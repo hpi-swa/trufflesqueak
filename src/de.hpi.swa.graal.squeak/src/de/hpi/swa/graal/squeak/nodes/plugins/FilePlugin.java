@@ -75,7 +75,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final TruffleFile asTruffleFile(final NativeObject obj) {
-            return code.image.env.getTruffleFile(asString(obj));
+            return method.image.env.getTruffleFile(asString(obj));
         }
     }
 
@@ -172,9 +172,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             }
             if (path.exists()) {
                 final Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
-                return code.image.wrap(result);
+                return method.image.wrap(result);
             }
-            return code.image.nil;
+            return method.image.nil;
         }
     }
 
@@ -189,7 +189,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"longIndex > 0", "nativePathName.isByteType()", "nativePathName.getByteLength() == 0"})
         @TruffleBoundary
         protected final Object doLookupEmptyString(@SuppressWarnings("unused") final PointersObject receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex) {
-            assert code.image.os.isWindows() : "Unexpected empty path on a non-Windows system.";
+            assert method.image.os.isWindows() : "Unexpected empty path on a non-Windows system.";
             final ArrayList<File> fileList = new ArrayList<>();
             for (Path path : FileSystems.getDefault().getRootDirectories()) {
                 fileList.add(path.toFile());
@@ -200,9 +200,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 final File file = files[index];
                 // Use getPath here, getName returns empty string on root path.
                 // Squeak strips the trailing backslash from C:\ on Windows.
-                return code.image.wrap(file.getPath().replace("\\", ""), file.lastModified(), file.lastModified(), file.isDirectory(), file.length());
+                return method.image.wrap(file.getPath().replace("\\", ""), file.lastModified(), file.lastModified(), file.isDirectory(), file.length());
             } else {
-                return code.image.nil;
+                return method.image.nil;
             }
         }
 
@@ -210,7 +210,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final Object doLookup(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
             String pathName = asString(nativePathName);
-            if (code.image.os.isWindows() && !pathName.endsWith("\\")) {
+            if (method.image.os.isWindows() && !pathName.endsWith("\\")) {
                 pathName += "\\"; // new File("C:") will fail, we need to add a trailing backslash.
             }
             final File directory = new File(pathName);
@@ -221,16 +221,16 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final int index = (int) longIndex - 1;
             if (files != null && index < files.length) {
                 final File file = files[index];
-                return code.image.wrap(file.getName(), file.lastModified(), file.lastModified(), file.isDirectory(), file.length());
+                return method.image.wrap(file.getName(), file.lastModified(), file.lastModified(), file.isDirectory(), file.length());
             } else {
-                return code.image.nil;
+                return method.image.nil;
             }
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"longIndex <= 0"})
         protected final Object doNil(final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
-            return code.image.nil;
+            return method.image.nil;
         }
     }
 
@@ -286,7 +286,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doAtEnd(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
                 final SeekableByteChannel file = getFileOrPrimFail(fileDescriptor);
-                return code.image.wrap(file.position() >= file.size() - 1);
+                return method.image.wrap(file.position() >= file.size() - 1);
             } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
@@ -358,7 +358,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
-                return code.image.wrap(getFileOrPrimFail(fileDescriptor).position());
+                return method.image.wrap(getFileOrPrimFail(fileDescriptor).position());
             } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
@@ -472,7 +472,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final Object doSize(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
-                return code.image.wrap(getFileOrPrimFail(fileDescriptor).size());
+                return method.image.wrap(getFileOrPrimFail(fileDescriptor).size());
             } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
@@ -488,7 +488,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object getHandles(@SuppressWarnings("unused") final ClassObject receiver) {
-            return code.image.newList(STDIO_HANDLES.ALL);
+            return method.image.newList(STDIO_HANDLES.ALL);
         }
     }
 
@@ -531,14 +531,14 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"content.isByteType()", "fileDescriptor == OUT"})
         @TruffleBoundary
         protected final long doWriteByteToStdout(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
-            return fileWriteToPrintWriter(code.image.getOutput(), content, startIndex, count);
+            return fileWriteToPrintWriter(method.image.getOutput(), content, startIndex, count);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"content.isByteType()", "fileDescriptor == ERROR"})
         @TruffleBoundary
         protected final long doWriteByteToStderr(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
-            return fileWriteToPrintWriter(code.image.getError(), content, startIndex, count);
+            return fileWriteToPrintWriter(method.image.getError(), content, startIndex, count);
         }
 
         @Specialization(guards = {"content.isIntType()", "!isStdioFileDescriptor(fileDescriptor)"})

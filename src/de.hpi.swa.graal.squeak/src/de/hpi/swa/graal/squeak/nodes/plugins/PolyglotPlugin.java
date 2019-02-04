@@ -71,7 +71,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             PrimGetLastErrorNode.unsetLastError();
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asString();
             final String sourceText = sourceObject.asString();
-            final Env env = code.image.env;
+            final Env env = method.image.env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
                 final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
@@ -80,18 +80,18 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
                 final Source source = newBuilder.build();
-                final boolean wasActive = code.image.interrupt.isActive();
-                code.image.interrupt.deactivate();
+                final boolean wasActive = method.image.interrupt.isActive();
+                method.image.interrupt.deactivate();
                 try {
-                    return code.image.wrap(env.parse(source).call());
+                    return method.image.wrap(env.parse(source).call());
                 } finally {
                     if (wasActive) {
-                        code.image.interrupt.activate();
+                        method.image.interrupt.activate();
                     }
                 }
             } catch (RuntimeException e) {
                 CompilerDirectives.transferToInterpreter();
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -111,7 +111,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             PrimGetLastErrorNode.unsetLastError();
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asString();
             final String pathString = path.asString();
-            final Env env = code.image.env;
+            final Env env = method.image.env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
                 final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
@@ -122,7 +122,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 return env.parse(newBuilder.name(pathString).build()).call();
             } catch (IOException | RuntimeException e) {
                 CompilerDirectives.transferToInterpreter();
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -145,32 +145,32 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doEvaluate(final NativeObject receiver, final NativeObject memberToCall) {
             PrimGetLastErrorNode.unsetLastError();
             final String foreignCode = receiver.asString();
-            final String cFile = code.image.imageRelativeFilePathFor(C_FILENAME);
-            final String llvmFile = code.image.imageRelativeFilePathFor(LLVM_FILENAME);
+            final String cFile = method.image.imageRelativeFilePathFor(C_FILENAME);
+            final String llvmFile = method.image.imageRelativeFilePathFor(LLVM_FILENAME);
             try {
                 Files.write(Paths.get(cFile), foreignCode.getBytes());
                 final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
                 p.waitFor();
-                final Source source = Source.newBuilder("llvm", code.image.env.getTruffleFile(llvmFile)).build();
-                final CallTarget foreignCallTarget = code.image.env.parse(source);
+                final Source source = Source.newBuilder("llvm", method.image.env.getTruffleFile(llvmFile)).build();
+                final CallTarget foreignCallTarget = method.image.env.parse(source);
                 final TruffleObject library = (TruffleObject) foreignCallTarget.call();
                 final TruffleObject cFunction;
                 try {
                     cFunction = (TruffleObject) ForeignAccess.sendRead(readNode, library, memberToCall.asString());
                 } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                    PrimGetLastErrorNode.setLastError(code, e);
+                    PrimGetLastErrorNode.setLastError(method, e);
                     throw new PrimitiveFailed();
                 }
                 final Object result;
                 try {
                     result = ForeignAccess.sendExecute(executeNode, cFunction);
                 } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
-                    PrimGetLastErrorNode.setLastError(code, e);
+                    PrimGetLastErrorNode.setLastError(method, e);
                     throw new PrimitiveFailed();
                 }
-                return code.image.wrap(result);
+                return method.image.wrap(result);
             } catch (IOException | RuntimeException | InterruptedException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -189,9 +189,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doExecute(final TruffleObject receiver) {
             PrimGetLastErrorNode.unsetLastError();
             try {
-                return code.image.wrap(ForeignAccess.sendAsPointer(asPointerNode, receiver));
+                return method.image.wrap(ForeignAccess.sendAsPointer(asPointerNode, receiver));
             } catch (UnsupportedMessageException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -212,9 +212,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             PrimGetLastErrorNode.unsetLastError();
             final Object[] arguments = getObjectArrayNode.execute(argumentArray);
             try {
-                return code.image.wrap(ForeignAccess.sendExecute(executeNode, receiver, identifier.asString(), arguments));
+                return method.image.wrap(ForeignAccess.sendExecute(executeNode, receiver, identifier.asString(), arguments));
             } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -230,7 +230,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary
         public final Object exportSymbol(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject name, final Object value) {
-            code.image.env.exportSymbol(name.asString(), value);
+            method.image.env.exportSymbol(name.asString(), value);
             return value;
         }
     }
@@ -257,9 +257,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                     final Object value = ForeignAccess.sendRead(readNode, sendKeysResult, index);
                     keys[index] = value == null ? "null" : value.toString();
                 }
-                return code.image.wrap(keys);
+                return method.image.wrap(keys);
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -287,7 +287,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                     return 0L;
                 }
             } catch (UnsupportedMessageException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -313,7 +313,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                     return 0L;
                 }
             } catch (UnsupportedMessageException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -329,8 +329,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "languageID.isByteType()")
         @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject languageID) {
-            final Collection<LanguageInfo> languages = code.image.env.getLanguages().values();
-            return code.image.wrap(languages.stream().//
+            final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
+            return method.image.wrap(languages.stream().//
                             filter(l -> !l.isInternal() && l.getId().equals(languageID.asString())).//
                             map(l -> new Object[]{l.getId(), l.getName(), l.getVersion(), l.getDefaultMimeType(), l.getMimeTypes().toArray()}).//
                             findFirst().orElseThrow(PrimitiveFailed::new));
@@ -349,12 +349,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "lastError != null")
         @TruffleBoundary
         protected final Object doError(@SuppressWarnings("unused") final Object receiver) {
-            return code.image.wrap(lastError.toString());
+            return method.image.wrap(lastError.toString());
         }
 
         @Specialization(guards = "lastError == null")
         protected final Object doNil(@SuppressWarnings("unused") final Object receiver) {
-            return code.image.nil;
+            return method.image.nil;
         }
 
         protected static final void setLastError(final CompiledCodeObject code, final Exception e) {
@@ -379,7 +379,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         protected final TruffleObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return (TruffleObject) code.image.env.getPolyglotBindings();
+            return (TruffleObject) method.image.env.getPolyglotBindings();
         }
     }
 
@@ -393,9 +393,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary
         public final Object importSymbol(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject name) {
-            final Object object = code.image.env.importSymbol(name.asString());
+            final Object object = method.image.env.importSymbol(name.asString());
             if (object == null) {
-                return code.image.nil;
+                return method.image.nil;
             }
             return object;
         }
@@ -411,9 +411,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         protected final Object doList(@SuppressWarnings("unused") final ClassObject receiver) {
-            final Collection<LanguageInfo> languages = code.image.env.getLanguages().values();
+            final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
             final Object[] result = languages.stream().filter(l -> !l.isInternal()).map(l -> l.getId()).toArray();
-            return code.image.wrap(result);
+            return method.image.wrap(result);
         }
     }
 
@@ -432,9 +432,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             PrimGetLastErrorNode.unsetLastError();
             final Object[] arguments = getObjectArrayNode.execute(argumentArray);
             try {
-                return code.image.wrap(ForeignAccess.sendInvoke(invokeNode, receiver, identifier.asString(), arguments));
+                return method.image.wrap(ForeignAccess.sendInvoke(invokeNode, receiver, identifier.asString(), arguments));
             } catch (UnsupportedTypeException | ArityException | UnknownIdentifierException | UnsupportedMessageException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -451,7 +451,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
         protected final Object doIsBoxed(final TruffleObject receiver) {
-            return code.image.wrap(ForeignAccess.sendIsBoxed(isExecutableNode, receiver));
+            return method.image.wrap(ForeignAccess.sendIsBoxed(isExecutableNode, receiver));
         }
     }
 
@@ -466,7 +466,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
         protected final Object doIsExecutable(final TruffleObject receiver) {
-            return code.image.wrap(ForeignAccess.sendIsExecutable(isExecutableNode, receiver));
+            return method.image.wrap(ForeignAccess.sendIsExecutable(isExecutableNode, receiver));
         }
     }
 
@@ -481,7 +481,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
         protected final Object doIsInstantiable(final TruffleObject receiver) {
-            return code.image.wrap(ForeignAccess.sendIsInstantiable(isIntantiable, receiver));
+            return method.image.wrap(ForeignAccess.sendIsInstantiable(isIntantiable, receiver));
         }
     }
 
@@ -496,7 +496,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
         protected final Object doIsNull(final TruffleObject receiver) {
-            return code.image.wrap(ForeignAccess.sendIsNull(isNullNode, receiver));
+            return method.image.wrap(ForeignAccess.sendIsNull(isNullNode, receiver));
         }
     }
 
@@ -511,7 +511,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
         protected final Object doIsPointer(final TruffleObject receiver) {
-            return code.image.wrap(ForeignAccess.sendIsPointer(isPointerNode, receiver));
+            return method.image.wrap(ForeignAccess.sendIsPointer(isPointerNode, receiver));
         }
     }
 
@@ -528,9 +528,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doRead(final TruffleObject receiver, final NativeObject selector) {
             PrimGetLastErrorNode.unsetLastError();
             try {
-                return code.image.wrap(ForeignAccess.sendRead(readNode, receiver, selector.asString()));
+                return method.image.wrap(ForeignAccess.sendRead(readNode, receiver, selector.asString()));
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -548,7 +548,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
         @TruffleBoundary
         protected final Object doRead(final TruffleObject receiver) {
-            return code.image.wrap(receiver.toString());
+            return method.image.wrap(receiver.toString());
         }
     }
 
@@ -566,9 +566,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doRead(final TruffleObject receiver) {
             PrimGetLastErrorNode.unsetLastError();
             try {
-                return code.image.wrap(ForeignAccess.sendUnbox(unboxNode, receiver));
+                return method.image.wrap(ForeignAccess.sendUnbox(unboxNode, receiver));
             } catch (UnsupportedMessageException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }
@@ -588,9 +588,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doWrite(final TruffleObject receiver, final NativeObject selector, final Object value) {
             PrimGetLastErrorNode.unsetLastError();
             try {
-                return code.image.wrap(ForeignAccess.sendWrite(writeNode, receiver, selector.asString(), value));
+                return method.image.wrap(ForeignAccess.sendWrite(writeNode, receiver, selector.asString(), value));
             } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
-                PrimGetLastErrorNode.setLastError(code, e);
+                PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
         }

@@ -641,7 +641,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"inBounds(index, obj)"})
         protected final Object doNativeObject(final NativeObject obj, final long index) {
-            return CharacterObject.valueOf(code.image, (int) (long) readNode.execute(obj, index - 1));
+            return CharacterObject.valueOf(method.image, (int) (long) readNode.execute(obj, index - 1));
         }
     }
 
@@ -670,7 +670,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"inBounds(index, obj)", "acceptsValueNode.execute(obj, value)"})
         protected final Object doNativeObject(final NativeObject obj, final long index, final long value) {
             writeNode.execute(obj, index - 1, value);
-            return CharacterObject.valueOf(code.image, (int) value);
+            return CharacterObject.valueOf(method.image, (int) value);
         }
     }
 

@@ -100,11 +100,11 @@ public final class ClassObject extends AbstractSqueakObject {
         return getInstanceSpecification() >= 16;
     }
 
-    public boolean isCompiledMethodClass() {
+    public boolean isCompiledMethodClassType() {
         return getInstanceSpecification() >= 24;
     }
 
-    public boolean isEphemeronClass() {
+    public boolean isEphemeronClassType() {
         return getInstanceSpecification() == 5;
     }
 
@@ -112,7 +112,7 @@ public final class ClassObject extends AbstractSqueakObject {
         return !isVariable();
     }
 
-    public boolean isImmediateClass() {
+    public boolean isImmediateClassType() {
         return getInstanceSpecification() == 7;
     }
 
@@ -411,5 +411,33 @@ public final class ClassObject extends AbstractSqueakObject {
 
     public String getClassComment() {
         return CLASS_DESCRIPTION.getClassComment(this);
+    }
+
+    public boolean isCompiledMethodClass() {
+        return this == image.compiledMethodClass;
+    }
+
+    public boolean isMethodContextClass() {
+        return this == image.methodContextClass;
+    }
+
+    public boolean isBlockClosureClass() {
+        return this == image.blockClosureClass;
+    }
+
+    public boolean isFloatClass() {
+        return this == image.floatClass;
+    }
+
+    public boolean isLargePositiveIntegerClass() {
+        return this == image.largePositiveIntegerClass;
+    }
+
+    public boolean isLargeNegativeIntegerClass() {
+        return this == image.largeNegativeIntegerClass;
+    }
+
+    public boolean isSmallIntegerClass() {
+        return this == image.smallIntegerClass;
     }
 }

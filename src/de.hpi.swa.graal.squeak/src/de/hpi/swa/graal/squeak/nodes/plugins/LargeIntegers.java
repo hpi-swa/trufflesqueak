@@ -44,7 +44,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         protected final boolean doLong(final long receiver, final long start, final long stopArg) {
             final long stop = Math.min(stopArg, Long.highestOneBit(receiver));
             if (start > stop) {
-                return code.image.sqFalse;
+                return method.image.sqFalse;
             }
             final long firstDigitIndex = Math.floorDiv(start - 1, 32);
             final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
@@ -53,23 +53,23 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if (firstDigitIndex == lastDigitIndex) {
                 final byte digit = digitOf(receiver, firstDigitIndex);
                 if ((digit & (firstMask & lastMask)) != 0) {
-                    return code.image.sqTrue;
+                    return method.image.sqTrue;
                 } else {
-                    return code.image.sqFalse;
+                    return method.image.sqFalse;
                 }
             }
             if (((digitOf(receiver, firstDigitIndex)) & firstMask) != 0) {
-                return code.image.sqTrue;
+                return method.image.sqTrue;
             }
             for (long i = firstDigitIndex + 1; i < lastDigitIndex - 1; i++) {
                 if (digitOf(receiver, i) != 0) {
-                    return code.image.sqTrue;
+                    return method.image.sqTrue;
                 }
             }
             if ((digitOf(receiver, lastDigitIndex) & lastMask) != 0) {
-                return code.image.sqTrue;
+                return method.image.sqTrue;
             }
-            return code.image.sqFalse;
+            return method.image.sqFalse;
         }
 
         @Specialization(guards = {"start >= 1", "stopArg >= 1"}, rewriteOn = {ArithmeticException.class})
@@ -81,7 +81,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         protected final boolean doLargeInteger(final LargeIntegerObject receiver, final long start, final long stopArg) {
             final long stop = Math.min(stopArg, receiver.bitLength());
             if (start > stop) {
-                return code.image.sqFalse;
+                return method.image.sqFalse;
             }
             final long firstDigitIndex = Math.floorDiv(start - 1, 32);
             final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
@@ -90,23 +90,23 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if (firstDigitIndex == lastDigitIndex) {
                 final long digit = receiver.getNativeAt0(firstDigitIndex);
                 if ((digit & (firstMask & lastMask)) != 0) {
-                    return code.image.sqTrue;
+                    return method.image.sqTrue;
                 } else {
-                    return code.image.sqFalse;
+                    return method.image.sqFalse;
                 }
             }
             if ((receiver.getNativeAt0(firstDigitIndex) & firstMask) != 0) {
-                return code.image.sqTrue;
+                return method.image.sqTrue;
             }
             for (long i = firstDigitIndex + 1; i < lastDigitIndex - 1; i++) {
                 if (receiver.getNativeAt0(i) != 0) {
-                    return code.image.sqTrue;
+                    return method.image.sqTrue;
                 }
             }
             if ((receiver.getNativeAt0(lastDigitIndex) & lastMask) != 0) {
-                return code.image.sqTrue;
+                return method.image.sqTrue;
             }
-            return code.image.sqFalse;
+            return method.image.sqFalse;
         }
 
         private static byte digitOf(final long value, final long index) {
@@ -506,7 +506,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if ((negative && divide >= 0) || (!negative && divide < 0)) {
                 divide = Math.negateExact(divide);
             }
-            return code.image.newList(new long[]{divide, rcvr % arg});
+            return method.image.newList(new long[]{divide, rcvr % arg});
         }
 
         @Specialization
@@ -521,7 +521,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 divide = divide.negateNoReduce();
             }
             final Object remainder = rcvr.remainder(arg);
-            return code.image.newListWith(divide.reduceIfPossible(), remainder);
+            return method.image.newListWith(divide.reduceIfPossible(), remainder);
         }
 
         @Specialization
@@ -545,7 +545,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject rcvr) {
-            return code.image.wrap(MODULE_NAME);
+            return method.image.wrap(MODULE_NAME);
         }
     }
 
@@ -705,7 +705,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 }
             }
             final byte[] resultBytes = ArrayConversionUtils.bytesFromIntsReversed(result);
-            return new LargeIntegerObject(code.image, code.image.largePositiveIntegerClass, resultBytes).reduceIfPossible(); // normalize
+            return new LargeIntegerObject(method.image, method.image.largePositiveIntegerClass, resultBytes).reduceIfPossible(); // normalize
         }
 
         private static int cDigitComparewithlen(final int[] first, final int[] second, final int len) {

@@ -54,7 +54,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             assert key != null : "key should not be null";
             final String value = systemGetEnv(key);
             assert value != null : "value should not be null";
-            return code.image.wrap(key + "=" + value);
+            return method.image.wrap(key + "=" + value);
         }
 
         protected static final Object[] getEnvironmentKeys() {
@@ -85,7 +85,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             if (value == null) {
                 throw new PrimitiveFailed();
             } else {
-                return code.image.wrap(value);
+                return method.image.wrap(value);
             }
         }
     }
@@ -100,7 +100,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @Specialization
         protected final Object doAt(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.nil; // TODO: implement parent pid
+            return method.image.nil; // TODO: implement parent pid
         }
     }
 
@@ -114,7 +114,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @Specialization
         protected final long doNumber(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.wrap(20);
+            return method.image.wrap(20);
         }
     }
 
@@ -129,7 +129,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         @SuppressWarnings("unused")
         @Specialization
         protected final Object doForward(final Object receiver, final long signalNumber, final long semaphoreIndex) {
-            return code.image.sqTrue; // TODO: implement
+            return method.image.sqTrue; // TODO: implement
         }
     }
 }

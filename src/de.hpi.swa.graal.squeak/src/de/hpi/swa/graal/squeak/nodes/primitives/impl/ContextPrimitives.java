@@ -58,7 +58,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             ContextObject current = receiver;
             while (current != previousContextOrNil) {
                 final Object sender = current.getSender();
-                if (sender == code.image.nil || sender == previousContextOrNil) {
+                if (sender == method.image.nil || sender == previousContextOrNil) {
                     break;
                 } else {
                     current = (ContextObject) sender;
@@ -67,7 +67,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     }
                 }
             }
-            return code.image.nil;
+            return method.image.nil;
         }
 
         @Specialization(guards = "!receiver.hasMaterializedSender()")
@@ -86,7 +86,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     }
                 } else {
                     if (previousContext == context) {
-                        return code.image.nil;
+                        return method.image.nil;
                     }
                     if (FrameAccess.getClosure(current) == null && FrameAccess.getMethod(current).isUnwindMarked()) {
                         if (context != null) {
@@ -99,7 +99,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 return null;
             });
             assert foundMyself[0] : "Did not find receiver with virtual sender on Truffle stack";
-            return result != null ? result : code.image.nil;
+            return result != null ? result : method.image.nil;
         }
 
         @Specialization(guards = "!receiver.hasMaterializedSender()")
@@ -137,7 +137,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             while (current.hasMaterializedSender()) {
                 final AbstractSqueakObject sender = start.getSender();
                 current.terminate();
-                if (sender == code.image.nil || sender == end) {
+                if (sender == method.image.nil || sender == end) {
                     return;
                 } else {
                     current = (ContextObject) sender;
@@ -172,7 +172,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         final Frame currentWritable = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
                         // Terminate frame
                         FrameAccess.setInstructionPointer(currentWritable, currentCode, -1);
-                        FrameAccess.setSender(currentWritable, code.image.nil);
+                        FrameAccess.setSender(currentWritable, method.image.nil);
                     }
                     return null;
                 }
@@ -202,8 +202,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (sender instanceof ContextObject) {
                     context = (ContextObject) sender;
                 } else {
-                    assert sender == code.image.nil;
-                    return code.image.nil;
+                    assert sender == method.image.nil;
+                    return method.image.nil;
                 }
             }
         }
@@ -242,7 +242,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (lastSender[0] instanceof ContextObject) {
                     return findNext((ContextObject) lastSender[0]);
                 } else {
-                    return code.image.nil;
+                    return method.image.nil;
                 }
             } else {
                 return result;

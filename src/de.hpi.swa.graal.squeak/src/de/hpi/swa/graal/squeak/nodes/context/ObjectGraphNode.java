@@ -2,13 +2,11 @@ package de.hpi.swa.graal.squeak.nodes.context;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -43,8 +41,6 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
     private static final int SEEN_INITIAL_CAPACITY = 500000;
     private static final int PENDING_INITIAL_SIZE = 256;
 
-    @CompilationFinal private static HashSet<AbstractSqueakObject> classesWithNoInstances;
-
     @Child private GetTraceablePointersNode getPointersNode = GetTraceablePointersNode.create();
 
     protected ObjectGraphNode(final SqueakImageContext image) {
@@ -53,15 +49,6 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
 
     public static ObjectGraphNode create(final SqueakImageContext image) {
         return ObjectGraphNodeGen.create(image);
-    }
-
-    public HashSet<AbstractSqueakObject> getClassesWithNoInstances() {
-        if (classesWithNoInstances == null) {
-            // TODO: BlockContext missing.
-            final AbstractSqueakObject[] classes = new AbstractSqueakObject[]{image.smallIntegerClass, image.characterClass, image.floatClass};
-            classesWithNoInstances = new HashSet<>(Arrays.asList(classes));
-        }
-        return classesWithNoInstances;
     }
 
     public List<AbstractSqueakObject> allInstances() {

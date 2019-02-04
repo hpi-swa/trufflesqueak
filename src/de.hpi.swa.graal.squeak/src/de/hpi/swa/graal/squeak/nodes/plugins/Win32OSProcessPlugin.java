@@ -46,7 +46,7 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
             for (Map.Entry<String, String> entry : envMap.entrySet()) {
                 strings.add(entry.getKey() + "=" + entry.getValue());
             }
-            return code.image.wrap(String.join("\n", strings));
+            return method.image.wrap(String.join("\n", strings));
         }
     }
 }

@@ -39,7 +39,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "dropIndex <= getFileListSize()")
         protected final Object doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex) {
-            return FilePlugin.createFileHandleOrPrimFail(code.image.env.getTruffleFile(fileList[(int) dropIndex - 1]), false);
+            return FilePlugin.createFileHandleOrPrimFail(method.image.env.getTruffleFile(fileList[(int) dropIndex - 1]), false);
         }
     }
 
@@ -53,7 +53,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "dropIndex <= getFileListSize()")
         protected final Object doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex) {
-            return code.image.wrap(fileList[(int) dropIndex - 1]);
+            return method.image.wrap(fileList[(int) dropIndex - 1]);
         }
     }
 }

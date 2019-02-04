@@ -73,7 +73,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a < b ? code.image.sqTrue : code.image.sqFalse;
+            return a < b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -86,7 +86,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a > b ? code.image.sqTrue : code.image.sqFalse;
+            return a > b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -99,7 +99,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a <= b ? code.image.sqTrue : code.image.sqFalse;
+            return a <= b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -112,7 +112,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a >= b ? code.image.sqTrue : code.image.sqFalse;
+            return a >= b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -125,7 +125,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a == b ? code.image.sqTrue : code.image.sqFalse;
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -138,7 +138,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a != b ? code.image.sqTrue : code.image.sqFalse;
+            return a != b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -417,13 +417,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a < b ? code.image.sqTrue : code.image.sqFalse;
+            return a < b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) < 0 ? code.image.sqTrue : code.image.sqFalse;
+            return a.compareTo(b) < 0 ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -437,13 +437,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a > b ? code.image.sqTrue : code.image.sqFalse;
+            return a > b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) > 0 ? code.image.sqTrue : code.image.sqFalse;
+            return a.compareTo(b) > 0 ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -457,13 +457,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a <= b ? code.image.sqTrue : code.image.sqFalse;
+            return a <= b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) <= 0 ? code.image.sqTrue : code.image.sqFalse;
+            return a.compareTo(b) <= 0 ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -477,13 +477,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a >= b ? code.image.sqTrue : code.image.sqFalse;
+            return a >= b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) >= 0 ? code.image.sqTrue : code.image.sqFalse;
+            return a.compareTo(b) >= 0 ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -497,13 +497,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a == b ? code.image.sqTrue : code.image.sqFalse;
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) == 0 ? code.image.sqTrue : code.image.sqFalse;
+            return a.compareTo(b) == 0 ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -517,13 +517,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a != b ? code.image.sqTrue : code.image.sqFalse;
+            return a != b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) != 0 ? code.image.sqTrue : code.image.sqFalse;
+            return a.compareTo(b) != 0 ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -797,13 +797,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a < b ? code.image.sqTrue : code.image.sqFalse;
+            return a < b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() < b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+            return a.getValue() < b.getValue() ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -817,13 +817,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a > b ? code.image.sqTrue : code.image.sqFalse;
+            return a > b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() > b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+            return a.getValue() > b.getValue() ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -837,13 +837,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a <= b ? code.image.sqTrue : code.image.sqFalse;
+            return a <= b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() <= b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+            return a.getValue() <= b.getValue() ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -857,13 +857,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a >= b ? code.image.sqTrue : code.image.sqFalse;
+            return a >= b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() >= b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+            return a.getValue() >= b.getValue() ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -877,13 +877,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a == b ? code.image.sqTrue : code.image.sqFalse;
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() == b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+            return a.getValue() == b.getValue() ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -897,13 +897,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a != b ? code.image.sqTrue : code.image.sqFalse;
+            return a != b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() != b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+            return a.getValue() != b.getValue() ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -1241,7 +1241,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a < b ? code.image.sqTrue : code.image.sqFalse;
+            return a < b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -1254,7 +1254,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a > b ? code.image.sqTrue : code.image.sqFalse;
+            return a > b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -1267,7 +1267,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a <= b ? code.image.sqTrue : code.image.sqFalse;
+            return a <= b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -1280,7 +1280,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a >= b ? code.image.sqTrue : code.image.sqFalse;
+            return a >= b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -1293,7 +1293,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a == b ? code.image.sqTrue : code.image.sqFalse;
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -1306,7 +1306,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a != b ? code.image.sqTrue : code.image.sqFalse;
+            return a != b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 

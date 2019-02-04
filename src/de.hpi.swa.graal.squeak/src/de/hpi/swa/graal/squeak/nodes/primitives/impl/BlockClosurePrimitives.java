@@ -152,13 +152,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block) {
             final Object[] arguments = FrameAccess.newBlockArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY);
-            final boolean wasActive = code.image.interrupt.isActive();
-            code.image.interrupt.deactivate();
+            final boolean wasActive = method.image.interrupt.isActive();
+            method.image.interrupt.deactivate();
             try {
                 return dispatch.executeBlock(block, arguments);
             } finally {
                 if (wasActive) {
-                    code.image.interrupt.activate();
+                    method.image.interrupt.activate();
                 }
             }
         }
@@ -177,13 +177,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
                         @Cached("create()") final ArrayObjectToObjectArrayTransformNode getObjectArrayNode) {
             final Object[] arguments = FrameAccess.newBlockArguments(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray));
-            final boolean wasActive = code.image.interrupt.isActive();
-            code.image.interrupt.deactivate();
+            final boolean wasActive = method.image.interrupt.isActive();
+            method.image.interrupt.deactivate();
             try {
                 return dispatch.executeBlock(block, arguments);
             } finally {
                 if (wasActive) {
-                    code.image.interrupt.activate();
+                    method.image.interrupt.activate();
                 }
             }
         }

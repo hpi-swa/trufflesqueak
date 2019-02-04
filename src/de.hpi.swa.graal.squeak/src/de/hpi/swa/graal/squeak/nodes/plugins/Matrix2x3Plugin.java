@@ -113,9 +113,9 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doIdentity(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
             if (ints[0] == FLOAT_ONE && ints[1] == 0 && ints[2] == 0 && ints[3] == 0 && ints[4] == FLOAT_ONE && ints[5] == 0) {
-                return code.image.sqTrue;
+                return method.image.sqTrue;
             } else {
-                return code.image.sqFalse;
+                return method.image.sqFalse;
             }
         }
     }
@@ -131,9 +131,9 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doPure(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
             if (ints[0] == FLOAT_ONE && ints[1] == 0 && ints[3] == 0 && ints[4] == FLOAT_ONE) {
-                return code.image.sqTrue;
+                return method.image.sqTrue;
             } else {
-                return code.image.sqFalse;
+                return method.image.sqFalse;
             }
         }
     }

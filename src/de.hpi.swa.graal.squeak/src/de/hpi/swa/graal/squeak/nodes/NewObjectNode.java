@@ -64,18 +64,18 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
         }
     }
 
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject == image.methodContextClass"})
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isMethodContextClass()"})
     protected final Object doContext(final ClassObject classObject, final int extraSize) {
         return ContextObject.create(image, classObject.getBasicInstanceSize() + extraSize);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject == image.blockClosureClass"})
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isBlockClosureClass()"})
     protected final Object doBlockClosure(final ClassObject classObject, final int extraSize) {
         return new BlockClosureObject(image); // TODO: verify this is actually used
     }
 
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject != image.methodContextClass", "classObject != image.blockClosureClass"})
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!classObject.isMethodContextClass()", "!classObject.isBlockClosureClass()"})
     protected final Object doPointers(final ClassObject classObject, final int extraSize) {
         return new PointersObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
@@ -85,7 +85,7 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
         return new WeakPointersObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = "classObject.isEphemeronClass()")
+    @Specialization(guards = "classObject.isEphemeronClassType()")
     protected final Object doEphemerons(final ClassObject classObject, final int extraSize) {
         return doWeakPointers(classObject, extraSize); // TODO: ephemerons
     }
@@ -95,13 +95,13 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
         return NativeObject.newNativeLongs(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = {"classObject.isWords()", "classObject == image.floatClass"})
+    @Specialization(guards = {"classObject.isWords()", "classObject.isFloatClass()"})
     protected final Object doFloat(final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() + extraSize == 2;
         return new FloatObject(image);
     }
 
-    @Specialization(guards = {"classObject.isWords()", "classObject != image.floatClass"})
+    @Specialization(guards = {"classObject.isWords()", "!classObject.isFloatClass()"})
     protected final Object doNativeInts(final ClassObject classObject, final int extraSize) {
         return NativeObject.newNativeInts(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
@@ -111,17 +111,17 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
         return NativeObject.newNativeShorts(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = {"classObject.isBytes()", "classObject == image.largePositiveIntegerClass || classObject == image.largeNegativeIntegerClass"})
+    @Specialization(guards = {"classObject.isBytes()", "classObject.isLargePositiveIntegerClass() || classObject.isLargeNegativeIntegerClass()"})
     protected final Object doLargeIntegers(final ClassObject classObject, final int extraSize) {
         return new LargeIntegerObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = {"classObject.isBytes()", "classObject != image.largePositiveIntegerClass", "classObject != image.largeNegativeIntegerClass"})
+    @Specialization(guards = {"classObject.isBytes()", "!classObject.isLargePositiveIntegerClass()", "!classObject.isLargeNegativeIntegerClass()"})
     protected final Object doNativeBytes(final ClassObject classObject, final int extraSize) {
         return NativeObject.newNativeBytes(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = {"classObject.isCompiledMethodClass()"})
+    @Specialization(guards = {"classObject.isCompiledMethodClassType()"})
     protected final Object doCompiledMethod(final ClassObject classObject, final int extraSize) {
         return CompiledMethodObject.newOfSize(image, classObject.getBasicInstanceSize() + extraSize);
     }

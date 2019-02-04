@@ -93,15 +93,15 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
-            code.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
-            code.image.interrupt.setTimerSemaphore(semaphore);
-            code.image.interrupt.setNextWakeupTick(msTime);
+            method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
+            method.image.interrupt.setTimerSemaphore(semaphore);
+            method.image.interrupt.setNextWakeupTick(msTime);
         }
 
         protected final void signalAtMilliseconds(final NilObject semaphore, @SuppressWarnings("unused") final long msTime) {
-            code.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
-            code.image.interrupt.setTimerSemaphore(null);
-            code.image.interrupt.setNextWakeupTick(0);
+            method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
+            method.image.interrupt.setTimerSemaphore(null);
+            method.image.interrupt.setNextWakeupTick(0);
         }
     }
 
@@ -116,12 +116,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "classObject == code.image.smallIntegerClass")
+        @Specialization(guards = "classObject.isImmediateClassType()")
         protected static final Object doSmallIntegerClass(final ClassObject classObject) {
             throw new PrimitiveFailed();
         }
 
-        @Specialization(guards = "classObject != code.image.smallIntegerClass")
+        @Specialization(guards = "!classObject.isImmediateClassType()")
         protected final AbstractSqueakObject doSomeInstance(final ClassObject classObject) {
             try {
                 return objectGraphNode.someInstanceOf(classObject);
@@ -141,7 +141,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final AbstractSqueakObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.wrap(code.image.getImagePath());
+            return method.image.wrap(method.image.getImagePath());
         }
     }
 
@@ -169,7 +169,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore) {
-            code.image.setSemaphore(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE, semaphore);
+            method.image.setSemaphore(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE, semaphore);
             return receiver;
         }
     }
@@ -199,111 +199,111 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final boolean doClass(final ClassObject receiver, final Object thang) {
-            return receiver.pointsTo(thang) ? code.image.sqTrue : code.image.sqFalse;
+            return receiver.pointsTo(thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization
         protected final boolean doClass(final CompiledCodeObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getLiterals(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getLiterals(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization
         protected final boolean doContext(final ContextObject receiver, final Object thang) {
-            return receiver.pointsTo(thang) ? code.image.sqTrue : code.image.sqFalse;
+            return receiver.pointsTo(thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = {"receiver.isEmptyType()", "receiver.getEmptyStorage() > 0"})
         protected final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
-            return thang == code.image.nil ? code.image.sqTrue : code.image.sqFalse;
+            return thang == method.image.nil ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isAbstractSqueakObjectType()")
         protected final boolean doArrayOfSqueakObjects(final ArrayObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getAbstractSqueakObjectStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getAbstractSqueakObjectStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
         protected final boolean doArrayOfBooleans(final ArrayObject receiver, final boolean thang) {
-            return ArrayUtils.contains(receiver.getBooleanStorage(), thang ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getBooleanStorage(), thang ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
         protected final boolean doArrayOfBooleans(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getBooleanStorage(), ArrayObject.BOOLEAN_NIL_TAG) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getBooleanStorage(), ArrayObject.BOOLEAN_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isBooleanType()", "!isBoolean(thang)", "!isNilObject(thang)"})
         protected final boolean doArrayOfBooleans(final ArrayObject receiver, final Object thang) {
-            return code.image.sqFalse;
+            return method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isCharType()")
         protected final boolean doArrayOfChars(final ArrayObject receiver, final char thang) {
-            return ArrayUtils.contains(receiver.getCharStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getCharStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isCharType()")
         protected final boolean doArrayOfChars(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getCharStorage(), ArrayObject.CHAR_NIL_TAG) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getCharStorage(), ArrayObject.CHAR_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isCharType()", "!isCharacter(thang)", "!isNilObject(thang)"})
         protected final boolean doArrayOfChars(final ArrayObject receiver, final Object thang) {
-            return code.image.sqFalse;
+            return method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isLongType()")
         protected final boolean doArrayOfLongs(final ArrayObject receiver, final long thang) {
-            return ArrayUtils.contains(receiver.getLongStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getLongStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isLongType()")
         protected final boolean doArrayOfLongs(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getLongStorage(), ArrayObject.LONG_NIL_TAG) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getLongStorage(), ArrayObject.LONG_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isLongType()", "!isLong(thang)", "!isNilObject(thang)"})
         protected final boolean doArrayOfLongss(final ArrayObject receiver, final Object thang) {
-            return code.image.sqFalse;
+            return method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isDoubleType()")
         protected final boolean doArrayOfDoubles(final ArrayObject receiver, final double thang) {
-            return ArrayUtils.contains(receiver.getDoubleStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getDoubleStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isDoubleType()")
         protected final boolean doArrayOfDoubles(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getDoubleStorage(), ArrayObject.DOUBLE_NIL_TAG) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getDoubleStorage(), ArrayObject.DOUBLE_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isDoubleType()", "!isDouble(thang)", "!isNilObject(thang)"})
         protected final boolean doArrayOfDoubles(final ArrayObject receiver, final Object thang) {
-            return code.image.sqFalse;
+            return method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isNativeObjectType()")
         protected final boolean doArrayOfNatives(final ArrayObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getNativeObjectStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getNativeObjectStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isObjectType()")
         protected final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getObjectStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getObjectStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization
         protected final boolean doPointers(final PointersObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization
         protected final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -317,15 +317,15 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final PointersObject semaphore) {
-            code.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
-            code.image.interrupt.setInterruptSemaphore(semaphore);
+            method.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
+            method.image.interrupt.setInterruptSemaphore(semaphore);
             return receiver;
         }
 
         @Specialization
         protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final NilObject semaphore) {
-            code.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
-            code.image.interrupt.setInterruptSemaphore(null);
+            method.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
+            method.image.interrupt.setInterruptSemaphore(null);
             return receiver;
         }
     }
@@ -340,7 +340,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
-            return code.image.wrap(System.currentTimeMillis() - code.image.startUpMillis);
+            return method.image.wrap(System.currentTimeMillis() - method.image.startUpMillis);
         }
     }
 
@@ -375,7 +375,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
-            return code.image.wrap(currentMicrosecondsLocal() / 1000000);
+            return method.image.wrap(currentMicrosecondsLocal() / 1000000);
         }
     }
 
@@ -389,27 +389,27 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "code.image.hasDisplay()")
+        @Specialization(guards = "method.image.hasDisplay()")
         protected final Object getClipboardText(final Object receiver, final NotProvided value) {
-            return code.image.wrap(code.image.getDisplay().getClipboardData());
+            return method.image.wrap(method.image.getDisplay().getClipboardData());
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!code.image.hasDisplay()")
+        @Specialization(guards = "!method.image.hasDisplay()")
         protected final Object getClipboardTextHeadless(final Object receiver, final NotProvided value) {
             if (headlessValue == null) {
-                headlessValue = code.image.wrap("");
+                headlessValue = method.image.wrap("");
             }
             return headlessValue;
         }
 
-        @Specialization(guards = {"code.image.hasDisplay()", "value.isByteType()"})
+        @Specialization(guards = {"method.image.hasDisplay()", "value.isByteType()"})
         protected final Object setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
-            code.image.getDisplay().setClipboardData(value.asString());
+            method.image.getDisplay().setClipboardData(value.asString());
             return value;
         }
 
-        @Specialization(guards = {"!code.image.hasDisplay()", "value.isByteType()"})
+        @Specialization(guards = {"!method.image.hasDisplay()", "value.isByteType()"})
         protected final Object setClipboardTextHeadless(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
             headlessValue = value;
             return value;
@@ -427,7 +427,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         @TruffleBoundary
         protected final AbstractSqueakObject doVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.wrap(System.getProperty("java.home") + File.separatorChar);
+            return method.image.wrap(System.getProperty("java.home") + File.separatorChar);
         }
     }
 
@@ -507,44 +507,44 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             final int index = (int) longIndex;
             if (index == 0) {
                 final String separator = System.getProperty("file.separator");
-                return code.image.wrap(System.getProperty("java.home") + separator + "bin" + separator + "java");
+                return method.image.wrap(System.getProperty("java.home") + separator + "bin" + separator + "java");
             } else if (index == 1) {
-                return code.image.wrap(code.image.getImagePath());
+                return method.image.wrap(method.image.getImagePath());
             }
             if (index >= 2 && index <= 1000) {
-                final String[] restArgs = code.image.getImageArguments();
+                final String[] restArgs = method.image.getImageArguments();
                 if (restArgs.length > index - 2) {
-                    return code.image.wrap(restArgs[index - 2]);
+                    return method.image.wrap(restArgs[index - 2]);
                 } else {
-                    return code.image.nil;
+                    return method.image.nil;
                 }
             }
             switch (index) {
                 case 1001:  // this platform's operating system 'Mac OS', 'Win32', 'unix', ...
-                    return code.image.wrap(code.image.os.getSqOSName());
+                    return method.image.wrap(method.image.os.getSqOSName());
                 case 1002:  // operating system version
-                    if (code.image.os.isMacOS()) {
+                    if (method.image.os.isMacOS()) {
                         /* The image expects things like 1095, so convert 10.10.5 into 1010.5 */
-                        return code.image.wrap(System.getProperty("os.version").replaceFirst("\\.", ""));
+                        return method.image.wrap(System.getProperty("os.version").replaceFirst("\\.", ""));
                     }
-                    return code.image.wrap(System.getProperty("os.version"));
+                    return method.image.wrap(System.getProperty("os.version"));
                 case 1003:  // this platform's processor type
-                    return code.image.wrap("intel");
+                    return method.image.wrap("intel");
                 case 1004:  // vm version
-                    return code.image.wrap(System.getProperty("java.version"));
+                    return method.image.wrap(System.getProperty("java.version"));
                 case 1005:  // window system name
-                    return code.image.wrap("Aqua");
+                    return method.image.wrap("Aqua");
                 case 1006:  // vm build id
                     // Example output under Squeak: 'Win32 built on Oct 8 2018 09:19:35 GMT ...
                     // LanguageEnvironment>>win32VMUsesUnicode expects a Date after 'on'
                     final DateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy HH:mm:ss zzz", Locale.US);
-                    return code.image.wrap(String.format("%s on %s", Truffle.getRuntime().getName(), dateFormat.format(new Date())));
+                    return method.image.wrap(String.format("%s on %s", Truffle.getRuntime().getName(), dateFormat.format(new Date())));
                 // case 1007: // Interpreter class (Cog VM only)
                 // case 1008: // Cogit class (Cog VM only)
                 // case 1009: // Platform source version (Cog VM only?)
                 case 1201: // max filename length (Mac OS only)
-                    if (code.image.os.isMacOS()) {
-                        return code.image.wrap("255");
+                    if (method.image.os.isMacOS()) {
+                        return method.image.wrap("255");
                     }
                     break;
                 // case 1202: // file last error (Mac OS only)
@@ -552,9 +552,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // case 10002: // operating system details (Win32 only)
                 // case 10003: // graphics hardware details (Win32 only)
                 default:
-                    return code.image.nil;
+                    return method.image.nil;
             }
-            return code.image.nil;
+            return method.image.nil;
         }
     }
 
@@ -643,19 +643,15 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             objectGraphNode = ObjectGraphNode.create(method.image);
         }
 
-        protected final boolean hasNoInstances(final ClassObject classObject) {
-            return objectGraphNode.getClassesWithNoInstances().contains(classObject);
-        }
-
         @SuppressWarnings("unused")
-        @Specialization(guards = "hasNoInstances(classObject)")
+        @Specialization(guards = "classObject.isImmediateClassType()")
         protected final ArrayObject noInstances(final ClassObject classObject) {
-            return code.image.newList(ArrayUtils.EMPTY_ARRAY);
+            return method.image.newList(ArrayUtils.EMPTY_ARRAY);
         }
 
-        @Specialization
+        @Specialization(guards = "!classObject.isImmediateClassType()")
         protected final ArrayObject allInstances(final ClassObject classObject) {
-            return code.image.newList(ArrayUtils.toArray(objectGraphNode.allInstancesOf(classObject)));
+            return method.image.newList(ArrayUtils.toArray(objectGraphNode.allInstancesOf(classObject)));
         }
     }
 
@@ -669,8 +665,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final boolean isPinned(final AbstractSqueakObject receiver) {
-            PrimPinNode.printWarningIfNotTesting(code);
-            return receiver.isPinned() ? code.image.sqTrue : code.image.sqFalse;
+            PrimPinNode.printWarningIfNotTesting(method);
+            return receiver.isPinned() ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
@@ -684,18 +680,18 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "enable")
         protected final boolean doPinEnable(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
-            printWarningIfNotTesting(code);
+            printWarningIfNotTesting(method);
             final boolean wasPinned = receiver.isPinned();
             receiver.setPinned();
-            return wasPinned ? code.image.sqTrue : code.image.sqFalse;
+            return wasPinned ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "!enable")
         protected final boolean doPinDisable(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
-            printWarningIfNotTesting(code);
+            printWarningIfNotTesting(method);
             final boolean wasPinned = receiver.isPinned();
             receiver.unsetPinned();
-            return wasPinned ? code.image.sqTrue : code.image.sqFalse;
+            return wasPinned ? method.image.sqTrue : method.image.sqFalse;
         }
 
         protected static final void printWarningIfNotTesting(final CompiledCodeObject code) {
@@ -786,7 +782,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             for (int i = 0; i < PARAMS_ARRAY_SIZE; i++) {
                 vmParameters[i] = vmParameterAt(i + 1);
             }
-            return code.image.newList(vmParameters);
+            return method.image.newList(vmParameters);
         }
 
         @SuppressWarnings("unused")
@@ -798,7 +794,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization(guards = "!isNotProvided(value)")
         protected final Object getVMParameters(final Object receiver, final long index, final Object value) {
-            return code.image.nil; // ignore writes
+            return method.image.nil; // ignore writes
         }
 
         private Object vmParameterAt(final int index) {
@@ -807,8 +803,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1: return 1L; // end (v3)/size(Spur) of old-space (0-based, read-only)
                 case 2: return 1L; // end (v3)/size(Spur) of young/new-space (read-only)
                 case 3: return 1L; // end (v3)/size(Spur) of heap (read-only)
-                case 4: return code.image.nil; // nil (was allocationCount (read-only))
-                case 5: return code.image.nil; // nil (was allocations between GCs (read-write)
+                case 4: return method.image.nil; // nil (was allocationCount (read-only))
+                case 5: return method.image.nil; // nil (was allocations between GCs (read-write)
                 case 6: return 0L; // survivor count tenuring threshold (read-write)
                 case 7: return 1L; // full GCs since startup (read-only) -> used in InterpreterProxy>>#statNumGCs
                 case 8: return 1L; // total milliseconds in full GCs since startup (read-only)
@@ -842,23 +838,23 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
                 case 44: return 0L; // size of eden, in bytes
                 case 45: return 0L; // desired size of eden, in bytes (stored in image file header)
-                case 46: return code.image.nil; // machine code zone size, in bytes (Cog only; otherwise nil)
-                case 47: return code.image.nil; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
+                case 46: return method.image.nil; // machine code zone size, in bytes (Cog only; otherwise nil)
+                case 47: return method.image.nil; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
                 case 48: return 0L; // various header flags.  See getCogVMFlags.
                 case 49: return 256L; // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
-                case 50: case 51: return code.image.nil; // nil; reserved for VM parameters that persist in the image (such as eden above)
+                case 50: case 51: return method.image.nil; // nil; reserved for VM parameters that persist in the image (such as eden above)
                 case 52: return 65536L; // root table capacity
                 case 53: return 2L; // number of segments (Spur only; otherwise nil)
                 case 54: return 1L; // total size of free old space (Spur only, otherwise nil)
                 case 55: return 0L; // ratio of growth and image size at or above which a GC will be performed post scavenge
-                case 56: return code.image.nil; // number of process switches since startup (read-only)
+                case 56: return method.image.nil; // number of process switches since startup (read-only)
                 case 57: return 0L; // number of ioProcessEvents calls since startup (read-only)
                 case 58: return 0L; // number of ForceInterruptCheck calls since startup (read-only)
                 case 59: return 0L; // number of check event calls since startup (read-only)
                 case 60: return 0L; // number of stack page overflows since startup (read-only)
                 case 61: return 0L; // number of stack page divorces since startup (read-only)
-                case 62: return code.image.nil; // compiled code compactions since startup (read-only; Cog only; otherwise nil)
-                case 63: return code.image.nil; // total milliseconds in compiled code compactions since startup (read-only; Cog only; otherwise nil)
+                case 62: return method.image.nil; // compiled code compactions since startup (read-only; Cog only; otherwise nil)
+                case 63: return method.image.nil; // total milliseconds in compiled code compactions since startup (read-only; Cog only; otherwise nil)
                 case 64: return 0L; // the number of methods that currently have jitted machine-code
                 case 65: return 0L; // whether the VM supports a certain feature, MULTIPLE_BYTECODE_SETS is bit 0, IMMTABILITY is bit 1
                 case 66: return 4096L; // the byte size of a stack page
@@ -867,7 +863,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 69: return 16L; // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become et al)
                 case 70: return 1L; // the vmProxyMajorVersion (the interpreterProxy VM_MAJOR_VERSION)
                 case 71: return 13L; // the vmProxyMinorVersion (the interpreterProxy VM_MINOR_VERSION)
-                default: return code.image.nil;
+                default: return method.image.nil;
             }
             //@formatter:on
         }
@@ -896,7 +892,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @TruffleBoundary
         private void debugMetaPrimitiveFailures(final long reasonCode) {
             final String target = Truffle.getRuntime().getCallerFrame().getCallTarget().toString();
-            code.image.printToStdErr("Simulation primitive failed (target:", target, "/ reasonCode:", reasonCode, ")");
+            method.image.printToStdErr("Simulation primitive failed (target:", target, "/ reasonCode:", reasonCode, ")");
         }
     }
 
@@ -921,14 +917,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = "inBounds1(index, externalModuleNames.length)")
         @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
-            return code.image.wrap(externalModuleNames[(int) index - 1]);
+            return method.image.wrap(externalModuleNames[(int) index - 1]);
         }
 
         @Specialization(guards = "!inBounds1(index, externalModuleNames.length)")
         @SuppressWarnings("unused")
         @TruffleBoundary
         protected final NilObject doGetOutOfBounds(final AbstractSqueakObject receiver, final long index) {
-            return code.image.nil;
+            return method.image.nil;
         }
     }
 }

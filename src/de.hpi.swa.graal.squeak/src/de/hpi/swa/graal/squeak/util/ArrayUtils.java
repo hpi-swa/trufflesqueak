@@ -73,6 +73,19 @@ public final class ArrayUtils {
         return newObjects;
     }
 
+    public static boolean equals(final byte[] bytes, final String string) {
+        final int bytesLength = bytes.length;
+        if (bytesLength == string.length()) {
+            for (int i = 0; i < bytesLength; i++) {
+                if (bytes[i] != string.charAt(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     @TruffleBoundary
     public static void fillRandomly(final byte[] bytes) {
         RANDOM.nextBytes(bytes);

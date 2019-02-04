@@ -169,7 +169,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doObject(final Object xPos, final Object yPos) {
-            return code.image.newPoint(xPos, yPos);
+            return method.image.newPoint(xPos, yPos);
         }
     }
 
@@ -369,12 +369,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "obj == code.image.sqFalse")
+        @Specialization(guards = "obj == method.image.sqFalse")
         protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean obj) {
             return 2L;
         }
 
-        @Specialization(guards = "obj != code.image.sqFalse")
+        @Specialization(guards = "obj != method.image.sqFalse")
         protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean obj) {
             return 3L;
         }
@@ -420,24 +420,20 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             objectGraphNode = ObjectGraphNode.create(method.image);
         }
 
-        protected final boolean hasNoInstances(final AbstractSqueakObject sqObject) {
-            return objectGraphNode.getClassesWithNoInstances().contains(sqObject.getSqueakClass());
-        }
-
         @SuppressWarnings("unused")
-        @Specialization(guards = "hasNoInstances(sqObject)")
+        @Specialization(guards = "sqObject.getSqueakClass().isImmediateClassType()")
         protected final AbstractSqueakObject noInstances(final AbstractSqueakObject sqObject) {
-            return code.image.nil;
+            return method.image.nil;
         }
 
-        @Specialization(guards = "!hasNoInstances(sqObject)")
+        @Specialization(guards = "!sqObject.getSqueakClass().isImmediateClassType()")
         protected final AbstractSqueakObject someInstance(final AbstractSqueakObject sqObject) {
             final List<AbstractSqueakObject> instances = objectGraphNode.allInstancesOf(sqObject.getSqueakClass());
             final int nextIndex = instances.indexOf(sqObject) + 1;
             if (nextIndex < instances.size()) {
                 return instances.get(nextIndex);
             } else {
-                return code.image.nil;
+                return method.image.nil;
             }
         }
     }
@@ -450,9 +446,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "receiver == code.image.compiledMethodClass")
+        @Specialization(guards = "receiver.isCompiledMethodClass()")
         protected final AbstractSqueakObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
-            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(code.image, receiver.getBasicInstanceSize() + (int) bytecodeCount);
+            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(method.image, receiver.getBasicInstanceSize() + (int) bytecodeCount);
             newMethod.setHeader(header);
             return newMethod;
         }
@@ -523,7 +519,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.specialObjectsArray;
+            return method.image.specialObjectsArray;
         }
     }
 
@@ -580,22 +576,22 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return CharacterObject.valueOf(code.image, Math.toIntExact(receiver));
+            return CharacterObject.valueOf(method.image, Math.toIntExact(receiver));
         }
 
         @Specialization(guards = "receiver.fitsIntoInt()")
         protected final Object doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return CharacterObject.valueOf(code.image, receiver.intValueExact());
+            return CharacterObject.valueOf(method.image, receiver.intValueExact());
         }
 
         @Specialization
         protected final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target) {
-            return CharacterObject.valueOf(code.image, Math.toIntExact(target));
+            return CharacterObject.valueOf(method.image, Math.toIntExact(target));
         }
 
         @Specialization(guards = "target.fitsIntoInt()")
         protected final Object doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject target) {
-            return CharacterObject.valueOf(code.image, target.intValueExact());
+            return CharacterObject.valueOf(method.image, target.intValueExact());
         }
     }
 
@@ -642,7 +638,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject doAll(final VirtualFrame frame, @SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.newList(ArrayUtils.toArray(getAllInstancesNode.executeGet(frame)));
+            return method.image.newList(ArrayUtils.toArray(getAllInstancesNode.executeGet(frame)));
         }
     }
 

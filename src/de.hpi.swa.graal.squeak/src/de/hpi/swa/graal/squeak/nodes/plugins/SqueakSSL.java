@@ -404,7 +404,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             try {
                 return process(ssl, source, target);
             } catch (final SSLException e) {
-                e.printStackTrace(code.image.getError());
+                e.printStackTrace(method.image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -510,7 +510,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             try {
                 return processHandshake(ssl, source, target);
             } catch (final SSLException e) {
-                e.printStackTrace(code.image.getError());
+                e.printStackTrace(method.image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -688,7 +688,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 decryptOne(ssl, target);
                 return target.position();
             } catch (final SSLException e) {
-                e.printStackTrace(code.image.getError());
+                e.printStackTrace(method.image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -753,7 +753,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 encrypt(ssl, source, target);
                 return target.position();
             } catch (final SSLException e) {
-                e.printStackTrace(code.image.getError());
+                e.printStackTrace(method.image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -858,11 +858,11 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             final SqSSL impl = getSSL(sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (impl == null || property == null) {
-                return code.image.nil;
+                return method.image.nil;
             }
 
             final String value = getStringPropertyValue(impl, property);
-            return (value == null) ? code.image.nil : code.image.wrap(value);
+            return (value == null) ? method.image.nil : method.image.wrap(value);
         }
 
         private static String getStringPropertyValue(final SqSSL impl, final StringProperty property) {

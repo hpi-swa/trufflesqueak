@@ -28,7 +28,7 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object printArgs(final Object receiver, final Object value) {
-            code.image.printToStdOut(value);
+            method.image.printToStdOut(value);
             return receiver;
         }
     }

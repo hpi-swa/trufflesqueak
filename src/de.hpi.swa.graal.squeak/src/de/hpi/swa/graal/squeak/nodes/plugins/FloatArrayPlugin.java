@@ -176,8 +176,8 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver.isIntType()", "other.isIntType()"})
         protected final boolean doEqual(final NativeObject receiver, final NativeObject other) {
-            return Arrays.equals(receiver.getIntStorage(), other.getIntStorage()) ? code.image.sqTrue
-                            : code.image.sqFalse;
+            return Arrays.equals(receiver.getIntStorage(), other.getIntStorage()) ? method.image.sqTrue
+                            : method.image.sqFalse;
         }
 
         /*
@@ -186,7 +186,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization
         protected final boolean doNilCase(final NativeObject receiver, final NilObject other) {
-            return code.image.sqFalse;
+            return method.image.sqFalse;
         }
     }
 

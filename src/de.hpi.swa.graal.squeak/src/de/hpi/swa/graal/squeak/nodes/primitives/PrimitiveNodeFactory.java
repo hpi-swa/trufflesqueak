@@ -8,7 +8,9 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.B2DPlugin;
@@ -25,12 +27,12 @@ import de.hpi.swa.graal.squeak.nodes.plugins.LocalePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.network.SocketPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrims;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL;
 import de.hpi.swa.graal.squeak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.Win32OSProcessPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.network.SocketPlugin;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArithmeticPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArrayStreamPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.BlockClosurePrimitives;
@@ -41,6 +43,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.SimulationPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PrimitiveNodeFactory {
     private static final int MAX_PRIMITIVE_INDEX = 575;
@@ -98,14 +101,25 @@ public final class PrimitiveNodeFactory {
         return null;
     }
 
+    public static AbstractPrimitiveNode namedFor(final CompiledMethodObject method) {
+        final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
+        if (values[0] == method.image.nil || values[1] == method.image.nil) {
+            return PrimitiveFailedNode.create(method);
+        } else {
+            final NativeObject moduleName = (NativeObject) values[0];
+            final NativeObject functionName = (NativeObject) values[1];
+            return PrimitiveNodeFactory.forName(method, moduleName.getByteStorage(), functionName.getByteStorage());
+        }
+    }
+
     @TruffleBoundary
-    public static AbstractPrimitiveNode forName(final CompiledMethodObject method, final String moduleName, final String functionName) {
+    private static AbstractPrimitiveNode forName(final CompiledMethodObject method, final byte[] moduleName, final byte[] functionName) {
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
             if (!plugin.isEnabled(method.image)) {
                 continue;
             }
             final String pluginName = plugin.getClass().getSimpleName();
-            if (!pluginName.equals(moduleName)) {
+            if (!ArrayUtils.equals(moduleName, pluginName)) {
                 continue;
             }
             try {
@@ -114,13 +128,13 @@ public final class PrimitiveNodeFactory {
                     final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
                     final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                     for (final String name : primitive.names()) {
-                        if (functionName.equals(name)) {
+                        if (ArrayUtils.equals(functionName, name)) {
                             return createInstance(method, nodeFactory);
                         }
                     }
                 }
                 if (plugin.useSimulationAsFallback()) {
-                    return SimulationPrimitiveNode.create(method, pluginName, functionName);
+                    return SimulationPrimitiveNode.create(method, pluginName, new String(functionName));
                 }
             } catch (RuntimeException e) {
                 break;

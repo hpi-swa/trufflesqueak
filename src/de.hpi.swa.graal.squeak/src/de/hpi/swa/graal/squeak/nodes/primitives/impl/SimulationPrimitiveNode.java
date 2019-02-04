@@ -39,8 +39,8 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
 
     protected SimulationPrimitiveNode(final CompiledMethodObject method, @SuppressWarnings("unused") final String moduleName, final String functionName) {
         super(method);
-        this.functionName = code.image.wrap(functionName);
-        emptyList = code.image.newList(new Object[]{});
+        this.functionName = method.image.wrap(functionName);
+        emptyList = method.image.newList(new Object[]{});
     }
 
     public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName) {
@@ -64,53 +64,53 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
     @Specialization(guards = {"!isNotProvided(arg1)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final NotProvided arg2, final NotProvided arg3, final NotProvided arg4, final NotProvided arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1}));
+        return doSimulation(frame, receiver, method.image.newList(new Object[]{arg1}));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final NotProvided arg3, final NotProvided arg4, final NotProvided arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2}));
+        return doSimulation(frame, receiver, method.image.newList(new Object[]{arg1, arg2}));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final Object arg3, final NotProvided arg4, final NotProvided arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3}));
+        return doSimulation(frame, receiver, method.image.newList(new Object[]{arg1, arg2, arg3}));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final Object arg3, final Object arg4, final NotProvided arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4}));
+        return doSimulation(frame, receiver, method.image.newList(new Object[]{arg1, arg2, arg3, arg4}));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5}));
+        return doSimulation(frame, receiver, method.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5}));
     }
 
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6) {
-        return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6}));
+        return doSimulation(frame, receiver, method.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6}));
     }
 
     private Object doSimulation(final VirtualFrame frame, final Object receiver, final ArrayObject arguments) {
         final Object[] newRcvrAndArgs = new Object[]{receiver, functionName, arguments};
         try {
-            final boolean wasActive = code.image.interrupt.isActive();
-            code.image.interrupt.deactivate();
+            final boolean wasActive = method.image.interrupt.isActive();
+            method.image.interrupt.deactivate();
             try {
                 return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
             } finally {
                 if (wasActive) {
-                    code.image.interrupt.activate();
+                    method.image.interrupt.activate();
                 }
             }
         } catch (SimulationPrimitiveFailed e) {
@@ -122,14 +122,14 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
     private CompiledMethodObject getSimulateMethod(final Object receiver) {
         if (simulationMethod == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            assert code.image.getSimulatePrimitiveArgsSelector() != null : "BitBlt simulation not found in image.";
+            assert method.image.getSimulatePrimitiveArgsSelector() != null : "BitBlt simulation not found in image.";
             final Object lookupResult; // TODO: Nodes!
             final LookupMethodNode lookupMethodNode = LookupMethodNode.create();
             if (receiver instanceof ClassObject) {
-                lookupResult = lookupMethodNode.executeLookup(receiver, code.image.getSimulatePrimitiveArgsSelector());
+                lookupResult = lookupMethodNode.executeLookup(receiver, method.image.getSimulatePrimitiveArgsSelector());
             } else {
-                final ClassObject rcvrClass = LookupClassNode.create(code.image).executeLookup(receiver);
-                lookupResult = lookupMethodNode.executeLookup(rcvrClass, code.image.getSimulatePrimitiveArgsSelector());
+                final ClassObject rcvrClass = LookupClassNode.create(method.image).executeLookup(receiver);
+                lookupResult = lookupMethodNode.executeLookup(rcvrClass, method.image.getSimulatePrimitiveArgsSelector());
             }
             if (lookupResult instanceof CompiledMethodObject) {
                 final CompiledMethodObject result = (CompiledMethodObject) lookupResult;
