@@ -25,6 +25,7 @@ import de.hpi.swa.graal.squeak.nodes.plugins.LocalePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.SoundCodecPrims;
 import de.hpi.swa.graal.squeak.nodes.plugins.network.SocketPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrims;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL;
@@ -73,7 +74,8 @@ public final class PrimitiveNodeFactory {
                     new SqueakSSL(),
                     new UnixOSProcessPlugin(),
                     new UUIDPlugin(),
-                    new Win32OSProcessPlugin()};
+                    new Win32OSProcessPlugin(),
+                    new SoundCodecPrims()};
 
     // Using an array instead of a HashMap requires type-checking to be disabled here.
     @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
