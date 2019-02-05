@@ -49,6 +49,12 @@ def _graal_vm_args(args):
             '-Dgraal.TraceTruffleInlining=true',
         ]
 
+    if args.trace_splitting:
+        graal_args += [
+            # '-Dgraal.TraceTruffleSplitting=true',
+            '-Dgraal.TruffleTraceSplittingSummary=true',
+        ]
+
     if args.igv:
         print 'Sending Graal dumps to igv...'
         graal_args += [
@@ -160,12 +166,16 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         dest='trace_invalidation', action='store_true', default=False)
     parser.add_argument(
         '-tin', '--trace-inlining',
-        help='print information for inlining for each compilation.',
+        help='print information for inlining for each compilation',
         dest='trace_inlining', action='store_true', default=False)
     parser.add_argument(
         '-tps', '--trace-process-switches',
         help='trace Squeak process switches, ...',
         dest='trace_process_switches', action='store_true', default=False)
+    parser.add_argument(
+        '-ts', '--trace-splitting',
+        help='print splitting summary on shutdown',
+        dest='trace_splitting', action='store_true', default=False)
     parser.add_argument('-v', '--verbose',
                         help='enable verbose output',
                         dest='verbose',
