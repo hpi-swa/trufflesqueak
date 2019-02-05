@@ -169,6 +169,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         help='print information for inlining for each compilation',
         dest='trace_inlining', action='store_true', default=False)
     parser.add_argument(
+        '-tpf', '--trace-primitive-failures',
+        help='trace primitive failures',
+        dest='trace_primitive_failures', action='store_true', default=False)
+    parser.add_argument(
         '-tps', '--trace-process-switches',
         help='trace Squeak process switches, ...',
         dest='trace_process_switches', action='store_true', default=False)
@@ -237,6 +241,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--cputracer')
     if parsed_args.inspect:
         squeak_arguments.append('--inspect')
+    if parsed_args.trace_primitive_failures:
+        parsed_args.log = (
+            'de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes$CallPrimitiveNode=FINE')
     if parsed_args.trace_process_switches:
         parsed_args.log = (
             'de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode=FINE')
