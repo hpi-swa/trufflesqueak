@@ -429,28 +429,28 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "a == b")
-        protected long doLongEqual(final long a, final long b) {
+        protected static final long doLongEqual(final long a, final long b) {
             return 0L;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "a != b")
-        protected long doLongNotEqual(final long a, final long b) {
+        protected final long doLongNotEqual(final long a, final long b) {
             return digitCompareLargewith(asLargeInteger(a), asLargeInteger(b));
         }
 
         @Specialization
-        protected long doLongLargeInteger(final long a, final LargeIntegerObject b) {
+        protected final long doLongLargeInteger(final long a, final LargeIntegerObject b) {
             return digitCompareLargewith(asLargeInteger(a), b);
         }
 
         @Specialization
-        protected long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+        protected static final long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return digitCompareLargewith(a, b);
         }
 
         @Specialization
-        protected long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
+        protected final long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
             return digitCompareLargewith(a, asLargeInteger(b));
         }
 

@@ -20,12 +20,12 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeAcceptsValueNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
@@ -48,6 +48,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     protected abstract static class AbstractBasicAtOrAtPutNode extends AbstractPrimitiveWithSizeNode {
         @Child protected SqueakObjectInstSizeNode instSizeNode;
+        @Child private SqueakObjectSizeNode sizeNode;
 
         public AbstractBasicAtOrAtPutNode(final CompiledMethodObject method) {
             super(method);
@@ -64,14 +65,22 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             }
             return instSizeNode;
         }
+
+        protected final SqueakObjectSizeNode getSizeNode() {
+            if (sizeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                sizeNode = insert(SqueakObjectSizeNode.create());
+            }
+            return sizeNode;
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAtNode extends AbstractBasicAtOrAtPutNode implements TernaryPrimitive {
         @Child private SqueakObjectAt0Node at0Node;
-        @Child private ArrayObjectReadNode readArrayObjectNode;
-        @Child private NativeObjectReadNode readNativeObjectNode;
+        @Child private ArrayObjectReadNode arrayObjectReadNode;
+        @Child private NativeObjectReadNode nativeObjectReadNode;
 
         protected PrimBasicAtNode(final CompiledMethodObject method) {
             super(method);
@@ -100,10 +109,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = "inBounds(index, receiver)")
         protected final Object doNative(final NativeObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return getNativeArrayObjectNode().execute(receiver, index - 1);
+            return getNativeObjectReadNode().execute(receiver, index - 1);
         }
 
-        @Specialization(guards = "inBounds(index, receiver)")
+        @Specialization(guards = "inBounds1(index, receiver.size())")
         protected static final long doLargeInteger(final LargeIntegerObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return receiver.getNativeAt0(index - 1);
         }
@@ -122,7 +131,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = "inBounds(index, receiver)")
         protected final Object doArray(final ArrayObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return getReadArrayObjectNode().execute(receiver, index - 1);
+            return getArrayObjectReadNode().execute(receiver, index - 1);
         }
 
         @Specialization(guards = {"inBoundsOfSqueakObject(index, receiver)",
@@ -154,10 +163,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = "inBounds(index, target)")
         protected final Object doNative(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index) {
-            return getNativeArrayObjectNode().execute(target, index - 1);
+            return getNativeObjectReadNode().execute(target, index - 1);
         }
 
-        @Specialization(guards = "inBounds(index, target)")
+        @Specialization(guards = "inBounds1(index, target.size())")
         protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject target, final long index) {
             return target.getNativeAt0(index - 1);
         }
@@ -176,7 +185,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = "inBounds(index, target)")
         protected final Object doArray(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject target, final long index) {
-            return getReadArrayObjectNode().execute(target, index - 1);
+            return getArrayObjectReadNode().execute(target, index - 1);
         }
 
         @Specialization(guards = {"inBoundsOfSqueakObject(index, target)",
@@ -193,20 +202,20 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return at0Node;
         }
 
-        private ArrayObjectReadNode getReadArrayObjectNode() {
-            if (readArrayObjectNode == null) {
+        private ArrayObjectReadNode getArrayObjectReadNode() {
+            if (arrayObjectReadNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                readArrayObjectNode = insert(ArrayObjectReadNode.create());
+                arrayObjectReadNode = insert(ArrayObjectReadNode.create());
             }
-            return readArrayObjectNode;
+            return arrayObjectReadNode;
         }
 
-        private NativeObjectReadNode getNativeArrayObjectNode() {
-            if (readNativeObjectNode == null) {
+        private NativeObjectReadNode getNativeObjectReadNode() {
+            if (nativeObjectReadNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                readNativeObjectNode = insert(NativeObjectReadNode.create());
+                nativeObjectReadNode = insert(NativeObjectReadNode.create());
             }
-            return readNativeObjectNode;
+            return nativeObjectReadNode;
         }
     }
 
@@ -215,51 +224,51 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 61)
     protected abstract static class PrimBasicAtPutNode extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitive {
         @Child private SqueakObjectAtPut0Node atPut0Node;
-        @Child private NativeAcceptsValueNode acceptsValueNode;
-        @Child private ArrayObjectWriteNode writeArrayObjectNode;
-        @Child private NativeObjectWriteNode writeNativeObjectNode;
+        @Child private NativeAcceptsValueNode nativeAcceptsValueNode;
+        @Child private ArrayObjectWriteNode arrayObjectWriteNode;
+        @Child private NativeObjectWriteNode nativeObjectWriteNode;
 
         protected PrimBasicAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"inBounds(index, receiver)", "getAcceptsValueNode().execute(receiver, value)"})
+        @Specialization(guards = {"inBounds(index, receiver)", "getNativeAcceptsValueNode().execute(receiver, value)"})
         protected char doNativeChar(final NativeObject receiver, final long index, final char value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            getWriteNativeObjectNode().execute(receiver, index - 1, value);
+            getNativeObjectWriteNode().execute(receiver, index - 1, value);
             return value;
         }
 
-        @Specialization(guards = {"inBounds(index, receiver)", "getAcceptsValueNode().execute(receiver, value)"})
+        @Specialization(guards = {"inBounds(index, receiver)", "getNativeAcceptsValueNode().execute(receiver, value)"})
         protected Object doNativeChar(final NativeObject receiver, final long index, final CharacterObject value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            getWriteNativeObjectNode().execute(receiver, index - 1, value);
+            getNativeObjectWriteNode().execute(receiver, index - 1, value);
             return value;
         }
 
-        @Specialization(guards = {"inBounds(index, receiver)", "getAcceptsValueNode().execute(receiver, value)"})
+        @Specialization(guards = {"inBounds(index, receiver)", "getNativeAcceptsValueNode().execute(receiver, value)"})
         protected long doNativeLong(final NativeObject receiver, final long index, final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            getWriteNativeObjectNode().execute(receiver, index - 1, value);
+            getNativeObjectWriteNode().execute(receiver, index - 1, value);
             return value;
         }
 
-        @Specialization(guards = {"inBounds(index, receiver)", "getAcceptsValueNode().execute(receiver, value)"})
+        @Specialization(guards = {"inBounds(index, receiver)", "getNativeAcceptsValueNode().execute(receiver, value)"})
         protected Object doNativeLargeInteger(final NativeObject receiver, final long index, final LargeIntegerObject value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            getWriteNativeObjectNode().execute(receiver, index - 1, value);
+            getNativeObjectWriteNode().execute(receiver, index - 1, value);
             return value;
         }
 
-        @Specialization(guards = "inBounds(index, receiver)")
+        @Specialization(guards = "inBounds1(index, receiver.size())")
         protected char doLargeIntegerChar(final LargeIntegerObject receiver, final long index, final char value, @SuppressWarnings("unused") final NotProvided notProvided) {
             receiver.setNativeAt0(index - 1, value);
             return value;
         }
 
-        @Specialization(guards = "inBounds(index, receiver)")
+        @Specialization(guards = "inBounds1(index, receiver.size())")
         protected long doLargeIntegerLong(final LargeIntegerObject receiver, final long index, final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
             receiver.setNativeAt0(index - 1, value);
             return value;
         }
 
-        @Specialization(guards = "inBounds(index, receiver)")
+        @Specialization(guards = "inBounds1(index, receiver.size())")
         protected Object doLargeInteger(final LargeIntegerObject receiver, final long index, final LargeIntegerObject value, @SuppressWarnings("unused") final NotProvided notProvided) {
             receiver.setNativeAt0(index - 1, value.longValueExact());
             return value;
@@ -325,7 +334,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization// (guards = "inBounds(index, receiver)")
         protected final Object doArray(final ArrayObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            getWriteArrayObjectNode().execute(receiver, index - 1, value);
+            getArrayObjectWriteNode().execute(receiver, index - 1, value);
             return value;
         }
 
@@ -341,21 +350,27 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
          * Context>>#object:basicAt:put:
          */
 
-        @Specialization(guards = {"inBounds(index, target)", "getAcceptsValueNode().execute(target, value)"})
+        @Specialization(guards = {"inBounds(index, target)", "getNativeAcceptsValueNode().execute(target, value)"})
         protected char doNativeChar(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final char value) {
-            getWriteNativeObjectNode().execute(target, index - 1, value);
+            getNativeObjectWriteNode().execute(target, index - 1, value);
             return value;
         }
 
-        @Specialization(guards = {"inBounds(index, target)", "getAcceptsValueNode().execute(target, value)"})
+        @Specialization(guards = {"inBounds(index, target)", "getNativeAcceptsValueNode().execute(target, value)"})
+        protected CharacterObject doNativeChar(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final CharacterObject value) {
+            getNativeObjectWriteNode().execute(target, index - 1, value);
+            return value;
+        }
+
+        @Specialization(guards = {"inBounds(index, target)", "getNativeAcceptsValueNode().execute(target, value)"})
         protected long doNativeLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final long value) {
-            getWriteNativeObjectNode().execute(target, index - 1, value);
+            getNativeObjectWriteNode().execute(target, index - 1, value);
             return value;
         }
 
-        @Specialization(guards = {"inBounds(index, target)", "getAcceptsValueNode().execute(target, value)"})
+        @Specialization(guards = {"inBounds(index, target)", "getNativeAcceptsValueNode().execute(target, value)"})
         protected Object doNativeLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final LargeIntegerObject value) {
-            getWriteNativeObjectNode().execute(target, index - 1, value);
+            getNativeObjectWriteNode().execute(target, index - 1, value);
             return value;
         }
 
@@ -431,9 +446,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization(guards = "inBounds(index, receiver)")
+        @Specialization(guards = "inBounds(index, target)")
         protected final Object doArray(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject target, final long index, final Object value) {
-            getWriteArrayObjectNode().execute(target, index - 1, value);
+            getArrayObjectWriteNode().execute(target, index - 1, value);
             return value;
         }
 
@@ -453,28 +468,28 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return atPut0Node;
         }
 
-        protected final NativeAcceptsValueNode getAcceptsValueNode() {
-            if (acceptsValueNode == null) {
+        protected final NativeAcceptsValueNode getNativeAcceptsValueNode() {
+            if (nativeAcceptsValueNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                acceptsValueNode = insert(NativeAcceptsValueNode.create());
+                nativeAcceptsValueNode = insert(NativeAcceptsValueNode.create());
             }
-            return acceptsValueNode;
+            return nativeAcceptsValueNode;
         }
 
-        private ArrayObjectWriteNode getWriteArrayObjectNode() {
-            if (writeArrayObjectNode == null) {
+        private ArrayObjectWriteNode getArrayObjectWriteNode() {
+            if (arrayObjectWriteNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                writeArrayObjectNode = insert(ArrayObjectWriteNode.create());
+                arrayObjectWriteNode = insert(ArrayObjectWriteNode.create());
             }
-            return writeArrayObjectNode;
+            return arrayObjectWriteNode;
         }
 
-        private NativeObjectWriteNode getWriteNativeObjectNode() {
-            if (writeNativeObjectNode == null) {
+        private NativeObjectWriteNode getNativeObjectWriteNode() {
+            if (nativeObjectWriteNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                writeNativeObjectNode = insert(NativeObjectWriteNode.create());
+                nativeObjectWriteNode = insert(NativeObjectWriteNode.create());
             }
-            return writeNativeObjectNode;
+            return nativeObjectWriteNode;
         }
     }
 

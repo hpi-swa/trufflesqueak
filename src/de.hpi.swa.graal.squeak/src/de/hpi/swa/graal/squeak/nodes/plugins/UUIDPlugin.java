@@ -6,7 +6,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -30,12 +29,9 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "receiver.isByteType()")
+        @Specialization(guards = {"receiver.isByteType()", "receiver.getByteLength() == 16"})
         protected static final Object doUUID(final NativeObject receiver) {
             final byte[] bytes = receiver.getByteStorage();
-            if (bytes.length != 16) {
-                throw new PrimitiveFailed();
-            }
             ArrayUtils.fillRandomly(bytes);
             bytes[6] = (byte) ((bytes[6] & 0x0F) | 0x40); // Version 4
             bytes[8] = (byte) ((bytes[8] & 0x3F) | 0x80); // Fixed 8..b value
