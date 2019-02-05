@@ -63,7 +63,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimiti
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.process.LinkProcessToListNode;
 import de.hpi.swa.graal.squeak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.graal.squeak.nodes.process.ResumeProcessNode;
@@ -88,19 +87,23 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
      *
      * @SqueakPrimitive(indices = 19)
      */
-    @GenerateNodeFactory
-    public abstract static class PrimitiveFailedNode extends AbstractPrimitiveNode {
+    public static final class PrimitiveFailedNode extends AbstractPrimitiveNode {
 
         protected PrimitiveFailedNode(final CompiledMethodObject method) {
             super(method);
         }
 
         public static PrimitiveFailedNode create(final CompiledMethodObject method) {
-            return PrimitiveFailedNodeFactory.create(method, null);
+            return new PrimitiveFailedNode(method);
         }
 
-        @Specialization
-        protected static final Object doFail() {
+        @Override
+        public Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
+            throw new PrimitiveFailed();
+        }
+
+        @Override
+        public Object executePrimitive(final VirtualFrame frameValue) {
             throw new PrimitiveFailed();
         }
 
