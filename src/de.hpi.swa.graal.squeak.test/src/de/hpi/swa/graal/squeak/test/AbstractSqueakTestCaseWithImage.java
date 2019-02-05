@@ -47,9 +47,11 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         idleProcess = null;
     }
 
-    private static void reloadImage() {
-        cleanUp();
-        loadTestImage();
+    private static void reloadImage(final TestRequest request) {
+        if (request.reloadImageOnException) {
+            cleanUp();
+            loadTestImage();
+        }
     }
 
     private static void patchImageForTesting() {
@@ -159,27 +161,15 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         assertNotEquals(image.nil, patchResult);
     }
 
-    protected static TestResult runTestCase(final String testClassName) {
-        return runTestCase(testClassName, null);
-    }
-
-    protected static TestResult runTestCase(final String testClassName, final String testMethodName) {
-        return invokeTestCase(testClassName, testMethodName);
-    }
-
-    private static TestResult invokeTestCase(final String testClassName, final String testMethodName) {
-        return runWithTimeout(() -> {
-            final String testCommand = testCommand(testClassName, testMethodName);
+    protected static TestResult runTestCase(final TestRequest request) {
+        return runWithTimeout(request, () -> {
+            final String testCommand = testCommand(request);
             return extractFailuresAndErrorsFromTestResult(evaluate(testCommand));
         });
     }
 
-    private static String testCommand(final String testClassName, final String testMethodName) {
-        if (testMethodName == null) {
-            return String.format("%s buildSuite run", testClassName);
-        } else {
-            return String.format("%s run: #%s", testClassName, testMethodName);
-        }
+    private static String testCommand(final TestRequest request) {
+        return String.format("%s run: #%s", request.testCase, request.testSelector);
     }
 
     private static TestResult extractFailuresAndErrorsFromTestResult(final Object result) {
@@ -210,18 +200,30 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    private static TestResult runWithTimeout(final Supplier<TestResult> action) {
+    private static TestResult runWithTimeout(final TestRequest request, final Supplier<TestResult> action) {
         try {
             return CompletableFuture.supplyAsync(action).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (final TimeoutException e) {
-            reloadImage();
+            reloadImage(request);
             return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             return TestResult.fromException("interrupted", e);
         } catch (final ExecutionException e) {
-            reloadImage();
+            reloadImage(request);
             return TestResult.fromException("failed with an error", e.getCause());
+        }
+    }
+
+    protected static final class TestRequest {
+        protected final String testCase;
+        protected final String testSelector;
+        protected final boolean reloadImageOnException;
+
+        protected TestRequest(final String testCase, final String testSelector, final boolean reloadImageOnException) {
+            this.testCase = testCase;
+            this.testSelector = testSelector;
+            this.reloadImageOnException = reloadImageOnException;
         }
     }
 

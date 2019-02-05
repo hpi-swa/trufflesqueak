@@ -96,12 +96,6 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
     }
 
     @Test
-    public void testInspectSqueakTest() {
-        assumeNotOnMXGate();
-        assertTrue(runTestCase("ArrayTest").passed);
-    }
-
-    @Test
     public void testInspectSqueakTestSelector() {
         assumeNotOnMXGate();
         image.getOutput().println(evaluate("(WordArrayTest run: #testCannotPutNegativeValue) asString"));
