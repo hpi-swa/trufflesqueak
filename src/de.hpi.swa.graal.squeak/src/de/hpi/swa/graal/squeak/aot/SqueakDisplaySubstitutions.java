@@ -171,6 +171,12 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     }
 
     @Override
+    @TruffleBoundary
+    public boolean isVisible() {
+        return window.isNonNull();
+    }
+
+    @Override
     public DisplayPoint getLastMousePosition() {
         return new DisplayPoint(lastMouseXPos, lastMouseYPos);
     }

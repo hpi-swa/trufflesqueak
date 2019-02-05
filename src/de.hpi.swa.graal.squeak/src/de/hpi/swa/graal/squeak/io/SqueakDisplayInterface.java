@@ -20,6 +20,8 @@ public interface SqueakDisplayInterface {
 
     void open(PointersObject sqDisplay);
 
+    boolean isVisible();
+
     DisplayPoint getLastMousePosition();
 
     int getLastMouseButton();

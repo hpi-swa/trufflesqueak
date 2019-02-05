@@ -303,6 +303,12 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     @Override
+    @TruffleBoundary
+    public boolean isVisible() {
+        return frame.isVisible();
+    }
+
+    @Override
     public DisplayPoint getLastMousePosition() {
         final Point position = mouse.getPosition();
         return new DisplayPoint(position.getX(), position.getY());
