@@ -12,9 +12,11 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -441,25 +443,45 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        /* Byte(Array|String|Symbol)>>#hashWithInitialHash: */
+
         @Specialization(guards = {"string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long initialHash) {
+        protected static final long doNativeObject(final NativeObject string, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
             return calculateHash(initialHash, string.getByteStorage());
         }
 
         @Specialization
-        protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject largeInteger, final long initialHash) {
+        protected static final long doLargeInteger(final LargeIntegerObject largeInteger, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
         @Specialization(guards = {"!isSmallInteger(value)"})
-        protected final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final long initialHash) {
+        protected final long doLong(final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return calculateHash(initialHash, asLargeInteger(value).getBytes());
+        }
+
+        /* Byte(Array|String|Symbol) class>>#hashBytes:startingWith: */
+
+        @Specialization(guards = {"string.isByteType()"})
+        protected static final long doNativeObject(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject string, final long initialHash) {
+            return calculateHash(initialHash, string.getByteStorage());
+        }
+
+        @Specialization
+        protected static final long doLargeInteger(@SuppressWarnings("unused") final ClassObject receiver, final LargeIntegerObject largeInteger, final long initialHash) {
+            return calculateHash(initialHash, largeInteger.getBytes());
+        }
+
+        @Specialization(guards = {"!isSmallInteger(value)"})
+        protected final long doLong(@SuppressWarnings("unused") final ClassObject receiver, final long value, final long initialHash) {
             return calculateHash(initialHash, asLargeInteger(value).getBytes());
         }
 
         private static long calculateHash(final long initialHash, final byte[] bytes) {
             long hash = initialHash & 0xfffffff;
             long low;
-            for (int i = 0; i < bytes.length; i++) {
+            final int length = bytes.length;
+            for (int i = 0; i < length; i++) {
                 hash += bytes[i] & 0xff;
                 low = hash & 16383;
                 hash = (0x260D * low + (((0x260d * (hash >> 14) + (0x0065 * low)) & 16383) * 16384)) & 0x0fffffff;
