@@ -10,10 +10,14 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
+import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -496,128 +500,115 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSizeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private SqueakObjectSizeNode sizeNode;
         @Child private ArrayObjectSizeNode arrayObjectSizeNode;
         @Child private NativeObjectSizeNode nativeObjectSizeNode;
-        @Child private SqueakObjectInstSizeNode instSizeNode;
 
         protected PrimSizeNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
-        protected static final long size(@SuppressWarnings("unused") final char obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return 0;
+        @Specialization(guards = "receiver.getSqueakClass().isVariable()")
+        protected static final long doAbstractPointers(final AbstractPointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return receiver.size() - receiver.instsize();
         }
 
         @Specialization
-        protected static final long size(@SuppressWarnings("unused") final CharacterObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return 0;
+        protected final long doArrayObject(final ArrayObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return getArrayObjectSizeNode().execute(receiver);
         }
 
         @Specialization
-        protected static final long size(@SuppressWarnings("unused") final boolean o, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return 0;
+        protected static final long doClosure(final BlockClosureObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return receiver.size() - receiver.instsize();
+        }
+
+        @Specialization
+        protected static final long doCompiledMethod(final CompiledBlockObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return receiver.size() - receiver.instsize();
+        }
+
+        @Specialization
+        protected static final long doCompiledBlock(final CompiledMethodObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return receiver.size() - receiver.instsize();
+        }
+
+        @Specialization
+        protected static final long doContext(final ContextObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return receiver.size() - receiver.instsize();
+        }
+
+        @Specialization
+        protected static final long doFloatObject(final FloatObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return receiver.size() - receiver.instsize();
+        }
+
+        @Specialization
+        protected static final long doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return receiver.size() - receiver.instsize();
         }
 
         @Specialization(guards = "!isSmallInteger(value)")
-        protected final long doLong(final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return asLargeInteger(value).size();
+        protected final long doLongAsLargeInteger(final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return doLargeInteger(asLargeInteger(value), notProvided);
         }
 
         @Specialization
-        protected final long doArray(final ArrayObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return getArrayObjectSizeNode().execute(obj);
-        }
-
-        @Specialization
-        protected final long doNative(final NativeObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return getNativeObjectSizeNode().execute(obj);
-        }
-
-        @Specialization
-        protected static final long doLargeInteger(final LargeIntegerObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return obj.size();
-        }
-
-        @Specialization
-        protected static final long doFloat(final FloatObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return obj.size();
-        }
-
-        @Specialization
-        protected static final long doDouble(@SuppressWarnings("unused") final double o, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return 2; // Float in words
-        }
-
-        @Specialization(guards = {"!obj.isNil()", "!isArrayObject(obj)", "!isNativeObject(obj)", "obj.getSqueakClass().isVariable()"})
-        protected final long size(final AbstractSqueakObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return getSizeNode().execute(obj) - getInstSizeNode().execute(obj);
+        protected final long doNativeObject(final NativeObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return getNativeObjectSizeNode().execute(receiver);
         }
 
         /*
          * Context>>#objectSize:
          */
 
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final long doChar(final AbstractSqueakObject receiver, final char obj) {
-            return 0;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final long doChar(final AbstractSqueakObject receiver, final CharacterObject obj) {
-            return 0;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final long doBoolean(final AbstractSqueakObject receiver, final boolean o) {
-            return 0;
-        }
-
-        @Specialization(guards = "!isSmallInteger(value)")
-        protected final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value) {
-            return asLargeInteger(value).size();
+        @Specialization(guards = "target.getSqueakClass().isVariable()")
+        protected static final long doAbstractPointers(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractPointersObject target) {
+            return target.size() - target.instsize();
         }
 
         @Specialization
-        protected final long doArray(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject obj) {
-            return getArrayObjectSizeNode().execute(obj);
+        protected final long doArrayObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject target) {
+            return getArrayObjectSizeNode().execute(target);
         }
 
         @Specialization
-        protected final long doNative(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject obj) {
-            return getNativeObjectSizeNode().execute(obj);
+        protected static final long doClosure(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final BlockClosureObject target) {
+            return target.size() - target.instsize();
         }
 
         @Specialization
-        protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject obj) {
-            return obj.size();
+        protected static final long doCompiledMethod(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final CompiledBlockObject target) {
+            return target.size() - target.instsize();
         }
 
         @Specialization
-        protected static final long doFloat(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final FloatObject obj) {
-            return obj.size();
+        protected static final long doCompiledBlock(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final CompiledMethodObject target) {
+            return target.size() - target.instsize();
         }
 
         @Specialization
-        protected static final long doDouble(@SuppressWarnings("unused") final AbstractSqueakObject receiver, @SuppressWarnings("unused") final double obj) {
-            return 2; // Float in words
+        protected static final long doContext(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ContextObject target) {
+            return target.size() - target.instsize();
         }
 
-        @Specialization(guards = {"!obj.isNil()", "!isArrayObject(obj)", "!isNativeObject(obj)", "obj.getSqueakClass().isVariable()"})
-        protected final long doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject obj) {
-            return getSizeNode().execute(obj) - getInstSizeNode().execute(obj);
+        @Specialization
+        protected static final long doFloatObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final FloatObject target) {
+            return target.size() - target.instsize();
         }
 
-        private SqueakObjectSizeNode getSizeNode() {
-            if (sizeNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                sizeNode = insert(SqueakObjectSizeNode.create());
-            }
-            return sizeNode;
+        @Specialization
+        protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject target) {
+            return target.size() - target.instsize();
+        }
+
+        @Specialization(guards = "!isSmallInteger(target)")
+        protected final long doLongAsLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject value, final long target) {
+            return doLargeInteger(value, asLargeInteger(target));
+        }
+
+        @Specialization
+        protected final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target) {
+            return getNativeObjectSizeNode().execute(target);
         }
 
         private ArrayObjectSizeNode getArrayObjectSizeNode() {
@@ -634,14 +625,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                 nativeObjectSizeNode = insert(NativeObjectSizeNode.create());
             }
             return nativeObjectSizeNode;
-        }
-
-        private SqueakObjectInstSizeNode getInstSizeNode() {
-            if (instSizeNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                instSizeNode = insert(SqueakObjectInstSizeNode.create());
-            }
-            return instSizeNode;
         }
     }
 
