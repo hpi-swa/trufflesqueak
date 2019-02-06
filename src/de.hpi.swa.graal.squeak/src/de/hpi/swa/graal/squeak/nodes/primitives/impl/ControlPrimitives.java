@@ -121,18 +121,25 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method) {
             super(method);
-            lookupClassNode = LookupClassNode.create(method.image);
             dispatchSendNode = DispatchSendNode.create(method.image);
         }
 
-        protected final ClassObject lookup(final Object receiver) {
-            return lookupClassNode.executeLookup(receiver);
+        protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs) {
+            return dispatch(frame, selector, getLookupClassNode().executeLookup(rcvrAndArgs[0]), rcvrAndArgs);
         }
 
-        protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
+        protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             final Object contextOrMarker = getContextOrMarker(frame);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
+        }
+
+        private LookupClassNode getLookupClassNode() {
+            if (lookupClassNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                lookupClassNode = insert(LookupClassNode.create(method.image));
+            }
+            return lookupClassNode;
         }
     }
 
@@ -157,49 +164,41 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final NotProvided object1, final NotProvided object2, final NotProvided object3,
                         final NotProvided object4, final NotProvided object5) {
-            final ClassObject rcvrClass = lookup(receiver);
-            return dispatch(frame, selector, new Object[]{receiver}, rcvrClass);
+            return dispatch(frame, selector, new Object[]{receiver});
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isNotProvided(object1)"})
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final NotProvided object2, final NotProvided object3,
                         final NotProvided object4, final NotProvided object5) {
-            final ClassObject rcvrClass = lookup(receiver);
-            return dispatch(frame, selector, new Object[]{receiver, object1}, rcvrClass);
+            return dispatch(frame, selector, new Object[]{receiver, object1});
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)"})
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final NotProvided object3,
                         final NotProvided object4, final NotProvided object5) {
-            final ClassObject rcvrClass = lookup(receiver);
-            return dispatch(frame, selector, new Object[]{receiver, object1, object2}, rcvrClass);
+            return dispatch(frame, selector, new Object[]{receiver, object1, object2});
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)"})
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
                         final NotProvided object4, final NotProvided object5) {
-            final ClassObject rcvrClass = lookup(receiver);
-            return dispatch(frame, selector, new Object[]{receiver, object1, object2, object3}, rcvrClass);
+            return dispatch(frame, selector, new Object[]{receiver, object1, object2, object3});
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)", "!isNotProvided(object4)"})
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
-                        final Object object4,
-                        final NotProvided object5) {
-            final ClassObject rcvrClass = lookup(receiver);
-            return dispatch(frame, selector, new Object[]{receiver, object1, object2, object3, object4}, rcvrClass);
+                        final Object object4, final NotProvided object5) {
+            return dispatch(frame, selector, new Object[]{receiver, object1, object2, object3, object4});
         }
 
         @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)", "!isNotProvided(object4)", "!isNotProvided(object5)"})
         protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
-                        final Object object4,
-                        final Object object5) {
-            final ClassObject rcvrClass = lookup(receiver);
-            return dispatch(frame, selector, new Object[]{receiver, object1, object2, object3, object4, object5}, rcvrClass);
+                        final Object object4, final Object object5) {
+            return dispatch(frame, selector, new Object[]{receiver, object1, object2, object3, object4, object5});
         }
     }
 
@@ -214,7 +213,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments) {
-            return dispatch(frame, selector, getObjectArrayNode.executeWithFirst(arguments, receiver), lookup(receiver));
+            return dispatch(frame, selector, getObjectArrayNode.executeWithFirst(arguments, receiver));
         }
     }
 
@@ -351,14 +350,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doPerform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
                         @SuppressWarnings("unused") final NotProvided np) {
             // Object>>#perform:withArguments:inSuperclass:
-            return dispatch(frame, selector, getObjectArrayNode.executeWithFirst(arguments, receiver), superClass);
+            return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, receiver));
         }
 
         @Specialization
         protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject selector, final ArrayObject arguments,
                         final ClassObject superClass) {
             // Context>>#object:perform:withArguments:inClass:
-            return dispatch(frame, selector, getObjectArrayNode.executeWithFirst(arguments, object), superClass);
+            return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, object));
         }
     }
 
