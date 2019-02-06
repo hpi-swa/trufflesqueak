@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 
 import org.graalvm.collections.EconomicMap;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -49,6 +50,7 @@ import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
 import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
@@ -223,7 +225,9 @@ public final class SqueakImageContext {
     }
 
     private Object evaluate(final String sourceCode) {
-        return compilerClass.send("evaluate:", wrap(sourceCode));
+        CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
+        final Source source = Source.newBuilder(SqueakLanguageConfig.NAME, sourceCode, "<image#evaluate>").build();
+        return Truffle.getRuntime().createCallTarget(getDoItContextNode(source)).call();
     }
 
     public boolean patch(final SqueakLanguage.Env newEnv) {
