@@ -782,14 +782,19 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"method.image.hasDisplay()", "method.image.getDisplay().isVisible()"})
+        @Specialization(guards = {"hasVisibleDisplay(receiver)"})
         protected final AbstractSqueakObject doSize(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return method.image.wrap(method.image.getDisplay().getWindowSize());
         }
 
-        @Specialization(guards = "!method.image.hasDisplay() || !method.image.getDisplay().isVisible()")
+        @Specialization(guards = "!hasVisibleDisplay(receiver)")
         protected final AbstractSqueakObject doSizeHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return method.image.wrap(method.image.flags.getLastWindowSize());
+        }
+
+        // guard helper to work around code generation issue.
+        protected final boolean hasVisibleDisplay(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return method.image.hasDisplay() && method.image.getDisplay().isVisible();
         }
     }
 
