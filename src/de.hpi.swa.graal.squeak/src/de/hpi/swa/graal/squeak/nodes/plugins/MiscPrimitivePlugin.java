@@ -12,7 +12,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -460,20 +459,20 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return calculateHash(initialHash, asLargeInteger(value).getBytes());
         }
 
-        /* Byte(Array|String|Symbol) class>>#hashBytes:startingWith: */
+        /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
 
         @Specialization(guards = {"string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject string, final long initialHash) {
+        protected static final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long initialHash) {
             return calculateHash(initialHash, string.getByteStorage());
         }
 
         @Specialization
-        protected static final long doLargeInteger(@SuppressWarnings("unused") final ClassObject receiver, final LargeIntegerObject largeInteger, final long initialHash) {
+        protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject largeInteger, final long initialHash) {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
         @Specialization(guards = {"!isSmallInteger(value)"})
-        protected final long doLong(@SuppressWarnings("unused") final ClassObject receiver, final long value, final long initialHash) {
+        protected final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final long initialHash) {
             return calculateHash(initialHash, asLargeInteger(value).getBytes());
         }
 
