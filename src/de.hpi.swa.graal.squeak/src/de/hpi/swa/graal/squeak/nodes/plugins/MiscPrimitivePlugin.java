@@ -2,8 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -20,6 +19,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -33,82 +33,35 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCompareString")
-    public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        @CompilationFinal private static NativeObject asciiOrder;
+    public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveWithoutFallback {
 
         public PrimCompareStringNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "order.isByteType()", "isASCIIOrder(order)"})
-        protected static final long doAsciiOrder(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string1, final NativeObject string2,
-                        @SuppressWarnings("unused") final NativeObject order) {
-            final byte[] bytes1 = string1.getByteStorage();
-            final byte[] bytes2 = string2.getByteStorage();
-            final int length1 = bytes1.length;
-            final int length2 = bytes2.length;
-            final int minLength = Math.min(bytes1.length, length2);
-            for (int i = 0; i < minLength; i++) {
-                final byte c1 = bytes1[i];
-                final byte c2 = bytes2[i];
+        @Specialization(guards = {"string1Value.isByteType()", "string2Value.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"})
+        protected static final long doCompare(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string1Value, final NativeObject string2Value,
+                        final NativeObject orderValue) {
+            final byte[] string1 = string1Value.getByteStorage();
+            final byte[] string2 = string2Value.getByteStorage();
+            final byte[] order = orderValue.getByteStorage();
+            final int len1 = string1.length;
+            final int len2 = string2.length;
+            final int min = Math.min(len1, len2);
+            for (int i = 0; i < min; i++) {
+                final int c1 = order[string1[i] & 0xff] & 0xff;
+                final int c2 = order[string2[i] & 0xff] & 0xff;
                 if (c1 != c2) {
-                    if (c1 < c2) {
-                        return 1;
-                    } else {
-                        return 3;
-                    }
+                    return c1 < c2 ? 1L : 3L;
                 }
             }
-            if (length1 == length2) {
-                return 2;
-            } else if (length1 < length2) {
-                return 1;
-            } else {
-                return 3;
-            }
+            return len1 == len2 ? 2L : (len1 < len2 ? 1L : 3L);
         }
 
-        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "order.isByteType()", "!isASCIIOrder(order)"})
-        protected static final long doCollated(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string1, final NativeObject string2, final NativeObject order) {
-            final byte[] bytes1 = string1.getByteStorage();
-            final byte[] bytes2 = string2.getByteStorage();
-            final byte[] orderBytes = order.getByteStorage();
-            final int length1 = bytes1.length;
-            final int length2 = bytes2.length;
-            final int minLength = Math.min(length1, length2);
-            for (int i = 0; i < minLength; i++) {
-                final byte c1 = orderBytes[bytes1[i] & 0xFF];
-                final byte c2 = orderBytes[bytes2[i] & 0xFF];
-                if (c1 != c2) {
-                    if (c1 < c2) {
-                        return 1;
-                    } else {
-                        return 3;
-                    }
-                }
-            }
-            if (length1 == length2) {
-                return 2;
-            } else if (length1 < length2) {
-                return 1;
-            } else {
-                return 3;
-            }
-        }
-
-        protected static final boolean isASCIIOrder(final NativeObject order) {
-            if (asciiOrder == null) {
-                final byte[] bytes = order.getByteStorage();
-                for (int i = 0; i < 256; i++) {
-                    if (bytes[i] != (byte) i) {
-                        return false;
-                    }
-                }
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                asciiOrder = order;
-                return true;
-            }
-            return asciiOrder == order;
+        @SuppressWarnings("unused")
+        @Fallback
+        protected static final long doFail(final Object receiver, final Object string1, final Object string2, final Object order) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
 
@@ -121,30 +74,30 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         private static int encodeBytesOf(final int anInt, final byte[] ba, final int i) {
-            ba[i] = (byte) (anInt >> (24 & 0xff));
-            ba[i + 1] = (byte) (anInt >> (16 & 0xff));
-            ba[i + 2] = (byte) (anInt >> (8 & 0xff));
-            ba[i + 3] = (byte) (anInt >> (0 & 0xff));
-            return i + 5;
+            ba[i - 1] = (byte) (anInt >> (24 & 0xff));
+            ba[i + 0] = (byte) (anInt >> (16 & 0xff));
+            ba[i + 1] = (byte) (anInt >> (8 & 0xff));
+            ba[i + 2] = (byte) (anInt >> (0 & 0xff));
+            return i + 4;
         }
 
         // expects i to be a 1-based (Squeak) index
         private static int encodeInt(final int anInt, final byte[] ba, final int i) {
             if (anInt <= 223) {
-                ba[i] = (byte) anInt;
-                return i + 2;
+                ba[i - 1] = (byte) anInt;
+                return i + 1;
             }
             if (anInt <= 7935) {
-                ba[i] = (byte) (anInt / 256 + 224);
-                ba[i + 1] = (byte) (anInt % 256);
-                return i + 3;
+                ba[i - 1] = (byte) (anInt / 256 + 224);
+                ba[i] = (byte) (anInt % 256);
+                return i + 2;
             }
-            ba[i] = (byte) 255;
+            ba[i - 1] = (byte) 255;
             return encodeBytesOf(anInt, ba, i + 1);
         }
 
         @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
-        protected static final long compress(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
+        protected static final long doCompress(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
             // "Store a run-coded compression of the receiver into the byteArray ba,
             // and return the last index stored into. ba is assumed to be large enough.
             // The encoding is as follows...
@@ -161,18 +114,19 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             // 224-254 (0-30)*256 + next byte (0-7935)
             // 255 next 4 bytes"
             final byte[] baBytes = ba.getByteStorage();
-            final int[] bmBytes = bm.getIntStorage();
-            final int size = bmBytes.length;
-            int i = encodeInt(size, baBytes, 0);
-            int k = 1;
-            while (k <= size) {
-                final int word = bmBytes[k - 1];
+            final int[] bmInts = bm.getIntStorage();
+            final int size = bmInts.length;
+            int i = encodeInt(size, baBytes, 1);
+            int k = 0;
+            while (k < size) {
+                final int word = bmInts[k];
                 final int lowByte = word & 0xFF;
                 final boolean eqBytes = (word >> 8 & 0xFF) == lowByte &&
                                 ((word >> 16 & 0xFF) == lowByte && (word >> 24 & 0xFF) == lowByte);
+
                 int j = k;
                 // scan for equal words...
-                while (j < size && word == bmBytes[j + 1 - 1]) {
+                while (j + 1 < size && word == bmInts[j + 1]) {
                     j++;
                 }
                 if (j > k) {
@@ -184,7 +138,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         i++;
                     } else {
                         i = encodeInt((j - k + 1) * 4 + 2, baBytes, i);
-                        i = encodeBytesOf(word, baBytes, i - 1);
+                        i = encodeBytesOf(word, baBytes, i);
                     }
                     k = j + 1;
                 } else {
@@ -198,22 +152,28 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     } else {
                         // Finally, check for junk
                         // scan for unequal words...
-                        while (j < size && bmBytes[j - 1] != bmBytes[j + 1 - 1]) {
+                        while (j + 1 < size && bmInts[j] != bmInts[j + 1]) {
                             j++;
                         }
-                        if (j == size) {
+                        if (j + 1 == size) {
                             j++;
                         }
                         // We have one or more unmatching words, ending at j-1
                         i = encodeInt((j - k) * 4 + 3, baBytes, i);
-                        for (int m = k; m <= j - 1; m++) {
-                            i = encodeBytesOf(bmBytes[m - 1], baBytes, i - 1);
+                        for (int m = k; m < j; m++) {
+                            i = encodeBytesOf(bmInts[m], baBytes, i);
                         }
                         k = j;
                     }
                 }
             }
             return i - 1;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!ba.isByteType()"})
+        protected static final long doFailBadArgument(final Object receiver, final Object bm, final NativeObject ba) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
 
@@ -270,11 +230,11 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
              */
 
             final byte[] baBytes = ba.getByteStorage();
-            final int[] bmBytes = bm.getIntStorage();
+            final int[] bmInts = bm.getIntStorage();
             int i = (int) index - 1;
             final int end = baBytes.length;
             int k = 0;
-            final int pastEnd = bmBytes.length + 1;
+            final int pastEnd = bmInts.length + 1;
             while (i < end) {
                 // Decode next run start N
                 int anInt = baBytes[i++] & 0xff;
@@ -295,21 +255,21 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     case 1: { // n consecutive words of 4 bytes = the following byte
                         final int data = ((baBytes[i] & 0xff) << 24) | ((baBytes[i] & 0xff) << 16) | ((baBytes[i] & 0xff) << 8) | (baBytes[i++] & 0xff);
                         for (int j = 0; j < n; j++) {
-                            bmBytes[k++] = data;
+                            bmInts[k++] = data;
                         }
                         break;
                     }
                     case 2: { // n consecutive words = 4 following bytes
                         final int data = ((baBytes[i++] & 0xff) << 24) | ((baBytes[i++] & 0xff) << 16) | ((baBytes[i++] & 0xff) << 8) | (baBytes[i++] & 0xff);
                         for (int j = 0; j < n; j++) {
-                            bmBytes[k++] = data;
+                            bmInts[k++] = data;
                         }
                         break;
                     }
 
                     case 3: { // n consecutive words from the data
                         for (int m = 0; m < n; m++) {
-                            bmBytes[k++] = ((baBytes[i++] & 0xff) << 24) | ((baBytes[i++] & 0xff) << 16) | ((baBytes[i++] & 0xff) << 8) | (baBytes[i++] & 0xff);
+                            bmInts[k++] = ((baBytes[i++] & 0xff) << 24) | ((baBytes[i++] & 0xff) << 16) | ((baBytes[i++] & 0xff) << 8) | (baBytes[i++] & 0xff);
                         }
                         break;
                     }

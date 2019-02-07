@@ -48,11 +48,13 @@ public final class PrimitiveInterfaces {
         }
     }
 
-    public interface QuaternaryPrimitive extends AbstractPrimitive {
+    public interface QuaternaryPrimitiveWithoutFallback extends AbstractPrimitive {
         default int getNumArguments() {
             return 4;
         }
+    }
 
+    public interface QuaternaryPrimitive extends QuaternaryPrimitiveWithoutFallback {
         @SuppressWarnings("unused")
         @Fallback
         default Object doFail(final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
