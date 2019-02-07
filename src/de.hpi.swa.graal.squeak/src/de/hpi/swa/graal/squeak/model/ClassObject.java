@@ -316,6 +316,7 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     public Object[] listMethods() {
+        CompilerAsserts.neverPartOfCompilation("This is only for the interop API.");
         final List<String> methodNames = new ArrayList<>();
         ClassObject lookupClass = this;
         while (lookupClass != null) {

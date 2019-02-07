@@ -393,7 +393,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 110) // Complements #169.
     protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode implements TernaryPrimitive {
@@ -875,7 +874,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     }
 
-    @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 169) // Complements #110.
     protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {

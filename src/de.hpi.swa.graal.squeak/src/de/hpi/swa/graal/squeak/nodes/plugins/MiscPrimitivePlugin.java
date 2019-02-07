@@ -247,7 +247,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 final long n = anInt >> 2;
                 if (k + n > pastEnd) {
-                    throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
+                    throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_INDEX);
                 }
                 switch (anInt & 3) {
                     case 0: // skip
@@ -299,7 +299,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 index++;
             }
             if (index >= stringSize) {
-                return 0;
+                return 0L;
             } else {
                 return index + 1;
             }
@@ -341,7 +341,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return 0L;
         }
 
-        @Specialization(guards = {"key.isByteType()", "key.getByteLength() > 0", "body.isByteType()", "matchTable.isByteType()", "hasAtLeast256Items(matchTable)"})
+        @Specialization(guards = {"key.isByteType()", "key.getByteLength() > 0", "body.isByteType()", "matchTable.isByteType()", "matchTable.getByteLength() >= 256"})
         protected static final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable) {
             final byte[] keyBytes = key.getByteStorage();
@@ -368,10 +368,6 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doInvalidKey(final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
-
-        protected static final boolean hasAtLeast256Items(final NativeObject matchTable) {
-            return matchTable.getByteLength() >= 256;
-        }
     }
 
     @GenerateNodeFactory
@@ -390,7 +386,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     return i + 1;
                 }
             }
-            return 0;
+            return 0L;
         }
     }
 
