@@ -14,6 +14,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -37,9 +38,11 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, FilePlugin.class);
 
     public static final class STDIO_HANDLES {
         public static final long IN = 0;
@@ -90,8 +93,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final SeekableByteChannel file = truffleFile.newByteChannel(options);
             final long fileId = file.hashCode();
             image.filePluginHandles.put(fileId, file);
+            LOG.fine(() -> "File Handle Creation SUCCEEDED: " + truffleFile.getPath() + " (fileID: " + fileId + ", " + ", writable: " + writableFlag + ")");
             return fileId;
         } catch (IOException | UnsupportedOperationException | SecurityException e) {
+            LOG.fine(() -> "File Handle Creation FAILED: " + truffleFile.getPath() + " (writable: " + writableFlag + ")");
             throw new PrimitiveFailed();
         }
     }
@@ -305,7 +310,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doClose(final PointersObject receiver, final long fileDescriptor) {
             try {
                 getFileOrPrimFail(fileDescriptor).close();
+                LOG.fine(() -> "File Closed SUCCEEDED: " + fileDescriptor);
             } catch (IOException e) {
+                LOG.fine(() -> "File Closed FAILED: " + fileDescriptor);
                 throw new PrimitiveFailed();
             }
             return receiver;
