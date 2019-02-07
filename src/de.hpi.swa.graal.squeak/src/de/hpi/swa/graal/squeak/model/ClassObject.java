@@ -24,6 +24,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
  * Represents all subclasses of ClassDescription (Class, Metaclass, TraitBehavior, ...).
  */
 public final class ClassObject extends AbstractSqueakObject {
+    private final CyclicAssumption classHierarchyStable = new CyclicAssumption("Class hierarchy stability");
     private final CyclicAssumption methodDictStable = new CyclicAssumption("Method dictionary stability");
     private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
 
@@ -281,6 +282,7 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     public void setSuperclass(final ClassObject superclass) {
+        classHierarchyStable.invalidate();
         this.superclass = superclass;
     }
 
@@ -401,6 +403,10 @@ public final class ClassObject extends AbstractSqueakObject {
             result[CLASS_DESCRIPTION.SIZE + i - 1] = pointers[i];
         }
         return result;
+    }
+
+    public Assumption getClassHierarchyStable() {
+        return classHierarchyStable.getAssumption();
     }
 
     public Assumption getMethodDictStable() {

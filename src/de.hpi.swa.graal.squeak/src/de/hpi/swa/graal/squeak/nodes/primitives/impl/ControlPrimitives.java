@@ -41,6 +41,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
+import de.hpi.swa.graal.squeak.nodes.InheritsFromNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -121,7 +122,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method) {
             super(method);
-            dispatchSendNode = DispatchSendNode.create(method.image);
         }
 
         protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs) {
@@ -131,11 +131,19 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             final Object contextOrMarker = getContextOrMarker(frame);
-            return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
+            return getDispatchSendNode().executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
 
         protected final ClassObject lookupClass(final Object object) {
             return getLookupClassNode().executeLookup(object);
+        }
+
+        private DispatchSendNode getDispatchSendNode() {
+            if (dispatchSendNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dispatchSendNode = insert(DispatchSendNode.create(method.image));
+            }
+            return dispatchSendNode;
         }
 
         private LookupClassNode getLookupClassNode() {
@@ -345,46 +353,43 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 100)
     protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode implements QuinaryPrimitive {
         @Child private ArrayObjectToObjectArrayTransformNode getObjectArrayNode = ArrayObjectToObjectArrayTransformNode.create();
+        @Child protected InheritsFromNode inheritsFromNode;
 
         protected PrimPerformWithArgumentsInSuperclassNode(final CompiledMethodObject method) {
             super(method);
+            inheritsFromNode = InheritsFromNode.create(method.image);
         }
 
         /*
          * Object>>#perform:withArguments:inSuperclass:
          */
 
-        @Specialization
+        @Specialization(guards = "inheritsFromNode.execute(receiver, superClass)")
         protected final Object doPerform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
                         @SuppressWarnings("unused") final NotProvided np) {
-            if (!inInheritanceChain(receiver, superClass)) {
-                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_RECEIVER);
-            }
             return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, receiver));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!inheritsFromNode.execute(receiver, superClass)")
+        protected static final Object doFail(final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass, final NotProvided np) {
+            throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_RECEIVER);
         }
 
         /*
          * Context>>#object:perform:withArguments:inClass:
          */
 
-        @Specialization
-        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject receiver, final Object object, final NativeObject selector,
+        @Specialization(guards = "inheritsFromNode.execute(target, superClass)")
+        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject receiver, final Object target, final NativeObject selector,
                         final ArrayObject arguments, final ClassObject superClass) {
-            if (!inInheritanceChain(object, superClass)) {
-                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_RECEIVER);
-            }
-            return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, object));
+            return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, target));
         }
 
-        private boolean inInheritanceChain(final Object receiver, final ClassObject superClass) {
-            ClassObject classObject = lookupClass(receiver);
-            while (classObject != superClass) {
-                classObject = classObject.getSuperclassOrNull();
-                if (classObject == null) {
-                    return false;
-                }
-            }
-            return true;
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!inheritsFromNode.execute(target, superClass)")
+        protected static final Object doFail(final ContextObject receiver, final Object target, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass) {
+            throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_RECEIVER);
         }
     }
 
