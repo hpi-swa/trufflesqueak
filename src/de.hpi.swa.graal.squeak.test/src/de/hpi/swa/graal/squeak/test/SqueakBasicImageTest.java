@@ -76,15 +76,7 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
     }
 
     @Test
-    public void test09TinyBenchmarks() {
-        final String resultString = evaluate("1 tinyBenchmarks").toString();
-        assertTrue(resultString.contains("bytecodes/sec"));
-        assertTrue(resultString.contains("sends/sec"));
-        image.getOutput().println("tinyBenchmarks: " + resultString);
-    }
-
-    @Test
-    public void test10CompressAndDecompressBitmaps() {
+    public void test09CompressAndDecompressBitmaps() {
         // Iterate over all ToolIcons, copy their bitmaps, and then compress and decompress them.
         assertEquals(image.sqTrue, evaluate("ToolIcons icons values allSatisfy: [:icon | | sourceBitmap sourceArray destBitmap |\n" +
                         "  icon unhibernate.\n" + // Ensure icon is decompressed and has a bitmap.
@@ -96,14 +88,10 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
     }
 
     @Test
-    public void testInspectSqueakTest() {
-        assumeNotOnMXGate();
-        assertTrue(runTestCase("ArrayTest").passed);
-    }
-
-    @Test
-    public void testInspectSqueakTestSelector() {
-        assumeNotOnMXGate();
-        image.getOutput().println(evaluate("(WordArrayTest run: #testCannotPutNegativeValue) asString"));
+    public void test10TinyBenchmarks() {
+        final String resultString = evaluate("1 tinyBenchmarks").toString();
+        assertTrue(resultString.contains("bytecodes/sec"));
+        assertTrue(resultString.contains("sends/sec"));
+        image.getOutput().println("tinyBenchmarks: " + resultString);
     }
 }
