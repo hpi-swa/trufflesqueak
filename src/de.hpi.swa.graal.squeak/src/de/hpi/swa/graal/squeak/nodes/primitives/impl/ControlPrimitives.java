@@ -125,13 +125,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs) {
-            return dispatch(frame, selector, getLookupClassNode().executeLookup(rcvrAndArgs[0]), rcvrAndArgs);
+            return dispatch(frame, selector, lookupClass(rcvrAndArgs[0]), rcvrAndArgs);
         }
 
         protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             final Object contextOrMarker = getContextOrMarker(frame);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
+        }
+
+        protected final ClassObject lookupClass(final Object object) {
+            return getLookupClassNode().executeLookup(object);
         }
 
         private LookupClassNode getLookupClassNode() {
@@ -346,79 +350,155 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        /*
+         * Object>>#perform:withArguments:inSuperclass:
+         */
+
         @Specialization
         protected final Object doPerform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
                         @SuppressWarnings("unused") final NotProvided np) {
-            // Object>>#perform:withArguments:inSuperclass:
+            if (!inInheritanceChain(receiver, superClass)) {
+                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_RECEIVER);
+            }
             return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, receiver));
         }
 
+        /*
+         * Context>>#object:perform:withArguments:inClass:
+         */
+
         @Specialization
-        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject selector, final ArrayObject arguments,
-                        final ClassObject superClass) {
-            // Context>>#object:perform:withArguments:inClass:
+        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject receiver, final Object object, final NativeObject selector,
+                        final ArrayObject arguments, final ClassObject superClass) {
+            if (!inInheritanceChain(object, superClass)) {
+                throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_RECEIVER);
+            }
             return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, object));
+        }
+
+        private boolean inInheritanceChain(final Object receiver, final ClassObject superClass) {
+            ClassObject classObject = lookupClass(receiver);
+            while (classObject != superClass) {
+                classObject = classObject.getSuperclassOrNull();
+                if (classObject == null) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 
     @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 110) // Complements #169.
-    protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+    protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimIdenticalNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final boolean doBoolean(final boolean a, final boolean b) {
+        protected final boolean doBoolean(final boolean a, final boolean b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization
-        protected final boolean doChar(final char a, final char b) {
+        protected final boolean doChar(final char a, final char b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected final boolean doChar(final CharacterObject a, final char b) {
+        protected final boolean doChar(final CharacterObject a, final char b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected final boolean doChar(final char a, final CharacterObject b) {
+        protected final boolean doChar(final char a, final CharacterObject b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return method.image.sqFalse;
         }
 
         @Specialization
-        protected final boolean doChar(final CharacterObject a, final CharacterObject b) {
+        protected final boolean doChar(final CharacterObject a, final CharacterObject b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return a.getValue() == b.getValue() ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization
-        protected final boolean doLong(final long a, final long b) {
+        protected final boolean doLong(final long a, final long b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization
-        protected final boolean doDouble(final double a, final double b) {
+        protected final boolean doDouble(final double a, final double b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization
-        protected final boolean doFloat(final FloatObject a, final FloatObject b) {
+        protected final boolean doFloat(final FloatObject a, final FloatObject b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected final boolean doObject(final NilObject a, final NilObject b) {
+        protected final boolean doObject(final NilObject a, final NilObject b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return method.image.sqTrue;
         }
 
-        @Fallback
-        protected final boolean doSqueakObject(final Object a, final Object b) {
+        @Specialization
+        protected final boolean doSqueakObject(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doBoolean(@SuppressWarnings("unused") final ContextObject context, final boolean a, final boolean b) {
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final char a, final char b) {
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final CharacterObject a, final char b) {
+            return method.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final char a, final CharacterObject b) {
+            return method.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final CharacterObject a, final CharacterObject b) {
+            return a.getValue() == b.getValue() ? method.image.sqTrue : method.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doLong(@SuppressWarnings("unused") final ContextObject context, final long a, final long b) {
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doDouble(@SuppressWarnings("unused") final ContextObject context, final double a, final double b) {
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doFloat(@SuppressWarnings("unused") final ContextObject context, final FloatObject a, final FloatObject b) {
+            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final boolean doObject(@SuppressWarnings("unused") final ContextObject context, final NilObject a, final NilObject b) {
+            return method.image.sqTrue;
+        }
+
+        @Specialization
+        protected final boolean doSqueakObject(@SuppressWarnings("unused") final ContextObject context, final Object a, final Object b) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
