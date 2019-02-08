@@ -178,6 +178,19 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveResolverHostNameSize")
+    protected abstract static class PrimResolverHostNameSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimResolverHostNameSizeNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final AbstractSqueakObject doSize(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            throw new PrimitiveFailed(); // Signals that IPv6 is not available.
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketLocalPort")
     protected abstract static class PrimSocketLocalPortNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketLocalPortNode(final CompiledMethodObject method) {
