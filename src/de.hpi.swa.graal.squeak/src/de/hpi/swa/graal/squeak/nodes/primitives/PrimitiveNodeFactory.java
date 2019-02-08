@@ -16,6 +16,7 @@ import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.B2DPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.BMPReadWriterPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.ClipboardExtendedPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.CroquetPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.DropPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.FilePlugin;
@@ -67,6 +68,7 @@ public final class PrimitiveNodeFactory {
                     new B2DPlugin(),
                     new BitBltPlugin(),
                     new BMPReadWriterPlugin(),
+                    new ClipboardExtendedPlugin(),
                     new CroquetPlugin(),
                     new DropPlugin(),
                     new FilePlugin(),
