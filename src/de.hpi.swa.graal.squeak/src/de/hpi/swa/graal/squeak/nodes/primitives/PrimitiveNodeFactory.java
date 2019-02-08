@@ -27,6 +27,7 @@ import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.graal.squeak.nodes.plugins.LocalePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.NullPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.SoundCodecPrims;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrims;
@@ -49,6 +50,8 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PrimitiveNodeFactory {
     private static final int MAX_PRIMITIVE_INDEX = 575;
+    private static final byte[] NULL_MODULE_NAME = NullPlugin.class.getSimpleName().getBytes();
+
     @CompilationFinal(dimensions = 1) private final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
                     new ArithmeticPrimitives(),
                     new ArrayStreamPrimitives(),
@@ -74,6 +77,7 @@ public final class PrimitiveNodeFactory {
                     new LocalePlugin(),
                     new Matrix2x3Plugin(),
                     new MiscPrimitivePlugin(),
+                    new NullPlugin(),
                     new PolyglotPlugin(),
                     new SocketPlugin(),
                     new SqueakFFIPrims(),
@@ -105,8 +109,11 @@ public final class PrimitiveNodeFactory {
 
     public AbstractPrimitiveNode namedFor(final CompiledMethodObject method) {
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
-        if (values[0] == method.image.nil || values[1] == method.image.nil) {
+        if (values[1] == method.image.nil) {
             return PrimitiveFailedNode.create(method);
+        } else if (values[0] == method.image.nil) {
+            final NativeObject functionName = (NativeObject) values[1];
+            return forName(method, NULL_MODULE_NAME, functionName.getByteStorage());
         } else {
             final NativeObject moduleName = (NativeObject) values[0];
             final NativeObject functionName = (NativeObject) values[1];
