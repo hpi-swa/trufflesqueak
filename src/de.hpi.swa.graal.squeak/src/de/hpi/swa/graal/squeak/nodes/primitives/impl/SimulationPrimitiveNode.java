@@ -126,7 +126,7 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
             final Object lookupResult; // TODO: Nodes!
             final LookupMethodNode lookupMethodNode = LookupMethodNode.create();
             if (receiver instanceof ClassObject) {
-                lookupResult = lookupMethodNode.executeLookup(receiver, method.image.getSimulatePrimitiveArgsSelector());
+                lookupResult = lookupMethodNode.executeLookup((ClassObject) receiver, method.image.getSimulatePrimitiveArgsSelector());
             } else {
                 final ClassObject rcvrClass = LookupClassNode.create(method.image).executeLookup(receiver);
                 lookupResult = lookupMethodNode.executeLookup(rcvrClass, method.image.getSimulatePrimitiveArgsSelector());

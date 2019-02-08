@@ -2,13 +2,10 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -23,7 +20,7 @@ public abstract class LookupMethodNode extends AbstractNode {
         return LookupMethodNodeGen.create();
     }
 
-    public abstract Object executeLookup(Object sqClass, Object selector);
+    public abstract Object executeLookup(ClassObject sqClass, NativeObject selector);
 
     @SuppressWarnings("unused")
     @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass",
@@ -53,11 +50,5 @@ public abstract class LookupMethodNode extends AbstractNode {
         }
         assert !selector.isDoesNotUnderstand() : "Could not find does not understand method";
         return null; // Signals a doesNotUnderstand.
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    protected static final CompiledMethodObject doFail(final Object sqClass, final Object selector) {
-        throw new SqueakException("failed to lookup generic selector object on generic class");
     }
 }
