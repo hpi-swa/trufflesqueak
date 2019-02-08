@@ -126,6 +126,7 @@ public final class FrameAccess {
     }
 
     public static void setArgumentIfInRange(final Frame frame, final int index, final Object value) {
+        assert index >= 0;
         final Object[] frameArguments = frame.getArguments();
         final int argumentIndex = ArgumentIndicies.ARGUMENTS_START.ordinal() + index;
         if (argumentIndex < frameArguments.length) {
@@ -234,40 +235,42 @@ public final class FrameAccess {
     }
 
     public static Object[] newWith(final CompiledMethodObject method, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArguments.length];
+        final int receiverAndArgumentsLength = receiverAndArguments.length;
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
         assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
-        assert receiverAndArguments.length > 0 : "At least a receiver must be provided";
+        assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
         assert receiverAndArguments[0] != null : "Receiver should never be null";
         frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
-        System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArguments.length);
+        System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
         return frameArguments;
     }
 
     public static Object[] newDummyWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArguments.length];
+        final int receiverAndArgumentsLength = receiverAndArguments.length;
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
         assert sender != null : "Sender should never be null";
-        assert receiverAndArguments.length > 0 : "At least a receiver must be provided";
+        assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
         frameArguments[ArgumentIndicies.METHOD.ordinal()] = code;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
-        System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArguments.length);
+        System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
         return frameArguments;
     }
 
-    public static Object[] newBlockArguments(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects) {
+    public static Object[] newClosureArguments(final BlockClosureObject closure, final Object senderOrMarker, final Object[] objects) {
         final int numObjects = objects.length;
-        final Object[] copied = block.getStack();
+        final Object[] copied = closure.getCopied();
         final int numCopied = copied.length;
-        assert block.getCompiledBlock().getNumArgs() == numObjects && block.getCopied().length == numCopied : "number of required and provided block arguments do not match";
+        assert closure.getCompiledBlock().getNumArgs() == numObjects : "number of required and provided block arguments do not match";
         final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numObjects + numCopied];
-        arguments[ArgumentIndicies.METHOD.ordinal()] = block.getCompiledBlock().getMethod();
+        arguments[ArgumentIndicies.METHOD.ordinal()] = closure.getCompiledBlock().getMethod();
         // Sender is thisContext (or marker)
         arguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = senderOrMarker;
-        arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = block;
-        arguments[ArgumentIndicies.RECEIVER.ordinal()] = block.getReceiver();
+        arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        arguments[ArgumentIndicies.RECEIVER.ordinal()] = closure.getReceiver();
         System.arraycopy(objects, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal(), numObjects);
         System.arraycopy(copied, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal() + numObjects, numCopied);
         return arguments;

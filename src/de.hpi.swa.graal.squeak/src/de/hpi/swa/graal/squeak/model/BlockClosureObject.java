@@ -147,10 +147,6 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         return copied.length + instsize();
     }
 
-    public Object[] getStack() {
-        return copied;
-    }
-
     public Object getReceiver() {
         if (receiver == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
