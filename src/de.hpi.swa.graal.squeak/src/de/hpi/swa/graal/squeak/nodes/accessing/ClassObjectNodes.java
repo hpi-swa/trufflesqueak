@@ -60,20 +60,12 @@ public final class ClassObjectNodes {
 
         @Specialization(guards = "isInstanceVariablesIndex(index)")
         protected static final AbstractSqueakObject doClassInstanceVariables(final ClassObject obj, @SuppressWarnings("unused") final long index) {
-            if (obj.getInstanceVariables() != null) {
-                return obj.getInstanceVariables();
-            } else {
-                return obj.image.nilClass;
-            }
+            return obj.getInstanceVariables();
         }
 
         @Specialization(guards = "isOrganizationIndex(index)")
         protected static final AbstractSqueakObject doClassOrganization(final ClassObject obj, @SuppressWarnings("unused") final long index) {
-            if (obj.getOrganization() != null) {
-                return obj.getOrganization();
-            } else {
-                return obj.image.nilClass;
-            }
+            return obj.getOrganization();
         }
 
         @Specialization(guards = "isOtherIndex(index)")
@@ -112,8 +104,8 @@ public final class ClassObjectNodes {
         }
 
         @Specialization(guards = "isFormatIndex(index)")
-        protected static final void doClassFormat(final ClassObject obj, @SuppressWarnings("unused") final long index, final Object value) {
-            obj.setFormat((long) value);
+        protected static final void doClassFormat(final ClassObject obj, @SuppressWarnings("unused") final long index, final long value) {
+            obj.setFormat(value);
         }
 
         @Specialization(guards = "isInstanceVariablesIndex(index)")

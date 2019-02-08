@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -33,8 +32,8 @@ public abstract class StackPushForPrimitivesNode extends AbstractNode {
                     @Cached("getBlockOrMethod(frame)") final CompiledCodeObject codeObject,
                     @Cached("create(codeObject)") final FrameStackWriteNode writeNode) {
         assert value != null;
-        final int currentStackPointer = FrameUtil.getIntSafe(frame, codeObject.getStackPointerSlot());
-        frame.setInt(codeObject.getStackPointerSlot(), currentStackPointer + 1);
+        final int currentStackPointer = FrameAccess.getStackPointer(frame, codeObject);
+        FrameAccess.setStackPointer(frame, codeObject, currentStackPointer + 1);
         writeNode.execute(frame, currentStackPointer, value);
     }
 }

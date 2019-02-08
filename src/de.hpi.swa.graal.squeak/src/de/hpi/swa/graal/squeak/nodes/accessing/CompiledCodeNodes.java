@@ -8,8 +8,8 @@ import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.CalculcatePCOffsetNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetCompiledMethodNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetInitialPCNodeGen;
 
 public final class CompiledCodeNodes {
 
@@ -38,10 +38,10 @@ public final class CompiledCodeNodes {
 
     }
 
-    public abstract static class CalculcatePCOffsetNode extends AbstractNode {
+    public abstract static class GetInitialPCNode extends AbstractNode {
 
-        public static CalculcatePCOffsetNode create() {
-            return CalculcatePCOffsetNodeGen.create();
+        public static GetInitialPCNode create() {
+            return GetInitialPCNodeGen.create();
         }
 
         public abstract int execute(CompiledCodeObject object);

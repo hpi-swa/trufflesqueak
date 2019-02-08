@@ -21,7 +21,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.GetSuccessorNodeGen;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.TriggerInterruptHandlerNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.CalculcatePCOffsetNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetInitialPCNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -42,7 +42,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private GetSuccessorNode getSuccessorNode;
-    @Child private CalculcatePCOffsetNode calculcatePCOffsetNode;
+    @Child private GetInitialPCNode calculcatePCOffsetNode;
 
     protected ExecuteContextNode(final CompiledCodeObject code) {
         super(code);
@@ -302,10 +302,10 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         return handleNonLocalReturnNode;
     }
 
-    private CalculcatePCOffsetNode getCalculcatePCOffsetNode() {
+    private GetInitialPCNode getCalculcatePCOffsetNode() {
         if (calculcatePCOffsetNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            calculcatePCOffsetNode = insert(CalculcatePCOffsetNode.create());
+            calculcatePCOffsetNode = insert(GetInitialPCNode.create());
         }
         return calculcatePCOffsetNode;
     }
