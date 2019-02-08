@@ -124,7 +124,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             final Object fromPointer = fromPointers[j];
                             if (argument == fromPointer) {
                                 final Object toPointer = toPointers[j];
-                                current.getArguments()[i] = toPointer;
+                                FrameAccess.setArgumentIfInRange(current, i, toPointer);
                                 updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                             } else {
                                 pointersBecomeNode.execute(argument, fromPointers, toPointers, copyHash);
