@@ -220,6 +220,7 @@ public final class SqueakImageContext {
         if (squeakImage == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             squeakImage = new SqueakImage(this);
+            primitiveNodeFactory.initialize(this);
         }
         return squeakImage;
     }

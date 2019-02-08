@@ -4,10 +4,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.UnmodifiableEconomicMap;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -46,57 +50,60 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.SimulationPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PrimitiveNodeFactory {
     private static final int MAX_PRIMITIVE_INDEX = 575;
     private static final byte[] NULL_MODULE_NAME = NullPlugin.class.getSimpleName().getBytes();
 
-    @CompilationFinal(dimensions = 1) private final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
-                    new ArithmeticPrimitives(),
-                    new ArrayStreamPrimitives(),
-                    new BlockClosurePrimitives(),
-                    new ContextPrimitives(),
-                    new ControlPrimitives(),
-                    new IOPrimitives(),
-                    new MiscellaneousPrimitives(),
-                    new StoragePrimitives()};
-
-    @CompilationFinal(dimensions = 1) private final AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
-                    new B2DPlugin(),
-                    new BitBltPlugin(),
-                    new BMPReadWriterPlugin(),
-                    new ClipboardExtendedPlugin(),
-                    new CroquetPlugin(),
-                    new DropPlugin(),
-                    new FilePlugin(),
-                    new FloatArrayPlugin(),
-                    new GraalSqueakPlugin(),
-                    new HostWindowPlugin(),
-                    new JPEGReaderPlugin(),
-                    new LargeIntegers(),
-                    new LocalePlugin(),
-                    new Matrix2x3Plugin(),
-                    new MiscPrimitivePlugin(),
-                    new NullPlugin(),
-                    new PolyglotPlugin(),
-                    new SecurityPlugin(),
-                    new SocketPlugin(),
-                    new SqueakFFIPrims(),
-                    new SqueakSSL(),
-                    new UnixOSProcessPlugin(),
-                    new UUIDPlugin(),
-                    new Win32OSProcessPlugin(),
-                    new SoundCodecPrims()};
-
     // Using an array instead of a HashMap requires type-checking to be disabled here.
     @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
 
+    private final EconomicMap<String, UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>>> pluginsMap = EconomicMap.create();
+
     public PrimitiveNodeFactory() {
+    }
+
+    public void initialize(final SqueakImageContext image) {
+        final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
+                        new ArithmeticPrimitives(),
+                        new ArrayStreamPrimitives(),
+                        new BlockClosurePrimitives(),
+                        new ContextPrimitives(),
+                        new ControlPrimitives(),
+                        new IOPrimitives(),
+                        new MiscellaneousPrimitives(),
+                        new StoragePrimitives()};
         fillPrimitiveTable(indexPrimitives);
+
+        final AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
+                        new B2DPlugin(),
+                        new BitBltPlugin(),
+                        new BMPReadWriterPlugin(),
+                        new ClipboardExtendedPlugin(),
+                        new CroquetPlugin(),
+                        new DropPlugin(),
+                        new FilePlugin(),
+                        new FloatArrayPlugin(),
+                        new GraalSqueakPlugin(),
+                        new HostWindowPlugin(),
+                        new JPEGReaderPlugin(),
+                        new LargeIntegers(),
+                        new LocalePlugin(),
+                        new Matrix2x3Plugin(),
+                        new MiscPrimitivePlugin(),
+                        new NullPlugin(),
+                        new PolyglotPlugin(),
+                        new SecurityPlugin(),
+                        new SocketPlugin(),
+                        new SqueakFFIPrims(),
+                        new SqueakSSL(),
+                        new UnixOSProcessPlugin(),
+                        new UUIDPlugin(),
+                        new Win32OSProcessPlugin(),
+                        new SoundCodecPrims()};
         fillPrimitiveTable(plugins);
+        fillPluginMap(image, plugins);
     }
 
     @TruffleBoundary
@@ -104,9 +111,11 @@ public final class PrimitiveNodeFactory {
         if (264 <= primitiveIndex && primitiveIndex <= 520) {
             return ControlPrimitives.PrimQuickReturnReceiverVariableNode.create(method, primitiveIndex - 264);
         }
-        final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = getFromPrimitiveTable(primitiveIndex);
-        if (nodeFactory != null) {
-            return createInstance(method, nodeFactory);
+        if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
+            final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable[primitiveIndex - 1];
+            if (nodeFactory != null) {
+                return createInstance(method, nodeFactory);
+            }
         }
         return null;
     }
@@ -127,41 +136,22 @@ public final class PrimitiveNodeFactory {
 
     @TruffleBoundary
     private AbstractPrimitiveNode forName(final CompiledMethodObject method, final byte[] moduleName, final byte[] functionName) {
-        for (AbstractPrimitiveFactoryHolder plugin : plugins) {
-            if (!plugin.isEnabled(method.image)) {
-                continue;
-            }
-            final String pluginName = plugin.getClass().getSimpleName();
-            if (!ArrayUtils.equals(moduleName, pluginName)) {
-                continue;
-            }
-            try {
-                final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = plugin.getFactories();
-                for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
-                    final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
-                    final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
-                    for (final String name : primitive.names()) {
-                        if (ArrayUtils.equals(functionName, name)) {
-                            return createInstance(method, nodeFactory);
-                        }
-                    }
-                }
-                if (plugin.useSimulationAsFallback()) {
-                    return SimulationPrimitiveNode.create(method, pluginName, new String(functionName));
-                }
-            } catch (RuntimeException e) {
-                break;
+        final UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = pluginsMap.get(new String(moduleName));
+        if (functionNameToNodeFactory != null) {
+            final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = functionNameToNodeFactory.get(new String(functionName));
+            if (nodeFactory != null) {
+                return createInstance(method, nodeFactory);
             }
         }
         return PrimitiveFailedNode.create(method);
     }
 
-    public Set<String> getPluginNames() {
-        final HashSet<String> names = new HashSet<>(plugins.length);
-        for (AbstractPrimitiveFactoryHolder plugin : plugins) {
-            names.add(plugin.getClass().getSimpleName());
+    public String[] getPluginNames() {
+        final Set<String> target = new HashSet<>();
+        for (String key : pluginsMap.getKeys()) {
+            target.add(key);
         }
-        return names;
+        return target.toArray(new String[target.size()]);
     }
 
     private static AbstractPrimitiveNode createInstance(final CompiledMethodObject method, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
@@ -191,11 +181,24 @@ public final class PrimitiveNodeFactory {
         }
     }
 
-    private NodeFactory<? extends AbstractPrimitiveNode> getFromPrimitiveTable(final int index) {
-        if (index <= MAX_PRIMITIVE_INDEX) {
-            return primitiveTable[index - 1];
+    private void fillPluginMap(final SqueakImageContext image, final AbstractPrimitiveFactoryHolder[] plugins) {
+        for (AbstractPrimitiveFactoryHolder plugin : plugins) {
+            if (!plugin.isEnabled(image)) {
+                continue;
+            }
+            final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = plugin.getFactories();
+            final EconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = EconomicMap.create(nodeFactories.size());
+            for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
+                final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
+                final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
+                for (final String name : primitive.names()) {
+                    assert !functionNameToNodeFactory.containsKey(name) : "Primitive name is not unique: " + name;
+                    functionNameToNodeFactory.put(name, nodeFactory);
+                }
+            }
+            final String pluginName = plugin.getClass().getSimpleName();
+            pluginsMap.put(pluginName, EconomicMap.create(functionNameToNodeFactory));
         }
-        return null;
     }
 
     private void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {

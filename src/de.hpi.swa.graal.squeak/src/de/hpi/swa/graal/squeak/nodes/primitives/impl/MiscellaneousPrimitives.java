@@ -9,7 +9,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -917,8 +916,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         private String[] getExternalModuleNames() {
             if (externalModuleNames == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final Set<String> pluginNames = method.image.primitiveNodeFactory.getPluginNames();
-                externalModuleNames = pluginNames.toArray(new String[pluginNames.size()]);
+                externalModuleNames = method.image.primitiveNodeFactory.getPluginNames();
                 Arrays.sort(externalModuleNames);
             }
             return externalModuleNames;
