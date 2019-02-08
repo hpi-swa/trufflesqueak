@@ -1,11 +1,13 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakSyntaxError;
@@ -65,11 +67,12 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
 
     @Specialization(guards = {"!isCompiledMethodObject(targetObject)"})
     protected final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, @SuppressWarnings("unused") final ClassObject rcvrClass,
-                    final Object[] rcvrAndArgs, final Object contextOrMarker) {
+                    final Object[] rcvrAndArgs, final Object contextOrMarker,
+                    @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
         final ClassObject targetClass = getLookupClassNode().executeLookup(targetObject);
         final Object newLookupResult = getLookupNode().executeLookup(targetClass, image.runWithInSelector);
-        if (newLookupResult == null) {
+        if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
             final Object doesNotUnderstandMethod = getLookupNode().executeLookup(targetClass, image.doesNotUnderstand);
             return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
         } else {

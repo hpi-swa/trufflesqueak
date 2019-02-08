@@ -4,11 +4,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.MaterializeContextOnMethodExitNodeGen.SetSenderNodeGen;
 
 public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWithCode {
     protected static ContextObject lastSeenContext;
@@ -40,13 +39,17 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
 
     @Specialization(guards = {"hasLastSeenContext(frame)"})
     protected static final void doMaterialize(final VirtualFrame frame,
-                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
-                    @Cached("create()") final SetSenderNode setSenderNode) {
+                    @Cached("createCountingProfile()") final ConditionProfile isNotLastSeenContextProfile,
+                    @Cached("createCountingProfile()") final ConditionProfile lastSeenNeedsSenderProfile,
+                    @Cached("createCountingProfile()") final ConditionProfile continueProfile,
+                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode) {
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
-        if (context != lastSeenContext) {
+        if (isNotLastSeenContextProfile.profile(context != lastSeenContext)) {
             assert context.hasTruffleFrame();
-            setSenderNode.execute(lastSeenContext, context);
-            if (!context.isTerminated() && context.hasEscaped()) {
+            if (lastSeenNeedsSenderProfile.profile(lastSeenContext != null && !lastSeenContext.hasMaterializedSender())) {
+                lastSeenContext.setSender(context);
+            }
+            if (continueProfile.profile(!context.isTerminated() && context.hasEscaped())) {
                 // Materialization needs to continue in parent frame.
                 lastSeenContext = context;
             } else {
@@ -66,25 +69,5 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
 
     protected static final boolean hasLastSeenContext(@SuppressWarnings("unused") final VirtualFrame frame) {
         return lastSeenContext != null;
-    }
-
-    protected abstract static class SetSenderNode extends Node {
-
-        public static SetSenderNode create() {
-            return SetSenderNodeGen.create();
-        }
-
-        protected abstract void execute(ContextObject childContext, ContextObject context);
-
-        @Specialization(guards = {"childContext != null", "!childContext.hasMaterializedSender()"})
-        protected static final void doSet(final ContextObject childContext, final ContextObject context) {
-            childContext.setSender(context);
-        }
-
-        @Fallback
-        @SuppressWarnings("unused")
-        protected final void doNothing(final ContextObject childContext, final ContextObject context) {
-            // Sender does not need to be set.
-        }
     }
 }

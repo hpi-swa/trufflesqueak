@@ -220,8 +220,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     protected abstract static class TriggerInterruptHandlerNode extends AbstractNodeWithCode {
         protected static final int BYTECODE_LENGTH_THRESHOLD = 32;
 
-        private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
-
         protected TriggerInterruptHandlerNode(final CompiledCodeObject code) {
             super(code);
         }
@@ -235,8 +233,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         @SuppressWarnings("unused")
         @Specialization(guards = {"!code.image.interrupt.disabled()", "!hasPrimitive", "bytecodeLength > BYTECODE_LENGTH_THRESHOLD"})
         protected final void doTrigger(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength,
+                        @Cached("createCountingProfile()") final ConditionProfile triggerProfile,
                         @Cached("create(code)") final InterruptHandlerNode interruptNode) {
-            if (countingProfile.profile(code.image.interrupt.shouldTrigger())) {
+            if (triggerProfile.profile(code.image.interrupt.shouldTrigger())) {
                 interruptNode.executeTrigger(frame);
             }
         }
@@ -267,9 +266,10 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         }
 
         @Specialization
-        protected static final int doConditionalJump(final VirtualFrame frame, final ConditionalJumpNode node) {
+        protected static final int doConditionalJump(final VirtualFrame frame, final ConditionalJumpNode node,
+                        @Cached("createCountingProfile()") final ConditionProfile jumpProfile) {
             // `executeCondition` should only be called once because it pops value off the stack.
-            if (node.executeCondition(frame)) {
+            if (jumpProfile.profile(node.executeCondition(frame))) {
                 return node.getJumpSuccessor();
             } else {
                 return node.getSuccessorIndex();
