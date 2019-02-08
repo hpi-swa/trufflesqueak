@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -13,8 +14,10 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -37,6 +40,25 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         factories.addAll(UnixOSProcessPluginFactory.getFactories());
         factories.addAll(AbstractOSProcessPluginFactory.getFactories());
         return factories;
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveArgumentAt")
+    protected abstract static class PrimArgumentAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        protected PrimArgumentAtNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "inBounds1(index, method.image.getImageArguments().length)")
+        protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
+            return method.image.wrap(method.image.getImageArguments()[(int) index]);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected final NilObject doNil(final Object receiver, final Object index) {
+            return method.image.nil;
+        }
     }
 
     @GenerateNodeFactory
@@ -101,6 +123,48 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         @Specialization
         protected final Object doAt(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return method.image.nil; // TODO: implement parent pid
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetStdErrHandle")
+    protected abstract static class PrimGetStdErrHandleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimGetStdErrHandleNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return FilePlugin.STDIO_HANDLES.ERROR;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetStdInHandle")
+    protected abstract static class PrimGetStdInHandleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimGetStdInHandleNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return FilePlugin.STDIO_HANDLES.IN;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetStdOutHandle")
+    protected abstract static class PrimGetStdOutHandleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimGetStdOutHandleNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return FilePlugin.STDIO_HANDLES.OUT;
         }
     }
 
