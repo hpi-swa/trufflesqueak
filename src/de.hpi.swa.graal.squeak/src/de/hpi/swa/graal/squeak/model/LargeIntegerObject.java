@@ -74,7 +74,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         integerDirty = true;
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public BigInteger getBigInteger() {
         if (integerDirty) {
             integer = derivedBigIntegerFromBytes(bytes, isNegative());
@@ -137,7 +137,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @Override
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return getBigInteger().toString();
@@ -161,7 +161,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new LargeIntegerObject(this);
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     private Object reduceIfPossible(final BigInteger value) {
         if (value.bitLength() > Long.SIZE - 1) {
             return newFromBigInteger(value);
@@ -170,22 +170,22 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         }
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object reduceIfPossible() {
         return reduceIfPossible(getBigInteger());
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long longValue() {
         return getBigInteger().longValue();
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long longValueExact() throws ArithmeticException {
         return getBigInteger().longValueExact();
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public int intValueExact() throws ArithmeticException {
         return getBigInteger().intValueExact();
     }
@@ -198,7 +198,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return bitLength() <= 31;
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public int bitLength() {
         return getBigInteger().bitLength();
     }
@@ -211,7 +211,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new LargeIntegerObject(image, value);
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public static LargeIntegerObject valueOf(final SqueakImageContext image, final long a) {
         return newFromBigInteger(image, BigInteger.valueOf(a));
     }
@@ -220,27 +220,27 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
      * Arithmetic Operations
      */
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object add(final LargeIntegerObject b) {
         return reduceIfPossible(getBigInteger().add(b.getBigInteger()));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object subtract(final LargeIntegerObject b) {
         return reduceIfPossible(getBigInteger().subtract(b.getBigInteger()));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object multiply(final LargeIntegerObject b) {
         return reduceIfPossible(getBigInteger().multiply(b.getBigInteger()));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object divide(final LargeIntegerObject b) {
         return reduceIfPossible(getBigInteger().divide(b.getBigInteger()));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object floorDivide(final LargeIntegerObject b) {
         return reduceIfPossible(floorDivide(getBigInteger(), b.getBigInteger()));
     }
@@ -254,73 +254,73 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return r;
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object floorMod(final LargeIntegerObject b) {
         return reduceIfPossible(getBigInteger().subtract(floorDivide(getBigInteger(), b.getBigInteger()).multiply(b.getBigInteger())));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject divideNoReduce(final LargeIntegerObject b) {
         return newFromBigInteger(getBigInteger().divide(b.getBigInteger()));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object remainder(final LargeIntegerObject b) {
         return reduceIfPossible(getBigInteger().remainder(b.getBigInteger()));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject negateNoReduce() {
         return newFromBigInteger(getBigInteger().negate());
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public int compareTo(final LargeIntegerObject b) {
         return getBigInteger().compareTo(b.getBigInteger());
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public double doubleValue() {
         return getBigInteger().doubleValue();
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean isZero() {
         return getBigInteger().compareTo(BigInteger.ZERO) == 0;
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean isZeroOrPositive() {
         return getBigInteger().compareTo(BigInteger.ZERO) >= 0;
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean lessThanOrEqualTo(final long value) {
         return fitsIntoLong() && getBigInteger().longValueExact() <= value;
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean lessThanOneShiftedBy64() {
         return getBigInteger().compareTo(ONE_SHIFTED_BY_64) < 0;
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean inRange(final long minValue, final long maxValue) {
         final long longValueExact = getBigInteger().longValueExact();
         return minValue <= longValueExact && longValueExact <= maxValue;
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean isIntegralWhenDividedBy(final LargeIntegerObject other) {
         return getBigInteger().mod(other.getBigInteger().abs()).compareTo(BigInteger.ZERO) == 0;
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public int signum() {
         return getBigInteger().signum();
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject toSigned() {
         if (getBigInteger().shiftRight(56).compareTo(ONE_HUNDRED_TWENTY_EIGHT) >= 0) {
             return newFromBigInteger(getBigInteger().subtract(ONE_SHIFTED_BY_64));
@@ -329,7 +329,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         }
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject toUnsigned() {
         if (getBigInteger().compareTo(BigInteger.ZERO) < 0) {
             return newFromBigInteger(getBigInteger().add(ONE_SHIFTED_BY_64));
@@ -342,27 +342,27 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
      * Bit Operations
      */
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object and(final LargeIntegerObject b) {
         return reduceIfPossible(getBigInteger().and(b.getBigInteger()));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object or(final LargeIntegerObject b) {
         return reduceIfPossible(getBigInteger().or(b.getBigInteger()));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object xor(final LargeIntegerObject b) {
         return reduceIfPossible(getBigInteger().xor(b.getBigInteger()));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object shiftLeft(final int b) {
         return reduceIfPossible(getBigInteger().shiftLeft(b));
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object shiftRight(final int b) {
         return reduceIfPossible(getBigInteger().shiftRight(b));
     }

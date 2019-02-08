@@ -18,7 +18,7 @@ public final class ProcessSwitch extends ControlFlowException {
         return new ProcessSwitch(newContext);
     }
 
-    @TruffleBoundary
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public static ProcessSwitch createWithBoundary(final ContextObject newContext) {
         return new ProcessSwitch(newContext);
     }

@@ -27,7 +27,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
         }
 
         @Specialization
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             try {
                 final String runtimeName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
