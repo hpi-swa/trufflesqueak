@@ -6,7 +6,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -112,16 +111,16 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
     private void initializeArgumentsAndTemps(final VirtualFrame frame) {
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
-        assert code.getNumArgsAndCopied() == (arguments.length - FrameAccess.ARGUMENTS_START);
+        assert arguments.length == FrameAccess.expectedArgumentSize(code.getNumArgsAndCopied());
         for (int i = 0; i < code.getNumArgsAndCopied(); i++) {
-            pushStackNode.executeWrite(frame, arguments[FrameAccess.ARGUMENTS_START + i]);
+            pushStackNode.executeWrite(frame, arguments[FrameAccess.getArgumentStartIndex() + i]);
         }
         // Initialize remaining temporary variables with nil in newContext.
         final int remainingTemps = code.getNumTemps() - code.getNumArgs();
         for (int i = 0; i < remainingTemps; i++) {
             pushStackNode.executeWrite(frame, code.image.nil);
         }
-        assert (FrameUtil.getIntSafe(frame, code.getStackPointerSlot())) >= remainingTemps;
+        assert FrameAccess.getStackPointer(frame, code) >= remainingTemps;
     }
 
     @Override

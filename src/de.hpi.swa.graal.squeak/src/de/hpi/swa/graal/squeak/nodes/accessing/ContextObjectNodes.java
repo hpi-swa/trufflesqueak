@@ -162,10 +162,7 @@ public final class ContextObjectNodes {
                         @SuppressWarnings("unused") @Cached("context.getBlockOrMethod()") final CompiledCodeObject codeObject,
                         @Cached("create(codeObject)") final FrameStackWriteNode writeNode) {
             final int stackIndex = (int) (index - CONTEXT.TEMP_FRAME_START);
-            final Object[] frameArguments = context.getTruffleFrame().getArguments();
-            if (FrameAccess.ARGUMENTS_START + stackIndex < frameArguments.length) {
-                frameArguments[FrameAccess.ARGUMENTS_START + stackIndex] = value;
-            }
+            FrameAccess.setArgumentIfInRange(context.getTruffleFrame(), stackIndex, value);
             writeNode.execute(context.getTruffleFrame(), stackIndex, value);
         }
 

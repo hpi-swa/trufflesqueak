@@ -21,66 +21,71 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
+/**
+ * GraalSqueak frame argument layout.
+ *
+ * <pre>
+ *                            +-------------------------------+
+ * METHOD                  -> | CompiledMethodObject          |
+ *                            +-------------------------------+
+ * SENDER_OR_SENDER_MARKER -> | FrameMarker: virtual sender   |
+ *                            | ContextObject: materialized   |
+ *                            | nil: terminated / top-level   |
+ *                            +-------------------------------+
+ * CLOSURE_OR_NULL         -> | BlockClosure / null           |
+ *                            +-------------------------------+
+ * RECEIVER                -> | Object                        |
+ *                            +-------------------------------+
+ * ARGUMENTS_START         -> | argument0                     |
+ *                            | argument1                     |
+ *                            | ...                           |
+ *                            | argument(nArgs-1)             |
+ *                            | copiedValue1                  |
+ *                            | copiedValue2                  |
+ *                            | ...                           |
+ *                            | copiedValue(nCopied-1)        |
+ *                            +-------------------------------+
+ * </pre>
+ *
+ * GraalSqueak frame slot layout.
+ *
+ * <pre>
+ *                       +-------------------------------+
+ * thisMarker         -> | FrameMarker                   |
+ *                       +-------------------------------+
+ * thisContext        -> | ContextObject / null          |
+ *                       +-------------------------------+
+ * instructionPointer -> | int (-1 if terminated)        |
+ *                       +-------------------------------+
+ * stackPointer       -> | int                           |
+ *                       +-------------------------------+
+ * stackSlots[]       -> | Object[] (specialized)        |
+ *                       +-------------------------------+
+ * </pre>
+ */
 public final class FrameAccess {
-    /**
-     * GraalSqueak frame argument layout.
-     *
-     * <pre>
-     *                            +-------------------------------+
-     * METHOD                  -> | CompiledMethodObject          |
-     *                            +-------------------------------+
-     * SENDER_OR_SENDER_MARKER -> | FrameMarker: virtual sender   |
-     *                            | ContextObject: materialized   |
-     *                            | nil: terminated / top-level   |
-     *                            +-------------------------------+
-     * CLOSURE_OR_NULL         -> | BlockClosure / null           |
-     *                            +-------------------------------+
-     * RECEIVER                -> | Object                        |
-     *                            +-------------------------------+
-     * ARGUMENTS_START         -> | argument0                     |
-     *                            | argument1                     |
-     *                            | ...                           |
-     *                            | argument(nArgs-1)             |
-     *                            | copiedValue1                  |
-     *                            | copiedValue2                  |
-     *                            | ...                           |
-     *                            | copiedValue(nCopied-1)        |
-     *                            +-------------------------------+
-     * </pre>
-     */
-    public static final int METHOD = 0;
-    public static final int SENDER_OR_SENDER_MARKER = 1;
-    public static final int CLOSURE_OR_NULL = 2;
-    public static final int RECEIVER = 3;
-    public static final int ARGUMENTS_START = 4;
 
-    /**
-     * GraalSqueak frame slot layout.
-     *
-     * <pre>
-     *                       +-------------------------------+
-     * thisMarker         -> | FrameMarker                   |
-     *                       +-------------------------------+
-     * thisContext        -> | ContextObject / null          |
-     *                       +-------------------------------+
-     * instructionPointer -> | int (-1 if terminated)        |
-     *                       +-------------------------------+
-     * stackPointer       -> | int                           |
-     *                       +-------------------------------+
-     * stackSlots[]       -> | Object[] (specialized)        |
-     *                       +-------------------------------+
-     * </pre>
-     */
+    private enum ArgumentIndicies {
+        METHOD, // 0
+        SENDER_OR_SENDER_MARKER, // 1
+        CLOSURE_OR_NULL, // 2
+        RECEIVER, // 3
+        ARGUMENTS_START, // 4
+    }
 
     private FrameAccess() {
     }
 
     public static CompiledMethodObject getMethod(final Frame frame) {
-        return (CompiledMethodObject) frame.getArguments()[METHOD];
+        return (CompiledMethodObject) frame.getArguments()[ArgumentIndicies.METHOD.ordinal()];
+    }
+
+    public static void setMethod(final Frame frame, final CompiledMethodObject method) {
+        frame.getArguments()[ArgumentIndicies.METHOD.ordinal()] = method;
     }
 
     public static Object getSender(final Frame frame) {
-        return frame.getArguments()[SENDER_OR_SENDER_MARKER];
+        return frame.getArguments()[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()];
     }
 
     public static ContextObject getSenderContext(final Frame frame) {
@@ -88,11 +93,15 @@ public final class FrameAccess {
     }
 
     public static void setSender(final Frame frame, final AbstractSqueakObject value) {
-        frame.getArguments()[SENDER_OR_SENDER_MARKER] = value;
+        frame.getArguments()[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = value;
     }
 
     public static BlockClosureObject getClosure(final Frame frame) {
-        return (BlockClosureObject) frame.getArguments()[CLOSURE_OR_NULL];
+        return (BlockClosureObject) frame.getArguments()[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()];
+    }
+
+    public static void setClosure(final Frame frame, final BlockClosureObject closure) {
+        frame.getArguments()[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
     }
 
     public static CompiledCodeObject getBlockOrMethod(final Frame frame) {
@@ -101,16 +110,32 @@ public final class FrameAccess {
     }
 
     public static Object getReceiver(final Frame frame) {
-        return frame.getArguments()[RECEIVER];
+        return frame.getArguments()[ArgumentIndicies.RECEIVER.ordinal()];
+    }
+
+    public static void setReceiver(final Frame frame, final Object receiver) {
+        frame.getArguments()[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
     }
 
     public static Object getArgument(final Frame frame, final int index) {
-        return frame.getArguments()[RECEIVER + index];
+        return frame.getArguments()[ArgumentIndicies.RECEIVER.ordinal() + index];
+    }
+
+    public static int getArgumentStartIndex() {
+        return ArgumentIndicies.ARGUMENTS_START.ordinal();
+    }
+
+    public static void setArgumentIfInRange(final Frame frame, final int index, final Object value) {
+        final Object[] frameArguments = frame.getArguments();
+        final int argumentIndex = ArgumentIndicies.ARGUMENTS_START.ordinal() + index;
+        if (argumentIndex < frameArguments.length) {
+            frameArguments[argumentIndex] = value;
+        }
     }
 
     public static Object[] getReceiverAndArguments(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        return Arrays.copyOfRange(frame.getArguments(), RECEIVER, frame.getArguments().length);
+        return Arrays.copyOfRange(frame.getArguments(), ArgumentIndicies.RECEIVER.ordinal(), frame.getArguments().length);
     }
 
     public static FrameMarker getMarker(final Frame frame) {
@@ -201,38 +226,34 @@ public final class FrameAccess {
 
     public static boolean isGraalSqueakFrame(final Frame frame) {
         final Object[] arguments = frame.getArguments();
-        return arguments.length >= RECEIVER && arguments[METHOD] instanceof CompiledMethodObject;
+        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()] instanceof CompiledMethodObject;
     }
 
     public static boolean matchesContextOrMarker(final FrameMarker frameMarker, final Object contextOrMarker) {
         return contextOrMarker == frameMarker || (contextOrMarker instanceof ContextObject && ((ContextObject) contextOrMarker).getFrameMarker() == frameMarker);
     }
 
-    public static Object[] newWith(final CompiledMethodObject method, final Object sender, final BlockClosureObject closure, final Object[] arguments) {
-        final Object[] frameArguments = new Object[RECEIVER + arguments.length];
+    public static Object[] newWith(final CompiledMethodObject method, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArguments.length];
         assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
-        assert arguments.length > 0 : "At least a receiver must be provided";
-        assert arguments[0] != null : "Receiver should never be null";
-        frameArguments[METHOD] = method;
-        frameArguments[SENDER_OR_SENDER_MARKER] = sender;
-        frameArguments[CLOSURE_OR_NULL] = closure;
-        for (int i = 0; i < arguments.length; i++) {
-            frameArguments[RECEIVER + i] = arguments[i];
-        }
+        assert receiverAndArguments.length > 0 : "At least a receiver must be provided";
+        assert receiverAndArguments[0] != null : "Receiver should never be null";
+        frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArguments.length);
         return frameArguments;
     }
 
-    public static Object[] newDummyWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] arguments) {
-        final Object[] frameArguments = new Object[RECEIVER + arguments.length];
+    public static Object[] newDummyWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArguments.length];
         assert sender != null : "Sender should never be null";
-        assert arguments.length > 0 : "At least a receiver must be provided";
-        frameArguments[METHOD] = code;
-        frameArguments[SENDER_OR_SENDER_MARKER] = sender;
-        frameArguments[CLOSURE_OR_NULL] = closure;
-        for (int i = 0; i < arguments.length; i++) {
-            frameArguments[RECEIVER + i] = arguments[i];
-        }
+        assert receiverAndArguments.length > 0 : "At least a receiver must be provided";
+        frameArguments[ArgumentIndicies.METHOD.ordinal()] = code;
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArguments.length);
         return frameArguments;
     }
 
@@ -241,19 +262,27 @@ public final class FrameAccess {
         final Object[] copied = block.getStack();
         final int numCopied = copied.length;
         assert block.getCompiledBlock().getNumArgs() == numObjects && block.getCopied().length == numCopied : "number of required and provided block arguments do not match";
-        final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START + numObjects + numCopied];
-        arguments[FrameAccess.METHOD] = block.getCompiledBlock().getMethod();
+        final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numObjects + numCopied];
+        arguments[ArgumentIndicies.METHOD.ordinal()] = block.getCompiledBlock().getMethod();
         // Sender is thisContext (or marker)
-        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = senderOrMarker;
-        arguments[FrameAccess.CLOSURE_OR_NULL] = block;
-        arguments[FrameAccess.RECEIVER] = block.getReceiver();
-        for (int i = 0; i < numObjects; i++) {
-            arguments[FrameAccess.ARGUMENTS_START + i] = objects[i];
-        }
-        for (int i = 0; i < numCopied; i++) {
-            arguments[FrameAccess.ARGUMENTS_START + numObjects + i] = copied[i];
-        }
+        arguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = senderOrMarker;
+        arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = block;
+        arguments[ArgumentIndicies.RECEIVER.ordinal()] = block.getReceiver();
+        System.arraycopy(objects, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal(), numObjects);
+        System.arraycopy(copied, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal() + numObjects, numCopied);
         return arguments;
+    }
+
+    public static int expectedArgumentSize(final int numArgsAndCopied) {
+        return ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgsAndCopied;
+    }
+
+    public static void assertSenderNotNull(final Frame frame) {
+        assert getSender(frame) != null : "Sender should not be null";
+    }
+
+    public static void assertReceiverNotNull(final Frame frame) {
+        assert getReceiver(frame) != null : "Receiver should not be null";
     }
 
     @TruffleBoundary

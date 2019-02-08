@@ -10,7 +10,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SYNTAX_ERROR_NOTIFICATION;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -42,9 +41,8 @@ public final class SqueakExceptions {
             final FrameInstance currentFrame = Truffle.getRuntime().getCurrentFrame();
             if (currentFrame != null) {
                 final Frame frame = currentFrame.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                if (frame.getArguments().length > FrameAccess.METHOD) {
-                    final CompiledCodeObject code = FrameAccess.getMethod(frame);
-                    code.image.printSqStackTrace();
+                if (FrameAccess.isGraalSqueakFrame(frame)) {
+                    FrameAccess.getMethod(frame).image.printSqStackTrace();
                 }
             }
         }

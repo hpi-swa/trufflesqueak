@@ -101,6 +101,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         private void patchTruffleFrames(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
+            final int fromPointersLength = fromPointers.length;
+
             Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
                 private boolean firstSkipped = false;
 
@@ -115,10 +117,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     if (!FrameAccess.isGraalSqueakFrame(current)) {
                         return null;
                     }
-                    final Object[] arguments = current.getArguments();
-                    for (int i = FrameAccess.RECEIVER; i < arguments.length; i++) {
+                    final Object[] arguments = FrameAccess.getReceiverAndArguments(current);
+                    for (int i = 0; i < arguments.length; i++) {
                         final Object argument = arguments[i];
-                        for (int j = 0; j < fromPointers.length; j++) {
+                        for (int j = 0; j < fromPointersLength; j++) {
                             final Object fromPointer = fromPointers[j];
                             if (argument == fromPointer) {
                                 final Object toPointer = toPointers[j];
@@ -141,7 +143,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             return null;
                         }
                         final Object stackObject = current.getValue(frameSlot);
-                        for (int j = 0; j < fromPointers.length; j++) {
+                        for (int j = 0; j < fromPointersLength; j++) {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];

@@ -66,7 +66,7 @@ public final class ContextObject extends AbstractSqueakObject {
         final int numStackSlots = code.getNumStackSlots();
         for (int i = 0; i < numStackSlots; i++) {
             final FrameSlot slot = code.getStackSlot(i);
-            truffleFrame.setObject(slot, original.truffleFrame.getValue(slot));
+            truffleFrame.setObject(slot, original.truffleFrame.getValue(slot)); // TODO: specialize
         }
     }
 
@@ -213,10 +213,10 @@ public final class ContextObject extends AbstractSqueakObject {
                 assert FrameAccess.getSender(truffleFrame) != null : "Sender should not be null";
 
                 final Object[] dummyArguments = truffleFrame.getArguments();
-                final int expectedArgumentSize = FrameAccess.ARGUMENTS_START + method.getNumArgsAndCopied();
+                final int expectedArgumentSize = FrameAccess.expectedArgumentSize(method.getNumArgsAndCopied());
                 assert dummyArguments.length >= expectedArgumentSize : "Unexpected argument size, maybe dummy frame had wrong size?";
+                FrameAccess.assertReceiverNotNull(truffleFrame);
                 frameArguments = truffleFrame.getArguments();
-                assert frameArguments[FrameAccess.RECEIVER] != null : "Receiver should probably not be null here";
                 if (truffleFrame.getFrameDescriptor().getSize() > 0) {
                     instructionPointer = FrameAccess.getInstructionPointer(truffleFrame, method);
                     stackPointer = FrameAccess.getStackPointer(truffleFrame, method);
@@ -252,7 +252,7 @@ public final class ContextObject extends AbstractSqueakObject {
                 assert FrameAccess.getSender(truffleFrame) != null : "Sender should not be null";
 
                 final Object[] dummyArguments = truffleFrame.getArguments();
-                final int expectedArgumentSize = FrameAccess.ARGUMENTS_START + compiledBlock.getNumArgsAndCopied();
+                final int expectedArgumentSize = FrameAccess.expectedArgumentSize(compiledBlock.getNumArgsAndCopied());
                 assert dummyArguments.length >= expectedArgumentSize : "Unexpected argument size, maybe dummy frame had wrong size?";
                 if (dummyArguments.length > expectedArgumentSize) {
                     // Trim arguments.
@@ -260,8 +260,6 @@ public final class ContextObject extends AbstractSqueakObject {
                 } else {
                     frameArguments = truffleFrame.getArguments();
                 }
-                assert frameArguments[FrameAccess.RECEIVER] != null : "Receiver should probably not be null here";
-
                 if (truffleFrame.getFrameDescriptor().getSize() > 0) {
                     instructionPointer = FrameAccess.getInstructionPointer(truffleFrame, compiledBlock);
                     stackPointer = FrameAccess.getStackPointer(truffleFrame, compiledBlock);
@@ -276,10 +274,10 @@ public final class ContextObject extends AbstractSqueakObject {
                 instructionPointer = compiledBlock.getInitialPC();
                 stackPointer = 0;
             }
-            assert frameArguments[FrameAccess.RECEIVER] != null : "Receiver should probably not be null here";
-            assert frameArguments[FrameAccess.SENDER_OR_SENDER_MARKER] != null;
             CompilerDirectives.transferToInterpreterAndInvalidate();
             truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, compiledBlock.getFrameDescriptor());
+            FrameAccess.assertSenderNotNull(truffleFrame);
+            FrameAccess.assertReceiverNotNull(truffleFrame);
             FrameAccess.initializeMarker(truffleFrame, compiledBlock);
             FrameAccess.setContext(truffleFrame, compiledBlock, this);
             FrameAccess.setInstructionPointer(truffleFrame, compiledBlock, instructionPointer);
@@ -313,7 +311,7 @@ public final class ContextObject extends AbstractSqueakObject {
         if (!hasModifiedSender && truffleFrame != null && FrameAccess.getSender(truffleFrame) != value.getFrameMarker()) {
             hasModifiedSender = true;
         }
-        getOrCreateTruffleFrame().getArguments()[FrameAccess.SENDER_OR_SENDER_MARKER] = value;
+        FrameAccess.setSender(getOrCreateTruffleFrame(), value);
     }
 
     public void removeSender() {
@@ -349,7 +347,7 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public void setMethod(final CompiledMethodObject value) {
-        getOrCreateTruffleFrame(value).getArguments()[FrameAccess.METHOD] = value;
+        FrameAccess.setMethod(getOrCreateTruffleFrame(value), value);
     }
 
     public BlockClosureObject getClosure() {
@@ -357,7 +355,7 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public void setClosure(final BlockClosureObject value) {
-        getOrCreateTruffleFrame(value).getArguments()[FrameAccess.CLOSURE_OR_NULL] = value;
+        FrameAccess.setClosure(getOrCreateTruffleFrame(value), value);
     }
 
     public CompiledCodeObject getBlockOrMethod() {
@@ -374,7 +372,7 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public void setReceiver(final Object value) {
-        getOrCreateTruffleFrame().getArguments()[FrameAccess.RECEIVER] = value;
+        FrameAccess.setReceiver(getOrCreateTruffleFrame(), value);
     }
 
     public Object atTemp(final int index) {
@@ -385,10 +383,7 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public void atTempPut(final int index, final Object value) {
-        final Object[] frameArguments = getOrCreateTruffleFrame().getArguments();
-        if (FrameAccess.ARGUMENTS_START + index < frameArguments.length) {
-            frameArguments[FrameAccess.ARGUMENTS_START + index] = value;
-        }
+        FrameAccess.setArgumentIfInRange(getOrCreateTruffleFrame(), index, value);
         final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(truffleFrame);
         assert index < blockOrMethod.getNumStackSlots() : "Invalid context stack access at #" + index;
         final FrameSlot frameSlot = blockOrMethod.getStackSlot(index);

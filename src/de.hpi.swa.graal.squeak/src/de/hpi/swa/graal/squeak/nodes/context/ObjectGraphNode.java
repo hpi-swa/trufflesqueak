@@ -120,11 +120,9 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
             if (!FrameAccess.isGraalSqueakFrame(current)) {
                 return null;
             }
-            final Object[] arguments = current.getArguments();
-            for (int i = FrameAccess.RECEIVER; i < arguments.length; i++) {
-                final Object argument = arguments[i];
-                if (SqueakGuards.isAbstractSqueakObject(argument)) {
-                    pending.add((AbstractSqueakObject) argument);
+            for (final Object value : FrameAccess.getReceiverAndArguments(current)) {
+                if (SqueakGuards.isAbstractSqueakObject(value)) {
+                    pending.add((AbstractSqueakObject) value);
                 }
             }
             final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
