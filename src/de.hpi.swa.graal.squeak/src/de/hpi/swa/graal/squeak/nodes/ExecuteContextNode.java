@@ -8,7 +8,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -253,7 +252,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         }
     }
 
-    protected abstract static class GetSuccessorNode extends Node {
+    protected abstract static class GetSuccessorNode extends AbstractNode {
         private static GetSuccessorNode create() {
             return GetSuccessorNodeGen.create();
         }

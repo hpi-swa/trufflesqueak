@@ -4,11 +4,11 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.NotProvided;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 
-public abstract class CreateEagerArgumentsNode extends Node {
+public abstract class CreateEagerArgumentsNode extends AbstractNode {
     public static CreateEagerArgumentsNode create() {
         return CreateEagerArgumentsNodeGen.create();
     }

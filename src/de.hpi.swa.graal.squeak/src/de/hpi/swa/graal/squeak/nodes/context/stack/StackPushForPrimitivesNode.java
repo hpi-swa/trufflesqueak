@@ -6,9 +6,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -21,7 +21,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
  * during eager primitive calls.
  */
 @ImportStatic(FrameAccess.class)
-public abstract class StackPushForPrimitivesNode extends Node {
+public abstract class StackPushForPrimitivesNode extends AbstractNode {
     public static StackPushForPrimitivesNode create() {
         return StackPushForPrimitivesNodeGen.create();
     }

@@ -1,33 +1,26 @@
 package de.hpi.swa.graal.squeak.nodes.primitives;
 
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakTypes;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.AbstractPrimitive;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-@ImportStatic(SqueakGuards.class)
-@ReportPolymorphism
-@TypeSystemReference(SqueakTypes.class)
 @GenerateWrapper
 @NodeChild(value = "arguments", type = SqueakNode[].class)
-public abstract class AbstractPrimitiveNode extends Node implements AbstractPrimitive, InstrumentableNode {
+public abstract class AbstractPrimitiveNode extends AbstractNode implements AbstractPrimitive, InstrumentableNode {
     protected final CompiledMethodObject method;
 
     public AbstractPrimitiveNode(final CompiledMethodObject method) {
