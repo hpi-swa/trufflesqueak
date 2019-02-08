@@ -505,7 +505,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         protected final Object doGet(@SuppressWarnings("unused") final Object image, final long longIndex) {
             final int index = (int) longIndex;
             if (index == 0) {
-                final String separator = System.getProperty("file.separator");
+                final String separator = File.separator;
                 return method.image.wrap(System.getProperty("java.home") + separator + "bin" + separator + "java");
             } else if (index == 1) {
                 return method.image.wrap(method.image.getImagePath());
@@ -908,7 +908,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "inBounds1(index, externalModuleNames.length)")
-        @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
             return method.image.wrap(getExternalModuleNames()[(int) index - 1]);
         }
@@ -924,7 +923,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "!inBounds1(index, externalModuleNames.length)")
         @SuppressWarnings("unused")
-        @TruffleBoundary
         protected final NilObject doGetOutOfBounds(final AbstractSqueakObject receiver, final long index) {
             return method.image.nil;
         }
