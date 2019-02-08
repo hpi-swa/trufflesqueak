@@ -29,6 +29,7 @@ import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.NullPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.SecurityPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.SoundCodecPrims;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrims;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL;
@@ -79,6 +80,7 @@ public final class PrimitiveNodeFactory {
                     new MiscPrimitivePlugin(),
                     new NullPlugin(),
                     new PolyglotPlugin(),
+                    new SecurityPlugin(),
                     new SocketPlugin(),
                     new SqueakFFIPrims(),
                     new SqueakSSL(),
