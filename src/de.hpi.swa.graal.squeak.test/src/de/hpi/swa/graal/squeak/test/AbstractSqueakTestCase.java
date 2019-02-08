@@ -134,5 +134,6 @@ public abstract class AbstractSqueakTestCase {
         if (Files.exists(Paths.get(imagePath))) {
             image.ensureLoaded();
         }
+        image.getSqueakImage(); // Pretend image has been loaded.
     }
 }
