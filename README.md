@@ -11,9 +11,7 @@ A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
    Oracle Labs JDK's home directory.
 4. Run [`bin/graalsqueak`][graalsqueak] to build and start GraalSqueak with
    [mx] using the Oracle Labs JDK.
-5. Open a pre-configured
-   [Squeak/Smalltalk image for GraalSqueak][graalsqueak_image]
-   (incl. [VMMaker] for BitBlt/Balloon simulation).
+5. Open a recent [Squeak/Smalltalk image][squeak_downloads] (Squeak-5.2 or later).
 
 To list all available options, run `bin/graalsqueak -h`.
 
@@ -28,17 +26,19 @@ contribute a bugfix or a new feature.
 
 ### Setting Up A New Development Environment
 
-It is recommended to use [Eclipse Oxygen][eclipse_oxygen] with the
+It is recommended to use [Eclipse][eclipse_downloads] with the
 [Eclipse Checkstyle Plugin][eclipse_cs] for development.
 
-1. Run `mx eclipseinit` to create all project files for Eclipse.
+1. Run `mx eclipseinit` in GraalSqueak's root directory to create all project
+   files for Eclipse.
 2. Import all projects from the [graal] repository which `mx` should have
    already cloned into the parent directory of your GraalSqueak checkout during
    the build process.
-3. Import all projects from the `graalsqueak` repository.
+3. Import all projects from GraalSqueak's root directory.
 4. Launch [`GraalSqueakLauncher`][graalsqueak_launcher] to start GraalSqueak.
 
-Run `mx --help` to list all commands that may help you develop GraalSqueak.
+Run `mx --help` and `mx squeak --help` to list all commands that may help you
+develop GraalSqueak.
 
 
 ## Contributing
@@ -49,12 +49,12 @@ Please [report any issues here on GitHub][issues] and open
 
 ## Papers
 
-- Fabio Niephaus, Tim Felgentreff, and Robert Hirschfeld. GraalSqueak: A Fast
-Smalltalk Bytecode Interpreter Written in an AST Interpreter Framework. In
-Proceedings of the Workshop on Implementation, Compilation, Optimization of
-Object-Oriented Languages, Programs and Systems (ICOOOLPS) 2018, co-located with
-the European Conference on Object-oriented Programming (ECOOP), Amsterdam,
-Netherlands, July 17, 2018, ACM DL.  
+- Fabio Niephaus, Tim Felgentreff, and Robert Hirschfeld. *GraalSqueak: A Fast
+Smalltalk Bytecode Interpreter Written in an AST Interpreter Framework.* In
+Proceedings of [the Workshop on Implementation, Compilation, Optimization of
+Object-Oriented Languages, Programs and Systems (ICOOOLPS) 2018][icooolps18],
+co-located with [the European Conference on Object-oriented Programming
+(ECOOP)][ecoop], Amsterdam, Netherlands, July 17, 2018, ACM DL.  
    [![doi][icooolps18_doi]][icooolps18_paper] [![Preprint][icooolps18_preprint]][icooolps18_pdf]
 
 
@@ -63,7 +63,7 @@ Netherlands, July 17, 2018, ACM DL.
 [codacy_grade]: https://img.shields.io/codacy/grade/9748bfe3726b48c8973e3808549f6d05.svg
 [dev]: ../../tree/dev
 [eclipse_cs]: http://checkstyle.org/eclipse-cs/
-[eclipse_oxygen]: https://www.eclipse.org/oxygen/
+[eclipse_downloads]: https://www.eclipse.org/downloads/
 [ecoop]: https://2018.ecoop.org/
 [graal]: https://github.com/oracle/graal
 [graalsqueak]: bin/graalsqueak
@@ -82,6 +82,7 @@ Netherlands, July 17, 2018, ACM DL.
 [mx]: https://github.com/graalvm/mx
 [pull_request]: ../../compare/dev...
 [squeak]: https://squeak.org
+[squeak_downloads]: https://squeak.org/downloads/
 [travis]: https://travis-ci.com/hpi-swa-lab/graalsqueak
 [travis_badge]: https://travis-ci.com/hpi-swa-lab/graalsqueak.svg?token=7fqzGEv22MQpvpU7RhK5&branch=master
 [vmmaker]: http://source.squeak.org/VMMaker/
