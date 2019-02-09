@@ -1666,11 +1666,8 @@ public final class BitBlt {
         if ((shifts == null) || (masks == null)) {
             return true;
         }
-        if (((shifts[RED_INDEX]) == 0) && (((shifts[GREEN_INDEX]) == 0) && (((shifts[BLUE_INDEX]) == 0) && (((shifts[ALPHA_INDEX]) == 0) &&
-                        (((masks[RED_INDEX]) == 0xFF0000) && (((masks[GREEN_INDEX]) == 0xFF00) && (((masks[BLUE_INDEX]) == 0xFF) && ((masks[ALPHA_INDEX]) == 0xFF000000)))))))) {
-            return true;
-        }
-        return false;
+        return (((shifts[RED_INDEX]) == 0) && (((shifts[GREEN_INDEX]) == 0) && (((shifts[BLUE_INDEX]) == 0) && (((shifts[ALPHA_INDEX]) == 0) &&
+                        (((masks[RED_INDEX]) == 0xFF0000) && (((masks[GREEN_INDEX]) == 0xFF00) && (((masks[BLUE_INDEX]) == 0xFF) && ((masks[ALPHA_INDEX]) == 0xFF000000))))))));
     }
 
     /*
@@ -1708,10 +1705,7 @@ public final class BitBlt {
             destBits = ArrayConversionUtils.intsFromBytes(destBitsNative.getByteStorage());
         }
         final long destBitsSize = destBits.length * 4;
-        if (destBitsSize < (destPitch * destHeight)) {
-            return false;
-        }
-        return true;
+        return destBitsSize >= destPitch * destHeight;
     }
 
     /*
@@ -1838,10 +1832,7 @@ public final class BitBlt {
             sourceBits = ArrayConversionUtils.intsFromBytes(sourceBitsNative.getByteStorage());
         }
         final long sourceBitsSize = sourceBits.length * 4;
-        if (sourceBitsSize < (sourcePitch * sourceHeight)) {
-            return false;
-        }
-        return true;
+        return sourceBitsSize >= sourcePitch * sourceHeight;
     }
 
     /*
@@ -2561,7 +2552,7 @@ public final class BitBlt {
         maxGlyph = (slotSizeOf(xTable)) - 2;
         /* no point using slower version */
         quickBlt = (destBits != null) && ((sourceBits != null) &&
-                        ((noSource == false) && ((sourceForm != destForm) && ((cmFlags != 0) || ((sourceMSB != destMSB) || (sourceDepth != destDepth))))));
+                        (!noSource && ((sourceForm != destForm) && ((cmFlags != 0) || ((sourceMSB != destMSB) || (sourceDepth != destDepth))))));
         if (quickBlt) {
             endOfSource = sourcePitch * sourceHeight;
             endOfDestination = destPitch * destHeight;
@@ -3416,7 +3407,6 @@ public final class BitBlt {
         cmShiftTable = shifts;
         cmMaskTable = masks;
         cmFlags = cmFlags | (COLOR_MAP_PRESENT | COLOR_MAP_FIXED_PART);
-        return;
     }
 
     /* BitBltSimulation>>#showDisplayBits */
@@ -3987,11 +3977,9 @@ public final class BitBlt {
                 }
                 /* map the pixel */
                 rgb = (((((a) << 24)) + (((r) << 16))) + (((g) << 8))) + b;
-                if (rgb == 0) {
+                if (rgb == 0 && (((r + g) + b) + a) > 0) {
                     /* only generate zero if pixel is really transparent */
-                    if ((((r + g) + b) + a) > 0) {
-                        rgb = 1;
-                    }
+                    rgb = 1;
                 }
                 rgb = mapPixelflags(rgb, cmFlags);
             }
