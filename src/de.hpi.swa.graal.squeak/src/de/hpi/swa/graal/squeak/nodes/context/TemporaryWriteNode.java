@@ -40,6 +40,6 @@ public abstract class TemporaryWriteNode extends AbstractNodeWithCode {
     @SuppressWarnings("unused")
     @Fallback
     protected static final void doFail(final VirtualFrame frame, final Object value) {
-        throw new SqueakException("Should never happen");
+        throw SqueakException.create("Should never happen");
     }
 }

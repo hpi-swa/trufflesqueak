@@ -39,6 +39,6 @@ public abstract class FrameStackWriteNode extends AbstractNodeWithCode {
     @SuppressWarnings("unused")
     @Specialization(replaces = "doWrite")
     protected static final void doFail(final Frame frame, final int stackIndex, final Object value) {
-        throw new SqueakException("Unexpected failure in FrameStackWriteNode");
+        throw SqueakException.create("Unexpected failure in FrameStackWriteNode");
     }
 }

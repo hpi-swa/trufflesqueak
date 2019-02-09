@@ -99,18 +99,18 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     @SuppressWarnings("unused")
     @Specialization
     protected static final Object doEmpty(final EmptyObject obj, final long index) {
-        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
+        throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected static final Object doNil(final NilObject obj, final long index) {
-        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
+        throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @SuppressWarnings("unused")
     @Fallback
     protected static final Object doFallback(final Object obj, final long index) {
-        throw new SqueakException("Object does not support at0:", obj);
+        throw SqueakException.create("Object does not support at0:", obj);
     }
 }

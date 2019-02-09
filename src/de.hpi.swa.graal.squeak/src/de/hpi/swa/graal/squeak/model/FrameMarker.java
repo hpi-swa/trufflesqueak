@@ -29,7 +29,7 @@ public final class FrameMarker implements TruffleObject {
     public ContextObject getMaterializedContext() {
         final Frame targetFrame = FrameAccess.findFrameForMarker(this);
         if (targetFrame == null) {
-            throw new SqueakException("Could not find frame for: " + this);
+            throw SqueakException.create("Could not find frame for: " + this);
         }
         final ContextObject context = FrameAccess.getContext(targetFrame);
         if (context != null) {

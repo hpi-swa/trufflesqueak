@@ -210,7 +210,7 @@ public final class PushBytecodes {
 
         @Fallback
         protected static final void doFail(@SuppressWarnings("unused") final VirtualFrame frame) {
-            throw new SqueakException("Should never happen");
+            throw SqueakException.create("Should never happen");
         }
 
         @Override

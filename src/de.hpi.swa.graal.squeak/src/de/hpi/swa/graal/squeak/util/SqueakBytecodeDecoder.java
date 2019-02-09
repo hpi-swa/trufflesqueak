@@ -90,7 +90,7 @@ public final class SqueakBytecodeDecoder {
             case 64: // decodeSourcePointer
                 return bytecodeLength - 4;
             default:
-                throw new SqueakException("Undefined method encoding (see CompiledMethodTrailer).");
+                throw SqueakException.create("Undefined method encoding (see CompiledMethodTrailer).");
         }
     }
 
@@ -220,7 +220,7 @@ public final class SqueakBytecodeDecoder {
             case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 255:
                 return SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 2);
             default:
-                throw new SqueakException("Unknown bytecode:", b);
+                throw SqueakException.create("Unknown bytecode:", b);
         }
         //@formatter:on
     }

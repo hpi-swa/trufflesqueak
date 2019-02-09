@@ -730,7 +730,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization
         protected static final double doDouble(final double receiver, final long index, final long value) {
-            throw new SqueakException("Cannot modify immediate double value");
+            throw SqueakException.create("Cannot modify immediate double value");
         }
     }
 
@@ -1330,12 +1330,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doLong(final long a, final long b) {
-            throw new SqueakException("Should have been overriden: ", a, "-", b);
+            throw SqueakException.create("Should have been overriden: ", a, "-", b);
         }
 
         @Specialization
         protected Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            throw new SqueakException("Should have been overriden: ", a, "-", b);
+            throw SqueakException.create("Should have been overriden: ", a, "-", b);
         }
 
         @Specialization
@@ -1356,12 +1356,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doDouble(final double a, final double b) {
-            throw new SqueakException("Should have been overriden: ", a, "-", b);
+            throw SqueakException.create("Should have been overriden: ", a, "-", b);
         }
 
         @Specialization
         protected Object doFloat(final FloatObject a, final FloatObject b) {
-            throw new SqueakException("Should have been overriden: ", a, "-", b);
+            throw SqueakException.create("Should have been overriden: ", a, "-", b);
         }
 
         @Specialization

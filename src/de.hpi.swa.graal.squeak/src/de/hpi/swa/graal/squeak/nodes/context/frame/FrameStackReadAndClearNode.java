@@ -45,6 +45,6 @@ public abstract class FrameStackReadAndClearNode extends AbstractNodeWithCode {
     @SuppressWarnings("unused")
     @Specialization(replaces = "doClear")
     protected static final void doFail(final Frame frame, final int stackIndex) {
-        throw new SqueakException("Unexpected failure in FrameStackClearNode");
+        throw SqueakException.create("Unexpected failure in FrameStackClearNode");
     }
 }

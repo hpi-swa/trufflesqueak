@@ -25,16 +25,24 @@ public final class SqueakExceptions {
     public static final class SqueakException extends IllegalStateException {
         private static final long serialVersionUID = 1L;
 
-        public SqueakException(final String message, final Throwable cause) {
+        private SqueakException(final String message, final Throwable cause) {
             super(message, cause);
-            CompilerDirectives.transferToInterpreter();
             printSqueakStackTrace();
         }
 
-        public SqueakException(final Object... messageParts) {
+        private SqueakException(final Object... messageParts) {
             super(ArrayUtils.toJoinedString(" ", messageParts));
-            CompilerDirectives.transferToInterpreter();
             printSqueakStackTrace();
+        }
+
+        public static SqueakException create(final String message, final Throwable cause) {
+            CompilerDirectives.transferToInterpreter();
+            return new SqueakException(message, cause);
+        }
+
+        public static SqueakException create(final Object... messageParts) {
+            CompilerDirectives.transferToInterpreter();
+            return new SqueakException(messageParts);
         }
 
         private static void printSqueakStackTrace() {
@@ -51,8 +59,13 @@ public final class SqueakExceptions {
     public static final class SqueakAbortException extends RuntimeException implements TruffleException {
         private static final long serialVersionUID = 1L;
 
-        public SqueakAbortException(final Object... messageParts) {
+        private SqueakAbortException(final Object... messageParts) {
             super(ArrayUtils.toJoinedString(" ", messageParts));
+        }
+
+        public static SqueakAbortException create(final Object... messageParts) {
+            CompilerDirectives.transferToInterpreter();
+            return new SqueakAbortException(messageParts);
         }
 
         public Node getLocation() {

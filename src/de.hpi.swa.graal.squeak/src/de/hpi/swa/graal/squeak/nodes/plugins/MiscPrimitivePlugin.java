@@ -274,7 +274,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         break;
                     }
                     default:
-                        throw new SqueakException("primitiveDecompressFromByteArray: should not happen");
+                        throw SqueakException.create("primitiveDecompressFromByteArray: should not happen");
                 }
             }
             return receiver;

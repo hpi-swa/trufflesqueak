@@ -55,7 +55,7 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
 
     @Fallback
     protected static final void doFail(final PrimitiveFailed e) {
-        throw new SqueakException("Should never happen:", e);
+        throw SqueakException.create("Should never happen:", e);
     }
 
     protected static final boolean followedByExtendedStore(final CompiledCodeObject codeObject) {

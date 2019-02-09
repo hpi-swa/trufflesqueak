@@ -33,7 +33,7 @@ public final class CompiledCodeNodes {
 
         @Fallback
         protected static final CompiledMethodObject doFail(final CompiledCodeObject object) {
-            throw new SqueakException("Unexpected value: ", object);
+            throw SqueakException.create("Unexpected value: ", object);
         }
 
     }
@@ -58,7 +58,7 @@ public final class CompiledCodeNodes {
 
         @Fallback
         protected static final int doFail(final CompiledCodeObject object) {
-            throw new SqueakException("Should never happen", object);
+            throw SqueakException.create("Should never happen", object);
         }
     }
 }

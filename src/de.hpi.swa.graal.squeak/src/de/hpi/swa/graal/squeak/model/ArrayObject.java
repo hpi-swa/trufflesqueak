@@ -285,7 +285,7 @@ public final class ArrayObject extends AbstractSqueakObject {
 
     @Override
     public int size() {
-        throw new SqueakException("Use ArrayObjectSizeNode");
+        throw SqueakException.create("Use ArrayObjectSizeNode");
     }
 
     public boolean isAbstractSqueakObjectType() {

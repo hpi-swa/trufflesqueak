@@ -205,7 +205,7 @@ public final class SqueakImageChunk {
                     }
                     return Double.longBitsToDouble(Long.rotateRight(valueWithoutTag, 1));
                 default:
-                    throw new SqueakException("Unexpected pointer");
+                    throw SqueakException.create("Unexpected pointer");
             }
         } else {
             if ((ptr & 3) == 0) {

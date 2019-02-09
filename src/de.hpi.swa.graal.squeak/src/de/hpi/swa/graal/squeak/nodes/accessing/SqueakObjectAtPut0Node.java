@@ -110,18 +110,18 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     @SuppressWarnings("unused")
     @Specialization
     protected static final void doEmpty(final EmptyObject obj, final long index, final Object value) {
-        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
+        throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected static final void doNil(final NilObject obj, final long index, final Object value) {
-        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
+        throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @SuppressWarnings("unused")
     @Fallback
     protected static final void doFallback(final Object obj, final long index, final Object value) {
-        throw new SqueakException("Object does not support atput0:", obj);
+        throw SqueakException.create("Object does not support atput0:", obj);
     }
 }

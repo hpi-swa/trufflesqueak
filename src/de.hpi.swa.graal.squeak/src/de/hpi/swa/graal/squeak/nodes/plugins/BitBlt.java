@@ -877,7 +877,7 @@ public final class BitBlt {
             gammaLookupTable = null;
             ungammaLookupTable = null;
 
-            throw new SqueakException("Not implemented");
+            throw SqueakException.create("Not implemented");
             // TODO: uncomment:
             // if ((methodArgumentCount()) >= 2) {
             // componentAlphaModeAlpha = stackIntegerValue((methodArgumentCount()) - 2);
@@ -1517,7 +1517,7 @@ public final class BitBlt {
             }
             PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         }
-        throw new SqueakException("Should not be reached:", fieldOop);
+        throw SqueakException.create("Should not be reached:", fieldOop);
     }
 
     private static int floatToLong(final double floatValue) {
@@ -1555,7 +1555,7 @@ public final class BitBlt {
             }
             PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         }
-        throw new SqueakException("Should not be reached:", fieldOop);
+        throw SqueakException.create("Should not be reached:", fieldOop);
     }
 
     /*
@@ -1694,7 +1694,7 @@ public final class BitBlt {
         }
         if (!(isWordsOrBytes(destBitsValue))) {
             if (destBitsValue instanceof Long) {
-                throw new SqueakException("Not supported: Query for actual surface dimensions");
+                throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
                 return false;
             }
@@ -1824,7 +1824,7 @@ public final class BitBlt {
         }
         if (!(isWordsOrBytes(sourceBitsValue))) {
             if (sourceBitsValue instanceof Long) {
-                throw new SqueakException("Not supported: Query for actual surface dimensions");
+                throw SqueakException.create("Not supported: Query for actual surface dimensions");
             } else {
                 return false;
             }
@@ -2528,11 +2528,11 @@ public final class BitBlt {
         }
         copyBits(factor);
         if (failed()) {
-            throw new SqueakException("Should not happen");
+            throw SqueakException.create("Should not happen");
         }
         showDisplayBits();
         if (failed()) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         if ((combinationRule == 22) || (combinationRule == 32)) {
             return bitCount;
@@ -2583,7 +2583,7 @@ public final class BitBlt {
             sourceX = (int) xTableLongs[glyphIndex];
             width = (int) (xTableLongs[glyphIndex + 1] - sourceX);
             if (failed()) {
-                throw new SqueakException("return null");
+                throw SqueakException.create("return null");
             }
             clipRange();
             if ((bbW > 0) && (bbH > 0)) {
@@ -2599,7 +2599,7 @@ public final class BitBlt {
                 }
             }
             if (failed()) {
-                throw new SqueakException("return null");
+                throw SqueakException.create("return null");
             }
             destX = (destX + width) + kernDelta;
         }
@@ -2659,7 +2659,7 @@ public final class BitBlt {
         /* if width/height/depth are not integer, fail */
         depth = fetchIntegerofObject(FORM.DEPTH, rcvr);
         if (failed()) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         if ((xVal >= width) || (yVal >= height)) {
             return 0L;
@@ -2707,11 +2707,11 @@ public final class BitBlt {
         }
         warpBits(n, sourceMap);
         if (failed()) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         showDisplayBits();
         if (failed()) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         return rcvr;
     }

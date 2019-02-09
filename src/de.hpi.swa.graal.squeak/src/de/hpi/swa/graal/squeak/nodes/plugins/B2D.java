@@ -3523,7 +3523,7 @@ public final class B2D {
         bmHeight = fetchIntegerofObject(2, formOop);
         bmDepth = fetchIntegerofObject(3, formOop);
         if (failed()) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         if (!((bmWidth >= 0) && (bmHeight >= 0))) {
             PrimitiveFailed.andTransferToInterpreter();
@@ -3541,7 +3541,7 @@ public final class B2D {
         }
         bmFill = allocateBitmapFillcolormap(cmSize, cmBits);
         if (engineStopped) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         bitmapWidthOfput(bmFill, bmWidth);
         bitmapHeightOfput(bmFill, bmHeight);
@@ -3767,7 +3767,7 @@ public final class B2D {
         hasEdgeTransformPut(0);
         okay = loadTransformFromintolength(transformOop, GW_EDGE_TRANSFORM, 6);
         if (failed()) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         if (!okay) {
             return false;
@@ -3885,7 +3885,7 @@ public final class B2D {
         rampWidth = slotSizeOf(rampOop);
         fill = allocateGradientFillrampWidthisRadial(rampOop.getIntStorage(), rampWidth, isRadial);
         if (engineStopped) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         loadFillOrientationfromalongnormalwidthheight(fill, rampWidth, rampWidth);
         return fill;
@@ -5350,7 +5350,7 @@ public final class B2D {
             }
         }
         if (failed()) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         storeEngineStateInto(engine);
         if (doProfileStats) {
@@ -6791,7 +6791,7 @@ public final class B2D {
     /* BalloonEngineBase>>#storeRenderingState */
     private static long storeRenderingState(final PointersObject edgeOop, final PointersObject fillOop) {
         if (failed()) {
-            throw new SqueakException("return null");
+            throw SqueakException.create("return null");
         }
         if (engineStopped) {
             /* Check the stop reason and store the required information */

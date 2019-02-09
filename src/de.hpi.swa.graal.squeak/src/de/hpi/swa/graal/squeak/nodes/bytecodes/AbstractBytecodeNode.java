@@ -34,7 +34,7 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
 
     @Override
     public final Object executeRead(final VirtualFrame frame) {
-        throw new SqueakException("Should call executeVoid instead");
+        throw SqueakException.create("Should call executeVoid instead");
     }
 
     public abstract void executeVoid(VirtualFrame frame);

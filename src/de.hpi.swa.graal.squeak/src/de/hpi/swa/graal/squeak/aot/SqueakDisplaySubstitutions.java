@@ -139,12 +139,12 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     public void open(final PointersObject sqDisplay) {
         bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
         if (!bitmap.isIntType()) {
-            throw new SqueakException("Display bitmap expected to be a words object");
+            throw SqueakException.create("Display bitmap expected to be a words object");
         }
 
         final int depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
         if (depth != 32) {
-            throw new SqueakException("Expected 32bit display");
+            throw SqueakException.create("Expected 32bit display");
         }
         if (window.isNull()) {
             width = (int) (long) sqDisplay.at0(FORM.WIDTH);
@@ -344,7 +344,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
 
     private static void sdlAssert(final boolean successful) {
         if (!successful) {
-            throw new SqueakException(SDL.getErrorString());
+            throw SqueakException.create(SDL.getErrorString());
         }
     }
 

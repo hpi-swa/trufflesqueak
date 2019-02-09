@@ -75,7 +75,7 @@ public abstract class LookupClassNode extends AbstractNodeWithImage {
 
     @Fallback
     protected static final ClassObject doFail(final Object value) {
-        throw new SqueakException("Unexpected value: " + value);
+        throw SqueakException.create("Unexpected value: " + value);
     }
 
     protected final boolean isLargeNegative(final long value) {

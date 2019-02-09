@@ -110,7 +110,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
 
     @Fallback
     protected static final List<AbstractSqueakObject> doFail(final ClassObject classObj, final boolean isSomeInstance) {
-        throw new SqueakException("Unexpected arguments:", classObj, isSomeInstance);
+        throw SqueakException.create("Unexpected arguments:", classObj, isSomeInstance);
     }
 
     @TruffleBoundary

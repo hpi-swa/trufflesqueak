@@ -58,7 +58,7 @@ public abstract class InterruptHandlerNode extends Node {
 
     @Fallback
     protected static final void doFail() {
-        throw new SqueakException("Should never happen");
+        throw SqueakException.create("Should never happen");
     }
 
     private void performChecks(final VirtualFrame frame) {

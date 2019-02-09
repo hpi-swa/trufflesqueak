@@ -93,7 +93,7 @@ public final class JumpBytecodes {
                 getPushNode().executeWrite(frame, result);
                 getSendMustBeBooleanNode().executeSend(frame);
                 CompilerDirectives.transferToInterpreter();
-                throw new SqueakException("Should not be reached");
+                throw SqueakException.create("Should not be reached");
             }
 
             private StackPushNode getPushNode() {

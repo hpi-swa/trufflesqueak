@@ -157,7 +157,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                     bufferedImage.setRGB(0, 0, drawWidth, drawHeight, words, 0, width);
                     break;
                 default:
-                    throw new SqueakException("Unsupported form depth:",  depth);
+                    throw SqueakException.create("Unsupported form depth:",  depth);
             }
             //@formatter:on
             g.drawImage(bufferedImage, 0, 0, null);
@@ -211,7 +211,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             this.bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
             if (!bitmap.isIntType()) {
-                throw new SqueakException("Display bitmap expected to be a words object");
+                throw SqueakException.create("Display bitmap expected to be a words object");
             }
             this.width = (int) (long) sqDisplay.at0(FORM.WIDTH);
             this.height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
@@ -483,7 +483,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     @Override
     public void pollEvents() {
-        throw new SqueakException("No need to poll for events manually when using AWT.");
+        throw SqueakException.create("No need to poll for events manually when using AWT.");
     }
 
     private final class SqueakDropTargetAdapter extends DropTargetAdapter {

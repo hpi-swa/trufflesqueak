@@ -61,9 +61,9 @@ public final class SqueakImageReaderNode extends RootNode {
         final TruffleFile truffleFile = image.env.getTruffleFile(image.getImagePath());
         if (!truffleFile.isRegularFile()) {
             if (image.getImagePath().isEmpty()) {
-                throw new SqueakAbortException(MiscUtils.format("An image must be provided via `%s.ImagePath`.", SqueakLanguageConfig.ID));
+                throw SqueakAbortException.create(MiscUtils.format("An image must be provided via `%s.ImagePath`.", SqueakLanguageConfig.ID));
             } else {
-                throw new SqueakAbortException(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
+                throw SqueakAbortException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
             }
         }
         BufferedInputStream inputStream = null;
@@ -71,7 +71,7 @@ public final class SqueakImageReaderNode extends RootNode {
             inputStream = new BufferedInputStream(truffleFile.newInputStream());
         } catch (IOException e) {
             if (!image.isTesting()) {
-                throw new SqueakAbortException(e);
+                throw SqueakAbortException.create(e);
             }
         }
         stream = inputStream;
@@ -109,7 +109,7 @@ public final class SqueakImageReaderNode extends RootNode {
         try {
             stream.read(bytes, 0, length);
         } catch (IOException e) {
-            throw new SqueakAbortException("Unable to read next bytes:", e.getMessage());
+            throw SqueakAbortException.create("Unable to read next bytes:", e.getMessage());
         }
     }
 
@@ -165,7 +165,7 @@ public final class SqueakImageReaderNode extends RootNode {
         try {
             this.position += this.stream.skip(count);
         } catch (IOException e) {
-            throw new SqueakAbortException("Unable to skip next bytes:", e);
+            throw SqueakAbortException.create("Unable to skip next bytes:", e);
         }
     }
 
@@ -267,7 +267,7 @@ public final class SqueakImageReaderNode extends RootNode {
         try {
             this.stream.close();
         } catch (IOException e) {
-            throw new SqueakAbortException("Unable to close stream:", e);
+            throw SqueakAbortException.create("Unable to close stream:", e);
         }
     }
 

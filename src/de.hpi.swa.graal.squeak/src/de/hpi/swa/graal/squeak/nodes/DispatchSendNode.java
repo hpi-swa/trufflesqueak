@@ -47,7 +47,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Specialization(guards = {"image.isHeadless()", "selector.isDebugErrorSelector()", "lookupResult != null"})
     protected static final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
-        throw new SqueakException(MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
+        throw SqueakException.create(MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
     }
 
     @SuppressWarnings("unused")
@@ -84,7 +84,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Fallback
     protected static final Object doFail(final VirtualFrame frame, final NativeObject selector, final Object targetObject, final ClassObject rcvrClass, final Object[] rcvrAndArgs,
                     final Object contextOrMarker) {
-        throw new SqueakException("Should never happen");
+        throw SqueakException.create("Should never happen");
     }
 
     protected static final boolean isAllowedInHeadlessMode(final NativeObject selector) {

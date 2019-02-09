@@ -727,7 +727,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @SuppressWarnings("unused")
         @Specialization(guards = "receiver.isLongType()")
         protected static final long doNativeLongs(final NativeObject receiver, final long index) {
-            throw new SqueakException("Not yet implemented: shortAtPut0"); // TODO: implement
+            throw SqueakException.create("Not yet implemented: shortAtPut0"); // TODO: implement
         }
     }
 
@@ -773,7 +773,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @SuppressWarnings("unused")
         @Specialization(guards = {"inShortRange(value)", "receiver.isLongType()"})
         protected static final long doNativeLongs(final NativeObject receiver, final long index, final long value) {
-            throw new SqueakException("Not yet implemented: shortAtPut0"); // TODO: implement
+            throw SqueakException.create("Not yet implemented: shortAtPut0"); // TODO: implement
         }
 
         protected static final boolean inShortRange(final long value) {

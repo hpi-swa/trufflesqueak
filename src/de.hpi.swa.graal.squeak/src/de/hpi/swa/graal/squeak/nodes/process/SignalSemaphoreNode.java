@@ -47,6 +47,6 @@ public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
 
     @Fallback
     protected static final void doFallback(@SuppressWarnings("unused") final VirtualFrame frame, final Object semaphore) {
-        throw new SqueakException("Unexpected object in SignalSemaphoreNode:", semaphore);
+        throw SqueakException.create("Unexpected object in SignalSemaphoreNode:", semaphore);
     }
 }

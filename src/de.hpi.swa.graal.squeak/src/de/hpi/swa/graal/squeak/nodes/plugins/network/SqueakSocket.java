@@ -51,7 +51,7 @@ public abstract class SqueakSocket {
                     return type;
                 }
             }
-            throw new SqueakException("Unknown SocketType: " + id);
+            throw SqueakException.create("Unknown SocketType: " + id);
         }
     }
 
@@ -182,7 +182,7 @@ public abstract class SqueakSocket {
         if (address instanceof InetSocketAddress) {
             return (InetSocketAddress) address;
         }
-        throw new SqueakException("Unknown address type");
+        throw SqueakException.create("Unknown address type");
     }
 
     protected static SqueakSocket create(final SqueakSocket.Type socketType) throws IOException {
@@ -192,7 +192,7 @@ public abstract class SqueakSocket {
             case UDP:
                 return new SqueakUDPSocket();
             default:
-                throw new SqueakException("Unknown SocketType");
+                throw SqueakException.create("Unknown SocketType");
         }
     }
 }

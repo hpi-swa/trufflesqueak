@@ -82,12 +82,12 @@ public abstract class SqueakObjectBecomeNode extends AbstractNode {
     @Specialization(guards = {"left != right"})
     protected static final boolean doWeakPointers(final WeakPointersObject left, final WeakPointersObject right) {
         // TODO: implement or remove?
-        throw new SqueakException("become not implemented for WeakPointersObjects");
+        throw SqueakException.create("become not implemented for WeakPointersObjects");
     }
 
     @Fallback
     protected static final boolean doFail(final Object left, final Object right) {
-        throw new SqueakException("Unexpected left:", left, "and right:", right);
+        throw SqueakException.create("Unexpected left:", left, "and right:", right);
     }
 
 }

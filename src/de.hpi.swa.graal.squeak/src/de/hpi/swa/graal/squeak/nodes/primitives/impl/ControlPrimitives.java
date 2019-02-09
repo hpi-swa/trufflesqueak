@@ -574,7 +574,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object debugger(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            throw new SqueakException("EXIT TO DEBUGGER");
+            throw SqueakException.create("EXIT TO DEBUGGER");
         }
     }
 

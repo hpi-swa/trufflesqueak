@@ -138,7 +138,7 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
                     return result;
                 }
             }
-            throw new SqueakException("Unable to find simulationMethod.");
+            throw SqueakException.create("Unable to find simulationMethod.");
         }
         return simulationMethod;
     }

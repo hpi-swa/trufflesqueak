@@ -50,7 +50,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final ArrayObject copiedValues) {
-            throw new SqueakException("Not implemented and not used in Squeak anymore");
+            throw SqueakException.create("Not implemented and not used in Squeak anymore");
         }
     }
 

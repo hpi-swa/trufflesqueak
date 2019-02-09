@@ -133,7 +133,7 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage 
 
     @Fallback
     protected static final Object doFail(final Object object) {
-        throw new SqueakException("Unsupported value:", object);
+        throw SqueakException.create("Unsupported value:", object);
     }
 
 }

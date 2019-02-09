@@ -50,6 +50,6 @@ public abstract class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode 
 
     @Fallback
     protected final void doFail(final Object object, final Object value) {
-        throw new SqueakException(object, "at:", index, "put:", value, "failed");
+        throw SqueakException.create(object, "at:", index, "put:", value, "failed");
     }
 }

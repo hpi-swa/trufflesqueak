@@ -89,7 +89,7 @@ public final class NativeObject extends AbstractSqueakObject {
 
     @Override
     public int size() {
-        throw new SqueakException("Use NativeObjectSizeNode");
+        throw SqueakException.create("Use NativeObjectSizeNode");
     }
 
     @TruffleBoundary
@@ -203,7 +203,7 @@ public final class NativeObject extends AbstractSqueakObject {
         } else if (isLongType()) {
             return "LongArray(size=" + getLongLength() + ")";
         } else {
-            throw new SqueakException("Unexpected native object type");
+            throw SqueakException.create("Unexpected native object type");
         }
     }
 

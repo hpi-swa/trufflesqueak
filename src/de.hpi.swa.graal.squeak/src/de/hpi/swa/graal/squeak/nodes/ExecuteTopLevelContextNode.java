@@ -56,7 +56,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 }
             }
         }
-        throw new SqueakException("Top level context did not return");
+        throw SqueakException.create("Top level context did not return");
     }
 
     private void executeLoop() {

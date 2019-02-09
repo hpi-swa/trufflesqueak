@@ -83,6 +83,6 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
 
     @Fallback
     protected static final int doFail(final AbstractSqueakObject object) {
-        throw new SqueakException("Unexpected value:", object);
+        throw SqueakException.create("Unexpected value:", object);
     }
 }

@@ -31,7 +31,7 @@ public final class ReturnBytecodes {
         }
 
         protected Object getReturnValue(@SuppressWarnings("unused") final VirtualFrame frame) {
-            throw new SqueakException("Needs to be overriden");
+            throw SqueakException.create("Needs to be overriden");
         }
     }
 
@@ -67,7 +67,7 @@ public final class ReturnBytecodes {
 
         @Fallback
         protected static final void doFail(final Object closure) {
-            throw new SqueakException("Unexpected closure argument:" + closure);
+            throw SqueakException.create("Unexpected closure argument:" + closure);
         }
     }
 
@@ -154,7 +154,7 @@ public final class ReturnBytecodes {
 
         @Fallback
         protected static final void doFail(final Object closure) {
-            throw new SqueakException("Unexpected closure argument:" + closure);
+            throw SqueakException.create("Unexpected closure argument:" + closure);
         }
 
         @Override

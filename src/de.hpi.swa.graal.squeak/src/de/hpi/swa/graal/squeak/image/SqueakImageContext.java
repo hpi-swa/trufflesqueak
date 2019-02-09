@@ -381,7 +381,7 @@ public final class SqueakImageContext {
         } else if (obj instanceof TruffleObject) {
             return obj; // never wrap TruffleObjects
         }
-        throw new SqueakException("Unsupported value to wrap:", obj);
+        throw SqueakException.create("Unsupported value to wrap:", obj);
     }
 
     public boolean wrap(final boolean value) {

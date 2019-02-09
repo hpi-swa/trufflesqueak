@@ -66,6 +66,6 @@ public abstract class UnwindContextChainNode extends AbstractNodeWithImage {
 
     @Fallback
     protected static final ContextObject doFail(final AbstractSqueakObject startContext, final AbstractSqueakObject targetContext, final Object returnValue) {
-        throw new SqueakException("Failed to unwind context chain (start:", startContext, ", target:", targetContext, ", returnValue:", returnValue, ")");
+        throw SqueakException.create("Failed to unwind context chain (start:", startContext, ", target:", targetContext, ", returnValue:", returnValue, ")");
     }
 }

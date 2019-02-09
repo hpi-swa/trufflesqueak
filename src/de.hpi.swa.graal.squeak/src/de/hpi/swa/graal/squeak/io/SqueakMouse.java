@@ -68,7 +68,7 @@ public final class SqueakMouse extends MouseInputAdapter {
                 buttons = 0;
                 break;
             default:
-                throw new SqueakException("Unknown mouse event:", e);
+                throw SqueakException.create("Unknown mouse event:", e);
         }
 
         display.buttons = buttons | display.recordModifiers(e);
@@ -88,7 +88,7 @@ public final class SqueakMouse extends MouseInputAdapter {
             case MouseEvent.NOBUTTON:
                 return 0;
             default:
-                throw new SqueakException("Unknown mouse button in event:", e);
+                throw SqueakException.create("Unknown mouse button in event:", e);
         }
     }
 }

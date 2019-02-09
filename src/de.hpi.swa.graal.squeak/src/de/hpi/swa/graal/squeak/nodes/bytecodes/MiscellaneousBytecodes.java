@@ -77,7 +77,7 @@ public final class MiscellaneousBytecodes {
 
         @Fallback
         protected static final void doFail() {
-            throw new SqueakException("Should never happen");
+            throw SqueakException.create("Should never happen");
         }
 
         @Override
@@ -150,7 +150,7 @@ public final class MiscellaneousBytecodes {
                 case 3:
                     return new PopIntoAssociationNode(code, index, numBytecodes, variableIndex);
                 default:
-                    throw new SqueakException("illegal ExtendedStore bytecode");
+                    throw SqueakException.create("illegal ExtendedStore bytecode");
             }
         }
 
@@ -166,7 +166,7 @@ public final class MiscellaneousBytecodes {
                 case 3:
                     return new PushLiteralVariableNode(code, index, numBytecodes, variableIndex);
                 default:
-                    throw new SqueakException("unexpected type for ExtendedPush");
+                    throw SqueakException.create("unexpected type for ExtendedPush");
             }
         }
 
@@ -182,7 +182,7 @@ public final class MiscellaneousBytecodes {
                 case 3:
                     return new StoreIntoAssociationNode(code, index, numBytecodes, variableIndex);
                 default:
-                    throw new SqueakException("illegal ExtendedStore bytecode");
+                    throw SqueakException.create("illegal ExtendedStore bytecode");
             }
         }
 
@@ -225,7 +225,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            throw new SqueakException("Unknown/uninterpreted bytecode:", bytecode);
+            throw SqueakException.create("Unknown/uninterpreted bytecode:", bytecode);
         }
 
         @Override

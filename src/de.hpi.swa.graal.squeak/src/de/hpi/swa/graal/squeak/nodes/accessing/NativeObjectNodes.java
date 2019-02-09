@@ -102,7 +102,7 @@ public final class NativeObjectNodes {
 
         @Fallback
         protected static final boolean doFail(final NativeObject object, final Object value) {
-            throw new SqueakException("Unexpected values:", object, value);
+            throw SqueakException.create("Unexpected values:", object, value);
         }
     }
 
@@ -141,7 +141,7 @@ public final class NativeObjectNodes {
 
         @Fallback
         protected static final long doFail(final NativeObject obj, final long index) {
-            throw new SqueakException("Unexpected values:", obj, index);
+            throw SqueakException.create("Unexpected values:", obj, index);
         }
     }
 
@@ -226,7 +226,7 @@ public final class NativeObjectNodes {
         @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isIntType()", "!value.inRange(0, INTEGER_MAX)"})
         protected static final void doNativeIntsLargeIntegerIllegal(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            throw new SqueakException("Illegal value for int array: " + value);
+            throw SqueakException.create("Illegal value for int array: " + value);
         }
 
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "value.fitsIntoLong()"})
@@ -241,7 +241,7 @@ public final class NativeObjectNodes {
 
         @Fallback
         protected static final void doFail(final NativeObject obj, final long index, final Object value) {
-            throw new SqueakException("Unexpected values:", obj, index, value);
+            throw SqueakException.create("Unexpected values:", obj, index, value);
         }
     }
 
@@ -275,7 +275,7 @@ public final class NativeObjectNodes {
 
         @Fallback
         protected static final int doFail(final NativeObject object) {
-            throw new SqueakException("Unexpected value:", object);
+            throw SqueakException.create("Unexpected value:", object);
         }
     }
 
@@ -314,7 +314,7 @@ public final class NativeObjectNodes {
 
         @Fallback
         protected static final byte[] doFail(final NativeObject object) {
-            throw new SqueakException("Unexpected value:", object);
+            throw SqueakException.create("Unexpected value:", object);
         }
     }
 }

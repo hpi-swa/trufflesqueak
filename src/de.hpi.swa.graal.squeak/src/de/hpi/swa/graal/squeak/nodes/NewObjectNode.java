@@ -128,6 +128,6 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
 
     @Fallback
     protected static final Object doFail(final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {
-        throw new SqueakException("Cannot instantiate class:", classObject, "(Spec: " + classObject.getInstanceSpecification() + ")");
+        throw SqueakException.create("Cannot instantiate class:", classObject, "(Spec: " + classObject.getInstanceSpecification() + ")");
     }
 }

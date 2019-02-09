@@ -37,7 +37,7 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
         do {
             if (p < 0) {
                 errorProfile.enter();
-                throw new SqueakException("scheduler could not find a runnable process");
+                throw SqueakException.create("scheduler could not find a runnable process");
             }
             processList = (PointersObject) arrayReadNode.execute(schedLists, p--);
         } while (processList.isEmptyList());

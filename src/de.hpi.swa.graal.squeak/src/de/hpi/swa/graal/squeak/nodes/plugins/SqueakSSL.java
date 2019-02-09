@@ -284,7 +284,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                     return result;
 
                 default:
-                    throw new SqueakException("Unknown SSL engine status");
+                    throw SqueakException.create("Unknown SSL engine status");
             }
         }
     }
@@ -602,9 +602,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         try {
             ssl.context = SSLContextInitializer.createSSLContext(certificatePath);
         } catch (final IOException e) {
-            throw new SqueakException("Failed to load certificate " + certificate + ". Does the file exist?", e);
+            throw SqueakException.create("Failed to load certificate " + certificate + ". Does the file exist?", e);
         } catch (final GeneralSecurityException e) {
-            throw new SqueakException("Security error when loading certificate " + certificate, e);
+            throw SqueakException.create("Security error when loading certificate " + certificate, e);
         }
     }
 
@@ -613,7 +613,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             ssl.context = SSLContext.getInstance("TLS");
             ssl.context.init(null, null, null);
         } catch (final GeneralSecurityException e) {
-            throw new SqueakException("Failed to initialize default certificate store", e);
+            throw SqueakException.create("Failed to initialize default certificate store", e);
         }
     }
 

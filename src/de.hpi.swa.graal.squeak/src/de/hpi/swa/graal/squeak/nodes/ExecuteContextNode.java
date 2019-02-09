@@ -72,7 +72,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         try {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
             startBytecode(frame);
-            throw new SqueakException("Method did not return");
+            throw SqueakException.create("Method did not return");
         } catch (LocalReturn lr) {
             /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleLocalReturnNode().executeHandle(frame, lr);
@@ -110,7 +110,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 resumeBytecode(frame, initialPC);
             }
             CompilerAsserts.neverPartOfCompilation();
-            throw new SqueakException("Method did not return");
+            throw SqueakException.create("Method did not return");
         } catch (LocalReturn lr) {
             /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleLocalReturnNode().executeHandle(frame, lr);
@@ -248,7 +248,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         @SuppressWarnings("unused")
         @Fallback
         protected static final void doFail(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
-            throw new SqueakException("Should not happen");
+            throw SqueakException.create("Should not happen");
         }
     }
 

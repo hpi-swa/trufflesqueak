@@ -95,7 +95,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (imagePath32bit != null) {
             return imagePath32bit;
         }
-        throw new SqueakException("Unable to locate test image.");
+        throw SqueakException.create("Unable to locate test image.");
     }
 
     private static String getPathToTestImage(final String imageName) {

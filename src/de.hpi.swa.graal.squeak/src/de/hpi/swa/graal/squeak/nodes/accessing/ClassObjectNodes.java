@@ -75,7 +75,7 @@ public final class ClassObjectNodes {
 
         @Fallback
         protected static final void doFail(final ClassObject object, final long index) {
-            throw new SqueakException("Unexpected value:", object, index);
+            throw SqueakException.create("Unexpected value:", object, index);
         }
     }
 
@@ -135,7 +135,7 @@ public final class ClassObjectNodes {
 
         @Fallback
         protected static final void doFail(final ClassObject object, final long index, final Object value) {
-            throw new SqueakException("Unexpected value:", object, index, value);
+            throw SqueakException.create("Unexpected value:", object, index, value);
         }
     }
 }

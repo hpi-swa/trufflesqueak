@@ -23,7 +23,7 @@ public abstract class FillInContextNode extends Node {
     @SuppressWarnings("unused")
     @Specialization(guards = "obj.hasTruffleFrame()")
     protected static final void doContextFail(final ContextObject obj, final SqueakImageChunk chunk) {
-        throw new SqueakException("Context already has a truffleFrame");
+        throw SqueakException.create("Context already has a truffleFrame");
     }
 
     @SuppressWarnings("unused")

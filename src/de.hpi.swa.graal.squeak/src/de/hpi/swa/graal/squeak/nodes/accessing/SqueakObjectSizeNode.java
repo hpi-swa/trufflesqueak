@@ -91,6 +91,6 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
 
     @Fallback
     protected static final int doFallback(final Object obj) {
-        throw new SqueakException("Object does not support size:", obj);
+        throw SqueakException.create("Object does not support size:", obj);
     }
 }

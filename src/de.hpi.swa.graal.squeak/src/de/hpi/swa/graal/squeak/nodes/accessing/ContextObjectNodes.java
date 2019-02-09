@@ -5,13 +5,11 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -88,7 +86,7 @@ public final class ContextObjectNodes {
 
         @Fallback
         protected static final Object doFail(final ContextObject obj, final long index) {
-            throw new SqueakException("Unexpected values:", obj, index);
+            throw SqueakException.create("Unexpected values:", obj, index);
         }
     }
 
@@ -110,12 +108,6 @@ public final class ContextObjectNodes {
         @Specialization(guards = "index == SENDER_OR_NIL")
         protected static final void doSender(final ContextObject context, final long index, final NilObject value) {
             context.removeSender();
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "index == SENDER_OR_NIL")
-        protected static final void doSender(final ContextObject context, final long index, final FrameMarker value) {
-            throw new SqueakExceptions.SqueakException("Sender cannot be set to a frame marker");
         }
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER"})
@@ -173,7 +165,7 @@ public final class ContextObjectNodes {
 
         @Fallback
         protected static final void doFail(final ContextObject obj, final long index, final Object value) {
-            throw new SqueakException("Unexpected values:", obj, index, value);
+            throw SqueakException.create("Unexpected values:", obj, index, value);
         }
     }
 }

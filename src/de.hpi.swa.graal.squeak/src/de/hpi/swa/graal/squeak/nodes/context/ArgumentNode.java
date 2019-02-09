@@ -34,6 +34,6 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
 
     @Fallback
     protected static final Object doFail() {
-        throw new SqueakException("Should never happend");
+        throw SqueakException.create("Should never happend");
     }
 }

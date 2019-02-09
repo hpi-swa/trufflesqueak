@@ -76,7 +76,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
 
     @Fallback
     protected static final void doFail(final NonLocalReturn nlr) {
-        throw new SqueakException("Should never happend:", nlr);
+        throw SqueakException.create("Should never happend:", nlr);
     }
 
     protected final boolean isNil(final VirtualFrame frame, final FrameSlotReadNode completeTempReadNode) {

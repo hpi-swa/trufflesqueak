@@ -397,7 +397,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doNativeFloat(final NativeObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
-            throw new SqueakException("Not supported"); // TODO: check this is needed
+            throw SqueakException.create("Not supported"); // TODO: check this is needed
         }
 
         @SuppressWarnings("unused")

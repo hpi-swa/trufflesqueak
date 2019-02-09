@@ -36,7 +36,7 @@ public final class ArrayObjectNodes {
         @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isEmptyType()", "index < 0 || index >= obj.getEmptyStorage()"})
         protected static final long doEmptyArrayOutOfBounds(final ArrayObject obj, final long index) {
-            throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
+            throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
         }
 
         @Specialization(guards = "obj.isAbstractSqueakObjectType()")
@@ -76,7 +76,7 @@ public final class ArrayObjectNodes {
 
         @Fallback
         protected static final Object doFail(final ArrayObject obj, final long index) {
-            throw new SqueakException("Unexpected values:", obj, index);
+            throw SqueakException.create("Unexpected values:", obj, index);
         }
     }
 
@@ -130,7 +130,7 @@ public final class ArrayObjectNodes {
 
         @Fallback
         protected static final ArrayObject doFail(final ArrayObject object) {
-            throw new SqueakException("Unexpected value:", object);
+            throw SqueakException.create("Unexpected value:", object);
         }
     }
 
@@ -184,7 +184,7 @@ public final class ArrayObjectNodes {
 
         @Fallback
         protected static final int doFail(final ArrayObject object) {
-            throw new SqueakException("Unexpected value:", object);
+            throw SqueakException.create("Unexpected value:", object);
         }
     }
 
@@ -292,7 +292,7 @@ public final class ArrayObjectNodes {
 
         @Fallback
         protected static final Object[] doFail(final ArrayObject object) {
-            throw new SqueakException("Unexpected value:", object);
+            throw SqueakException.create("Unexpected value:", object);
         }
     }
 
@@ -356,7 +356,7 @@ public final class ArrayObjectNodes {
 
         @Fallback
         protected static final Object[] doFail(final ArrayObject object) {
-            throw new SqueakException("Unexpected value:", object);
+            throw SqueakException.create("Unexpected value:", object);
         }
     }
 
@@ -428,7 +428,7 @@ public final class ArrayObjectNodes {
         @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isEmptyType()", "index >= obj.getEmptyStorage()"})
         protected static final void doEmptyArrayOutOfBounds(final ArrayObject obj, final long index, final Object value) {
-            throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
+            throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
         }
 
         @Specialization(guards = "obj.isAbstractSqueakObjectType()")
@@ -543,7 +543,7 @@ public final class ArrayObjectNodes {
 
         @Fallback
         protected static final void doFail(final ArrayObject obj, final long index, final Object value) {
-            throw new SqueakException("Unexpected values:", obj, index, value);
+            throw SqueakException.create("Unexpected values:", obj, index, value);
         }
     }
 }

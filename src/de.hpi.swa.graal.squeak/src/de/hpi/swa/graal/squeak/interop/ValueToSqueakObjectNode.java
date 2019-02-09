@@ -48,6 +48,6 @@ public abstract class ValueToSqueakObjectNode extends AbstractNodeWithCode {
 
     @Fallback
     protected static final Object doFail(final Value value) {
-        throw new SqueakException("Unexpected Value: ", value);
+        throw SqueakException.create("Unexpected Value: ", value);
     }
 }

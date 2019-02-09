@@ -39,6 +39,6 @@ public abstract class FrameStackReadNode extends AbstractNodeWithCode {
     @SuppressWarnings("unused")
     @Specialization(replaces = "doRead")
     protected static final Object doFail(final Frame frame, final int stackIndex) {
-        throw new SqueakException("Unexpected failure in FrameStackReadNode");
+        throw SqueakException.create("Unexpected failure in FrameStackReadNode");
     }
 }

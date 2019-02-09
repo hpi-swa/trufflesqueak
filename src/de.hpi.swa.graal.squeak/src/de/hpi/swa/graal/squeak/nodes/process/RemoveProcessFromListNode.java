@@ -75,6 +75,6 @@ public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
     @SuppressWarnings("unused")
     @Fallback
     protected static final void doFail(final PointersObject process, final PointersObject list, final Object first, final Object last) {
-        throw new SqueakException("Should never happen");
+        throw SqueakException.create("Should never happen");
     }
 }
