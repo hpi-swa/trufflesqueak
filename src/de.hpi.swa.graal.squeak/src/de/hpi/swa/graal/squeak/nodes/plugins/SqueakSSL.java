@@ -206,11 +206,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     }
 
     private static final class Constants {
-
         private static final long VERSION = 3;
-
-        private Constants() {
-        }
     }
 
     private static ByteBuffer createEmptyImmutableBuffer() {

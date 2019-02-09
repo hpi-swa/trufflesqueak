@@ -31,10 +31,10 @@ public final class SqueakImage implements TruffleObject {
     }
 
     @MessageResolution(receiverType = SqueakImage.class)
-    abstract static class SqueakImageMessageResolution {
+    public abstract static class SqueakImageMessageResolution {
 
         @Resolve(message = "READ")
-        abstract static class ReadNode extends Node {
+        public abstract static class ReadNode extends Node {
             Object access(final SqueakImage squeakImage, final String name) {
                 if ("Compiler".equals(name)) {
                     return squeakImage.image.getCompilerClass();
@@ -46,14 +46,14 @@ public final class SqueakImage implements TruffleObject {
         }
 
         @Resolve(message = "IS_EXECUTABLE")
-        abstract static class IsExecutableNode extends Node {
+        public abstract static class IsExecutableNode extends Node {
             boolean access(@SuppressWarnings("unused") final SqueakImage squeakImage) {
                 return true;
             }
         }
 
         @Resolve(message = "EXECUTE")
-        abstract static class ExecuteNode extends Node {
+        public abstract static class ExecuteNode extends Node {
             Object access(final SqueakImage squeakImage, final Object[] args) {
                 assert args.length == 0;
                 squeakImage.image.interrupt.start();
@@ -63,7 +63,7 @@ public final class SqueakImage implements TruffleObject {
         }
 
         @CanResolve
-        abstract static class CanResolveSqueakImage extends Node {
+        public abstract static class CanResolveSqueakImage extends Node {
             boolean test(final TruffleObject object) {
                 return object instanceof SqueakImage;
             }

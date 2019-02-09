@@ -26,14 +26,14 @@ public final class InteropMap implements TruffleObject {
     }
 
     @Resolve(message = "HAS_KEYS")
-    abstract static class HasKeys extends Node {
+    public abstract static class HasKeys extends Node {
         public Object access(@SuppressWarnings("unused") final InteropMap receiver) {
             return true;
         }
     }
 
     @Resolve(message = "KEY_INFO")
-    abstract static class KeyInfoNode extends Node {
+    public abstract static class KeyInfoNode extends Node {
         @TruffleBoundary
         public Object access(final InteropMap receiver, final Object key) {
             if (receiver.map.containsKey(key)) {
@@ -45,7 +45,7 @@ public final class InteropMap implements TruffleObject {
     }
 
     @Resolve(message = "KEYS")
-    abstract static class GetSize extends Node {
+    public abstract static class GetSize extends Node {
         @TruffleBoundary
         public Object access(final InteropMap receiver) {
             return new InteropArray(receiver.map.keySet().toArray());
@@ -53,7 +53,7 @@ public final class InteropMap implements TruffleObject {
     }
 
     @Resolve(message = "READ")
-    abstract static class Read extends Node {
+    public abstract static class Read extends Node {
         @TruffleBoundary
         public Object access(final InteropMap receiver, final Object key) {
             return receiver.map.get(key);
@@ -65,7 +65,7 @@ public final class InteropMap implements TruffleObject {
         return InteropMapForeign.ACCESS;
     }
 
-    static boolean isInstance(final TruffleObject object) {
+    public static boolean isInstance(final TruffleObject object) {
         return object instanceof InteropMap;
     }
 }

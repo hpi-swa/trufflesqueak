@@ -18,21 +18,21 @@ public final class InteropArray implements TruffleObject {
     }
 
     @Resolve(message = "HAS_SIZE")
-    abstract static class HasSize extends Node {
+    public abstract static class HasSize extends Node {
         public Object access(@SuppressWarnings("unused") final InteropArray receiver) {
             return true;
         }
     }
 
     @Resolve(message = "GET_SIZE")
-    abstract static class GetSize extends Node {
+    public abstract static class GetSize extends Node {
         public Object access(final InteropArray receiver) {
             return receiver.keys.length;
         }
     }
 
     @Resolve(message = "READ")
-    abstract static class Read extends Node {
+    public abstract static class Read extends Node {
         public Object access(final InteropArray receiver, final int index) {
             try {
                 final Object key = receiver.keys[index];
@@ -50,7 +50,7 @@ public final class InteropArray implements TruffleObject {
         return InteropArrayForeign.ACCESS;
     }
 
-    static boolean isInstance(final TruffleObject object) {
+    public static boolean isInstance(final TruffleObject object) {
         return object instanceof InteropArray;
     }
 }

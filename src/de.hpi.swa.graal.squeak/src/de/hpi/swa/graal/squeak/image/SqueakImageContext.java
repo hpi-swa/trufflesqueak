@@ -157,7 +157,6 @@ public final class SqueakImageContext {
 
     @CompilationFinal private ClassObject compilerClass = null;
     @CompilationFinal private ClassObject parserClass = null;
-    @CompilationFinal private CompiledMethodObject evaluateMethod;
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
 

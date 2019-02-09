@@ -89,11 +89,7 @@ public final class SqueakObjectMessageResolution {
         }
 
         protected static final boolean access(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            if (receiver instanceof CompiledMethodObject) {
-                return true;
-            } else {
-                return false;
-            }
+            return receiver instanceof CompiledMethodObject;
         }
     }
 

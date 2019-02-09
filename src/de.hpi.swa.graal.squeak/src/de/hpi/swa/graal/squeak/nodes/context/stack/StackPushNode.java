@@ -8,7 +8,7 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
 public final class StackPushNode extends AbstractNodeWithCode {
-    @Child FrameStackWriteNode writeNode;
+    @Child private FrameStackWriteNode writeNode;
 
     protected StackPushNode(final CompiledCodeObject code) {
         super(code);

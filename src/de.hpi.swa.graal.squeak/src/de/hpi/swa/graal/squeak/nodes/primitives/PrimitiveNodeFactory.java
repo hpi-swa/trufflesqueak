@@ -61,9 +61,6 @@ public final class PrimitiveNodeFactory {
 
     private final EconomicMap<String, UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>>> pluginsMap = EconomicMap.create();
 
-    public PrimitiveNodeFactory() {
-    }
-
     public void initialize(final SqueakImageContext image) {
         final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
                         new ArithmeticPrimitives(),
