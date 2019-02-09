@@ -32,6 +32,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
+    @ImportStatic(CONTEXT.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 76)
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements BinaryPrimitive {
@@ -39,9 +40,13 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
-        protected static final ContextObject store(final ContextObject receiver, final long value) {
-            receiver.setStackPointer((int) value);
+        @Specialization(guards = {"0 <= newStackPointer", "newStackPointer <= LARGE_FRAMESIZE"})
+        protected static final ContextObject store(final ContextObject receiver, final long newStackPointer) {
+            /**
+             * Not need to "nil any newly accessible cells" as cells are always nil-initialized and
+             * their values are cleared (overwritten with nil) on stack pop.
+             */
+            receiver.setStackPointer((int) newStackPointer);
             return receiver;
         }
     }
