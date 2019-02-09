@@ -407,10 +407,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         if (sz < jsReadLimit) {
             return false;
         }
-        if ((jsPosition < 0) || (jsPosition >= jsReadLimit)) {
-            return false;
-        }
-        return true;
+        return 0 <= jsPosition && jsPosition < jsReadLimit;
     }
 
     /* JPEGReaderPlugin>>#nextSampleCb */

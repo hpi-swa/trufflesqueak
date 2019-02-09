@@ -1838,7 +1838,6 @@ public final class B2D {
             dt += dtX;
             x++;
         }
-        return;
     }
 
     /*
@@ -2793,6 +2792,8 @@ public final class B2D {
                     case 7:
                         stepToNextWideBezier();
                         break;
+                    default:
+                        throw SqueakException.create("Unexpected type:", type);
                 }
                 resortFirstAETEntry();
                 aetStartPut((aetStartGet()) + 1);
@@ -5062,7 +5063,7 @@ public final class B2D {
     public static long primitiveGetAALevel(final PointersObject receiver) {
         final long failureCode;
 
-        if (!(((failureCode = quickLoadEngineFrom(receiver))) == 0)) {
+        if ((failureCode = quickLoadEngineFrom(receiver)) != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         return aaLevelGet();
@@ -6537,7 +6538,7 @@ public final class B2D {
         } else {
             edgeFillsInvalidate(line);
         }
-        if (!(startY == yValue)) {
+        if (startY != yValue) {
             for (int i = startY; i < yValue; i++) {
                 stepToNextWideLineInat(line, i);
             }
