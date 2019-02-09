@@ -997,10 +997,7 @@ public final class B2D {
          * nSegments * 3, for ShortPointArrays or, pSize = nSegments * 6, for PointArrays
          */
         final long pSize = slotSizeOf(points);
-        if (!((pSize == (nSegments * 3)) || (pSize == (nSegments * 6)))) {
-            return false;
-        }
-        return true;
+        return pSize == (nSegments * 3) || pSize == (nSegments * 6);
     }
 
     /*
@@ -1030,10 +1027,7 @@ public final class B2D {
         if (!(checkCompressedFillIndexListmaxsegments(lineFills, maxFillIndex, nSegments))) {
             return false;
         }
-        if (!(checkCompressedLineWidthssegments(lineWidths, nSegments))) {
-            return false;
-        }
-        return true;
+        return checkCompressedLineWidthssegments(lineWidths, nSegments);
     }
 
     /*
@@ -1354,11 +1348,9 @@ public final class B2D {
         final long end = objUsed;
         while (object < end) {
             /* Note: addEdgeToGET: may fail on insufficient space but that's not a problem here */
-            if (isEdge(object)) {
+            if (isEdge(object) && edgeYValueOf(object) < fillMaxYGet()) {
                 /* Check if the edge starts below fillMaxY. */
-                if (edgeYValueOf(object) < fillMaxYGet()) {
-                    checkedAddEdgeToGET(object);
-                }
+                checkedAddEdgeToGET(object);
             }
             object += objectLengthOf(object);
         }
@@ -1607,10 +1599,8 @@ public final class B2D {
         stopX = topRightX();
         while (stopX < rightX) {
             fill = makeUnsignedFrom(topFill());
-            if (fill != 0) {
-                if (fillSpanfromto(fill, startX, stopX)) {
-                    return true;
-                }
+            if (fill != 0 && fillSpanfromto(fill, startX, stopX)) {
+                return true;
             }
             quickRemoveInvalidFillsAt(stopX);
             startX = stopX;
@@ -3867,7 +3857,7 @@ public final class B2D {
             }
             ppw = div(32, bmDepth);
             bmRaster = div(bmWidth + (ppw - 1), ppw);
-            if (!(bmBitsSize == (bmRaster * bmHeight))) {
+            if (bmBitsSize != bmRaster * bmHeight) {
                 return false;
             }
         }
@@ -4979,7 +4969,7 @@ public final class B2D {
         if (((failCode = loadWorkBufferFrom(buf1))) != 0) {
             PrimitiveFailed.andTransferToInterpreter(failCode);
         }
-        if (!((fetchClassOf(buf1)) == (fetchClassOf(buf2)))) {
+        if (fetchClassOf(buf1) != fetchClassOf(buf2)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_CLASS_MISMATCH);
         }
         diff = (slotSizeOf(buf2)) - (slotSizeOf(buf1));
@@ -5056,7 +5046,7 @@ public final class B2D {
         if (doProfileStats) {
             geProfileTime = ioMicroMSecs();
         }
-        if (!(((failureCode = quickLoadEngineFrom(receiver))) == 0)) {
+        if ((failureCode = quickLoadEngineFrom(receiver)) != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         finished = finishedProcessing();
@@ -5869,7 +5859,7 @@ public final class B2D {
     private static long quickLoadEngineFromrequiredState(final PointersObject oop, final long requiredState) {
         final long failureCode;
 
-        if (!(((failureCode = quickLoadEngineFrom(oop))) == 0)) {
+        if ((failureCode = quickLoadEngineFrom(oop)) != 0) {
             return failureCode;
         }
         if ((stateGet()) == requiredState) {
@@ -5883,7 +5873,7 @@ public final class B2D {
     private static long quickLoadEngineFromrequiredStateor(final PointersObject oop, final long requiredState, final long alternativeState) {
         final long failureCode;
 
-        if (!(((failureCode = quickLoadEngineFrom(oop))) == 0)) {
+        if ((failureCode = quickLoadEngineFrom(oop)) != 0) {
             return failureCode;
         }
         if ((stateGet()) == requiredState) {
@@ -6179,7 +6169,6 @@ public final class B2D {
             topFillDepthPut(depth);
             topFillRightXPut(rightX);
         }
-        return;
     }
 
     /* Sort the entire global edge table */
@@ -6360,7 +6349,7 @@ public final class B2D {
         bezierUpdateDataOf(bezier, GB_UPDATE_DY, fwDy);
         bezierUpdateDataOf(bezier, GB_UPDATE_DDX, fwDDx);
         bezierUpdateDataOf(bezier, GB_UPDATE_DDY, fwDDy);
-        if (!(((startY = edgeYValueOf(bezier))) == yValue)) {
+        if ((startY = edgeYValueOf(bezier)) != yValue) {
             stepToNextBezierInat(bezier, yValue);
             edgeNumLinesOfput(bezier, deltaY - (yValue - startY));
         }
@@ -6425,7 +6414,7 @@ public final class B2D {
         lineErrorAdjUpOfput(line, errorAdjUp);
         lineErrorAdjDownOfput(line, deltaY);
         final int startY;
-        if (!(((startY = edgeYValueOf(line))) == yValue)) {
+        if ((startY = edgeYValueOf(line)) != yValue) {
             for (int i = startY; i < yValue; i++) {
                 stepToNextLineInat(line, i);
             }
@@ -6497,7 +6486,7 @@ public final class B2D {
             edgeFillsInvalidate(bezier);
         }
         computeFinalWideBezierValueswidth(bezier, lineWidth);
-        if (!(startY == yValue)) {
+        if (startY != yValue) {
             /* Note: Must single step here so that entry/exit works */
             for (int i = startY; i < yValue; i++) {
                 stepToNextWideBezierInat(bezier, i);
@@ -6823,7 +6812,7 @@ public final class B2D {
     @TruffleBoundary // Highly recursive.
     private static int subdivideBezierFrom(final int index) {
         final int otherIndex = subdivideBezier(index);
-        if (!(otherIndex == index)) {
+        if (otherIndex != index) {
             final int index1 = subdivideBezierFrom(index);
             if (engineStopped) {
                 return 0;
@@ -6951,11 +6940,11 @@ public final class B2D {
         }
         final long depth = (((edgeZValueOf(edge))) << 1);
         long fillIndex = edgeLeftFillOf(edge);
-        if (!(fillIndex == 0)) {
+        if (fillIndex != 0) {
             toggleFilldepthrightX(fillIndex, depth, 999999999);
         }
         fillIndex = edgeRightFillOf(edge);
-        if (!(fillIndex == 0)) {
+        if (fillIndex != 0) {
             toggleFilldepthrightX(fillIndex, depth, 999999999);
         }
         quickRemoveInvalidFillsAt(edgeXValueOf(edge));
@@ -6994,6 +6983,8 @@ public final class B2D {
             case 3:
                 returnWideBezierWidth();
                 break;
+            default:
+                throw SqueakException.create("Unexpected type:", type);
         }
         final long lineWidth = dispatchReturnValue;
         switch (type) {
@@ -7007,6 +6998,8 @@ public final class B2D {
             case 3:
                 returnWideBezierFill();
                 break;
+            default:
+                throw SqueakException.create("Unexpected type:", type);
         }
         final long fill = dispatchReturnValue;
         if (fill == 0) {
