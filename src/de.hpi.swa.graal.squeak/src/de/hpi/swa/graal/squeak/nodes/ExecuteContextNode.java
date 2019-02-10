@@ -21,12 +21,10 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.GetSuccessorNodeGen;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.TriggerInterruptHandlerNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetInitialPCNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
-import de.hpi.swa.graal.squeak.nodes.context.UpdateInstructionPointerNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
@@ -39,10 +37,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
 
-    @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private GetSuccessorNode getSuccessorNode;
-    @Child private GetInitialPCNode calculcatePCOffsetNode;
 
     protected ExecuteContextNode(final CompiledCodeObject code) {
         super(code);
@@ -101,7 +97,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
 
         try {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
-            final long initialPC = getAndDecodeSqueakPC(context);
+            final long initialPC = context.getInstructionPointerForBytecodeLoop();
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
@@ -128,10 +124,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             getOrCreateContextNode = insert(GetOrCreateContextNode.create(code));
         }
         return getOrCreateContextNode;
-    }
-
-    private long getAndDecodeSqueakPC(final ContextObject newContext) {
-        return newContext.getInstructionPointer() - getCalculcatePCOffsetNode().execute(newContext.getBlockOrMethod());
     }
 
     /*
@@ -175,7 +167,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     continue;
                 } else {
                     final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-                    getUpdateInstructionPointerNode().executeUpdate(frame, successor);
+                    FrameAccess.setInstructionPointer(frame, code, successor);
                     node.executeVoid(frame);
                     pc = successor;
                     node = fetchNextBytecodeNode(pc);
@@ -196,7 +188,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
         while (pc >= 0) {
             final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-            getUpdateInstructionPointerNode().executeUpdate(frame, successor);
+            FrameAccess.setInstructionPointer(frame, code, successor);
             node.executeVoid(frame);
             pc = successor;
             node = fetchNextBytecodeNode(pc);
@@ -300,22 +292,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             handleNonLocalReturnNode = insert(HandleNonLocalReturnNode.create(code));
         }
         return handleNonLocalReturnNode;
-    }
-
-    private GetInitialPCNode getCalculcatePCOffsetNode() {
-        if (calculcatePCOffsetNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            calculcatePCOffsetNode = insert(GetInitialPCNode.create());
-        }
-        return calculcatePCOffsetNode;
-    }
-
-    private UpdateInstructionPointerNode getUpdateInstructionPointerNode() {
-        if (updateInstructionPointerNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateInstructionPointerNode = insert(UpdateInstructionPointerNode.create(code));
-        }
-        return updateInstructionPointerNode;
     }
 
     private GetSuccessorNode getGetSuccessorNode() {

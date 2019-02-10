@@ -9,10 +9,8 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetCompiledMethodNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetInitialPCNodeGen;
 
 public final class CompiledCodeNodes {
-
     public abstract static class GetCompiledMethodNode extends AbstractNode {
 
         public static GetCompiledMethodNode create() {
@@ -34,31 +32,6 @@ public final class CompiledCodeNodes {
         @Fallback
         protected static final CompiledMethodObject doFail(final CompiledCodeObject object) {
             throw SqueakException.create("Unexpected value: ", object);
-        }
-
-    }
-
-    public abstract static class GetInitialPCNode extends AbstractNode {
-
-        public static GetInitialPCNode create() {
-            return GetInitialPCNodeGen.create();
-        }
-
-        public abstract int execute(CompiledCodeObject object);
-
-        @Specialization
-        protected static final int doBlock(final CompiledBlockObject object) {
-            return object.getInitialPC();
-        }
-
-        @Specialization
-        protected static final int doMethod(final CompiledMethodObject object) {
-            return object.getInitialPC();
-        }
-
-        @Fallback
-        protected static final int doFail(final CompiledCodeObject object) {
-            throw SqueakException.create("Should never happen", object);
         }
     }
 }

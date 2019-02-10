@@ -221,7 +221,7 @@ public final class ContextObject extends AbstractSqueakObject {
                     instructionPointer = FrameAccess.getInstructionPointer(truffleFrame, method);
                     stackPointer = FrameAccess.getStackPointer(truffleFrame, method);
                 } else { // Frame slots unknown, so initialize PC and SP.
-                    instructionPointer = method.getInitialPC();
+                    instructionPointer = 0;
                     stackPointer = 0;
                 }
             } else {
@@ -264,14 +264,14 @@ public final class ContextObject extends AbstractSqueakObject {
                     instructionPointer = FrameAccess.getInstructionPointer(truffleFrame, compiledBlock);
                     stackPointer = FrameAccess.getStackPointer(truffleFrame, compiledBlock);
                 } else { // Frame slots unknown, so initialize PC and SP;
-                    instructionPointer = compiledBlock.getInitialPC();
+                    instructionPointer = 0;
                     stackPointer = 0;
                 }
             } else {
                 // Receiver plus arguments.
                 final Object[] squeakArguments = new Object[1 + compiledBlock.getNumArgsAndCopied()];
                 frameArguments = FrameAccess.newDummyWith(null, image.nil, null, squeakArguments);
-                instructionPointer = compiledBlock.getInitialPC();
+                instructionPointer = 0;
                 stackPointer = 0;
             }
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -322,11 +322,29 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public int getInstructionPointer() {
+        final BlockClosureObject closure = getClosure();
+        if (closure != null) {
+            final CompiledBlockObject block = closure.getCompiledBlock();
+            return FrameAccess.getInstructionPointer(truffleFrame, block) + block.getInitialPC();
+        } else {
+            final CompiledMethodObject method = getMethod();
+            return FrameAccess.getInstructionPointer(truffleFrame, method) + method.getInitialPC();
+        }
+    }
+
+    public int getInstructionPointerForBytecodeLoop() {
         return FrameAccess.getInstructionPointer(truffleFrame);
     }
 
     public void setInstructionPointer(final int value) {
-        FrameAccess.setInstructionPointer(getOrCreateTruffleFrame(), getBlockOrMethod(), value);
+        final BlockClosureObject closure = getClosure();
+        if (closure != null) {
+            final CompiledBlockObject block = closure.getCompiledBlock();
+            FrameAccess.setInstructionPointer(truffleFrame, block, value - block.getInitialPC());
+        } else {
+            final CompiledMethodObject method = getMethod();
+            FrameAccess.setInstructionPointer(truffleFrame, method, value - method.getInitialPC());
+        }
     }
 
     public int getStackPointer() {
@@ -352,6 +370,10 @@ public final class ContextObject extends AbstractSqueakObject {
 
     public BlockClosureObject getClosure() {
         return FrameAccess.getClosure(truffleFrame);
+    }
+
+    public boolean hasClosure() {
+        return FrameAccess.getClosure(truffleFrame) != null;
     }
 
     public void setClosure(final BlockClosureObject value) {
@@ -545,9 +567,7 @@ public final class ContextObject extends AbstractSqueakObject {
 
     // The context represents primitive call which needs to be skipped when unwinding call stack.
     public boolean isPrimitiveContext() {
-        final CompiledCodeObject codeObject = getBlockOrMethod();
-        return codeObject.hasPrimitive() && codeObject instanceof CompiledMethodObject &&
-                        (getInstructionPointer() - ((CompiledMethodObject) codeObject).getInitialPC() == CallPrimitiveNode.NUM_BYTECODES);
+        return !hasClosure() && getMethod().hasPrimitive() && getInstructionPointerForBytecodeLoop() == CallPrimitiveNode.NUM_BYTECODES;
     }
 
     public boolean pointsTo(final Object thang) {
