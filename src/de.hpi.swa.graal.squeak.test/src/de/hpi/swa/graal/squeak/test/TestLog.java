@@ -73,7 +73,7 @@ public final class TestLog {
 
         private static final Map<String, Long> testToSelectorCount;
         private static final List<Failure> failures;
-        private static AtomicLong expectedSelectors;
+        private static AtomicLong expectedSelectors = new AtomicLong();
 
         static {
             testToSelectorCount = SqueakSUnitTest.TESTS.stream().collect(groupingBy(t -> t.className, counting()));
