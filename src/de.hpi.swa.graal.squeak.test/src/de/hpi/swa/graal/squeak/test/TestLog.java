@@ -4,18 +4,21 @@ package de.hpi.swa.graal.squeak.test;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 
-import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
-import de.hpi.swa.graal.squeak.test.Travis.AnsiCodes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
+
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 import org.junit.runners.model.Statement;
+
+import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
+import de.hpi.swa.graal.squeak.test.Travis.AnsiCodes;
 
 public final class TestLog {
 
@@ -70,7 +73,7 @@ public final class TestLog {
 
         private static final Map<String, Long> testToSelectorCount;
         private static final List<Failure> failures;
-        private static volatile long expectedSelectors;
+        private static AtomicLong expectedSelectors;
 
         static {
             testToSelectorCount = SqueakSUnitTest.TESTS.stream().collect(groupingBy(t -> t.className, counting()));
@@ -121,16 +124,15 @@ public final class TestLog {
         }
 
         private static synchronized void begin(final SqueakTest test) {
-            if (expectedSelectors == 0) {
-                expectedSelectors = testToSelectorCount.get(test.className);
+            if (expectedSelectors.get() == 0) {
+                expectedSelectors.set(testToSelectorCount.get(test.className));
                 Travis.get().begin(test.className, "Squeak test class: " + test.className);
             }
         }
 
         private static synchronized void end() {
-            if (expectedSelectors > 0) {
-                --expectedSelectors;
-                if (expectedSelectors == 0) {
+            if (expectedSelectors.get() > 0) {
+                if (expectedSelectors.decrementAndGet() == 0) {
                     Travis.get().end();
                     printAndClearFailures();
                 }
