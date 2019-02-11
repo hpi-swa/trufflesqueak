@@ -62,6 +62,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     public final SqueakImageContext image;
     private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
     private final Canvas canvas = new Canvas();
+    private boolean hasVisibleHardwareCursor;
     private final SqueakMouse mouse;
     private final SqueakKeyboard keyboard;
     private final Deque<long[]> deferredEvents = new ArrayDeque<>();
@@ -235,6 +236,15 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @TruffleBoundary
     public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
         assert left < right && top < bottom;
+        /**
+         * {@link Canvas#repaint} informs the repaint manager that the canvas should soon be
+         * repainted which is sufficient in most cases. When the user drags content and the hardware
+         * cursor is invisible, however, it is necessary to {@link Canvas#paintImmediately} which is
+         * expensive but avoids strange visual artifacts.
+         */
+        if (hasVisibleHardwareCursor) {
+            canvas.repaint(0, left, top, right - left, bottom - top);
+        } else {
             canvas.paintImmediately(left, top, right - left, bottom - top);
         }
     }
@@ -347,6 +357,14 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                   0        1     invert the underlying pixel
              * </pre>
              */
+            boolean allZero = true;
+            for (final int cursorWord : cursorWords) {
+                if (cursorWord != 0) {
+                    allZero = false;
+                    break;
+                }
+            }
+            hasVisibleHardwareCursor = !allZero;
             final int[] ints;
             if (mask != null) {
                 ints = mergeCursorWithMask(cursorWords, mask);
