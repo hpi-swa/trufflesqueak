@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -183,8 +184,13 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             });
             if (result == null && bottomContextOnTruffleStack[0] != null) {
-                terminateBetween(bottomContextOnTruffleStack[0], end);
+                terminateBetweenRecursively(bottomContextOnTruffleStack[0], end);
             }
+        }
+
+        @TruffleBoundary
+        private void terminateBetweenRecursively(final ContextObject start, final ContextObject end) {
+            terminateBetween(start, end);
         }
     }
 
