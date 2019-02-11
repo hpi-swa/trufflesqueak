@@ -893,14 +893,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"method.image.hasDisplay()"})
+        @Specialization(guards = {"method.image.hasDisplay()", "left < right", "top < bottom"})
         protected final AbstractSqueakObject doShow(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
             method.image.getDisplay().showDisplayRect((int) left, (int) right, (int) top, (int) bottom);
             return receiver;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!method.image.hasDisplay()"})
+        @Specialization(guards = {"!method.image.hasDisplay() || (left > right || top > bottom)"})
         protected static final AbstractSqueakObject doDrawHeadless(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
             return receiver;
         }

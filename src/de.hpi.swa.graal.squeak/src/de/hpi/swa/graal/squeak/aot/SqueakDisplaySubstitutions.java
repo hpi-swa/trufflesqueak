@@ -106,9 +106,8 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
 
     @Override
     public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
-        if (left < right && top < bottom) {
-            paintImmediately(left, right, top, bottom);
-        }
+        assert left < right && top < bottom;
+        paintImmediately(left, right, top, bottom);
     }
 
     private void paintImmediately(final int left, final int right, final int top, final int bottom) {

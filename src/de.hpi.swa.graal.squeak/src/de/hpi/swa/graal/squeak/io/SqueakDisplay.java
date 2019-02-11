@@ -234,7 +234,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @Override
     @TruffleBoundary
     public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
-        if ((left < right) && (top < bottom)) {
+        assert left < right && top < bottom;
             canvas.paintImmediately(left, top, right - left, bottom - top);
         }
     }
