@@ -201,7 +201,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         protected static final boolean inUnsignedBounds(final LargeIntegerObject value) {
-            return value.isZeroOrPositive() && value.fitsIntoLong();
+            return value.isZeroOrPositive() && value.lessThanOneShiftedBy64();
         }
     }
 
