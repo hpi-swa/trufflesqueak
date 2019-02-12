@@ -762,11 +762,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean sameSign(final LargeIntegerObject a, final long b) {
-            return (a.signum() >= 0 && b >= 0) || (a.signum() < 0 && b < 0);
+            return (a.isPositive() && b >= 0) || (!a.isPositive() && b < 0);
         }
 
         protected static final boolean sameSign(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.signum() == b.signum();
+            return a.getSqueakClass() == b.getSqueakClass();
         }
     }
 }

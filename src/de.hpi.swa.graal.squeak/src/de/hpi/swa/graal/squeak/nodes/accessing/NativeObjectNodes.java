@@ -97,7 +97,7 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = {"obj.isLongType()"})
         protected static final boolean doNativeLongsLargeInteger(@SuppressWarnings("unused") final NativeObject obj, final LargeIntegerObject value) {
-            return value.isZeroOrPositive() && value.lessThanOneShiftedBy64();
+            return value.isZeroOrPositive() && value.fitsIntoLong();
         }
 
         @Fallback

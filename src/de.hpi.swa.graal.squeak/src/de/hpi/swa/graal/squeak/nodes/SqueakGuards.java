@@ -106,7 +106,7 @@ public final class SqueakGuards {
         return value instanceof Long;
     }
 
-    public static boolean isMinValueDividedByMinusOne(final long a, final long b) {
+    public static boolean isOverflowDivision(final long a, final long b) {
         return a == Long.MIN_VALUE && b == -1;
     }
 
@@ -138,8 +138,24 @@ public final class SqueakGuards {
         return LargeIntegerObject.SMALLINTEGER32_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
     }
 
+    public static boolean isSmallInteger32bitPositive(final long value) {
+        return 0 <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
+    }
+
     public static boolean isSmallInteger64bit(final long value) {
         return LargeIntegerObject.SMALLINTEGER64_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER64_MAX;
+    }
+
+    public static boolean isSmallInteger64bitPositive(final long value) {
+        return 0 <= value && value <= LargeIntegerObject.SMALLINTEGER64_MAX;
+    }
+
+    public static boolean isSmallIntegerPositive(final SqueakImageContext image, final long value) {
+        if (image.flags.is64bit()) {
+            return isSmallInteger64bitPositive(value);
+        } else {
+            return isSmallInteger32bitPositive(value);
+        }
     }
 
     public static boolean isZero(final double value) {

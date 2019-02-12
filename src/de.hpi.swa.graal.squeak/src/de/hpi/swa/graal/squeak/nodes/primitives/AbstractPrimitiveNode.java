@@ -44,6 +44,10 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
         return SqueakGuards.isSmallInteger(method.image, value);
     }
 
+    protected final boolean isSmallIntegerPositive(final long value) {
+        return SqueakGuards.isSmallIntegerPositive(method.image, value);
+    }
+
     protected final LargeIntegerObject asLargeInteger(final long value) {
         return LargeIntegerObject.valueOf(method.image, value);
     }

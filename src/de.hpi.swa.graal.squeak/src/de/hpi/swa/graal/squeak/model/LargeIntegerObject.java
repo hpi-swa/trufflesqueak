@@ -18,25 +18,26 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public static final long MASK_64BIT = 0xffffffffffffffffL;
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     private static final BigInteger ONE_HUNDRED_TWENTY_EIGHT = BigInteger.valueOf(128);
+    private static final BigInteger OVERFLOW_DIVISION_RESULT = BigInteger.valueOf(Long.MIN_VALUE).divide(BigInteger.valueOf(-1));
 
     private byte[] bytes;
     private BigInteger integer;
     private boolean integerDirty = false;
 
-    public LargeIntegerObject(final SqueakImageContext img, final BigInteger integer) {
-        super(img, integer.compareTo(BigInteger.ZERO) >= 0 ? img.largePositiveIntegerClass : img.largeNegativeIntegerClass);
+    public LargeIntegerObject(final SqueakImageContext image, final BigInteger integer) {
+        super(image, integer.compareTo(BigInteger.ZERO) >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass);
         this.bytes = derivedBytesFromBigInteger(integer);
         this.integer = integer;
     }
 
-    public LargeIntegerObject(final SqueakImageContext img, final long hash, final ClassObject klass, final byte[] bytes) {
-        super(img, hash, klass);
+    public LargeIntegerObject(final SqueakImageContext image, final long hash, final ClassObject klass, final byte[] bytes) {
+        super(image, hash, klass);
         this.bytes = bytes;
         this.integerDirty = true;
     }
 
-    public LargeIntegerObject(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
-        super(img, klass);
+    public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final byte[] bytes) {
+        super(image, klass);
         this.bytes = bytes;
         this.integerDirty = true;
     }
@@ -51,6 +52,10 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         super(original.image, original.getSqueakClass());
         bytes = original.bytes.clone();
         integer = original.integer;
+    }
+
+    public static LargeIntegerObject createOverflowDivisionResult(final SqueakImageContext image) {
+        return new LargeIntegerObject(image, OVERFLOW_DIVISION_RESULT);
     }
 
     public long getNativeAt0(final long index) {
@@ -216,6 +221,17 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return newFromBigInteger(image, BigInteger.valueOf(a));
     }
 
+    public boolean isPositive() {
+        return getSqueakClass() == image.largePositiveIntegerClass;
+    }
+
+    public boolean sizeLessThanWordSize() {
+        /**
+         * See `InterpreterPrimitives>>#positiveMachineIntegerValueOf:`.
+         */
+        return size() <= image.flags.wordSize();
+    }
+
     /*
      * Arithmetic Operations
      */
@@ -313,11 +329,6 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean isIntegralWhenDividedBy(final LargeIntegerObject other) {
         return getBigInteger().mod(other.getBigInteger().abs()).compareTo(BigInteger.ZERO) == 0;
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public int signum() {
-        return getBigInteger().signum();
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
