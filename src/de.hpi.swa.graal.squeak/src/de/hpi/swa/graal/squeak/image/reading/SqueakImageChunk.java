@@ -212,7 +212,7 @@ public final class SqueakImageChunk {
                 final SqueakImageChunk chunk = reader.getChunk(ptr);
                 if (chunk == null) {
                     logBogusPointer(ptr);
-                    return image.wrap(ptr >> (reader.is64bit ? 3 : 1));
+                    return image.wrap(ptr >> 1);
                 } else {
                     return chunk.asObject();
                 }

@@ -182,6 +182,7 @@ public final class NativeObject extends AbstractSqueakObject {
     }
 
     public LargeIntegerObject normalize() {
+        // FIXME: getSqueakClass()?
         return new LargeIntegerObject(image, getSqueakClass(), getByteStorage());
     }
 

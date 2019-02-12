@@ -295,7 +295,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] inclusionMapBytes = inclusionMap.getByteStorage();
             final int stringSize = stringBytes.length;
             int index = (int) start - 1;
-            while (index < stringSize && inclusionMapBytes[stringBytes[index] & 0xFF] == 0) {
+            while (index < stringSize && inclusionMapBytes[Byte.toUnsignedInt(stringBytes[index])] == 0) {
                 index++;
             }
             if (index >= stringSize) {
