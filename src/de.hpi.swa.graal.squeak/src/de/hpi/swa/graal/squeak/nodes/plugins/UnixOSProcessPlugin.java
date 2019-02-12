@@ -51,7 +51,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @Specialization(guards = "inBounds1(index, method.image.getImageArguments().length)")
         protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
-            return method.image.wrap(method.image.getImageArguments()[(int) index]);
+            return method.image.wrap(method.image.getImageArguments()[(int) index - 1]);
         }
 
         @SuppressWarnings("unused")
