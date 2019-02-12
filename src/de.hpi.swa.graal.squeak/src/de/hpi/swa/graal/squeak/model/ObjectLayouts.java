@@ -293,6 +293,13 @@ public final class ObjectLayouts {
         public static final int CLASS_WEAK_FINALIZER = 55;
     }
 
+    public static final class SPECIAL_OBJECT_TAG {
+        public static final int SMALL_INTEGER = 1;
+        public static final int CHARACTER = 2;
+        public static final int SMALL_INTEGER_TAG_BITS = 3;
+        public static final int SMALL_FLOAT = 4;
+    }
+
     public static final class SYNTAX_ERROR_NOTIFICATION {
         public static final int IN_CLASS = 5;
         public static final int CODE = 6;

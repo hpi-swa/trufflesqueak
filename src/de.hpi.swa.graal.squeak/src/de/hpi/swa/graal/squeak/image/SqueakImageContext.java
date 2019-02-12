@@ -89,6 +89,7 @@ public final class SqueakImageContext {
     public final NativeObject runWithInSelector = new NativeObject(this);
     public final ArrayObject primitiveErrorTable = new ArrayObject(this);
     public final ArrayObject specialSelectors = new ArrayObject(this);
+    @CompilationFinal public ClassObject smallFloatClass;
     @CompilationFinal public ClassObject truffleObjectClass = null;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
@@ -330,6 +331,11 @@ public final class SqueakImageContext {
     public void setSimulatePrimitiveArgsSelector(final NativeObject simulatePrimitiveArgsSelector) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.simulatePrimitiveArgsSelector = simulatePrimitiveArgsSelector;
+    }
+
+    public void setSmallFloat(final ClassObject classObject) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        smallFloatClass = classObject;
     }
 
     public ClassObject initializeTruffleObject() {

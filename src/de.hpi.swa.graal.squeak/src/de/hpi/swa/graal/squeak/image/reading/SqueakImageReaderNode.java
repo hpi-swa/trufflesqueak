@@ -18,8 +18,12 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_TAG;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
@@ -55,6 +59,7 @@ public final class SqueakImageReaderNode extends RootNode {
     @Child private FillInClassAndHashNode fillInClassNode = FillInClassAndHashNode.create();
     @Child private FillInContextNode fillInContextNode = FillInContextNode.create();
     @Child private FillInNode fillInNode;
+    @Child private ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.create();
 
     public SqueakImageReaderNode(final SqueakImageContext image) {
         super(image.getLanguage());
@@ -421,6 +426,8 @@ public final class SqueakImageReaderNode extends RootNode {
         for (final SqueakImageChunk chunk : chunktable.values()) {
             fillInContextNode.execute(chunk.asObject(), chunk);
         }
+
+        fillInSmallFloatClass();
     }
 
     private void instantiateClasses() {
@@ -441,6 +448,18 @@ public final class SqueakImageReaderNode extends RootNode {
                     }
                 }
             }
+        }
+    }
+
+    private void fillInSmallFloatClass() {
+        final ArrayObject classTableFirstPage = (ArrayObject) getChunk(hiddenRootsChunk.getWords()[0]).asObject();
+        assert arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_INTEGER) == image.smallIntegerClass;
+        assert arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.CHARACTER) == image.characterClass;
+        final Object smallFloatClassOrNil = arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_FLOAT);
+        if (image.flags.is64bit()) {
+            image.setSmallFloat((ClassObject) smallFloatClassOrNil);
+        } else {
+            assert smallFloatClassOrNil == image.nil : "smallFloatClass is not nil on 32-bit";
         }
     }
 
