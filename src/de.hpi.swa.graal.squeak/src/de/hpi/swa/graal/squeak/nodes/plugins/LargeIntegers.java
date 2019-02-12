@@ -5,6 +5,7 @@ import java.util.List;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -13,7 +14,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -35,6 +35,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primAnyBitFromTo")
     public abstract static class PrimAnyBitFromToNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        private final BranchProfile startLargerThanStopProfile = BranchProfile.create();
+        private final BranchProfile firstAndLastDigitIndexIdenticalProfile = BranchProfile.create();
 
         public PrimAnyBitFromToNode(final CompiledMethodObject method) {
             super(method);
@@ -44,6 +46,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         protected final boolean doLong(final long receiver, final long start, final long stopArg) {
             final long stop = Math.min(stopArg, Long.highestOneBit(receiver));
             if (start > stop) {
+                startLargerThanStopProfile.enter();
                 return method.image.sqFalse;
             }
             final long firstDigitIndex = Math.floorDiv(start - 1, 32);
@@ -51,6 +54,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final long firstMask = 0xFFFFFFFFL << ((start - 1) & 31);
             final long lastMask = 0xFFFFFFFFL >> (31 - ((stop - 1) & 31));
             if (firstDigitIndex == lastDigitIndex) {
+                firstAndLastDigitIndexIdenticalProfile.enter();
                 final byte digit = digitOf(receiver, firstDigitIndex);
                 if ((digit & (firstMask & lastMask)) != 0) {
                     return method.image.sqTrue;
@@ -68,8 +72,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
             if ((digitOf(receiver, lastDigitIndex) & lastMask) != 0) {
                 return method.image.sqTrue;
+            } else {
+                return method.image.sqFalse;
             }
-            return method.image.sqFalse;
         }
 
         @Specialization(guards = {"start >= 1", "stopArg >= 1"}, rewriteOn = {ArithmeticException.class})
@@ -81,6 +86,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         protected final boolean doLargeInteger(final LargeIntegerObject receiver, final long start, final long stopArg) {
             final long stop = Math.min(stopArg, receiver.bitLength());
             if (start > stop) {
+                startLargerThanStopProfile.enter();
                 return method.image.sqFalse;
             }
             final long firstDigitIndex = Math.floorDiv(start - 1, 32);
@@ -88,6 +94,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final long firstMask = 0xFFFFFFFFL << ((start - 1) & 31);
             final long lastMask = 0xFFFFFFFFL >> (31 - ((stop - 1) & 31));
             if (firstDigitIndex == lastDigitIndex) {
+                firstAndLastDigitIndexIdenticalProfile.enter();
                 final long digit = receiver.getNativeAt0(firstDigitIndex);
                 if ((digit & (firstMask & lastMask)) != 0) {
                     return method.image.sqTrue;
@@ -105,8 +112,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
             if ((receiver.getNativeAt0(lastDigitIndex) & lastMask) != 0) {
                 return method.image.sqTrue;
+            } else {
+                return method.image.sqFalse;
             }
-            return method.image.sqFalse;
         }
 
         private static byte digitOf(final long value, final long index) {
@@ -238,7 +246,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final Object doLong(final long a, final long b) {
+        protected static final long doLong(final long a, final long b) {
             return Math.multiplyExact(a, b);
         }
 
@@ -263,12 +271,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doDouble(final double a, final double b) {
+        protected static final double doDouble(final double a, final double b) {
             return a * b;
         }
 
         @Specialization
-        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+        protected final FloatObject doFloat(final FloatObject a, final FloatObject b) {
             return asFloatObject(a.getValue() * b.getValue());
         }
     }
@@ -422,9 +430,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitCompare")
     public abstract static class PrimDigitCompareNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        private final BranchProfile secondLargerProfile = BranchProfile.create();
+        private final BranchProfile firstLargerProfile = BranchProfile.create();
+        private final BranchProfile equalProfile = BranchProfile.create();
 
         public PrimDigitCompareNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "a > b")
+        protected static final long doLongGreater(final long a, final long b) {
+            return 1L;
         }
 
         @SuppressWarnings("unused")
@@ -434,44 +451,65 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "a != b")
-        protected final long doLongNotEqual(final long a, final long b) {
-            return digitCompareLargewith(asLargeInteger(a), asLargeInteger(b));
+        @Specialization(guards = "a < b")
+        protected static final long doLongSmaller(final long a, final long b) {
+            return -1L;
+        }
+
+        @Specialization(guards = "a >= 0")
+        protected final long doLongPositiveLargeInteger(final long a, final LargeIntegerObject b) {
+            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromPositiveLong(a), b.getBytes());
+        }
+
+        @Specialization(guards = {"a < 0", "!isLongMinValue(a)"})
+        protected final long doLongNegativeLargeInteger(final long a, final LargeIntegerObject b) {
+            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromPositiveLong(-a), b.getBytes());
+        }
+
+        @Specialization(guards = {"isLongMinValue(a)"})
+        protected final long doLongMinValueLargeInteger(final long a, final LargeIntegerObject b) {
+            return digitCompareLargewith(asFloatObject(a).getBytes(), b.getBytes());
         }
 
         @Specialization
-        protected final long doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return digitCompareLargewith(asLargeInteger(a), b);
+        protected final long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return digitCompareLargewith(a.getBytes(), b.getBytes());
         }
 
-        @Specialization
-        protected static final long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return digitCompareLargewith(a, b);
+        @Specialization(guards = "b >= 0")
+        protected final long doLargeIntegerLongPositive(final LargeIntegerObject a, final long b) {
+            return digitCompareLargewith(a.getBytes(), ArrayConversionUtils.largeIntegerBytesFromPositiveLong(b));
         }
 
-        @Specialization
-        protected final long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return digitCompareLargewith(a, asLargeInteger(b));
+        @Specialization(guards = {"b < 0", "!isLongMinValue(b)"})
+        protected final long doLargeIntegerLongNegative(final LargeIntegerObject a, final long b) {
+            return digitCompareLargewith(a.getBytes(), ArrayConversionUtils.largeIntegerBytesFromPositiveLong(-b));
+        }
+
+        @Specialization(guards = {"isLongMinValue(b)"})
+        protected final long doLargeIntegerLongMinValue(final LargeIntegerObject a, final long b) {
+            return digitCompareLargewith(a.getBytes(), asFloatObject(b).getBytes());
         }
 
         /*
          * Compare the magnitude of firstInteger with that of secondInteger. Return a code of 1, 0,
          * -1 for firstInteger >, = , < secondInteger
          */
-        private static long digitCompareLargewith(final LargeIntegerObject firstInteger, final LargeIntegerObject secondInteger) {
-            final byte[] firstBytes = firstInteger.getBytes();
-            final byte[] secondBytes = secondInteger.getBytes();
-
+        private long digitCompareLargewith(final byte[] firstBytes, final byte[] secondBytes) {
             final int firstLen = firstBytes.length;
             final int secondLen = secondBytes.length;
             if (secondLen != firstLen) {
                 if (secondLen > firstLen) {
-                    return -1;
+                    secondLargerProfile.enter();
+                    return -1L;
                 } else {
-                    return 1;
+                    firstLargerProfile.enter();
+                    return 1L;
                 }
+            } else {
+                equalProfile.enter();
+                return cDigitComparewithlen(firstBytes, secondBytes, firstLen);
             }
-            return cDigitComparewithlen(firstBytes, secondBytes, firstLen);
         }
 
         /* Precondition: pFirst len = pSecond len. */
@@ -480,22 +518,26 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             int secondDigit;
             int ix = len - 1;
             while (ix >= 0) {
-                if (((secondDigit = Byte.toUnsignedInt(pSecond[ix]))) != ((firstDigit = Byte.toUnsignedInt(pFirst[ix])))) {
+                firstDigit = Byte.toUnsignedInt(pFirst[ix]);
+                secondDigit = Byte.toUnsignedInt(pSecond[ix]);
+                if (secondDigit != firstDigit) {
                     if (secondDigit < firstDigit) {
-                        return 1;
+                        return 1L;
                     } else {
-                        return -1;
+                        return -1L;
                     }
                 }
                 --ix;
             }
-            return 0;
+            return 0L;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitDivNegative")
     public abstract static class PrimDigitDivNegativeNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        private final BranchProfile signProfile = BranchProfile.create();
+
         public PrimDigitDivNegativeNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -504,6 +546,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         protected final ArrayObject doLong(final long rcvr, final long arg, final boolean negative) {
             long divide = rcvr / arg;
             if ((negative && divide >= 0) || (!negative && divide < 0)) {
+                signProfile.enter();
                 divide = Math.negateExact(divide);
             }
             return method.image.newList(new long[]{divide, rcvr % arg});
@@ -518,6 +561,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         protected final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
             LargeIntegerObject divide = rcvr.divideNoReduce(arg);
             if (negative != divide.isNegative()) {
+                signProfile.enter();
                 divide = divide.negateNoReduce();
             }
             final Object remainder = rcvr.remainder(arg);
@@ -729,11 +773,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = {"primNormalizePositive", "primNormalizeNegative"})
     public abstract static class PrimNormalizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private ReturnReceiverNode receiverNode;
 
         public PrimNormalizeNode(final CompiledMethodObject method) {
             super(method);
-            receiverNode = ReturnReceiverNode.create(method, -1);
         }
 
         @Specialization

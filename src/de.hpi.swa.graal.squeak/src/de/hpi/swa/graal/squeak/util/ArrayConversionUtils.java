@@ -172,6 +172,20 @@ public final class ArrayConversionUtils {
         return longs;
     }
 
+    public static int largeIntegerByteSizeForLong(final long longValue) {
+        return LONG_BYTE_SIZE - Long.numberOfLeadingZeros(longValue) / LONG_BYTE_SIZE;
+    }
+
+    public static byte[] largeIntegerBytesFromPositiveLong(final long longValue) {
+        assert longValue >= 0;
+        final int numBytes = largeIntegerByteSizeForLong(longValue);
+        final byte[] bytes = new byte[numBytes];
+        for (int i = 0; i < numBytes; i++) {
+            bytes[i] = (byte) (longValue >> (LONG_BYTE_SIZE * i));
+        }
+        return bytes;
+    }
+
     public static long[] longsFromBytes(final byte[] bytes) {
         final int size = bytes.length / LONG_BYTE_SIZE;
         final long[] longs = new long[size];

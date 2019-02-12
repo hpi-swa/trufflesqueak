@@ -106,8 +106,8 @@ public final class SqueakGuards {
         return value instanceof Long;
     }
 
-    public static boolean isOverflowDivision(final long a, final long b) {
-        return a == Long.MIN_VALUE && b == -1;
+    public static boolean isLongMinValue(final long value) {
+        return value == Long.MIN_VALUE;
     }
 
     public static boolean isNativeObject(final Object object) {
@@ -120,6 +120,10 @@ public final class SqueakGuards {
 
     public static boolean isNotProvided(final Object obj) {
         return NotProvided.isInstance(obj);
+    }
+
+    public static boolean isOverflowDivision(final long a, final long b) {
+        return a == Long.MIN_VALUE && b == -1;
     }
 
     public static boolean isPointersObject(final Object obj) {
