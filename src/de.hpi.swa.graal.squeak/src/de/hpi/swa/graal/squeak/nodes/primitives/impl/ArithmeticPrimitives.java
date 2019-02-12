@@ -228,9 +228,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver & arg;
         }
 
-        @Specialization(guards = {"isSmallIntegerPositive(receiver)", "arg.sizeLessThanWordSize()"})
-        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+        @Specialization(guards = {"isSmallIntegerPositive(receiver)", "arg.fitsIntoLong()"})
+        protected static final Object doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
             return doLong(receiver, arg.longValueExact());
+        }
+
+        @Specialization(guards = {"isSmallInteger(receiver)", "!arg.fitsIntoLong()", "arg.sizeLessThanWordSize()"})
+        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+            return asLargeInteger(receiver).and(arg);
         }
     }
 
@@ -246,9 +251,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver | arg;
         }
 
-        @Specialization(guards = {"isSmallInteger(receiver)", "arg.sizeLessThanWordSize()"})
-        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+        @Specialization(guards = {"isSmallInteger(receiver)", "arg.fitsIntoLong()"})
+        protected static final Object doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
             return doLong(receiver, arg.longValueExact());
+        }
+
+        @Specialization(guards = {"isSmallInteger(receiver)", "!arg.fitsIntoLong()", "arg.sizeLessThanWordSize()"})
+        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+            return asLargeInteger(receiver).or(arg);
         }
     }
 
@@ -264,9 +274,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver ^ arg;
         }
 
-        @Specialization(guards = {"isSmallInteger(receiver)", "arg.sizeLessThanWordSize()"})
-        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+        @Specialization(guards = {"isSmallInteger(receiver)", "arg.fitsIntoLong()"})
+        protected static final Object doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
             return doLong(receiver, arg.longValueExact());
+        }
+
+        @Specialization(guards = {"isSmallInteger(receiver)", "!arg.fitsIntoLong()", "arg.sizeLessThanWordSize()"})
+        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+            return asLargeInteger(receiver).xor(arg);
         }
     }
 
@@ -327,8 +342,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isOverflowDivision(a, b)"})
-        protected final LargeIntegerObject doLongWithOverflow(final long a, final long b) {
-            return LargeIntegerObject.createOverflowDivisionResult(method.image);
+        protected static final long doLongWithOverflow(final long a, final long b) {
+            return 0L;
         }
 
         @Specialization(guards = {"!b.isZero()"})
@@ -767,8 +782,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
-        protected final FloatObject doLong(final long receiver) {
+        @Specialization(guards = "method.image.flags.is64bit()")
+        protected final double doLong64bit(final long receiver) {
+            assert isSmallInteger(receiver);
+            return receiver;
+        }
+
+        @Specialization(guards = "!method.image.flags.is64bit()")
+        protected final FloatObject doLong32bit(final long receiver) {
             assert isSmallInteger(receiver);
             return asFloatObject(receiver);
         }
@@ -1213,8 +1234,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             throw SqueakException.create("Should have been overriden: ", a, "-", b);
         }
 
-        @Specialization
-        protected final FloatObject doFloat(final FloatObject a, final FloatObject b) {
+        @Specialization(guards = "method.image.flags.is64bit()")
+        protected final double doFloat64bit(final FloatObject a, final FloatObject b) {
+            return doDouble(a.getValue(), b.getValue());
+        }
+
+        @Specialization(guards = "!method.image.flags.is64bit()")
+        protected final FloatObject doFloat32bit(final FloatObject a, final FloatObject b) {
             return asFloatObject(doDouble(a.getValue(), b.getValue()));
         }
 
@@ -1223,9 +1249,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(a, b.getValue());
         }
 
-        @Specialization
-        protected final double doFloatDouble(final FloatObject a, final double b) {
+        @Specialization(guards = "method.image.flags.is64bit()")
+        protected final double doFloatDouble64bit(final FloatObject a, final double b) {
             return doDouble(a.getValue(), b);
+        }
+
+        @Specialization(guards = "!method.image.flags.is64bit()")
+        protected final FloatObject doFloatDouble32bit(final FloatObject a, final double b) {
+            return asFloatObject(doDouble(a.getValue(), b));
         }
 
         /*
@@ -1237,9 +1268,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(a, b);
         }
 
-        @Specialization(guards = "isSmallInteger(b)") // Needs to fail on LargeIntegerObjects.
-        protected final double doFloatLong(final FloatObject a, final long b) {
-            return doFloatDouble(a, b);
+        @Specialization(guards = {"method.image.flags.is64bit()", "isSmallInteger(b)"})
+        protected final double doFloatLong64bit(final FloatObject a, final long b) {
+            return doFloatDouble64bit(a, b);
+        }
+
+        @Specialization(guards = {"!method.image.flags.is64bit()", "isSmallInteger(b)"})
+        protected final FloatObject doFloatLong32bit(final FloatObject a, final long b) {
+            return doFloatDouble32bit(a, b);
         }
     }
 
@@ -1272,12 +1308,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
          * `Float` primitives accept `SmallInteger`s (see #loadFloatOrIntFrom:).
          */
 
-        @Specialization(guards = "isSmallInteger(b)") // Needs to fail on LargeIntegerObjects.
+        @Specialization(guards = "isSmallInteger(b)")
         protected final boolean doDoubleLong(final double a, final long b) {
             return doDouble(a, b);
         }
 
-        @Specialization(guards = "isSmallInteger(b)") // Needs to fail on LargeIntegerObjects.
+        @Specialization(guards = "isSmallInteger(b)")
         protected final boolean doFloatLong(final FloatObject a, final long b) {
             return doFloatDouble(a, b);
         }
