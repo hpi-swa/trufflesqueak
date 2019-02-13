@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
-import java.util.Iterator;
+import java.util.AbstractCollection;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
@@ -16,7 +16,6 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -30,7 +29,6 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
-import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -61,11 +59,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     private abstract static class AbstractInstancesPrimitiveNode extends AbstractPrimitiveNode {
-        @Child protected GetAllInstancesNode getAllInstancesNode;
+        @Child protected ObjectGraphNode objectGraphNode;
 
         protected AbstractInstancesPrimitiveNode(final CompiledMethodObject method) {
             super(method);
-            getAllInstancesNode = GetAllInstancesNode.create(method);
+            objectGraphNode = ObjectGraphNode.create(method.image);
         }
     }
 
@@ -78,24 +76,29 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        // TODO: specialize for arrays -> object/native/abstractsqu only
-        protected final AbstractSqueakObject performPointersBecomeOneWay(final VirtualFrame frame, final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
+        // TODO: specialize for arrays -> object/native/abstractsqueak only
+        protected final AbstractSqueakObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             final Object[] fromPointers = getObjectArrayNode.execute(fromArray);
             final Object[] toPointers = getObjectArrayNode.execute(toArray);
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            migrateInstances(fromPointersClone, toPointers, copyHash, getAllInstancesNode.executeGet(frame));
+            final AbstractCollection<AbstractSqueakObject> instances;
+            if (fromPointers.length == 1) {
+                instances = objectGraphNode.executeAllInstancesOf(((AbstractSqueakObject) fromPointers[0]).getSqueakClass());
+            } else {
+                instances = objectGraphNode.executeAllInstances();
+            }
+            migrateInstances(fromPointersClone, toPointers, copyHash, instances);
+            // TODO: why is it necessary to iterate over frames again? all instances already does
+            // that as well.
             patchTruffleFrames(fromPointersClone, toPointers, copyHash);
             return fromArray;
         }
 
         @TruffleBoundary
-        private void migrateInstances(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash, final List<AbstractSqueakObject> instances) {
-            for (Iterator<AbstractSqueakObject> iterator = instances.iterator(); iterator.hasNext();) {
-                final AbstractSqueakObject instance = iterator.next();
-                if (instance != null && instance.getSqueakClass() != null) {
-                    pointersBecomeNode.execute(instance, fromPointers, toPointers, copyHash);
-                }
+        private void migrateInstances(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash, final AbstractCollection<AbstractSqueakObject> instances) {
+            for (AbstractSqueakObject instance : instances) {
+                pointersBecomeNode.execute(instance, fromPointers, toPointers, copyHash);
             }
         }
 
@@ -124,7 +127,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             final Object fromPointer = fromPointers[j];
                             if (argument == fromPointer) {
                                 final Object toPointer = toPointers[j];
-                                FrameAccess.setArgumentIfInRange(current, i, toPointer);
                                 updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                             } else {
                                 pointersBecomeNode.execute(argument, fromPointers, toPointers, copyHash);
@@ -295,9 +297,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
-        protected final AbstractSqueakObject doForward(final VirtualFrame frame, final ArrayObject fromArray, final ArrayObject toArray,
+        protected final AbstractSqueakObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode) {
-            return performPointersBecomeOneWay(frame, fromArray, toArray, true);
+            return performPointersBecomeOneWay(fromArray, toArray, true);
         }
 
         @SuppressWarnings("unused")
@@ -430,14 +432,17 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!sqObject.getSqueakClass().isImmediateClassType()")
-        protected final AbstractSqueakObject someInstance(final AbstractSqueakObject sqObject) {
-            final List<AbstractSqueakObject> instances = objectGraphNode.allInstancesOf(sqObject.getSqueakClass());
-            final int nextIndex = instances.indexOf(sqObject) + 1;
-            if (nextIndex < instances.size()) {
-                return instances.get(nextIndex);
-            } else {
-                return method.image.nil;
+        protected final AbstractSqueakObject nextInstance(final AbstractSqueakObject sqObject) {
+            final AbstractCollection<AbstractSqueakObject> instances = objectGraphNode.executeAllInstancesOf(sqObject.getSqueakClass());
+            boolean foundMyself = false;
+            for (AbstractSqueakObject instance : instances) {
+                if (instance == sqObject) {
+                    foundMyself = true;
+                } else if (foundMyself) {
+                    return instance;
+                }
             }
+            return method.image.nil;
         }
     }
 
@@ -528,20 +533,15 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 138)
-    protected abstract static class PrimSomeObjectNode extends AbstractInstancesPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSomeObjectNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimSomeObjectNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final AbstractSqueakObject doSome(final VirtualFrame frame, @SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return getFirst(getAllInstancesNode.executeGet(frame));
-        }
-
-        @TruffleBoundary
-        private static AbstractSqueakObject getFirst(final List<AbstractSqueakObject> list) {
-            return list.get(0);
+        protected final AbstractSqueakObject doSome(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return method.image.specialObjectsArray;
         }
     }
 
@@ -554,18 +554,21 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final AbstractSqueakObject doNext(final VirtualFrame frame, final AbstractSqueakObject receiver) {
-            return getNext(receiver, getAllInstancesNode.executeGet(frame));
+        protected final AbstractSqueakObject doNext(final AbstractSqueakObject receiver) {
+            return getNext(receiver, objectGraphNode.executeAllInstances());
         }
 
         @TruffleBoundary
-        private static AbstractSqueakObject getNext(final AbstractSqueakObject receiver, final List<AbstractSqueakObject> allInstances) {
-            final int index = allInstances.indexOf(receiver);
-            if (0 <= index && index + 1 < allInstances.size()) {
-                return allInstances.get(index + 1);
-            } else {
-                return allInstances.get(0);
+        private static AbstractSqueakObject getNext(final AbstractSqueakObject receiver, final AbstractCollection<AbstractSqueakObject> allInstances) {
+            boolean foundMyself = false;
+            for (AbstractSqueakObject instance : allInstances) {
+                if (instance == receiver) {
+                    foundMyself = true;
+                } else if (foundMyself) {
+                    return instance;
+                }
             }
+            return allInstances.iterator().next(); // first
         }
     }
 
@@ -640,8 +643,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final AbstractSqueakObject doAll(final VirtualFrame frame, @SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.newList(ArrayUtils.toArray(getAllInstancesNode.executeGet(frame)));
+        protected final ArrayObject doAll(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return method.image.newList(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
         }
     }
 
@@ -698,9 +701,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
-        protected final AbstractSqueakObject doForward(final VirtualFrame frame, final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+        protected final AbstractSqueakObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode) {
-            return performPointersBecomeOneWay(frame, fromArray, toArray, copyHash);
+            return performPointersBecomeOneWay(fromArray, toArray, copyHash);
         }
 
         @SuppressWarnings("unused")

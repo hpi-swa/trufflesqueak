@@ -1,7 +1,7 @@
 package de.hpi.swa.graal.squeak.util;
 
+import java.util.AbstractCollection;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -116,8 +116,8 @@ public final class ArrayUtils {
     }
 
     @TruffleBoundary
-    public static Object[] toArray(final List<AbstractSqueakObject> list) {
-        return list.toArray(); // needs to be behind a TruffleBoundary
+    public static AbstractSqueakObject[] toArray(final AbstractCollection<AbstractSqueakObject> list) {
+        return list.toArray(new AbstractSqueakObject[list.size()]);
     }
 
     @TruffleBoundary

@@ -244,14 +244,4 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     public AbstractSqueakObject shallowCopy() {
         return new BlockClosureObject(this);
     }
-
-    public Object[] getTraceableObjects() {
-        final Object[] result = new Object[copied.length + 2];
-        for (int i = 0; i < copied.length; i++) {
-            result[i] = copied[i];
-        }
-        result[copied.length] = receiver;
-        result[copied.length + 1] = outerContext;
-        return result;
-    }
 }

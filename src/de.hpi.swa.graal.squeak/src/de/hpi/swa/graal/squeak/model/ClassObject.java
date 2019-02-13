@@ -393,19 +393,6 @@ public final class ClassObject extends AbstractSqueakObject {
         this.setOtherPointers(otherPointers);
     }
 
-    public Object[] getTraceableObjects() {
-        final Object[] result = new Object[CLASS_DESCRIPTION.SIZE + pointers.length - 1];
-        result[CLASS_DESCRIPTION.SUPERCLASS] = superclass;
-        result[CLASS_DESCRIPTION.METHOD_DICT] = methodDict;
-        // result[CLASS_DESCRIPTION.FORMAT] = format; <- Ignore immediate value during tracing.
-        result[CLASS_DESCRIPTION.INSTANCE_VARIABLES - 1] = instanceVariables;
-        result[CLASS_DESCRIPTION.ORGANIZATION - 1] = organization;
-        for (int i = 0; i < pointers.length; i++) {
-            result[CLASS_DESCRIPTION.SIZE + i - 1] = pointers[i];
-        }
-        return result;
-    }
-
     public Assumption getClassHierarchyStable() {
         return classHierarchyStable.getAssumption();
     }

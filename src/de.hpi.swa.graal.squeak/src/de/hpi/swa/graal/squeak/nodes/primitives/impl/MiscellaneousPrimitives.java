@@ -123,7 +123,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = "!classObject.isImmediateClassType()")
         protected final AbstractSqueakObject doSomeInstance(final ClassObject classObject) {
             try {
-                return objectGraphNode.someInstanceOf(classObject);
+                return objectGraphNode.executeSomeInstanceOf(classObject);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
@@ -650,7 +650,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "!classObject.isImmediateClassType()")
         protected final ArrayObject allInstances(final ClassObject classObject) {
-            return method.image.newList(ArrayUtils.toArray(objectGraphNode.allInstancesOf(classObject)));
+            return method.image.newList(ArrayUtils.toArray(objectGraphNode.executeAllInstancesOf(classObject)));
         }
     }
 
