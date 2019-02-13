@@ -27,8 +27,10 @@ import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ObjectGraphNode extends AbstractNodeWithImage {
-    private static final int SEEN_INITIAL_CAPACITY = 500000;
+    private static final float SEEN_LOAD_FACTOR = 0.9F;
     private static final int PENDING_INITIAL_SIZE = 256;
+
+    private static int lastSeenObjects = 500000;
 
     protected ObjectGraphNode(final SqueakImageContext image) {
         super(image);
@@ -40,7 +42,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
 
     @TruffleBoundary
     public AbstractCollection<AbstractSqueakObject> executeAllInstances() {
-        final HashSet<AbstractSqueakObject> seen = new HashSet<>(SEEN_INITIAL_CAPACITY);
+        final HashSet<AbstractSqueakObject> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
         final ArrayDeque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
@@ -50,13 +52,14 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                 tracePointers(pending, currentObject);
             }
         }
+        lastSeenObjects = seen.size();
         return seen;
     }
 
     @TruffleBoundary
     public AbstractCollection<AbstractSqueakObject> executeAllInstancesOf(final ClassObject classObj) {
         final ArrayDeque<AbstractSqueakObject> result = new ArrayDeque<>();
-        final HashSet<AbstractSqueakObject> seen = new HashSet<>(SEEN_INITIAL_CAPACITY);
+        final HashSet<AbstractSqueakObject> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
         final ArrayDeque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
@@ -69,12 +72,13 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                 tracePointers(pending, currentObject);
             }
         }
+        lastSeenObjects = seen.size();
         return result;
     }
 
     @TruffleBoundary
     public AbstractSqueakObject executeSomeInstanceOf(final ClassObject classObj) {
-        final HashSet<AbstractSqueakObject> seen = new HashSet<>(SEEN_INITIAL_CAPACITY);
+        final HashSet<AbstractSqueakObject> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
         final ArrayDeque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
@@ -87,6 +91,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                 tracePointers(pending, currentObject);
             }
         }
+        lastSeenObjects = seen.size();
         return image.nil;
     }
 
