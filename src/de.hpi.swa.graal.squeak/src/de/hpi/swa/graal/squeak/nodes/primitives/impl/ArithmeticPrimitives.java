@@ -1213,7 +1213,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(a, asLargeInteger(b));
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
+        @Specialization(guards = "b.fitsIntoLong()", rewriteOn = ArithmeticException.class)
         protected final Object doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
             return doLong(a, b.longValueExact());
         }
