@@ -908,7 +908,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Fallback
         protected final boolean doObject(final Object a, final Object b) {
-            return !a.equals(b) ? method.image.sqTrue : method.image.sqFalse;
+            return a != b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
 
