@@ -9,7 +9,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -24,7 +23,6 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -55,7 +53,6 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
@@ -393,8 +390,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    /** Complements {@link PrimNotIdenticalNode}. */
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = 110) // Complements #169.
+    @SqueakPrimitive(indices = 110)
     protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimIdenticalNode(final CompiledMethodObject method) {
             super(method);
@@ -410,23 +408,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization
-        protected final boolean doChar(final CharacterObject a, final char b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return method.image.sqFalse;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected final boolean doChar(final char a, final CharacterObject b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return method.image.sqFalse;
-        }
-
-        @Specialization
-        protected final boolean doChar(final CharacterObject a, final CharacterObject b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return a.getValue() == b.getValue() ? method.image.sqTrue : method.image.sqFalse;
-        }
-
         @Specialization
         protected final boolean doLong(final long a, final long b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
@@ -434,22 +415,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final boolean doDouble(final double a, final double b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
-        }
-
-        @Specialization
-        protected final boolean doFloat(final FloatObject a, final FloatObject b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+            return Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
-        @Specialization
-        protected final boolean doObject(final NilObject a, final NilObject b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return method.image.sqTrue;
+        @Specialization(guards = {"a.getClass() != b.getClass()"})
+        public boolean doIncompatiblePrimitiveTypes(final Object a, final Object b, final NotProvided notProvided) {
+            return method.image.sqFalse;
         }
 
-        @Specialization
-        protected final boolean doSqueakObject(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided) {
+        @Specialization(guards = {"a.getClass() == b.getClass()", "!isPrimitive(a) || !isPrimitive(b)"})
+        public boolean doSameClass(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
@@ -463,23 +439,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization
-        protected final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final CharacterObject a, final char b) {
-            return method.image.sqFalse;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final char a, final CharacterObject b) {
-            return method.image.sqFalse;
-        }
-
-        @Specialization
-        protected final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final CharacterObject a, final CharacterObject b) {
-            return a.getValue() == b.getValue() ? method.image.sqTrue : method.image.sqFalse;
-        }
-
         @Specialization
         protected final boolean doLong(@SuppressWarnings("unused") final ContextObject context, final long a, final long b) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
@@ -487,22 +446,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final boolean doDouble(@SuppressWarnings("unused") final ContextObject context, final double a, final double b) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
-        }
-
-        @Specialization
-        protected final boolean doFloat(@SuppressWarnings("unused") final ContextObject context, final FloatObject a, final FloatObject b) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+            return Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
-        @Specialization
-        protected final boolean doObject(@SuppressWarnings("unused") final ContextObject context, final NilObject a, final NilObject b) {
-            return method.image.sqTrue;
+        @Specialization(guards = {"a.getClass() != b.getClass()", "!isPrimitive(a) || !isPrimitive(b)"})
+        public boolean doIncompatiblePrimitiveTypes(final ContextObject context, final Object a, final Object b) {
+            return method.image.sqFalse;
         }
 
-        @Specialization
-        protected final boolean doSqueakObject(@SuppressWarnings("unused") final ContextObject context, final Object a, final Object b) {
+        @Specialization(guards = {"a.getClass() == b.getClass()", "!isPrimitive(a) || !isPrimitive(b)"})
+        public boolean doSameClass(@SuppressWarnings("unused") final ContextObject context, final Object a, final Object b) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
@@ -874,9 +828,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     }
 
+    /** Complements {@link PrimIdenticalNode}. */
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = 169) // Complements #110.
-    protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+    @SqueakPrimitive(indices = 169)
+    protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimNotIdenticalNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -898,16 +853,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final boolean doDouble(final double a, final double b) {
-            return a != b ? method.image.sqTrue : method.image.sqFalse;
+            return Double.doubleToRawLongBits(a) != Double.doubleToRawLongBits(b) ? method.image.sqTrue : method.image.sqFalse;
         }
 
-        @Specialization
-        protected final boolean doFloat(final FloatObject a, final FloatObject b) {
-            return a != b && !doDouble(a.getValue(), b.getValue());
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"a.getClass() != b.getClass()"})
+        public boolean doIncompatiblePrimitiveTypes(final Object a, final Object b) {
+            return method.image.sqTrue;
         }
 
-        @Fallback
-        protected final boolean doObject(final Object a, final Object b) {
+        @Specialization(guards = {"a.getClass() == b.getClass()", "!isPrimitive(a) || !isPrimitive(b)"})
+        public boolean doSameClass(final Object a, final Object b) {
             return a != b ? method.image.sqTrue : method.image.sqFalse;
         }
     }

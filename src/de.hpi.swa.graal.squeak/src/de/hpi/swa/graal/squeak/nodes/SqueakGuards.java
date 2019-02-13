@@ -130,6 +130,10 @@ public final class SqueakGuards {
         return obj instanceof PointersObject;
     }
 
+    public static boolean isPrimitive(final Object obj) {
+        return (obj instanceof Boolean) || (obj instanceof Character) || (obj instanceof Long) || (obj instanceof Double);
+    }
+
     public static boolean isSmallInteger(final SqueakImageContext image, final long value) {
         if (image.flags.is64bit()) {
             return isSmallInteger64bit(value);
