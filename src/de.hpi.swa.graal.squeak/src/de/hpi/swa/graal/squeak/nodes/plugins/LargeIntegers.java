@@ -439,21 +439,39 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "a > b")
-        protected static final long doLongGreater(final long a, final long b) {
-            return 1L;
-        }
-
-        @SuppressWarnings("unused")
         @Specialization(guards = "a == b")
         protected static final long doLongEqual(final long a, final long b) {
             return 0L;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "a < b")
-        protected static final long doLongSmaller(final long a, final long b) {
+        @Specialization(guards = "a == b || a.hasSameValueAs(b)")
+        protected static final long doLargeIntegerEqual(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return 0L;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"a > b", "isSmallInteger(a)", "isSmallInteger(b)"})
+        protected static final long doLongGreaterThan(final long a, final long b) {
+            return 1L;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"a < b", "isSmallInteger(a)", "isSmallInteger(b)"})
+        protected static final long doLongLessThan(final long a, final long b) {
             return -1L;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isSmallInteger(a) || !isSmallInteger(b)", "!isLongMinValue(a)", "!isLongMinValue(b)"})
+        protected final long doLongAsLargeIntegerQuick(final long a, final long b) {
+            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromPositiveLong(Math.abs(a)), ArrayConversionUtils.largeIntegerBytesFromPositiveLong(Math.abs(b)));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isSmallInteger(a) || !isSmallInteger(b)", "isLongMinValue(a) || isLongMinValue(b)"})
+        protected final long doLongAsLargeInteger(final long a, final long b) {
+            return digitCompareLargewith(asLargeInteger(a).getBytes(), asLargeInteger(b).getBytes());
         }
 
         @Specialization(guards = "a >= 0")
@@ -471,7 +489,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return digitCompareLargewith(asFloatObject(a).getBytes(), b.getBytes());
         }
 
-        @Specialization
+        @Specialization(guards = {"a != b", "!a.hasSameValueAs(b)"})
         protected final long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return digitCompareLargewith(a.getBytes(), b.getBytes());
         }

@@ -148,10 +148,14 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return getBigInteger().toString();
     }
 
+    public boolean hasSameValueAs(final LargeIntegerObject other) {
+        return Arrays.equals(bytes, other.bytes);
+    }
+
     @Override
     public boolean equals(final Object other) {
         if (other instanceof LargeIntegerObject) {
-            return Arrays.equals(bytes, ((LargeIntegerObject) other).bytes);
+            return hasSameValueAs((LargeIntegerObject) other);
         } else {
             return super.equals(other);
         }
