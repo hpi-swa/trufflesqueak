@@ -98,7 +98,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                 return null;
             }
             for (final Object argument : current.getArguments()) {
-                addAbstractSqueakObjectToPendingDeque(pending, argument);
+                addIfHasNotImmediateClassType(pending, argument);
             }
             final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
             final FrameDescriptor frameDescriptor = blockOrMethod.getFrameDescriptor();
@@ -107,7 +107,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                 if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
                     return null; // Stop here, because this slot and all following are not used.
                 }
-                addAbstractSqueakObjectToPendingDeque(pending, current.getValue(slot));
+                addIfHasNotImmediateClassType(pending, current.getValue(slot));
             }
             return null;
         });
@@ -121,11 +121,12 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         addTraceablePointers(pending, currentObject);
     }
 
-    private static void addAbstractSqueakObjectToPendingDeque(final ArrayDeque<AbstractSqueakObject> pending, final Object argument) {
+    private static void addIfHasNotImmediateClassType(final ArrayDeque<AbstractSqueakObject> pending, final Object argument) {
         if (SqueakGuards.isAbstractSqueakObject(argument)) {
             final AbstractSqueakObject abstractSqueakObject = (AbstractSqueakObject) argument;
-            assert !abstractSqueakObject.getSqueakClass().isImmediateClassType();
-            pending.add(abstractSqueakObject);
+            if (!abstractSqueakObject.getSqueakClass().isImmediateClassType()) {
+                pending.add(abstractSqueakObject);
+            }
         }
     }
 
@@ -137,14 +138,14 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
             pending.add(classObject.getInstanceVariables());
             pending.add(classObject.getOrganization());
             for (Object value : classObject.getOtherPointers()) {
-                addAbstractSqueakObjectToPendingDeque(pending, value);
+                addIfHasNotImmediateClassType(pending, value);
             }
         } else if (object instanceof BlockClosureObject) {
             final BlockClosureObject closure = (BlockClosureObject) object;
-            addAbstractSqueakObjectToPendingDeque(pending, closure.getReceiver());
+            addIfHasNotImmediateClassType(pending, closure.getReceiver());
             pending.add(closure.getOuterContext());
             for (Object value : closure.getCopied()) {
-                addAbstractSqueakObjectToPendingDeque(pending, value);
+                addIfHasNotImmediateClassType(pending, value);
             }
         } else if (object instanceof ContextObject) {
             final ContextObject context = (ContextObject) object;
@@ -154,34 +155,34 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                 if (context.hasClosure()) {
                     pending.add(context.getClosure());
                 }
-                addAbstractSqueakObjectToPendingDeque(pending, context.getReceiver());
+                addIfHasNotImmediateClassType(pending, context.getReceiver());
                 for (int i = 0; i < context.getBlockOrMethod().getNumStackSlots(); i++) {
-                    addAbstractSqueakObjectToPendingDeque(pending, context.atTemp(i));
+                    addIfHasNotImmediateClassType(pending, context.atTemp(i));
                 }
             }
         } else if (object instanceof CompiledMethodObject) {
             for (Object literal : ((CompiledMethodObject) object).getLiterals()) {
-                addAbstractSqueakObjectToPendingDeque(pending, literal);
+                addIfHasNotImmediateClassType(pending, literal);
             }
         } else if (object instanceof ArrayObject) {
             final ArrayObject array = (ArrayObject) object;
             if (array.isObjectType()) {
                 for (Object value : array.getObjectStorage()) {
-                    addAbstractSqueakObjectToPendingDeque(pending, value);
+                    addIfHasNotImmediateClassType(pending, value);
                 }
             } else if (array.isAbstractSqueakObjectType()) {
                 for (Object value : array.getAbstractSqueakObjectStorage()) {
-                    addAbstractSqueakObjectToPendingDeque(pending, value);
+                    addIfHasNotImmediateClassType(pending, value);
                 }
             }
         } else if (object instanceof PointersObject) {
             for (Object pointer : ((PointersObject) object).getPointers()) {
-                addAbstractSqueakObjectToPendingDeque(pending, pointer);
+                addIfHasNotImmediateClassType(pending, pointer);
             }
         } else if (object instanceof WeakPointersObject) {
             final WeakPointersObject weakPointersObject = ((WeakPointersObject) object);
             for (int i = 0; i < weakPointersObject.size(); i++) {
-                addAbstractSqueakObjectToPendingDeque(pending, weakPointersObject.at0(i));
+                addIfHasNotImmediateClassType(pending, weakPointersObject.at0(i));
             }
         }
     }
