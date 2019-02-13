@@ -782,13 +782,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "method.image.flags.is64bit()")
+        @Specialization(guards = "is64bit(receiver)")
         protected final double doLong64bit(final long receiver) {
             assert isSmallInteger(receiver);
             return receiver;
         }
 
-        @Specialization(guards = "!method.image.flags.is64bit()")
+        @Specialization(guards = "!is64bit(receiver)")
         protected final FloatObject doLong32bit(final long receiver) {
             assert isSmallInteger(receiver);
             return asFloatObject(receiver);
@@ -1234,12 +1234,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             throw SqueakException.create("Should have been overriden: ", a, "-", b);
         }
 
-        @Specialization(guards = "method.image.flags.is64bit()")
+        @Specialization(guards = "is64bit(a)")
         protected final double doFloat64bit(final FloatObject a, final FloatObject b) {
             return doDouble(a.getValue(), b.getValue());
         }
 
-        @Specialization(guards = "!method.image.flags.is64bit()")
+        @Specialization(guards = "!is64bit(a)")
         protected final FloatObject doFloat32bit(final FloatObject a, final FloatObject b) {
             return asFloatObject(doDouble(a.getValue(), b.getValue()));
         }
@@ -1249,12 +1249,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(a, b.getValue());
         }
 
-        @Specialization(guards = "method.image.flags.is64bit()")
+        @Specialization(guards = "is64bit(a)")
         protected final double doFloatDouble64bit(final FloatObject a, final double b) {
             return doDouble(a.getValue(), b);
         }
 
-        @Specialization(guards = "!method.image.flags.is64bit()")
+        @Specialization(guards = "!is64bit(a)")
         protected final FloatObject doFloatDouble32bit(final FloatObject a, final double b) {
             return asFloatObject(doDouble(a.getValue(), b));
         }
@@ -1268,12 +1268,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(a, b);
         }
 
-        @Specialization(guards = {"method.image.flags.is64bit()", "isSmallInteger(b)"})
+        @Specialization(guards = {"is64bit(a)", "isSmallInteger(b)"})
         protected final double doFloatLong64bit(final FloatObject a, final long b) {
             return doFloatDouble64bit(a, b);
         }
 
-        @Specialization(guards = {"!method.image.flags.is64bit()", "isSmallInteger(b)"})
+        @Specialization(guards = {"!is64bit(a)", "isSmallInteger(b)"})
         protected final FloatObject doFloatLong32bit(final FloatObject a, final long b) {
             return doFloatDouble32bit(a, b);
         }
