@@ -37,7 +37,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     @BeforeClass
     public static void loadTestImage() {
         final String imagePath = getPathToTestImage();
-        ensureImageContext(imagePath);
+        loadImageContext(imagePath);
         image.getOutput().println("Test image loaded from " + imagePath + "...");
         patchImageForTesting();
     }
@@ -45,6 +45,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     @AfterClass
     public static void cleanUp() {
         idleProcess = null;
+        destroyImageContext();
     }
 
     private static void reloadImage() {

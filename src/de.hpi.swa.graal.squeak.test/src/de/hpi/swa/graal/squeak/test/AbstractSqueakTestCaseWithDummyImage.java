@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.test;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
@@ -8,7 +9,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
 
     @BeforeClass
     public static void setUpSqueakImageContext() {
-        ensureImageContext("fake.image");
+        loadImageContext("fake.image");
         image.plus.setStorage("plus".getBytes());
         image.minus.setStorage("minus".getBytes());
         image.lt.setStorage("lt".getBytes());
@@ -48,5 +49,10 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         image.compiledMethodClass.fillin(fakeChunk);
         image.nilClass.setFormat(0);
         image.arrayClass.setFormat(0);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        destroyImageContext();
     }
 }

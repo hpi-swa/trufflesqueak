@@ -31,6 +31,7 @@ public abstract class AbstractSqueakTestCase {
 
     @ClassRule public static final TestLog.Rule TEST_LOG = new TestLog.Rule();
 
+    private static Context context;
     protected static SqueakImageContext image;
 
     protected CompiledCodeObject makeMethod(final byte[] bytes) {
@@ -120,13 +121,14 @@ public abstract class AbstractSqueakTestCase {
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 
-    protected static void ensureImageContext(final String imagePath) {
+    protected static void loadImageContext(final String imagePath) {
+        assert context == null && image == null;
         final Builder contextBuilder = Context.newBuilder();
         contextBuilder.option(SqueakLanguageConfig.ID + ".ImagePath", imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + ".Headless", "true");
         contextBuilder.option(SqueakLanguageConfig.ID + ".Testing", "true");
         contextBuilder.allowIO(true);
-        final Context context = contextBuilder.build();
+        context = contextBuilder.build();
         context.enter();
         context.initialize(SqueakLanguageConfig.ID);
         image = SqueakLanguage.getContext();
@@ -135,5 +137,13 @@ public abstract class AbstractSqueakTestCase {
             image.ensureLoaded();
         }
         image.getSqueakImage(); // Pretend image has been loaded.
+    }
+
+    protected static void destroyImageContext() {
+        // Close context if existing (for reloading mechanism).
+        context.leave();
+        context.close(true);
+        context = null;
+        image = null;
     }
 }
