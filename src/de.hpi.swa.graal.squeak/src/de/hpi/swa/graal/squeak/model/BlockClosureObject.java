@@ -69,6 +69,43 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         copied = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FIRST_COPIED_VALUE, pointers.length);
     }
 
+    public Object at0(final long longIndex) {
+        final int index = (int) longIndex;
+        switch (index) {
+            case BLOCK_CLOSURE.OUTER_CONTEXT:
+                return getOuterContext();
+            case BLOCK_CLOSURE.START_PC:
+                return getStartPC();
+            case BLOCK_CLOSURE.ARGUMENT_COUNT:
+                return getNumArgs();
+            default:
+                return getCopiedAt0(index);
+        }
+    }
+
+    public void atput0(final long longIndex, final Object obj) {
+        final int index = (int) longIndex;
+        switch (index) {
+            case BLOCK_CLOSURE.OUTER_CONTEXT:
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                outerContext = (ContextObject) obj;
+                break;
+            case BLOCK_CLOSURE.START_PC:
+                setStartPC((int) (long) obj);
+                break;
+            case BLOCK_CLOSURE.ARGUMENT_COUNT:
+                setNumArgs((int) (long) obj);
+                break;
+            default:
+                setCopiedAt0(index, obj);
+                break;
+        }
+    }
+
+    public ContextObject getOuterContext() {
+        return outerContext;
+    }
+
     public long getStartPC() {
         if (pc == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -85,44 +122,37 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         return numArgs;
     }
 
+    public Object getCopiedAt0(final int index) {
+        return copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
+    }
+
     public Object[] getCopied() {
         return copied;
     }
 
-    public Object at0(final long longIndex) {
-        final int index = (int) longIndex;
-        switch (index) {
-            case BLOCK_CLOSURE.OUTER_CONTEXT:
-                return outerContext;
-            case BLOCK_CLOSURE.START_PC:
-                return getStartPC();
-            case BLOCK_CLOSURE.ARGUMENT_COUNT:
-                return getNumArgs();
-            default:
-                return copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
-        }
+    public void setOuterContext(final ContextObject outerContext) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.outerContext = outerContext;
     }
 
-    public void atput0(final long longIndex, final Object obj) {
-        final int index = (int) longIndex;
-        switch (index) {
-            case BLOCK_CLOSURE.OUTER_CONTEXT:
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                outerContext = (ContextObject) obj;
-                break;
-            case BLOCK_CLOSURE.START_PC:
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                pc = (int) (long) obj;
-                break;
-            case BLOCK_CLOSURE.ARGUMENT_COUNT:
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                numArgs = (int) (long) obj;
-                break;
-            default:
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = obj;
-                break;
-        }
+    public void setStartPC(final int pc) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.pc = pc;
+    }
+
+    public void setNumArgs(final int numArgs) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.numArgs = numArgs;
+    }
+
+    public void setCopiedAt0(final int index, final Object value) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = value;
+    }
+
+    public void setCopied(final Object[] copied) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.copied = copied;
     }
 
     public void become(final BlockClosureObject other) {
@@ -130,11 +160,6 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         final Object[] otherCopied = other.copied;
         other.setCopied(this.copied);
         this.setCopied(otherCopied);
-    }
-
-    public void setCopied(final Object[] copied) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.copied = copied;
     }
 
     @Override
@@ -214,15 +239,6 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         } else {
             return outerContext;
         }
-    }
-
-    public ContextObject getOuterContext() {
-        return outerContext;
-    }
-
-    public void setOuterContext(final ContextObject outerContext) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.outerContext = outerContext;
     }
 
     public AbstractSqueakObject shallowCopy() {
