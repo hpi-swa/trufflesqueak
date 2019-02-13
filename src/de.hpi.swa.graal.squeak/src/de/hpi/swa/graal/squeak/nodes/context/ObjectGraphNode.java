@@ -11,6 +11,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -107,12 +108,18 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
             }
             final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
             final FrameDescriptor frameDescriptor = blockOrMethod.getFrameDescriptor();
+            final ContextObject context = FrameAccess.getContext(current, blockOrMethod);
+            if (context != null) {
+                pending.add(context);
+            }
             final FrameSlot[] stackSlots = blockOrMethod.getStackSlots();
             for (final FrameSlot slot : stackSlots) {
-                if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
+                final FrameSlotKind currentSlotKind = frameDescriptor.getFrameSlotKind(slot);
+                if (currentSlotKind == FrameSlotKind.Object) {
+                    addIfHasNotImmediateClassType(pending, FrameUtil.getObjectSafe(current, slot));
+                } else if (currentSlotKind == FrameSlotKind.Illegal) {
                     return null; // Stop here, because this slot and all following are not used.
                 }
-                addIfHasNotImmediateClassType(pending, current.getValue(slot));
             }
             return null;
         });
