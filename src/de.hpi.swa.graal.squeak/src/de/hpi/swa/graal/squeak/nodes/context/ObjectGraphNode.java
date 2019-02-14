@@ -22,7 +22,6 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -191,11 +190,10 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
             for (Object pointer : ((PointersObject) object).getPointers()) {
                 addIfHasNotImmediateClassType(pending, pointer);
             }
-        } else if (object instanceof WeakPointersObject) {
-            final WeakPointersObject weakPointersObject = ((WeakPointersObject) object);
-            for (int i = 0; i < weakPointersObject.size(); i++) {
-                addIfHasNotImmediateClassType(pending, weakPointersObject.at0(i));
-            }
         }
+        /**
+         * No need to trace weak pointers objects. Their pointers are reachable from other objects
+         * and therefore are traced anyway.
+         */
     }
 }
