@@ -56,9 +56,14 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
         return readNode.execute(obj, index);
     }
 
-    @Specialization
-    protected static final Object doWeakPointers(final WeakPointersObject obj, final long index) {
+    @Specialization(guards = "obj.inVariablePart(index)")
+    protected static final Object doWeakPointersVariable(final WeakPointersObject obj, final long index) {
         return obj.at0(index);
+    }
+
+    @Specialization(guards = "!obj.inVariablePart(index)")
+    protected static final Object doWeakPointers(final WeakPointersObject obj, final long index) {
+        return obj.getPointer((int) index);
     }
 
     @Specialization

@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -51,9 +52,14 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
         writeNode.execute(obj, index, value);
     }
 
-    @Specialization
+    @Specialization(guards = "obj.inVariablePart(index)")
+    protected static final void doWeakPointers(final WeakPointersObject obj, final long index, final AbstractSqueakObject value) {
+        obj.setWeakPointer((int) index, value);
+    }
+
+    @Specialization(guards = "!isAbstractSqueakObject(value) || !obj.inVariablePart(index)")
     protected static final void doWeakPointers(final WeakPointersObject obj, final long index, final Object value) {
-        obj.atput0(index, value);
+        obj.setPointer((int) index, value);
     }
 
     @Specialization

@@ -4,7 +4,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -48,20 +47,19 @@ public final class WeakPointersObject extends AbstractPointersObject {
 
     public void atput0(final long index, final Object obj) {
         assert obj != null : "`null` indicates a problem";
-        if (isStoreIntoVariablePart(index, obj)) {
-            setPointer((int) index, newWeakReferenceFor(obj));
+        if (obj instanceof AbstractSqueakObject && inVariablePart(index)) {
+            setWeakPointer((int) index, obj);
         } else {
             setPointer((int) index, obj);
         }
     }
 
-    private boolean isStoreIntoVariablePart(final long index, final Object obj) {
-        return obj instanceof AbstractSqueakObject && index >= instsize();
+    public void setWeakPointer(final int index, final Object value) {
+        setPointer(index, new WeakReference<>(value, weakPointersQueue));
     }
 
-    @TruffleBoundary
-    private static WeakReference<Object> newWeakReferenceFor(final Object pointer) {
-        return new WeakReference<>(pointer, weakPointersQueue);
+    public boolean inVariablePart(final long index) {
+        return instsize() <= index;
     }
 
     public void setWeakPointers(final Object[] pointers) {
