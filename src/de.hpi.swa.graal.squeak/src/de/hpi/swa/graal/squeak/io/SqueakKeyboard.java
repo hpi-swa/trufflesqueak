@@ -28,7 +28,7 @@ public final class SqueakKeyboard implements KeyListener {
 
     @Override
     public void keyTyped(final KeyEvent e) {
-        assert e.getExtendedKeyCode() == KeyEvent.VK_UNDEFINED;
+        // Ignored.
     }
 
     @Override
