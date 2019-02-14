@@ -320,6 +320,10 @@ public final class ArrayObject extends AbstractSqueakObject {
         return storage.getClass() == Object[].class;
     }
 
+    public boolean isTraceableObjectType() {
+        return isAbstractSqueakObjectType() || isObjectType();
+    }
+
     public void setStorage(final Object newStorage) {
         storage = newStorage;
     }
