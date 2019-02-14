@@ -216,7 +216,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doHash(final NativeObject receiver) {
             final int[] words = receiver.getIntStorage();
             long hash = 0;
-            for (int word : words) {
+            for (final int word : words) {
                 hash += word;
             }
             return hash & 0x1fffffff;
@@ -328,7 +328,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final double doSum64bit(final NativeObject receiver) {
             final int[] words = receiver.getIntStorage();
             double sum = 0;
-            for (int word : words) {
+            for (final int word : words) {
                 sum += Float.intBitsToFloat(word);
             }
             return sum;

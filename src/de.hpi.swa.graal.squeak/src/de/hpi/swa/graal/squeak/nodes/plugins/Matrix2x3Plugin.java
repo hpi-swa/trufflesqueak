@@ -66,12 +66,12 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             final float[] m1 = loadMatrixAsFloat(receiver);
             final float[] m2 = loadMatrixAsFloat(aTransformation);
             final int[] m3 = loadMatrix(result);
-            m3[0] = Float.floatToRawIntBits((m1[0] * m2[0]) + (m1[1] * m2[3]));
-            m3[1] = Float.floatToRawIntBits((m1[0] * m2[1]) + (m1[1] * m2[4]));
-            m3[2] = Float.floatToRawIntBits((m1[0] * m2[2]) + (m1[1] * m2[5]) + m1[2]);
-            m3[3] = Float.floatToRawIntBits((m1[3] * m2[0]) + (m1[4] * m2[3]));
-            m3[4] = Float.floatToRawIntBits((m1[3] * m2[1]) + (m1[4] * m2[4]));
-            m3[5] = Float.floatToRawIntBits((m1[3] * m2[2]) + (m1[4] * m2[5]) + m1[5]);
+            m3[0] = Float.floatToRawIntBits(m1[0] * m2[0] + m1[1] * m2[3]);
+            m3[1] = Float.floatToRawIntBits(m1[0] * m2[1] + m1[1] * m2[4]);
+            m3[2] = Float.floatToRawIntBits(m1[0] * m2[2] + m1[1] * m2[5] + m1[2]);
+            m3[3] = Float.floatToRawIntBits(m1[3] * m2[0] + m1[4] * m2[3]);
+            m3[4] = Float.floatToRawIntBits(m1[3] * m2[1] + m1[4] * m2[4]);
+            m3[5] = Float.floatToRawIntBits(m1[3] * m2[2] + m1[4] * m2[5] + m1[5]);
             return result;
         }
     }

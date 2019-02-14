@@ -22,27 +22,27 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     // For special/well-known objects only.
     protected AbstractSqueakObject(final SqueakImageContext image) {
         this.image = image;
-        this.squeakHash = -1;
-        this.squeakClass = null;
+        squeakHash = -1;
+        squeakClass = null;
     }
 
     protected AbstractSqueakObject(final SqueakImageContext image, final ClassObject klass) {
         this.image = image;
-        this.squeakHash = hashCode() & IDENTITY_HASH_MASK;
-        this.squeakClass = klass;
+        squeakHash = hashCode() & IDENTITY_HASH_MASK;
+        squeakClass = klass;
     }
 
     protected AbstractSqueakObject(final SqueakImageContext image, final int hash) {
         this.image = image;
         // Generate new hash if hash is `0`. This might have something to do with compact classes?
-        this.squeakHash = hash != 0 ? hash : hashCode() & IDENTITY_HASH_MASK;
-        this.squeakClass = null;
+        squeakHash = hash != 0 ? hash : hashCode() & IDENTITY_HASH_MASK;
+        squeakClass = null;
     }
 
     protected AbstractSqueakObject(final SqueakImageContext image, final long hash, final ClassObject klass) {
         this.image = image;
-        this.squeakHash = hash;
-        this.squeakClass = klass;
+        squeakHash = hash;
+        squeakClass = klass;
     }
 
     public static final boolean isInstance(final TruffleObject obj) {
@@ -51,8 +51,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final void becomeOtherClass(final AbstractSqueakObject other) {
         final ClassObject otherSqClass = other.squeakClass;
-        other.setSqueakClass(this.squeakClass);
-        this.setSqueakClass(otherSqClass);
+        other.setSqueakClass(squeakClass);
+        setSqueakClass(otherSqClass);
     }
 
     @Override
@@ -93,7 +93,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public final boolean isClass() {
-        assert !(this instanceof ClassObject) || (getSqueakClass().isMetaClass() || getSqueakClass().getSqueakClass().isMetaClass());
+        assert !(this instanceof ClassObject) || getSqueakClass().isMetaClass() || getSqueakClass().getSqueakClass().isMetaClass();
         CompilerAsserts.neverPartOfCompilation();
         return this instanceof ClassObject;
     }
@@ -111,7 +111,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public final boolean isPinned() {
-        return ((squeakHash >> PINNED_BIT_SHIFT) & 1) == 1;
+        return (squeakHash >> PINNED_BIT_SHIFT & 1) == 1;
     }
 
     public final boolean isSemaphore() {
@@ -123,7 +123,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public final void setPinned() {
-        setSqueakHash(squeakHash | (1 << PINNED_BIT_SHIFT));
+        setSqueakHash(squeakHash | 1 << PINNED_BIT_SHIFT);
     }
 
     public final void setSqueakClass(final ClassObject newClass) {
@@ -146,7 +146,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final Object send(final String selector, final Object... arguments) {
         CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
-        final CompiledMethodObject method = (CompiledMethodObject) this.getSqueakClass().lookup(selector);
+        final CompiledMethodObject method = (CompiledMethodObject) getSqueakClass().lookup(selector);
         final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(ArrayUtils.EMPTY_ARRAY, method.getFrameDescriptor());
         return DispatchSendNode.create(image).executeSend(frame, method.getCompiledInSelector(), method, getSqueakClass(), ArrayUtils.copyWithFirst(arguments, this), image.nil);
     }

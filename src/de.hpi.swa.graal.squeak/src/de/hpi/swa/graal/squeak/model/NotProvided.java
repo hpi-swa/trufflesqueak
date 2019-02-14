@@ -19,6 +19,7 @@ public final class NotProvided implements TruffleObject {
         return obj == INSTANCE;
     }
 
+    @Override
     public ForeignAccess getForeignAccess() {
         return SqueakObjectMessageResolutionForeign.ACCESS;
     }

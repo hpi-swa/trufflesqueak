@@ -104,7 +104,7 @@ public final class ArrayConversionUtils {
         final int[] ints = new int[size];
         for (int i = 0; i < ints.length; i++) {
             final int offset = i * 4;
-            ints[i] = (bytes[offset + 0] & 0xFF) << 24 | (bytes[offset + 1] & 0xFF) << 16 | (bytes[offset + 2] & 0xFF) << 8 | (bytes[offset + 3] & 0xFF);
+            ints[i] = (bytes[offset + 0] & 0xFF) << 24 | (bytes[offset + 1] & 0xFF) << 16 | (bytes[offset + 2] & 0xFF) << 8 | bytes[offset + 3] & 0xFF;
         }
         return ints;
     }
@@ -125,7 +125,7 @@ public final class ArrayConversionUtils {
                 ints[i] |= (bytes[offset + 2] & 0xFF) << 8;
             }
             if (offset + 3 < byteSize) {
-                ints[i] |= (bytes[offset + 3] & 0xFF);
+                ints[i] |= bytes[offset + 3] & 0xFF;
             }
         }
         return ints;
@@ -136,7 +136,7 @@ public final class ArrayConversionUtils {
         final int[] ints = new int[size];
         for (int i = 0; i < size; i++) {
             final int offset = i * 4;
-            ints[i] = (bytes[offset + 3] & 0xFF) << 24 | (bytes[offset + 2] & 0xFF) << 16 | (bytes[offset + 1] & 0xFF) << 8 | (bytes[offset + 0] & 0xFF);
+            ints[i] = (bytes[offset + 3] & 0xFF) << 24 | (bytes[offset + 2] & 0xFF) << 16 | (bytes[offset + 1] & 0xFF) << 8 | bytes[offset + 0] & 0xFF;
         }
         return ints;
     }
@@ -157,7 +157,7 @@ public final class ArrayConversionUtils {
                 ints[i] |= (bytes[offset + 1] & 0xFF) << 8;
             }
             if (offset < byteSize) {
-                ints[i] |= (bytes[offset + 0] & 0xFF);
+                ints[i] |= bytes[offset + 0] & 0xFF;
             }
         }
         return ints;
@@ -181,7 +181,7 @@ public final class ArrayConversionUtils {
         final int numBytes = largeIntegerByteSizeForLong(longValue);
         final byte[] bytes = new byte[numBytes];
         for (int i = 0; i < numBytes; i++) {
-            bytes[i] = (byte) (longValue >> (LONG_BYTE_SIZE * i));
+            bytes[i] = (byte) (longValue >> LONG_BYTE_SIZE * i);
         }
         return bytes;
     }
@@ -213,7 +213,7 @@ public final class ArrayConversionUtils {
         final short[] shorts = new short[size];
         for (int i = 0; i < shorts.length; i++) {
             final int offset = i * 2;
-            shorts[i] = (short) (((bytes[offset] & 0xFF) << 8) | (bytes[offset + 1] & 0xFF));
+            shorts[i] = (short) ((bytes[offset] & 0xFF) << 8 | bytes[offset + 1] & 0xFF);
         }
         return shorts;
     }
@@ -223,7 +223,7 @@ public final class ArrayConversionUtils {
         final short[] shorts = new short[size];
         for (int i = 0; i < shorts.length; i++) {
             final int offset = i * 2;
-            shorts[i] = (short) (((bytes[offset + 1] & 0xFF) << 8) | (bytes[offset] & 0xFF));
+            shorts[i] = (short) ((bytes[offset + 1] & 0xFF) << 8 | bytes[offset] & 0xFF);
         }
         return shorts;
     }

@@ -43,7 +43,7 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final Map<String, String> envMap = System.getenv();
             final List<String> strings = new ArrayList<>();
-            for (Map.Entry<String, String> entry : envMap.entrySet()) {
+            for (final Map.Entry<String, String> entry : envMap.entrySet()) {
                 strings.add(entry.getKey() + "=" + entry.getValue());
             }
             return method.image.wrap(String.join("\n", strings));

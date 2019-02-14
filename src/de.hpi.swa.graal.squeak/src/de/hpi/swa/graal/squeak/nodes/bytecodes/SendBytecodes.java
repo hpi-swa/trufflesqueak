@@ -60,16 +60,16 @@ public final class SendBytecodes {
                 result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
                 assert result != null : "Result of a message send should not be null";
                 getPushNode().executeWrite(frame, result);
-            } catch (PrimitiveWithoutResultException e) {
+            } catch (final PrimitiveWithoutResultException e) {
                 return; // ignoring result
-            } catch (NonLocalReturn nlr) {
+            } catch (final NonLocalReturn nlr) {
                 nlrProfile.enter();
                 if (nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame)) {
                     getPushNode().executeWrite(frame, nlr.getReturnValue());
                 } else {
                     throw nlr;
                 }
-            } catch (NonVirtualReturn nvr) {
+            } catch (final NonVirtualReturn nvr) {
                 nvrProfile.enter();
                 if (nvr.getTargetContext() == getContext(frame)) {
                     getPushNode().executeWrite(frame, nvr.getReturnValue());

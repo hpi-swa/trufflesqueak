@@ -24,7 +24,7 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class SqueakImageChunk {
-    private static final long SMALLFLOAT_MASK = 896L << (52 + 1);
+    private static final long SMALLFLOAT_MASK = 896L << 52 + 1;
 
     protected Object object;
     @CompilationFinal private ClassObject sqClass;
@@ -99,7 +99,7 @@ public final class SqueakImageChunk {
             } else if (format == 9) { // 64-bit integers
                 object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
-                if (this.getSqClass() == image.floatClass) {
+                if (getSqClass() == image.floatClass) {
                     object = FloatObject.newFromChunkWords(image, hash, getInts());
                 } else {
                     object = NativeObject.newNativeInts(this);
@@ -153,11 +153,11 @@ public final class SqueakImageChunk {
     }
 
     private static int minorClassIndexOf(final int classid) {
-        return classid & ((1 << 10) - 1);
+        return classid & (1 << 10) - 1;
     }
 
     public void setSqClass(final ClassObject baseSqueakObject) {
-        this.sqClass = baseSqueakObject;
+        sqClass = baseSqueakObject;
     }
 
     @ExplodeLoop
@@ -199,7 +199,7 @@ public final class SqueakImageChunk {
                 case 2: // Character
                     return CharacterObject.valueOf(image, (int) (ptr >> 3));
                 case 4: // SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:)
-                    long valueWithoutTag = (ptr >>> 3);
+                    long valueWithoutTag = ptr >>> 3;
                     if (valueWithoutTag > 1) {
                         valueWithoutTag += SMALLFLOAT_MASK;
                     }
@@ -219,7 +219,7 @@ public final class SqueakImageChunk {
             } else if ((ptr & 1) == 1) {
                 return ptr >> 1;
             } else {
-                assert ((ptr & 3) == 2);
+                assert (ptr & 3) == 2;
                 return CharacterObject.valueOf(image, (int) (ptr >> 2));
             }
         }
@@ -257,7 +257,7 @@ public final class SqueakImageChunk {
                     words[i] = (data[i * 4 + 3] & 0xFF) << 24 |
                                     (data[i * 4 + 2] & 0xFF) << 16 |
                                     (data[i * 4 + 1] & 0xFF) << 8 |
-                                    (data[i * 4 + 0] & 0xFF);
+                                    data[i * 4 + 0] & 0xFF;
                 }
             }
         }
@@ -270,12 +270,12 @@ public final class SqueakImageChunk {
 
     public int getPadding() {
         if (image.flags.is64bit()) {
-            if ((16 <= format) && (format <= 31)) {
+            if (16 <= format && format <= 31) {
                 return format & 7;
             } else if (format == 11) {
                 // 32-bit words with 1 word padding
                 return 4;
-            } else if ((12 <= format) && (format <= 15)) {
+            } else if (12 <= format && format <= 15) {
                 // 16-bit words with 2, 4, or 6 bytes padding
                 return format & 3;
             } else if (10 <= format) {
@@ -284,12 +284,12 @@ public final class SqueakImageChunk {
                 return 0;
             }
         } else {
-            if ((16 <= format) && (format <= 31)) {
+            if (16 <= format && format <= 31) {
                 return format & 3;
             } else if (format == 11) {
                 // 32-bit words with 1 word padding
                 return 4;
-            } else if ((12 <= format) && (format <= 15)) {
+            } else if (12 <= format && format <= 15) {
                 // 16-bit words with 2, 4, or 6 bytes padding
                 return (format & 3) * 2;
             } else {
@@ -299,7 +299,7 @@ public final class SqueakImageChunk {
     }
 
     public byte getElementSize() {
-        if ((16 <= format) && (format <= 23)) {
+        if (16 <= format && format <= 23) {
             return 1;
         } else {
             return 4;

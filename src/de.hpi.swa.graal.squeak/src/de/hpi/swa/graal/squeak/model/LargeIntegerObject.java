@@ -26,25 +26,25 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public LargeIntegerObject(final SqueakImageContext image, final BigInteger integer) {
         super(image, integer.compareTo(BigInteger.ZERO) >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass);
-        this.bytes = derivedBytesFromBigInteger(integer);
+        bytes = derivedBytesFromBigInteger(integer);
         this.integer = integer;
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final long hash, final ClassObject klass, final byte[] bytes) {
         super(image, hash, klass);
         this.bytes = bytes;
-        this.integerDirty = true;
+        integerDirty = true;
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final byte[] bytes) {
         super(image, klass);
         this.bytes = bytes;
-        this.integerDirty = true;
+        integerDirty = true;
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final int size) {
         super(image, klass);
-        this.bytes = new byte[size];
+        bytes = new byte[size];
         integer = BigInteger.ZERO;
     }
 

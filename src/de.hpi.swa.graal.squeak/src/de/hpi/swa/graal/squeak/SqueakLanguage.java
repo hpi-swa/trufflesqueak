@@ -80,7 +80,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     protected Iterable<Scope> findLocalScopes(final SqueakImageContext context, final Node node, final Frame frame) {
         // TODO Implement for LSP
         final ArrayList<Scope> scopes = new ArrayList<>();
-        for (Scope s : super.findLocalScopes(context, node, frame)) {
+        for (final Scope s : super.findLocalScopes(context, node, frame)) {
             scopes.add(s);
         }
         if (frame != null) {

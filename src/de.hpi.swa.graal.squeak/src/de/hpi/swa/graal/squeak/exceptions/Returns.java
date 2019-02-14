@@ -40,7 +40,7 @@ public final class Returns {
 
         public NonLocalReturn(final Object returnValue, final Object targetContext) {
             super(returnValue);
-            this.targetContextOrMarker = targetContext;
+            targetContextOrMarker = targetContext;
         }
 
         public Object getTargetContextOrMarker() {

@@ -45,7 +45,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     public Object execute(final VirtualFrame frame) {
         try {
             executeLoop();
-        } catch (TopLevelReturn e) {
+        } catch (final TopLevelReturn e) {
             return e.getReturnValue();
         } finally {
             if (needsShutdown) {
@@ -80,14 +80,14 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(), activeContext);
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
                 LOG.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
-            } catch (ProcessSwitch ps) {
+            } catch (final ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
                 LOG.log(Level.FINE, "Process Switch: {0}", activeContext);
-            } catch (NonLocalReturn nlr) {
+            } catch (final NonLocalReturn nlr) {
                 final AbstractSqueakObject target = (AbstractSqueakObject) nlr.getTargetContextOrMarker();
                 activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
                 LOG.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
-            } catch (NonVirtualReturn nvr) {
+            } catch (final NonVirtualReturn nvr) {
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                 LOG.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }

@@ -69,10 +69,12 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
         return tag == StandardTags.StatementTag.class;
     }
 
+    @Override
     public final boolean isInstrumentable() {
         return true;
     }
 
+    @Override
     public final WrapperNode createWrapper(final ProbeNode probe) {
         return new AbstractPrimitiveNodeWrapper(this, this, probe);
     }

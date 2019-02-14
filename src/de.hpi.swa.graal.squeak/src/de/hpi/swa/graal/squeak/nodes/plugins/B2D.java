@@ -298,7 +298,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#aaFirstPixelFrom:to: */
     private static long aaFirstPixelFromto(final long leftX, final long rightX) {
-        final long firstPixel = ((leftX + (aaLevelGet())) - 1) & (~((aaLevelGet()) - 1));
+        final long firstPixel = leftX + aaLevelGet() - 1 & ~(aaLevelGet() - 1);
         if (firstPixel > rightX) {
             return rightX;
         } else {
@@ -321,7 +321,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#aaLastPixelFrom:to: */
     private static long aaLastPixelFromto(@SuppressWarnings("unused") final long leftX, final long rightX) {
-        return (rightX - 1) & (~((aaLevelGet()) - 1));
+        return rightX - 1 & ~(aaLevelGet() - 1);
     }
 
     /* BalloonEngineBase>>#aaLevelGet */
@@ -362,8 +362,8 @@ public final class B2D {
     /* BalloonEnginePlugin>>#absoluteSquared8Dot24: */
     private static long absoluteSquared8Dot24(final long value) {
         final long word1 = value & 0xFFFF;
-        final long word2 = ((value >>> 16)) & 0xFF;
-        return ((((word1 * word1 >>> 16)) + ((word1 * word2) * 2)) + ((word2 * word2 << 16)) >>> 8);
+        final long word2 = value >>> 16 & 0xFF;
+        return (word1 * word1 >>> 16) + word1 * word2 * 2 + (word2 * word2 << 16) >>> 8;
     }
 
     /* Return the accurate length of the vector described by deltaX and deltaY */
@@ -384,17 +384,17 @@ public final class B2D {
                 return deltaX;
             }
         }
-        final int length = (int) ((deltaX * deltaX) + (deltaY * deltaY));
+        final int length = (int) (deltaX * deltaX + deltaY * deltaY);
         return computeSqrt(length);
     }
 
     /* BalloonEngineBase>>#addEdgeToGET: */
     private static void addEdgeToGET(final long edge) {
-        if (!(allocateGETEntry(1))) {
+        if (!allocateGETEntry(1)) {
             return;
         }
         getBuffer(getUsedGet(), edge);
-        getUsedPut((getUsedGet()) + 1);
+        getUsedPut(getUsedGet() + 1);
     }
 
     /*
@@ -403,11 +403,11 @@ public final class B2D {
      * /* BalloonEnginePlugin>>#adjustWideBezierLeft:width:offset:endX:
      */
     private static void adjustWideBezierLeftwidthoffsetendX(final long bezier, final long lineWidth, final long lineOffset, final long endX) {
-        bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierUpdateDataOf(bezier, GB_UPDATE_X) - (lineOffset * 256));
+        bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierUpdateDataOf(bezier, GB_UPDATE_X) - lineOffset * 256);
         final int lastX = wideBezierUpdateDataOf(bezier, GB_UPDATE_X);
-        wideBezierUpdateDataOf(bezier, GB_UPDATE_X, lastX + ((lineWidth - lineOffset) * 256));
+        wideBezierUpdateDataOf(bezier, GB_UPDATE_X, lastX + (lineWidth - lineOffset) * 256);
         final int lastY = wideBezierUpdateDataOf(bezier, GB_UPDATE_Y);
-        wideBezierUpdateDataOf(bezier, GB_UPDATE_Y, lastY + (lineWidth * 256));
+        wideBezierUpdateDataOf(bezier, GB_UPDATE_Y, lastY + lineWidth * 256);
         bezierFinalXOfput(bezier, endX - lineOffset);
     }
 
@@ -417,13 +417,13 @@ public final class B2D {
      * /* BalloonEnginePlugin>>#adjustWideBezierRight:width:offset:endX:
      */
     private static void adjustWideBezierRightwidthoffsetendX(final long bezier, final long lineWidth, final long lineOffset, final long endX) {
-        bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierUpdateDataOf(bezier, GB_UPDATE_X) + (lineOffset * 256));
+        bezierUpdateDataOf(bezier, GB_UPDATE_X, bezierUpdateDataOf(bezier, GB_UPDATE_X) + lineOffset * 256);
         final int lastX = wideBezierUpdateDataOf(bezier, GB_UPDATE_X);
-        wideBezierUpdateDataOf(bezier, GB_UPDATE_X, lastX - ((lineWidth - lineOffset) * 256));
+        wideBezierUpdateDataOf(bezier, GB_UPDATE_X, lastX - (lineWidth - lineOffset) * 256);
         /* Set lineWidth pixels down */
         final int lastY = wideBezierUpdateDataOf(bezier, GB_UPDATE_Y);
-        wideBezierUpdateDataOf(bezier, GB_UPDATE_Y, lastY + (lineWidth * 256));
-        bezierFinalXOfput(bezier, (endX - lineOffset) + lineWidth);
+        wideBezierUpdateDataOf(bezier, GB_UPDATE_Y, lastY + lineWidth * 256);
+        bezierFinalXOfput(bezier, endX - lineOffset + lineWidth);
     }
 
     /*
@@ -452,7 +452,7 @@ public final class B2D {
                 edgeXValueOfput(line, lastX);
             }
         }
-        if ((yExit + lineOffset) == 0) {
+        if (yExit + lineOffset == 0) {
             if (xDir > 0) {
                 lineWidth -= lineXIncrementOf(line);
             } else {
@@ -461,7 +461,7 @@ public final class B2D {
                 edgeXValueOfput(line, lastX);
             }
         }
-        if ((yExit + lineOffset) > 0) {
+        if (yExit + lineOffset > 0) {
             if (xDir < 0) {
                 /* effectively subtracting */
                 lineWidth += deltaX;
@@ -502,7 +502,7 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#allocateBezier */
     private static long allocateBezier() {
-        if (!(allocateObjEntry(GB_BASE_SIZE))) {
+        if (!allocateObjEntry(GB_BASE_SIZE)) {
             return 0;
         }
         final int bezier = objUsed;
@@ -522,7 +522,7 @@ public final class B2D {
     /* BalloonEnginePlugin>>#allocateBitmapFill:colormap: */
     private static long allocateBitmapFillcolormap(final long cmSize, final int[] cmBits) {
         final int fillSize = GB_M_BASE_SIZE + (int) cmSize;
-        if (!(allocateObjEntry(fillSize))) {
+        if (!allocateObjEntry(fillSize)) {
             return 0;
         }
         final int fill = objUsed;
@@ -548,14 +548,14 @@ public final class B2D {
     /* BalloonEngineBase>>#allocateGETEntry: */
     private static boolean allocateGETEntry(final int nSlots) {
         /* First allocate nSlots in the AET */
-        if (!(allocateAETEntry(nSlots))) {
+        if (!allocateAETEntry(nSlots)) {
             return false;
         }
         if (aetUsedGet() != 0) {
             /* Then move the AET upwards */
             int srcIndex = aetUsedGet();
-            int dstIndex = (aetUsedGet()) + nSlots;
-            for (int i = 1, iLimiT = (aetUsedGet()); i <= iLimiT; i++) {
+            int dstIndex = aetUsedGet() + nSlots;
+            for (int i = 1, iLimiT = aetUsedGet(); i <= iLimiT; i++) {
                 aetBuffer(--dstIndex, aetBuffer(--srcIndex));
             }
         }
@@ -566,7 +566,7 @@ public final class B2D {
     /* BalloonEnginePlugin>>#allocateGradientFill:rampWidth:isRadial: */
     private static long allocateGradientFillrampWidthisRadial(final int[] ramp, final long rampWidth, final boolean isRadial) {
         final int fillSize = GG_BASE_SIZE + (int) rampWidth;
-        if (!(allocateObjEntry(fillSize))) {
+        if (!allocateObjEntry(fillSize)) {
             return 0;
         }
         final int fill = objUsed;
@@ -585,7 +585,7 @@ public final class B2D {
             }
         } else {
             for (int i = 0; i < rampWidth; i++) {
-                workBuffer[rampPtr + i] = (ramp[i]);
+                workBuffer[rampPtr + i] = ramp[i];
             }
         }
         gradientRampLengthOfput(fill, rampWidth);
@@ -594,7 +594,7 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#allocateLine */
     private static long allocateLine() {
-        if (!(allocateObjEntry(GL_BASE_SIZE))) {
+        if (!allocateObjEntry(GL_BASE_SIZE)) {
             return 0;
         }
         final int line = objUsed;
@@ -610,7 +610,7 @@ public final class B2D {
     /* BalloonEngineBase>>#allocateObjEntry: */
     private static boolean allocateObjEntry(final int nSlots) {
         /* First allocate nSlots in the GET */
-        if (!(allocateGETEntry(nSlots))) {
+        if (!allocateGETEntry(nSlots)) {
             return false;
         }
         if (getUsedGet() != 0) {
@@ -639,7 +639,7 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#allocateWideBezier */
     private static long allocateWideBezier() {
-        if (!(allocateObjEntry(GB_WIDE_SIZE))) {
+        if (!allocateObjEntry(GB_WIDE_SIZE)) {
             return 0;
         }
         final int bezier = objUsed;
@@ -652,7 +652,7 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#allocateWideLine */
     private static long allocateWideLine() {
-        if (!(allocateObjEntry(GL_WIDE_SIZE))) {
+        if (!allocateObjEntry(GL_WIDE_SIZE)) {
             return 0;
         }
         final int line = objUsed;
@@ -828,30 +828,30 @@ public final class B2D {
         bmDepth = bitmapDepthOf(bmFill);
         bmRaster = bitmapRasterOf(bmFill);
         if (bmDepth == 32) {
-            value = bits[(int) ((bmRaster * yp) + xp)];
-            if ((value != 0) && ((value & 0xFF000000L) == 0)) {
+            value = bits[(int) (bmRaster * yp + xp)];
+            if (value != 0 && (value & 0xFF000000L) == 0) {
                 value = value | 0xFF000000;
             }
             return uncheckedTransformColor(value);
         }
-        rShift = (rShiftTable())[bmDepth];
+        rShift = rShiftTable()[bmDepth];
         /* cMask - mask out the pixel from the word */
-        value = bits[(int) ((bmRaster * yp) + shr(xp, rShift))];
+        value = bits[(int) (bmRaster * yp + shr(xp, rShift))];
         /* rShift - shift value to move the pixel in the word to the lowest bit position */
         cMask = shl(1, bmDepth) - 1;
-        rShift = (int) ((32 - bmDepth) - ((xp & (shl(1, rShift) - 1)) * bmDepth));
+        rShift = (int) (32 - bmDepth - (xp & shl(1, rShift) - 1) * bmDepth);
         value = shr(value, rShift) & cMask;
         if (bmDepth == 16) {
             /* Must convert by expanding bits */
             if (value != 0) {
                 b = (value & 0x1F) << 3;
                 b += b >>> 5;
-                g = (((value) >>> 5) & 0x1F) << 3;
+                g = (value >>> 5 & 0x1F) << 3;
                 g += g >>> 5;
-                r = (((value) >>> 10) & 0x1F) << 3;
+                r = (value >>> 10 & 0x1F) << 3;
                 r += r >>> 5;
                 a = 0xFF;
-                value = ((b + (g << 8)) + (r << 16)) + (a << 24);
+                value = b + (g << 8) + (r << 16) + (a << 24);
             }
         } else {
             /* Must convert by using color map */
@@ -876,62 +876,62 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#bzEndX: */
     private static int bzEndX(final long index) {
-        return wbStackValue(((wbStackSize()) - index) + 4);
+        return wbStackValue(wbStackSize() - index + 4);
     }
 
     /* BalloonEnginePlugin>>#bzEndX:put: */
     private static void bzEndXput(final long index, final long value) {
-        wbStackValueput(((wbStackSize()) - index) + 4, value);
+        wbStackValueput(wbStackSize() - index + 4, value);
     }
 
     /* BalloonEnginePlugin>>#bzEndY: */
     private static int bzEndY(final long index) {
-        return wbStackValue(((wbStackSize()) - index) + 5);
+        return wbStackValue(wbStackSize() - index + 5);
     }
 
     /* BalloonEnginePlugin>>#bzEndY:put: */
     private static void bzEndYput(final long index, final long value) {
-        wbStackValueput(((wbStackSize()) - index) + 5, value);
+        wbStackValueput(wbStackSize() - index + 5, value);
     }
 
     /* BalloonEnginePlugin>>#bzStartX: */
     private static int bzStartX(final long index) {
-        return wbStackValue(((wbStackSize()) - index));
+        return wbStackValue(wbStackSize() - index);
     }
 
     /* BalloonEnginePlugin>>#bzStartX:put: */
     private static void bzStartXput(final long index, final long value) {
-        wbStackValueput(((wbStackSize()) - index), value);
+        wbStackValueput(wbStackSize() - index, value);
     }
 
     /* BalloonEnginePlugin>>#bzStartY: */
     private static int bzStartY(final long index) {
-        return wbStackValue(((wbStackSize()) - index) + 1);
+        return wbStackValue(wbStackSize() - index + 1);
     }
 
     /* BalloonEnginePlugin>>#bzStartY:put: */
     private static void bzStartYput(final long index, final long value) {
-        wbStackValueput(((wbStackSize()) - index) + 1, value);
+        wbStackValueput(wbStackSize() - index + 1, value);
     }
 
     /* BalloonEnginePlugin>>#bzViaX: */
     private static int bzViaX(final long index) {
-        return wbStackValue(((wbStackSize()) - index) + 2);
+        return wbStackValue(wbStackSize() - index + 2);
     }
 
     /* BalloonEnginePlugin>>#bzViaX:put: */
     private static void bzViaXput(final long index, final long value) {
-        wbStackValueput(((wbStackSize()) - index) + 2, value);
+        wbStackValueput(wbStackSize() - index + 2, value);
     }
 
     /* BalloonEnginePlugin>>#bzViaY: */
     private static int bzViaY(final long index) {
-        return wbStackValue(((wbStackSize()) - index) + 3);
+        return wbStackValue(wbStackSize() - index + 3);
     }
 
     /* BalloonEnginePlugin>>#bzViaY:put: */
     private static void bzViaYput(final long index, final long value) {
-        wbStackValueput(((wbStackSize()) - index) + 3, value);
+        wbStackValueput(wbStackSize() - index + 3, value);
     }
 
     /* Check the fill indexes in the run-length encoded fillList */
@@ -948,7 +948,7 @@ public final class B2D {
         for (int i = 0; i < length; i++) {
             runLength = shortRunLengthAtfrom(i, fillPtr);
             runValue = shortRunValueAtfrom(i, fillPtr);
-            if (!((runValue >= 0) && (runValue <= maxIndex))) {
+            if (!(runValue >= 0 && runValue <= maxIndex)) {
                 return false;
             }
             nFills += runLength;
@@ -964,7 +964,7 @@ public final class B2D {
         final long length = fillPtr.length;
         for (int i = 0; i < length; i++) {
             /* Make sure the fill is okay */
-            if (!(isFillOkay(fillPtr[i]))) {
+            if (!isFillOkay(fillPtr[i])) {
                 return false;
             }
         }
@@ -997,7 +997,7 @@ public final class B2D {
          * nSegments * 3, for ShortPointArrays or, pSize = nSegments * 6, for PointArrays
          */
         final long pSize = slotSizeOf(points);
-        return pSize == (nSegments * 3) || pSize == (nSegments * 6);
+        return pSize == nSegments * 3 || pSize == nSegments * 6;
     }
 
     /*
@@ -1011,20 +1011,20 @@ public final class B2D {
      */
     private static boolean checkCompressedShapesegmentsleftFillsrightFillslineWidthslineFillsfillIndexList(final NativeObject points, final long nSegments, final NativeObject leftFills,
                     final NativeObject rightFills, final NativeObject lineWidths, final NativeObject lineFills, final NativeObject fillIndexList) {
-        if (!(checkCompressedPointssegments(points, nSegments))) {
+        if (!checkCompressedPointssegments(points, nSegments)) {
             return false;
         }
-        if (!(checkCompressedFills(fillIndexList))) {
+        if (!checkCompressedFills(fillIndexList)) {
             return false;
         }
         final long maxFillIndex = slotSizeOf(fillIndexList);
-        if (!(checkCompressedFillIndexListmaxsegments(leftFills, maxFillIndex, nSegments))) {
+        if (!checkCompressedFillIndexListmaxsegments(leftFills, maxFillIndex, nSegments)) {
             return false;
         }
-        if (!(checkCompressedFillIndexListmaxsegments(rightFills, maxFillIndex, nSegments))) {
+        if (!checkCompressedFillIndexListmaxsegments(rightFills, maxFillIndex, nSegments)) {
             return false;
         }
-        if (!(checkCompressedFillIndexListmaxsegments(lineFills, maxFillIndex, nSegments))) {
+        if (!checkCompressedFillIndexListmaxsegments(lineFills, maxFillIndex, nSegments)) {
             return false;
         }
         return checkCompressedLineWidthssegments(lineWidths, nSegments);
@@ -1043,10 +1043,10 @@ public final class B2D {
         } else {
             lineWidth = 0;
         }
-        if (((bezierEndYOf(bezier)) + lineWidth) < (fillMinYGet())) {
+        if (bezierEndYOf(bezier) + lineWidth < fillMinYGet()) {
             return;
         }
-        if ((((edgeXValueOf(bezier)) - lineWidth) >= (fillMaxXGet())) && (((bezierEndXOf(bezier)) - lineWidth) >= (fillMaxXGet()))) {
+        if (edgeXValueOf(bezier) - lineWidth >= fillMaxXGet() && bezierEndXOf(bezier) - lineWidth >= fillMaxXGet()) {
             return;
         }
         addEdgeToGET(bezier);
@@ -1081,10 +1081,10 @@ public final class B2D {
         } else {
             lineWidth = 0;
         }
-        if (((lineEndYOf(line)) + lineWidth) < (fillMinYGet())) {
+        if (lineEndYOf(line) + lineWidth < fillMinYGet()) {
             return;
         }
-        if ((((edgeXValueOf(line)) - lineWidth) >= (fillMaxXGet())) && (((lineEndXOf(line)) - lineWidth) >= (fillMaxXGet()))) {
+        if (edgeXValueOf(line) - lineWidth >= fillMaxXGet() && lineEndXOf(line) - lineWidth >= fillMaxXGet()) {
             return;
         }
         addEdgeToGET(line);
@@ -1116,7 +1116,7 @@ public final class B2D {
         if (x0 < 0) {
             x0 = 0;
         }
-        if (x1 > (spanSizeGet())) {
+        if (x1 > spanSizeGet()) {
             x1 = spanSizeGet();
         }
         while (x0 < x1) {
@@ -1187,7 +1187,7 @@ public final class B2D {
     }
 
     private static int colormapIndexOf(final long bmFill) {
-        return (objBufferIndex + (int) bmFill) + GB_COLORMAP_OFFSET;
+        return objBufferIndex + (int) bmFill + GB_COLORMAP_OFFSET;
     }
 
     /* BalloonEngineBase>>#colorTransform */
@@ -1213,18 +1213,18 @@ public final class B2D {
         if (engineStopped) {
             return 0;
         }
-        long leftViaX = (startX = bzStartX(index));
-        long leftViaY = (startY = bzStartY(index));
-        long rightViaX = (viaX = bzViaX(index));
-        long rightViaY = (viaY = bzViaY(index));
+        long leftViaX = startX = bzStartX(index);
+        long leftViaY = startY = bzStartY(index);
+        long rightViaX = viaX = bzViaX(index);
+        long rightViaY = viaY = bzViaY(index);
         final long endX = bzEndX(index);
         /* Compute intermediate points */
         endY = bzEndY(index);
         leftViaX += (viaX - startX) / 2;
         leftViaY += (viaY - startY) / 2;
-        long sharedX = (rightViaX += (endX - viaX) / 2);
+        long sharedX = rightViaX += (endX - viaX) / 2;
         /* Compute new shared point */
-        long sharedY = (rightViaY += (endY - viaY) / 2);
+        long sharedY = rightViaY += (endY - viaY) / 2;
         sharedX += (leftViaX - rightViaX) / 2;
         /* Store the first part back */
         sharedY += (leftViaY - rightViaY) / 2;
@@ -1262,17 +1262,17 @@ public final class B2D {
         final long viaX;
         final long viaY;
 
-        leftViaX = (startX = bzStartX(index));
-        leftViaY = (startY = bzStartY(index));
-        rightViaX = (viaX = bzViaX(index));
-        rightViaY = (viaY = bzViaY(index));
+        leftViaX = startX = bzStartX(index);
+        leftViaY = startY = bzStartY(index);
+        rightViaX = viaX = bzViaX(index);
+        rightViaY = viaY = bzViaY(index);
         endX = bzEndX(index);
 
         /* Compute intermediate points */
         endY = bzEndY(index);
-        sharedX = (leftViaX += ((long) (((viaX - startX)) * param)));
-        sharedY = (leftViaY += ((long) (((viaY - startY)) * param)));
-        rightViaX += ((long) (((endX - viaX)) * param));
+        sharedX = leftViaX += (long) ((viaX - startX) * param);
+        sharedY = leftViaY += (long) ((viaY - startY) * param);
+        rightViaX += (long) ((endX - viaX) * param);
 
         /*
          * Compute new shared point[] / rightViaY += ((long) ((((double) (endY - viaY))) * param));
@@ -1280,7 +1280,7 @@ public final class B2D {
          *
          * /* Check the new via points
          */
-        sharedY += ((long) (((rightViaY - leftViaY)) * param));
+        sharedY += (long) ((rightViaY - leftViaY) * param);
         leftViaY = assureValuebetweenand(leftViaY, startY, sharedY);
         rightViaY = assureValuebetweenand(rightViaY, sharedY, endY);
         final int newIndex = allocateBezierStackEntry();
@@ -1319,7 +1319,7 @@ public final class B2D {
             rightX = temp;
         }
         edgeXValueOfput(bezier, leftX);
-        if ((rightX - leftX) > lineWidth) {
+        if (rightX - leftX > lineWidth) {
             wideBezierWidthOfput(bezier, rightX - leftX);
         } else {
             wideBezierWidthOfput(bezier, lineWidth);
@@ -1331,7 +1331,7 @@ public final class B2D {
         if (length < 32) {
             return SMALL_SQRT_TABLE[length];
         } else {
-            return (int) (Math.sqrt((length)) + 0.5);
+            return (int) (Math.sqrt(length) + 0.5);
         }
     }
 
@@ -1402,15 +1402,15 @@ public final class B2D {
     private static void displaySpanBufferAt(final long y) {
         /* self aaLevelGet > 1 ifTrue:[self adjustAALevel]. */
         int targetX0 = shr(spanStartGet(), aaShiftGet());
-        if (targetX0 < (clipMinXGet())) {
+        if (targetX0 < clipMinXGet()) {
             targetX0 = clipMinXGet();
         }
-        int targetX1 = shr((spanEndGet() + aaLevelGet()) - 1, aaShiftGet());
+        int targetX1 = shr(spanEndGet() + aaLevelGet() - 1, aaShiftGet());
         if (targetX1 > clipMaxXGet()) {
             targetX1 = clipMaxXGet();
         }
         final int targetY = shr(y, aaShiftGet());
-        if ((targetY < clipMinYGet()) || ((targetY >= clipMaxYGet()) || ((targetX1 < clipMinXGet()) || (targetX0 >= clipMaxXGet())))) {
+        if (targetY < clipMinYGet() || targetY >= clipMaxYGet() || targetX1 < clipMinXGet() || targetX0 >= clipMaxXGet()) {
             return;
         }
         copyBitsFromtoat(targetX0, targetX1, targetY);
@@ -1463,12 +1463,12 @@ public final class B2D {
 
     /* BalloonEngineBase>>#edgeFillsInvalidate: */
     private static void edgeFillsInvalidate(final long edge) {
-        objectTypeOfput(edge, (objectTypeOf(edge)) | GE_EDGE_FILLS_INVALID);
+        objectTypeOfput(edge, objectTypeOf(edge) | GE_EDGE_FILLS_INVALID);
     }
 
     /* BalloonEngineBase>>#edgeFillsValidate: */
     private static void edgeFillsValidate(final long edge) {
-        objectTypeOfput(edge, (objectTypeOf(edge)) & ((long) ~GE_EDGE_FILLS_INVALID));
+        objectTypeOfput(edge, objectTypeOf(edge) & (long) ~GE_EDGE_FILLS_INVALID);
     }
 
     /* BalloonEngineBase>>#edgeLeftFillOf: */
@@ -1514,7 +1514,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#edgeTypeOf: */
     private static int edgeTypeOf(final long edge) {
-        return ((objectTypeOf(edge))) >>> 1;
+        return objectTypeOf(edge) >>> 1;
     }
 
     /* BalloonEngineBase>>#edgeXValueOf: */
@@ -1580,9 +1580,9 @@ public final class B2D {
             absDy = 0 - deltaY;
         }
         if (absDx > absDy) {
-            return absDx + (absDy / 2);
+            return absDx + absDy / 2;
         } else {
-            return absDy + (absDx / 2);
+            return absDy + absDx / 2;
         }
     }
 
@@ -1648,13 +1648,13 @@ public final class B2D {
         }
         bmWidth = bitmapWidthOf(bmFill);
         bmHeight = bitmapHeightOf(bmFill);
-        tileFlag = (bitmapTileFlagOf(bmFill)) == 1;
-        deltaX = leftX - (fillOriginXOf(bmFill));
-        deltaY = yValue - (fillOriginYOf(bmFill));
+        tileFlag = bitmapTileFlagOf(bmFill) == 1;
+        deltaX = leftX - fillOriginXOf(bmFill);
+        deltaY = yValue - fillOriginYOf(bmFill);
         dsX = fillDirectionXOf(bmFill);
         dtX = fillNormalXOf(bmFill);
-        ds = (deltaX * dsX) + (deltaY * (fillDirectionYOf(bmFill)));
-        dt = (deltaX * dtX) + (deltaY * (fillNormalYOf(bmFill)));
+        ds = deltaX * dsX + deltaY * fillDirectionYOf(bmFill);
+        dt = deltaX * dtX + deltaY * fillNormalYOf(bmFill);
         aaLevel = aaLevelGet();
         firstPixel = aaFirstPixelFromto(leftX, rightX);
         lastPixel = aaLastPixelFromto(leftX, rightX);
@@ -1664,8 +1664,8 @@ public final class B2D {
         x = leftX;
         while (x < firstPixel) {
             if (tileFlag) {
-                ds = repeatValuemax(ds, ((bmWidth) << 16));
-                dt = repeatValuemax(dt, ((bmHeight) << 16));
+                ds = repeatValuemax(ds, bmWidth << 16);
+                dt = repeatValuemax(dt, bmHeight << 16);
             }
             xp = ds / 65536;
             yp = dt / 65536;
@@ -1673,11 +1673,11 @@ public final class B2D {
                 xp = clampValuemax(xp, bmWidth);
                 yp = clampValuemax(yp, bmHeight);
             }
-            if ((xp >= 0) && ((yp >= 0) && ((xp < bmWidth) && (yp < bmHeight)))) {
+            if (xp >= 0 && yp >= 0 && xp < bmWidth && yp < bmHeight) {
                 fillValue = bitmapValuebitsatXy(bmFill, bits, xp, yp);
                 fillValue = shr(fillValue & cMask, cShift);
                 idx = shr(x, baseShift);
-                spanBuffer[idx] = (int) ((spanBuffer[idx]) + fillValue);
+                spanBuffer[idx] = (int) (spanBuffer[idx] + fillValue);
             }
             ds += dsX;
             dt += dtX;
@@ -1687,8 +1687,8 @@ public final class B2D {
         cShift = aaShiftGet();
         while (x < lastPixel) {
             if (tileFlag) {
-                ds = repeatValuemax(ds, ((bmWidth) << 16));
-                dt = repeatValuemax(dt, ((bmHeight) << 16));
+                ds = repeatValuemax(ds, bmWidth << 16);
+                dt = repeatValuemax(dt, bmHeight << 16);
             }
             xp = ds / 65536;
             yp = dt / 65536;
@@ -1696,11 +1696,11 @@ public final class B2D {
                 xp = clampValuemax(xp, bmWidth);
                 yp = clampValuemax(yp, bmHeight);
             }
-            if ((xp >= 0) && ((yp >= 0) && ((xp < bmWidth) && (yp < bmHeight)))) {
+            if (xp >= 0 && yp >= 0 && xp < bmWidth && yp < bmHeight) {
                 fillValue = bitmapValuebitsatXy(bmFill, bits, xp, yp);
                 fillValue = shr(fillValue & cMask, cShift);
                 idx = shr(x, baseShift);
-                spanBuffer[idx] = (int) ((spanBuffer[idx]) + fillValue);
+                spanBuffer[idx] = (int) (spanBuffer[idx] + fillValue);
             }
             ds += shl(dsX, cShift);
             dt += shl(dtX, cShift);
@@ -1710,8 +1710,8 @@ public final class B2D {
         cShift = aaColorShiftGet();
         while (x < rightX) {
             if (tileFlag) {
-                ds = repeatValuemax(ds, ((bmWidth) << 16));
-                dt = repeatValuemax(dt, ((bmHeight) << 16));
+                ds = repeatValuemax(ds, bmWidth << 16);
+                dt = repeatValuemax(dt, bmHeight << 16);
             }
             xp = ds / 65536;
             yp = dt / 65536;
@@ -1719,11 +1719,11 @@ public final class B2D {
                 xp = clampValuemax(xp, bmWidth);
                 yp = clampValuemax(yp, bmHeight);
             }
-            if ((xp >= 0) && ((yp >= 0) && ((xp < bmWidth) && (yp < bmHeight)))) {
+            if (xp >= 0 && yp >= 0 && xp < bmWidth && yp < bmHeight) {
                 fillValue = bitmapValuebitsatXy(bmFill, bits, xp, yp);
                 fillValue = shr(fillValue & cMask, cShift);
                 idx = shr(x, baseShift);
-                spanBuffer[idx] = (int) ((spanBuffer[idx]) + fillValue);
+                spanBuffer[idx] = (int) (spanBuffer[idx] + fillValue);
             }
             ds += dsX;
             dt += dtX;
@@ -1754,7 +1754,7 @@ public final class B2D {
 
         /* Hack for pre-increment */
         bitX = -1;
-        if ((aaLevelGet()) == 1) {
+        if (aaLevelGet() == 1) {
             /* Speedy version for no anti-aliasing */
             while (x0 < x1) {
                 fillValue = bits[++bitX];
@@ -1770,14 +1770,14 @@ public final class B2D {
                 x = shr(x0, baseShift);
                 fillValue = bits[++bitX];
                 fillValue = shr(fillValue & colorMask, colorShift);
-                spanBuffer[x] = ((spanBuffer[x]) + fillValue);
+                spanBuffer[x] = spanBuffer[x] + fillValue;
                 x0++;
             }
         }
-        if (x1 > (spanEndGet())) {
+        if (x1 > spanEndGet()) {
             spanEndPut(x1);
         }
-        if (x1 > (spanEndAAGet())) {
+        if (x1 > spanEndAAGet()) {
             spanEndAAPut(x1);
         }
     }
@@ -1810,19 +1810,19 @@ public final class B2D {
         }
         bmWidth = bitmapWidthOf(bmFill);
         bmHeight = bitmapHeightOf(bmFill);
-        tileFlag = (bitmapTileFlagOf(bmFill)) == 1;
-        deltaX = leftX - (fillOriginXOf(bmFill));
-        deltaY = yValue - (fillOriginYOf(bmFill));
+        tileFlag = bitmapTileFlagOf(bmFill) == 1;
+        deltaX = leftX - fillOriginXOf(bmFill);
+        deltaY = yValue - fillOriginYOf(bmFill);
         dsX = fillDirectionXOf(bmFill);
         dtX = fillNormalXOf(bmFill);
-        ds = (deltaX * dsX) + (deltaY * (fillDirectionYOf(bmFill)));
-        dt = (deltaX * dtX) + (deltaY * (fillNormalYOf(bmFill)));
+        ds = deltaX * dsX + deltaY * fillDirectionYOf(bmFill);
+        dt = deltaX * dtX + deltaY * fillNormalYOf(bmFill);
         x = (int) leftX;
         x1 = rightX;
         while (x < x1) {
             if (tileFlag) {
-                ds = repeatValuemax(ds, ((bmWidth) << 16));
-                dt = repeatValuemax(dt, ((bmHeight) << 16));
+                ds = repeatValuemax(ds, bmWidth << 16);
+                dt = repeatValuemax(dt, bmHeight << 16);
             }
             xp = ds / 65536;
             yp = dt / 65536;
@@ -1830,7 +1830,7 @@ public final class B2D {
                 xp = clampValuemax(xp, bmWidth);
                 yp = clampValuemax(yp, bmHeight);
             }
-            if ((xp >= 0) && ((yp >= 0) && ((xp < bmWidth) && (yp < bmHeight)))) {
+            if (xp >= 0 && yp >= 0 && xp < bmWidth && yp < bmHeight) {
                 fillValue = bitmapValuebitsatXy(bmFill, bits, xp, yp);
                 spanBuffer[x] = (int) fillValue;
             }
@@ -1870,7 +1870,7 @@ public final class B2D {
             pv32 = shr(pixelValue32 & aaColorMaskGet(), aaColorShiftGet());
             while (x < firstPixel) {
                 idx = shr(x, baseShift);
-                spanBuffer[idx] = (int) ((spanBuffer[idx]) + pv32);
+                spanBuffer[idx] = (int) (spanBuffer[idx] + pv32);
                 x++;
             }
         }
@@ -1879,7 +1879,7 @@ public final class B2D {
             pv32 = shr(pixelValue32 & colorMask, aaShiftGet());
             while (x < lastPixel) {
                 idx = shr(x, baseShift);
-                spanBuffer[idx] = (int) ((spanBuffer[idx]) + pv32);
+                spanBuffer[idx] = (int) (spanBuffer[idx] + pv32);
                 x += aaLevel;
             }
         }
@@ -1887,7 +1887,7 @@ public final class B2D {
             pv32 = shr(pixelValue32 & aaColorMaskGet(), aaColorShiftGet());
             while (x < rightX) {
                 idx = shr(x, baseShift);
-                spanBuffer[idx] = (int) ((spanBuffer[idx]) + pv32);
+                spanBuffer[idx] = (int) (spanBuffer[idx] + pv32);
                 x++;
             }
         }
@@ -1910,7 +1910,7 @@ public final class B2D {
         x0 = leftX;
         /* Unroll the inner loop four times, since we're only storing data. */
         x1 = rightX;
-        while ((x0 + 4) < x1) {
+        while (x0 + 4 < x1) {
             spanBuffer[x0] = pixelValue32;
             spanBuffer[x0 + 1] = pixelValue32;
             spanBuffer[x0 + 2] = pixelValue32;
@@ -1977,27 +1977,27 @@ public final class B2D {
         lastPixel = aaLastPixelFromto(leftX, rightX);
         colorMask = aaColorMaskGet();
         colorShift = aaColorShiftGet();
-        while ((x < firstPixel) && ((rampIndex < rampSize) && (rampIndex >= 0))) {
+        while (x < firstPixel && rampIndex < rampSize && rampIndex >= 0) {
             rampValue = unsignedAt(rampPtr + rampIndex);
             /* Copy as many pixels as possible */
             rampValue = shr(rampValue & colorMask, colorShift);
-            while ((x < firstPixel) && ((ds / 65536) == rampIndex)) {
+            while (x < firstPixel && ds / 65536 == rampIndex) {
                 idx = shr(x, baseShift);
-                spanBuffer[idx] = (int) ((spanBuffer[idx]) + rampValue);
+                spanBuffer[idx] = (int) (spanBuffer[idx] + rampValue);
                 x++;
                 ds += dsX;
             }
             rampIndex = (int) (ds / 65536);
         }
-        colorMask = (((aaColorMaskGet())) >> (aaShiftGet())) | 4042322160L;
+        colorMask = aaColorMaskGet() >> aaShiftGet() | 4042322160L;
         colorShift = aaShiftGet();
-        while ((x < lastPixel) && ((rampIndex < rampSize) && (rampIndex >= 0))) {
+        while (x < lastPixel && rampIndex < rampSize && rampIndex >= 0) {
             rampValue = unsignedAt(rampPtr + rampIndex);
             /* Copy as many pixels as possible */
             rampValue = shr(rampValue & colorMask, colorShift);
-            while ((x < lastPixel) && ((ds / 65536) == rampIndex)) {
+            while (x < lastPixel && ds / 65536 == rampIndex) {
                 idx = shr(x, baseShift);
-                spanBuffer[idx] = (int) ((spanBuffer[idx]) + rampValue);
+                spanBuffer[idx] = (int) (spanBuffer[idx] + rampValue);
                 x += aaLevel;
                 ds += shl(dsX, colorShift);
             }
@@ -2005,13 +2005,13 @@ public final class B2D {
         }
         colorMask = aaColorMaskGet();
         colorShift = aaColorShiftGet();
-        while ((x < rightX) && ((rampIndex < rampSize) && (rampIndex >= 0))) {
+        while (x < rightX && rampIndex < rampSize && rampIndex >= 0) {
             rampValue = unsignedAt(rampPtr + rampIndex);
             /* Copy as many pixels as possible */
             rampValue = shr(rampValue & colorMask, colorShift);
-            while ((x < rightX) && ((ds / 65536) == rampIndex)) {
+            while (x < rightX && ds / 65536 == rampIndex) {
                 idx = shr(x, baseShift);
-                spanBuffer[idx] = (int) ((spanBuffer[idx]) + rampValue);
+                spanBuffer[idx] = (int) (spanBuffer[idx] + rampValue);
                 x++;
                 ds += dsX;
             }
@@ -2036,12 +2036,12 @@ public final class B2D {
         rampPtr = gradientRampIndexOf(fill);
         rampSize = (int) gradientRampLengthOf(fill);
         dsX = fillDirectionXOf(fill);
-        ds = ((leftX - (fillOriginXOf(fill))) * dsX) + ((yValue - (fillOriginYOf(fill))) * (fillDirectionYOf(fill)));
+        ds = (leftX - fillOriginXOf(fill)) * dsX + (yValue - fillOriginYOf(fill)) * fillDirectionYOf(fill);
         x = x0 = (int) leftX;
         /* Note: The inner loop has been divided into three parts for speed */
         /* Part one: Fill everything outside the left boundary */
         x1 = (int) rightX;
-        while (((((rampIndex = (int) (ds / 65536))) < 0) || (rampIndex >= rampSize)) && (x < x1)) {
+        while (((rampIndex = (int) (ds / 65536)) < 0 || rampIndex >= rampSize) && x < x1) {
             x++;
             ds += dsX;
         }
@@ -2054,10 +2054,10 @@ public final class B2D {
             }
             fillColorSpanfromto(workBuffer[rampPtr + rampIndex], x0, x);
         }
-        if ((aaLevelGet()) == 1) {
+        if (aaLevelGet() == 1) {
             /* Fast version w/o anti-aliasing */
-            while (((((rampIndex = (int) (ds / 65536))) < rampSize) && (rampIndex >= 0)) && (x < x1)) {
-                spanBuffer[x] = (unsignedAt(rampPtr + rampIndex));
+            while ((rampIndex = (int) (ds / 65536)) < rampSize && rampIndex >= 0 && x < x1) {
+                spanBuffer[x] = unsignedAt(rampPtr + rampIndex);
                 x++;
                 ds += dsX;
             }
@@ -2221,9 +2221,9 @@ public final class B2D {
             rampValue = shr(rampValue & colorMask, colorShift);
             while (x < firstPixel) {
                 /* Try to copy the current value more than just once */
-                while ((x < firstPixel) && ((squaredLengthOfwith(ds / 65536, dt / 65536)) >= length2)) {
+                while (x < firstPixel && squaredLengthOfwith(ds / 65536, dt / 65536) >= length2) {
                     index = shr(x, baseShift);
-                    spanBuffer[index] = (int) ((spanBuffer[index]) + rampValue);
+                    spanBuffer[index] = (int) (spanBuffer[index] + rampValue);
                     x++;
                     ds += dsX;
                     dt += dtX;
@@ -2244,9 +2244,9 @@ public final class B2D {
             rampValue = shr(rampValue & colorMask, colorShift);
             while (x < lastPixel) {
                 /* Try to copy the current value more than just once */
-                while ((x < lastPixel) && ((squaredLengthOfwith(ds / 65536, dt / 65536)) >= length2)) {
+                while (x < lastPixel && squaredLengthOfwith(ds / 65536, dt / 65536) >= length2) {
                     index = shr(x, baseShift);
-                    spanBuffer[index] = (int) ((spanBuffer[index]) + rampValue);
+                    spanBuffer[index] = (int) (spanBuffer[index] + rampValue);
                     x += aaLevel;
                     ds += shl(dsX, colorShift);
                     dt += shl(dtX, colorShift);
@@ -2267,9 +2267,9 @@ public final class B2D {
             rampValue = shr(rampValue & colorMask, colorShift);
             while (x < x1) {
                 /* Try to copy the current value more than just once */
-                while ((x < x1) && ((squaredLengthOfwith(ds / 65536, dt / 65536)) >= length2)) {
+                while (x < x1 && squaredLengthOfwith(ds / 65536, dt / 65536) >= length2) {
                     index = shr(x, baseShift);
-                    spanBuffer[index] = (int) ((spanBuffer[index]) + rampValue);
+                    spanBuffer[index] = (int) (spanBuffer[index] + rampValue);
                     x++;
                     ds += dsX;
                     dt += dtX;
@@ -2308,12 +2308,12 @@ public final class B2D {
         length2 = (rampIndex - 1) * (rampIndex - 1);
         x = (int) leftX;
         x1 = rightX;
-        if (x1 > (fillOriginXOf(fill))) {
+        if (x1 > fillOriginXOf(fill)) {
             x1 = fillOriginXOf(fill);
         }
         while (x < x1) {
             /* Try to copy the current value more than just once */
-            while ((x < x1) && ((squaredLengthOfwith(ds / 65536, dt / 65536)) >= length2)) {
+            while (x < x1 && squaredLengthOfwith(ds / 65536, dt / 65536) >= length2) {
                 spanBuffer[x] = (int) rampValue;
                 x++;
                 ds += dsX;
@@ -2354,12 +2354,12 @@ public final class B2D {
 
         rampPtr = gradientRampIndexOf(fill);
         rampSize = (int) gradientRampLengthOf(fill);
-        deltaX = leftX - (fillOriginXOf(fill));
-        deltaY = yValue - (fillOriginYOf(fill));
+        deltaX = leftX - fillOriginXOf(fill);
+        deltaY = yValue - fillOriginYOf(fill);
         dsX = fillDirectionXOf(fill);
         dtX = fillNormalXOf(fill);
-        ds = (deltaX * dsX) + (deltaY * (fillDirectionYOf(fill)));
-        dt = (deltaX * dtX) + (deltaY * (fillNormalYOf(fill)));
+        ds = deltaX * dsX + deltaY * fillDirectionYOf(fill);
+        dt = deltaX * dtX + deltaY * fillNormalYOf(fill);
         x = leftX;
 
         /* Note: The inner loop has been divided into three parts for speed */
@@ -2367,7 +2367,7 @@ public final class B2D {
         x1 = rightX;
         /* This is the upper bound */
         length2 = (rampSize - 1) * (rampSize - 1);
-        while (((squaredLengthOfwith(ds / 65536, dt / 65536)) >= length2) && (x < x1)) {
+        while (squaredLengthOfwith(ds / 65536, dt / 65536) >= length2 && x < x1) {
             x++;
             ds += dsX;
             dt += dtX;
@@ -2377,9 +2377,9 @@ public final class B2D {
         }
         point1SetX(ds);
         point1SetY(dt);
-        if (x < (fillOriginXOf(fill))) {
+        if (x < fillOriginXOf(fill)) {
             /* Draw the decreasing part */
-            if ((aaLevelGet()) == 1) {
+            if (aaLevelGet() == 1) {
                 x = fillRadialDecreasingrampdeltaSTdsXdtXfromto(fill, rampPtr, dsX, dtX, x, x1);
             } else {
                 x = fillRadialDecreasingAArampdeltaSTdsXdtXfromto(fill, rampPtr, dsX, dtX, x, x1);
@@ -2387,7 +2387,7 @@ public final class B2D {
         }
         if (x < x1) {
             /* Draw the increasing part */
-            if ((aaLevelGet()) == 1) {
+            if (aaLevelGet() == 1) {
                 x = fillRadialIncreasingrampdeltaSTdsXdtXfromto(fill, rampPtr, dsX, dtX, x, x1);
             } else {
                 x = fillRadialIncreasingAArampdeltaSTdsXdtXfromto(fill, rampPtr, dsX, dtX, x, x1);
@@ -2433,16 +2433,16 @@ public final class B2D {
         firstPixel = aaFirstPixelFromto(leftX, rightX);
         /* Deal with the first n subPixels */
         lastPixel = aaLastPixelFromto(leftX, rightX);
-        if ((x < firstPixel) && (lastLength < length2)) {
+        if (x < firstPixel && lastLength < length2) {
             colorMask = aaColorMaskGet();
             colorShift = aaColorShiftGet();
             rampValue = unsignedAt(rampPtr + rampIndex);
             rampValue = shr(rampValue & colorMask, colorShift);
-            while ((x < firstPixel) && (lastLength < length2)) {
+            while (x < firstPixel && lastLength < length2) {
                 /* Try to copy the current value more than once */
-                while ((x < firstPixel) && ((squaredLengthOfwith(ds / 65536, dt / 65536)) <= nextLength)) {
+                while (x < firstPixel && squaredLengthOfwith(ds / 65536, dt / 65536) <= nextLength) {
                     index = shr(x, baseShift);
-                    spanBuffer[index] = (int) ((spanBuffer[index]) + rampValue);
+                    spanBuffer[index] = (int) (spanBuffer[index] + rampValue);
                     x++;
                     ds += dsX;
                     dt += dtX;
@@ -2456,19 +2456,19 @@ public final class B2D {
                 }
             }
         }
-        if ((x < lastPixel) && (lastLength < length2)) {
+        if (x < lastPixel && lastLength < length2) {
             colorMask = shr(aaColorMaskGet(), aaShiftGet()) | 4042322160L;
             colorShift = aaShiftGet();
             rampValue = unsignedAt(rampPtr + rampIndex);
             rampValue = shr(rampValue & colorMask, colorShift);
-            while ((x < lastPixel) && (lastLength < length2)) {
+            while (x < lastPixel && lastLength < length2) {
                 /* Try to copy the current value more than once */
-                while ((x < lastPixel) && ((squaredLengthOfwith(ds / 65536, dt / 65536)) <= nextLength)) {
+                while (x < lastPixel && squaredLengthOfwith(ds / 65536, dt / 65536) <= nextLength) {
                     index = shr(x, baseShift);
-                    spanBuffer[index] = (int) ((spanBuffer[index]) + rampValue);
+                    spanBuffer[index] = (int) (spanBuffer[index] + rampValue);
                     x += aaLevel;
-                    ds += ((dsX) << colorShift);
-                    dt += ((dtX) << colorShift);
+                    ds += dsX << colorShift;
+                    dt += dtX << colorShift;
                 }
                 lastLength = squaredLengthOfwith(ds / 65536, dt / 65536);
                 while (lastLength > nextLength) {
@@ -2479,16 +2479,16 @@ public final class B2D {
                 }
             }
         }
-        if ((x < rightX) && (lastLength < length2)) {
+        if (x < rightX && lastLength < length2) {
             colorMask = aaColorMaskGet();
             colorShift = aaColorShiftGet();
             rampValue = unsignedAt(rampPtr + rampIndex);
             rampValue = shr(rampValue & colorMask, colorShift);
-            while ((x < rightX) && (lastLength < length2)) {
+            while (x < rightX && lastLength < length2) {
                 /* Try to copy the current value more than once */
-                while ((x < rightX) && ((squaredLengthOfwith(ds / 65536, dt / 65536)) <= nextLength)) {
+                while (x < rightX && squaredLengthOfwith(ds / 65536, dt / 65536) <= nextLength) {
                     index = shr(x, baseShift);
-                    spanBuffer[index] = (int) ((spanBuffer[index]) + rampValue);
+                    spanBuffer[index] = (int) (spanBuffer[index] + rampValue);
                     x++;
                     ds += dsX;
                     dt += dtX;
@@ -2534,9 +2534,9 @@ public final class B2D {
         lastLength = squaredLengthOfwith(ds / 65536, dt / 65536);
         x = (int) leftX;
         x1 = rightX;
-        while ((x < x1) && (lastLength < length2)) {
+        while (x < x1 && lastLength < length2) {
             /* Try to copy the current value more than once */
-            while ((x < x1) && ((squaredLengthOfwith(ds / 65536, dt / 65536)) <= nextLength)) {
+            while (x < x1 && squaredLengthOfwith(ds / 65536, dt / 65536) <= nextLength) {
                 spanBuffer[x] = (int) rampValue;
                 x++;
                 ds += dsX;
@@ -2559,11 +2559,11 @@ public final class B2D {
     /* BalloonEngineBase>>#fillSorts:before: */
     private static boolean fillSortsbefore(final long fillEntry1, final long fillEntry2) {
         /* First check the depth value */
-        final int diff = (stackFillDepth(fillEntry1)) - (stackFillDepth(fillEntry2));
+        final int diff = stackFillDepth(fillEntry1) - stackFillDepth(fillEntry2);
         if (diff != 0) {
             return diff > 0;
         }
-        return (((makeUnsignedFrom(stackFillValue(fillEntry1))))) < (((makeUnsignedFrom(stackFillValue(fillEntry2)))));
+        return makeUnsignedFrom(stackFillValue(fillEntry1)) < makeUnsignedFrom(stackFillValue(fillEntry2));
     }
 
     /*
@@ -2580,7 +2580,7 @@ public final class B2D {
         if (fill == 0) {
             return false;
         }
-        if (leftX < (spanEndAAGet())) {
+        if (leftX < spanEndAAGet()) {
             x0 = spanEndAAGet();
         } else {
             x0 = (int) leftX;
@@ -2590,19 +2590,19 @@ public final class B2D {
         } else {
             x1 = (int) rightX;
         }
-        if (x0 < (fillMinXGet())) {
+        if (x0 < fillMinXGet()) {
             x0 = fillMinXGet();
         }
-        if (x1 > (fillMaxXGet())) {
+        if (x1 > fillMaxXGet()) {
             x1 = fillMaxXGet();
         }
-        if (x0 < (spanStartGet())) {
+        if (x0 < spanStartGet()) {
             spanStartPut(x0);
         }
-        if (x1 > (spanEndGet())) {
+        if (x1 > spanEndGet()) {
             spanEndPut(x1);
         }
-        if (x1 > (spanEndAAGet())) {
+        if (x1 > spanEndAAGet()) {
             spanEndAAPut(x1);
         }
         if (x0 >= x1) {
@@ -2641,7 +2641,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#fillTypeOf: */
     private static int fillTypeOf(final long fill) {
-        return (((objectTypeOf(fill)) & GE_PRIMITIVE_FILL_MASK)) >>> 8;
+        return (objectTypeOf(fill) & GE_PRIMITIVE_FILL_MASK) >>> 8;
     }
 
     /* BalloonEngineBase>>#findNextAETEdgeFrom: -> has no senders */
@@ -2659,16 +2659,16 @@ public final class B2D {
 
         /* As long as we have entries in the GET */
         yValue = currentYGet();
-        while ((getStartGet()) < (getUsedGet())) {
+        while (getStartGet() < getUsedGet()) {
             edge = getBuffer(getStartGet());
-            if ((edgeYValueOf(edge)) > yValue) {
+            if (edgeYValueOf(edge) > yValue) {
                 return false;
             }
             type = objectTypeOf(edge);
             if ((type & GE_PRIMITIVE_WIDE_MASK) == GE_PRIMITIVE_EDGE) {
                 return true;
             }
-            if (!(needAvailableSpace(1))) {
+            if (!needAvailableSpace(1)) {
                 return false;
             }
             switch (type) {
@@ -2692,7 +2692,7 @@ public final class B2D {
                     break;
             }
             insertEdgeIntoAET(edge);
-            getStartPut((getStartGet()) + 1);
+            getStartPut(getStartGet() + 1);
         }
         return false;
     }
@@ -2712,15 +2712,15 @@ public final class B2D {
         int rightEdge;
         long rightX;
 
-        leftX = (rightX = fillMaxXGet());
-        while ((aetStartGet()) < (aetUsedGet())) {
+        leftX = rightX = fillMaxXGet();
+        while (aetStartGet() < aetUsedGet()) {
             /*
              * TODO: We should check if leftX from last operation is greater than leftX from next
              * edge. Currently, we rely here on spanEndAA from the span buffer fill.
              */
-            leftEdge = (rightEdge = aetBuffer(aetStartGet()));
-            leftX = (rightX = edgeXValueOf(leftEdge));
-            if (leftX >= (fillMaxXGet())) {
+            leftEdge = rightEdge = aetBuffer(aetStartGet());
+            leftX = rightX = edgeXValueOf(leftEdge);
+            if (leftX >= fillMaxXGet()) {
                 return false;
             }
             quickRemoveInvalidFillsAt(leftX);
@@ -2733,17 +2733,17 @@ public final class B2D {
                     return false;
                 }
             }
-            aetStartPut((aetStartGet()) + 1);
-            if ((aetStartGet()) < (aetUsedGet())) {
+            aetStartPut(aetStartGet() + 1);
+            if (aetStartGet() < aetUsedGet()) {
                 rightEdge = aetBuffer(aetStartGet());
                 rightX = edgeXValueOf(rightEdge);
-                if (rightX >= (fillMinXGet())) {
+                if (rightX >= fillMinXGet()) {
                     /* This is the visible portion */
                     fillAllFromto(leftX, rightX);
                 }
             }
         }
-        if (rightX < (fillMaxXGet())) {
+        if (rightX < fillMaxXGet()) {
             fillAllFromto(rightX, fillMaxXGet());
         }
         return false;
@@ -2760,9 +2760,9 @@ public final class B2D {
         int edge;
         int type;
 
-        while ((aetStartGet()) < (aetUsedGet())) {
+        while (aetStartGet() < aetUsedGet()) {
             edge = aetBuffer(aetStartGet());
-            count = (edgeNumLinesOf(edge)) - 1;
+            count = edgeNumLinesOf(edge) - 1;
             if (count == 0) {
                 /* Edge at end -- remove it */
                 removeFirstAETEntry();
@@ -2796,7 +2796,7 @@ public final class B2D {
                         throw SqueakException.create("Unexpected type:", type);
                 }
                 resortFirstAETEntry();
-                aetStartPut((aetStartGet()) + 1);
+                aetStartPut(aetStartGet() + 1);
             }
         }
         return false;
@@ -2805,10 +2805,10 @@ public final class B2D {
     /* BalloonEngineBase>>#findStackFill:depth: */
     private static int findStackFilldepth(final long fillIndex, final long depth) {
         int index = 0;
-        while ((index < (stackFillSize())) && (((stackFillValue(index)) != fillIndex) || ((stackFillDepth(index)) != depth))) {
+        while (index < stackFillSize() && (stackFillValue(index) != fillIndex || stackFillDepth(index) != depth)) {
             index += stackFillEntryLength();
         }
-        if (index >= (stackFillSize())) {
+        if (index >= stackFillSize()) {
             return -1;
         } else {
             return index;
@@ -2819,7 +2819,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#finishedProcessing */
     private static boolean finishedProcessing() {
-        return (stateGet()) == GE_STATE_COMPLETED;
+        return stateGet() == GE_STATE_COMPLETED;
     }
 
     /* BalloonEngineBase>>#firstPointListGet */
@@ -2859,11 +2859,11 @@ public final class B2D {
         if (edge1 == edge2) {
             return true;
         }
-        diff = (edgeYValueOf(edge1)) - (edgeYValueOf(edge2));
+        diff = edgeYValueOf(edge1) - edgeYValueOf(edge2);
         if (diff != 0) {
             return diff < 0;
         }
-        diff = (edgeXValueOf(edge1)) - (edgeXValueOf(edge2));
+        diff = edgeXValueOf(edge1) - edgeXValueOf(edge2);
         return diff < 0;
     }
 
@@ -2899,7 +2899,7 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#gradientRampOf: */
     private static int gradientRampIndexOf(final long fill) {
-        return (objBufferIndex + (int) fill) + GF_RAMP_OFFSET;
+        return objBufferIndex + (int) fill + GF_RAMP_OFFSET;
     }
 
     /* BalloonEngineBase>>#hasColorTransform */
@@ -2954,18 +2954,18 @@ public final class B2D {
         stackFillDepthput(index, stackFillDepth(0));
         stackFillRightXput(index, stackFillRightX(0));
         freeStackFillEntry();
-        if ((stackFillSize()) <= (stackFillEntryLength())) {
+        if (stackFillSize() <= stackFillEntryLength()) {
             return true;
         }
         newTopIndex = 0;
         index = stackFillEntryLength();
-        while (index < (stackFillSize())) {
+        while (index < stackFillSize()) {
             if (fillSortsbefore(index, newTopIndex)) {
                 newTopIndex = index;
             }
             index += stackFillEntryLength();
         }
-        if ((newTopIndex + (stackFillEntryLength())) == (stackFillSize())) {
+        if (newTopIndex + stackFillEntryLength() == stackFillSize()) {
             return true;
         }
         newTop = stackFillValue(newTopIndex);
@@ -2983,13 +2983,13 @@ public final class B2D {
     /* BalloonEngineBase>>#incrementPoint:by: */
     @SuppressWarnings("unused")
     private static void incrementPointby(final int[] point, final long delta) {
-        point[0] = ((point[0]) + (int) delta);
-        point[1] = ((point[1]) + (int) delta);
+        point[0] = point[0] + (int) delta;
+        point[1] = point[1] + (int) delta;
     }
 
     /* BalloonEngineBase>>#incrementStat:by: */
     private static long incrementStatby(final long statIndex, final long value) {
-        return workBuffer[(int) statIndex] = ((workBuffer[(int) statIndex]) + (int) value);
+        return workBuffer[(int) statIndex] = workBuffer[(int) statIndex] + (int) value;
     }
 
     /* Find insertion point for the given edge in the AET */
@@ -3001,10 +3001,10 @@ public final class B2D {
 
         initialX = edgeXValueOf(edge);
         index = 0;
-        while ((index < (aetUsedGet())) && ((edgeXValueOf(aetBuffer(index))) < initialX)) {
+        while (index < aetUsedGet() && edgeXValueOf(aetBuffer(index)) < initialX) {
             index++;
         }
-        while ((index < (aetUsedGet())) && (((edgeXValueOf(aetBuffer(index))) == initialX) && (getSortsbefore(aetBuffer(index), edge)))) {
+        while (index < aetUsedGet() && edgeXValueOf(aetBuffer(index)) == initialX && getSortsbefore(aetBuffer(index), edge)) {
             index++;
         }
         return index;
@@ -3044,10 +3044,10 @@ public final class B2D {
     /* BalloonEngineBase>>#initializeGETProcessing */
     private static void initializeGETProcessing() {
         setAALevel(aaLevelGet());
-        if ((clipMinXGet()) < 0) {
+        if (clipMinXGet() < 0) {
             clipMinXPut(0);
         }
-        if ((clipMaxXGet()) > (spanSizeGet())) {
+        if (clipMaxXGet() > spanSizeGet()) {
             clipMaxXPut(spanSizeGet());
         }
         fillMinXPut(shl(clipMinXGet(), aaShiftGet()));
@@ -3063,13 +3063,13 @@ public final class B2D {
         if (engineStopped) {
             return;
         }
-        if ((getUsedGet()) == 0) {
+        if (getUsedGet() == 0) {
             /* Nothing to do */
             currentYPut(fillMaxYGet());
         }
         sortGlobalEdgeTable();
         currentYPut(edgeYValueOf(getBuffer(0)));
-        if ((currentYGet()) < (fillMinYGet())) {
+        if (currentYGet() < fillMinYGet()) {
             currentYPut(fillMinYGet());
         }
         spanStartPut(0);
@@ -3088,7 +3088,7 @@ public final class B2D {
         final long index;
 
         /* Check for the number of lines remaining */
-        if ((edgeNumLinesOf(edge)) <= 0) {
+        if (edgeNumLinesOf(edge) <= 0) {
             return;
         }
 
@@ -3102,21 +3102,21 @@ public final class B2D {
     /* BalloonEngineBase>>#insertToAET:beforeIndex: */
     private static void insertToAETbeforeIndex(final long edge, final long index) {
         /* Make sure we have space in the AET */
-        if (!(allocateAETEntry(1))) {
+        if (!allocateAETEntry(1)) {
             return;
         }
-        int i = (aetUsedGet()) - 1;
+        int i = aetUsedGet() - 1;
         while (i >= index) {
             aetBuffer(i + 1, aetBuffer(i));
             i--;
         }
         aetBuffer(index, edge);
-        aetUsedPut((aetUsedGet()) + 1);
+        aetUsedPut(aetUsedGet() + 1);
     }
 
     /* BalloonEnginePlugin>>#isBezier: */
     private static boolean isBezier(final long bezier) {
-        return ((objectTypeOf(bezier)) & GE_PRIMITIVE_WIDE_MASK) == GE_PRIMITIVE_BEZIER;
+        return (objectTypeOf(bezier) & GE_PRIMITIVE_WIDE_MASK) == GE_PRIMITIVE_BEZIER;
     }
 
     /* BalloonEngineBase>>#isEdge: */
@@ -3127,17 +3127,17 @@ public final class B2D {
         if (type > GE_PRIMITIVE_EDGE_MASK) {
             return false;
         }
-        return ((objectTypeOf(edge)) & GE_PRIMITIVE_EDGE_MASK) != 0;
+        return (objectTypeOf(edge) & GE_PRIMITIVE_EDGE_MASK) != 0;
     }
 
     /* BalloonEngineBase>>#isFillColor: */
     private static boolean isFillColor(final long fill) {
-        return ((makeUnsignedFrom(fill)) & 0xFF000000L) != 0;
+        return (makeUnsignedFrom(fill) & 0xFF000000L) != 0;
     }
 
     /* BalloonEnginePlugin>>#isFillOkay: */
     private static boolean isFillOkay(final long fill) {
-        return (fill == 0) || (isFillColor(fill) || (isObject(fill) && isFill(fill)));
+        return fill == 0 || isFillColor(fill) || isObject(fill) && isFill(fill);
     }
 
     /* BalloonEngineBase>>#isFill: */
@@ -3147,46 +3147,46 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#isLine: */
     private static boolean isLine(final long line) {
-        return ((objectTypeOf(line)) & GE_PRIMITIVE_WIDE_MASK) == GE_PRIMITIVE_LINE;
+        return (objectTypeOf(line) & GE_PRIMITIVE_WIDE_MASK) == GE_PRIMITIVE_LINE;
     }
 
     /* BalloonEngineBase>>#isObject: */
     private static boolean isObject(final long obj) {
-        return (obj >= 0) && (obj < objUsed);
+        return obj >= 0 && obj < objUsed;
     }
 
     /* BalloonEngineBase>>#isRealFill: */
     private static boolean isRealFill(final long fill) {
-        return ((objectTypeOf(fill)) & GE_PRIMITIVE_FILL_MASK) != 0;
+        return (objectTypeOf(fill) & GE_PRIMITIVE_FILL_MASK) != 0;
     }
 
     /* BalloonEngineBase>>#isStackEntry: */
     @SuppressWarnings("unused")
     private static boolean isStackEntry(final long entry) {
-        return (entry >= (wbTopGet())) && (entry < (wbSizeGet()));
+        return entry >= wbTopGet() && entry < wbSizeGet();
     }
 
     /* BalloonEngineBase>>#isStackIndex: */
     @SuppressWarnings("unused")
     private static boolean isStackIndex(final long index) {
-        return (index >= 0) && (index < (wbStackSize()));
+        return index >= 0 && index < wbStackSize();
     }
 
     /* BalloonEnginePlugin>>#isWideBezier: */
     @SuppressWarnings("unused")
     private static boolean isWideBezier(final long bezier) {
-        return (isBezier(bezier)) && (isWide(bezier));
+        return isBezier(bezier) && isWide(bezier);
     }
 
     /* BalloonEnginePlugin>>#isWideLine: */
     @SuppressWarnings("unused")
     private static boolean isWideLine(final long line) {
-        return (isLine(line)) && (isWide(line));
+        return isLine(line) && isWide(line);
     }
 
     /* BalloonEngineBase>>#isWide: */
     private static boolean isWide(final long object) {
-        return ((objectTypeOf(object)) & GE_PRIMITIVE_WIDE) != 0;
+        return (objectTypeOf(object) & GE_PRIMITIVE_WIDE) != 0;
     }
 
     /* BalloonEngineBase>>#lastExportedEdgeGet */
@@ -3331,7 +3331,7 @@ public final class B2D {
         bzViaYput(bz1, point2GetY());
         bzEndXput(bz1, point3GetX());
         bzEndYput(bz1, point3GetY());
-        index2 = (bz2 = subdivideToBeMonotoninX(bz1, wideFlag));
+        index2 = bz2 = subdivideToBeMonotoninX(bz1, wideFlag);
         for (int index = bz1; index <= bz2; index += 6) {
             index1 = subdivideBezierFrom(index);
             if (index1 > index2) {
@@ -3392,9 +3392,9 @@ public final class B2D {
         for (int i = 0; i < nSegments; i++) {
             pointOop = fetchPointerofObject(i * 3, points);
             loadPointfrom(GW_POINT_1, pointOop);
-            pointOop = fetchPointerofObject((i * 3) + 1, points);
+            pointOop = fetchPointerofObject(i * 3 + 1, points);
             loadPointfrom(GW_POINT_2, pointOop);
-            pointOop = fetchPointerofObject((i * 3) + 2, points);
+            pointOop = fetchPointerofObject(i * 3 + 2, points);
             loadPointfrom(GW_POINT_3, pointOop);
             if (failed()) {
                 return;
@@ -3407,11 +3407,11 @@ public final class B2D {
             x2 = point3GetX();
             /* Check if we can use a line */
             y2 = point3GetY();
-            if (((x0 == y0) && (x1 == y1)) || ((x1 == x2) && (y1 == y2))) {
+            if (x0 == y0 && x1 == y1 || x1 == x2 && y1 == y2) {
                 loadWideLinefromtolineFillleftFillrightFill(lineWidth, GW_POINT_1, GW_POINT_3, lineFill, fillIndex, 0);
             } else {
                 /* Need bezier */
-                segs = loadAndSubdivideBezierFromviatoisWide((lineWidth != 0) && (lineFill != 0));
+                segs = loadAndSubdivideBezierFromviatoisWide(lineWidth != 0 && lineFill != 0);
                 if (engineStopped) {
                     return;
                 }
@@ -3431,15 +3431,15 @@ public final class B2D {
 
         for (int i = 0; i < n; i++) {
             value = transformOop.at0Object(i);
-            if (!((isIntegerObject(value)) || (isFloatObject(value)))) {
+            if (!(isIntegerObject(value) || isFloatObject(value))) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
             if (value instanceof Long) {
-                workbufferAtput(destPtr + i, ((((long) value))));
+                workbufferAtput(destPtr + i, (long) value);
             } else if (value instanceof FloatObject) {
-                workbufferAtput(destPtr + i, ((float) (((FloatObject) value).getValue())));
+                workbufferAtput(destPtr + i, (float) ((FloatObject) value).getValue());
             } else {
-                workbufferAtput(destPtr + i, ((float) ((double) (value))));
+                workbufferAtput(destPtr + i, (float) (double) value);
             }
         }
     }
@@ -3448,21 +3448,21 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#loadBezier:segment:leftFill:rightFill:offset: */
     private static void loadBeziersegmentleftFillrightFilloffset(final long bezier, final long index, final long leftFillIndex, final long rightFillIndex, final long yOffset) {
-        if ((bzEndY(index)) >= (bzStartY(index))) {
+        if (bzEndY(index) >= bzStartY(index)) {
             /* Top to bottom */
             edgeXValueOfput(bezier, bzStartX(index));
-            edgeYValueOfput(bezier, (bzStartY(index)) - yOffset);
+            edgeYValueOfput(bezier, bzStartY(index) - yOffset);
             bezierViaXOfput(bezier, bzViaX(index));
-            bezierViaYOfput(bezier, (bzViaY(index)) - yOffset);
+            bezierViaYOfput(bezier, bzViaY(index) - yOffset);
             bezierEndXOfput(bezier, bzEndX(index));
-            bezierEndYOfput(bezier, (bzEndY(index)) - yOffset);
+            bezierEndYOfput(bezier, bzEndY(index) - yOffset);
         } else {
             edgeXValueOfput(bezier, bzEndX(index));
-            edgeYValueOfput(bezier, (bzEndY(index)) - yOffset);
+            edgeYValueOfput(bezier, bzEndY(index) - yOffset);
             bezierViaXOfput(bezier, bzViaX(index));
-            bezierViaYOfput(bezier, (bzViaY(index)) - yOffset);
+            bezierViaYOfput(bezier, bzViaY(index) - yOffset);
             bezierEndXOfput(bezier, bzStartX(index));
-            bezierEndYOfput(bezier, (bzStartY(index)) - yOffset);
+            bezierEndYOfput(bezier, bzStartY(index) - yOffset);
         }
         edgeZValueOfput(bezier, currentZGet());
         edgeLeftFillOfput(bezier, leftFillIndex);
@@ -3499,10 +3499,10 @@ public final class B2D {
             cmBits = ((NativeObject) cmOop).getIntStorage();
             cmSize = cmBits.length;
         }
-        if (!(isPointers(formOop))) {
+        if (!isPointers(formOop)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        if ((slotSizeOf(formOop)) < 5) {
+        if (slotSizeOf(formOop) < 5) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         bmBits = fetchNativeofObject(0, formOop);
@@ -3516,18 +3516,18 @@ public final class B2D {
         if (failed()) {
             throw SqueakException.create("return null");
         }
-        if (!((bmWidth >= 0) && (bmHeight >= 0))) {
+        if (!(bmWidth >= 0 && bmHeight >= 0)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        if (!((((((bmDepth == 32) || (bmDepth == 8)) || (bmDepth == 16)) || (bmDepth == 1)) || (bmDepth == 2)) || (bmDepth == 4))) {
+        if (!(bmDepth == 32 || bmDepth == 8 || bmDepth == 16 || bmDepth == 1 || bmDepth == 2 || bmDepth == 4)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        if (!((cmSize == 0) || (cmSize == (1L << bmDepth)))) {
+        if (!(cmSize == 0 || cmSize == 1L << bmDepth)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         ppw = div(32, bmDepth);
-        bmRaster = div(bmWidth + (ppw - 1), ppw);
-        if (bmBitsSize != (bmRaster * bmHeight)) {
+        bmRaster = div(bmWidth + ppw - 1, ppw);
+        if (bmBitsSize != bmRaster * bmHeight) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         bmFill = allocateBitmapFillcolormap(cmSize, cmBits);
@@ -3555,7 +3555,7 @@ public final class B2D {
         final int xIndex;
 
         xIndex = objectIndexOf(bmFill);
-        if (xIndex > (slotSizeOf(formArray))) {
+        if (xIndex > slotSizeOf(formArray)) {
             return null;
         }
         formOop = fetchPointerofObject(xIndex, formArray);
@@ -3583,10 +3583,10 @@ public final class B2D {
             return false;
         }
         hasColorTransformPut(1);
-        colorTransformSet(1, (colorTransformGet(1)) * (256.0f));
-        colorTransformSet(3, (colorTransformGet(3)) * (256.0f));
-        colorTransformSet(5, (colorTransformGet(5)) * (256.0f));
-        colorTransformSet(7, (colorTransformGet(7)) * (256.0f));
+        colorTransformSet(1, colorTransformGet(1) * 256.0f);
+        colorTransformSet(3, colorTransformGet(3) * 256.0f);
+        colorTransformSet(5, colorTransformGet(5) * 256.0f);
+        colorTransformSet(7, colorTransformGet(7) * 256.0f);
         return okay;
     }
 
@@ -3609,7 +3609,7 @@ public final class B2D {
         final int y2;
 
         /* Check if have anything to do at all */
-        if ((leftFill == rightFill) && ((lineWidth == 0) || (lineFill == 0))) {
+        if (leftFill == rightFill && (lineWidth == 0 || lineFill == 0)) {
             return;
         }
         /* 3 points with x/y each */
@@ -3630,9 +3630,9 @@ public final class B2D {
             x2 = loadPointIntAtfrom(index + 4, points);
             y2 = loadPointIntAtfrom(index + 5, points);
         }
-        if (((x0 == x1) && (y0 == y1)) || ((x1 == x2) && (y1 == y2))) {
+        if (x0 == x1 && y0 == y1 || x1 == x2 && y1 == y2) {
             /* We can use a line from x0/y0 to x2/y2 */
-            if ((x0 == x2) && (y0 == y2)) {
+            if (x0 == x2 && y0 == y2) {
                 return;
             }
             point1SetX(x0);
@@ -3650,7 +3650,7 @@ public final class B2D {
         point3SetX(x2);
         point3SetY(y2);
         transformPoints(3);
-        segs = loadAndSubdivideBezierFromviatoisWide((lineWidth != 0) && (lineFill != 0));
+        segs = loadAndSubdivideBezierFromviatoisWide(lineWidth != 0 && lineFill != 0);
         if (engineStopped) {
             return;
         }
@@ -3684,9 +3684,9 @@ public final class B2D {
         if (nSegments == 0) {
             return;
         }
-        leftRun = (rightRun = (widthRun = (lineFillRun = -1)));
-        leftLength = (rightLength = (widthLength = (lineFillLength = 1)));
-        leftValue = (rightValue = (widthValue = (lineFillValue = 0)));
+        leftRun = rightRun = widthRun = lineFillRun = -1;
+        leftLength = rightLength = widthLength = lineFillLength = 1;
+        leftValue = rightValue = widthValue = lineFillValue = 0;
         for (int i = 1; i <= nSegments; i++) {
             /* Decrement current run length and load new stuff */
             if (--leftLength <= 0) {
@@ -3736,7 +3736,7 @@ public final class B2D {
     /* BalloonEngineBase>>#loadEdgeStateFrom: */
     private static long loadEdgeStateFrom(final PointersObject edgeOop) {
         final int edge = lastExportedEdgeGet();
-        if ((slotSizeOf(edgeOop)) < ET_BALLOON_EDGE_DATA_SIZE) {
+        if (slotSizeOf(edgeOop) < ET_BALLOON_EDGE_DATA_SIZE) {
             PrimitiveFailed.andTransferToInterpreter(GEF_EDGE_DATA_TOO_SMALL);
         }
         edgeXValueOfput(edge, fetchIntegerofObject(ET_X_VALUE_INDEX, edgeOop));
@@ -3764,8 +3764,8 @@ public final class B2D {
             return false;
         }
         hasEdgeTransformPut(1);
-        edgeTransformSet(2, ((float) ((edgeTransformGet(2)) + (((double) (destOffsetXGet()))))));
-        edgeTransformSet(5, ((float) ((edgeTransformGet(5)) + (((double) (destOffsetYGet()))))));
+        edgeTransformSet(2, (float) (edgeTransformGet(2) + (double) destOffsetXGet()));
+        edgeTransformSet(5, (float) (edgeTransformGet(5) + (double) destOffsetYGet()));
         return true;
     }
 
@@ -3784,30 +3784,30 @@ public final class B2D {
         final int nrmX;
         final int nrmY;
 
-        point2SetX((point2GetX()) + (point1GetX()));
-        point2SetY((point2GetY()) + (point1GetY()));
-        point3SetX((point3GetX()) + (point1GetX()));
-        point3SetY((point3GetY()) + (point1GetY()));
+        point2SetX(point2GetX() + point1GetX());
+        point2SetY(point2GetY() + point1GetY());
+        point3SetX(point3GetX() + point1GetX());
+        point3SetY(point3GetY() + point1GetY());
         transformPoint(GW_POINT_1);
         transformPoint(GW_POINT_2);
         transformPoint(GW_POINT_3);
-        dirX = (point2GetX()) - (point1GetX());
-        dirY = (point2GetY()) - (point1GetY());
-        nrmX = (point3GetX()) - (point1GetX());
+        dirX = point2GetX() - point1GetX();
+        dirY = point2GetY() - point1GetY();
+        nrmX = point3GetX() - point1GetX();
         /* Compute the scale from direction/normal into ramp size */
-        nrmY = (point3GetY()) - (point1GetY());
-        dsLength2 = (dirX * dirX) + (dirY * dirY);
+        nrmY = point3GetY() - point1GetY();
+        dsLength2 = dirX * dirX + dirY * dirY;
         if (dsLength2 > 0) {
-            dsX = ((long) ((((((double) dirX)) * (((double) fillWidth))) * 65536.0) / ((dsLength2))));
-            dsY = ((long) ((((((double) dirY)) * (((double) fillWidth))) * 65536.0) / ((dsLength2))));
+            dsX = (long) ((double) dirX * (double) fillWidth * 65536.0 / dsLength2);
+            dsY = (long) ((double) dirY * (double) fillWidth * 65536.0 / dsLength2);
         } else {
             dsX = 0;
             dsY = 0;
         }
-        dtLength2 = (nrmX * nrmX) + (nrmY * nrmY);
+        dtLength2 = nrmX * nrmX + nrmY * nrmY;
         if (dtLength2 > 0) {
-            dtX = ((long) ((((((double) nrmX)) * (((double) fillHeight))) * 65536.0) / ((dtLength2))));
-            dtY = ((long) ((((((double) nrmY)) * (((double) fillHeight))) * 65536.0) / ((dtLength2))));
+            dtX = (long) ((double) nrmX * (double) fillHeight * 65536.0 / dtLength2);
+            dtY = (long) ((double) nrmY * (double) fillHeight * 65536.0 / dtLength2);
         } else {
             dtX = 0;
             dtY = 0;
@@ -3834,12 +3834,12 @@ public final class B2D {
         long ppw;
 
         formArray = arrayOop;
-        for (int i = 0, iLimiT = ((slotSizeOf(formArray)) - 1); i <= iLimiT; i++) {
+        for (int i = 0, iLimiT = slotSizeOf(formArray) - 1; i <= iLimiT; i++) {
             formOop = fetchPointerofObject(i, formArray);
-            if (!(isPointers(formOop))) {
+            if (!isPointers(formOop)) {
                 return false;
             }
-            if ((slotSizeOf(formOop)) < 5) {
+            if (slotSizeOf(formOop) < 5) {
                 return false;
             }
             bmBits = fetchNativeofObject(0, formOop);
@@ -3853,11 +3853,11 @@ public final class B2D {
             if (failed()) {
                 return false;
             }
-            if (!((bmWidth >= 0) && (bmHeight >= 0))) {
+            if (!(bmWidth >= 0 && bmHeight >= 0)) {
                 return false;
             }
             ppw = div(32, bmDepth);
-            bmRaster = div(bmWidth + (ppw - 1), ppw);
+            bmRaster = div(bmWidth + ppw - 1, ppw);
             if (bmBitsSize != bmRaster * bmHeight) {
                 return false;
             }
@@ -3890,7 +3890,7 @@ public final class B2D {
         final int p4Index;
         final long yDir;
 
-        if ((pointGetY(point1Index)) <= (pointGetY(point2Index))) {
+        if (pointGetY(point1Index) <= pointGetY(point2Index)) {
             p3Index = point1Index;
             p4Index = point2Index;
             yDir = 1;
@@ -3919,22 +3919,22 @@ public final class B2D {
         final long y2;
 
         /* Load start point of segment */
-        x0 = ((long) (((CIRCLE_COS_TABLE[(seg * 2)]) * (w)) + cx));
-        y0 = ((long) (((CIRCLE_SIN_TABLE[(seg * 2)]) * (h)) + cy));
+        x0 = (long) (CIRCLE_COS_TABLE[seg * 2] * w + cx);
+        y0 = (long) (CIRCLE_SIN_TABLE[seg * 2] * h + cy);
         point1SetX(x0);
         point1SetY(y0);
-        x2 = ((long) (((CIRCLE_COS_TABLE[(seg * 2) + 2]) * (w)) + cx));
-        y2 = ((long) (((CIRCLE_SIN_TABLE[(seg * 2) + 2]) * (h)) + cy));
+        x2 = (long) (CIRCLE_COS_TABLE[seg * 2 + 2] * w + cx);
+        y2 = (long) (CIRCLE_SIN_TABLE[seg * 2 + 2] * h + cy);
         point3SetX(x2);
         point3SetY(y2);
-        x1 = ((long) (((CIRCLE_COS_TABLE[(seg * 2) + 1]) * (w)) + cx));
+        x1 = (long) (CIRCLE_COS_TABLE[seg * 2 + 1] * w + cx);
         /*
          * NOTE: The intermediate point is the point ON the curve and not yet the control point
          * (which is OFF the curve)
          */
-        y1 = ((long) (((CIRCLE_SIN_TABLE[(seg * 2) + 1]) * (h)) + cy));
-        x1 = (x1 * 2) - ((x0 + x2) / 2);
-        y1 = (y1 * 2) - ((y0 + y2) / 2);
+        y1 = (long) (CIRCLE_SIN_TABLE[seg * 2 + 1] * h + cy);
+        x1 = x1 * 2 - (x0 + x2) / 2;
+        y1 = y1 * 2 - (y0 + y2) / 2;
         point2SetX(x1);
         point2SetY(y1);
     }
@@ -3949,14 +3949,14 @@ public final class B2D {
         long nSegments;
         final int w;
 
-        w = (((point2GetX())) - ((point1GetX()))) / 2;
-        h = (((point2GetX())) - ((point1GetY()))) / 2;
-        cx = (((point2GetX())) + ((point1GetX()))) / 2;
-        cy = (((point2GetY())) + ((point1GetY()))) / 2;
+        w = (point2GetX() - point1GetX()) / 2;
+        h = (point2GetX() - point1GetY()) / 2;
+        cx = (point2GetX() + point1GetX()) / 2;
+        cy = (point2GetY() + point1GetY()) / 2;
         for (int i = 0; i <= 15; i++) {
             loadOvalSegmentwhcxcy(i, w, h, cx, cy);
             transformPoints(3);
-            nSegments = loadAndSubdivideBezierFromviatoisWide((lineWidth != 0) && (lineFill != 0));
+            nSegments = loadAndSubdivideBezierFromviatoisWide(lineWidth != 0 && lineFill != 0);
             if (engineStopped) {
                 return;
             }
@@ -3994,22 +3994,22 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter();
         }
         final Object value0 = fetchObjectofObject(0, pointOop);
-        if (!((isIntegerObject(value0)) || (isFloatObject(value0)))) {
+        if (!(isIntegerObject(value0) || isFloatObject(value0))) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         if (isIntegerObject(value0)) {
             pointSetX(pointIndex, integerValueOf(value0));
         } else {
-            pointSetX(pointIndex, ((long) (floatValueOf(value0))));
+            pointSetX(pointIndex, (long) floatValueOf(value0));
         }
         final Object value1 = fetchObjectofObject(1, pointOop);
-        if (!((isIntegerObject(value1)) || (isFloatObject(value1)))) {
+        if (!(isIntegerObject(value1) || isFloatObject(value1))) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         if (isIntegerObject(value1)) {
             pointSetY(pointIndex, integerValueOf(value1));
         } else {
-            pointSetY(pointIndex, ((long) (floatValueOf(value1))));
+            pointSetY(pointIndex, (long) floatValueOf(value1));
         }
     }
 
@@ -4031,10 +4031,10 @@ public final class B2D {
         for (int i = 1; i < nPoints; i++) {
             if (isShort) {
                 x1 = loadPointShortAtfrom(i * 2, points);
-                y1 = loadPointShortAtfrom((i * 2) + 1, points);
+                y1 = loadPointShortAtfrom(i * 2 + 1, points);
             } else {
                 x1 = loadPointIntAtfrom(i * 2, points);
-                y1 = loadPointIntAtfrom((i * 2) + 1, points);
+                y1 = loadPointIntAtfrom(i * 2 + 1, points);
             }
             point1SetX(x0);
             point1SetY(y0);
@@ -4070,24 +4070,24 @@ public final class B2D {
         long failCode;
         final long state;
 
-        if (((failCode = quickLoadEngineFrom(receiver))) != 0) {
+        if ((failCode = quickLoadEngineFrom(receiver)) != 0) {
             return failCode;
         }
-        if (((failCode = loadSpanBufferFrom(fetchNativeofObject(BE_SPAN_INDEX, engine)))) != 0) {
+        if ((failCode = loadSpanBufferFrom(fetchNativeofObject(BE_SPAN_INDEX, engine))) != 0) {
             return failCode;
         }
         loadBitBltFrom(fetchPointerofObject(BE_BITBLT_INDEX, engine));
-        if (!(loadFormsFrom(fetchArrayofObject(BE_FORMS_INDEX, engine)))) {
+        if (!loadFormsFrom(fetchArrayofObject(BE_FORMS_INDEX, engine))) {
             return GEF_FORM_LOAD_FAILED;
         }
-        if ((slotSizeOf(edgeOop)) < ET_BALLOON_EDGE_DATA_SIZE) {
+        if (slotSizeOf(edgeOop) < ET_BALLOON_EDGE_DATA_SIZE) {
             return GEF_EDGE_DATA_TOO_SMALL;
         }
-        if ((slotSizeOf(fillOop)) < FT_BALLOON_FILL_DATA_SIZE) {
+        if (slotSizeOf(fillOop) < FT_BALLOON_FILL_DATA_SIZE) {
             return GEF_FILL_DATA_TOO_SMALL;
         }
         state = stateGet();
-        if ((state == GE_STATE_WAITING_FOR_EDGE) || ((state == GE_STATE_WAITING_FOR_FILL) || (state == GE_STATE_WAITING_CHANGE))) {
+        if (state == GE_STATE_WAITING_FOR_EDGE || state == GE_STATE_WAITING_FOR_FILL || state == GE_STATE_WAITING_CHANGE) {
             return GEF_WRONG_STATE;
         }
         return 0;
@@ -4116,7 +4116,7 @@ public final class B2D {
         }
         /* Leave last entry unused to avoid complications */
         spanBuffer = spanOop.getIntStorage();
-        final int value = (slotSizeOf(spanOop)) - 1;
+        final int value = slotSizeOf(spanOop) - 1;
         spanSizePut(value);
         return 0;
     }
@@ -4159,7 +4159,7 @@ public final class B2D {
         final long offset;
         final boolean wide;
 
-        if ((lineWidth == 0) || (lineFill == 0)) {
+        if (lineWidth == 0 || lineFill == 0) {
             wide = false;
             offset = 0;
         } else {
@@ -4194,7 +4194,7 @@ public final class B2D {
         final long line;
         final long offset;
 
-        if ((lineWidth == 0) || (lineFill == 0)) {
+        if (lineWidth == 0 || lineFill == 0) {
             line = allocateLine();
             offset = 0;
         } else {
@@ -4226,10 +4226,10 @@ public final class B2D {
 
     /* BalloonEngineBase>>#loadWorkBufferFrom: */
     private static long loadWorkBufferFrom(final NativeObject wbOop) {
-        if (!(isWords(wbOop))) {
+        if (!isWords(wbOop)) {
             return GEF_WORKBUFFER_IS_POINTERS;
         }
-        if ((slotSizeOf(wbOop)) < GW_MINIMAL_SIZE) {
+        if (slotSizeOf(wbOop) < GW_MINIMAL_SIZE) {
             return GEF_WORKBUFFER_TOO_SMALL;
         }
         workBufferPut(wbOop);
@@ -4243,10 +4243,10 @@ public final class B2D {
             return GEF_WORKBUFFER_START_WRONG;
         }
         objBufferIndex = objStartGet();
-        getBufferIndex = objBufferIndex + (objUsedGet());
+        getBufferIndex = objBufferIndex + objUsedGet();
         /* Make sure we don't exceed the work buffer */
-        aetBufferIndex = getBufferIndex + (getUsedGet());
-        if ((((GW_HEADER_SIZE + (objUsedGet())) + (getUsedGet())) + (aetUsedGet())) > (wbSizeGet())) {
+        aetBufferIndex = getBufferIndex + getUsedGet();
+        if (GW_HEADER_SIZE + objUsedGet() + getUsedGet() + aetUsedGet() > wbSizeGet()) {
             return GEF_WORK_TOO_BIG;
         }
         return 0;
@@ -4286,7 +4286,7 @@ public final class B2D {
     /* BalloonEngineBase>>#moveAETEntryFrom:edge:x: */
     private static void moveAETEntryFromedgex(final long index, final long edge, final long xValue) {
         int newIndex = (int) index;
-        while ((newIndex > 0) && ((edgeXValueOf(aetBuffer(newIndex - 1))) > xValue)) {
+        while (newIndex > 0 && edgeXValueOf(aetBuffer(newIndex - 1)) > xValue) {
             aetBuffer(newIndex, aetBuffer(newIndex - 1));
             newIndex--;
         }
@@ -4297,7 +4297,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#needAvailableSpace: */
     private static boolean needAvailableSpace(final long nSlots) {
-        if (((((GW_HEADER_SIZE + objUsed) + (getUsedGet())) + (aetUsedGet())) + nSlots) > (wbTopGet())) {
+        if (GW_HEADER_SIZE + objUsed + getUsedGet() + aetUsedGet() + nSlots > wbTopGet()) {
             stopBecauseOf(G_ERROR_NO_MORE_SPACE);
             return false;
         }
@@ -4346,7 +4346,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#objectTypeOf: */
     private static int objectTypeOf(final long obj) {
-        return (int) ((makeUnsignedFrom(objat(obj, GE_OBJECT_TYPE))) & GE_PRIMITIVE_TYPE_MASK);
+        return (int) (makeUnsignedFrom(objat(obj, GE_OBJECT_TYPE)) & GE_PRIMITIVE_TYPE_MASK);
     }
 
     /* BalloonEngineBase>>#objectTypeOf:put: */
@@ -4492,11 +4492,11 @@ public final class B2D {
 
     /* BalloonEngineBase>>#postDisplayAction */
     private static void postDisplayAction() {
-        if (((getStartGet()) >= (getUsedGet())) && ((aetUsedGet()) == 0)) {
+        if (getStartGet() >= getUsedGet() && aetUsedGet() == 0) {
             /* No more entries to process */
             statePut(GE_STATE_COMPLETED);
         }
-        if ((currentYGet()) >= (fillMaxYGet())) {
+        if (currentYGet() >= fillMaxYGet()) {
             /* Out of clipping range */
             statePut(GE_STATE_COMPLETED);
         }
@@ -4516,10 +4516,10 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final long edge = loadEdgeStateFrom(edgeEntry);
-        if (!(needAvailableSpace(1))) {
+        if (!needAvailableSpace(1)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
-        if ((edgeNumLinesOf(edge)) > 0) {
+        if (edgeNumLinesOf(edge) > 0) {
             insertEdgeIntoAET(edge);
         }
         if (engineStopped) {
@@ -4529,7 +4529,7 @@ public final class B2D {
         storeEngineStateInto(engine);
         if (doProfileStats) {
             incrementStatby(GW_COUNT_ADD_AET_ENTRY, 1);
-            incrementStatby(GW_TIME_ADD_AET_ENTRY, (ioMicroMSecs()) - geProfileTime);
+            incrementStatby(GW_TIME_ADD_AET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
         return receiver;
     }
@@ -4545,7 +4545,7 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        if (!((isFillOkay(leftFill)) && (isFillOkay(rightFill)))) {
+        if (!(isFillOkay(leftFill) && isFillOkay(rightFill))) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         // if ((leftFill == rightFill) && false) {
@@ -4595,29 +4595,29 @@ public final class B2D {
             /* Either PointArray or ShortPointArray */
             pointsIsArray = false;
             length = slotSizeOf((NativeObject) points);
-            if (!((length == (nSegments * 3)) || (length == (nSegments * 6)))) {
+            if (!(length == nSegments * 3 || length == nSegments * 6)) {
                 PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
             }
         } else {
             /* Must be Array of points */
-            if (!(isArray(points))) {
+            if (!isArray(points)) {
                 PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
             }
             length = slotSizeOf((ArrayObject) points);
-            if (length != (nSegments * 3)) {
+            if (length != nSegments * 3) {
                 PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
             }
             pointsIsArray = true;
         }
-        if ((lineWidth == 0) || (lineFillValue == 0)) {
+        if (lineWidth == 0 || lineFillValue == 0) {
             segSize = GL_BASE_SIZE;
         } else {
             segSize = GL_WIDE_SIZE;
         }
-        if (!(needAvailableSpace(segSize * nSegments))) {
+        if (!needAvailableSpace(segSize * nSegments)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
-        if (!((isFillOkay(lineFillValue)) && (isFillOkay(fillIndexValue)))) {
+        if (!(isFillOkay(lineFillValue) && isFillOkay(fillIndexValue))) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         final long lineFill = transformColor(lineFillValue);
@@ -4625,7 +4625,7 @@ public final class B2D {
         if (engineStopped) {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
-        if (((lineFill == 0) || (lineWidth == 0)) && (fillIndex == 0)) {
+        if ((lineFill == 0 || lineWidth == 0) && fillIndex == 0) {
             return receiver;
         }
         if (lineWidth != 0) {
@@ -4637,7 +4637,7 @@ public final class B2D {
         if (pointsIsArray) {
             loadArrayShapenSegmentsfilllineWidthlineFill((ArrayObject) points, nSegments, fillIndex, lineWidth, lineFill);
         } else {
-            loadShapenSegmentsfilllineWidthlineFillpointsShort(((NativeObject) points).getIntStorage(), nSegments, fillIndex, lineWidth, lineFill, (nSegments * 3) == length);
+            loadShapenSegmentsfilllineWidthlineFillpointsShort(((NativeObject) points).getIntStorage(), nSegments, fillIndex, lineWidth, lineFill, nSegments * 3 == length);
         }
         if (engineStopped) {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
@@ -4689,15 +4689,15 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        if (!(checkCompressedShapesegmentsleftFillsrightFillslineWidthslineFillsfillIndexList(points, nSegments, leftFills, rightFills, lineWidths, lineFills, fillIndexList))) {
+        if (!checkCompressedShapesegmentsleftFillsrightFillslineWidthslineFillsfillIndexList(points, nSegments, leftFills, rightFills, lineWidths, lineFills, fillIndexList)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_CHECK_FAILED);
         }
-        if (!(needAvailableSpace(GL_BASE_SIZE * nSegments))) {
+        if (!needAvailableSpace(GL_BASE_SIZE * nSegments)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
 
         /* Then actually load the compressed shape */
-        pointsShort = (slotSizeOf(points)) == (nSegments * 3);
+        pointsShort = slotSizeOf(points) == nSegments * 3;
         loadCompressedShapesegmentsleftFillsrightFillslineWidthslineFillsfillIndexListpointShort(points.getIntStorage(), nSegments, leftFills.getIntStorage(), rightFills.getIntStorage(),
                         lineWidths.getIntStorage(), lineFills.getIntStorage(), fillIndexList.getIntStorage(), pointsShort);
         if (engineStopped) {
@@ -4745,7 +4745,7 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        if (!((isFillOkay(leftFillValue)) && (isFillOkay(rightFillValue)))) {
+        if (!(isFillOkay(leftFillValue) && isFillOkay(rightFillValue))) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         loadPointfrom(GW_POINT_1, start);
@@ -4777,7 +4777,7 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        if (!((isFillOkay(borderIndexValue)) && (isFillOkay(fillIndexValue)))) {
+        if (!(isFillOkay(borderIndexValue) && isFillOkay(fillIndexValue))) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         final long fillIndex = transformColor(fillIndexValue);
@@ -4785,14 +4785,14 @@ public final class B2D {
         if (engineStopped) {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
-        if ((fillIndex == 0) && ((borderIndex == 0) || (borderWidthValue <= 0))) {
+        if (fillIndex == 0 && (borderIndex == 0 || borderWidthValue <= 0)) {
             return receiver;
         }
-        if (!(needAvailableSpace(16 * GB_BASE_SIZE))) {
+        if (!needAvailableSpace(16 * GB_BASE_SIZE)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
         final int borderWidth;
-        if ((borderWidthValue > 0) && (borderIndex != 0)) {
+        if (borderWidthValue > 0 && borderIndex != 0) {
             borderWidth = transformWidth(borderWidthValue);
         } else {
             borderWidth = 0;
@@ -4831,12 +4831,12 @@ public final class B2D {
             /* Either PointArray or ShortPointArray */
             pointsIsArray = false;
             length = slotSizeOf((NativeObject) points);
-            if (!((length == nPoints) || ((nPoints * 2) == length))) {
+            if (!(length == nPoints || nPoints * 2 == length)) {
                 PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
             }
         } else {
             /* Must be Array of points */
-            if (!(isArray(points))) {
+            if (!isArray(points)) {
                 PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
             }
             length = slotSizeOf((ArrayObject) points);
@@ -4845,15 +4845,15 @@ public final class B2D {
             }
             pointsIsArray = true;
         }
-        if ((lineWidth == 0) || (lineFillValue == 0)) {
+        if (lineWidth == 0 || lineFillValue == 0) {
             segSize = GL_BASE_SIZE;
         } else {
             segSize = GL_WIDE_SIZE;
         }
-        if (!(needAvailableSpace(segSize * nPoints))) {
+        if (!needAvailableSpace(segSize * nPoints)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        if (!((isFillOkay(lineFillValue)) && (isFillOkay(fillIndexValue)))) {
+        if (!(isFillOkay(lineFillValue) && isFillOkay(fillIndexValue))) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         final long lineFill = transformColor(lineFillValue);
@@ -4861,7 +4861,7 @@ public final class B2D {
         if (engineStopped) {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
-        if (((lineFill == 0) || (lineWidth == 0)) && (fillIndex == 0)) {
+        if ((lineFill == 0 || lineWidth == 0) && fillIndex == 0) {
             return receiver;
         }
         if (lineWidth != 0) {
@@ -4890,7 +4890,7 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        if (!((isFillOkay(borderIndexValue)) && (isFillOkay(fillIndexValue)))) {
+        if (!(isFillOkay(borderIndexValue) && isFillOkay(fillIndexValue))) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         final long borderIndex = transformColor(borderIndexValue);
@@ -4898,14 +4898,14 @@ public final class B2D {
         if (engineStopped) {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
-        if ((fillIndex == 0) && ((borderIndex == 0) || (borderWidthValue == 0))) {
+        if (fillIndex == 0 && (borderIndex == 0 || borderWidthValue == 0)) {
             return receiver;
         }
-        if (!(needAvailableSpace(4 * GL_BASE_SIZE))) {
+        if (!needAvailableSpace(4 * GL_BASE_SIZE)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
         final int borderWidth;
-        if ((borderWidthValue > 0) && (borderIndex != 0)) {
+        if (borderWidthValue > 0 && borderIndex != 0) {
             borderWidth = transformWidth(borderWidthValue);
         } else {
             borderWidth = 0;
@@ -4943,17 +4943,17 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         edge = loadEdgeStateFrom(edgeEntry);
-        if ((edgeNumLinesOf(edge)) == 0) {
+        if (edgeNumLinesOf(edge) == 0) {
             removeFirstAETEntry();
         } else {
             resortFirstAETEntry();
-            aetStartPut((aetStartGet()) + 1);
+            aetStartPut(aetStartGet() + 1);
         }
         statePut(GE_STATE_UPDATE_EDGES);
         storeEngineStateInto(engine);
         if (doProfileStats) {
             incrementStatby(GW_COUNT_CHANGE_AET_ENTRY, 1);
-            incrementStatby(GW_TIME_CHANGE_AET_ENTRY, (ioMicroMSecs()) - geProfileTime);
+            incrementStatby(GW_TIME_CHANGE_AET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
         return receiver;
     }
@@ -4970,21 +4970,21 @@ public final class B2D {
         if (fetchClassOf(buf1) != fetchClassOf(buf2)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_CLASS_MISMATCH);
         }
-        diff = (slotSizeOf(buf2)) - (slotSizeOf(buf1));
+        diff = slotSizeOf(buf2) - slotSizeOf(buf1);
         if (diff < 0) {
             PrimitiveFailed.andTransferToInterpreter(GEF_SIZE_MISMATCH);
         }
         final int[] src = workBuffer;
         final int[] dst = buf2.getIntStorage();
-        for (int i = 0, iLimiT = ((wbTopGet()) - 1); i <= iLimiT; i++) {
-            dst[i] = (src[i]);
+        for (int i = 0, iLimiT = wbTopGet() - 1; i <= iLimiT; i++) {
+            dst[i] = src[i];
         }
-        dst[GW_BUFFER_TOP] = ((wbTopGet()) + diff);
-        dst[GW_SIZE] = ((wbSizeGet()) + diff);
+        dst[GW_BUFFER_TOP] = wbTopGet() + diff;
+        dst[GW_SIZE] = wbSizeGet() + diff;
         final int srcOffset = wbTopGet();
         final int dstOffset = wbTopGet() + diff;
-        for (int i = 0, iLimiT = (((wbSizeGet()) - (wbTopGet())) - 1); i <= iLimiT; i++) {
-            dst[dstOffset + i] = (src[srcOffset + i]);
+        for (int i = 0, iLimiT = wbSizeGet() - wbTopGet() - 1; i <= iLimiT; i++) {
+            dst[dstOffset + i] = src[srcOffset + i];
         }
         final long failureCode2 = loadWorkBufferFrom(buf2);
         if (failureCode2 != 0) {
@@ -5009,19 +5009,19 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(failureCode2);
         }
         loadBitBltFrom(fetchPointerofObject(BE_BITBLT_INDEX, engine));
-        if (((currentYGet()) & (aaScanMaskGet())) == (aaScanMaskGet())) {
+        if ((currentYGet() & aaScanMaskGet()) == aaScanMaskGet()) {
             displaySpanBufferAt(currentYGet());
             postDisplayAction();
         }
-        if (!(finishedProcessing())) {
+        if (!finishedProcessing()) {
             aetStartPut(0);
-            currentYPut((currentYGet()) + 1);
+            currentYPut(currentYGet() + 1);
             statePut(GE_STATE_UPDATE_EDGES);
         }
         storeEngineStateInto(engine);
         if (doProfileStats) {
             incrementStatby(GW_COUNT_DISPLAY_SPAN, 1);
-            incrementStatby(GW_TIME_DISPLAY_SPAN, (ioMicroMSecs()) - geProfileTime);
+            incrementStatby(GW_TIME_DISPLAY_SPAN, ioMicroMSecs() - geProfileTime);
         }
         return receiver;
     }
@@ -5048,7 +5048,7 @@ public final class B2D {
         storeEngineStateInto(engine);
         if (doProfileStats) {
             incrementStatby(GW_COUNT_FINISH_TEST, 1);
-            incrementStatby(GW_TIME_FINISH_TEST, (ioMicroMSecs()) - geProfileTime);
+            incrementStatby(GW_TIME_FINISH_TEST, ioMicroMSecs() - geProfileTime);
         }
         return receiver.image.wrap(finished);
     }
@@ -5069,10 +5069,10 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final int[] stats = statOop.getIntStorage();
-        stats[0] = ((stats[0]) + (workBuffer[GW_BEZIER_MONOTON_SUBDIVISIONS]));
-        stats[1] = ((stats[1]) + (workBuffer[GW_BEZIER_HEIGHT_SUBDIVISIONS]));
-        stats[2] = ((stats[2]) + (workBuffer[GW_BEZIER_OVERFLOW_SUBDIVISIONS]));
-        stats[3] = ((stats[3]) + (workBuffer[GW_BEZIER_LINE_CONVERSIONS]));
+        stats[0] = stats[0] + workBuffer[GW_BEZIER_MONOTON_SUBDIVISIONS];
+        stats[1] = stats[1] + workBuffer[GW_BEZIER_HEIGHT_SUBDIVISIONS];
+        stats[2] = stats[2] + workBuffer[GW_BEZIER_OVERFLOW_SUBDIVISIONS];
+        stats[3] = stats[3] + workBuffer[GW_BEZIER_LINE_CONVERSIONS];
         return receiver;
     }
 
@@ -5096,15 +5096,15 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final int[] stats = statOop.getIntStorage();
-        stats[0] = ((stats[0]) + (workBuffer[GW_COUNT_INITIALIZING]));
-        stats[1] = ((stats[1]) + (workBuffer[GW_COUNT_FINISH_TEST]));
-        stats[2] = ((stats[2]) + (workBuffer[GW_COUNT_NEXT_GET_ENTRY]));
-        stats[3] = ((stats[3]) + (workBuffer[GW_COUNT_ADD_AET_ENTRY]));
-        stats[4] = ((stats[4]) + (workBuffer[GW_COUNT_NEXT_FILL_ENTRY]));
-        stats[5] = ((stats[5]) + (workBuffer[GW_COUNT_MERGE_FILL]));
-        stats[6] = ((stats[6]) + (workBuffer[GW_COUNT_DISPLAY_SPAN]));
-        stats[7] = ((stats[7]) + (workBuffer[GW_COUNT_NEXT_AET_ENTRY]));
-        stats[8] = ((stats[8]) + (workBuffer[GW_COUNT_CHANGE_AET_ENTRY]));
+        stats[0] = stats[0] + workBuffer[GW_COUNT_INITIALIZING];
+        stats[1] = stats[1] + workBuffer[GW_COUNT_FINISH_TEST];
+        stats[2] = stats[2] + workBuffer[GW_COUNT_NEXT_GET_ENTRY];
+        stats[3] = stats[3] + workBuffer[GW_COUNT_ADD_AET_ENTRY];
+        stats[4] = stats[4] + workBuffer[GW_COUNT_NEXT_FILL_ENTRY];
+        stats[5] = stats[5] + workBuffer[GW_COUNT_MERGE_FILL];
+        stats[6] = stats[6] + workBuffer[GW_COUNT_DISPLAY_SPAN];
+        stats[7] = stats[7] + workBuffer[GW_COUNT_NEXT_AET_ENTRY];
+        stats[8] = stats[8] + workBuffer[GW_COUNT_CHANGE_AET_ENTRY];
         return receiver;
     }
 
@@ -5216,12 +5216,12 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         statePut(GE_STATE_ADDING_FROM_GET);
-        if (!(failed())) {
+        if (!failed()) {
             storeEngineStateInto(engine);
         }
         if (doProfileStats) {
             incrementStatby(GW_COUNT_INITIALIZING, 1);
-            incrementStatby(GW_TIME_INITIALIZING, (ioMicroMSecs()) - geProfileTime);
+            incrementStatby(GW_TIME_INITIALIZING, ioMicroMSecs() - geProfileTime);
         }
         return receiver;
     }
@@ -5244,7 +5244,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(failureCode2);
         }
         /* Check bitmap */
-        if ((slotSizeOf(fillOop)) < FT_BALLOON_FILL_DATA_SIZE) {
+        if (slotSizeOf(fillOop) < FT_BALLOON_FILL_DATA_SIZE) {
             PrimitiveFailed.andTransferToInterpreter(GEF_FILL_DATA_TOO_SMALL);
         }
         value = fetchIntegerofObject(FT_INDEX_INDEX, fillOop);
@@ -5259,7 +5259,7 @@ public final class B2D {
         if (lastExportedRightXGet() != value) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
-        if ((slotSizeOf(bitsOop)) < ((lastExportedRightXGet()) - (lastExportedLeftXGet()))) {
+        if (slotSizeOf(bitsOop) < lastExportedRightXGet() - lastExportedLeftXGet()) {
             PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
         }
         if (failed()) {
@@ -5270,7 +5270,7 @@ public final class B2D {
         storeEngineStateInto(engine);
         if (doProfileStats) {
             incrementStatby(GW_COUNT_MERGE_FILL, 1);
-            incrementStatby(GW_TIME_MERGE_FILL, (ioMicroMSecs()) - geProfileTime);
+            incrementStatby(GW_TIME_MERGE_FILL, ioMicroMSecs() - geProfileTime);
         }
         return receiver;
     }
@@ -5334,7 +5334,7 @@ public final class B2D {
         storeEngineStateInto(engine);
         if (doProfileStats) {
             incrementStatby(GW_COUNT_NEXT_AET_ENTRY, 1);
-            incrementStatby(GW_TIME_NEXT_AET_ENTRY, (ioMicroMSecs()) - geProfileTime);
+            incrementStatby(GW_TIME_NEXT_AET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
         return receiver.image.wrap(!hasEdge);
     }
@@ -5360,7 +5360,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(GEF_FORM_LOAD_FAILED);
         }
         if (clearSpanBufferGet() != 0) {
-            if (((currentYGet()) & (aaScanMaskGet())) == 0) {
+            if ((currentYGet() & aaScanMaskGet()) == 0) {
                 clearSpanBuffer();
             }
             clearSpanBufferPut(0);
@@ -5385,7 +5385,7 @@ public final class B2D {
         storeEngineStateInto(engine);
         if (doProfileStats) {
             incrementStatby(GW_COUNT_NEXT_FILL_ENTRY, 1);
-            incrementStatby(GW_TIME_NEXT_FILL_ENTRY, (ioMicroMSecs()) - geProfileTime);
+            incrementStatby(GW_TIME_NEXT_FILL_ENTRY, ioMicroMSecs() - geProfileTime);
         }
         return receiver.image.wrap(!hasFill);
     }
@@ -5408,7 +5408,7 @@ public final class B2D {
         if (hasEdge) {
             edge = getBuffer(getStartGet());
             storeEdgeStateFrominto(edge, edgeEntry);
-            getStartPut((getStartGet()) + 1);
+            getStartPut(getStartGet() + 1);
         }
         if (failed()) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_EDGE);
@@ -5425,7 +5425,7 @@ public final class B2D {
         storeEngineStateInto(engine);
         if (doProfileStats) {
             incrementStatby(GW_COUNT_NEXT_GET_ENTRY, 1);
-            incrementStatby(GW_TIME_NEXT_GET_ENTRY, (ioMicroMSecs()) - geProfileTime);
+            incrementStatby(GW_TIME_NEXT_GET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
         return receiver.image.wrap(!hasEdge);
     }
@@ -5439,10 +5439,10 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        if (!(allocateObjEntry(GE_BASE_EDGE_SIZE))) {
+        if (!allocateObjEntry(GE_BASE_EDGE_SIZE)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
         }
-        if (!((isFillOkay(leftFillIndex)) && (isFillOkay(rightFillIndex)))) {
+        if (!(isFillOkay(leftFillIndex) && isFillOkay(rightFillIndex))) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         edge = objUsed;
@@ -5459,7 +5459,7 @@ public final class B2D {
         if (engineStopped) {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
-        if (!(failed())) {
+        if (!failed()) {
             storeEngineStateInto(engine);
         }
         return receiver;
@@ -5475,7 +5475,7 @@ public final class B2D {
         }
         fill = 0;
         while (fill == 0) {
-            if (!(allocateObjEntry(GE_BASE_EDGE_SIZE))) {
+            if (!allocateObjEntry(GE_BASE_EDGE_SIZE)) {
                 PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
             }
             fill = objUsed;
@@ -5556,10 +5556,10 @@ public final class B2D {
         if (failed()) {
             PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
         }
-        clipMinXPut((point1GetX()));
-        clipMinYPut((point1GetY()));
-        clipMaxXPut((point2GetX()));
-        clipMaxYPut((point2GetY()));
+        clipMinXPut(point1GetX());
+        clipMinYPut(point1GetY());
+        clipMaxXPut(point2GetX());
+        clipMaxYPut(point2GetY());
         storeEngineStateInto(engine);
         return receiver;
     }
@@ -5616,14 +5616,14 @@ public final class B2D {
     private static void proceedRenderingImage() {
         boolean external;
 
-        while (!(finishedProcessing())) {
+        while (!finishedProcessing()) {
             if (doProfileStats) {
                 geProfileTime = ioMicroMSecs();
             }
             external = findNextExternalEntryFromGET();
             if (doProfileStats) {
                 incrementStatby(GW_COUNT_NEXT_GET_ENTRY, 1);
-                incrementStatby(GW_TIME_NEXT_GET_ENTRY, (ioMicroMSecs()) - geProfileTime);
+                incrementStatby(GW_TIME_NEXT_GET_ENTRY, ioMicroMSecs() - geProfileTime);
             }
             if (engineStopped) {
                 statePut(GE_STATE_ADDING_FROM_GET);
@@ -5640,14 +5640,14 @@ public final class B2D {
             if (doProfileStats) {
                 geProfileTime = ioMicroMSecs();
             }
-            if (((clearSpanBufferGet()) != 0) && (((currentYGet()) & (aaScanMaskGet())) == 0)) {
+            if (clearSpanBufferGet() != 0 && (currentYGet() & aaScanMaskGet()) == 0) {
                 clearSpanBuffer();
             }
             clearSpanBufferPut(0);
             external = findNextExternalFillFromAET();
             if (doProfileStats) {
                 incrementStatby(GW_COUNT_NEXT_FILL_ENTRY, 1);
-                incrementStatby(GW_TIME_NEXT_FILL_ENTRY, (ioMicroMSecs()) - geProfileTime);
+                incrementStatby(GW_TIME_NEXT_FILL_ENTRY, ioMicroMSecs() - geProfileTime);
             }
             if (engineStopped) {
                 statePut(GE_STATE_SCANNING_AET);
@@ -5663,13 +5663,13 @@ public final class B2D {
             if (doProfileStats) {
                 geProfileTime = ioMicroMSecs();
             }
-            if (((currentYGet()) & (aaScanMaskGet())) == (aaScanMaskGet())) {
+            if ((currentYGet() & aaScanMaskGet()) == aaScanMaskGet()) {
                 displaySpanBufferAt(currentYGet());
                 postDisplayAction();
             }
             if (doProfileStats) {
                 incrementStatby(GW_COUNT_DISPLAY_SPAN, 1);
-                incrementStatby(GW_TIME_DISPLAY_SPAN, (ioMicroMSecs()) - geProfileTime);
+                incrementStatby(GW_TIME_DISPLAY_SPAN, ioMicroMSecs() - geProfileTime);
             }
             if (engineStopped) {
                 statePut(GE_STATE_BLIT_BUFFER);
@@ -5679,14 +5679,14 @@ public final class B2D {
                 return;
             }
             aetStartPut(0);
-            currentYPut((currentYGet()) + 1);
+            currentYPut(currentYGet() + 1);
             if (doProfileStats) {
                 geProfileTime = ioMicroMSecs();
             }
             external = findNextExternalUpdateFromAET();
             if (doProfileStats) {
                 incrementStatby(GW_COUNT_NEXT_AET_ENTRY, 1);
-                incrementStatby(GW_TIME_NEXT_AET_ENTRY, (ioMicroMSecs()) - geProfileTime);
+                incrementStatby(GW_TIME_NEXT_AET_ENTRY, ioMicroMSecs() - geProfileTime);
             }
             if (engineStopped) {
                 statePut(GE_STATE_UPDATE_EDGES);
@@ -5725,7 +5725,7 @@ public final class B2D {
             external = findNextExternalEntryFromGET();
             if (doProfileStats) {
                 incrementStatby(GW_COUNT_NEXT_GET_ENTRY, 1);
-                incrementStatby(GW_TIME_NEXT_GET_ENTRY, (ioMicroMSecs()) - geProfileTime);
+                incrementStatby(GW_TIME_NEXT_GET_ENTRY, ioMicroMSecs() - geProfileTime);
             }
             if (engineStopped) {
                 statePut(GE_STATE_ADDING_FROM_GET);
@@ -5745,14 +5745,14 @@ public final class B2D {
             if (doProfileStats) {
                 geProfileTime = ioMicroMSecs();
             }
-            if (((clearSpanBufferGet()) != 0) && (((currentYGet()) & (aaScanMaskGet())) == 0)) {
+            if (clearSpanBufferGet() != 0 && (currentYGet() & aaScanMaskGet()) == 0) {
                 clearSpanBuffer();
             }
             clearSpanBufferPut(0);
             external = findNextExternalFillFromAET();
             if (doProfileStats) {
                 incrementStatby(GW_COUNT_NEXT_FILL_ENTRY, 1);
-                incrementStatby(GW_TIME_NEXT_FILL_ENTRY, (ioMicroMSecs()) - geProfileTime);
+                incrementStatby(GW_TIME_NEXT_FILL_ENTRY, ioMicroMSecs() - geProfileTime);
             }
             if (engineStopped) {
                 statePut(GE_STATE_SCANNING_AET);
@@ -5771,13 +5771,13 @@ public final class B2D {
             if (doProfileStats) {
                 geProfileTime = ioMicroMSecs();
             }
-            if (((currentYGet()) & (aaScanMaskGet())) == (aaScanMaskGet())) {
+            if ((currentYGet() & aaScanMaskGet()) == aaScanMaskGet()) {
                 displaySpanBufferAt(currentYGet());
                 postDisplayAction();
             }
             if (doProfileStats) {
                 incrementStatby(GW_COUNT_DISPLAY_SPAN, 1);
-                incrementStatby(GW_TIME_DISPLAY_SPAN, (ioMicroMSecs()) - geProfileTime);
+                incrementStatby(GW_TIME_DISPLAY_SPAN, ioMicroMSecs() - geProfileTime);
             }
             if (engineStopped) {
                 statePut(GE_STATE_BLIT_BUFFER);
@@ -5788,7 +5788,7 @@ public final class B2D {
             }
             state = GE_STATE_UPDATE_EDGES;
             aetStartPut(0);
-            currentYPut((currentYGet()) + 1);
+            currentYPut(currentYGet() + 1);
         }
         if (state == GE_STATE_UPDATE_EDGES) {
             if (doProfileStats) {
@@ -5797,7 +5797,7 @@ public final class B2D {
             external = findNextExternalUpdateFromAET();
             if (doProfileStats) {
                 incrementStatby(GW_COUNT_NEXT_AET_ENTRY, 1);
-                incrementStatby(GW_TIME_NEXT_AET_ENTRY, (ioMicroMSecs()) - geProfileTime);
+                incrementStatby(GW_TIME_NEXT_AET_ENTRY, ioMicroMSecs() - geProfileTime);
             }
             if (engineStopped) {
                 statePut(GE_STATE_UPDATE_EDGES);
@@ -5824,11 +5824,11 @@ public final class B2D {
         if (failed()) {
             return GEF_ALREADY_FAILED;
         }
-        if ((slotSizeOf(engineOop)) < BE_BALLOON_ENGINE_SIZE) {
+        if (slotSizeOf(engineOop) < BE_BALLOON_ENGINE_SIZE) {
             return GEF_ENGINE_TOO_SMALL;
         }
         engine = engineOop;
-        if (((failCode = loadWorkBufferFrom(fetchNativeofObject(BE_WORKBUFFER_INDEX, engineOop)))) != 0) {
+        if ((failCode = loadWorkBufferFrom(fetchNativeofObject(BE_WORKBUFFER_INDEX, engineOop))) != 0) {
             return failCode;
         }
         stopReasonPut(0);
@@ -5843,7 +5843,7 @@ public final class B2D {
         if (failureCode != 0) {
             return failureCode;
         }
-        if ((stateGet()) == requiredState) {
+        if (stateGet() == requiredState) {
             return 0;
         }
         stopReasonPut(G_ERROR_BAD_STATE);
@@ -5856,10 +5856,10 @@ public final class B2D {
         if (failureCode != 0) {
             return failureCode;
         }
-        if ((stateGet()) == requiredState) {
+        if (stateGet() == requiredState) {
             return 0;
         }
-        if ((stateGet()) == alternativeState) {
+        if (stateGet() == alternativeState) {
             return 0;
         }
         stopReasonPut(G_ERROR_BAD_STATE);
@@ -5870,12 +5870,12 @@ public final class B2D {
 
     /* BalloonEngineBase>>#quickRemoveInvalidFillsAt: */
     private static void quickRemoveInvalidFillsAt(final long leftX) {
-        if ((stackFillSize()) == 0) {
+        if (stackFillSize() == 0) {
             return;
         }
-        while ((topRightX()) <= leftX) {
+        while (topRightX() <= leftX) {
             hideFilldepth(topFill(), topDepth());
-            if ((stackFillSize()) == 0) {
+            if (stackFillSize() == 0) {
                 return;
             }
         }
@@ -5902,7 +5902,7 @@ public final class B2D {
         final int tt;
 
         /* The prefix d means the data at that index. */
-        if (((n = (j + 1) - i)) <= 1) {
+        if ((n = j + 1 - i) <= 1) {
             return;
         }
         di = array[i];
@@ -5911,7 +5911,7 @@ public final class B2D {
         before = getSortsbefore(di, dj);
         if (!before) {
             tmp = array[i];
-            array[i] = (array[j]);
+            array[i] = array[j];
             array[j] = tmp;
             tt = di;
             di = dj;
@@ -5932,14 +5932,14 @@ public final class B2D {
             if (!before) {
                 /* i.e., should dij precede dj? */
                 tmp = array[j];
-                array[j] = (array[ij]);
+                array[j] = array[ij];
                 array[ij] = tmp;
                 dij = dj;
             }
         } else {
             /* i.e. di should come after dij */
             tmp = array[i];
-            array[i] = (array[ij]);
+            array[i] = array[ij];
             array[ij] = tmp;
             dij = di;
         }
@@ -5971,7 +5971,7 @@ public final class B2D {
             again = k <= l;
             if (again) {
                 tmp = array[k];
-                array[k] = (array[l]);
+                array[k] = array[l];
                 array[l] = tmp;
             }
         }
@@ -5982,8 +5982,8 @@ public final class B2D {
     /* BalloonEngineBase>>#removeFirstAETEntry */
     private static void removeFirstAETEntry() {
         int index = aetStartGet();
-        aetUsedPut((aetUsedGet()) - 1);
-        while (index < (aetUsedGet())) {
+        aetUsedPut(aetUsedGet() - 1);
+        while (index < aetUsedGet()) {
             aetBuffer(index, aetBuffer(index + 1));
             index++;
         }
@@ -6033,13 +6033,13 @@ public final class B2D {
         final int leftEdge;
         final long xValue;
 
-        if ((aetStartGet()) == 0) {
+        if (aetStartGet() == 0) {
             return;
         }
         edge = aetBuffer(aetStartGet());
         xValue = edgeXValueOf(edge);
-        leftEdge = aetBuffer((aetStartGet()) - 1);
-        if ((edgeXValueOf(leftEdge)) <= xValue) {
+        leftEdge = aetBuffer(aetStartGet() - 1);
+        if (edgeXValueOf(leftEdge) <= xValue) {
             return;
         }
         moveAETEntryFromedgex(aetStartGet(), edge, xValue);
@@ -6047,26 +6047,26 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#returnWideBezierFill */
     private static long returnWideBezierFill() {
-        return (dispatchReturnValue = wideBezierFillOf(dispatchedValue));
+        return dispatchReturnValue = wideBezierFillOf(dispatchedValue);
     }
 
     /* BalloonEnginePlugin>>#returnWideBezierWidth */
     private static long returnWideBezierWidth() {
-        return (dispatchReturnValue = wideBezierWidthOf(dispatchedValue));
+        return dispatchReturnValue = wideBezierWidthOf(dispatchedValue);
     }
 
     /* Return the fill of the (wide) line - this method is called from a case. */
 
     /* BalloonEnginePlugin>>#returnWideLineFill */
     private static long returnWideLineFill() {
-        return (dispatchReturnValue = wideLineFillOf(dispatchedValue));
+        return dispatchReturnValue = wideLineFillOf(dispatchedValue);
     }
 
     /* Return the width of the (wide) line - this method is called from a case. */
 
     /* BalloonEnginePlugin>>#returnWideLineWidth */
     private static long returnWideLineWidth() {
-        return (dispatchReturnValue = wideLineWidthOf(dispatchedValue));
+        return dispatchReturnValue = wideLineWidthOf(dispatchedValue);
     }
 
     /* BalloonEnginePlugin>>#rShiftTable */
@@ -6086,7 +6086,7 @@ public final class B2D {
         if (level >= 4) {
             aaLevel = 4;
         }
-        if ((level >= 2) && (level < 4)) {
+        if (level >= 2 && level < 4) {
             aaLevel = 2;
         }
         if (level < 2) {
@@ -6131,16 +6131,16 @@ public final class B2D {
 
     /* BalloonEngineBase>>#showFill:depth:rightX: */
     private static void showFilldepthrightX(final long fillIndex, final long depth, final long rightX) {
-        if (!(allocateStackFillEntry())) {
+        if (!allocateStackFillEntry()) {
             return;
         }
         stackFillValueput(0, fillIndex);
         stackFillDepthput(0, depth);
         stackFillRightXput(0, rightX);
-        if ((stackFillSize()) == (stackFillEntryLength())) {
+        if (stackFillSize() == stackFillEntryLength()) {
             return;
         }
-        if (fillSortsbefore(0, (stackFillSize()) - (stackFillEntryLength()))) {
+        if (fillSortsbefore(0, stackFillSize() - stackFillEntryLength())) {
             /* New top fill */
             stackFillValueput(0, topFillValue());
             stackFillDepthput(0, topFillDepth());
@@ -6155,7 +6155,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#sortGlobalEdgeTable */
     private static void sortGlobalEdgeTable() {
-        quickSortGlobalEdgeTablefromto(workBuffer, getBufferIndex, getBufferIndex + (getUsedGet()) - 1);
+        quickSortGlobalEdgeTablefromto(workBuffer, getBufferIndex, getBufferIndex + getUsedGet() - 1);
     }
 
     /* BalloonEngineBase>>#spanEndAAGet */
@@ -6200,7 +6200,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#squaredLengthOf:with: */
     private static long squaredLengthOfwith(final long deltaX, final long deltaY) {
-        return (deltaX * deltaX) + (deltaY * deltaY);
+        return deltaX * deltaX + deltaY * deltaY;
     }
 
     /* BalloonEngineBase>>#stackFillDepth: */
@@ -6291,7 +6291,7 @@ public final class B2D {
         final long viaY;
 
         /* Do a quick check if there is anything at all to do */
-        if ((!(isWide(bezier))) && (yValue >= (bezierEndYOf(bezier)))) {
+        if (!isWide(bezier) && yValue >= bezierEndYOf(bezier)) {
             edgeNumLinesOfput(bezier, 0);
             return;
         }
@@ -6305,9 +6305,9 @@ public final class B2D {
         /* Initialize integer forward differencing */
         deltaY = endY - startY;
         fwX1 = (viaX - startX) * 2;
-        fwX2 = (startX + endX) - (viaX * 2);
+        fwX2 = startX + endX - viaX * 2;
         fwY1 = (viaY - startY) * 2;
-        fwY2 = (startY + endY) - (viaY * 2);
+        fwY2 = startY + endY - viaY * 2;
         maxSteps = deltaY * 2;
         if (maxSteps < 2) {
             maxSteps = 2;
@@ -6315,16 +6315,16 @@ public final class B2D {
         scaledStepSize = div(0x1000000, maxSteps);
         squaredStepSize = absoluteSquared8Dot24(scaledStepSize);
         fwDx = fwX1 * scaledStepSize;
-        fwDDx = (fwX2 * squaredStepSize) * 2;
+        fwDDx = fwX2 * squaredStepSize * 2;
         fwDx += fwDDx / 2;
         fwDy = fwY1 * scaledStepSize;
-        fwDDy = (fwY2 * squaredStepSize) * 2;
+        fwDDy = fwY2 * squaredStepSize * 2;
 
         /* Store the values */
         fwDy += fwDDy / 2;
         edgeNumLinesOfput(bezier, deltaY);
-        bezierUpdateDataOf(bezier, GB_UPDATE_X, (startX * 256));
-        bezierUpdateDataOf(bezier, GB_UPDATE_Y, (startY * 256));
+        bezierUpdateDataOf(bezier, GB_UPDATE_X, startX * 256);
+        bezierUpdateDataOf(bezier, GB_UPDATE_Y, startY * 256);
         bezierUpdateDataOf(bezier, GB_UPDATE_DX, fwDx);
         bezierUpdateDataOf(bezier, GB_UPDATE_DY, fwDy);
         bezierUpdateDataOf(bezier, GB_UPDATE_DDX, fwDDx);
@@ -6349,13 +6349,13 @@ public final class B2D {
     /* BalloonEnginePlugin>>#stepToFirstLineIn:at: */
     private static void stepToFirstLineInat(final long line, final long yValue) {
         /* Do a quick check if there is anything at all to do */
-        if ((!(isWide(line))) && (yValue >= (lineEndYOf(line)))) {
+        if (!isWide(line) && yValue >= lineEndYOf(line)) {
             edgeNumLinesOfput(line, 0);
             return;
         }
-        final int deltaX = (lineEndXOf(line)) - (edgeXValueOf(line));
+        final int deltaX = lineEndXOf(line) - edgeXValueOf(line);
         /* Check if edge goes left to right */
-        final int deltaY = (lineEndYOf(line)) - (edgeYValueOf(line));
+        final int deltaY = lineEndYOf(line) - edgeYValueOf(line);
         final int xDir;
         final int widthX;
         int error;
@@ -6457,10 +6457,10 @@ public final class B2D {
         /* turned on at lineOffset */
         yEntry = 0;
         /* turned off at zero */
-        yExit = (0 - nLines) - lineOffset;
+        yExit = 0 - nLines - lineOffset;
         wideBezierEntryOfput(bezier, yEntry);
         wideBezierExitOfput(bezier, yExit);
-        if ((yEntry >= lineOffset) && (yExit < 0)) {
+        if (yEntry >= lineOffset && yExit < 0) {
             edgeFillsValidate(bezier);
         } else {
             edgeFillsInvalidate(bezier);
@@ -6471,7 +6471,7 @@ public final class B2D {
             for (int i = startY; i < yValue; i++) {
                 stepToNextWideBezierInat(bezier, i);
             }
-            edgeNumLinesOfput(bezier, (edgeNumLinesOf(bezier)) - (yValue - startY));
+            edgeNumLinesOfput(bezier, edgeNumLinesOf(bezier) - (yValue - startY));
         }
     }
 
@@ -6501,18 +6501,18 @@ public final class B2D {
         edgeXValueOfput(line, startX - lineOffset);
         edgeNumLinesOfput(line, nLines + lineWidth);
         if (xDir > 0) {
-            wideLineWidthOfput(line, (lineXIncrementOf(line)) + lineWidth);
+            wideLineWidthOfput(line, lineXIncrementOf(line) + lineWidth);
         } else {
-            wideLineWidthOfput(line, lineWidth - (lineXIncrementOf(line)));
-            edgeXValueOfput(line, (edgeXValueOf(line)) + (lineXIncrementOf(line)));
+            wideLineWidthOfput(line, lineWidth - lineXIncrementOf(line));
+            edgeXValueOfput(line, edgeXValueOf(line) + lineXIncrementOf(line));
         }
         /* turned on at lineOffset */
         final int yEntry = 0;
         /* turned off at zero */
-        final long yExit = (0 - nLines) - lineOffset;
+        final long yExit = 0 - nLines - lineOffset;
         wideLineEntryOfput(line, yEntry);
         wideLineExitOfput(line, yExit);
-        if ((yEntry >= lineOffset) && (yExit < 0)) {
+        if (yEntry >= lineOffset && yExit < 0) {
             edgeFillsValidate(line);
         } else {
             edgeFillsInvalidate(line);
@@ -6521,7 +6521,7 @@ public final class B2D {
             for (int i = startY; i < yValue; i++) {
                 stepToNextWideLineInat(line, i);
             }
-            edgeNumLinesOfput(line, (edgeNumLinesOf(line)) - (yValue - startY));
+            edgeNumLinesOfput(line, edgeNumLinesOf(line) - (yValue - startY));
         }
     }
 
@@ -6557,9 +6557,9 @@ public final class B2D {
          * good insurance in practice.
          */
         minY = yValue * 256;
-        while ((minY > lastY) && (fwDy >= 0)) {
-            lastX += ((fwDx + 32768) >> 16);
-            lastY += ((fwDy + 32768) >> 16);
+        while (minY > lastY && fwDy >= 0) {
+            lastX += fwDx + 32768 >> 16;
+            lastY += fwDy + 32768 >> 16;
             fwDx += bezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DDX);
             fwDy += bezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DDY);
         }
@@ -6567,7 +6567,7 @@ public final class B2D {
         bezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_Y, lastY);
         bezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DX, fwDx);
         bezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DY, fwDy);
-        return (lastX >> 8);
+        return lastX >> 8;
     }
 
     /* Copy of BalloonEnginePlugin>>#stepToNextBezierForward:at: for wide beziers */
@@ -6589,9 +6589,9 @@ public final class B2D {
          * good insurance in practice.
          */
         minY = yValue * 256;
-        while ((minY > lastY) && (fwDy >= 0)) {
-            lastX += ((fwDx + 32768) >> 16);
-            lastY += ((fwDy + 32768) >> 16);
+        while (minY > lastY && fwDy >= 0) {
+            lastX += fwDx + 32768 >> 16;
+            lastY += fwDy + 32768 >> 16;
             fwDx += wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DDX);
             fwDy += wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DDY);
         }
@@ -6599,7 +6599,7 @@ public final class B2D {
         wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_Y, lastY);
         wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DX, fwDx);
         wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DY, fwDy);
-        return (lastX >> 8);
+        return lastX >> 8;
     }
 
     /* Incrementally step to the next scan line in the given bezier */
@@ -6626,8 +6626,8 @@ public final class B2D {
         long err;
         long x;
 
-        x = (edgeXValueOf(line)) + (lineXIncrementOf(line));
-        err = (lineErrorOf(line)) + (lineErrorAdjUpOf(line));
+        x = edgeXValueOf(line) + lineXIncrementOf(line);
+        err = lineErrorOf(line) + lineErrorAdjUpOf(line);
         if (err > 0) {
             x += lineXDirectionOf(line);
             err -= lineErrorAdjDownOf(line);
@@ -6661,7 +6661,7 @@ public final class B2D {
         if (yExit >= 0) {
             edgeFillsInvalidate(bezier);
         }
-        if ((yExit + lineOffset) < 0) {
+        if (yExit + lineOffset < 0) {
             stepToNextBezierForwardat(bezier, yValue);
         } else {
             /* Adjust the last x value to the final x recorded previously */
@@ -6683,8 +6683,8 @@ public final class B2D {
     /* BalloonEnginePlugin>>#stepToNextWideLineIn:at: */
     private static void stepToNextWideLineInat(final long line, final long yValue) {
         /* Adjust entry/exit values */
-        final int yEntry = (wideLineEntryOf(line)) + 1;
-        final int yExit = (wideLineExitOf(line)) + 1;
+        final int yEntry = wideLineEntryOf(line) + 1;
+        final int yExit = wideLineExitOf(line) + 1;
         wideLineEntryOfput(line, yEntry);
         wideLineExitOfput(line, yExit);
         final int lineWidth = wideLineExtentOf(line);
@@ -6699,7 +6699,7 @@ public final class B2D {
         stepToNextLineInat(line, yValue);
         /* Check for special start/end adjustments */
         final int nextX = edgeXValueOf(line);
-        if ((yEntry <= lineWidth) || ((yExit + lineOffset) >= 0)) {
+        if (yEntry <= lineWidth || yExit + lineOffset >= 0) {
             /* Yes, need an update */
             adjustWideLineafterSteppingFromto(line, lastX, nextX);
         }
@@ -6723,7 +6723,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#storeEdgeStateFrom:into: */
     private static void storeEdgeStateFrominto(final long edge, final PointersObject edgeOop) {
-        if ((slotSizeOf(edgeOop)) < ET_BALLOON_EDGE_DATA_SIZE) {
+        if (slotSizeOf(edgeOop) < ET_BALLOON_EDGE_DATA_SIZE) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         storeValue(ET_INDEX_INDEX, edgeOop, objectIndexOf(edge));
@@ -6748,7 +6748,7 @@ public final class B2D {
         fillIndex = lastExportedFillGet();
         leftX = lastExportedLeftXGet();
         rightX = lastExportedRightXGet();
-        if ((slotSizeOf(fillOop)) < FT_BALLOON_FILL_DATA_SIZE) {
+        if (slotSizeOf(fillOop) < FT_BALLOON_FILL_DATA_SIZE) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         storeValue(FT_INDEX_INDEX, fillOop, objectIndexOf(fillIndex));
@@ -6777,7 +6777,7 @@ public final class B2D {
         if (reason == G_ERROR_GET_ENTRY) {
             edge = getBuffer(getStartGet());
             storeEdgeStateFrominto(edge, edgeOop);
-            getStartPut((getStartGet()) + 1);
+            getStartPut(getStartGet() + 1);
         } else if (reason == G_ERROR_FILL_ENTRY) {
             storeFillStateInto(fillOop);
         } else if (reason == G_ERROR_AET_ENTRY) {
@@ -6834,7 +6834,7 @@ public final class B2D {
         if (deltaX < 0) {
             deltaX = 0 - deltaX;
         }
-        if ((deltaY * 32) < deltaX) {
+        if (deltaY * 32 < deltaX) {
             incrementStatby(GW_BEZIER_OVERFLOW_SUBDIVISIONS, 1);
             return computeBezierSplitAtHalf(index);
         }
@@ -6850,7 +6850,7 @@ public final class B2D {
         final int endX = bzEndX(index);
         final int dx1 = viaX - startX;
         final int dx2 = endX - viaX;
-        if ((dx1 * dx2) >= 0) {
+        if (dx1 * dx2 >= 0) {
             return index;
         }
         incrementStatby(GW_BEZIER_MONOTON_SUBDIVISIONS, 1);
@@ -6862,7 +6862,7 @@ public final class B2D {
         if (denom < 0) {
             denom = 0 - denom;
         }
-        return computeBeziersplitAt(index, ((double) num) / ((double) denom));
+        return computeBeziersplitAt(index, (double) num / (double) denom);
     }
 
     /* Check if the given bezier curve is monoton in Y. If not, subdivide it */
@@ -6874,7 +6874,7 @@ public final class B2D {
         final int endY = bzEndY(index);
         final int dy1 = viaY - startY;
         final int dy2 = endY - viaY;
-        if ((dy1 * dy2) >= 0) {
+        if (dy1 * dy2 >= 0) {
             return (int) index;
         }
         incrementStatby(GW_BEZIER_MONOTON_SUBDIVISIONS, 1);
@@ -6886,7 +6886,7 @@ public final class B2D {
         if (denom < 0) {
             denom = 0 - denom;
         }
-        return computeBeziersplitAt(index, (((float) num)) / (((float) denom)));
+        return computeBeziersplitAt(index, (float) num / (float) denom);
     }
 
     /*
@@ -6904,7 +6904,7 @@ public final class B2D {
         if (index1 > index2) {
             index2 = index1;
         }
-        if ((base != base2) && (doTestX)) {
+        if (base != base2 && doTestX) {
             index1 = subdivideToBeMonotonInX(base2);
         }
         if (index1 > index2) {
@@ -6915,10 +6915,10 @@ public final class B2D {
 
     /* BalloonEngineBase>>#toggleFillsOf: */
     private static void toggleFillsOf(final long edge) {
-        if (!(needAvailableSpace((stackFillEntryLength()) * 2))) {
+        if (!needAvailableSpace(stackFillEntryLength() * 2)) {
             return;
         }
-        final long depth = (((edgeZValueOf(edge))) << 1);
+        final long depth = edgeZValueOf(edge) << 1;
         long fillIndex = edgeLeftFillOf(edge);
         if (fillIndex != 0) {
             toggleFilldepthrightX(fillIndex, depth, 999999999);
@@ -6934,7 +6934,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#toggleFill:depth:rightX: */
     private static void toggleFilldepthrightX(final long fillIndex, final long depth, final long rightX) {
-        if ((stackFillSize()) == 0) {
+        if (stackFillSize() == 0) {
             if (allocateStackFillEntry()) {
                 topFillValuePut(fillIndex);
                 topFillDepthPut(depth);
@@ -6985,17 +6985,17 @@ public final class B2D {
         if (fill == 0) {
             return;
         }
-        if (!(needAvailableSpace(stackFillEntryLength()))) {
+        if (!needAvailableSpace(stackFillEntryLength())) {
             return;
         }
         /* So lines sort before interior fills */
-        final long depth = ((((edgeZValueOf(edge))) << 1)) + 1;
-        final long rightX = (edgeXValueOf(edge)) + lineWidth;
+        final long depth = (edgeZValueOf(edge) << 1) + 1;
+        final long rightX = edgeXValueOf(edge) + lineWidth;
         final long index = findStackFilldepth(fill, depth);
         if (index == -1) {
             showFilldepthrightX(fill, depth, rightX);
         } else {
-            if ((stackFillRightX(index)) < rightX) {
+            if (stackFillRightX(index) < rightX) {
                 stackFillRightXput(index, rightX);
             }
         }
@@ -7004,7 +7004,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#topDepth */
     private static long topDepth() {
-        if ((stackFillSize()) == 0) {
+        if (stackFillSize() == 0) {
             return -1;
         } else {
             return topFillDepth();
@@ -7013,7 +7013,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#topFill */
     private static int topFill() {
-        if ((stackFillSize()) == 0) {
+        if (stackFillSize() == 0) {
             return 0;
         } else {
             return topFillValue();
@@ -7022,37 +7022,37 @@ public final class B2D {
 
     /* BalloonEngineBase>>#topFillDepth */
     private static int topFillDepth() {
-        return stackFillDepth((stackFillSize()) - (stackFillEntryLength()));
+        return stackFillDepth(stackFillSize() - stackFillEntryLength());
     }
 
     /* BalloonEngineBase>>#topFillDepthPut: */
     private static void topFillDepthPut(final long value) {
-        stackFillDepthput((stackFillSize()) - (stackFillEntryLength()), value);
+        stackFillDepthput(stackFillSize() - stackFillEntryLength(), value);
     }
 
     /* BalloonEngineBase>>#topFillRightX */
     private static int topFillRightX() {
-        return stackFillRightX((stackFillSize()) - (stackFillEntryLength()));
+        return stackFillRightX(stackFillSize() - stackFillEntryLength());
     }
 
     /* BalloonEngineBase>>#topFillRightXPut: */
     private static void topFillRightXPut(final long value) {
-        stackFillRightXput((stackFillSize()) - (stackFillEntryLength()), value);
+        stackFillRightXput(stackFillSize() - stackFillEntryLength(), value);
     }
 
     /* BalloonEngineBase>>#topFillValue */
     private static int topFillValue() {
-        return stackFillValue((stackFillSize()) - (stackFillEntryLength()));
+        return stackFillValue(stackFillSize() - stackFillEntryLength());
     }
 
     /* BalloonEngineBase>>#topFillValuePut: */
     private static void topFillValuePut(final long value) {
-        stackFillValueput((stackFillSize()) - (stackFillEntryLength()), value);
+        stackFillValueput(stackFillSize() - stackFillEntryLength(), value);
     }
 
     /* BalloonEngineBase>>#topRightX */
     private static long topRightX() {
-        if ((stackFillSize()) == 0) {
+        if (stackFillSize() == 0) {
             return 999999999;
         } else {
             return topFillRightX();
@@ -7068,35 +7068,35 @@ public final class B2D {
         int g;
         int r;
 
-        if (!((fillIndex == 0) || (isFillColor(fillIndex)))) {
+        if (!(fillIndex == 0 || isFillColor(fillIndex))) {
             return fillIndex;
         }
         b = fillIndex & 0xFF;
-        g = ((fillIndex) >>> 8) & 0xFF;
-        r = ((fillIndex) >>> 16) & 0xFF;
-        a = ((fillIndex) >>> 24) & 0xFF;
+        g = fillIndex >>> 8 & 0xFF;
+        r = fillIndex >>> 16 & 0xFF;
+        a = fillIndex >>> 24 & 0xFF;
         if (hasColorTransform()) {
-            alphaScale = ((a * (colorTransformGet(6))) + (colorTransformGet(7))) / a;
-            r = (int) ((((r * (colorTransformGet(0))) + (colorTransformGet(1))) * alphaScale));
-            g = (int) ((((g * (colorTransformGet(2))) + (colorTransformGet(3))) * alphaScale));
-            b = (int) ((((b * (colorTransformGet(4))) + (colorTransformGet(5))) * alphaScale));
+            alphaScale = (a * colorTransformGet(6) + colorTransformGet(7)) / a;
+            r = (int) ((r * colorTransformGet(0) + colorTransformGet(1)) * alphaScale);
+            g = (int) ((g * colorTransformGet(2) + colorTransformGet(3)) * alphaScale);
+            b = (int) ((b * colorTransformGet(4) + colorTransformGet(5)) * alphaScale);
             a = (int) (a * alphaScale); // TODO: check this cast is ok
-            r = ((r < 0) ? 0 : r);
-            r = ((r < 0xFF) ? r : 0xFF);
-            g = ((g < 0) ? 0 : g);
-            g = ((g < 0xFF) ? g : 0xFF);
-            b = ((b < 0) ? 0 : b);
-            b = ((b < 0xFF) ? b : 0xFF);
-            a = ((a < 0) ? 0 : a);
-            a = ((a < 0xFF) ? a : 0xFF);
+            r = r < 0 ? 0 : r;
+            r = r < 0xFF ? r : 0xFF;
+            g = g < 0 ? 0 : g;
+            g = g < 0xFF ? g : 0xFF;
+            b = b < 0 ? 0 : b;
+            b = b < 0xFF ? b : 0xFF;
+            a = a < 0 ? 0 : a;
+            a = a < 0xFF ? a : 0xFF;
         }
         if (a < 1) {
             return 0;
         }
-        if ((a < 0xFF) && (needsFlush())) {
+        if (a < 0xFF && needsFlush()) {
             stopBecauseOf(G_ERROR_NEED_FLUSH);
         }
-        return ((b + ((g << 8))) + ((r << 16))) + ((a << 24));
+        return b + (g << 8) + (r << 16) + (a << 24);
     }
 
     /*
@@ -7131,8 +7131,8 @@ public final class B2D {
         final int x;
         final int y;
 
-        x = (int) ((((((edgeTransformGet(0)) * xValue) + ((edgeTransformGet(1)) * yValue)) + (edgeTransformGet(2))) * (((aaLevelGet())))));
-        y = (int) ((((((edgeTransformGet(3)) * xValue) + ((edgeTransformGet(4)) * yValue)) + (edgeTransformGet(5))) * (((aaLevelGet())))));
+        x = (int) ((edgeTransformGet(0) * xValue + edgeTransformGet(1) * yValue + edgeTransformGet(2)) * aaLevelGet());
+        y = (int) ((edgeTransformGet(3) * xValue + edgeTransformGet(4) * yValue + edgeTransformGet(5)) * aaLevelGet());
         pointSetX(dstPointIndex, x);
         pointSetY(dstPointIndex, y);
     }
@@ -7148,8 +7148,8 @@ public final class B2D {
             transformPointinto(pointIndex, pointIndex);
         } else {
             /* Multiply each component by aaLevel and add a half pixel */
-            pointSetX(pointIndex, (((pointGetX(pointIndex)) + (destOffsetXGet())) * (aaLevelGet())));
-            pointSetY(pointIndex, (((pointGetY(pointIndex)) + (destOffsetYGet())) * (aaLevelGet())));
+            pointSetX(pointIndex, (pointGetX(pointIndex) + destOffsetXGet()) * aaLevelGet());
+            pointSetY(pointIndex, (pointGetY(pointIndex) + destOffsetYGet()) * aaLevelGet());
         }
     }
 
@@ -7178,17 +7178,17 @@ public final class B2D {
         }
         point1SetX(0);
         point1SetY(0);
-        point2SetX((w * 256));
+        point2SetX(w * 256);
         point2SetY(0);
         point3SetX(0);
-        point3SetY((w * 256));
+        point3SetY(w * 256);
         transformPoints(3);
-        deltaX = (((point2GetX())) - ((point1GetX())));
-        deltaY = (((point2GetY())) - ((point1GetY())));
-        dstWidth = ((((int) (Math.sqrt((deltaX * deltaX) + (deltaY * deltaY))))) + 128) / 256;
-        deltaX = (((point3GetX())) - ((point1GetX())));
-        deltaY = (((point3GetY())) - ((point1GetY())));
-        dstWidth2 = ((((int) (Math.sqrt((deltaX * deltaX) + (deltaY * deltaY))))) + 128) / 256;
+        deltaX = point2GetX() - point1GetX();
+        deltaY = point2GetY() - point1GetY();
+        dstWidth = ((int) Math.sqrt(deltaX * deltaX + deltaY * deltaY) + 128) / 256;
+        deltaX = point3GetX() - point1GetX();
+        deltaY = point3GetY() - point1GetY();
+        dstWidth2 = ((int) Math.sqrt(deltaX * deltaX + deltaY * deltaY) + 128) / 256;
         if (dstWidth2 < dstWidth) {
             dstWidth = dstWidth2;
         }
@@ -7201,29 +7201,29 @@ public final class B2D {
 
     /* BalloonEngineBase>>#uncheckedTransformColor: */
     private static int uncheckedTransformColor(final int fillIndex) {
-        if (!(hasColorTransform())) {
+        if (!hasColorTransform()) {
             return fillIndex;
         }
         int b = fillIndex & 0xFF;
-        int g = ((fillIndex) >>> 8) & 0xFF;
-        int r = ((fillIndex) >>> 16) & 0xFF;
-        int a = ((fillIndex) >>> 24) & 0xFF;
-        r = ((r * (colorTransformGet(0))) + (colorTransformGet(1)));
-        g = ((g * (colorTransformGet(2))) + (colorTransformGet(3)));
-        b = ((b * (colorTransformGet(4))) + (colorTransformGet(5)));
-        a = ((a * (colorTransformGet(6))) + (colorTransformGet(7)));
-        r = ((r < 0) ? 0 : r);
-        r = ((r < 0xFF) ? r : 0xFF);
-        g = ((g < 0) ? 0 : g);
-        g = ((g < 0xFF) ? g : 0xFF);
-        b = ((b < 0) ? 0 : b);
-        b = ((b < 0xFF) ? b : 0xFF);
-        a = ((a < 0) ? 0 : a);
-        a = ((a < 0xFF) ? a : 0xFF);
+        int g = fillIndex >>> 8 & 0xFF;
+        int r = fillIndex >>> 16 & 0xFF;
+        int a = fillIndex >>> 24 & 0xFF;
+        r = r * colorTransformGet(0) + colorTransformGet(1);
+        g = g * colorTransformGet(2) + colorTransformGet(3);
+        b = b * colorTransformGet(4) + colorTransformGet(5);
+        a = a * colorTransformGet(6) + colorTransformGet(7);
+        r = r < 0 ? 0 : r;
+        r = r < 0xFF ? r : 0xFF;
+        g = g < 0 ? 0 : g;
+        g = g < 0xFF ? g : 0xFF;
+        b = b < 0 ? 0 : b;
+        b = b < 0xFF ? b : 0xFF;
+        a = a < 0 ? 0 : a;
+        a = a < 0xFF ? a : 0xFF;
         if (a < 16) {
             return 0;
         }
-        return ((b + ((g << 8))) + ((r << 16))) + ((a << 24));
+        return b + (g << 8) + (r << 16) + (a << 24);
     }
 
     /* BalloonEngineBase>>#wbSizeGet */
@@ -7243,31 +7243,31 @@ public final class B2D {
 
     /* BalloonEngineBase>>#wbStackPop: */
     private static void wbStackPop(final long nItems) {
-        wbTopPut((wbTopGet()) + nItems);
+        wbTopPut(wbTopGet() + nItems);
     }
 
     /* BalloonEngineBase>>#wbStackPush: */
     private static boolean wbStackPush(final long nItems) {
-        if (!(allocateStackEntry(nItems))) {
+        if (!allocateStackEntry(nItems)) {
             return false;
         }
-        wbTopPut((wbTopGet()) - nItems);
+        wbTopPut(wbTopGet() - nItems);
         return true;
     }
 
     /* BalloonEngineBase>>#wbStackSize */
     private static int wbStackSize() {
-        return (wbSizeGet()) - (wbTopGet());
+        return wbSizeGet() - wbTopGet();
     }
 
     /* BalloonEngineBase>>#wbStackValue: */
     private static int wbStackValue(final long index) {
-        return workBuffer[(wbTopGet()) + (int) index];
+        return workBuffer[wbTopGet() + (int) index];
     }
 
     /* BalloonEngineBase>>#wbStackValue:put: */
     private static void wbStackValueput(final long index, final long value) {
-        workBuffer[(wbTopGet()) + (int) index] = (int) value;
+        workBuffer[wbTopGet() + (int) index] = (int) value;
     }
 
     /* BalloonEngineBase>>#wbTopGet */
@@ -7330,7 +7330,7 @@ public final class B2D {
     }
 
     private static int wideBezierUpdateDataIndexOf(final long bezier) {
-        return (objBufferIndex + (int) bezier) + GB_WIDE_UPDATE_DATA;
+        return objBufferIndex + (int) bezier + GB_WIDE_UPDATE_DATA;
     }
 
     /* BalloonEnginePlugin>>#wideBezierWidthOf: */

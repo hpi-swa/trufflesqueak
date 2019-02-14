@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins.network;
 
-import com.oracle.truffle.api.TruffleLogger;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -12,6 +10,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+
+import com.oracle.truffle.api.TruffleLogger;
+
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 final class SqueakTCPSocket extends SqueakSocket {
 

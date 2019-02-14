@@ -145,7 +145,7 @@ public final class PrimitiveNodeFactory {
 
     public String[] getPluginNames() {
         final Set<String> target = new HashSet<>();
-        for (String key : pluginsMap.getKeys()) {
+        for (final String key : pluginsMap.getKeys()) {
             target.add(key);
         }
         return target.toArray(new String[target.size()]);
@@ -163,9 +163,9 @@ public final class PrimitiveNodeFactory {
     }
 
     private void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {
-        for (AbstractPrimitiveFactoryHolder primitiveFactory : primitiveFactories) {
+        for (final AbstractPrimitiveFactoryHolder primitiveFactory : primitiveFactories) {
             final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = primitiveFactory.getFactories();
-            for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
+            for (final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
                 final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
                 final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                 if (primitive == null) {
@@ -179,13 +179,13 @@ public final class PrimitiveNodeFactory {
     }
 
     private void fillPluginMap(final SqueakImageContext image, final AbstractPrimitiveFactoryHolder[] plugins) {
-        for (AbstractPrimitiveFactoryHolder plugin : plugins) {
+        for (final AbstractPrimitiveFactoryHolder plugin : plugins) {
             if (!plugin.isEnabled(image)) {
                 continue;
             }
             final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = plugin.getFactories();
             final EconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = EconomicMap.create(nodeFactories.size());
-            for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
+            for (final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
                 final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
                 final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                 for (final String name : primitive.names()) {

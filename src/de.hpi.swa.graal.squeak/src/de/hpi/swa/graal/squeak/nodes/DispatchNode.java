@@ -64,7 +64,7 @@ public abstract class DispatchNode extends AbstractNode {
                     @Cached("create(cachedTarget)") final DirectCallNode callNode) {
         try {
             return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
-        } catch (PrimitiveFailed e) {
+        } catch (final PrimitiveFailed e) {
             // TODO (low priority): Skip CallPrimitiveNode somehow, not necessary to fail twice.
             return callNode.call(FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
         }

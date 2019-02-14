@@ -98,6 +98,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         }
     }
 
+    @Override
     public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
         if (left < right && top < bottom && !deferUpdates && destForm.isDisplay()) {
             paintImmediately(left, right, top, bottom);
@@ -228,6 +229,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         return SqueakIOConstants.NULL_EVENT.clone();
     }
 
+    @Override
     public void pollEvents() {
         while (SDL.pollEvent(event) != 0) {
             final long time = getEventTime();
@@ -244,8 +246,8 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
                 handleKeyboardEvent();
                 long[] later = null;
                 // No TEXTINPUT event for this key will follow, but Squeak needs a KeyStroke anyway.
-                if (!isModifierKey(key) && ((image.os.isLinux() && isControlKey(key)) ||
-                                (!image.os.isLinux() && (isControlKey(key) || (SDL.getModState() & ~SDL.kmodShift()) != 0)))) {
+                if (!isModifierKey(key) && (image.os.isLinux() && isControlKey(key) ||
+                                !image.os.isLinux() && (isControlKey(key) || (SDL.getModState() & ~SDL.kmodShift()) != 0))) {
                     later = getNextKeyEvent(KEYBOARD_EVENT.CHAR, time);
                 }
                 fixKeyCodeCase();
@@ -303,6 +305,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         fullDamage();
     }
 
+    @Override
     public DisplayPoint getWindowSize() {
         // TODO Auto-generated method stub
         return image.flags.getLastWindowSize();
@@ -319,7 +322,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     @Override
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.inputSemaphoreIndex = interruptSemaphoreIndex;
+        inputSemaphoreIndex = interruptSemaphoreIndex;
     }
 
     @Override
@@ -357,7 +360,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     private void copyPixels(final int start, final int stop) {
         final int offset = start * bpp;
         assert offset >= 0;
-        final int remainingSize = (width * height * bpp) - offset;
+        final int remainingSize = width * height * bpp - offset;
         if (remainingSize <= 0 || start >= stop) {
             image.printToStdOut("remainingSize <= 0", remainingSize <= 0, "start >= stop", start >= stop);
             return;

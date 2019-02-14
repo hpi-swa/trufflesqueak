@@ -231,7 +231,7 @@ public final class FrameAccess {
     }
 
     public static boolean matchesContextOrMarker(final FrameMarker frameMarker, final Object contextOrMarker) {
-        return contextOrMarker == frameMarker || (contextOrMarker instanceof ContextObject && ((ContextObject) contextOrMarker).getFrameMarker() == frameMarker);
+        return contextOrMarker == frameMarker || contextOrMarker instanceof ContextObject && ((ContextObject) contextOrMarker).getFrameMarker() == frameMarker;
     }
 
     public static Object[] newWith(final CompiledMethodObject method, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {

@@ -61,7 +61,7 @@ public final class MiscellaneousBytecodes {
         protected final void doPrimitive(final VirtualFrame frame) {
             try {
                 throw new LocalReturn(primitiveNode.executePrimitive(frame));
-            } catch (PrimitiveFailed e) {
+            } catch (final PrimitiveFailed e) {
                 primitiveFailureProfile.enter();
                 LOG.log(Level.FINE, "Primitive failure: {0}", primitiveNode);
                 handlePrimFailed.executeHandle(frame, e);
@@ -191,7 +191,7 @@ public final class MiscellaneousBytecodes {
         }
 
         protected static byte variableType(final int i) {
-            return (byte) ((i >> 6) & 3);
+            return (byte) (i >> 6 & 3);
         }
     }
 

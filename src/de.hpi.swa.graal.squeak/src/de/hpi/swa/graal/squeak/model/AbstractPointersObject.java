@@ -33,7 +33,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObject {
     }
 
     public final void setPointer(final int index, final Object value) {
-        this.pointers[index] = value;
+        pointers[index] = value;
     }
 
     public final void setPointersUnsafe(final Object[] pointers) {

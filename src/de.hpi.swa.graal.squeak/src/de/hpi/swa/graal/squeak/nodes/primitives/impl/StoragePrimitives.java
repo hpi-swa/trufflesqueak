@@ -188,7 +188,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object literalAt(final CompiledCodeObject receiver, final long index) {
             // Use getLiterals() instead of getLiteral(i), the latter skips the header.
-            return receiver.getLiterals()[(int) (index) - 1];
+            return receiver.getLiterals()[(int) index - 1];
         }
     }
 
@@ -225,7 +225,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(cachedReceiver);
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
             }
@@ -236,7 +236,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver);
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
             }
@@ -262,7 +262,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(cachedReceiver, (int) size);
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
             }
@@ -273,14 +273,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver, (int) size);
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
             }
         }
 
         protected static final boolean isInstantiable(final ClassObject receiver, final long size) {
-            return size == 0 || (receiver.isVariable() && 0 <= size && size <= Integer.MAX_VALUE);
+            return size == 0 || receiver.isVariable() && 0 <= size && size <= Integer.MAX_VALUE;
         }
 
         @SuppressWarnings("unused")
@@ -563,7 +563,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         private static AbstractSqueakObject getNext(final AbstractSqueakObject receiver, final AbstractCollection<AbstractSqueakObject> allInstances) {
             boolean foundMyself = false;
-            for (AbstractSqueakObject instance : allInstances) {
+            for (final AbstractSqueakObject instance : allInstances) {
                 if (instance == receiver) {
                     foundMyself = true;
                 } else if (foundMyself) {

@@ -36,7 +36,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final long doLongWithOverflow(final long a, final long b) {
             try {
                 return Math.addExact(a, b);
-            } catch (ArithmeticException e) {
+            } catch (final ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -58,7 +58,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final long doLongWithOverflow(final long a, final long b) {
             try {
                 return Math.subtractExact(a, b);
-            } catch (ArithmeticException e) {
+            } catch (final ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -158,7 +158,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final long doLongWithOverflow(final long a, final long b) {
             try {
                 return Math.multiplyExact(a, b);
-            } catch (ArithmeticException e) {
+            } catch (final ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -1022,12 +1022,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isZero(receiver)")
         protected static final long doDouble(final double receiver) {
-            final long bits = (Double.doubleToRawLongBits(receiver) >>> 52) & 0x7FF;
+            final long bits = Double.doubleToRawLongBits(receiver) >>> 52 & 0x7FF;
             if (bits == 0) { // we have a subnormal float (actual zero was handled above)
                 // make it normal by multiplying a large number
                 final double data = receiver * Math.pow(2, 64);
                 // access its exponent bits, and subtract the large number's exponent and bias
-                return ((Double.doubleToRawLongBits(data) >>> 52) & 0x7FF) - 64 - BIAS;
+                return (Double.doubleToRawLongBits(data) >>> 52 & 0x7FF) - 64 - BIAS;
             } else {
                 return bits - BIAS; // apply bias
             }
@@ -1177,7 +1177,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doLong(final long receiver) {
-            return (receiver * HASH_MULTIPLY_CONSTANT) & HASH_MULTIPLY_MASK;
+            return receiver * HASH_MULTIPLY_CONSTANT & HASH_MULTIPLY_MASK;
         }
     }
 

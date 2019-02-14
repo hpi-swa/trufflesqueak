@@ -39,7 +39,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         protected static final long doAt2Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
             final int byteOffset = (int) byteOffsetLong - 1;
             final byte[] bytes = byteArray.getByteStorage();
-            return bytes[byteOffset] & 0xffL | ((bytes[byteOffset + 1] & 0xffL) << 8);
+            return bytes[byteOffset] & 0xffL | (bytes[byteOffset + 1] & 0xffL) << 8;
         }
 
         @SuppressWarnings("unused")
@@ -53,8 +53,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         protected static final long doAt4Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
             final int byteOffset = (int) byteOffsetLong - 1;
             final byte[] bytes = byteArray.getByteStorage();
-            return bytes[byteOffset] & 0xffL | ((bytes[byteOffset + 1] & 0xffL) << 8) |
-                            ((bytes[byteOffset + 2] & 0xffL) << 16) | ((bytes[byteOffset + 3] & 0xffL) << 24);
+            return bytes[byteOffset] & 0xffL | (bytes[byteOffset + 1] & 0xffL) << 8 |
+                            (bytes[byteOffset + 2] & 0xffL) << 16 | (bytes[byteOffset + 3] & 0xffL) << 24;
         }
 
         @SuppressWarnings("unused")
@@ -77,13 +77,13 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFFIIntegerAtPut")
     protected abstract static class PrimFFIIntegerAtPutNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
-        protected static final long MAX_VALUE_SIGNED_1 = 1L << (8 * 1 - 1);
-        protected static final long MAX_VALUE_SIGNED_2 = 1L << (8 * 2 - 1);
-        protected static final long MAX_VALUE_SIGNED_4 = 1L << (8 * 4 - 1);
+        protected static final long MAX_VALUE_SIGNED_1 = 1L << 8 * 1 - 1;
+        protected static final long MAX_VALUE_SIGNED_2 = 1L << 8 * 2 - 1;
+        protected static final long MAX_VALUE_SIGNED_4 = 1L << 8 * 4 - 1;
         protected static final BigInteger MAX_VALUE_SIGNED_8 = BigInteger.ONE.shiftLeft(8 * 8 - 1);
-        protected static final long MAX_VALUE_UNSIGNED_1 = 1L << (8 * 1);
-        protected static final long MAX_VALUE_UNSIGNED_2 = 1L << (8 * 2);
-        protected static final long MAX_VALUE_UNSIGNED_4 = 1L << (8 * 4);
+        protected static final long MAX_VALUE_UNSIGNED_1 = 1L << 8 * 1;
+        protected static final long MAX_VALUE_UNSIGNED_2 = 1L << 8 * 2;
+        protected static final long MAX_VALUE_UNSIGNED_4 = 1L << 8 * 4;
 
         protected PrimFFIIntegerAtPutNode(final CompiledMethodObject method) {
             super(method);
@@ -187,7 +187,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean inSignedBounds(final long value, final long max) {
-            return value >= (0 - max) && value < max;
+            return value >= 0 - max && value < max;
         }
 
         protected static final boolean inUnsignedBounds(final long value, final long max) {

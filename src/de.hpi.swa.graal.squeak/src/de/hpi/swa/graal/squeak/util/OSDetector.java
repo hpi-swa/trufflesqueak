@@ -13,7 +13,7 @@ public class OSDetector {
 
     public OSDetector() {
         final String os = System.getProperty("os.name", "generic").toLowerCase();
-        if ((os.indexOf("mac") >= 0) || (os.indexOf("darwin") >= 0)) {
+        if (os.indexOf("mac") >= 0 || os.indexOf("darwin") >= 0) {
             currentOS = OSType.MacOS;
         } else if (os.indexOf("win") >= 0) {
             currentOS = OSType.Windows;

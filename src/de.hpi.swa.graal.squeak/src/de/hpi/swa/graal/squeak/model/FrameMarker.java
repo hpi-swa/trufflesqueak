@@ -41,6 +41,7 @@ public final class FrameMarker implements TruffleObject {
         }
     }
 
+    @Override
     public ForeignAccess getForeignAccess() {
         return SqueakObjectMessageResolutionForeign.ACCESS;
     }

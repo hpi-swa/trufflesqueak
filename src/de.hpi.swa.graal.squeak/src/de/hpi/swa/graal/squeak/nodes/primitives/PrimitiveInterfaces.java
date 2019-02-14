@@ -10,6 +10,7 @@ public final class PrimitiveInterfaces {
     }
 
     public interface UnaryPrimitiveWithoutFallback extends AbstractPrimitive {
+        @Override
         default int getNumArguments() {
             return 1;
         }
@@ -23,6 +24,7 @@ public final class PrimitiveInterfaces {
     }
 
     public interface BinaryPrimitiveWithoutFallback extends AbstractPrimitive {
+        @Override
         default int getNumArguments() {
             return 2;
         }
@@ -37,6 +39,7 @@ public final class PrimitiveInterfaces {
     }
 
     public interface TernaryPrimitive extends AbstractPrimitive {
+        @Override
         default int getNumArguments() {
             return 3;
         }
@@ -49,6 +52,7 @@ public final class PrimitiveInterfaces {
     }
 
     public interface QuaternaryPrimitiveWithoutFallback extends AbstractPrimitive {
+        @Override
         default int getNumArguments() {
             return 4;
         }
@@ -63,6 +67,7 @@ public final class PrimitiveInterfaces {
     }
 
     public interface QuinaryPrimitive extends AbstractPrimitive {
+        @Override
         default int getNumArguments() {
             return 5;
         }
@@ -75,6 +80,7 @@ public final class PrimitiveInterfaces {
     }
 
     public interface SenaryPrimitive extends AbstractPrimitive {
+        @Override
         default int getNumArguments() {
             return 6;
         }
@@ -87,6 +93,7 @@ public final class PrimitiveInterfaces {
     }
 
     public interface SeptenaryPrimitive extends AbstractPrimitive {
+        @Override
         default int getNumArguments() {
             return 7;
         }
@@ -99,6 +106,7 @@ public final class PrimitiveInterfaces {
     }
 
     public interface OctonaryPrimitive extends AbstractPrimitive {
+        @Override
         default int getNumArguments() {
             return 8;
         }

@@ -26,10 +26,12 @@ public final class SqueakKeyboard implements KeyListener {
         return keys.isEmpty() ? 0 : keys.peek();
     }
 
+    @Override
     public void keyTyped(final KeyEvent e) {
         assert e.getExtendedKeyCode() == KeyEvent.VK_UNDEFINED;
     }
 
+    @Override
     public void keyPressed(final KeyEvent e) {
         display.recordModifiers(e);
         final int keyCode = mapSpecialKeyCode(e);
@@ -43,6 +45,7 @@ public final class SqueakKeyboard implements KeyListener {
         }
     }
 
+    @Override
     public void keyReleased(final KeyEvent e) {
         display.recordModifiers(e);
     }

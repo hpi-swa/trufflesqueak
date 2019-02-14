@@ -195,7 +195,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doLookupEmptyString(@SuppressWarnings("unused") final PointersObject receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex) {
             assert method.image.os.isWindows() : "Unexpected empty path on a non-Windows system.";
             final ArrayList<File> fileList = new ArrayList<>();
-            for (Path path : FileSystems.getDefault().getRootDirectories()) {
+            for (final Path path : FileSystems.getDefault().getRootDirectories()) {
                 fileList.add(path.toFile());
             }
             final File[] files = fileList.toArray(new File[fileList.size()]);
@@ -291,7 +291,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 final SeekableByteChannel file = getFileOrPrimFail(fileDescriptor);
                 return method.image.wrap(file.position() >= file.size() - 1);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -311,7 +311,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getFileOrPrimFail(fileDescriptor).close();
                 LOG.fine(() -> "File Closed SUCCEEDED: " + fileDescriptor);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOG.fine(() -> "File Closed FAILED: " + fileDescriptor);
                 throw new PrimitiveFailed();
             }
@@ -365,7 +365,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doGet(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
                 return method.image.wrap(getFileOrPrimFail(fileDescriptor).position());
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -405,7 +405,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                     atPut0Node.execute(target, startIndex - 1 + index, getFrom(dst, index) & 0xFFL);
                 }
                 return Math.max(read, 0); // `read` can be `-1`, Squeak expects zero.
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -439,7 +439,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doRename(final PointersObject receiver, final NativeObject oldName, final NativeObject newName) {
             try {
                 asTruffleFile(oldName).move(asTruffleFile(newName));
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
             return receiver;
@@ -479,7 +479,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doSize(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
                 return method.image.wrap(getFileOrPrimFail(fileDescriptor).size());
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -587,7 +587,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final int written;
             try {
                 written = getFileOrPrimFail(fileDescriptor).write(buffer);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
             return written / elementSize;

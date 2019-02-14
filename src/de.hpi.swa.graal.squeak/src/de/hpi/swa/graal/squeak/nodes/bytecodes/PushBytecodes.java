@@ -78,8 +78,8 @@ public final class PushBytecodes {
         private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
             super(code, index, numBytecodes);
             numArgs = i & 0xF;
-            numCopied = (i >> 4) & 0xF;
-            blockSize = (j << 8) | k;
+            numCopied = i >> 4 & 0xF;
+            blockSize = j << 8 | k;
             popNReversedNode = StackPopNReversedNode.create(code, numCopied);
             getOrCreateContextNode = GetOrCreateContextNode.create(code);
         }
@@ -317,7 +317,7 @@ public final class PushBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushTemp: " + this.tempIndex;
+            return "pushTemp: " + tempIndex;
         }
     }
 }

@@ -65,13 +65,13 @@ public final class FloatObject extends AbstractSqueakObject {
     private void setWords(final long high, final long low) {
         final long highMasked = high & LargeIntegerObject.MASK_32BIT;
         final long lowMasked = low & LargeIntegerObject.MASK_32BIT;
-        this.doubleValue = Double.longBitsToDouble(((highMasked) << 32) | lowMasked);
+        doubleValue = Double.longBitsToDouble(highMasked << 32 | lowMasked);
     }
 
     public void setBytes(final byte[] bytes) {
         assert bytes.length == WORD_LENGTH * 4;
-        final int high = ((bytes[3] & 0xff) << 24) | ((bytes[2] & 0xff) << 16) | ((bytes[1] & 0xff) << 8) | bytes[0] & 0xff;
-        final int low = ((bytes[7] & 0xff) << 24) | ((bytes[6] & 0xff) << 16) | ((bytes[5] & 0xff) << 8) | bytes[4] & 0xff;
+        final int high = (bytes[3] & 0xff) << 24 | (bytes[2] & 0xff) << 16 | (bytes[1] & 0xff) << 8 | bytes[0] & 0xff;
+        final int low = (bytes[7] & 0xff) << 24 | (bytes[6] & 0xff) << 16 | (bytes[5] & 0xff) << 8 | bytes[4] & 0xff;
         setWords(high, low);
     }
 

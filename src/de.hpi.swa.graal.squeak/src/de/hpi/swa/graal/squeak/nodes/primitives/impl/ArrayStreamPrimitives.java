@@ -106,7 +106,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected final long doLong(final long receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             try {
                 return asLargeInteger(receiver).getNativeAt0(index - 1);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (final IndexOutOfBoundsException e) {
                 return 0L; // inline fallback code
             }
         }
@@ -330,7 +330,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected Object doSqueakObject(final long receiver, final long index, final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
             try {
                 asLargeInteger(receiver).setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
+            } catch (final IllegalArgumentException e) {
                 throw new PrimitiveFailed();
             }
             return value;
@@ -704,7 +704,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             if ((index - 1) % 2 == 0) {
                 shortValue = word & 0xffff;
             } else {
-                shortValue = (word >> 16) & 0xffff;
+                shortValue = word >> 16 & 0xffff;
             }
             if ((shortValue & 0x8000) != 0) {
                 shortValue = 0xffff0000 | shortValue;
@@ -758,7 +758,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected static final long doNativeIntsEven(final NativeObject receiver, final long index, final long value) {
             final int wordIndex = (int) ((index - 1) / 2);
             final int[] ints = receiver.getIntStorage();
-            ints[wordIndex] = (ints[wordIndex] & 0xffff0000) | ((int) value & 0xffff);
+            ints[wordIndex] = ints[wordIndex] & 0xffff0000 | (int) value & 0xffff;
             return value;
         }
 
@@ -766,7 +766,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected static final long doNativeIntsOdd(final NativeObject receiver, final long index, final long value) {
             final int wordIndex = (int) ((index - 1) / 2);
             final int[] ints = receiver.getIntStorage();
-            ints[wordIndex] = ((int) value << 16) | (ints[wordIndex] & 0xffff);
+            ints[wordIndex] = (int) value << 16 | ints[wordIndex] & 0xffff;
             return value;
         }
 

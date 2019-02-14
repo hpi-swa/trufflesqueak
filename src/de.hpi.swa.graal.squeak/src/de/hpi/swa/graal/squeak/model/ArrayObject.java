@@ -194,7 +194,7 @@ public final class ArrayObject extends AbstractSqueakObject {
     public void become(final ArrayObject other) {
         becomeOtherClass(other);
         final Object otherStorage = other.storage;
-        other.setStorage(this.storage);
+        other.setStorage(storage);
         setStorage(otherStorage);
     }
 

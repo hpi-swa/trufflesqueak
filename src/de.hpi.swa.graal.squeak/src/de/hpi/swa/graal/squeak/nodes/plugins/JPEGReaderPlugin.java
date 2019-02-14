@@ -181,7 +181,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     /* JPEGReaderPlugin>>#cbColorComponentFrom: */
     private static boolean cbColorComponentFrom(final Object oop) {
-        return (colorComponentfrom(cbComponent, oop)) && (colorComponentBlocksfrom(cbBlocks, oop));
+        return colorComponentfrom(cbComponent, oop) && colorComponentBlocksfrom(cbBlocks, oop);
     }
 
     /* JPEGReaderPlugin>>#colorComponentBlocks:from: */
@@ -190,15 +190,15 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         Object blockOop;
         final int max;
 
-        if (!(isPointers(oop))) {
+        if (!isPointers(oop)) {
             return false;
         }
         final PointersObject pointersOop = (PointersObject) oop;
-        if ((slotSizeOf(pointersOop)) < MinComponentSize) {
+        if (slotSizeOf(pointersOop) < MinComponentSize) {
             return false;
         }
         arrayOop = fetchPointerofObject(MCUBlockIndex, pointersOop);
-        if (!(isPointers(arrayOop))) {
+        if (!isPointers(arrayOop)) {
             return false;
         }
         final PointersObject arrayPointersOop = (PointersObject) arrayOop;
@@ -208,7 +208,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         }
         for (int i = 0; i < max; i += 1) {
             blockOop = fetchPointerofObject(i, arrayPointersOop);
-            if (!(isWords(blockOop))) {
+            if (!isWords(blockOop)) {
                 return false;
             }
             final NativeObject blockNativeOop = (NativeObject) blockOop;
@@ -226,17 +226,17 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
             return false;
         }
         final PointersObject pointersOop = (PointersObject) oop;
-        if ((slotSizeOf(pointersOop)) < MinComponentSize) {
+        if (slotSizeOf(pointersOop) < MinComponentSize) {
             return false;
         }
 
-        aColorComponent[CurrentXIndex] = (fetchIntegerofObject(CurrentXIndex, pointersOop));
-        aColorComponent[CurrentYIndex] = (fetchIntegerofObject(CurrentYIndex, pointersOop));
-        aColorComponent[HScaleIndex] = (fetchIntegerofObject(HScaleIndex, pointersOop));
-        aColorComponent[VScaleIndex] = (fetchIntegerofObject(VScaleIndex, pointersOop));
-        aColorComponent[BlockWidthIndex] = (fetchIntegerofObject(BlockWidthIndex, pointersOop));
-        aColorComponent[MCUWidthIndex] = (fetchIntegerofObject(MCUWidthIndex, pointersOop));
-        aColorComponent[PriorDCValueIndex] = (fetchIntegerofObject(PriorDCValueIndex, pointersOop));
+        aColorComponent[CurrentXIndex] = fetchIntegerofObject(CurrentXIndex, pointersOop);
+        aColorComponent[CurrentYIndex] = fetchIntegerofObject(CurrentYIndex, pointersOop);
+        aColorComponent[HScaleIndex] = fetchIntegerofObject(HScaleIndex, pointersOop);
+        aColorComponent[VScaleIndex] = fetchIntegerofObject(VScaleIndex, pointersOop);
+        aColorComponent[BlockWidthIndex] = fetchIntegerofObject(BlockWidthIndex, pointersOop);
+        aColorComponent[MCUWidthIndex] = fetchIntegerofObject(MCUWidthIndex, pointersOop);
+        aColorComponent[PriorDCValueIndex] = fetchIntegerofObject(PriorDCValueIndex, pointersOop);
         return true;
     }
 
@@ -246,7 +246,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     /* JPEGReaderPlugin>>#crColorComponentFrom: */
     private static boolean crColorComponentFrom(final Object oop) {
-        return (colorComponentfrom(crComponent, oop)) && (colorComponentBlocksfrom(crBlocks, oop));
+        return colorComponentfrom(crComponent, oop) && colorComponentBlocksfrom(crBlocks, oop);
     }
 
     /* JPEGReaderPlugin>>#decodeBlockInto:component: */
@@ -265,7 +265,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
             bits = getBits(byteValue);
             byteValue = scaleAndSignExtendinFieldWidth(bits, byteValue);
         }
-        byteValue = aColorComponent[PriorDCValueIndex] = ((aColorComponent[PriorDCValueIndex]) + byteValue);
+        byteValue = aColorComponent[PriorDCValueIndex] = aColorComponent[PriorDCValueIndex] + byteValue;
         anArray[0] = byteValue;
         for (i = 1; i < DCTSize2; i += 1) {
             anArray[i] = 0;
@@ -282,7 +282,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
                 index += zeroCount;
                 bits = getBits(byteValue);
                 byteValue = scaleAndSignExtendinFieldWidth(bits, byteValue);
-                if ((index < 0) || (index >= DCTSize2)) {
+                if (index < 0 || index >= DCTSize2) {
                     throw new PrimitiveFailed();
                 }
                 anArray[jpegNaturalOrder[index]] = byteValue;
@@ -309,7 +309,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
             jsPosition += 1;
             if (byteValue == (byte) 0xFF) {
                 /* peek for 00 */
-                if (!((jsPosition < jsReadLimit) && ((jsCollection[jsPosition]) == 0))) {
+                if (!(jsPosition < jsReadLimit && jsCollection[jsPosition] == 0)) {
                     jsPosition -= 1;
                     return jsBitCount;
                 }
@@ -333,7 +333,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         }
         jsBitCount -= requestedBits;
         value = (int) (Integer.toUnsignedLong(jsBitBuffer) >> jsBitCount);
-        jsBitBuffer = jsBitBuffer & ((1 << jsBitCount) - 1);
+        jsBitBuffer = jsBitBuffer & (1 << jsBitCount) - 1;
         return value;
     }
 
@@ -364,7 +364,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
             if (bits < 0) {
                 return -1;
             }
-            index = (tableIndex + bits) - 1;
+            index = tableIndex + bits - 1;
             if (index >= tableSize) {
                 return -1;
             }
@@ -379,7 +379,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
             tableIndex = value & 0xFFFF;
 
             /* Additional bits in high 8 bit */
-            bitsNeeded = (int) ((Integer.toUnsignedLong(value) >> 24) & 0xFF);
+            bitsNeeded = (int) (Integer.toUnsignedLong(value) >> 24 & 0xFF);
             if (bitsNeeded > MaxBits) {
                 return -1;
             }
@@ -392,7 +392,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         final int sz;
 
         oop = fetchPointerofObject(0, streamOop);
-        if (!(isBytes(oop))) {
+        if (!isBytes(oop)) {
             return false;
         }
         jsCollection = ((NativeObject) oop).getByteStorage();
@@ -421,23 +421,23 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         final int sx;
         final int sy;
 
-        dx = (curX = cbComponent[CurrentXIndex]);
+        dx = curX = cbComponent[CurrentXIndex];
         dy = cbComponent[CurrentYIndex];
         sx = cbComponent[HScaleIndex];
         sy = cbComponent[VScaleIndex];
-        if (!((sx == 0) && (sy == 0))) {
+        if (!(sx == 0 && sy == 0)) {
             dx = dx / sx;
             dy = dy / sy;
         }
-        blockIndex = (int) ((((Integer.toUnsignedLong(dy) >> 3)) * (cbComponent[BlockWidthIndex])) + ((Integer.toUnsignedLong(dx) >> 3)));
-        sampleIndex = (int) (((Integer.toUnsignedLong(dy & 7) << 3)) + (dx & 7));
-        sample = (cbBlocks[blockIndex])[sampleIndex];
+        blockIndex = (int) ((Integer.toUnsignedLong(dy) >> 3) * cbComponent[BlockWidthIndex] + (Integer.toUnsignedLong(dx) >> 3));
+        sampleIndex = (int) ((Integer.toUnsignedLong(dy & 7) << 3) + (dx & 7));
+        sample = cbBlocks[blockIndex][sampleIndex];
         curX += 1;
-        if (curX < ((cbComponent[MCUWidthIndex]) * 8)) {
+        if (curX < cbComponent[MCUWidthIndex] * 8) {
             cbComponent[CurrentXIndex] = curX;
         } else {
             cbComponent[CurrentXIndex] = 0;
-            cbComponent[CurrentYIndex] = ((cbComponent[CurrentYIndex]) + 1);
+            cbComponent[CurrentYIndex] = cbComponent[CurrentYIndex] + 1;
         }
         return sample;
     }
@@ -457,23 +457,23 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         final int sx;
         final int sy;
 
-        dx = (curX = yComponent[CurrentXIndex]);
+        dx = curX = yComponent[CurrentXIndex];
         dy = yComponent[CurrentYIndex];
         sx = yComponent[HScaleIndex];
         sy = yComponent[VScaleIndex];
-        if (!((sx == 0) && (sy == 0))) {
+        if (!(sx == 0 && sy == 0)) {
             dx = dx / sx;
             dy = dy / sy;
         }
-        blockIndex = (int) ((((Integer.toUnsignedLong(dy) >> 3)) * (yComponent[BlockWidthIndex])) + ((Integer.toUnsignedLong(dx) >> 3)));
-        sampleIndex = (int) (((Integer.toUnsignedLong(dy & 7) << 3)) + (dx & 7));
-        sample = (yBlocks[blockIndex])[sampleIndex];
+        blockIndex = (int) ((Integer.toUnsignedLong(dy) >> 3) * yComponent[BlockWidthIndex] + (Integer.toUnsignedLong(dx) >> 3));
+        sampleIndex = (int) ((Integer.toUnsignedLong(dy & 7) << 3) + (dx & 7));
+        sample = yBlocks[blockIndex][sampleIndex];
         curX += 1;
-        if (curX < ((yComponent[MCUWidthIndex]) * 8)) {
+        if (curX < yComponent[MCUWidthIndex] * 8) {
             yComponent[CurrentXIndex] = curX;
         } else {
             yComponent[CurrentXIndex] = 0;
-            yComponent[CurrentYIndex] = ((yComponent[CurrentYIndex]) + 1);
+            yComponent[CurrentYIndex] = yComponent[CurrentYIndex] + 1;
         }
         return sample;
     }
@@ -488,7 +488,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         residuals = residualArray.getIntStorage();
         jpegBits = bits.getIntStorage();
         jpegBitsSize = jpegBits.length;
-        if (!(yColorComponentFrom(componentArray))) {
+        if (!yColorComponentFrom(componentArray)) {
             throw new PrimitiveFailed();
         }
         /* begin colorConvertGrayscaleMCU */
@@ -498,11 +498,11 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         for (int i = 0; i < jpegBitsSize; i += 1) {
             y = nextSampleY();
             y += residuals[GreenIndex];
-            y = ((y < MaxSample) ? y : MaxSample);
-            residuals[GreenIndex] = (y & ditherMask);
-            y = y & (MaxSample - ditherMask);
-            y = ((y < 1) ? 1 : y);
-            jpegBits[i] = (((0xFF000000 + (((int) ((long) (y) << 16)))) + (((int) ((long) (y) << 8)))) + y);
+            y = y < MaxSample ? y : MaxSample;
+            residuals[GreenIndex] = y & ditherMask;
+            y = y & MaxSample - ditherMask;
+            y = y < 1 ? 1 : y;
+            jpegBits[i] = 0xFF000000 + (int) ((long) y << 16) + (int) ((long) y << 8) + y;
         }
         return receiver;
     }
@@ -533,13 +533,13 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         residuals = residualArray.getIntStorage();
         jpegBits = bits.getIntStorage();
         jpegBitsSize = jpegBits.length;
-        if (!(yColorComponentFrom(fetchPointerofObject(0, componentArray)))) {
+        if (!yColorComponentFrom(fetchPointerofObject(0, componentArray))) {
             throw new PrimitiveFailed();
         }
-        if (!(cbColorComponentFrom(fetchPointerofObject(1, componentArray)))) {
+        if (!cbColorComponentFrom(fetchPointerofObject(1, componentArray))) {
             throw new PrimitiveFailed();
         }
-        if (!(crColorComponentFrom(fetchPointerofObject(2, componentArray)))) {
+        if (!crColorComponentFrom(fetchPointerofObject(2, componentArray))) {
             throw new PrimitiveFailed();
         }
         /* begin colorConvertMCU */
@@ -554,45 +554,45 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
             cb = nextSampleCb();
             cb -= SampleOffset;
             /* begin nextSampleCr */
-            dx = (curX = crComponent[CurrentXIndex]);
+            dx = curX = crComponent[CurrentXIndex];
             dy = crComponent[CurrentYIndex];
             sx = crComponent[HScaleIndex];
             sy = crComponent[VScaleIndex];
-            if (!((sx == 0) && (sy == 0))) {
+            if (!(sx == 0 && sy == 0)) {
                 dx = dx / sx;
                 dy = dy / sy;
             }
-            blockIndex = (int) ((((Integer.toUnsignedLong(dy) >> 3)) * (crComponent[BlockWidthIndex])) + ((Integer.toUnsignedLong(dx) >> 3)));
-            sampleIndex = (int) (((Integer.toUnsignedLong(dy & 7) << 3)) + (dx & 7));
-            sample = (crBlocks[blockIndex])[sampleIndex];
+            blockIndex = (int) ((Integer.toUnsignedLong(dy) >> 3) * crComponent[BlockWidthIndex] + (Integer.toUnsignedLong(dx) >> 3));
+            sampleIndex = (int) ((Integer.toUnsignedLong(dy & 7) << 3) + (dx & 7));
+            sample = crBlocks[blockIndex][sampleIndex];
             curX += 1;
-            if (curX < ((crComponent[MCUWidthIndex]) * 8)) {
+            if (curX < crComponent[MCUWidthIndex] * 8) {
                 crComponent[CurrentXIndex] = curX;
             } else {
                 crComponent[CurrentXIndex] = 0;
-                crComponent[CurrentYIndex] = ((crComponent[CurrentYIndex]) + 1);
+                crComponent[CurrentYIndex] = crComponent[CurrentYIndex] + 1;
             }
             cr = sample;
             cr -= SampleOffset;
-            red = (y + ((FIXn1n40200 * cr) / 65536)) + (residuals[RedIndex]);
-            red = ((red < MaxSample) ? red : MaxSample);
-            red = ((red < 0) ? 0 : red);
-            residuals[RedIndex] = (red & ditherMask);
-            red = red & (MaxSample - ditherMask);
-            red = ((red < 1) ? 1 : red);
-            green = ((y - ((FIXn0n34414 * cb) / 65536)) - ((FIXn0n71414 * cr) / 65536)) + (residuals[GreenIndex]);
-            green = ((green < MaxSample) ? green : MaxSample);
-            green = ((green < 0) ? 0 : green);
-            residuals[GreenIndex] = (green & ditherMask);
-            green = green & (MaxSample - ditherMask);
-            green = ((green < 1) ? 1 : green);
-            blue = (y + ((FIXn1n77200 * cb) / 65536)) + (residuals[BlueIndex]);
-            blue = ((blue < MaxSample) ? blue : MaxSample);
-            blue = ((blue < 0) ? 0 : blue);
-            residuals[BlueIndex] = (blue & ditherMask);
-            blue = blue & (MaxSample - ditherMask);
-            blue = ((blue < 1) ? 1 : blue);
-            jpegBits[i] = (int) (((0xFF000000 + ((Integer.toUnsignedLong(red) << 16))) + ((Integer.toUnsignedLong(green) << 8))) + blue);
+            red = y + FIXn1n40200 * cr / 65536 + residuals[RedIndex];
+            red = red < MaxSample ? red : MaxSample;
+            red = red < 0 ? 0 : red;
+            residuals[RedIndex] = red & ditherMask;
+            red = red & MaxSample - ditherMask;
+            red = red < 1 ? 1 : red;
+            green = y - FIXn0n34414 * cb / 65536 - FIXn0n71414 * cr / 65536 + residuals[GreenIndex];
+            green = green < MaxSample ? green : MaxSample;
+            green = green < 0 ? 0 : green;
+            residuals[GreenIndex] = green & ditherMask;
+            green = green & MaxSample - ditherMask;
+            green = green < 1 ? 1 : green;
+            blue = y + FIXn1n77200 * cb / 65536 + residuals[BlueIndex];
+            blue = blue < MaxSample ? blue : MaxSample;
+            blue = blue < 0 ? 0 : blue;
+            residuals[BlueIndex] = blue & ditherMask;
+            blue = blue & MaxSample - ditherMask;
+            blue = blue < 1 ? 1 : blue;
+            jpegBits[i] = (int) (0xFF000000 + (Integer.toUnsignedLong(red) << 16) + (Integer.toUnsignedLong(green) << 8) + blue);
         }
         return receiver;
     }
@@ -605,14 +605,14 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     /* JPEGReaderPlugin>>#primitiveDecodeMCU */
     private static Object primitiveDecodeMCU(final Object receiver, final NativeObject sampleBuffer, final PointersObject comp, final NativeObject dcTableValue, final NativeObject acTableValue,
                     final PointersObject jpegStream) {
-        if (!(loadJPEGStreamFrom(jpegStream))) {
+        if (!loadJPEGStreamFrom(jpegStream)) {
             throw new PrimitiveFailed();
         }
         acTable = acTableValue.getIntStorage();
         acTableSize = acTable.length;
         dcTable = dcTableValue.getIntStorage();
         dcTableSize = dcTable.length;
-        if (!(colorComponentfrom(yComponent, comp))) {
+        if (!colorComponentfrom(yComponent, comp)) {
             throw new PrimitiveFailed();
         }
         decodeBlockIntocomponent(sampleBuffer.getIntStorage(), yComponent);
@@ -658,33 +658,33 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         for (int i = 0; i < DCTSize; i += 1) {
             anACTerm = -1;
             for (row = 1; row < DCTSize; row += 1) {
-                if (anACTerm == -1 && anArray[(row * DCTSize) + i] != 0) {
+                if (anACTerm == -1 && anArray[row * DCTSize + i] != 0) {
                     anACTerm = row;
                 }
             }
             if (anACTerm == -1) {
-                dcval = ((int) ((long) (((anArray[i]) * (qt[0]))) << Pass1Bits));
+                dcval = (int) ((long) (anArray[i] * qt[0]) << Pass1Bits);
                 for (j = 0; j < DCTSize; j += 1) {
-                    ws[(j * DCTSize) + i] = dcval;
+                    ws[j * DCTSize + i] = dcval;
                 }
             } else {
-                z2 = (anArray[(DCTSize * 2) + i]) * (qt[(DCTSize * 2) + i]);
-                z3 = (anArray[(DCTSize * 6) + i]) * (qt[(DCTSize * 6) + i]);
+                z2 = anArray[DCTSize * 2 + i] * qt[DCTSize * 2 + i];
+                z3 = anArray[DCTSize * 6 + i] * qt[DCTSize * 6 + i];
                 z1 = (z2 + z3) * FIXn0n541196100;
-                t2 = z1 + (z3 * (0 - FIXn1n847759065));
-                t3 = z1 + (z2 * FIXn0n765366865);
-                z2 = (anArray[i]) * (qt[i]);
-                z3 = (anArray[(DCTSize * 4) + i]) * (qt[(DCTSize * 4) + i]);
-                t0 = ((int) ((long) ((z2 + z3)) << ConstBits));
-                t1 = ((int) ((long) ((z2 - z3)) << ConstBits));
+                t2 = z1 + z3 * (0 - FIXn1n847759065);
+                t3 = z1 + z2 * FIXn0n765366865;
+                z2 = anArray[i] * qt[i];
+                z3 = anArray[DCTSize * 4 + i] * qt[DCTSize * 4 + i];
+                t0 = (int) ((long) (z2 + z3) << ConstBits);
+                t1 = (int) ((long) (z2 - z3) << ConstBits);
                 t10 = t0 + t3;
                 t13 = t0 - t3;
                 t11 = t1 + t2;
                 t12 = t1 - t2;
-                t0 = (anArray[(DCTSize * 7) + i]) * (qt[(DCTSize * 7) + i]);
-                t1 = (anArray[(DCTSize * 5) + i]) * (qt[(DCTSize * 5) + i]);
-                t2 = (anArray[(DCTSize * 3) + i]) * (qt[(DCTSize * 3) + i]);
-                t3 = (anArray[DCTSize + i]) * (qt[DCTSize + i]);
+                t0 = anArray[DCTSize * 7 + i] * qt[DCTSize * 7 + i];
+                t1 = anArray[DCTSize * 5 + i] * qt[DCTSize * 5 + i];
+                t2 = anArray[DCTSize * 3 + i] * qt[DCTSize * 3 + i];
+                t3 = anArray[DCTSize + i] * qt[DCTSize + i];
                 z1 = t0 + t3;
                 z2 = t1 + t2;
                 z3 = t0 + t2;
@@ -700,28 +700,28 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
                 z4 = z4 * (0 - FIXn0n390180644);
                 z3 += z5;
                 z4 += z5;
-                t0 = (t0 + z1) + z3;
-                t1 = (t1 + z2) + z4;
-                t2 = (t2 + z2) + z3;
-                t3 = (t3 + z1) + z4;
-                ws[i] = ((t10 + t3) / Pass1Div);
-                ws[(DCTSize * 7) + i] = ((t10 - t3) / Pass1Div);
-                ws[(DCTSize) + i] = ((t11 + t2) / Pass1Div);
-                ws[(DCTSize * 6) + i] = ((t11 - t2) / Pass1Div);
-                ws[(DCTSize * 2) + i] = ((t12 + t1) / Pass1Div);
-                ws[(DCTSize * 5) + i] = ((t12 - t1) / Pass1Div);
-                ws[(DCTSize * 3) + i] = ((t13 + t0) / Pass1Div);
-                ws[(DCTSize * 4) + i] = ((t13 - t0) / Pass1Div);
+                t0 = t0 + z1 + z3;
+                t1 = t1 + z2 + z4;
+                t2 = t2 + z2 + z3;
+                t3 = t3 + z1 + z4;
+                ws[i] = (t10 + t3) / Pass1Div;
+                ws[DCTSize * 7 + i] = (t10 - t3) / Pass1Div;
+                ws[DCTSize + i] = (t11 + t2) / Pass1Div;
+                ws[DCTSize * 6 + i] = (t11 - t2) / Pass1Div;
+                ws[DCTSize * 2 + i] = (t12 + t1) / Pass1Div;
+                ws[DCTSize * 5 + i] = (t12 - t1) / Pass1Div;
+                ws[DCTSize * 3 + i] = (t13 + t0) / Pass1Div;
+                ws[DCTSize * 4 + i] = (t13 - t0) / Pass1Div;
             }
         }
-        for (int i = 0; i <= (DCTSize2 - DCTSize); i += DCTSize) {
+        for (int i = 0; i <= DCTSize2 - DCTSize; i += DCTSize) {
             z2 = ws[i + 2];
             z3 = ws[i + 6];
             z1 = (z2 + z3) * FIXn0n541196100;
-            t2 = z1 + (z3 * (0 - FIXn1n847759065));
-            t3 = z1 + (z2 * FIXn0n765366865);
-            t0 = ((int) (Integer.toUnsignedLong(((ws[i]) + (ws[i + 4]))) << ConstBits));
-            t1 = ((int) (Integer.toUnsignedLong(((ws[i]) - (ws[i + 4]))) << ConstBits));
+            t2 = z1 + z3 * (0 - FIXn1n847759065);
+            t3 = z1 + z2 * FIXn0n765366865;
+            t0 = (int) (Integer.toUnsignedLong(ws[i] + ws[i + 4]) << ConstBits);
+            t1 = (int) (Integer.toUnsignedLong(ws[i] - ws[i + 4]) << ConstBits);
             t10 = t0 + t3;
             t13 = t0 - t3;
             t11 = t1 + t2;
@@ -745,41 +745,41 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
             z4 = z4 * (0 - FIXn0n390180644);
             z3 += z5;
             z4 += z5;
-            t0 = (t0 + z1) + z3;
-            t1 = (t1 + z2) + z4;
-            t2 = (t2 + z2) + z3;
-            t3 = (t3 + z1) + z4;
-            v = ((t10 + t3) / Pass2Div) + SampleOffset;
-            v = ((v < MaxSample) ? v : MaxSample);
-            v = ((v < 0) ? 0 : v);
+            t0 = t0 + z1 + z3;
+            t1 = t1 + z2 + z4;
+            t2 = t2 + z2 + z3;
+            t3 = t3 + z1 + z4;
+            v = (t10 + t3) / Pass2Div + SampleOffset;
+            v = v < MaxSample ? v : MaxSample;
+            v = v < 0 ? 0 : v;
             anArray[i] = v;
-            v = ((t10 - t3) / Pass2Div) + SampleOffset;
-            v = ((v < MaxSample) ? v : MaxSample);
-            v = ((v < 0) ? 0 : v);
+            v = (t10 - t3) / Pass2Div + SampleOffset;
+            v = v < MaxSample ? v : MaxSample;
+            v = v < 0 ? 0 : v;
             anArray[i + 7] = v;
-            v = ((t11 + t2) / Pass2Div) + SampleOffset;
-            v = ((v < MaxSample) ? v : MaxSample);
-            v = ((v < 0) ? 0 : v);
+            v = (t11 + t2) / Pass2Div + SampleOffset;
+            v = v < MaxSample ? v : MaxSample;
+            v = v < 0 ? 0 : v;
             anArray[i + 1] = v;
-            v = ((t11 - t2) / Pass2Div) + SampleOffset;
-            v = ((v < MaxSample) ? v : MaxSample);
-            v = ((v < 0) ? 0 : v);
+            v = (t11 - t2) / Pass2Div + SampleOffset;
+            v = v < MaxSample ? v : MaxSample;
+            v = v < 0 ? 0 : v;
             anArray[i + 6] = v;
-            v = ((t12 + t1) / Pass2Div) + SampleOffset;
-            v = ((v < MaxSample) ? v : MaxSample);
-            v = ((v < 0) ? 0 : v);
+            v = (t12 + t1) / Pass2Div + SampleOffset;
+            v = v < MaxSample ? v : MaxSample;
+            v = v < 0 ? 0 : v;
             anArray[i + 2] = v;
-            v = ((t12 - t1) / Pass2Div) + SampleOffset;
-            v = ((v < MaxSample) ? v : MaxSample);
-            v = ((v < 0) ? 0 : v);
+            v = (t12 - t1) / Pass2Div + SampleOffset;
+            v = v < MaxSample ? v : MaxSample;
+            v = v < 0 ? 0 : v;
             anArray[i + 5] = v;
-            v = ((t13 + t0) / Pass2Div) + SampleOffset;
-            v = ((v < MaxSample) ? v : MaxSample);
-            v = ((v < 0) ? 0 : v);
+            v = (t13 + t0) / Pass2Div + SampleOffset;
+            v = v < MaxSample ? v : MaxSample;
+            v = v < 0 ? 0 : v;
             anArray[i + 3] = v;
-            v = ((t13 - t0) / Pass2Div) + SampleOffset;
-            v = ((v < MaxSample) ? v : MaxSample);
-            v = ((v < 0) ? 0 : v);
+            v = (t13 - t0) / Pass2Div + SampleOffset;
+            v = v < MaxSample ? v : MaxSample;
+            v = v < 0 ? 0 : v;
             anArray[i + 4] = v;
         }
         return receiver;
@@ -787,8 +787,8 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     /* JPEGReaderPlugin>>#scaleAndSignExtend:inFieldWidth: */
     private static int scaleAndSignExtendinFieldWidth(final int aNumber, final int w) {
-        if (aNumber < (1 << (w - 1))) {
-            return (aNumber - (1 << w)) + 1;
+        if (aNumber < 1 << w - 1) {
+            return aNumber - (1 << w) + 1;
         } else {
             return aNumber;
         }
@@ -803,7 +803,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     /* JPEGReaderPlugin>>#yColorComponentFrom: */
     private static boolean yColorComponentFrom(final Object oop) {
-        return (colorComponentfrom(yComponent, oop)) && (colorComponentBlocksfrom(yBlocks, oop));
+        return colorComponentfrom(yComponent, oop) && colorComponentBlocksfrom(yBlocks, oop);
     }
 
     /*

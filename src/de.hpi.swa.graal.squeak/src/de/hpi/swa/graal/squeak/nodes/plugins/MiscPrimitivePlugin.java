@@ -55,7 +55,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     return c1 < c2 ? 1L : 3L;
                 }
             }
-            return len1 == len2 ? 2L : (len1 < len2 ? 1L : 3L);
+            return len1 == len2 ? 2L : len1 < len2 ? 1L : 3L;
         }
 
         @SuppressWarnings("unused")
@@ -122,7 +122,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final int word = bmInts[k];
                 final int lowByte = word & 0xFF;
                 final boolean eqBytes = (word >> 8 & 0xFF) == lowByte &&
-                                ((word >> 16 & 0xFF) == lowByte && (word >> 24 & 0xFF) == lowByte);
+                                (word >> 16 & 0xFF) == lowByte && (word >> 24 & 0xFF) == lowByte;
 
                 int j = k;
                 // scan for equal words...
@@ -192,9 +192,9 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final int wordIndex = i / 2;
                 final long value = (bytes[i] & 0xff) << 8;
                 if (i % 2 == 0) {
-                    ints[wordIndex] = (ints[wordIndex] & 0xffff0000) | ((int) value & 0xffff);
+                    ints[wordIndex] = ints[wordIndex] & 0xffff0000 | (int) value & 0xffff;
                 } else {
-                    ints[wordIndex] = ((int) value << 16) | (ints[wordIndex] & 0xffff);
+                    ints[wordIndex] = (int) value << 16 | ints[wordIndex] & 0xffff;
                 }
             }
             return receiver;
@@ -242,7 +242,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     if (anInt <= 254) {
                         anInt = (anInt - 224) * 256 + (baBytes[i++] & 0xff);
                     } else {
-                        anInt = ((baBytes[i++] & 0xff) << 24) | ((baBytes[i++] & 0xff) << 16) | ((baBytes[i++] & 0xff) << 8) | (baBytes[i++] & 0xff);
+                        anInt = (baBytes[i++] & 0xff) << 24 | (baBytes[i++] & 0xff) << 16 | (baBytes[i++] & 0xff) << 8 | baBytes[i++] & 0xff;
                     }
                 }
                 final long n = anInt >> 2;
@@ -253,14 +253,14 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     case 0: // skip
                         break;
                     case 1: { // n consecutive words of 4 bytes = the following byte
-                        final int data = ((baBytes[i] & 0xff) << 24) | ((baBytes[i] & 0xff) << 16) | ((baBytes[i] & 0xff) << 8) | (baBytes[i++] & 0xff);
+                        final int data = (baBytes[i] & 0xff) << 24 | (baBytes[i] & 0xff) << 16 | (baBytes[i] & 0xff) << 8 | baBytes[i++] & 0xff;
                         for (int j = 0; j < n; j++) {
                             bmInts[k++] = data;
                         }
                         break;
                     }
                     case 2: { // n consecutive words = 4 following bytes
-                        final int data = ((baBytes[i++] & 0xff) << 24) | ((baBytes[i++] & 0xff) << 16) | ((baBytes[i++] & 0xff) << 8) | (baBytes[i++] & 0xff);
+                        final int data = (baBytes[i++] & 0xff) << 24 | (baBytes[i++] & 0xff) << 16 | (baBytes[i++] & 0xff) << 8 | baBytes[i++] & 0xff;
                         for (int j = 0; j < n; j++) {
                             bmInts[k++] = data;
                         }
@@ -269,7 +269,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
                     case 3: { // n consecutive words from the data
                         for (int m = 0; m < n; m++) {
-                            bmInts[k++] = ((baBytes[i++] & 0xff) << 24) | ((baBytes[i++] & 0xff) << 16) | ((baBytes[i++] & 0xff) << 8) | (baBytes[i++] & 0xff);
+                            bmInts[k++] = (baBytes[i++] & 0xff) << 24 | (baBytes[i++] & 0xff) << 16 | (baBytes[i++] & 0xff) << 8 | baBytes[i++] & 0xff;
                         }
                         break;
                     }
@@ -439,7 +439,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < length; i++) {
                 hash += bytes[i] & 0xff;
                 low = hash & 16383;
-                hash = (0x260D * low + (((0x260d * (hash >> 14) + (0x0065 * low)) & 16383) * 16384)) & 0x0fffffff;
+                hash = 0x260D * low + (0x260d * (hash >> 14) + 0x0065 * low & 16383) * 16384 & 0x0fffffff;
             }
             return hash;
         }
@@ -487,7 +487,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean hasBadIndex(final NativeObject string, final long start, final long stop) {
-            return start < 1 || (string.isByteType() && stop > string.getByteLength());
+            return start < 1 || string.isByteType() && stop > string.getByteLength();
         }
     }
 }

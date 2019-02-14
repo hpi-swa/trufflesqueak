@@ -105,6 +105,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveFailed();
         }
 
+        @Override
         public int getNumArguments() {
             return 0;
         }
@@ -699,6 +700,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return replace(method.image.primitiveNodeFactory.namedFor(method)).executePrimitive(frame);
         }
 
+        @Override
         public int getNumArguments() {
             return 0;
         }

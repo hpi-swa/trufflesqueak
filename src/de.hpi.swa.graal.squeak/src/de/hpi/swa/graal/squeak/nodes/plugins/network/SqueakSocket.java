@@ -1,8 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins.network;
 
-import com.oracle.truffle.api.TruffleLogger;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -13,6 +10,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
+
+import com.oracle.truffle.api.TruffleLogger;
+
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public abstract class SqueakSocket {
 
@@ -63,9 +65,9 @@ public abstract class SqueakSocket {
     protected boolean listening;
 
     protected SqueakSocket() throws IOException {
-        this.handle = System.identityHashCode(this);
-        this.selector = Selector.open();
-        this.listening = false;
+        handle = System.identityHashCode(this);
+        selector = Selector.open();
+        listening = false;
     }
 
     protected final long handle() {
@@ -150,7 +152,7 @@ public abstract class SqueakSocket {
         final SocketOption<?> option = socketOptionFromString(name);
         final Object value = asNetworkChannel().getOption(option);
         if (value instanceof Boolean) {
-            return ((boolean) value) ? "1" : "0";
+            return (boolean) value ? "1" : "0";
         }
         return String.valueOf(value);
     }

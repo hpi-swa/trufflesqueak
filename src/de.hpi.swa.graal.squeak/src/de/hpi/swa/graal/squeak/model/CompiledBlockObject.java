@@ -12,14 +12,14 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         super(code.image, 0, numCopied);
         this.outerMethod = outerMethod;
         final int additionalOffset = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getOffset() : 0;
-        this.offset = additionalOffset + bytecodeOffset;
+        offset = additionalOffset + bytecodeOffset;
         final Object[] outerLiterals = outerMethod.getLiterals();
         final int outerLiteralsLength = outerLiterals.length;
-        this.literals = new Object[outerLiteralsLength + 1];
-        this.literals[0] = makeHeader(numArgs, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
-        System.arraycopy(outerLiterals, 1, this.literals, 1, outerLiteralsLength - 1);
-        this.literals[outerLiteralsLength] = outerMethod; // Last literal is back pointer to method.
-        this.bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, (bytecodeOffset + blockSize));
+        literals = new Object[outerLiteralsLength + 1];
+        literals[0] = makeHeader(numArgs, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
+        System.arraycopy(outerLiterals, 1, literals, 1, outerLiteralsLength - 1);
+        literals[outerLiteralsLength] = outerMethod; // Last literal is back pointer to method.
+        bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, bytecodeOffset + blockSize);
         decodeHeader();
     }
 

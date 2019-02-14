@@ -46,7 +46,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
         final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
         try {
             dispatchNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY));
-        } catch (LocalReturn blockLR) { // ignore
+        } catch (final LocalReturn blockLR) { // ignore
         }
     }
 

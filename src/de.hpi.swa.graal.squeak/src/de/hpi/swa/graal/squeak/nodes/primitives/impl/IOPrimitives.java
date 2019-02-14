@@ -283,7 +283,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             long scanDestX = (long) receiver.at0(CHARACTER_SCANNER.DEST_X);
             long scanLastIndex = startIndex;
             while (scanLastIndex <= stopIndex) {
-                final long ascii = (sourceBytes[(int) (scanLastIndex - 1)] & 0xFF);
+                final long ascii = sourceBytes[(int) (scanLastIndex - 1)] & 0xFF;
                 final Object stopReason = readNode.execute(stops, ascii);
                 if (stopReason != method.image.nil) {
                     storeStateInReceiver(receiver, scanDestX, scanLastIndex);
@@ -301,7 +301,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 try {
                     sourceX1 = (long) readNode.execute(scanXTable, glyphIndex);
                     sourceX2 = (long) readNode.execute(scanXTable, glyphIndex + 1);
-                } catch (ClassCastException e) {
+                } catch (final ClassCastException e) {
                     throw PrimitiveFailed.andTransferToInterpreter();
                 }
                 final long nextDestX = scanDestX + sourceX2 - sourceX1;
@@ -700,17 +700,17 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean inBounds(final AbstractPointersObject target, final long start, final long stop, final AbstractPointersObject repl, final long replStart) {
-            return (start >= 1 && (start - 1) <= stop && (stop + target.instsize()) <= target.size()) &&
-                            (replStart >= 1 && (stop - start + replStart + repl.instsize() <= repl.size()));
+            return start >= 1 && start - 1 <= stop && stop + target.instsize() <= target.size() &&
+                            replStart >= 1 && stop - start + replStart + repl.instsize() <= repl.size();
         }
 
         protected static final boolean inBounds(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize, final long replStart) {
-            return (start >= 1 && (start - 1) <= stop && (stop + rcvrInstSize) <= rcvrSize) && (replStart >= 1 && (stop - start + replStart + replInstSize <= replSize));
+            return start >= 1 && start - 1 <= stop && stop + rcvrInstSize <= rcvrSize && replStart >= 1 && stop - start + replStart + replInstSize <= replSize;
         }
 
         protected final boolean inBounds(final AbstractSqueakObject array, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
-            return (start >= 1 && (start - 1) <= stop && (stop + getInstSizeNode().execute(array)) <= getSizeNode().execute(array)) &&
-                            (replStart >= 1 && (stop - start + replStart + getInstSizeNode().execute(repl) <= getSizeNode().execute(repl)));
+            return start >= 1 && start - 1 <= stop && stop + getInstSizeNode().execute(array) <= getSizeNode().execute(array) &&
+                            replStart >= 1 && stop - start + replStart + getInstSizeNode().execute(repl) <= getSizeNode().execute(repl);
         }
 
         private static void replaceGeneric(final Object[] dstArray, final long start, final long stop, final Object[] srcArray, final long replStart) {

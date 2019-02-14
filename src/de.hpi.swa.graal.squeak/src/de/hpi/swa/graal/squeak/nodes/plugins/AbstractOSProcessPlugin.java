@@ -36,10 +36,10 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
                     if (index != -1) {
                         return Long.parseLong(runtimeName.substring(0, index));
                     }
-                } catch (NumberFormatException e) {
+                } catch (final NumberFormatException e) {
                 }
                 throw new PrimitiveFailed();
-            } catch (LinkageError err) {
+            } catch (final LinkageError err) {
                 throw new PrimitiveFailed();
             }
         }

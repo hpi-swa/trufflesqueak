@@ -38,7 +38,7 @@ public final class InteropArray implements TruffleObject {
                 final Object key = receiver.keys[index];
                 assert key instanceof String;
                 return key;
-            } catch (IndexOutOfBoundsException e) {
+            } catch (final IndexOutOfBoundsException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw UnknownIdentifierException.raise(String.valueOf(index));
             }

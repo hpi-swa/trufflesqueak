@@ -51,18 +51,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
             final long firstDigitIndex = Math.floorDiv(start - 1, 32);
             final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
-            final long firstMask = 0xFFFFFFFFL << ((start - 1) & 31);
-            final long lastMask = 0xFFFFFFFFL >> (31 - ((stop - 1) & 31));
+            final long firstMask = 0xFFFFFFFFL << (start - 1 & 31);
+            final long lastMask = 0xFFFFFFFFL >> 31 - (stop - 1 & 31);
             if (firstDigitIndex == lastDigitIndex) {
                 firstAndLastDigitIndexIdenticalProfile.enter();
                 final byte digit = digitOf(receiver, firstDigitIndex);
-                if ((digit & (firstMask & lastMask)) != 0) {
+                if ((digit & firstMask & lastMask) != 0) {
                     return method.image.sqTrue;
                 } else {
                     return method.image.sqFalse;
                 }
             }
-            if (((digitOf(receiver, firstDigitIndex)) & firstMask) != 0) {
+            if ((digitOf(receiver, firstDigitIndex) & firstMask) != 0) {
                 return method.image.sqTrue;
             }
             for (long i = firstDigitIndex + 1; i < lastDigitIndex - 1; i++) {
@@ -91,12 +91,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
             final long firstDigitIndex = Math.floorDiv(start - 1, 32);
             final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
-            final long firstMask = 0xFFFFFFFFL << ((start - 1) & 31);
-            final long lastMask = 0xFFFFFFFFL >> (31 - ((stop - 1) & 31));
+            final long firstMask = 0xFFFFFFFFL << (start - 1 & 31);
+            final long lastMask = 0xFFFFFFFFL >> 31 - (stop - 1 & 31);
             if (firstDigitIndex == lastDigitIndex) {
                 firstAndLastDigitIndexIdenticalProfile.enter();
                 final long digit = receiver.getNativeAt0(firstDigitIndex);
-                if ((digit & (firstMask & lastMask)) != 0) {
+                if ((digit & firstMask & lastMask) != 0) {
                     return method.image.sqTrue;
                 } else {
                     return method.image.sqFalse;
@@ -118,7 +118,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         private static byte digitOf(final long value, final long index) {
-            return (byte) (value >> (Byte.SIZE * index));
+            return (byte) (value >> Byte.SIZE * index);
         }
     }
 
@@ -563,7 +563,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected final ArrayObject doLong(final long rcvr, final long arg, final boolean negative) {
             long divide = rcvr / arg;
-            if ((negative && divide >= 0) || (!negative && divide < 0)) {
+            if (negative && divide >= 0 || !negative && divide < 0) {
                 signProfile.enter();
                 divide = Math.negateExact(divide);
             }
@@ -639,13 +639,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"fitsInOneWord(receiver)", "fitsInOneWord(a)", "fitsInOneWord(m)"})
         protected static final long doLongQuick(final long receiver, final long a, final long m, final long mInv) {
             final long accum3 = receiver * a;
-            final long u = (accum3 * mInv) & 0xFFFFFFFFL;
+            final long u = accum3 * mInv & 0xFFFFFFFFL;
             final long accum2 = u * m;
             long accum = (accum2 & 0xFFFFFFFFL) + (accum3 & 0xFFFFFFFFL);
             accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32);
             long result = accum & 0xFFFFFFFFL;
-            if (!((accum >> 32) == 0 && result < m)) {
-                result = (result - m) & 0xFFFFFFFFL;
+            if (!(accum >> 32 == 0 && result < m)) {
+                result = result - m & 0xFFFFFFFFL;
             }
             return result;
         }
@@ -720,24 +720,24 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             int lastDigit = 0;
             for (int i = 0; i <= limit1; i++) {
                 accum3 = firstInts[i] & 0xFFFFFFFFL;
-                accum3 = (accum3 * (secondInts[0] & 0xFFFFFFFFL)) + (result[0] & 0xFFFFFFFFL);
-                final long u = (accum3 * mInv) & 0xFFFFFFFFL;
+                accum3 = accum3 * (secondInts[0] & 0xFFFFFFFFL) + (result[0] & 0xFFFFFFFFL);
+                final long u = accum3 * mInv & 0xFFFFFFFFL;
                 accum2 = u * (thirdInts[0] & 0xFFFFFFFFL);
                 accum = (accum2 & 0xFFFFFFFFL) + (accum3 & 0xFFFFFFFFL);
-                accum = (accum >> 32) + (accum2 >> 32) + ((accum3 >> 32) & 0xFFFFFFFFL);
+                accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32 & 0xFFFFFFFFL);
                 for (int k = 1; k <= limit2; k++) {
                     accum3 = firstInts[i] & 0xFFFFFFFFL;
-                    accum3 = (accum3 * (secondInts[k] & 0xFFFFFFFFL)) + (result[k] & 0xFFFFFFFFL);
+                    accum3 = accum3 * (secondInts[k] & 0xFFFFFFFFL) + (result[k] & 0xFFFFFFFFL);
                     accum2 = u * (thirdInts[k] & 0xFFFFFFFFL);
                     accum = accum + (accum2 & 0xFFFFFFFFL) + (accum3 & 0xFFFFFFFFL);
                     result[k - 1] = (int) (accum & 0xFFFFFFFFL);
-                    accum = (accum >> 32) + (accum2 >> 32) + ((accum3 >> 32) & 0xFFFFFFFFL);
+                    accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32 & 0xFFFFFFFFL);
                 }
                 for (int k = secondLen; k <= limit3; k++) {
                     accum2 = u * (thirdInts[k] & 0xFFFFFFFFL);
                     accum = accum + (result[k] & 0xFFFFFFFFL) + (accum2 & 0xFFFFFFFFL);
                     result[k - 1] = (int) (accum & 0xFFFFFFFFL);
-                    accum = ((accum >> 32) + (accum2 >> 32)) & 0xFFFFFFFFL;
+                    accum = (accum >> 32) + (accum2 >> 32) & 0xFFFFFFFFL;
                 }
                 accum += lastDigit;
                 result[limit3] = (int) (accum & 0xFFFFFFFFL);
@@ -745,20 +745,20 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
             for (int i = firstLen; i <= limit3; i++) {
                 accum = result[0] & 0xFFFFFFFFL;
-                final long u = (accum * mInv) & 0xFFFFFFFFL;
+                final long u = accum * mInv & 0xFFFFFFFFL;
                 accum += u * (thirdInts[0] & 0xFFFFFFFFL);
                 accum = accum >> 32;
                 for (int k = 1; k <= limit3; k++) {
                     accum2 = u * (thirdInts[k] & 0xFFFFFFFFL);
                     accum = accum + (result[k] & 0xFFFFFFFFL) + (accum2 & 0xFFFFFFFFL);
                     result[k - 1] = (int) (accum & 0xFFFFFFFFL);
-                    accum = ((accum >> 32) + (accum2 >> 32)) & 0xFFFFFFFFL;
+                    accum = (accum >> 32) + (accum2 >> 32) & 0xFFFFFFFFL;
                 }
                 accum += lastDigit;
                 result[limit3] = (int) (accum & 0xFFFFFFFFL);
                 lastDigit = (int) (accum >> 32);
             }
-            if (!((lastDigit == 0) && (cDigitComparewithlen(thirdInts, result, thirdLen) == 1))) {
+            if (!(lastDigit == 0 && cDigitComparewithlen(thirdInts, result, thirdLen) == 1)) {
                 accum = 0;
                 for (int i = 0; i <= limit3; i++) {
                     accum = accum + result[i] - (thirdInts[i] & 0xFFFFFFFFL);
@@ -775,7 +775,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             int secondDigit;
             int index = len - 1;
             while (index >= 0) {
-                if (((secondDigit = second[index])) != ((firstDigit = first[index]))) {
+                if ((secondDigit = second[index]) != (firstDigit = first[index])) {
                     if (secondDigit < firstDigit) {
                         return 1;
                     } else {
@@ -818,11 +818,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean sameSign(final long a, final long b) {
-            return (a >= 0 && b >= 0) || (a < 0 && b < 0);
+            return a >= 0 && b >= 0 || a < 0 && b < 0;
         }
 
         protected static final boolean sameSign(final LargeIntegerObject a, final long b) {
-            return (a.isPositive() && b >= 0) || (!a.isPositive() && b < 0);
+            return a.isPositive() && b >= 0 || !a.isPositive() && b < 0;
         }
 
         protected static final boolean sameSign(final LargeIntegerObject a, final LargeIntegerObject b) {

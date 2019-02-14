@@ -69,17 +69,17 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
             startBytecode(frame);
             throw SqueakException.create("Method did not return");
-        } catch (LocalReturn lr) {
+        } catch (final LocalReturn lr) {
             /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleLocalReturnNode().executeHandle(frame, lr);
-        } catch (NonLocalReturn nlr) {
+        } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
-        } catch (NonVirtualReturn nvr) {
+        } catch (final NonVirtualReturn nvr) {
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw nvr;
-        } catch (ProcessSwitch ps) {
+        } catch (final ProcessSwitch ps) {
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw ps;
@@ -107,10 +107,10 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             }
             CompilerAsserts.neverPartOfCompilation();
             throw SqueakException.create("Method did not return");
-        } catch (LocalReturn lr) {
+        } catch (final LocalReturn lr) {
             /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleLocalReturnNode().executeHandle(frame, lr);
-        } catch (NonLocalReturn nlr) {
+        } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } finally {

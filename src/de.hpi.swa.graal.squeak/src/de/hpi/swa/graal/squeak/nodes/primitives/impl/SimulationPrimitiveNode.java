@@ -113,7 +113,7 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
                     method.image.interrupt.activate();
                 }
             }
-        } catch (SimulationPrimitiveFailed e) {
+        } catch (final SimulationPrimitiveFailed e) {
             simulationFailedProfile.enter();
             throw new PrimitiveFailed(e.getReasonCode());
         }

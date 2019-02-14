@@ -33,8 +33,8 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doUUID(final NativeObject receiver) {
             final byte[] bytes = receiver.getByteStorage();
             ArrayUtils.fillRandomly(bytes);
-            bytes[6] = (byte) ((bytes[6] & 0x0F) | 0x40); // Version 4
-            bytes[8] = (byte) ((bytes[8] & 0x3F) | 0x80); // Fixed 8..b value
+            bytes[6] = (byte) (bytes[6] & 0x0F | 0x40); // Version 4
+            bytes[8] = (byte) (bytes[8] & 0x3F | 0x80); // Fixed 8..b value
             return receiver;
         }
     }

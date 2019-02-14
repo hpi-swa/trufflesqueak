@@ -101,7 +101,7 @@ public final class StoreBytecodes {
         private AbstractStoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            this.storeNode = TemporaryWriteNode.create(code, tempIndex);
+            storeNode = TemporaryWriteNode.create(code, tempIndex);
         }
 
         protected abstract String getTypeName();

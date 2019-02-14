@@ -71,7 +71,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         private AbstractClockPrimitiveNode(final CompiledMethodObject method) {
             super(method);
             final Calendar rightNow = Calendar.getInstance();
-            timeZoneOffsetMicroseconds = (((long) rightNow.get(Calendar.ZONE_OFFSET)) + rightNow.get(Calendar.DST_OFFSET)) * 1000;
+            timeZoneOffsetMicroseconds = ((long) rightNow.get(Calendar.ZONE_OFFSET) + rightNow.get(Calendar.DST_OFFSET)) * 1000;
         }
 
         @TruffleBoundary
@@ -124,7 +124,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         protected final AbstractSqueakObject doSomeInstance(final ClassObject classObject) {
             try {
                 return objectGraphNode.executeSomeInstanceOf(classObject);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (final IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
         }

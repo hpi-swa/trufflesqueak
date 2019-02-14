@@ -73,7 +73,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     protected CompiledCodeObject(final CompiledCodeObject original) {
         super(original.image, original.image.compiledMethodClass);
-        this.numCopiedValues = original.numCopiedValues;
+        numCopiedValues = original.numCopiedValues;
         frameDescriptor = original.frameDescriptor;
         thisMarkerSlot = original.thisMarkerSlot;
         thisContextSlot = original.thisContextSlot;
@@ -184,7 +184,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final long[] words = chunk.getWords();
         // header is a tagged small integer
-        final long header = (words[0] >> (image.flags.is64bit() ? 3 : 1));
+        final long header = words[0] >> (image.flags.is64bit() ? 3 : 1);
         final int numberOfLiterals = (int) (header & 0x7fff);
         final Object[] ptrs = chunk.getPointers(numberOfLiterals + 1);
         assert literals == null;
@@ -247,7 +247,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;
         other.setLiteralsAndBytes(literals, bytes);
-        this.setLiteralsAndBytes(literals2, bytes2);
+        setLiteralsAndBytes(literals2, bytes2);
         other.callTargetStable.invalidate();
         callTargetStable.invalidate();
     }

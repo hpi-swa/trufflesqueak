@@ -18,7 +18,7 @@ public final class InteropMap implements TruffleObject {
     private final Map<Object, Object> map;
 
     public InteropMap(final PointersObject squeakDictionary) {
-        this.map = DICTIONARY.toJavaMap(squeakDictionary);
+        map = DICTIONARY.toJavaMap(squeakDictionary);
     }
 
     public InteropMap(final Map<Object, Object> map) {

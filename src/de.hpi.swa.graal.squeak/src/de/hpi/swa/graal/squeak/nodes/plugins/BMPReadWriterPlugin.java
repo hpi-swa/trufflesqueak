@@ -33,7 +33,7 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
             int bitsIndex = (int) formBitsIndex - 1;
             int rgb = 0;
             for (int j = 0; j < width; j++) {
-                rgb = (bytes[pixelIndex++] & 0xFF) | ((bytes[pixelIndex++] & 0xFF) << 8) | ((bytes[pixelIndex++] & 0xFF) << 16);
+                rgb = bytes[pixelIndex++] & 0xFF | (bytes[pixelIndex++] & 0xFF) << 8 | (bytes[pixelIndex++] & 0xFF) << 16;
                 if (rgb == 0) {
                     ints[bitsIndex++] = 0xFF000001;
                 } else {
@@ -62,8 +62,8 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
             for (int j = 0; j < width; j++) {
                 rgb = ints[bitsIndex++] & 0xFFFFFF;
                 bytes[pixelIndex++] = (byte) (rgb & 0xFF);
-                bytes[pixelIndex++] = (byte) ((rgb >> 8) & 0xFF);
-                bytes[pixelIndex++] = (byte) ((rgb >> 16) & 0xFF);
+                bytes[pixelIndex++] = (byte) (rgb >> 8 & 0xFF);
+                bytes[pixelIndex++] = (byte) (rgb >> 16 & 0xFF);
             }
             return receiver;
         }

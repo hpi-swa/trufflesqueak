@@ -79,7 +79,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
                 return null;
             } else if (lit instanceof NativeObject) {
                 return (NativeObject) lit;
-            } else if ((lit instanceof PointersObject) && ((PointersObject) lit).size() >= 2) {
+            } else if (lit instanceof PointersObject && ((PointersObject) lit).size() >= 2) {
                 final Object secondValue = ((PointersObject) lit).at0(1);
                 if (secondValue instanceof NativeObject) {
                     return (NativeObject) secondValue;

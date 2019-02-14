@@ -68,6 +68,7 @@ public final class SqueakExceptions {
             return new SqueakAbortException(messageParts);
         }
 
+        @Override
         public Node getLocation() {
             return null;
         }
@@ -88,10 +89,12 @@ public final class SqueakExceptions {
             dummyCodeObjectNode = new FakeSourceCodeObjectNode(syntaxErrorNotification.image, sourceOffset);
         }
 
+        @Override
         public Node getLocation() {
             return dummyCodeObjectNode;
         }
 
+        @Override
         public boolean isSyntaxError() {
             return true;
         }
@@ -129,14 +132,17 @@ public final class SqueakExceptions {
             this.exitStatus = exitStatus;
         }
 
+        @Override
         public int getExitStatus() {
             return exitStatus;
         }
 
+        @Override
         public Node getLocation() {
             return null;
         }
 
+        @Override
         public boolean isExit() {
             return true;
         }

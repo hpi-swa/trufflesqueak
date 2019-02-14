@@ -90,7 +90,7 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     private boolean isAMetaClass() {
-        return this.getSqueakClass().isMetaClass();
+        return getSqueakClass().isMetaClass();
     }
 
     public boolean isBits() {
@@ -337,7 +337,7 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     public int getInstanceSpecification() {
-        return (int) ((format >> 16) & 0x1f);
+        return (int) (format >> 16 & 0x1f);
     }
 
     public AbstractSqueakObject shallowCopy(final ArrayObject copiedInstanceVariablesOrNull) {
@@ -378,19 +378,19 @@ public final class ClassObject extends AbstractSqueakObject {
         final PointersObject otherOrganization = other.organization;
         final Object[] otherPointers = other.pointers;
 
-        other.setSuperclass(this.superclass);
-        other.setMethodDict(this.methodDict);
-        other.setFormat(this.format);
-        other.setInstanceVariables(this.instanceVariables);
-        other.setOrganization(this.organization);
-        other.setOtherPointers(this.pointers);
+        other.setSuperclass(superclass);
+        other.setMethodDict(methodDict);
+        other.setFormat(format);
+        other.setInstanceVariables(instanceVariables);
+        other.setOrganization(organization);
+        other.setOtherPointers(pointers);
 
-        this.setSuperclass(otherSuperclass);
-        this.setMethodDict(otherMethodDict);
-        this.setFormat(otherFormat);
-        this.setInstanceVariables(otherInstanceVariables);
-        this.setOrganization(otherOrganization);
-        this.setOtherPointers(otherPointers);
+        setSuperclass(otherSuperclass);
+        setMethodDict(otherMethodDict);
+        setFormat(otherFormat);
+        setInstanceVariables(otherInstanceVariables);
+        setOrganization(otherOrganization);
+        setOtherPointers(otherPointers);
     }
 
     public Assumption getClassHierarchyStable() {

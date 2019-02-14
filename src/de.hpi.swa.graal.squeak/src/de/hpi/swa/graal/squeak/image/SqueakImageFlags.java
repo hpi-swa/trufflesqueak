@@ -23,7 +23,7 @@ public final class SqueakImageFlags {
         flagInterpretedMethods = (headerFlags & 8) != 0;
         preemptionYields = (headerFlags & 16) == 0;
         newFinalization = (headerFlags & 64) != 0;
-        lastWindowSize = new DisplayPoint((lastWindowSizeWord >> 16) & 0xffff, lastWindowSizeWord & 0xffff);
+        lastWindowSize = new DisplayPoint(lastWindowSizeWord >> 16 & 0xffff, lastWindowSizeWord & 0xffff);
         is64bit = is64bitImage;
         wordSize = is64bitImage ? ArrayConversionUtils.LONG_BYTE_SIZE : ArrayConversionUtils.INTEGER_BYTE_SIZE;
     }

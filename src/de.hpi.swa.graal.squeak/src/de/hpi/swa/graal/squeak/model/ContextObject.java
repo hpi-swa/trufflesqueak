@@ -46,7 +46,7 @@ public final class ContextObject extends AbstractSqueakObject {
         assert FrameAccess.getContext(frame, blockOrMethod) == null;
         truffleFrame = frame.materialize();
         FrameAccess.setContext(truffleFrame, blockOrMethod, this);
-        this.size = blockOrMethod.getSqueakContextSize();
+        size = blockOrMethod.getSqueakContextSize();
     }
 
     public ContextObject(final ContextObject original) {
@@ -442,7 +442,7 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public void markEscaped() {
-        this.escaped = true;
+        escaped = true;
     }
 
     public boolean hasModifiedSender() {
@@ -493,15 +493,15 @@ public final class ContextObject extends AbstractSqueakObject {
         final boolean otherHasModifiedSender = other.hasModifiedSender;
         final boolean otherEscaped = other.escaped;
         other.setFields(truffleFrame, size, hasModifiedSender, escaped);
-        this.setFields(otherTruffleFrame, otherSize, otherHasModifiedSender, otherEscaped);
+        setFields(otherTruffleFrame, otherSize, otherHasModifiedSender, otherEscaped);
     }
 
     private void setFields(final MaterializedFrame otherTruffleFrame, final int otherSize, final boolean otherHasModifiedSender, final boolean otherEscaped) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.truffleFrame = otherTruffleFrame;
-        this.size = otherSize;
-        this.hasModifiedSender = otherHasModifiedSender;
-        this.escaped = otherEscaped;
+        truffleFrame = otherTruffleFrame;
+        size = otherSize;
+        hasModifiedSender = otherHasModifiedSender;
+        escaped = otherEscaped;
     }
 
     private Object[] getReceiverAndNArguments(final int numArgs) {

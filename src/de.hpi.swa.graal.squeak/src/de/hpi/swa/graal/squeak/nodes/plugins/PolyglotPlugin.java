@@ -89,7 +89,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         method.image.interrupt.activate();
                     }
                 }
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 CompilerDirectives.transferToInterpreter();
                 PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
@@ -190,7 +190,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             PrimGetLastErrorNode.unsetLastError();
             try {
                 return method.image.wrap(ForeignAccess.sendAsPointer(asPointerNode, receiver));
-            } catch (UnsupportedMessageException e) {
+            } catch (final UnsupportedMessageException e) {
                 PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
@@ -286,7 +286,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 } else {
                     return 0L;
                 }
-            } catch (UnsupportedMessageException e) {
+            } catch (final UnsupportedMessageException e) {
                 PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
@@ -312,7 +312,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 } else {
                     return 0L;
                 }
-            } catch (UnsupportedMessageException e) {
+            } catch (final UnsupportedMessageException e) {
                 PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
@@ -567,7 +567,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             PrimGetLastErrorNode.unsetLastError();
             try {
                 return method.image.wrap(ForeignAccess.sendUnbox(unboxNode, receiver));
-            } catch (UnsupportedMessageException e) {
+            } catch (final UnsupportedMessageException e) {
                 PrimGetLastErrorNode.setLastError(method, e);
                 throw new PrimitiveFailed();
             }
@@ -603,7 +603,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @TruffleBoundary(transferToInterpreterOnException = false)
     private static String findLanguageByMimeType(final Env env, final String mimeType) {
         final Map<String, LanguageInfo> languages = env.getLanguages();
-        for (String registeredMimeType : languages.keySet()) {
+        for (final String registeredMimeType : languages.keySet()) {
             if (mimeType.equals(registeredMimeType)) {
                 return languages.get(registeredMimeType).getId();
             }

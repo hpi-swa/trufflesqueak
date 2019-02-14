@@ -124,7 +124,7 @@ public final class JumpBytecodes {
 
         public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter) {
             super(code, index, numBytecodes);
-            offset = (((bytecode & 7) - 4) << 8) + parameter;
+            offset = ((bytecode & 7) - 4 << 8) + parameter;
         }
 
         @Override

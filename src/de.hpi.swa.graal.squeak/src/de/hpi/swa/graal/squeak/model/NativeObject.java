@@ -101,8 +101,8 @@ public final class NativeObject extends AbstractSqueakObject {
     public void become(final NativeObject other) {
         super.becomeOtherClass(other);
         final Object otherStorage = other.storage;
-        other.setStorage(this.storage);
-        this.setStorage(otherStorage);
+        other.setStorage(storage);
+        setStorage(otherStorage);
     }
 
     public void convertToBytesStorage(final byte[] bytes) {

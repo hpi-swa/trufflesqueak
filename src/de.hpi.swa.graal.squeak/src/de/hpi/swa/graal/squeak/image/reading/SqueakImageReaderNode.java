@@ -74,7 +74,7 @@ public final class SqueakImageReaderNode extends RootNode {
         BufferedInputStream inputStream = null;
         try {
             inputStream = new BufferedInputStream(truffleFile.newInputStream());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             if (!image.isTesting()) {
                 throw SqueakAbortException.create(e);
             }
@@ -95,7 +95,7 @@ public final class SqueakImageReaderNode extends RootNode {
         readBody(frame);
         initObjects();
         clearChunktable();
-        image.printToStdOut("Image loaded in", (currentTimeMillis() - start) + "ms.");
+        image.printToStdOut("Image loaded in", currentTimeMillis() - start + "ms.");
         return image.getSqueakImage();
     }
 
@@ -113,7 +113,7 @@ public final class SqueakImageReaderNode extends RootNode {
     private void readBytes(final byte[] bytes, final int length) {
         try {
             stream.read(bytes, 0, length);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw SqueakAbortException.create("Unable to read next bytes:", e.getMessage());
         }
     }
@@ -129,32 +129,32 @@ public final class SqueakImageReaderNode extends RootNode {
     private byte[] nextBytes(final int count) {
         final byte[] bytes = new byte[count];
         readBytes(bytes, count);
-        this.position += count;
+        position += count;
         return bytes;
     }
 
     private short nextShort() {
         final byte[] bytes = new byte[2];
         readBytes(bytes, 2);
-        this.position += 2;
+        position += 2;
         return (short) ((bytes[1] & 0xFF) << 8 |
-                        (bytes[0] & 0xFF));
+                        bytes[0] & 0xFF);
     }
 
     private int nextInt() {
         final byte[] bytes = new byte[4];
         readBytes(bytes, 4);
-        this.position += 4;
+        position += 4;
         return (bytes[3] & 0xFF) << 24 |
                         (bytes[2] & 0xFF) << 16 |
                         (bytes[1] & 0xFF) << 8 |
-                        (bytes[0] & 0xFF);
+                        bytes[0] & 0xFF;
     }
 
     private long nextLong() {
         final byte[] bytes = new byte[8];
         readBytes(bytes, 8);
-        this.position += 8;
+        position += 8;
         return (long) (bytes[7] & 0xFF) << 56 |
                         (long) (bytes[6] & 0xFF) << 48 |
                         (long) (bytes[5] & 0xFF) << 40 |
@@ -162,14 +162,14 @@ public final class SqueakImageReaderNode extends RootNode {
                         (bytes[3] & 0xFF) << 24 |
                         (bytes[2] & 0xFF) << 16 |
                         (bytes[1] & 0xFF) << 8 |
-                        (bytes[0] & 0xFF);
+                        bytes[0] & 0xFF;
     }
 
     @TruffleBoundary
     private void skipBytes(final long count) {
         try {
-            this.position += this.stream.skip(count);
-        } catch (IOException e) {
+            position += stream.skip(count);
+        } catch (final IOException e) {
             throw SqueakAbortException.create("Unable to skip next bytes:", e);
         }
     }
@@ -229,6 +229,7 @@ public final class SqueakImageReaderNode extends RootNode {
             this.reader = reader;
         }
 
+        @Override
         public boolean executeRepeating(final VirtualFrame frame) {
             if (reader.position < reader.segmentEnd - 16) {
                 final SqueakImageChunk chunk = reader.readObject();
@@ -247,7 +248,7 @@ public final class SqueakImageReaderNode extends RootNode {
         position = 0;
         segmentEnd = firstSegmentSize;
         currentAddressSwizzle = oldBaseAddress;
-        while (this.position < segmentEnd) {
+        while (position < segmentEnd) {
             readObjectLoopNode.executeLoop(frame);
             final long bridge = nextLong();
             long bridgeSpan = 0;
@@ -270,15 +271,15 @@ public final class SqueakImageReaderNode extends RootNode {
     @TruffleBoundary
     private void closeStream() {
         try {
-            this.stream.close();
-        } catch (IOException e) {
+            stream.close();
+        } catch (final IOException e) {
             throw SqueakAbortException.create("Unable to close stream:", e);
         }
     }
 
     @TruffleBoundary
     private void putChunk(final SqueakImageChunk chunk) {
-        chunktable.put(chunk.pos + this.currentAddressSwizzle, chunk);
+        chunktable.put(chunk.pos + currentAddressSwizzle, chunk);
         if (chunkCount++ == HIDDEN_ROOTS_CHUNK_INDEX) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             hiddenRootsChunk = chunk;
@@ -308,7 +309,7 @@ public final class SqueakImageReaderNode extends RootNode {
         final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextBytes(size * wordSize), format, classid, hash, pos);
         final int wordsFor = wordsFor(size);
         if (wordsFor > size * wordSize) {
-            skipBytes(wordsFor - (size * wordSize)); // skip trailing alignment words
+            skipBytes(wordsFor - size * wordSize); // skip trailing alignment words
         }
         assert format != 0 || classid == 0 || size == 0 : "Empty objects must not have slots";
         assert checkAddressIntegrity(classid, format, chunk);
@@ -321,7 +322,7 @@ public final class SqueakImageReaderNode extends RootNode {
         }
         boolean result = true;
         if (format < 10 && classid != FREE_OBJECT_CLASS_INDEX_PUN) {
-            for (long slot : chunk.getWords()) {
+            for (final long slot : chunk.getWords()) {
                 result &= slot % 16 != 0 || slot >= oldBaseAddress;
             }
         }
@@ -432,9 +433,9 @@ public final class SqueakImageReaderNode extends RootNode {
 
     private void instantiateClasses() {
         // find all metaclasses and instantiate their singleton instances as class objects
-        for (long classtablePtr : hiddenRootsChunk.getWords()) {
+        for (final long classtablePtr : hiddenRootsChunk.getWords()) {
             if (getChunk(classtablePtr) != null) {
-                for (long potentialClassPtr : getChunk(classtablePtr).getWords()) {
+                for (final long potentialClassPtr : getChunk(classtablePtr).getWords()) {
                     if (potentialClassPtr == 0) {
                         continue;
                     }

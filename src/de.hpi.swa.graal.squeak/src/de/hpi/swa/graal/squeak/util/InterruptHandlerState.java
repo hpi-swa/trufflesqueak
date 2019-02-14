@@ -104,7 +104,7 @@ public final class InterruptHandlerState {
     }
 
     protected boolean nextWakeUpTickTrigger() {
-        return (nextWakeupTick != 0) && (System.currentTimeMillis() >= nextWakeupTick);
+        return nextWakeupTick != 0 && System.currentTimeMillis() >= nextWakeupTick;
     }
 
     public void setPendingFinalizations(final boolean value) {

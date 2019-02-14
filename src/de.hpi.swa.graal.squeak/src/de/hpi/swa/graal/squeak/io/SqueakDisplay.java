@@ -88,12 +88,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         installEventListeners();
         if (REPAINT_AUTOMATICALLY) {
             repaintExecutor = Executors.newSingleThreadScheduledExecutor();
-            repaintExecutor.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    canvas.repaint();
-                }
-            }, 0, 20, TimeUnit.MILLISECONDS);
+            repaintExecutor.scheduleWithFixedDelay(() -> canvas.repaint(), 0, 20, TimeUnit.MILLISECONDS);
         } else {
             repaintExecutor = null;
         }
@@ -166,12 +161,12 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
         private int[] decodeColors() {
             final int shift = 4 - depth;
-            int pixelmask = ((1 << depth) - 1) << shift;
+            int pixelmask = (1 << depth) - 1 << shift;
             final int[] table = SqueakIOConstants.PIXEL_LOOKUP_TABLE[depth - 1];
             final int[] words = bitmap.getIntStorage();
             final int[] rgb = new int[words.length];
             for (int i = 0; i < words.length; i++) {
-                final int pixel = (words[i] & pixelmask) >> (shift - i * depth);
+                final int pixel = (words[i] & pixelmask) >> shift - i * depth;
                 rgb[i] = table[pixel];
                 pixelmask >>= depth;
             }
@@ -198,7 +193,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                 word = words[i];
                 high = word >> 16;
                 low = word & 0xffff;
-                x = (i % width / 2) * 2;
+                x = i % width / 2 * 2;
                 y = i / width;
                 pixel = colorModel.getDataElements(high, pixel);
                 raster.setDataElements(x, y, pixel);
@@ -210,13 +205,13 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
         private void setSqDisplay(final PointersObject sqDisplay) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            this.bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
+            bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            this.width = (int) (long) sqDisplay.at0(FORM.WIDTH);
-            this.height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
-            this.depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
+            width = (int) (long) sqDisplay.at0(FORM.WIDTH);
+            height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
+            depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
             if (width > 0 && height > 0) {
                 bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                 repaint();
@@ -375,7 +370,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             for (int y = 0; y < SqueakIOConstants.CURSOR_HEIGHT; y++) {
                 final int word = ints[y];
                 for (int x = 0; x < SqueakIOConstants.CURSOR_WIDTH; x++) {
-                    final int colorIndex = (word >> ((SqueakIOConstants.CURSOR_WIDTH - 1 - x) * 2)) & 3;
+                    final int colorIndex = word >> (SqueakIOConstants.CURSOR_WIDTH - 1 - x) * 2 & 3;
                     bufferedImage.setRGB(x, y, CURSOR_COLORS[colorIndex]);
                 }
             }
@@ -397,7 +392,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             bit = 0x80000000;
             merged = 0;
             for (int x = 0; x < SqueakIOConstants.CURSOR_WIDTH; x++) {
-                merged = merged | ((maskWord & bit) >> x) | ((cursorWord & bit) >> (x + 1));
+                merged = merged | (maskWord & bit) >> x | (cursorWord & bit) >> x + 1;
                 bit = bit >>> 1;
             }
             words[y] = merged;
@@ -440,9 +435,9 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     public int recordModifiers(final InputEvent e) {
         final int shiftValue = e.isShiftDown() ? KEYBOARD.SHIFT : 0;
         final int ctrlValue = e.isControlDown() && !e.isAltDown() ? KEYBOARD.CTRL : 0;
-        final int cmdValue = e.isMetaDown() || (e.isAltDown() && !e.isControlDown()) ? KEYBOARD.CMD : 0;
+        final int cmdValue = e.isMetaDown() || e.isAltDown() && !e.isControlDown() ? KEYBOARD.CMD : 0;
         final int modifiers = shiftValue + ctrlValue + cmdValue;
-        buttons = (buttons & ~KEYBOARD.ALL) | modifiers;
+        buttons = buttons & ~KEYBOARD.ALL | modifiers;
         return modifiers;
     }
 
@@ -469,7 +464,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @Override
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.inputSemaphoreIndex = interruptSemaphoreIndex;
+        inputSemaphoreIndex = interruptSemaphoreIndex;
     }
 
     @Override
@@ -509,7 +504,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         @Override
         public void drop(final DropTargetDropEvent dtde) {
             final Transferable transferable = dtde.getTransferable();
-            for (DataFlavor flavor : transferable.getTransferDataFlavors()) {
+            for (final DataFlavor flavor : transferable.getTransferDataFlavors()) {
                 if (DataFlavor.javaFileListFlavor.equals(flavor)) {
                     dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     try {
@@ -525,10 +520,10 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                         addDragEvent(DRAG.DROP, dtde.getLocation());
                         dtde.getDropTargetContext().dropComplete(true);
                         return;
-                    } catch (UnsupportedFlavorException e) {
+                    } catch (final UnsupportedFlavorException e) {
                         CompilerDirectives.transferToInterpreter();
                         e.printStackTrace();
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         CompilerDirectives.transferToInterpreter();
                         e.printStackTrace();
                     }

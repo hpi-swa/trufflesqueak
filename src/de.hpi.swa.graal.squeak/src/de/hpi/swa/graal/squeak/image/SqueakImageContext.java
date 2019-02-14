@@ -196,7 +196,7 @@ public final class SqueakImageContext {
             evaluate("{EventSensor. ProcessorScheduler. Project. WeakArray} do: [:ea | Smalltalk removeFromStartUpList: ea]");
             try {
                 evaluate("[Smalltalk processStartUpList: true] value");
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 printToStdErr("startUpList failed:");
                 e.printStackTrace();
             }

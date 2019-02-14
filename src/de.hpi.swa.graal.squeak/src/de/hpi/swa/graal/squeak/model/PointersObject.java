@@ -42,7 +42,7 @@ public final class PointersObject extends AbstractPointersObject {
     public void become(final PointersObject other) {
         becomeOtherClass(other);
         final Object[] otherPointers = other.getPointers();
-        other.setPointers(this.getPointers());
+        other.setPointers(getPointers());
         setPointers(otherPointers);
     }
 

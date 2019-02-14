@@ -29,34 +29,34 @@ public final class BlockClosureObject extends AbstractSqueakObject {
 
     public BlockClosureObject(final SqueakImageContext image, final long hash) {
         super(image, hash, image.blockClosureClass);
-        this.copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
+        copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
     }
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
-        this.copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
+        copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
     }
 
     public BlockClosureObject(final CompiledBlockObject compiledBlock, final RootCallTarget callTarget, final Object receiver, final Object[] copied, final ContextObject outerContext) {
         super(compiledBlock.image, compiledBlock.image.blockClosureClass);
-        this.block = compiledBlock;
+        block = compiledBlock;
         this.callTarget = callTarget;
         this.outerContext = outerContext;
         this.receiver = receiver;
         this.copied = copied;
-        this.pc = block.getInitialPC();
-        this.numArgs = block.getNumArgs();
+        pc = block.getInitialPC();
+        numArgs = block.getNumArgs();
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
         super(original.image, original.image.blockClosureClass);
-        this.block = original.block;
-        this.callTarget = original.callTarget;
-        this.outerContext = original.outerContext;
-        this.receiver = original.receiver;
-        this.copied = original.copied;
-        this.pc = original.pc;
-        this.numArgs = original.numArgs;
+        block = original.block;
+        callTarget = original.callTarget;
+        outerContext = original.outerContext;
+        receiver = original.receiver;
+        copied = original.copied;
+        pc = original.pc;
+        numArgs = original.numArgs;
     }
 
     public void fillin(final SqueakImageChunk chunk) {
@@ -158,8 +158,8 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     public void become(final BlockClosureObject other) {
         becomeOtherClass(other);
         final Object[] otherCopied = other.copied;
-        other.setCopied(this.copied);
-        this.setCopied(otherCopied);
+        other.setCopied(copied);
+        setCopied(otherCopied);
     }
 
     @Override
@@ -199,7 +199,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         final int offset = (int) pc - method.getInitialPC();
         final int j = method.getBytes()[offset - 2];
         final int k = method.getBytes()[offset - 1];
-        final int blockSize = (j << 8) | (k & 0xff);
+        final int blockSize = j << 8 | k & 0xff;
         block = CompiledBlockObject.create(method, method, (int) numArgs, copied.length, offset, blockSize);
         callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
     }

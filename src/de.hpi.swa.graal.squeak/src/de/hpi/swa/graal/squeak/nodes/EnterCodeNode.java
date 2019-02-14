@@ -60,7 +60,7 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
         public Object execute(final VirtualFrame frame) {
             try {
                 return codeNode.execute(frame);
-            } catch (StackOverflowError e) {
+            } catch (final StackOverflowError e) {
                 CompilerDirectives.transferToInterpreter();
                 codeNode.code.image.printSqStackTrace();
                 throw e;
@@ -129,14 +129,17 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
         return code.toString();
     }
 
+    @Override
     public final boolean hasTag(final Class<? extends Tag> tag) {
         return tag == StandardTags.RootTag.class;
     }
 
+    @Override
     public final boolean isInstrumentable() {
         return true;
     }
 
+    @Override
     public final WrapperNode createWrapper(final ProbeNode probe) {
         return new EnterCodeNodeWrapper(this, this, probe);
     }

@@ -12,7 +12,7 @@ public final class MiscUtils {
         final int[] out = new int[lengths.length];
         for (int i = 0; i < lengths.length; i++) {
             final int length = lengths[i];
-            out[i] = (int) (integer & ((1 << length) - 1));
+            out[i] = (int) (integer & (1 << length) - 1);
             integer = integer >> length;
         }
         return out;
