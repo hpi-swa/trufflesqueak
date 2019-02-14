@@ -646,7 +646,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final ArrayObject doAll(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.newList(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
+            return method.image.newArrayOfAbstractSqueakObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
         }
     }
 

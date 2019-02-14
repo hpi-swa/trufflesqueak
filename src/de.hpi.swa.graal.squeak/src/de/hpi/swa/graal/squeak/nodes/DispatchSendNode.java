@@ -76,7 +76,8 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
             final Object doesNotUnderstandMethod = getLookupNode().executeLookup(targetClass, image.doesNotUnderstand);
             return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
         } else {
-            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, image.newList(arguments), rcvrAndArgs[0]}, contextOrMarker);
+            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, image.newArrayOfObjects(arguments), rcvrAndArgs[0]},
+                            contextOrMarker);
         }
     }
 
@@ -110,7 +111,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     private PointersObject createMessage(final NativeObject selector, final ClassObject rcvrClass, final Object[] arguments) {
         final PointersObject message = new PointersObject(image, image.messageClass, image.messageClass.getBasicInstanceSize());
         message.atput0(MESSAGE.SELECTOR, selector);
-        message.atput0(MESSAGE.ARGUMENTS, image.newList(arguments));
+        message.atput0(MESSAGE.ARGUMENTS, image.newArrayOfObjects(arguments));
         if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // Early versions do not have lookupClass.
             message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
         }

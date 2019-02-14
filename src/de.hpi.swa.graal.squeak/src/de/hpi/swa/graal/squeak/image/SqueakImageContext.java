@@ -51,6 +51,7 @@ import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
 import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
@@ -361,6 +362,7 @@ public final class SqueakImageContext {
     }
 
     public Object wrap(final Object obj) {
+        CompilerAsserts.neverPartOfCompilation("Generic wrap is a slow operation");
         if (obj == null) {
             return nil;
         } else if (obj instanceof Boolean) {
@@ -406,9 +408,8 @@ public final class SqueakImageContext {
         return new FloatObject(this, value);
     }
 
-    @TruffleBoundary
-    public NativeObject wrap(final String s) {
-        return NativeObject.newNativeBytes(this, stringClass, s.getBytes());
+    public NativeObject wrap(final String value) {
+        return NativeObject.newNativeBytes(this, stringClass, ArrayConversionUtils.stringToBytes(value));
     }
 
     public NativeObject wrap(final byte[] bytes) {
@@ -419,30 +420,37 @@ public final class SqueakImageContext {
         return character;
     }
 
-    @TruffleBoundary
     public ArrayObject wrap(final Object... elements) {
+        CompilerAsserts.neverPartOfCompilation("Generic wrap is a slow operation");
         final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             wrappedElements[i] = wrap(elements[i]);
         }
-        return newList(wrappedElements);
+        return newArrayOfObjects(wrappedElements);
     }
 
     public PointersObject wrap(final DisplayPoint point) {
         return newPoint((long) point.getWidth(), (long) point.getHeight());
     }
 
-    public ArrayObject newList(final Object elements) {
-        // TODO: Specialize storage?
+    public PointersObject newPoint(final Object xPos, final Object yPos) {
+        return new PointersObject(this, pointClass, new Object[]{xPos, yPos});
+    }
+
+    public ArrayObject newArrayEmpty() {
+        return ArrayObject.createWithStorage(this, arrayClass, ArrayUtils.EMPTY_ARRAY);
+    }
+
+    public ArrayObject newArrayOfAbstractSqueakObjects(final AbstractSqueakObject... elements) {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 
-    public ArrayObject newListWith(final Object... elements) {
-        return newList(elements);
+    public ArrayObject newArrayOfLongs(final long... elements) {
+        return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 
-    public PointersObject newPoint(final Object xPos, final Object yPos) {
-        return new PointersObject(this, pointClass, new Object[]{xPos, yPos});
+    public ArrayObject newArrayOfObjects(final Object... elements) {
+        return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 
     public NativeObject newSymbol(final String value) {

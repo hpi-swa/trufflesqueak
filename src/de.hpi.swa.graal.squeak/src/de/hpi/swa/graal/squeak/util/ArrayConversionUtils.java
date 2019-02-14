@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.util;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
 public final class ArrayConversionUtils {
     public static final int SHORT_BYTE_SIZE = 2;
     public static final int INTEGER_BYTE_SIZE = 4;
@@ -88,6 +90,11 @@ public final class ArrayConversionUtils {
             ints[i] = bytes[i];
         }
         return ints;
+    }
+
+    @TruffleBoundary
+    public static String bytesToString(final byte[] bytes) {
+        return new String(bytes);
     }
 
     public static long[] bytesToUnsignedLongs(final byte[] bytes) {
@@ -226,5 +233,10 @@ public final class ArrayConversionUtils {
             shorts[i] = (short) ((bytes[offset + 1] & 0xFF) << 8 | bytes[offset] & 0xFF);
         }
         return shorts;
+    }
+
+    @TruffleBoundary
+    public static byte[] stringToBytes(final String value) {
+        return value.getBytes();
     }
 }

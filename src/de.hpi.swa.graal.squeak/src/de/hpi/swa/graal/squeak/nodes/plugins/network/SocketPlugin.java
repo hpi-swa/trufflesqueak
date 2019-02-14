@@ -306,10 +306,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private ArrayObject setSocketOption(final SqueakSocket socket, final String option, final String value) throws IOException {
             if (socket.supportsOption(option)) {
                 socket.setOption(option, value);
-                return method.image.wrap(0L, value);
+                return method.image.newArrayOfObjects(0L, method.image.wrap(value));
             }
-
-            return method.image.wrap(1L, "0");
+            return method.image.newArrayOfObjects(1L, method.image.wrap("0"));
         }
     }
 
@@ -418,7 +417,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 final SqueakSocket socket = getSocketOrPrimFail(method, socketID);
                 final String value = socket.getOption(option.asString());
-                return method.image.wrap(0, value);
+                return method.image.newArrayOfObjects(0L, method.image.wrap(value));
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving socket option failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();

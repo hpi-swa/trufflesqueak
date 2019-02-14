@@ -92,10 +92,8 @@ public final class NativeObject extends AbstractSqueakObject {
         throw SqueakException.create("Use NativeObjectSizeNode");
     }
 
-    @TruffleBoundary
     public String asString() {
-        assert isByteType();
-        return new String((byte[]) storage);
+        return ArrayConversionUtils.bytesToString(getByteStorage());
     }
 
     public void become(final NativeObject other) {

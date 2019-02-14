@@ -645,17 +645,17 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject.isImmediateClassType()")
         protected final ArrayObject noInstances(final ClassObject classObject) {
-            return method.image.newList(ArrayUtils.EMPTY_ARRAY);
+            return method.image.newArrayEmpty();
         }
 
         @Specialization(guards = {"!classObject.isNilClass()", "!classObject.isImmediateClassType()"})
         protected final ArrayObject allInstances(final ClassObject classObject) {
-            return method.image.newList(ArrayUtils.toArray(objectGraphNode.executeAllInstancesOf(classObject)));
+            return method.image.newArrayOfAbstractSqueakObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstancesOf(classObject)));
         }
 
         @Specialization(guards = "classObject.isNilClass()")
         protected final ArrayObject doNil(@SuppressWarnings("unused") final ClassObject classObject) {
-            return method.image.newListWith(method.image.nil);
+            return method.image.newArrayOfAbstractSqueakObjects(method.image.nil);
         }
     }
 
@@ -786,7 +786,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             for (int i = 0; i < PARAMS_ARRAY_SIZE; i++) {
                 vmParameters[i] = vmParameterAt(i + 1);
             }
-            return method.image.newList(vmParameters);
+            return method.image.newArrayOfObjects(vmParameters);
         }
 
         @SuppressWarnings("unused")

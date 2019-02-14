@@ -199,7 +199,7 @@ public final class PushBytecodes {
 
         @Specialization(guards = {"popNReversedNode != null"})
         protected final void doPushArray(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, code.image.newList(popNReversedNode.executePopN(frame)));
+            pushNode.executeWrite(frame, code.image.newArrayOfObjects(popNReversedNode.executePopN(frame)));
         }
 
         @Specialization(guards = {"popNReversedNode == null"})
