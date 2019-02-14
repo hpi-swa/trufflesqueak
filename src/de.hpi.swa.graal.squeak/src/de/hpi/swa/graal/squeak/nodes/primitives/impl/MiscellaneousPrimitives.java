@@ -648,9 +648,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return method.image.newList(ArrayUtils.EMPTY_ARRAY);
         }
 
-        @Specialization(guards = "!classObject.isImmediateClassType()")
+        @Specialization(guards = {"!classObject.isNilClass()", "!classObject.isImmediateClassType()"})
         protected final ArrayObject allInstances(final ClassObject classObject) {
             return method.image.newList(ArrayUtils.toArray(objectGraphNode.executeAllInstancesOf(classObject)));
+        }
+
+        @Specialization(guards = "classObject.isNilClass()")
+        protected final ArrayObject doNil(@SuppressWarnings("unused") final ClassObject classObject) {
+            return method.image.newListWith(method.image.nil);
         }
     }
 

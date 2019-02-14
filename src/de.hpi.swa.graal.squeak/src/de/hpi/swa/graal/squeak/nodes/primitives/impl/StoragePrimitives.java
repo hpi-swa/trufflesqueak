@@ -28,6 +28,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
@@ -427,16 +428,16 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "sqObject.getSqueakClass().isImmediateClassType()")
-        protected final AbstractSqueakObject noInstances(final AbstractSqueakObject sqObject) {
+        @Specialization(guards = "sqObject.getSqueakClass().isNilClass() || sqObject.getSqueakClass().isImmediateClassType()")
+        protected final NilObject doNil(final AbstractSqueakObject sqObject) {
             return method.image.nil;
         }
 
-        @Specialization(guards = "!sqObject.getSqueakClass().isImmediateClassType()")
-        protected final AbstractSqueakObject nextInstance(final AbstractSqueakObject sqObject) {
+        @Specialization(guards = {"!sqObject.getSqueakClass().isNilClass()", "!sqObject.getSqueakClass().isImmediateClassType()"})
+        protected final AbstractSqueakObject doNext(final AbstractSqueakObject sqObject) {
             final AbstractCollection<AbstractSqueakObject> instances = objectGraphNode.executeAllInstancesOf(sqObject.getSqueakClass());
             boolean foundMyself = false;
-            for (AbstractSqueakObject instance : instances) {
+            for (final AbstractSqueakObject instance : instances) {
                 if (instance == sqObject) {
                     foundMyself = true;
                 } else if (foundMyself) {

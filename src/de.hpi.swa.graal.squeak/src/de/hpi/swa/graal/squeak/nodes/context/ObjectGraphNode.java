@@ -57,6 +57,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
 
     @TruffleBoundary
     public AbstractCollection<AbstractSqueakObject> executeAllInstancesOf(final ClassObject classObj) {
+        assert classObj != image.nilClass;
         final ArrayDeque<AbstractSqueakObject> result = new ArrayDeque<>();
         final HashSet<AbstractSqueakObject> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
         final ArrayDeque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
@@ -77,6 +78,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
 
     @TruffleBoundary
     public AbstractSqueakObject executeSomeInstanceOf(final ClassObject classObj) {
+        assert classObj != image.nilClass;
         final HashSet<AbstractSqueakObject> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
         final ArrayDeque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);

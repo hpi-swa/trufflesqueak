@@ -433,6 +433,10 @@ public final class ClassObject extends AbstractSqueakObject {
         return this == image.largeNegativeIntegerClass;
     }
 
+    public boolean isNilClass() {
+        return this == image.nilClass;
+    }
+
     public boolean isSmallIntegerClass() {
         return this == image.smallIntegerClass;
     }
