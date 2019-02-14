@@ -13,9 +13,9 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -25,6 +25,7 @@ import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -82,22 +83,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] toPointers = getObjectArrayNode.execute(toArray);
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            final AbstractCollection<AbstractSqueakObject> instances;
-            if (fromPointers.length == 1) {
-                instances = objectGraphNode.executeAllInstancesOf(((AbstractSqueakObject) fromPointers[0]).getSqueakClass());
-            } else {
-                instances = objectGraphNode.executeAllInstances();
-            }
-            migrateInstances(fromPointersClone, toPointers, copyHash, instances);
-            // TODO: why is it necessary to iterate over frames again? all instances already does
-            // that as well.
+            migrateInstances(fromPointersClone, toPointers, copyHash, objectGraphNode.executeAllInstances());
             patchTruffleFrames(fromPointersClone, toPointers, copyHash);
             return fromArray;
         }
 
         @TruffleBoundary
         private void migrateInstances(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash, final AbstractCollection<AbstractSqueakObject> instances) {
-            for (AbstractSqueakObject instance : instances) {
+            for (final AbstractSqueakObject instance : instances) {
                 pointersBecomeNode.execute(instance, fromPointers, toPointers, copyHash);
             }
         }
@@ -106,59 +99,67 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         private void patchTruffleFrames(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
             final int fromPointersLength = fromPointers.length;
 
-            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
-                private boolean firstSkipped = false;
+            Truffle.getRuntime().iterateFrames((frameInstance) -> {
+                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+                if (!FrameAccess.isGraalSqueakFrame(current)) {
+                    return null;
+                }
+                final Object[] arguments = current.getArguments();
+                for (int i = 0; i < arguments.length; i++) {
+                    final Object argument = arguments[i];
+                    for (int j = 0; j < fromPointersLength; j++) {
+                        final Object fromPointer = fromPointers[j];
+                        if (argument == fromPointer) {
+                            final Object toPointer = toPointers[j];
+                            arguments[i] = toPointer;
+                            updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
+                        } else {
+                            pointersBecomeNode.execute(argument, fromPointers, toPointers, copyHash);
+                        }
+                    }
+                }
 
-                @Override
-                public Frame visitFrame(final FrameInstance frameInstance) {
-                    if (!firstSkipped) {
-                        // do not touch first frame, otherwise fromPointers will contain toPointers.
-                        firstSkipped = true;
-                        return null;
-                    }
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-                    if (!FrameAccess.isGraalSqueakFrame(current)) {
-                        return null;
-                    }
-                    final Object[] arguments = FrameAccess.getReceiverAndArguments(current);
-                    for (int i = 0; i < arguments.length; i++) {
-                        final Object argument = arguments[i];
-                        for (int j = 0; j < fromPointersLength; j++) {
-                            final Object fromPointer = fromPointers[j];
-                            if (argument == fromPointer) {
-                                final Object toPointer = toPointers[j];
-                                updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
-                            } else {
-                                pointersBecomeNode.execute(argument, fromPointers, toPointers, copyHash);
-                            }
+                final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
+                final ContextObject context = FrameAccess.getContext(current, blockOrMethod);
+                if (context != null) {
+                    for (int j = 0; j < fromPointersLength; j++) {
+                        final Object fromPointer = fromPointers[j];
+                        if (context == fromPointer) {
+                            final Object toPointer = toPointers[j];
+                            FrameAccess.setContext(current, blockOrMethod, (ContextObject) toPointer);
+                            updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
+                        } else {
+                            pointersBecomeNode.execute(context, fromPointers, toPointers, copyHash);
                         }
                     }
-                    /*
-                     * use method.frameSize() here instead of stackPointer because in rare cases,
-                     * the stack is accessed behind the stackPointer.
-                     */
-                    final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
-                    for (int i = 0; i < blockOrMethod.getNumStackSlots(); i++) {
-                        final FrameSlot frameSlot = blockOrMethod.getStackSlot(i);
-                        if (blockOrMethod.getFrameDescriptor().getFrameSlotKind(frameSlot) == FrameSlotKind.Illegal) {
-                            /** this slot and all following ones are not initialized, done. */
-                            return null;
-                        }
-                        final Object stackObject = current.getValue(frameSlot);
+                }
+
+                /*
+                 * use blockOrMethod.getNumStackSlots() here instead of stackPointer because in rare
+                 * cases, the stack is accessed behind the stackPointer.
+                 */
+                for (int i = 0; i < blockOrMethod.getNumStackSlots(); i++) {
+                    final FrameSlot frameSlot = blockOrMethod.getStackSlot(i);
+                    final FrameSlotKind frameSlotKind = blockOrMethod.getFrameDescriptor().getFrameSlotKind(frameSlot);
+                    if (frameSlotKind == FrameSlotKind.Object) {
+                        final Object stackObject = FrameUtil.getObjectSafe(current, frameSlot);
                         for (int j = 0; j < fromPointersLength; j++) {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
                                 assert toPointer != null;
-                                FrameAccess.setStackSlot(current, frameSlot, toPointer);
+                                current.setObject(frameSlot, toPointer);
                                 updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                             } else {
                                 pointersBecomeNode.execute(stackObject, fromPointers, toPointers, copyHash);
                             }
                         }
+                    } else if (frameSlotKind == FrameSlotKind.Illegal) {
+                        /** this slot and all following ones are not initialized, done. */
+                        return null;
                     }
-                    return null;
                 }
+                return null;
             });
         }
     }
