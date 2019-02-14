@@ -66,7 +66,7 @@ public final class ContextObject extends AbstractSqueakObject {
         final int numStackSlots = code.getNumStackSlots();
         for (int i = 0; i < numStackSlots; i++) {
             final FrameSlot slot = code.getStackSlot(i);
-            truffleFrame.setObject(slot, original.truffleFrame.getValue(slot)); // TODO: specialize
+            FrameAccess.setStackSlot(truffleFrame, slot, original.truffleFrame.getValue(slot));
         }
     }
 
