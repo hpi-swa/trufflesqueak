@@ -1,26 +1,43 @@
-*.cfg
-*.iml
-*.jar
-*.launch
-*.prefs
-*.pyc
-*.sources
-*.src.zip
-*dumps
-*nbproject*
-*src_gen*
+# OS
+.DS_Store
+
+# Editors
+*~
+
+# Eclipse
 .classpath
-.factorypath
-.idea
 .project
-.pydevproject
-build.xml
-coverage
-env
-images
-jacoco.exec
-.mx
-mx
-mxbuild
+.settings
+.factorypath
 workingsets.xml
+
+# NetBeans
+nbproject
+build.xml
+
+# IntelliJ
+.idea
+*.iml
+
+# mx
+/.mx
+/mx.graalsqueak/.pydevproject
+/mx.graalsqueak/*.pyc
+/mx.graalsqueak/env
+/mx.graalsqueak/eclipse-launches
+/mxbuild
+/GRAALSQUEAK*.dist
+/coverage
+jacoco.exec
+
+# Diagnostic output directory
+dumps/
+
+# Profile output directory
+profiles/
+
+# GraalSqueak
+images
+graalsqueak*.zip
+graalsqueak*.jar
 graalsqueak-svm
