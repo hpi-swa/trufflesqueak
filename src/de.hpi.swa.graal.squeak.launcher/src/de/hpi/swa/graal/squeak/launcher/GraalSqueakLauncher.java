@@ -87,7 +87,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute();
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
-        } catch (PolyglotException e) {
+        } catch (final PolyglotException e) {
             if (e.isExit()) {
                 return e.getExitStatus();
             } else if (!e.isInternalError()) {
@@ -96,7 +96,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             } else {
                 throw e;
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw abort(String.format("Error loading file '%s' (%s)", imagePath, e.getMessage()));
         }
     }

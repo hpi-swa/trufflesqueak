@@ -3,10 +3,11 @@ package de.hpi.swa.graal.squeak.test;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 
-import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
-import de.hpi.swa.graal.squeak.test.SqueakTests.TestType;
 import java.util.Collection;
 import java.util.Map;
+
+import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
+import de.hpi.swa.graal.squeak.test.SqueakTests.TestType;
 import de.hpi.swa.graal.squeak.test.Travis.AnsiCodes;
 
 public final class Statistics {

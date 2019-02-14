@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
+import org.junit.ClassRule;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -25,7 +26,6 @@ import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
-import org.junit.ClassRule;
 
 public abstract class AbstractSqueakTestCase {
 

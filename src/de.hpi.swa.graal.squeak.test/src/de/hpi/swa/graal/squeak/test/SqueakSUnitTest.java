@@ -5,8 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
-import de.hpi.swa.graal.squeak.test.SqueakTests.TestType;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
@@ -17,6 +15,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
+
+import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
+import de.hpi.swa.graal.squeak.test.SqueakTests.TestType;
 
 /**
  * Run tests from the Squeak image.

@@ -59,7 +59,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         evaluate("{Delay. EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
         image.getOutput().println("Processing StartUpList...");
         evaluate("Smalltalk processStartUpList: true");
-        final ArrayObject lists = ((ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS));
+        final ArrayObject lists = (ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject priority10List = (PointersObject) lists.at0(PRIORITY_10_LIST_INDEX);
         final Object firstLink = priority10List.at0(LINKED_LIST.FIRST_LINK);
         final Object lastLink = priority10List.at0(LINKED_LIST.LAST_LINK);

@@ -155,7 +155,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             try {
                 runMethod(rcvr, bytecode);
                 fail("Exception expected");
-            } catch (SqueakException e) {
+            } catch (final SqueakException e) {
                 assertEquals("Unknown/uninterpreted bytecode: " + bytecode, e.getMessage());
             }
         }
@@ -463,7 +463,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         CompiledMethodObject method = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, 138, 127, 124);
         Object result = runMethod(method, rcvr);
         assertTrue(result instanceof ArrayObject);
-        ArrayObject resultList = ((ArrayObject) result);
+        ArrayObject resultList = (ArrayObject) result;
         assertEquals(127, sizeNode.execute(resultList));
 
         // pushNewArray and pop
@@ -478,7 +478,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         method = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, intbytes);
         result = runMethod(method, rcvr);
         assertTrue(result instanceof ArrayObject);
-        resultList = ((ArrayObject) result);
+        resultList = (ArrayObject) result;
         assertEquals(arraySize, sizeNode.execute(resultList));
         for (int i = 0; i < arraySize; i++) {
             assertEquals(i % 2 == 0 ? image.sqTrue : image.sqFalse, at0Node.execute(resultList, i));
@@ -532,7 +532,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         try {
             final Object result = createContext(method, rcvr).execute(frame);
             assertTrue(result instanceof ArrayObject);
-            final ArrayObject resultList = ((ArrayObject) result);
+            final ArrayObject resultList = (ArrayObject) result;
             assertEquals(2, sizeNode.execute(resultList));
             assertEquals(image.sqFalse, at0Node.execute(resultList, 0));
             assertEquals(image.sqFalse, at0Node.execute(resultList, 1));
@@ -557,7 +557,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         try {
             final Object result = createContext(method, rcvr).execute(frame);
             assertTrue(result instanceof ArrayObject);
-            final ArrayObject resultList = ((ArrayObject) result);
+            final ArrayObject resultList = (ArrayObject) result;
             assertEquals(2, sizeNode.execute(resultList));
             assertEquals(image.sqFalse, at0Node.execute(resultList, 0));
             assertEquals(image.sqTrue, at0Node.execute(resultList, 1));
@@ -604,7 +604,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         // 41 <7C> returnTop
         for (int i = 0; i < 4; i++) {
             final int bytecode = 164 + i;
-            final int gap = (((bytecode & 7) - 4) << 8) + 20;
+            final int gap = ((bytecode & 7) - 4 << 8) + 20;
             final int length = 4 + gap;
             final int[] intBytes = new int[length];
             intBytes[0] = bytecode;

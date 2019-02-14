@@ -17,7 +17,7 @@ public final class Travis {
     private final Deque<Fold> folds = new ConcurrentLinkedDeque<>();
 
     private Travis() {
-        this.out = enabled() ? System.out : new NullPrintStream();
+        out = enabled() ? System.out : new NullPrintStream();
     }
 
     private static boolean enabled() {
