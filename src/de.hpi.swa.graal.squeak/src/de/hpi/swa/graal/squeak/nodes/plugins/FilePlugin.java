@@ -232,7 +232,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final int index = (int) longIndex - 1;
             if (files != null && index < files.length) {
                 final File file = files[index];
-                final NativeObject pathNameNative = method.image.wrap(file.getPath());
+                final NativeObject pathNameNative = method.image.wrap(file.getName());
                 final long pathLastModified = method.image.wrap(file.lastModified());
                 final boolean pathIsDirectory = method.image.wrap(file.isDirectory());
                 final long pathLength = method.image.wrap(file.length());
