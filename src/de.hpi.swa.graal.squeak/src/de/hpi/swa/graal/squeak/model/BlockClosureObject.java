@@ -102,7 +102,11 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         }
     }
 
-    public ContextObject getOuterContext() {
+    public AbstractSqueakObject getOuterContext() {
+        return outerContext == null ? image.nil : outerContext;
+    }
+
+    public ContextObject getOuterContextOrNull() {
         return outerContext;
     }
 

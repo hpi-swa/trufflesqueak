@@ -161,7 +161,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         } else if (object instanceof BlockClosureObject) {
             final BlockClosureObject closure = (BlockClosureObject) object;
             addIfHasTraceablePointers(pending, closure.getReceiver());
-            pending.add(closure.getOuterContext());
+            addIfHasTraceablePointers(pending, closure.getOuterContext());
             for (final Object value : closure.getCopied()) {
                 addIfHasTraceablePointers(pending, value);
             }

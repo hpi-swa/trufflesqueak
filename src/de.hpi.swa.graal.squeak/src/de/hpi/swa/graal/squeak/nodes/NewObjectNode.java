@@ -72,6 +72,7 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
     @SuppressWarnings("unused")
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isBlockClosureClass()"})
     protected final Object doBlockClosure(final ClassObject classObject, final int extraSize) {
+        assert extraSize == 0;
         return new BlockClosureObject(image); // TODO: verify this is actually used
     }
 

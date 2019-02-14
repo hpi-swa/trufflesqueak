@@ -33,7 +33,8 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
         final Object[] oldCopied = obj.getCopied();
         final int numOldCopied = oldCopied.length;
         Object newReceiver = obj.getReceiver();
-        ContextObject newOuterContext = obj.getOuterContext();
+        ContextObject newOuterContext = obj.getOuterContextOrNull();
+        assert newOuterContext != null : "Outer context should probably not be null/nil here";
         Object[] newCopied = null;
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
@@ -60,7 +61,7 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
         if (newReceiver != obj.getReceiver()) {
             obj.setReceiver(newReceiver);
         }
-        if (newOuterContext != obj.getOuterContext()) {
+        if (newOuterContext != obj.getOuterContextOrNull()) {
             obj.setOuterContext(newOuterContext);
         }
         if (newCopied != null) {
