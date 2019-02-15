@@ -7,8 +7,8 @@ import java.util.Set;
 import org.graalvm.collections.EconomicMap;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -48,6 +48,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.BlockClosurePrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ContextPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
@@ -103,12 +104,12 @@ public final class PrimitiveNodeFactory {
         fillPluginMap(image, plugins);
     }
 
-    @TruffleBoundary
     public AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final int primitiveIndex) {
+        CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
+        assert primitiveIndex >= 0 : "Unexpected negative primitiveIndex";
         if (264 <= primitiveIndex && primitiveIndex <= 520) {
-            return ControlPrimitives.PrimQuickReturnReceiverVariableNode.create(method, primitiveIndex - 264);
-        }
-        if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
+            return ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory.create(method, primitiveIndex - 264, new SqueakNode[]{ArgumentNode.create(method, 0)});
+        } else if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable[primitiveIndex - 1];
             if (nodeFactory != null) {
                 return createInstance(method, nodeFactory);
@@ -131,8 +132,8 @@ public final class PrimitiveNodeFactory {
         }
     }
 
-    @TruffleBoundary
     private AbstractPrimitiveNode forName(final CompiledMethodObject method, final byte[] moduleName, final byte[] functionName) {
+        CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         final UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = pluginsMap.get(new String(moduleName));
         if (functionNameToNodeFactory != null) {
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = functionNameToNodeFactory.get(new String(functionName));

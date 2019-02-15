@@ -299,11 +299,12 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final int primitiveIndex() {
-        if (hasPrimitive() && bytes.length >= 3) {
-            return (Byte.toUnsignedInt(bytes[2]) << 8) + Byte.toUnsignedInt(bytes[1]);
-        } else {
-            return 0;
-        }
+        assert hasPrimitive() && bytes.length >= 3;
+        return (Byte.toUnsignedInt(bytes[2]) << 8) + Byte.toUnsignedInt(bytes[1]);
+    }
+
+    public final boolean isUnwindMarked() {
+        return hasPrimitive() && primitiveIndex() == 198;
     }
 
     @Override
@@ -329,10 +330,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final void invalidateCanBeVirtualizedAssumption() {
         canBeVirtualized.invalidate();
-    }
-
-    public final boolean isUnwindMarked() {
-        return hasPrimitive() && primitiveIndex() == 198;
     }
 
     public static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {

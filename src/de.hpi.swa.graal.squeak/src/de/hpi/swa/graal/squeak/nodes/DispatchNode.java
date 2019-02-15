@@ -9,11 +9,10 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -29,54 +28,23 @@ public abstract class DispatchNode extends AbstractNode {
 
     public abstract Object executeDispatch(VirtualFrame frame, CompiledMethodObject method, Object[] receiverAndArguments, Object contextOrMarker);
 
-    protected static final boolean isQuickReturnReceiverVariable(final int primitiveIndex) {
-        return 264 <= primitiveIndex && primitiveIndex <= 520;
-    }
-
-    @Specialization(guards = {"isQuickReturnReceiverVariable(method.primitiveIndex())"})
-    protected static final Object doPrimitiveQuickReturnReceiver(final CompiledMethodObject method, final Object[] receiverAndArguments,
-                    @SuppressWarnings("unused") final Object contextOrMarker,
-                    @Cached("create()") final SqueakObjectAt0Node at0Node) {
-        assert receiverAndArguments[0] instanceof AbstractSqueakObject;
-        return at0Node.execute(receiverAndArguments[0], method.primitiveIndex() - 264);
-    }
-
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isQuickReturnReceiverVariable(method.primitiveIndex())", "method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, //
-                    limit = "PRIMITIVE_CACHE_SIZE", assumptions = {"callTargetStable"}, rewriteOn = {PrimitiveFailed.class})
+    @Specialization(guards = {"method.hasPrimitive()", "method == cachedMethod", "primitiveNode != null"}, //
+                    limit = "PRIMITIVE_CACHE_SIZE", assumptions = {"callTargetStable"})
     protected static final Object doPrimitiveEagerly(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
-                    @Cached("cachedMethod.image.primitiveNodeFactory.forIndex(method, method.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
-                    @Cached("create()") final CreateEagerArgumentsNode createEagerArgumentsNode) {
-        return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isQuickReturnReceiverVariable(method.primitiveIndex())", "method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, //
-                    limit = "PRIMITIVE_CACHE_SIZE", replaces = "doPrimitiveEagerly", assumptions = {"callTargetStable"})
-    protected static final Object doPrimitiveEagerlyCatch(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
-                    @Cached("method") final CompiledMethodObject cachedMethod,
-                    @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
-                    @Cached("cachedMethod.image.primitiveNodeFactory.forIndex(method, method.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
+                    @Cached("cachedMethod.image.primitiveNodeFactory.forIndex(cachedMethod, cachedMethod.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
                     @Cached("create()") final CreateEagerArgumentsNode createEagerArgumentsNode,
-                    @Cached("method.getCallTarget()") final RootCallTarget cachedTarget,
-                    @Cached("create(cachedTarget)") final DirectCallNode callNode) {
+                    @Cached("cachedMethod.getCallTarget()") final RootCallTarget cachedTarget,
+                    @Cached("create(cachedTarget)") final DirectCallNode callNode,
+                    @Cached("create()") final BranchProfile failedProfile) {
         try {
             return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
         } catch (final PrimitiveFailed e) {
-            // TODO (low priority): Skip CallPrimitiveNode somehow, not necessary to fail twice.
+            failedProfile.enter();
             return callNode.call(FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
         }
-    }
-
-    @Specialization(guards = {"method.getCallTarget() == cachedTarget", "!isQuickReturnReceiverVariable(method.primitiveIndex())", "!method.hasPrimitive()"}, //
-                    limit = "INLINE_CACHE_SIZE", assumptions = "callTargetStable")
-    protected static final Object doDirectWithoutPrimitive(final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
-                    @SuppressWarnings("unused") @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
-                    @SuppressWarnings("unused") @Cached("method.getCallTarget()") final RootCallTarget cachedTarget,
-                    @Cached("create(cachedTarget)") final DirectCallNode callNode) {
-        return callNode.call(FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
     }
 
     @Specialization(guards = {"code.getCallTarget() == cachedTarget"}, //
