@@ -223,14 +223,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"isSmallIntegerPositive(receiver)", "isSmallIntegerPositive(arg)"})
+        @Specialization(guards = {"isSmallIntegerPositive(receiver)"})
         protected static final long doLong(final long receiver, final long arg) {
             return receiver & arg;
         }
 
         @Specialization(guards = {"isSmallIntegerPositive(receiver)", "arg.fitsIntoLong()"})
         protected static final Object doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
-            return doLong(receiver, arg.longValueExact());
+            return doLong(receiver, arg.longValue());
         }
 
         @Specialization(guards = {"isSmallInteger(receiver)", "!arg.fitsIntoLong()", "arg.sizeLessThanWordSize()"})
@@ -246,14 +246,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"isSmallInteger(receiver)", "isSmallInteger(arg)"})
+        @Specialization(guards = {"isSmallInteger(receiver)"})
         protected static final long doLong(final long receiver, final long arg) {
             return receiver | arg;
         }
 
         @Specialization(guards = {"isSmallInteger(receiver)", "arg.fitsIntoLong()"})
         protected static final Object doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
-            return doLong(receiver, arg.longValueExact());
+            return doLong(receiver, arg.longValue());
         }
 
         @Specialization(guards = {"isSmallInteger(receiver)", "!arg.fitsIntoLong()", "arg.sizeLessThanWordSize()"})
@@ -269,7 +269,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"isSmallInteger(receiver)", "isSmallInteger(arg)"})
+        @Specialization(guards = {"isSmallInteger(receiver)"})
         protected static final long doLong(final long receiver, final long arg) {
             return receiver ^ arg;
         }
