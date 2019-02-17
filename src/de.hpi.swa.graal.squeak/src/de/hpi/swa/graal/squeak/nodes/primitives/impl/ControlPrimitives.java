@@ -715,6 +715,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 118)
     protected abstract static class PrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child protected ArrayObjectToObjectArrayTransformNode getObjectArrayNode = ArrayObjectToObjectArrayTransformNode.create();
+        @Child protected CreateEagerArgumentsNode createEagerArgumentsNode = CreateEagerArgumentsNode.create();
 
         public PrimDoPrimitiveWithArgsNode(final CompiledMethodObject method) {
             super(method);
@@ -742,7 +743,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (primitiveNode == null) {
                 throw new PrimitiveFailed();
             }
-            return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
+            return replace(primitiveNode).executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
         }
     }
 
