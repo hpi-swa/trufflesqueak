@@ -92,7 +92,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                     "69 <C5> send: atEnd",
                     "70 <C6> send: equivalent",
                     "71 <C7> send: klass",
-                    "72 <C8> send: blockCopy",
+                    "72 <C8> send: ~~",
                     "73 <C9> send: value",
                     "74 <CA> send: valueWithArg",
                     "75 <CB> send: do",

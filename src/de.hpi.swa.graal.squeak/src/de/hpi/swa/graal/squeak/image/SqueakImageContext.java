@@ -127,7 +127,7 @@ public final class SqueakImageContext {
     public final NativeObject atEnd = new NativeObject(this);
     public final NativeObject equivalent = new NativeObject(this);
     public final NativeObject klass = new NativeObject(this);
-    public final NativeObject blockCopy = new NativeObject(this);
+    public final NativeObject nonEquivalent = new NativeObject(this);
     public final NativeObject sqValue = new NativeObject(this);
     public final NativeObject valueWithArg = new NativeObject(this);
     public final NativeObject sqDo = new NativeObject(this);
@@ -139,7 +139,7 @@ public final class SqueakImageContext {
     @CompilationFinal(dimensions = 1) public final NativeObject[] specialSelectorsArray = new NativeObject[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
                     floorDivide, bitAnd, bitOr, at, atput, sqSize, next, nextPut, atEnd, equivalent,
-                    klass, blockCopy, sqValue, valueWithArg, sqDo, sqNew, newWithArg, x, y
+                    klass, nonEquivalent, sqValue, valueWithArg, sqDo, sqNew, newWithArg, x, y
     };
 
     @CompilationFinal(dimensions = 1) public final int[] specialSelectorsNumArgs = new int[]{

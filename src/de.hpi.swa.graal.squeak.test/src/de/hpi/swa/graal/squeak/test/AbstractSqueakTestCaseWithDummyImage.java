@@ -34,7 +34,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         image.atEnd.setStorage("atEnd".getBytes());
         image.equivalent.setStorage("equivalent".getBytes());
         image.klass.setStorage("klass".getBytes());
-        image.blockCopy.setStorage("blockCopy".getBytes());
+        image.nonEquivalent.setStorage("~~".getBytes());
         image.sqValue.setStorage("value".getBytes());
         image.valueWithArg.setStorage("valueWithArg".getBytes());
         image.sqDo.setStorage("do".getBytes());
