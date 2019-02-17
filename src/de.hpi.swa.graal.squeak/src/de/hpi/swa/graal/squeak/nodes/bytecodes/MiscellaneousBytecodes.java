@@ -3,11 +3,11 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
@@ -32,7 +32,10 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class MiscellaneousBytecodes {
 
@@ -40,44 +43,45 @@ public final class MiscellaneousBytecodes {
         private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
         public static final int NUM_BYTECODES = 3;
 
-        @Child private HandlePrimitiveFailedNode handlePrimFailed;
+        @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
         @Child protected AbstractPrimitiveNode primitiveNode;
         private final int primitiveIndex;
-
-        private final BranchProfile primitiveFailureProfile = BranchProfile.create();
 
         public CallPrimitiveNode(final CompiledMethodObject method, final int index, final int byte1, final int byte2) {
             super(method, index, NUM_BYTECODES);
             primitiveIndex = byte1 + (byte2 << 8);
             primitiveNode = method.image.primitiveNodeFactory.forIndex(method, primitiveIndex);
-            handlePrimFailed = primitiveNode == null ? null : HandlePrimitiveFailedNode.create(method);
+            assert method.hasPrimitive();
         }
 
         public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int byte1, final int byte2) {
             return CallPrimitiveNodeGen.create(code, index, byte1, byte2);
         }
 
-        @Specialization(guards = {"code.hasPrimitive()", "primitiveNode != null"})
+        @Specialization(guards = {"primitiveNode != null"})
         protected final void doPrimitive(final VirtualFrame frame) {
             try {
                 throw new LocalReturn(primitiveNode.executePrimitive(frame));
             } catch (final PrimitiveFailed e) {
-                primitiveFailureProfile.enter();
-                LOG.log(Level.FINE, "Primitive failure: {0}", primitiveNode);
-                handlePrimFailed.executeHandle(frame, e);
+                /** getHandlePrimitiveFailedNode() acts as branch profile. */
+                getHandlePrimitiveFailedNode().executeHandle(frame, e);
+                LOG.log(Level.FINE, () -> (primitiveNode instanceof PrimitiveFailedNode ? FrameAccess.getMethod(frame) : primitiveNode) +
+                                " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
             }
             // continue with fallback code
         }
 
-        // Cannot use `@Fallback` here, so manually negate previous guards
-        @Specialization(guards = {"!code.hasPrimitive() || primitiveNode == null"})
-        protected final void doFallbackCode() {
-            // continue with fallback code immediately
-        }
-
         @Fallback
         protected static final void doFail() {
-            throw SqueakException.create("Should never happen");
+            // continue with fallback code immediately.
+        }
+
+        private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
+            if (handlePrimitiveFailedNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                handlePrimitiveFailedNode = HandlePrimitiveFailedNode.create(code);
+            }
+            return handlePrimitiveFailedNode;
         }
 
         @Override
