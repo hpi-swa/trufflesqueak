@@ -1201,12 +1201,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(a, asLargeInteger(b));
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
+        @Specialization(rewriteOn = ArithmeticException.class)
         protected final Object doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+            return doLong(a, b.longValueExact());
         }
 
-        @Specialization(guards = "!b.fitsIntoLong()")
+        @Specialization
         protected final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
             return doLargeInteger(asLargeInteger(a), b);
         }
