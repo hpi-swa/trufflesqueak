@@ -276,7 +276,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"isSmallInteger(receiver)", "arg.fitsIntoLong()"})
         protected static final Object doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
-            return doLong(receiver, arg.longValueExact());
+            return doLong(receiver, arg.longValue());
         }
 
         @Specialization(guards = {"isSmallInteger(receiver)", "!arg.fitsIntoLong()", "arg.sizeLessThanWordSize()"})
@@ -347,7 +347,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()"})
         protected static final long doLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValueExact());
+            return doLong(a, b.longValue());
         }
 
         @Specialization(guards = {"!b.isZero()", "!b.fitsIntoLong()"})
@@ -584,13 +584,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(a, asLargeInteger(b));
         }
 
-        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "isIntegralWhenDividedBy(a, b.longValueExact())", "!isOverflowDivision(a, b.longValueExact())"})
+        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "isIntegralWhenDividedBy(a, b.longValue())", "!isOverflowDivision(a, b.longValue())"})
         protected static final Object doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValueExact());
+            return doLong(a, b.longValue());
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValueExact())"})
+        @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValue())"})
         protected final LargeIntegerObject doLongLargeIntegerAsLongWithOverflow(final long a, final LargeIntegerObject b) {
             return LargeIntegerObject.createOverflowDivisionResult(method.image);
         }
@@ -644,13 +644,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return a.floorDivide(b);
         }
 
-        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "!isOverflowDivision(a, b.longValueExact())"})
+        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "!isOverflowDivision(a, b.longValue())"})
         protected static final Object doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValueExact());
+            return doLong(a, b.longValue());
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValueExact())"})
+        @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValue())"})
         protected final LargeIntegerObject doLongLargeIntegerAsLongWithOverflow(final long a, final LargeIntegerObject b) {
             return LargeIntegerObject.createOverflowDivisionResult(method.image);
         }
@@ -684,13 +684,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return LargeIntegerObject.createOverflowDivisionResult(method.image);
         }
 
-        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "!isOverflowDivision(a, b.longValueExact())"})
+        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "!isOverflowDivision(a, b.longValue())"})
         protected static final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValueExact());
+            return doLong(a, b.longValue());
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValueExact())"})
+        @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValue())"})
         protected final LargeIntegerObject doLongLargeIntegerWithOverflow(final long a, final LargeIntegerObject b) {
             return LargeIntegerObject.createOverflowDivisionResult(method.image);
         }
@@ -1201,9 +1201,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(a, asLargeInteger(b));
         }
 
-        @Specialization(guards = "b.fitsIntoLong()", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = "b.fitsIntoLong()")
         protected final Object doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValueExact());
+            return doLong(a, b.longValue());
         }
 
         @Specialization(guards = "!b.fitsIntoLong()")
