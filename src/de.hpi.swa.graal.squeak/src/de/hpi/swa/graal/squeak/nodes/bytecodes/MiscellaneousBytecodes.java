@@ -68,12 +68,18 @@ public final class MiscellaneousBytecodes {
                 LOG.log(Level.FINE, () -> (primitiveNode instanceof PrimitiveFailedNode ? FrameAccess.getMethod(frame) : primitiveNode) +
                                 " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
             }
-            // continue with fallback code
+            /** continue with fallback code. */
+        }
+
+        // Cannot use `@Fallback` here, so manually negate previous guards
+        @Specialization(guards = {"primitiveNode == null"})
+        protected final void doFallbackCode() {
+            /** continue with fallback code immediately. */
         }
 
         @Fallback
-        protected static final void doFail() {
-            // continue with fallback code immediately.
+        protected static final void doFallback() {
+            throw SqueakException.create("Should never happen");
         }
 
         private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
