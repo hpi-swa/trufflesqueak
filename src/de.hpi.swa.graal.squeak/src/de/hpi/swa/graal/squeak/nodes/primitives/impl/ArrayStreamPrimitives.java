@@ -3,10 +3,15 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -23,6 +28,8 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.POSITIONABLE_STREAM;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -41,7 +48,10 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveWithSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArrayStreamPrimitivesFactory.PrimNextNodeFactory.DoNextNodeGen;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArrayStreamPrimitivesFactory.PrimNextPutNodeFactory.DoNextPutNodeGen;
 
 public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -669,6 +679,123 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected final Object doNativeObject(final NativeObject obj, final long index, final long value) {
             writeNode.execute(obj, index - 1, value);
             return CharacterObject.valueOf(method.image, (int) value);
+        }
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    @ImportStatic(POSITIONABLE_STREAM.class)
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 65)
+    protected abstract static class PrimNextNode extends AbstractPrimitiveWithSizeNode implements UnaryPrimitive {
+        @Child private DoNextNode doNextNode = DoNextNode.create();
+
+        protected PrimNextNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "stream.size() >= READ_LIMIT")
+        protected final Object doNext(final PointersObject stream) {
+            return doNextNode.execute(stream, stream.getPointer(POSITIONABLE_STREAM.COLLECTION), stream.getPointer(POSITIONABLE_STREAM.POSITION), stream.getPointer(POSITIONABLE_STREAM.READ_LIMIT));
+        }
+
+        protected abstract static class DoNextNode extends Node {
+
+            protected static DoNextNode create() {
+                return DoNextNodeGen.create();
+            }
+
+            protected abstract Object execute(PointersObject stream, Object collection, Object position, Object readLimit);
+
+            @Specialization(guards = {"position < readLimit"})
+            protected static final Object doArray(final PointersObject stream, final ArrayObject collection, final long position, @SuppressWarnings("unused") final long readLimit,
+                            @Cached("create()") final ArrayObjectReadNode readNode) {
+                final long newPosition = position + 1;
+                stream.setPointer(1, newPosition);
+                return readNode.execute(collection, position); // -1
+            }
+
+            @Specialization(guards = {"collection.isString()", "position < readLimit"})
+            protected static final char doString(final PointersObject stream, final NativeObject collection, final long position, @SuppressWarnings("unused") final long readLimit) {
+                final long newPosition = position + 1;
+                stream.setPointer(1, newPosition);
+                return (char) Byte.toUnsignedInt(collection.getByteStorage()[(int) position]); // -1
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            protected static final Object doFail(final PointersObject stream, final Object collection, final Object position, final Object readLimit) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    @ImportStatic(POSITIONABLE_STREAM.class)
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 66)
+    protected abstract static class PrimNextPutNode extends AbstractPrimitiveWithSizeNode implements BinaryPrimitive {
+        @Child private DoNextPutNode doNextNode = DoNextPutNode.create();
+
+        protected PrimNextPutNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "stream.size() >= READ_LIMIT")
+        protected final Object doNext(final PointersObject stream, final Object value) {
+            doNextNode.execute(stream, stream.getPointer(POSITIONABLE_STREAM.COLLECTION), stream.getPointer(POSITIONABLE_STREAM.POSITION), stream.getPointer(POSITIONABLE_STREAM.READ_LIMIT), value);
+            return stream;
+        }
+
+        protected abstract static class DoNextPutNode extends Node {
+
+            protected static DoNextPutNode create() {
+                return DoNextPutNodeGen.create();
+            }
+
+            protected abstract void execute(PointersObject stream, Object collection, Object position, Object readLimit, Object value);
+
+            @Specialization(guards = {"position < readLimit"})
+            protected static final void doArray(final PointersObject stream, final ArrayObject collection, final long position, @SuppressWarnings("unused") final long readLimit, final Object value,
+                            @Cached("create()") final ArrayObjectWriteNode writeNode) {
+                final long newPosition = position + 1;
+                stream.setPointer(1, newPosition);
+                writeNode.execute(collection, position, value); // -1
+            }
+
+            @Specialization(guards = {"collection.isString()", "position < readLimit"})
+            protected static final void doString(final PointersObject stream, final NativeObject collection, final long position, @SuppressWarnings("unused") final long readLimit, final char value) {
+                final long newPosition = position + 1;
+                stream.setPointer(1, newPosition);
+                collection.getByteStorage()[(int) position] = (byte) value;
+            }
+
+            @Specialization(guards = {"collection.isString()", "position < readLimit"})
+            protected static final void doString(final PointersObject stream, final NativeObject collection, final long position, @SuppressWarnings("unused") final long readLimit, final long value) {
+                final long newPosition = position + 1;
+                stream.setPointer(1, newPosition);
+                collection.getByteStorage()[(int) position] = (byte) value;
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            protected static final void doFail(final PointersObject stream, final Object collection, final Object position, final Object readLimit, final Object value) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @ImportStatic(POSITIONABLE_STREAM.class)
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 67)
+    protected abstract static class PrimAtEndNode extends AbstractPrimitiveWithSizeNode implements UnaryPrimitive {
+
+        protected PrimAtEndNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "stream.size() >= READ_LIMIT")
+        protected static final Object doAtEnd(final PointersObject stream) {
+            return (long) stream.getPointer(POSITIONABLE_STREAM.POSITION) >= (long) stream.getPointer(POSITIONABLE_STREAM.READ_LIMIT);
         }
     }
 

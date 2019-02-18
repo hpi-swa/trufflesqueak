@@ -215,6 +215,12 @@ public final class ObjectLayouts {
         public static final int SIZE = 2;
     }
 
+    public static final class POSITIONABLE_STREAM {
+        public static final int COLLECTION = 0;
+        public static final int POSITION = 1;
+        public static final int READ_LIMIT = 2;
+    }
+
     public static final class PROCESS {
         public static final int NEXT_LINK = 0;
         public static final int SUSPENDED_CONTEXT = 1;
