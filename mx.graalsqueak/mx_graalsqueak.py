@@ -11,6 +11,9 @@ import mx_unittest
 LANGUAGE_NAME = 'squeaksmalltalk'
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
 BASE_VM_ARGS = [
+    '-Xss64M',  # Increase thread stack size
+
+    # Tweak GC for faster image loading
     '-Xms2G',  # Initial heap size
     '-XX:MetaspaceSize=64M',  # Initial size of Metaspaces
 ]
@@ -261,7 +264,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.image:
         squeak_arguments.append(parsed_args.image)
     else:
-        if len(squeak_arguments) > 0:
+        if len(squeak_arguments) > 1:
             parser.error('an image needs to be explicitly provided')
 
     if parsed_args.image_arguments:
