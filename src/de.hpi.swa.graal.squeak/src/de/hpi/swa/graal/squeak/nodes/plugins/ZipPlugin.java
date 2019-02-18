@@ -388,7 +388,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
                  * Either the next match is better than the current one or we didn't have a good
                  * match after all (e.g., current match length < MinMatch). Output a single literal.
                  */
-                flushNeeded = encodeLiteral(zipCollection[here]);
+                flushNeeded = encodeLiteral(Byte.toUnsignedInt(zipCollection[here]));
                 here++;
                 if (here <= lastIndex && !flushNeeded) {
                     /* Cache the results for the next round */
