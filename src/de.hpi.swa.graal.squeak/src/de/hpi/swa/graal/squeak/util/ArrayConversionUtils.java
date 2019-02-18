@@ -83,6 +83,18 @@ public final class ArrayConversionUtils {
         return bytes;
     }
 
+    public static byte[] bytesFromShortsReversed(final short[] shorts) {
+        final int shortLength = shorts.length;
+        final byte[] bytes = new byte[shortLength * SHORT_BYTE_SIZE];
+        for (int i = 0; i < shortLength; i++) {
+            final int offset = i * SHORT_BYTE_SIZE;
+            final short shortValue = shorts[i];
+            bytes[offset + 1] = (byte) (shortValue >> 8);
+            bytes[offset] = (byte) shortValue;
+        }
+        return bytes;
+    }
+
     public static int[] bytesToInts(final byte[] bytes) {
         final int length = bytes.length;
         final int[] ints = new int[length];

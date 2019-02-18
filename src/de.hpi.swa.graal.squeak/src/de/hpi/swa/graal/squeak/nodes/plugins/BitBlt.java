@@ -121,6 +121,7 @@ public final class BitBlt {
     private static long componentAlphaModeAlpha;
     private static long componentAlphaModeColor;
     private static int[] destBits;
+    private static byte[] destBytes;
     private static long destDelta;
     private static int destDepth;
     private static PointersObject destForm;
@@ -1304,11 +1305,11 @@ public final class BitBlt {
         startBits = destPPW - (dx & pixPerM1);
         endBits = (dx + bbW - 1 & pixPerM1) + 1;
         if (destMSB) {
-            mask1 = shr(ALL_ONES, 32 - startBits * destDepth);
-            mask2 = shl(ALL_ONES, 32 - endBits * destDepth);
+            mask1 = (int) shr(ALL_ONES, 32 - startBits * destDepth);
+            mask2 = (int) shl(ALL_ONES, 32 - endBits * destDepth);
         } else {
-            mask1 = shl(ALL_ONES, 32 - startBits * destDepth);
-            mask2 = shr(ALL_ONES, 32 - endBits * destDepth);
+            mask1 = (int) shl(ALL_ONES, 32 - startBits * destDepth);
+            mask2 = (int) shr(ALL_ONES, 32 - endBits * destDepth);
         }
         if (bbW < startBits) {
             mask1 = mask1 & mask2;
@@ -1699,12 +1700,16 @@ public final class BitBlt {
         destPPW = div(32, destDepth);
         destPitch = div(destWidth + destPPW - 1, destPPW) * 4;
         final NativeObject destBitsNative = (NativeObject) destBitsValue;
+        final long destBitsSize;
         if (isWords(destBitsNative)) {
             destBits = destBitsNative.getIntStorage();
+            destBytes = null;
+            destBitsSize = destBits.length * 4;
         } else {
-            destBits = ArrayConversionUtils.intsFromBytes(destBitsNative.getByteStorage());
+            destBytes = destBitsNative.getByteStorage();
+            destBits = null;
+            destBitsSize = destBytes.length;
         }
-        final long destBitsSize = destBits.length * 4;
         return destBitsSize >= destPitch * destHeight;
     }
 
@@ -1829,7 +1834,7 @@ public final class BitBlt {
         if (isWords(sourceBitsNative)) {
             sourceBits = sourceBitsNative.getIntStorage();
         } else {
-            sourceBits = ArrayConversionUtils.intsFromBytes(sourceBitsNative.getByteStorage());
+            sourceBits = ArrayConversionUtils.intsFromBytesReversed(sourceBitsNative.getByteStorage());
         }
         final long sourceBitsSize = sourceBits.length * 4;
         return sourceBitsSize >= sourcePitch * sourceHeight;
@@ -1971,12 +1976,12 @@ public final class BitBlt {
         hasSurfaceLock = false;
 
         // Actual locking code not needed for GraalSqueak.
-        assert destBits != null;
+        assert destBits != null || destBytes != null;
         assert sourceBits != null || noSource;
 
         endOfSource = noSource || sourceBits == null ? 0 : sourcePitch * sourceHeight;
         endOfDestination = destPitch * destHeight;
-        return destBits != null && (sourceBits != null || noSource);
+        return (destBits != null || destBytes != null) && (sourceBits != null || noSource);
     }
 
     /* Color map the given source pixel. */
@@ -2551,7 +2556,7 @@ public final class BitBlt {
         /* See if we can go directly into copyLoopPixMap (usually we can) */
         maxGlyph = slotSizeOf(xTable) - 2;
         /* no point using slower version */
-        quickBlt = destBits != null && sourceBits != null &&
+        quickBlt = (destBits != null || destBytes != null) && sourceBits != null &&
                         !noSource && sourceForm != destForm && (cmFlags != 0 || sourceMSB != destMSB || sourceDepth != destDepth);
         if (quickBlt) {
             endOfSource = sourcePitch * sourceHeight;
@@ -3938,7 +3943,7 @@ public final class BitBlt {
                         nPix++;
                         if (sourceDepth < 16) {
                             /* Get RGBA values from sourcemap table */
-                            rgb = sourceMap[(int) (rgb << 2)];
+                            rgb = sourceMap[(int) rgb];
                         } else {
                             /* Already in RGB format */
                             if (sourceDepth == 16) {
@@ -4137,8 +4142,18 @@ public final class BitBlt {
     }
 
     private static long dstLongAt(final long index) {
-        assert index >>> 2 < endOfDestination;
-        return Integer.toUnsignedLong(destBits[(int) index >>> 2]);
+        final int i = (int) index >>> 2;
+        assert i < endOfDestination;
+        if (destBits != null) {
+            return Integer.toUnsignedLong(destBits[i]);
+        } else {
+            final int offset = i * ArrayConversionUtils.INTEGER_BYTE_SIZE;
+            if (destMSB) {
+                return Integer.toUnsignedLong((destBytes[offset + 3] & 0xFF) << 24 | (destBytes[offset + 2] & 0xFF) << 16 | (destBytes[offset + 1] & 0xFF) << 8 | destBytes[offset + 0] & 0xFF);
+            } else {
+                return Integer.toUnsignedLong((destBytes[offset + 0] & 0xFF) << 24 | (destBytes[offset + 1] & 0xFF) << 16 | (destBytes[offset + 2] & 0xFF) << 8 | destBytes[offset + 3] & 0xFF);
+            }
+        }
     }
 
     /*
@@ -4153,7 +4168,16 @@ public final class BitBlt {
     }
 
     private static void dstLongAtput(final long index, final long value) {
-        destBits[(int) index >>> 2] = (int) value;
+        final int i = (int) index >>> 2;
+        if (destBits != null) {
+            destBits[i] = (int) value;
+        } else {
+            final int offset = i * ArrayConversionUtils.INTEGER_BYTE_SIZE;
+            destBytes[offset + 3] = (byte) (value >> 24);
+            destBytes[offset + 2] = (byte) (value >> 16);
+            destBytes[offset + 1] = (byte) (value >> 8);
+            destBytes[offset + 0] = (byte) value;
+        }
     }
 
     private static long halftoneLongAt(final long index) {
