@@ -67,6 +67,11 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
         }
 
         @Override
+        public SourceSection getSourceSection() {
+            return codeNode.getSourceSection();
+        }
+
+        @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return codeNode.toString();
