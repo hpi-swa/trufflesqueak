@@ -58,13 +58,7 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            try {
-                return codeNode.execute(frame);
-            } catch (final StackOverflowError e) {
-                CompilerDirectives.transferToInterpreter();
-                codeNode.code.image.printSqStackTrace();
-                throw e;
-            }
+            return codeNode.execute(frame);
         }
 
         @Override
