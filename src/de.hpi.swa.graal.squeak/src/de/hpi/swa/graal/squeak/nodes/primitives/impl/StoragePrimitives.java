@@ -28,7 +28,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
@@ -462,44 +461,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(method.image, receiver.getBasicInstanceSize() + (int) bytecodeCount);
             newMethod.setHeader(header);
             return newMethod;
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 98)
-    protected abstract static class PrimStoreImageSegmentNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-
-        protected PrimStoreImageSegmentNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "segmentWordArray.isIntType()")
-        protected static final AbstractSqueakObject doStore(final AbstractSqueakObject receiver, final ArrayObject rootsArray, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
-            /**
-             * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
-             * some tests (e.g. BitmapStreamTests) run quickly.
-             */
-            return receiver;
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 99)
-    protected abstract static class PrimLoadImageSegmentNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
-        protected PrimLoadImageSegmentNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "segmentWordArray.isIntType()")
-        protected final ArrayObject doLoad(final AbstractSqueakObject receiver, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
-            /**
-             * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
-             * some tests (e.g. BitmapStreamTests) run quickly.
-             */
-            return method.image.newArrayEmpty();
         }
     }
 

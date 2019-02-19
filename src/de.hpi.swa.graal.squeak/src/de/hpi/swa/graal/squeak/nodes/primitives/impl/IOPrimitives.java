@@ -40,8 +40,10 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
@@ -180,7 +182,44 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             // TODO: implement primitiveSnapshot
             throw new PrimitiveFailed();
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 98)
+    protected abstract static class PrimStoreImageSegmentNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+
+        protected PrimStoreImageSegmentNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "segmentWordArray.isIntType()")
+        protected static final AbstractSqueakObject doStore(final AbstractSqueakObject receiver, final ArrayObject rootsArray, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
+            /**
+             * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
+             * some tests (e.g. BitmapStreamTests) run quickly.
+             */
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 99)
+    protected abstract static class PrimLoadImageSegmentNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+
+        protected PrimLoadImageSegmentNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "segmentWordArray.isIntType()")
+        protected final ArrayObject doLoad(final AbstractSqueakObject receiver, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
+            /**
+             * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
+             * some tests (e.g. BitmapStreamTests) run quickly.
+             */
+            return method.image.newArrayEmpty();
+        }
     }
 
     @GenerateNodeFactory
