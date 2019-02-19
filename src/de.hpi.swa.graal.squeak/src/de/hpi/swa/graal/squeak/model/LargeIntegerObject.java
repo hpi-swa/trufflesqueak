@@ -26,7 +26,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public LargeIntegerObject(final SqueakImageContext image, final BigInteger integer) {
         super(image, integer.compareTo(BigInteger.ZERO) >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass);
-        bytes = derivedBytesFromBigInteger(integer);
+        bytes = bigIntegerToBytes(integer);
         this.integer = integer;
     }
 
@@ -119,22 +119,13 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new BigInteger(bigEndianBytes).and(BigInteger.valueOf(1).shiftLeft(bigEndianBytes.length * 8).subtract(BigInteger.valueOf(1)));
     }
 
-    private static byte[] derivedBytesFromBigInteger(final BigInteger integer) {
-        final byte[] array = integer.abs().toByteArray();
-        final int length = array.length;
-        if (length <= 1) {
-            return array;
+    private static byte[] bigIntegerToBytes(final BigInteger bigInteger) {
+        final byte[] bytes = bigInteger.abs().toByteArray();
+        if (bytes[0] == 0) {
+            return ArrayUtils.swapOrderInPlace(Arrays.copyOfRange(bytes, 1, bytes.length));
+        } else {
+            return ArrayUtils.swapOrderInPlace(bytes);
         }
-        int skipped = 0;
-        for (int i = 0; i < length; i++) {
-            if (array[i] == 0) {
-                skipped++;
-                continue;
-            } else {
-                break;
-            }
-        }
-        return ArrayUtils.swapOrderInPlace(Arrays.copyOfRange(array, skipped, length));
     }
 
     public boolean isNegative() {
