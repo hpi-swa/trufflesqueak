@@ -145,5 +145,6 @@ public abstract class AbstractSqueakTestCase {
         context.close(true);
         context = null;
         image = null;
+        System.gc();
     }
 }
