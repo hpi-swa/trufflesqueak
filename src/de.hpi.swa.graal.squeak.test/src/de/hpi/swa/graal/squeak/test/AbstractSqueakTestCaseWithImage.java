@@ -144,7 +144,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             final Object value = linkedList.at0(LINKED_LIST.LAST_LINK);
             final Object expectedValue = i == PRIORITY_10_LIST_INDEX ? idleProcess : image.nil;
             if (key != expectedValue || value != expectedValue) {
-                image.printToStdErr(String.format("Removing inconsistent entry from scheduler list #%s...", i + 1));
+                image.printToStdErr(String.format("Removing inconsistent entry (%s->%s) from scheduler list #%s...", key, value, i + 1));
                 linkedList.atput0(LINKED_LIST.FIRST_LINK, expectedValue);
                 linkedList.atput0(LINKED_LIST.LAST_LINK, expectedValue);
             }

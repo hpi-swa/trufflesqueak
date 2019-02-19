@@ -8,7 +8,7 @@ public final class FloatObject extends AbstractSqueakObject {
     public static final int PRECISION = 53;
     public static final int EMIN = -1022;
     public static final int EMAX = 1023;
-    private static final int WORD_LENGTH = 2;
+    public static final int WORD_LENGTH = 2;
 
     private double doubleValue;
 

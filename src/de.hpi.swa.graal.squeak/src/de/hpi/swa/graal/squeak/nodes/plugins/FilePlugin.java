@@ -29,7 +29,6 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -79,6 +78,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return method.image.env.getTruffleFile(asString(obj));
         }
 
+        protected static final boolean inBounds(final long startIndex, final long count, final int slotSize) {
+            return startIndex >= 1 && startIndex + count - 1 <= slotSize;
+        }
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -399,23 +401,44 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileRead")
     protected abstract static class PrimFileReadNode extends AbstractFilePluginPrimitiveNode implements QuinaryPrimitive {
-        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
         protected PrimFileReadNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
-        protected final Object doRead(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final AbstractSqueakObject target,
+        @Specialization(guards = {"target.isByteType()", "inBounds(startIndex, longCount, target.getByteLength())"})
+        protected final Object doReadBytes(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final NativeObject target,
                         final long startIndex, final long longCount) {
             final int count = (int) longCount;
             final ByteBuffer dst = allocate(count);
             try {
                 final long read = readFrom(fileDescriptor, dst);
                 for (int index = 0; index < read; index++) {
-                    atPut0Node.execute(target, startIndex - 1 + index, getFrom(dst, index) & 0xFFL);
+                    target.getByteStorage()[(int) (startIndex - 1 + index)] = getFrom(dst, index);
                 }
-                return Math.max(read, 0); // `read` can be `-1`, Squeak expects zero.
+                return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
+            } catch (final IOException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Specialization(guards = {"target.isIntType()", "inBounds(startIndex, longCount, target.getIntLength())"})
+        protected final Object doReadInts(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final NativeObject target,
+                        final long startIndex, final long longCount) {
+            final int count = (int) longCount;
+            final ByteBuffer dst = allocate(count * ArrayConversionUtils.INTEGER_BYTE_SIZE);
+            try {
+                final long readBytes = readFrom(fileDescriptor, dst);
+                assert readBytes % ArrayConversionUtils.INTEGER_BYTE_SIZE == 0;
+                final long readInts = readBytes / ArrayConversionUtils.INTEGER_BYTE_SIZE;
+                for (int index = 0; index < readInts; index++) {
+                    final int offset = index * ArrayConversionUtils.INTEGER_BYTE_SIZE;
+                    target.getIntStorage()[(int) (startIndex - 1 + index)] = getFromUnsigned(dst, offset + 3) << 24 |
+                                    getFromUnsigned(dst, offset + 2) << 16 |
+                                    getFromUnsigned(dst, offset + 1) << 8 |
+                                    getFromUnsigned(dst, offset);
+                }
+                return Math.max(readInts, 0L); // `read` can be `-1`, Squeak expects zero.
             } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
@@ -434,6 +457,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         private static byte getFrom(final ByteBuffer dst, final int index) {
             return dst.get(index);
+        }
+
+        private static int getFromUnsigned(final ByteBuffer dst, final int index) {
+            return Byte.toUnsignedInt(getFrom(dst, index));
         }
     }
 
@@ -528,7 +555,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @ImportStatic(STDIO_HANDLES.class)
+    @ImportStatic({STDIO_HANDLES.class, FloatObject.class})
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileWrite")
     protected abstract static class PrimFileWriteNode extends AbstractFilePluginPrimitiveNode implements QuinaryPrimitive {
@@ -537,7 +564,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"content.isByteType()", "!isStdioFileDescriptor(fileDescriptor)"})
+        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final long doWriteByte(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex,
                         final long count) {
@@ -545,40 +572,40 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"content.isByteType()", "fileDescriptor == OUT"})
+        @Specialization(guards = {"fileDescriptor == OUT", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected long doWriteByteToStdout(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
             return fileWriteToPrintWriter(method.image.getOutput(), content, startIndex, count);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"content.isByteType()", "fileDescriptor == ERROR"})
+        @Specialization(guards = {"fileDescriptor == ERROR", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected long doWriteByteToStderr(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
             return fileWriteToPrintWriter(method.image.getError(), content, startIndex, count);
         }
 
-        @Specialization(guards = {"content.isIntType()", "!isStdioFileDescriptor(fileDescriptor)"})
+        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)", "content.isIntType()", "inBounds(startIndex, count, content.getIntLength())"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final long doWriteInt(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex,
                         final long count) {
             return fileWriteFromAt(fileDescriptor, count, ArrayConversionUtils.bytesFromInts(content.getIntStorage()), startIndex, 4);
         }
 
-        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)"})
+        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)", "inBounds(startIndex, count, content.size())"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final long doWriteLargeInteger(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final LargeIntegerObject content, final long startIndex,
                         final long count) {
             return fileWriteFromAt(fileDescriptor, count, content.getBytes(), startIndex, 1);
         }
 
-        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)"})
+        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)", "inBounds(startIndex, count, WORD_LENGTH)"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final long doWriteDouble(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final double content, final long startIndex, final long count) {
             return fileWriteFromAt(fileDescriptor, count, FloatObject.getBytes(content), startIndex, 8);
         }
 
-        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)"})
+        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)", "inBounds(startIndex, count, WORD_LENGTH)"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final long doWriteFloatObject(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final FloatObject content, final long startIndex,
                         final long count) {
