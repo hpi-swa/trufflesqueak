@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPr
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -393,6 +394,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveStringHash")
     public abstract static class PrimStringHashNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        private static final int TWO_LEFT_SHIFTED_BY_28 = 2 << 28;
 
         public PrimStringHashNode(final CompiledMethodObject method) {
             super(method);
@@ -411,8 +413,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isSmallInteger(value)"})
-        protected final long doLong(final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return calculateHash(initialHash, asLargeInteger(value).getBytes());
+        protected static final long doLong(final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromPositiveLong(Math.abs(value)));
         }
 
         /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
@@ -428,20 +430,17 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isSmallInteger(value)"})
-        protected final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final long initialHash) {
-            return calculateHash(initialHash, asLargeInteger(value).getBytes());
+        protected static final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final long initialHash) {
+            return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromPositiveLong(Math.abs(value)));
         }
 
         private static long calculateHash(final long initialHash, final byte[] bytes) {
-            long hash = initialHash & 0xfffffff;
-            long low;
+            int hash = (int) (initialHash & 0x0FFFFFFF);
             final int length = bytes.length;
             for (int i = 0; i < length; i++) {
-                hash += bytes[i] & 0xff;
-                low = hash & 16383;
-                hash = 0x260D * low + (0x260d * (hash >> 14) + 0x0065 * low & 16383) * 16384 & 0x0fffffff;
+                hash = (hash + (bytes[i] & 0xff)) * 0x19660D % TWO_LEFT_SHIFTED_BY_28;
             }
-            return hash;
+            return hash & 0x0FFFFFFFL;
         }
     }
 
@@ -458,7 +457,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] tableBytes = table.getByteStorage();
             for (int i = (int) start - 1; i < stop; i++) {
-                stringBytes[i] = tableBytes[stringBytes[i]];
+                stringBytes[i] = tableBytes[stringBytes[i] & 0xFF];
             }
             return receiver;
         }
@@ -469,7 +468,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] stringBytes = string.getByteStorage();
             final int[] tableBytes = table.getIntStorage();
             for (int i = (int) start - 1; i < stop; i++) {
-                stringBytes[i] = (byte) tableBytes[stringBytes[i]];
+                stringBytes[i] = (byte) tableBytes[stringBytes[i] & 0xFF];
             }
             return receiver;
         }
