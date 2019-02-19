@@ -465,7 +465,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isSmallInteger(a) || !isSmallInteger(b)", "!isLongMinValue(a)", "!isLongMinValue(b)"})
         protected final long doLongAsLargeIntegerQuick(final long a, final long b) {
-            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromPositiveLong(Math.abs(a)), ArrayConversionUtils.largeIntegerBytesFromPositiveLong(Math.abs(b)));
+            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromLong(a), ArrayConversionUtils.largeIntegerBytesFromLong(b));
         }
 
         @SuppressWarnings("unused")
@@ -474,14 +474,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return digitCompareLargewith(asLargeInteger(a).getBytes(), asLargeInteger(b).getBytes());
         }
 
-        @Specialization(guards = "a >= 0")
-        protected final long doLongPositiveLargeInteger(final long a, final LargeIntegerObject b) {
-            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromPositiveLong(a), b.getBytes());
-        }
-
-        @Specialization(guards = {"a < 0", "!isLongMinValue(a)"})
-        protected final long doLongNegativeLargeInteger(final long a, final LargeIntegerObject b) {
-            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromPositiveLong(-a), b.getBytes());
+        @Specialization(guards = {"!isLongMinValue(a)"})
+        protected final long doLongLargeInteger(final long a, final LargeIntegerObject b) {
+            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromLong(a), b.getBytes());
         }
 
         @Specialization(guards = {"isLongMinValue(a)"})
@@ -494,14 +489,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return digitCompareLargewith(a.getBytes(), b.getBytes());
         }
 
-        @Specialization(guards = "b >= 0")
-        protected final long doLargeIntegerLongPositive(final LargeIntegerObject a, final long b) {
-            return digitCompareLargewith(a.getBytes(), ArrayConversionUtils.largeIntegerBytesFromPositiveLong(b));
-        }
-
-        @Specialization(guards = {"b < 0", "!isLongMinValue(b)"})
-        protected final long doLargeIntegerLongNegative(final LargeIntegerObject a, final long b) {
-            return digitCompareLargewith(a.getBytes(), ArrayConversionUtils.largeIntegerBytesFromPositiveLong(-b));
+        @Specialization(guards = {"!isLongMinValue(b)"})
+        protected final long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
+            return digitCompareLargewith(a.getBytes(), ArrayConversionUtils.largeIntegerBytesFromLong(b));
         }
 
         @Specialization(guards = {"isLongMinValue(b)"})

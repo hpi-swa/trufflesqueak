@@ -414,7 +414,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isSmallInteger(value)"})
         protected static final long doLong(final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromPositiveLong(Math.abs(value)));
+            return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromLong(value));
         }
 
         /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
@@ -431,7 +431,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isSmallInteger(value)"})
         protected static final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final long initialHash) {
-            return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromPositiveLong(Math.abs(value)));
+            return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromLong(value));
         }
 
         private static long calculateHash(final long initialHash, final byte[] bytes) {

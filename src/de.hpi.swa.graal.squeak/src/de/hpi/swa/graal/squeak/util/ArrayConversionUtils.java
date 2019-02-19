@@ -183,8 +183,7 @@ public final class ArrayConversionUtils {
         return LONG_BYTE_SIZE - Long.numberOfLeadingZeros(longValue) / LONG_BYTE_SIZE;
     }
 
-    public static byte[] largeIntegerBytesFromPositiveLong(final long longValue) {
-        assert longValue >= 0;
+    public static byte[] largeIntegerBytesFromLong(final long longValue) {
         final int numBytes = largeIntegerByteSizeForLong(longValue);
         final byte[] bytes = new byte[numBytes];
         for (int i = 0; i < numBytes; i++) {
