@@ -25,7 +25,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
-public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
+public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
@@ -50,10 +50,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final int len2 = string2.length;
             final int min = Math.min(len1, len2);
             for (int i = 0; i < min; i++) {
-                final int c1 = order[string1[i] & 0xff] & 0xff;
-                final int c2 = order[string2[i] & 0xff] & 0xff;
+                final byte c1 = order[string1[i] & 0xff];
+                final byte c2 = order[string2[i] & 0xff];
                 if (c1 != c2) {
-                    return c1 < c2 ? 1L : 3L;
+                    return (c1 & 0xff) < (c2 & 0xff) ? 1L : 3L;
                 }
             }
             return len1 == len2 ? 2L : len1 < len2 ? 1L : 3L;
@@ -296,7 +296,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] inclusionMapBytes = inclusionMap.getByteStorage();
             final int stringSize = stringBytes.length;
             int index = (int) start - 1;
-            while (index < stringSize && inclusionMapBytes[Byte.toUnsignedInt(stringBytes[index])] == 0) {
+            while (index < stringSize && inclusionMapBytes[stringBytes[index] & 0xff] == 0) {
                 index++;
             }
             if (index >= stringSize) {
@@ -353,7 +353,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] matchTableBytes = matchTable.getByteStorage();
             for (int startIndex = Math.max((int) start - 1, 0); startIndex <= bodyBytesLength - keyBytesLength; startIndex++) {
                 int index = 0;
-                while (matchTableBytes[Byte.toUnsignedInt(bodyBytes[startIndex + index])] == matchTableBytes[keyBytes[index]]) {
+                while (matchTableBytes[bodyBytes[startIndex + index] & 0xff] == matchTableBytes[keyBytes[index] & 0xff]) {
                     if (index == keyBytesLength - 1) {
                         return startIndex + 1;
                     } else {
@@ -383,7 +383,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final NativeObject string, final long start) {
             final byte[] bytes = string.getByteStorage();
             for (int i = (int) (start - 1); i < bytes.length; i++) {
-                if (bytes[i] == value) {
+                if ((bytes[i] & 0xff) == value) {
                     return i + 1;
                 }
             }
@@ -435,12 +435,12 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         private static long calculateHash(final long initialHash, final byte[] bytes) {
-            int hash = (int) (initialHash & 0x0FFFFFFF);
+            int hash = (int) (initialHash & 0x0fffffff);
             final int length = bytes.length;
             for (int i = 0; i < length; i++) {
                 hash = (hash + (bytes[i] & 0xff)) * 0x19660D % TWO_LEFT_SHIFTED_BY_28;
             }
-            return hash & 0x0FFFFFFFL;
+            return hash & 0x0fffffffL;
         }
     }
 
@@ -457,7 +457,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] tableBytes = table.getByteStorage();
             for (int i = (int) start - 1; i < stop; i++) {
-                stringBytes[i] = tableBytes[stringBytes[i] & 0xFF];
+                stringBytes[i] = tableBytes[stringBytes[i] & 0xff];
             }
             return receiver;
         }
@@ -468,7 +468,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] stringBytes = string.getByteStorage();
             final int[] tableBytes = table.getIntStorage();
             for (int i = (int) start - 1; i < stop; i++) {
-                stringBytes[i] = (byte) tableBytes[stringBytes[i] & 0xFF];
+                stringBytes[i] = (byte) tableBytes[stringBytes[i] & 0xff];
             }
             return receiver;
         }
