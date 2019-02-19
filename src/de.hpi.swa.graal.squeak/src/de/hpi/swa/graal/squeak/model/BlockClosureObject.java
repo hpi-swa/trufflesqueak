@@ -37,6 +37,11 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
     }
 
+    public BlockClosureObject(final SqueakImageContext image, final int size) {
+        super(image, image.blockClosureClass);
+        copied = new Object[size];
+    }
+
     public BlockClosureObject(final CompiledBlockObject compiledBlock, final RootCallTarget callTarget, final Object receiver, final Object[] copied, final ContextObject outerContext) {
         super(compiledBlock.image, compiledBlock.image.blockClosureClass);
         block = compiledBlock;
