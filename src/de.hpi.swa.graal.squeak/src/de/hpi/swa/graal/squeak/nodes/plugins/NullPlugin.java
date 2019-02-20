@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -24,7 +25,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected final Object doUTC(@SuppressWarnings("unused") final ClassObject receiver) {
+        protected final ArrayObject doUTC(@SuppressWarnings("unused") final ClassObject receiver) {
             return method.image.newArrayOfLongs(System.currentTimeMillis() * 1000L, java.time.ZonedDateTime.now().getOffset().getTotalSeconds());
         }
     }

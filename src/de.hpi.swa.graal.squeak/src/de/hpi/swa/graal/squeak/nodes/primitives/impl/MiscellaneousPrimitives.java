@@ -51,6 +51,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 
@@ -530,14 +531,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1003:  // this platform's processor type
                     return method.image.wrap("intel");
                 case 1004:  // vm version
-                    return method.image.wrap(System.getProperty("java.version"));
+                    return method.image.wrap(SqueakLanguageConfig.NAME + " " + SqueakLanguageConfig.VERSION);
                 case 1005:  // window system name
                     return method.image.wrap("Aqua");
                 case 1006:  // vm build id
                     // Example output under Squeak: 'Win32 built on Oct 8 2018 09:19:35 GMT ...
                     // LanguageEnvironment>>win32VMUsesUnicode expects a Date after 'on'
                     final DateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy HH:mm:ss zzz", Locale.US);
-                    return method.image.wrap(String.format("%s on %s", Truffle.getRuntime().getName(), dateFormat.format(new Date())));
+                    return method.image.wrap(String.format("%s (Java %s) on %s", Truffle.getRuntime().getName(), System.getProperty("java.version"), dateFormat.format(new Date())));
                 // case 1007: // Interpreter class (Cog VM only)
                 // case 1008: // Cogit class (Cog VM only)
                 // case 1009: // Platform source version (Cog VM only?)
