@@ -184,10 +184,12 @@ public final class ArrayConversionUtils {
     }
 
     public static byte[] largeIntegerBytesFromLong(final long longValue) {
-        final int numBytes = largeIntegerByteSizeForLong(longValue);
+        assert longValue != Long.MIN_VALUE : "Cannot convert long to byte[] (Math.abs(Long.MIN_VALUE) overflows).";
+        final long longValuePositive = Math.abs(longValue);
+        final int numBytes = largeIntegerByteSizeForLong(longValuePositive);
         final byte[] bytes = new byte[numBytes];
         for (int i = 0; i < numBytes; i++) {
-            bytes[i] = (byte) (longValue >> LONG_BYTE_SIZE * i);
+            bytes[i] = (byte) (longValuePositive >> LONG_BYTE_SIZE * i);
         }
         return bytes;
     }

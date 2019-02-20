@@ -571,7 +571,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "isOverflowDivision(a, b)")
         protected final Object doLongWithOverflow(final long a, final long b) {
-            return LargeIntegerObject.createOverflowDivisionResult(method.image);
+            return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
         @Specialization(guards = {"!b.isZero()", "a.isIntegralWhenDividedBy(b)"})
@@ -592,7 +592,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValue())"})
         protected final LargeIntegerObject doLongLargeIntegerAsLongWithOverflow(final long a, final LargeIntegerObject b) {
-            return LargeIntegerObject.createOverflowDivisionResult(method.image);
+            return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
         @Specialization(guards = {"!b.isZero()", "!b.fitsIntoLong()", "asLargeInteger(a).isIntegralWhenDividedBy(b)"})
@@ -636,7 +636,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "isOverflowDivision(a, b)")
         protected final LargeIntegerObject doLongWithOverflow(final long a, final long b) {
-            return LargeIntegerObject.createOverflowDivisionResult(method.image);
+            return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
         @Specialization(guards = "!b.isZero()")
@@ -652,7 +652,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValue())"})
         protected final LargeIntegerObject doLongLargeIntegerAsLongWithOverflow(final long a, final LargeIntegerObject b) {
-            return LargeIntegerObject.createOverflowDivisionResult(method.image);
+            return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
         @Specialization(guards = {"!b.isZero()", "!b.fitsIntoLong()"})
@@ -681,7 +681,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "isOverflowDivision(a, b)")
         protected final LargeIntegerObject doLongWithOverflow(final long a, final long b) {
-            return LargeIntegerObject.createOverflowDivisionResult(method.image);
+            return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
         @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "!isOverflowDivision(a, b.longValue())"})
@@ -692,7 +692,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValue())"})
         protected final LargeIntegerObject doLongLargeIntegerWithOverflow(final long a, final LargeIntegerObject b) {
-            return LargeIntegerObject.createOverflowDivisionResult(method.image);
+            return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
         @Specialization(guards = {"!b.isZero()", "!b.fitsIntoLong()"})

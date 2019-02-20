@@ -412,9 +412,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
-        @Specialization(guards = {"!isSmallInteger(value)"})
+        @Specialization(guards = {"!isSmallInteger(value)", "!isLongMinValue(value)"})
         protected static final long doLong(final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
             return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromLong(value));
+        }
+
+        @Specialization(guards = {"isLongMinValue(value)"})
+        protected static final long doLongMinValue(@SuppressWarnings("unused") final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
         }
 
         /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
@@ -429,9 +434,14 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
-        @Specialization(guards = {"!isSmallInteger(value)"})
+        @Specialization(guards = {"!isSmallInteger(value)", "!isLongMinValue(value)"})
         protected static final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final long initialHash) {
             return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromLong(value));
+        }
+
+        @Specialization(guards = {"isLongMinValue(value)"})
+        protected static final long doLongMinValue(@SuppressWarnings("unused") final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long value, final long initialHash) {
+            return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
         }
 
         private static long calculateHash(final long initialHash, final byte[] bytes) {

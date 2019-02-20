@@ -18,7 +18,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public static final long MASK_64BIT = 0xffffffffffffffffL;
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     private static final BigInteger ONE_HUNDRED_TWENTY_EIGHT = BigInteger.valueOf(128);
-    private static final BigInteger OVERFLOW_DIVISION_RESULT = BigInteger.valueOf(Long.MIN_VALUE).divide(BigInteger.valueOf(-1));
+    private static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
 
     private byte[] bytes;
     private BigInteger integer;
@@ -54,8 +54,12 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         integer = original.integer;
     }
 
-    public static LargeIntegerObject createOverflowDivisionResult(final SqueakImageContext image) {
-        return new LargeIntegerObject(image, OVERFLOW_DIVISION_RESULT);
+    public static LargeIntegerObject createLongMinOverflowResult(final SqueakImageContext image) {
+        return new LargeIntegerObject(image, LONG_MIN_OVERFLOW_RESULT);
+    }
+
+    public static byte[] getLongMinOverflowResultBytes() {
+        return bigIntegerToBytes(LONG_MIN_OVERFLOW_RESULT);
     }
 
     public long getNativeAt0(final long index) {
@@ -119,7 +123,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new BigInteger(bigEndianBytes).and(BigInteger.valueOf(1).shiftLeft(bigEndianBytes.length * 8).subtract(BigInteger.valueOf(1)));
     }
 
-    private static byte[] bigIntegerToBytes(final BigInteger bigInteger) {
+    public static byte[] bigIntegerToBytes(final BigInteger bigInteger) {
         final byte[] bytes = bigInteger.abs().toByteArray();
         if (bytes[0] == 0) {
             return ArrayUtils.swapOrderInPlace(Arrays.copyOfRange(bytes, 1, bytes.length));
