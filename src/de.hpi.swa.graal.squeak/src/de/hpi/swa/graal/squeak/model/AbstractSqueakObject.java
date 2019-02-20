@@ -98,6 +98,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return this instanceof ClassObject;
     }
 
+    public final boolean isLargeInteger() {
+        return getSqueakClass() == image.largePositiveIntegerClass || getSqueakClass() == image.largeNegativeIntegerClass;
+    }
+
     public final boolean isMessage() {
         return getSqueakClass() == image.messageClass;
     }

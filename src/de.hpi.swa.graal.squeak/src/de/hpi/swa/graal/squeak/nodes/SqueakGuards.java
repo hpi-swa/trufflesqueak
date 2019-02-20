@@ -94,6 +94,10 @@ public final class SqueakGuards {
         return object instanceof FrameMarker;
     }
 
+    public static boolean isInfinite(final double value) {
+        return Double.isInfinite(value);
+    }
+
     public static boolean isIntegralWhenDividedBy(final long a, final long b) {
         return a % b == 0;
     }
