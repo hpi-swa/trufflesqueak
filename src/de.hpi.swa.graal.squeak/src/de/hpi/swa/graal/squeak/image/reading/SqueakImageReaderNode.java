@@ -30,8 +30,8 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 public final class SqueakImageReaderNode extends RootNode {
     @CompilationFinal(dimensions = 1) private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
     public static final Object NIL_OBJECT_PLACEHOLDER = new Object();
-    private static final int IMAGE_32BIT_VERSION = 6521;
-    private static final int IMAGE_64BIT_VERSION = 68021;
+    public static final long IMAGE_32BIT_VERSION = 6521;
+    public static final long IMAGE_64BIT_VERSION = 68021;
     private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
     private static final long SLOTS_MASK = 0xFF << 56;
     private static final long OVERFLOW_SLOTS = 255;

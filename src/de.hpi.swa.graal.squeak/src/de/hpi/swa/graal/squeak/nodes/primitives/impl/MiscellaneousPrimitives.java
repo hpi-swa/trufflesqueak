@@ -837,7 +837,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 38: return 0L; // milliseconds taken by current IGC (read-only)
                 case 39: return 0L; // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
                 case 40: return 4L; // BytesPerOop for this image
-                case 41: return 6521L; // imageFormatVersion for the VM
+                case 41: return method.image.flags.getImageFormatVersion(); // imageFormatVersion for the VM
                 case 42: return 1L; // number of stack pages in use
                 case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
                 case 44: return 0L; // size of eden, in bytes
