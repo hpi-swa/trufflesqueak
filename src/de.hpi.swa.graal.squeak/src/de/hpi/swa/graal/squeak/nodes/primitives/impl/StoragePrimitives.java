@@ -84,16 +84,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] toPointers = getObjectArrayNode.execute(toArray);
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            migrateInstances(fromPointersClone, toPointers, copyHash, objectGraphNode.executeAllInstances());
+            objectGraphNode.executePointersBecomeOneWay(pointersBecomeNode, fromPointersClone, toPointers, copyHash);
             patchTruffleFrames(fromPointersClone, toPointers, copyHash);
             return fromArray;
-        }
-
-        @TruffleBoundary
-        private void migrateInstances(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash, final AbstractCollection<AbstractSqueakObject> instances) {
-            for (final AbstractSqueakObject instance : instances) {
-                pointersBecomeNode.execute(instance, fromPointers, toPointers, copyHash);
-            }
         }
 
         @TruffleBoundary

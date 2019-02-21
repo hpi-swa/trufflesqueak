@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ObjectGraphNode extends AbstractNodeWithImage {
@@ -53,6 +54,22 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         }
         lastSeenObjects = seen.size();
         return seen;
+    }
+
+    @TruffleBoundary
+    public void executePointersBecomeOneWay(final SqueakObjectPointersBecomeOneWayNode pointersBecomeNode, final Object[] fromPointers,
+                    final Object[] toPointers, final boolean copyHash) {
+        final HashSet<AbstractSqueakObject> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
+        final ArrayDeque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        pending.add(image.specialObjectsArray);
+        while (!pending.isEmpty()) {
+            final AbstractSqueakObject currentObject = pending.pop();
+            if (seen.add(currentObject)) {
+                pointersBecomeNode.execute(currentObject, fromPointers, toPointers, copyHash);
+                tracePointers(pending, currentObject);
+            }
+        }
+        lastSeenObjects = seen.size();
     }
 
     @TruffleBoundary
@@ -97,16 +114,17 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    private void addObjectsFromTruffleFrames(final ArrayDeque<AbstractSqueakObject> pending) {
+    private static void addObjectsFromTruffleFrames(final ArrayDeque<AbstractSqueakObject> pending) {
         Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (!FrameAccess.isGraalSqueakFrame(current)) {
                 return null;
             }
             for (final Object argument : current.getArguments()) {
-                addIfHasTraceablePointers(pending, argument);
+                addIfAbstractSqueakObject(pending, argument);
             }
             final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
+
             final FrameDescriptor frameDescriptor = blockOrMethod.getFrameDescriptor();
             final ContextObject context = FrameAccess.getContext(current, blockOrMethod);
             if (context != null) {
@@ -116,7 +134,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
             for (final FrameSlot slot : stackSlots) {
                 final FrameSlotKind currentSlotKind = frameDescriptor.getFrameSlotKind(slot);
                 if (currentSlotKind == FrameSlotKind.Object) {
-                    addIfHasTraceablePointers(pending, FrameUtil.getObjectSafe(current, slot));
+                    addIfAbstractSqueakObject(pending, FrameUtil.getObjectSafe(current, slot));
                 } else if (currentSlotKind == FrameSlotKind.Illegal) {
                     return null; // Stop here, because this slot and all following are not used.
                 }
@@ -125,7 +143,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         });
     }
 
-    private void tracePointers(final ArrayDeque<AbstractSqueakObject> pending, final AbstractSqueakObject currentObject) {
+    private static void tracePointers(final ArrayDeque<AbstractSqueakObject> pending, final AbstractSqueakObject currentObject) {
         final ClassObject sqClass = currentObject.getSqueakClass();
         if (sqClass != null) {
             pending.add(sqClass);
@@ -133,76 +151,61 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         addTraceablePointers(pending, currentObject);
     }
 
-    private void addIfHasTraceablePointers(final ArrayDeque<AbstractSqueakObject> pending, final Object argument) {
-        if (hasTraceablePointers(argument)) {
+    private static void addIfAbstractSqueakObject(final ArrayDeque<AbstractSqueakObject> pending, final Object argument) {
+        if (argument instanceof AbstractSqueakObject) {
             pending.add((AbstractSqueakObject) argument);
         }
     }
 
-    private boolean hasTraceablePointers(final Object object) {
-        return object != image.nil && (object instanceof ClassObject ||
-                        object instanceof BlockClosureObject ||
-                        object instanceof ContextObject && ((ContextObject) object).hasTruffleFrame() ||
-                        object instanceof CompiledMethodObject ||
-                        object instanceof ArrayObject && ((ArrayObject) object).isTraceableObjectType() ||
-                        object instanceof PointersObject);
-    }
-
-    private void addTraceablePointers(final ArrayDeque<AbstractSqueakObject> pending, final AbstractSqueakObject object) {
+    private static void addTraceablePointers(final ArrayDeque<AbstractSqueakObject> pending, final AbstractSqueakObject object) {
         if (object instanceof ClassObject) {
             final ClassObject classObject = (ClassObject) object;
-            addIfHasTraceablePointers(pending, classObject.getSuperclass());
-            addIfHasTraceablePointers(pending, classObject.getMethodDict());
-            addIfHasTraceablePointers(pending, classObject.getInstanceVariables());
-            addIfHasTraceablePointers(pending, classObject.getOrganization());
+            addIfAbstractSqueakObject(pending, classObject.getSuperclass());
+            addIfAbstractSqueakObject(pending, classObject.getMethodDict());
+            addIfAbstractSqueakObject(pending, classObject.getInstanceVariables());
+            addIfAbstractSqueakObject(pending, classObject.getOrganization());
             for (final Object value : classObject.getOtherPointers()) {
-                addIfHasTraceablePointers(pending, value);
+                addIfAbstractSqueakObject(pending, value);
             }
         } else if (object instanceof BlockClosureObject) {
             final BlockClosureObject closure = (BlockClosureObject) object;
-            addIfHasTraceablePointers(pending, closure.getReceiver());
-            addIfHasTraceablePointers(pending, closure.getOuterContext());
+            addIfAbstractSqueakObject(pending, closure.getReceiver());
+            addIfAbstractSqueakObject(pending, closure.getOuterContext());
             for (final Object value : closure.getCopied()) {
-                addIfHasTraceablePointers(pending, value);
+                addIfAbstractSqueakObject(pending, value);
             }
         } else if (object instanceof ContextObject) {
             final ContextObject context = (ContextObject) object;
             if (context.hasTruffleFrame()) {
-                addIfHasTraceablePointers(pending, context.getSender());
-                addIfHasTraceablePointers(pending, context.getMethod());
+                addIfAbstractSqueakObject(pending, context.getSender());
+                addIfAbstractSqueakObject(pending, context.getMethod());
                 if (context.hasClosure()) {
                     pending.add(context.getClosure());
                 }
-                addIfHasTraceablePointers(pending, context.getReceiver());
+                addIfAbstractSqueakObject(pending, context.getReceiver());
                 for (int i = 0; i < context.getBlockOrMethod().getNumStackSlots(); i++) {
-                    addIfHasTraceablePointers(pending, context.atTemp(i));
+                    addIfAbstractSqueakObject(pending, context.atTemp(i));
                 }
-            } else {
-                assert false : "Should not happen";
             }
         } else if (object instanceof CompiledMethodObject) {
             for (final Object literal : ((CompiledMethodObject) object).getLiterals()) {
-                addIfHasTraceablePointers(pending, literal);
+                addIfAbstractSqueakObject(pending, literal);
             }
         } else if (object instanceof ArrayObject) {
             final ArrayObject array = (ArrayObject) object;
             if (array.isObjectType()) {
                 for (final Object value : array.getObjectStorage()) {
-                    addIfHasTraceablePointers(pending, value);
+                    addIfAbstractSqueakObject(pending, value);
                 }
             } else if (array.isAbstractSqueakObjectType()) {
                 for (final Object value : array.getAbstractSqueakObjectStorage()) {
-                    addIfHasTraceablePointers(pending, value);
+                    addIfAbstractSqueakObject(pending, value);
                 }
-            } else {
-                assert false : "Should not happen";
             }
         } else if (object instanceof PointersObject) {
             for (final Object pointer : ((PointersObject) object).getPointers()) {
-                addIfHasTraceablePointers(pending, pointer);
+                addIfAbstractSqueakObject(pending, pointer);
             }
-        } else {
-            assert false : "Should not happen";
         }
         /**
          * No need to trace weak pointers objects. Their pointers are reachable from other objects
