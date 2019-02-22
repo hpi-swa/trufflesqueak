@@ -14,6 +14,7 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakArithmeticTypes;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
+import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers.PrimDigitBitShiftMagnitudeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -593,48 +594,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 17)
-    public abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-
-        public PrimBitShiftNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = {"arg >= 0", "!isLShiftLongOverflow(receiver, arg)"})
-        protected static final long doLong(final long receiver, final long arg) {
-            return receiver << arg;
-        }
-
-        @Specialization(guards = {"arg < 0", "isArgInLongSizeRange(arg)"})
-        protected static final long doLongNegativeLong(final long receiver, final long arg) {
-            // The result of a right shift can only become smaller than the receiver and 0 or -1 at
-            // minimum, so no BigInteger needed here
-            return receiver >> -arg;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"arg < 0", "!isArgInLongSizeRange(arg)", "receiver >= 0"})
-        protected static final long doLongTooBigPositive(final long receiver, final long arg) {
-            return 0L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"arg < 0", "!isArgInLongSizeRange(arg)", "receiver < 0"})
-        protected static final long doLongTooBigNegative(final long receiver, final long arg) {
-            return -1L;
-        }
-
-        protected static final boolean isLShiftLongOverflow(final long receiver, final long arg) {
-            // -1 needed, because we do not want to shift a positive long into negative long (most
-            // significant bit indicates positive/negative)
-            return Long.numberOfLeadingZeros(receiver) - 1 < arg;
-        }
-
-        protected static final boolean isArgInLongSizeRange(final long negativeValue) {
-            return -negativeValue < Long.SIZE;
-        }
-    }
+    /** Primitive 17 implemented via {@link PrimDigitBitShiftMagnitudeNode}. */
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 20)
