@@ -4,11 +4,14 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakNodeWithCode;
+import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.FrameMarker;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
+public abstract class AbstractBytecodeNode extends AbstractNode {
+    protected final CompiledCodeObject code;
     protected final int numBytecodes;
     protected final int index;
 
@@ -16,7 +19,7 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     private int lineNumber = 1;
 
     protected AbstractBytecodeNode(final AbstractBytecodeNode original) {
-        super(original.code);
+        code = original.code;
         index = original.index;
         numBytecodes = original.numBytecodes;
         sourceSection = original.getSourceSection();
@@ -27,14 +30,9 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     }
 
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-        super(code);
+        this.code = code;
         this.index = index;
         this.numBytecodes = numBytecodes;
-    }
-
-    @Override
-    public final Object executeRead(final VirtualFrame frame) {
-        throw SqueakException.create("Should call executeVoid instead");
     }
 
     public abstract void executeVoid(VirtualFrame frame);
@@ -49,6 +47,14 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
 
     public final int getNumBytecodes() {
         return numBytecodes;
+    }
+
+    protected final ContextObject getContext(final VirtualFrame frame) {
+        return FrameAccess.getContext(frame, code);
+    }
+
+    protected final FrameMarker getMarker(final VirtualFrame frame) {
+        return FrameAccess.getMarker(frame, code);
     }
 
     @Override
