@@ -893,17 +893,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)"})
+        @Specialization(guards = {"is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)", "exponent != 0"})
         protected static final double doDoubleLong64bit(final double matissa, final long exponent) {
             return doDouble64bit(matissa, exponent);
         }
 
-        @Specialization(guards = {"!is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)"})
+        @Specialization(guards = {"!is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)", "exponent != 0"})
         protected final FloatObject doDoubleLong32bit(final double matissa, final long exponent) {
             return doDouble32bit(matissa, exponent);
         }
 
-        @Specialization(guards = {"is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)"})
+        @Specialization(guards = {"is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)", "!isZero(exponent)"})
         protected static final double doDouble64bit(final double matissa, final double exponent) {
             final double steps = Math.min(3, Math.ceil(Math.abs(exponent) / 1023));
             double result = matissa;
@@ -915,31 +915,51 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return result;
         }
 
-        @Specialization(guards = {"!is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)"})
+        @Specialization(guards = {"!is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)", "!isZero(exponent)"})
         protected final FloatObject doDouble32bit(final double matissa, final double exponent) {
             return asFloatObject(doDouble64bit(matissa, exponent));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"is64bit(matissa)", "isZero(matissa)"})
-        protected static final double doDoubleZero64bit(final double matissa, final double exponent) {
+        protected static final double doDoubleMatissaZero64bit(final double matissa, final Object exponent) {
             return 0D;
         }
 
         @Specialization(guards = {"!is64bit(matissa)", "isZero(matissa)"})
-        protected final FloatObject doDoubleZero32bit(final double matissa, final double exponent) {
-            return asFloatObject(doDoubleZero64bit(matissa, exponent));
+        protected final FloatObject doDoubleMatissaZero32bit(final double matissa, final Object exponent) {
+            return asFloatObject(doDoubleMatissaZero64bit(matissa, exponent));
+        }
+
+        @Specialization(guards = {"is64bit(matissa)", "exponent == 0"})
+        protected static final double doDoubleExponentZero64bit(final double matissa, @SuppressWarnings("unused") final long exponent) {
+            return matissa;
+        }
+
+        @Specialization(guards = {"is64bit(matissa)", "isZero(exponent)"})
+        protected static final double doDoubleExponentZero64bit(final double matissa, @SuppressWarnings("unused") final double exponent) {
+            return matissa;
+        }
+
+        @Specialization(guards = {"!is64bit(matissa)", "exponent == 0"})
+        protected final FloatObject doDoubleExponentZero32bit(final double matissa, @SuppressWarnings("unused") final long exponent) {
+            return asFloatObject(matissa);
+        }
+
+        @Specialization(guards = {"!is64bit(matissa)", "isZero(exponent)"})
+        protected final FloatObject doDoubleExponentZero32bit(final double matissa, @SuppressWarnings("unused") final double exponent) {
+            return asFloatObject(matissa);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"is64bit(matissa)", "isInfinite(matissa)"})
-        protected static final double doDoubleNaN64bit(final double matissa, final double exponent) {
+        protected static final double doDoubleNaN64bit(final double matissa, final Object exponent) {
             return matissa;
         }
 
         @Specialization(guards = {"!is64bit(matissa)", "isInfinite(matissa)"})
-        protected final FloatObject doDoubleNaN32bit(final double matissa, final double exponent) {
-            return asFloatObject(doDoubleZero64bit(matissa, exponent));
+        protected final FloatObject doDoubleNaN32bit(final double matissa, final Object exponent) {
+            return asFloatObject(doDoubleNaN64bit(matissa, exponent));
         }
     }
 
