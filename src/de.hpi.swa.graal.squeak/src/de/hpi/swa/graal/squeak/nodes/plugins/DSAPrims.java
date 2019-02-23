@@ -70,7 +70,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
             int d = statePtr[3];
             int e = statePtr[4];
             for (int i = 0; i <= 19; i += 1) {
-                final int tmp = 1518500249 + (b & c | ~b >> 32 & d) + leftRotateBy5(a) + e + bufPtr[i];
+                final int tmp = 1518500249 + (b & c | ~b & d) + leftRotateBy5(a) + e + bufPtr[i];
                 e = d;
                 d = c;
                 c = leftRotateBy30(b);
