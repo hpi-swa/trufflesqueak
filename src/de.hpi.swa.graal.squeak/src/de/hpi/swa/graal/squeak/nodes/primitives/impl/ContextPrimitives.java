@@ -60,7 +60,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.hasMaterializedSender()")
-        protected final Object doFindNext(final ContextObject receiver, final AbstractSqueakObject previousContextOrNil) {
+        protected final AbstractSqueakObject doFindNext(final ContextObject receiver, final AbstractSqueakObject previousContextOrNil) {
             ContextObject current = receiver;
             while (current != previousContextOrNil) {
                 final Object sender = current.getSender();
@@ -77,10 +77,10 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!receiver.hasMaterializedSender()")
-        protected final Object doFindNextAvoidingMaterialization(final ContextObject receiver, final ContextObject previousContext) {
+        protected final AbstractSqueakObject doFindNextAvoidingMaterialization(final ContextObject receiver, final ContextObject previousContext) {
             // Sender is not materialized, so avoid materialization by walking Truffle frames.
             final boolean[] foundMyself = {false};
-            final Object result = Truffle.getRuntime().iterateFrames((frameInstance) -> {
+            final AbstractSqueakObject result = Truffle.getRuntime().iterateFrames((frameInstance) -> {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (!FrameAccess.isGraalSqueakFrame(current)) {
                     return null; // Foreign frame cannot be unwind marked.
@@ -122,7 +122,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doUnwindAndTerminate(final ContextObject receiver, final ContextObject previousContext) {
+        protected final ContextObject doUnwindAndTerminate(final ContextObject receiver, final ContextObject previousContext) {
             /*
              * Terminate all the Contexts between me and previousContext, if previousContext is on
              * my Context stack. Make previousContext my sender.
@@ -133,7 +133,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doTerminate(final ContextObject receiver, @SuppressWarnings("unused") final NilObject nil) {
+        protected static final ContextObject doTerminate(final ContextObject receiver, @SuppressWarnings("unused") final NilObject nil) {
             receiver.removeSender();
             return receiver;
         }

@@ -161,7 +161,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         @Specialization(guards = "!isSmallInteger(target)")
-        protected final Object doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long target, final long index) {
+        protected final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long target, final long index) {
             return asLargeInteger(target).getNativeAt0(index - 1);
         }
 
@@ -660,7 +660,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         @Specialization(guards = {"inBounds(index, obj)", "acceptsValueNode.execute(obj, value)"})
-        protected final Object doNativeObject(final NativeObject obj, final long index, final CharacterObject value) {
+        protected final CharacterObject doNativeObject(final NativeObject obj, final long index, final CharacterObject value) {
             writeNode.execute(obj, index - 1, value.getValue());
             return value;
         }

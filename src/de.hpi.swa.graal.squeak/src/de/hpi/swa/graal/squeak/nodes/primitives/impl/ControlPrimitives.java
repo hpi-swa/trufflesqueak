@@ -311,7 +311,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!receiver.isActiveProcess()", "!hasNilList(receiver)"})
-        protected final Object doSuspendOtherProcess(final PointersObject receiver,
+        protected final PointersObject doSuspendOtherProcess(final PointersObject receiver,
                         @Cached("create(method.image)") final RemoveProcessFromListNode removeProcessNode) {
             final PointersObject oldList = (PointersObject) receiver.at0(PROCESS.LIST);
             removeProcessNode.executeRemove(receiver, oldList);
@@ -368,7 +368,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "!inheritsFromNode.execute(receiver, superClass)")
         protected static final Object doFail(final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass, final NotProvided np) {
-            throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_RECEIVER);
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         /*
@@ -384,7 +384,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "!inheritsFromNode.execute(target, superClass)")
         protected static final Object doFail(final ContextObject receiver, final Object target, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass) {
-            throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_RECEIVER);
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
     }
 
@@ -418,12 +418,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"a.getClass() != b.getClass()"})
-        public boolean doIncompatiblePrimitiveTypes(final Object a, final Object b, final NotProvided notProvided) {
+        public final boolean doIncompatiblePrimitiveTypes(final Object a, final Object b, final NotProvided notProvided) {
             return method.image.sqFalse;
         }
 
         @Specialization(guards = {"a.getClass() == b.getClass()", "!isPrimitive(a) || !isPrimitive(b)"})
-        public boolean doSameClass(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided) {
+        public final boolean doSameClass(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
@@ -449,12 +449,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"a.getClass() != b.getClass()", "!isPrimitive(a) || !isPrimitive(b)"})
-        public boolean doIncompatiblePrimitiveTypes(final ContextObject context, final Object a, final Object b) {
+        public final boolean doIncompatiblePrimitiveTypes(final ContextObject context, final Object a, final Object b) {
             return method.image.sqFalse;
         }
 
         @Specialization(guards = {"a.getClass() == b.getClass()", "!isPrimitive(a) || !isPrimitive(b)"})
-        public boolean doSameClass(@SuppressWarnings("unused") final ContextObject context, final Object a, final Object b) {
+        public final boolean doSameClass(@SuppressWarnings("unused") final ContextObject context, final Object a, final Object b) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
@@ -493,7 +493,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doBytesLeft(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final long doBytesLeft(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return method.image.wrap(MiscUtils.runtimeFreeMemory());
         }
     }
@@ -539,116 +539,110 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"isSmallInteger(receiver)", "isSmallInteger(argument)"})
-        protected static final Object doSmallInteger(final long receiver, final long argument) {
-            throw new PrimitiveFailed();
-        }
-
         @Specialization(guards = "receiver.haveSameStorageType(argument)")
-        protected static final Object doNative(final NativeObject receiver, final NativeObject argument) {
+        protected static final NativeObject doNative(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isByteType()"})
-        protected final Object doNativeConvertToBytes(final NativeObject receiver, final NativeObject argument) {
+        protected final NativeObject doNativeConvertToBytes(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isShortType()"})
-        protected final Object doNativeConvertToShorts(final NativeObject receiver, final NativeObject argument) {
+        protected final NativeObject doNativeConvertToShorts(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isIntType()"})
-        protected final Object doNativeConvertToInts(final NativeObject receiver, final NativeObject argument) {
+        protected final NativeObject doNativeConvertToInts(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isLongType()"})
-        protected final Object doNativeConvertToLongs(final NativeObject receiver, final NativeObject argument) {
+        protected final NativeObject doNativeConvertToLongs(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = "receiver.isByteType()")
-        protected static final Object doNativeLargeInteger(final NativeObject receiver, final LargeIntegerObject argument) {
+        protected static final NativeObject doNativeLargeInteger(final NativeObject receiver, final LargeIntegerObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             return receiver;
         }
 
         @Specialization(guards = "!receiver.isByteType()")
-        protected final Object doNativeLargeIntegerConvert(final NativeObject receiver, final LargeIntegerObject argument) {
+        protected final NativeObject doNativeLargeIntegerConvert(final NativeObject receiver, final LargeIntegerObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = "receiver.isByteType()")
-        protected static final Object doNativeFloat(final NativeObject receiver, final FloatObject argument) {
+        protected static final NativeObject doNativeFloat(final NativeObject receiver, final FloatObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             return receiver;
         }
 
         @Specialization(guards = "!receiver.isByteType()")
-        protected final Object doNativeFloatConvert(final NativeObject receiver, final FloatObject argument) {
+        protected final NativeObject doNativeFloatConvert(final NativeObject receiver, final FloatObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
             return receiver;
         }
 
         @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject argument) {
+        protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(argument.getBytes());
             return receiver;
         }
 
         @Specialization
-        protected final Object doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument) {
+        protected final LargeIntegerObject doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(getGetBytesNode().execute(argument));
             return receiver;
         }
 
         @Specialization
-        protected static final Object doLargeIntegerFloat(final LargeIntegerObject receiver, final FloatObject argument) {
+        protected static final LargeIntegerObject doLargeIntegerFloat(final LargeIntegerObject receiver, final FloatObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(argument.getBytes());
             return receiver;
         }
 
         @Specialization
-        protected static final Object doFloat(final FloatObject receiver, final FloatObject argument) {
+        protected static final FloatObject doFloat(final FloatObject receiver, final FloatObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(argument.getBytes());
             return receiver;
         }
 
         @Specialization
-        protected static final Object doFloatLargeInteger(final FloatObject receiver, final LargeIntegerObject argument) {
+        protected static final FloatObject doFloatLargeInteger(final FloatObject receiver, final LargeIntegerObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(argument.getBytes());
             return receiver;
         }
 
         @Specialization
-        protected final Object doFloatNative(final FloatObject receiver, final NativeObject argument) {
+        protected final FloatObject doFloatNative(final FloatObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(getGetBytesNode().execute(argument));
             return receiver;
         }
 
         @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)"})
-        protected static final Object doSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject argument) {
+        protected static final AbstractSqueakObject doSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             return receiver;
         }
@@ -772,7 +766,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final long doGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             MiscUtils.systemGC();
             if (hasPendingFinalizations()) {
                 method.image.interrupt.setPendingFinalizations(true);
@@ -803,7 +797,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doIncrementalGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final long doIncrementalGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             // It is not possible to suggest incremental GCs, so do not do anything here
             return method.image.wrap(MiscUtils.runtimeFreeMemory());
         }
@@ -858,12 +852,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"a.getClass() != b.getClass()"})
-        public boolean doIncompatiblePrimitiveTypes(final Object a, final Object b) {
+        public final boolean doIncompatiblePrimitiveTypes(final Object a, final Object b) {
             return method.image.sqTrue;
         }
 
         @Specialization(guards = {"a.getClass() == b.getClass()", "!isPrimitive(a) || !isPrimitive(b)"})
-        public boolean doSameClass(final Object a, final Object b) {
+        public final boolean doSameClass(final Object a, final Object b) {
             return a != b ? method.image.sqTrue : method.image.sqFalse;
         }
     }
@@ -876,7 +870,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "mutex.isEmptyList()")
-        protected final Object doExitEmpty(@SuppressWarnings("unused") final VirtualFrame frame, final PointersObject mutex) {
+        protected final PointersObject doExitEmpty(final PointersObject mutex) {
             mutex.atput0(MUTEX.OWNER, method.image.nil);
             return mutex;
         }
@@ -904,19 +898,19 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "ownerIsNil(mutex)")
-        protected final Object doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided) {
             mutex.atput0(MUTEX.OWNER, method.image.getActiveProcess());
             return method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "activeProcessMutexOwner(mutex)")
-        protected final Object doEnterActiveProcessOwner(final PointersObject mutex, final NotProvided notProvided) {
+        protected final boolean doEnterActiveProcessOwner(final PointersObject mutex, final NotProvided notProvided) {
             return method.image.sqTrue;
         }
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!activeProcessMutexOwner(mutex)"})
-        protected final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided) {
             getPushNode().executeWrite(frame, method.image.sqFalse);
             getLinkProcessToListNode().executeLink(method.image.getActiveProcess(), mutex);
             getWakeHighestPriorityNode().executeWake(frame);
@@ -924,19 +918,19 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "ownerIsNil(mutex)")
-        protected final Object doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess) {
+        protected final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess) {
             mutex.atput0(MUTEX.OWNER, effectiveProcess);
             return method.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isMutexOwner(mutex, effectiveProcess)")
-        protected final Object doEnterActiveProcessOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
+        protected final boolean doEnterActiveProcessOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
             return method.image.sqTrue;
         }
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!isMutexOwner(mutex, effectiveProcess)"})
-        protected final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess) {
+        protected final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess) {
             getPushNode().executeWrite(frame, method.image.sqFalse);
             getLinkProcessToListNode().executeLink(effectiveProcess, mutex);
             getWakeHighestPriorityNode().executeWake(frame);
@@ -1141,7 +1135,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected final boolean returnValue(@SuppressWarnings("unused") final Object receiver) {
             return method.image.sqTrue;
         }
     }
@@ -1154,7 +1148,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected final boolean returnValue(@SuppressWarnings("unused") final Object receiver) {
             return method.image.sqFalse;
         }
     }

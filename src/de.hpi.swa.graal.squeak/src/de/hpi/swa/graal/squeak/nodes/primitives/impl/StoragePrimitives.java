@@ -31,6 +31,7 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -79,7 +80,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         // TODO: specialize for arrays -> object/native/abstractsqueak only
-        protected final AbstractSqueakObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
+        protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             final Object[] fromPointers = getObjectArrayNode.execute(fromArray);
             final Object[] toPointers = getObjectArrayNode.execute(toArray);
             // Need to operate on copy of `fromPointers` because itself will also be changed.
@@ -166,7 +167,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doObject(final Object xPos, final Object yPos) {
+        protected final PointersObject doObject(final Object xPos, final Object yPos) {
             return method.image.newPoint(xPos, yPos);
         }
     }
@@ -292,27 +293,27 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
-        protected final AbstractSqueakObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
+        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode) {
             return performPointersBecomeOneWay(fromArray, toArray, true);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
-        protected static final AbstractSqueakObject doFail(final ArrayObject fromArray, final ArrayObject toArray,
+        protected static final ArrayObject doFail(final ArrayObject fromArray, final ArrayObject toArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
-        protected static final AbstractSqueakObject doFail(final Object receiver, final ArrayObject argument) {
+        protected static final ArrayObject doFail(final Object receiver, final ArrayObject argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
-        protected static final AbstractSqueakObject doFail(final ArrayObject receiver, final Object argument) {
+        protected static final ArrayObject doFail(final ArrayObject receiver, final Object argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
@@ -450,7 +451,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isCompiledMethodClass()")
-        protected final AbstractSqueakObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
+        protected final CompiledMethodObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
             final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(method.image, receiver.getBasicInstanceSize() + (int) bytecodeCount);
             newMethod.setHeader(header);
             return newMethod;
@@ -470,7 +471,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"sizeNode.execute(receiver) == sizeNode.execute(other)"})
-        protected final AbstractSqueakObject doBecome(final ArrayObject receiver, final ArrayObject other) {
+        protected final ArrayObject doBecome(final ArrayObject receiver, final ArrayObject other) {
             final int receiverSize = sizeNode.execute(receiver);
             int numBecomes = 0;
             final Object[] lefts = new Object[receiverSize];
@@ -495,19 +496,19 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"sizeNode.execute(receiver) != sizeNode.execute(other)"})
         @SuppressWarnings("unused")
-        protected static final AbstractSqueakObject doBadSize(final ArrayObject receiver, final ArrayObject other) {
+        protected static final ArrayObject doBadSize(final ArrayObject receiver, final ArrayObject other) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
         @Specialization(guards = {"!isArrayObject(receiver)"})
         @SuppressWarnings("unused")
-        protected static final Object doBadReceiver(final Object receiver, final ArrayObject other) {
+        protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject other) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @Specialization(guards = {"!isArrayObject(other)"})
         @SuppressWarnings("unused")
-        protected static final Object doBadArgument(final ArrayObject receiver, final Object other) {
+        protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object other) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
@@ -521,7 +522,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final ArrayObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return method.image.specialObjectsArray;
         }
     }
@@ -535,7 +536,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final AbstractSqueakObject doSome(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final ArrayObject doSome(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return method.image.specialObjectsArray;
         }
     }
@@ -696,27 +697,27 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
-        protected final AbstractSqueakObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode) {
             return performPointersBecomeOneWay(fromArray, toArray, copyHash);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
-        protected static final AbstractSqueakObject doFail(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+        protected static final ArrayObject doFail(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
-        protected static final AbstractSqueakObject doFail(final Object receiver, final ArrayObject argument, final boolean copyHash) {
+        protected static final ArrayObject doFail(final Object receiver, final ArrayObject argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
-        protected static final AbstractSqueakObject doFail(final ArrayObject receiver, final Object argument, final boolean copyHash) {
+        protected static final ArrayObject doFail(final ArrayObject receiver, final Object argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }

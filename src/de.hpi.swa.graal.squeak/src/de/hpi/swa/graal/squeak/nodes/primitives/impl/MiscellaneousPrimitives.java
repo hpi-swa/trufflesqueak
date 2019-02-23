@@ -140,7 +140,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final NativeObject doName(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return method.image.wrap(method.image.getImagePath());
         }
     }
@@ -390,13 +390,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = "method.image.hasDisplay()")
-        protected final Object getClipboardText(final Object receiver, final NotProvided value) {
+        protected final NativeObject getClipboardText(final Object receiver, final NotProvided value) {
             return method.image.wrap(method.image.getDisplay().getClipboardData());
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!method.image.hasDisplay()")
-        protected final Object getClipboardTextHeadless(final Object receiver, final NotProvided value) {
+        protected final NativeObject getClipboardTextHeadless(final Object receiver, final NotProvided value) {
             if (headlessValue == null) {
                 headlessValue = method.image.wrap("");
             }
@@ -404,13 +404,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"method.image.hasDisplay()", "value.isByteType()"})
-        protected final Object setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
+        protected final NativeObject setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
             method.image.getDisplay().setClipboardData(value.asString());
             return value;
         }
 
         @Specialization(guards = {"!method.image.hasDisplay()", "value.isByteType()"})
-        protected final Object setClipboardTextHeadless(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
+        protected final NativeObject setClipboardTextHeadless(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
             headlessValue = value;
             return value;
         }
@@ -426,7 +426,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         @TruffleBoundary
-        protected final AbstractSqueakObject doVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final NativeObject doVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return method.image.wrap(System.getProperty("java.home") + File.separatorChar);
         }
     }
@@ -567,7 +567,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"!isContextObject(receiver)", "receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
-        protected static final Object doCopyAbstractPointers(final AbstractPointersObject receiver, final AbstractPointersObject anotherObject) {
+        protected static final AbstractPointersObject doCopyAbstractPointers(final AbstractPointersObject receiver, final AbstractPointersObject anotherObject) {
             final Object[] destStorage = receiver.getPointers();
             System.arraycopy(anotherObject.getPointers(), 0, destStorage, 0, destStorage.length);
             return receiver;
@@ -575,7 +575,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "receiver.isByteType()", "anotherObject.isByteType()", "receiver.getByteLength() == anotherObject.getByteLength()"})
-        protected static final Object doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject) {
+        protected static final NativeObject doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject) {
             final byte[] destStorage = receiver.getByteStorage();
             System.arraycopy(anotherObject.getByteStorage(), 0, destStorage, 0, destStorage.length);
             return receiver;
@@ -583,7 +583,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "receiver.isShortType()", "anotherObject.isShortType()", "receiver.getShortLength() == anotherObject.getShortLength()"})
-        protected static final Object doCopyNativeShort(final NativeObject receiver, final NativeObject anotherObject) {
+        protected static final NativeObject doCopyNativeShort(final NativeObject receiver, final NativeObject anotherObject) {
             final short[] destStorage = receiver.getShortStorage();
             System.arraycopy(anotherObject.getShortStorage(), 0, destStorage, 0, destStorage.length);
             return receiver;
@@ -591,7 +591,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "receiver.isIntType()", "anotherObject.isIntType()", "receiver.getIntLength() == anotherObject.getIntLength()"})
-        protected static final Object doCopyNativeInt(final NativeObject receiver, final NativeObject anotherObject) {
+        protected static final NativeObject doCopyNativeInt(final NativeObject receiver, final NativeObject anotherObject) {
             final int[] destStorage = receiver.getIntStorage();
             System.arraycopy(anotherObject.getIntStorage(), 0, destStorage, 0, destStorage.length);
             return receiver;
@@ -599,7 +599,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "receiver.isLongType()", "anotherObject.isLongType()", "receiver.getLongLength() == anotherObject.getLongLength()"})
-        protected static final Object doCopyNativeLong(final NativeObject receiver, final NativeObject anotherObject) {
+        protected static final NativeObject doCopyNativeLong(final NativeObject receiver, final NativeObject anotherObject) {
             final long[] destStorage = receiver.getLongStorage();
             System.arraycopy(anotherObject.getLongStorage(), 0, destStorage, 0, destStorage.length);
             return receiver;
@@ -608,7 +608,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "!isNativeObject(receiver)", "!isPointersObject(receiver)", "!isContextObject(receiver)",
                         "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"}, limit = "1")
-        protected static final Object doCopy(final AbstractSqueakObject receiver, final AbstractSqueakObject anotherObject,
+        protected static final AbstractSqueakObject doCopy(final AbstractSqueakObject receiver, final AbstractSqueakObject anotherObject,
                         @Cached("create()") final SqueakObjectSizeNode sizeNode,
                         @Cached("create()") final SqueakObjectAtPut0Node atput0Node,
                         @Cached("create()") final SqueakObjectAt0Node at0Node) {
@@ -719,7 +719,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected static final long time(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doTime(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return currentMicrosecondsUTC();
         }
     }
@@ -733,7 +733,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final long time(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final long doTime(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return currentMicrosecondsLocal();
         }
     }
@@ -782,7 +782,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @ExplodeLoop
         @SuppressWarnings("unused")
         @Specialization
-        protected final Object getVMParameters(final Object receiver, final NotProvided index, final NotProvided value) {
+        protected final ArrayObject getVMParameters(final Object receiver, final NotProvided index, final NotProvided value) {
             final Object[] vmParameters = new Object[PARAMS_ARRAY_SIZE];
             for (int i = 0; i < PARAMS_ARRAY_SIZE; i++) {
                 vmParameters[i] = vmParameterAt(i + 1);
@@ -798,7 +798,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!isNotProvided(value)")
-        protected final Object getVMParameters(final Object receiver, final long index, final Object value) {
+        protected final NilObject getVMParameters(final Object receiver, final long index, final Object value) {
             return method.image.nil; // ignore writes
         }
 
@@ -914,7 +914,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "inBounds1(index, externalModuleNames.length)")
-        protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
+        protected final NativeObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
             return method.image.wrap(getExternalModuleNames()[(int) index - 1]);
         }
 

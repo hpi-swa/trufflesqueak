@@ -425,7 +425,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isOverflowDivision(a, b)")
-        protected final Object doLongWithOverflow(final long a, final long b) {
+        protected final LargeIntegerObject doLongWithOverflow(final long a, final long b) {
             return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
@@ -465,7 +465,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "isIntegralWhenDividedBy(a, b.longValue())", "!isOverflowDivision(a, b.longValue())"})
-        protected static final Object doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
+        protected static final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
             return doLong(a, b.longValue());
         }
 
@@ -538,7 +538,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"arg.fitsIntoLong()"})
-        protected static final Object doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
+        protected static final long doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
             return doLong(receiver, arg.longValue());
         }
 
@@ -561,7 +561,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"arg.fitsIntoLong()"})
-        protected static final Object doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
+        protected static final long doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
             return doLong(receiver, arg.longValue());
         }
 
@@ -584,7 +584,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"arg.fitsIntoLong()"})
-        protected static final Object doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
+        protected static final long doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
             return doLong(receiver, arg.longValue());
         }
 
@@ -657,7 +657,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"b != 0", "!isOverflowDivision(a, b)"})
-        protected static final Object doLong(final long a, final long b) {
+        protected static final long doLong(final long a, final long b) {
             return Math.floorDiv(a, b);
         }
 
@@ -673,7 +673,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "!isOverflowDivision(a, b.longValue())"})
-        protected static final Object doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
+        protected static final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
             return doLong(a, b.longValue());
         }
 
@@ -749,13 +749,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "index == 1")
-        protected static final Object doDoubleHigh(final double receiver, @SuppressWarnings("unused") final long index) {
+        protected static final long doDoubleHigh(final double receiver, @SuppressWarnings("unused") final long index) {
             final long bits = Double.doubleToRawLongBits(receiver);
             return Integer.toUnsignedLong((int) (bits >> 32));
         }
 
         @Specialization(guards = "index == 2")
-        protected static final Object doDoubleLow(final double receiver, @SuppressWarnings("unused") final long index) {
+        protected static final long doDoubleLow(final double receiver, @SuppressWarnings("unused") final long index) {
             final long bits = Double.doubleToRawLongBits(receiver);
             return Integer.toUnsignedLong((int) bits);
         }
