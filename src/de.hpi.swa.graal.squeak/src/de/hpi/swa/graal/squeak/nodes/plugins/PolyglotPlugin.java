@@ -372,7 +372,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final void setLastError(final Exception e) {
-            LOG.fine(e.toString());
+            LOG.fine(() -> MiscUtils.toString(e));
             lastError = e;
         }
 
