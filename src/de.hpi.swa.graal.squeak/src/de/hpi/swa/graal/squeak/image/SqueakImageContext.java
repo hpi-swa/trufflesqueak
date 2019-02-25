@@ -23,7 +23,6 @@ import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions.SqueakContextOptions;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.interop.InteropMap;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
@@ -361,36 +360,6 @@ public final class SqueakImageContext {
         return (PointersObject) getScheduler().at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
-    public Object wrap(final Object obj) {
-        CompilerAsserts.neverPartOfCompilation("Generic wrap is a slow operation");
-        if (obj == null) {
-            return nil;
-        } else if (obj instanceof Boolean) {
-            return wrap((boolean) obj);
-        } else if (obj instanceof Integer) {
-            return wrap((long) Long.valueOf((Integer) obj));
-        } else if (obj instanceof Long) {
-            return wrap((long) obj);
-        } else if (obj instanceof Double) {
-            return wrap((double) obj);
-        } else if (obj instanceof BigInteger) {
-            return wrap((BigInteger) obj);
-        } else if (obj instanceof String) {
-            return wrap((String) obj);
-        } else if (obj instanceof Character) {
-            return wrap((char) obj);
-        } else if (obj instanceof byte[]) {
-            return wrap((byte[]) obj);
-        } else if (obj instanceof Object[]) {
-            return wrap((Object[]) obj);
-        } else if (obj instanceof DisplayPoint) {
-            return wrap((DisplayPoint) obj);
-        } else if (obj instanceof TruffleObject) {
-            return obj; // never wrap TruffleObjects
-        }
-        throw SqueakException.create("Unsupported value to wrap:", obj);
-    }
-
     public boolean wrap(final boolean value) {
         return value ? sqTrue : sqFalse;
     }
@@ -418,15 +387,6 @@ public final class SqueakImageContext {
 
     public static char wrap(final char character) {
         return character;
-    }
-
-    public ArrayObject wrap(final Object... elements) {
-        CompilerAsserts.neverPartOfCompilation("Generic wrap is a slow operation");
-        final Object[] wrappedElements = new Object[elements.length];
-        for (int i = 0; i < elements.length; i++) {
-            wrappedElements[i] = wrap(elements[i]);
-        }
-        return newArrayOfObjects(wrappedElements);
     }
 
     public PointersObject wrap(final DisplayPoint point) {

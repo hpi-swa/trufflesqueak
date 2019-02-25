@@ -146,7 +146,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         dest='low_level', action='store_true', default=False)
     parser.add_argument('--log',
                         help='enable TruffleLogger for class, e.g.: '
-                        '"de.hpi.swa.graal.squeak.model.ArrayObject=FINER"',
+                        '"%s.model.ArrayObject=FINER"' % PACKAGE_NAME,
                         dest='log')
     parser.add_argument('--machine-code',
                         help='print machine code',
@@ -171,6 +171,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         '-tin', '--trace-inlining',
         help='print information for inlining for each compilation',
         dest='trace_inlining', action='store_true', default=False)
+    parser.add_argument(
+        '-tio', '--trace-interop',
+        help='trace interop errors, ...',
+        dest='trace_interop', action='store_true', default=False)
     parser.add_argument(
         '-tpf', '--trace-primitive-failures',
         help='trace primitive failures',
@@ -244,12 +248,16 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--cputracer')
     if parsed_args.inspect:
         squeak_arguments.append('--inspect')
+    if parsed_args.trace_interop:
+        parsed_args.log = (
+            '%s.nodes.plugins.PolyglotPlugin=FINE' % PACKAGE_NAME)
     if parsed_args.trace_primitive_failures:
         parsed_args.log = (
-            'de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes$CallPrimitiveNode=FINE')
+            '%s.nodes.bytecodes.MiscellaneousBytecodes$CallPrimitiveNode=FINE'
+                % PACKAGE_NAME)
     if parsed_args.trace_process_switches:
         parsed_args.log = (
-            'de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode=FINE')
+            '%s.nodes.ExecuteTopLevelContextNode=FINE' % PACKAGE_NAME)
     if parsed_args.log:
         split = parsed_args.log.split("=")
         if len(split) != 2:

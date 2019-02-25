@@ -24,12 +24,17 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static long runtimeFreeMemory() {
+        return Runtime.getRuntime().freeMemory();
+    }
+
+    @TruffleBoundary
     public static void systemGC() {
         System.gc();
     }
 
     @TruffleBoundary
-    public static long runtimeFreeMemory() {
-        return Runtime.getRuntime().freeMemory();
+    public static String toString(final Object value) {
+        return value.toString();
     }
 }
