@@ -609,7 +609,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(argument.getBytes());
+            receiver.setInteger(argument);
             return receiver;
         }
 
