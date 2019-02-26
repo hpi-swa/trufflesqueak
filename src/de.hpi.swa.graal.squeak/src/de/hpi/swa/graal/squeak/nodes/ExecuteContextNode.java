@@ -40,6 +40,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private GetSuccessorNode getSuccessorNode;
 
+    private static int stackDepth = 0;
+
     protected ExecuteContextNode(final CompiledCodeObject code) {
         super(code);
         if (DECODE_BYTECODE_ON_DEMAND) {
@@ -65,10 +67,20 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Specialization(guards = "context == null")
     protected final Object doVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context,
                     @Cached("create(code)") final MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode) {
+        if (CompilerDirectives.inInterpreter()) {
+            stackDepth += 1;
+        }
         try {
+            if (stackDepth > 200) {
+                final ContextObject gcontext = getGetOrCreateContextNode().executeGet(frame);
+                gcontext.transferTo(code.image.getActiveProcess());
+                stackDepth = 0;
+                throw new ProcessSwitch(context);
+            }
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
             startBytecode(frame);
             throw SqueakException.create("Method did not return");
+
         } catch (final LocalReturn lr) {
             /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleLocalReturnNode().executeHandle(frame, lr);
@@ -85,6 +97,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             throw ps;
         } finally {
             materializeContextOnMethodExitNode.execute(frame);
+            if (CompilerDirectives.inInterpreter()) {
+                stackDepth -= 1;
+            }
         }
     }
 
@@ -94,7 +109,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         assert code == context.getBlockOrMethod();
         assert context.getMethod() == FrameAccess.getMethod(frame);
         assert frame.getFrameDescriptor() == code.getFrameDescriptor();
-
         try {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
             final long initialPC = context.getInstructionPointerForBytecodeLoop();
@@ -106,6 +120,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 resumeBytecode(frame, initialPC);
             }
             CompilerAsserts.neverPartOfCompilation();
+
             throw SqueakException.create("Method did not return");
         } catch (final LocalReturn lr) {
             /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */

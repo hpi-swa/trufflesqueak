@@ -516,7 +516,8 @@ public final class ContextObject extends AbstractSqueakObject {
     public void transferTo(final PointersObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
         final PointersObject scheduler = image.getScheduler();
-        assert newProcess != image.getActiveProcess() : "trying to switch to already active process";
+        // assert newProcess != image.getActiveProcess() : "trying to switch to already active
+        // process";
         final PointersObject currentProcess = image.getActiveProcess(); // overwritten in next line.
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         currentProcess.atput0(PROCESS.SUSPENDED_CONTEXT, this);
