@@ -913,12 +913,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method);
         }
 
-        @Specialization(guards = "inBounds1(index, externalModuleNames.length)")
+        @Specialization(guards = "inBounds1(index, getExternalModuleNames().length)")
         protected final NativeObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
             return method.image.wrap(getExternalModuleNames()[(int) index - 1]);
         }
 
-        private String[] getExternalModuleNames() {
+        protected final String[] getExternalModuleNames() {
             if (externalModuleNames == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 externalModuleNames = method.image.primitiveNodeFactory.getPluginNames();
@@ -927,7 +927,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return externalModuleNames;
         }
 
-        @Specialization(guards = "!inBounds1(index, externalModuleNames.length)")
+        @Specialization(guards = "!inBounds1(index, getExternalModuleNames().length)")
         @SuppressWarnings("unused")
         protected final NilObject doGetOutOfBounds(final AbstractSqueakObject receiver, final long index) {
             return method.image.nil;
