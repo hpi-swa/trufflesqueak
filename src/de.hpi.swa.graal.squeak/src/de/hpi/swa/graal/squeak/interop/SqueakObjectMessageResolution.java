@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.interop;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.MessageResolution;
@@ -7,16 +8,17 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
+import de.hpi.swa.graal.squeak.nodes.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 @MessageResolution(receiverType = AbstractSqueakObject.class)
 public final class SqueakObjectMessageResolution {
@@ -30,6 +32,12 @@ public final class SqueakObjectMessageResolution {
             atput0Node.execute(receiver, index, value);
             return value;
         }
+
+        @SuppressWarnings("unused")
+        protected final Object access(final AbstractSqueakObject receiver, final long index, final Object value) {
+            atput0Node.execute(receiver, index, value);
+            return value;
+        }
     }
 
     @Resolve(message = "READ")
@@ -37,6 +45,10 @@ public final class SqueakObjectMessageResolution {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
         protected final Object access(final AbstractSqueakObject receiver, final int index) {
+            return at0Node.execute(receiver, index);
+        }
+
+        protected final Object access(final AbstractSqueakObject receiver, final long index) {
             return at0Node.execute(receiver, index);
         }
 
@@ -75,10 +87,24 @@ public final class SqueakObjectMessageResolution {
     @Resolve(message = "INVOKE")
     public abstract static class SqueakObjectInvokeNode extends Node {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child private WrapToSqueakNode wrapNode;
 
         protected final Object access(final VirtualFrame frame, final AbstractSqueakObject receiver, final String identifier, final Object[] arguments) {
             final CompiledMethodObject method = (CompiledMethodObject) receiver.getSqueakClass().lookup(toSelector(identifier));
-            return dispatchNode.executeDispatch(frame, method, ArrayUtils.copyWithFirst(arguments, receiver), null);
+            final Object[] squeakArguments = new Object[1 + arguments.length];
+            squeakArguments[0] = receiver;
+            for (int i = 0; i < arguments.length; i++) {
+                squeakArguments[i + 1] = getWrapNode(receiver.image).executeWrap(arguments[i]);
+            }
+            return dispatchNode.executeDispatch(frame, method, squeakArguments, null);
+        }
+
+        private WrapToSqueakNode getWrapNode(final SqueakImageContext image) {
+            if (wrapNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                wrapNode = insert(WrapToSqueakNode.create(image));
+            }
+            return wrapNode;
         }
     }
 
@@ -96,9 +122,22 @@ public final class SqueakObjectMessageResolution {
     @Resolve(message = "EXECUTE")
     public abstract static class SqueakObjectExecuteNode extends Node {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child private WrapToSqueakNode wrapNode;
 
         protected final Object access(final VirtualFrame frame, final CompiledMethodObject receiver, final Object[] arguments) {
-            return dispatchNode.executeDispatch(frame, receiver, arguments, null);
+            final Object[] squeakArguments = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                squeakArguments[i] = getWrapNode(receiver.image).executeWrap(arguments[i]);
+            }
+            return dispatchNode.executeDispatch(frame, receiver, squeakArguments, null);
+        }
+
+        private WrapToSqueakNode getWrapNode(final SqueakImageContext image) {
+            if (wrapNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                wrapNode = insert(WrapToSqueakNode.create(image));
+            }
+            return wrapNode;
         }
     }
 
@@ -120,6 +159,11 @@ public final class SqueakObjectMessageResolution {
     public abstract static class SqueakObjectPropertyInfoNode extends Node {
         @SuppressWarnings("unused")
         protected static final int access(final AbstractSqueakObject receiver, final int index) {
+            return KeyInfo.READABLE;
+        }
+
+        @SuppressWarnings("unused")
+        protected static final int access(final AbstractSqueakObject receiver, final long index) {
             return KeyInfo.READABLE;
         }
 
