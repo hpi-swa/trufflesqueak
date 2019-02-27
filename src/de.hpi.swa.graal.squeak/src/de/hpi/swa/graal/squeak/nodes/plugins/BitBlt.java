@@ -3,6 +3,8 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 import java.util.function.LongBinaryOperator;
 
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -197,8 +199,6 @@ public final class BitBlt {
     private static long warpSrcShift;
     private static int width;
 
-    private static boolean successFlag = false;
-
     static {
         initialiseModule();
     }
@@ -350,8 +350,9 @@ public final class BitBlt {
     private static long alphaPaintConstwith(final long sourceWord, final long destinationWord) {
         if (sourceWord == 0) {
             return destinationWord;
+        } else {
+            return alphaBlendConstwithpaintMode(sourceWord, destinationWord, true);
         }
-        return alphaBlendConstwithpaintMode(sourceWord, destinationWord, true);
     }
 
     /*
@@ -782,11 +783,11 @@ public final class BitBlt {
     /* This function is exported for the Balloon engine */
 
     /* BitBltSimulation>>#copyBits */
-    private static void copyBits() {
-        copyBits(-1);
+    private static void copyBits(final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile, final ConditionProfile copyLoopPixMapProfile) {
+        copyBits(-1, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
     }
 
-    private static void copyBits(final long factor) {
+    private static void copyBits(final long factor, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile, final ConditionProfile copyLoopPixMapProfile) {
         clipRange();
         if (bbW <= 0 || bbH <= 0) {
             /* zero width or height; noop */
@@ -796,19 +797,20 @@ public final class BitBlt {
         if (!lockSurfaces()) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        copyBitsLockedAndClipped(factor);
+        copyBitsLockedAndClipped(factor, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         unlockSurfaces();
     }
 
     /* Support for the balloon engine. */
 
     /* BitBltSimulation>>#copyBitsFrom:to:at: */
-    protected static void copyBitsFromtoat(final int startX, final int stopX, final int yValue) {
+    protected static void copyBitsFromtoat(final int startX, final int stopX, final int yValue, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile,
+                    final ConditionProfile copyLoopPixMapProfile) {
         destX = startX;
         destY = yValue;
         sourceX = startX;
         width = stopX - startX;
-        copyBits();
+        copyBits(combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         showDisplayBits();
     }
 
@@ -818,32 +820,30 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#copyBitsLockedAndClipped */
-    private static void copyBitsLockedAndClipped() {
-        copyBitsLockedAndClipped(-1);
+    private static void copyBitsLockedAndClipped(final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile, final ConditionProfile copyLoopPixMapProfile) {
+        copyBitsLockedAndClipped(-1, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
     }
 
-    private static void copyBitsLockedAndClipped(final long factorOrMinusOne) {
-        copyBitsRule41Test();
-        if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter();
-        }
-        if (tryCopyingBitsQuickly()) {
+    private static void copyBitsLockedAndClipped(final long factorOrMinusOne, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile,
+                    final ConditionProfile copyLoopPixMapProfile) {
+        copyBitsRule41Test(combinationRuleProfile);
+        if (tryCopyingBitsQuickly(combinationRuleProfile)) {
             return;
         }
-        if (combinationRule >= 30 && combinationRule <= 0x1F) {
+        if (combinationRuleProfile.profile(combinationRule) >= 30 && combinationRuleProfile.profile(combinationRule) <= 0x1F) {
             /* Check and fetch source alpha parameter for alpha blend */
             if (factorOrMinusOne == -1) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
             sourceAlpha = factorOrMinusOne;
-            if (failed() || sourceAlpha < 0 || sourceAlpha > 0xFF) {
+            if (sourceAlpha < 0 || sourceAlpha > 0xFF) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
         }
         /* Choose and perform the actual copy loop. */
         bitCount = 0;
-        performCopyLoop();
-        if (combinationRule >= 30 && combinationRule <= 0x1F) {
+        performCopyLoop(combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
+        if (combinationRuleProfile.profile(combinationRule) >= 30 && combinationRuleProfile.profile(combinationRule) <= 0x1F) {
             /* zero width and height; just return the count */
             affectedL = affectedR = affectedT = affectedB = 0;
         } else {
@@ -870,8 +870,8 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#copyBitsRule41Test */
-    private static void copyBitsRule41Test() {
-        if (combinationRule == 41) {
+    private static void copyBitsRule41Test(final ValueProfile combinationRuleProfile) {
+        if (combinationRuleProfile.profile(combinationRule) == 41) {
             /* fetch the forecolor into componentAlphaModeColor. */
             componentAlphaModeAlpha = 0xFF;
             componentAlphaModeColor = 0xFFFFFF;
@@ -915,7 +915,7 @@ public final class BitBlt {
     /* This version of the inner loop assumes noSource = false. */
 
     /* BitBltSimulation>>#copyLoop */
-    private static void copyLoop() {
+    private static void copyLoop(final ValueProfile combinationRuleProfile) {
         long destWord;
         long halftoneWord;
         final long hInc;
@@ -930,7 +930,7 @@ public final class BitBlt {
         int y;
 
         /* unskew is a bitShift and MUST remain signed, while skewMask is unsigned. */
-        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRule + 1];
+        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRuleProfile.profile(combinationRule) + 1];
         assert mergeFnwith != null;
         assert !(preload && skew == 0);
         /* Byte delta */
@@ -960,7 +960,7 @@ public final class BitBlt {
          * one for the general case.
          */
         y = dy;
-        if (combinationRule == 3) {
+        if (combinationRuleProfile.profile(combinationRule) == 3) {
             for (int i = 1; i <= bbH; i++) {
                 /*
                  * here is the vertical loop for combinationRule = 3 copy mode; no need to call
@@ -1102,14 +1102,14 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#copyLoopNoSource */
-    private static void copyLoopNoSource() {
+    private static void copyLoopNoSource(final ValueProfile combinationRuleProfile) {
         long destWord;
         long halftoneWord;
         long mergeWord;
         long word;
 
         halftoneWord = 0;
-        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRule + 1];
+        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRuleProfile.profile(combinationRule) + 1];
         assert mergeFnwith != null;
         if (noHalftone) {
             halftoneWord = ALL_ONES;
@@ -1126,7 +1126,7 @@ public final class BitBlt {
             dstLongAtput(destIndex, destWord);
             destIndex += 4;
             destMask = ALL_ONES;
-            if (combinationRule == 3) {
+            if (combinationRuleProfile.profile(combinationRule) == 3) {
                 /* Special inner loop for STORE */
                 destWord = halftoneWord;
                 for (word = 2; word < nWords; word++) {
@@ -1169,7 +1169,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#copyLoopPixMap */
-    private static long copyLoopPixMap() {
+    private static void copyLoopPixMap(final ValueProfile combinationRuleProfile) {
         final long destPixMask;
         long destWord;
         long dstShift;
@@ -1190,7 +1190,7 @@ public final class BitBlt {
         long words;
 
         halftoneWord = 0;
-        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRule + 1];
+        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRuleProfile.profile(combinationRule) + 1];
         assert mergeFnwith != null;
         sourcePPW = div(32, sourceDepth);
         sourcePixMask = MASK_TABLE[sourceDepth];
@@ -1268,7 +1268,6 @@ public final class BitBlt {
             sourceIndex += sourceDelta;
             destIndex += destDelta;
         }
-        return 0;
     }
 
     /* Utility routine for computing Warp increments. */
@@ -1345,7 +1344,8 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#drawLoopX:Y: */
-    private static void drawLoopXY(final long xDelta, final long yDelta) {
+    private static void drawLoopXY(final long xDelta, final long yDelta, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile,
+                    final ConditionProfile copyLoopPixMapProfile) {
         int affB;
         int affL;
         int affR;
@@ -1389,8 +1389,9 @@ public final class BitBlt {
                     p += py;
                 }
                 if (i < py) {
-                    copyBits();
-                    if (failed()) {
+                    try {
+                        copyBits(combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
+                    } catch (final PrimitiveFailed e) {
                         return;
                     }
                     if (affectedL < affectedR && affectedT < affectedB) {
@@ -1423,8 +1424,9 @@ public final class BitBlt {
                     p += px;
                 }
                 if (i < px) {
-                    copyBits();
-                    if (failed()) {
+                    try {
+                        copyBits(combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
+                    } catch (final PrimitiveFailed e) {
                         return;
                     }
                     if (affectedL < affectedR && affectedT < affectedB) {
@@ -1505,8 +1507,9 @@ public final class BitBlt {
         if (fieldOop instanceof Long) {
             if (SqueakGuards.isSmallInteger(objectPointer.image, (long) fieldOop)) {
                 return (int) (long) fieldOop;
+            } else {
+                throw PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
             }
-            PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         } else if (fieldOop instanceof FloatObject) {
             return floatToLong(((FloatObject) fieldOop).getValue());
         } else if (fieldOop instanceof Double) {
@@ -1516,16 +1519,17 @@ public final class BitBlt {
             if (fieldLarge.fitsIntoInt() && SqueakGuards.isSmallInteger(objectPointer.image, fieldLarge.intValueExact())) {
                 return fieldLarge.intValueExact();
             }
-            PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
+            throw PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         }
         throw SqueakException.create("Should not be reached:", fieldOop);
     }
 
     private static int floatToLong(final double floatValue) {
-        if (!(-2.147483648e9 <= floatValue && floatValue <= 2.147483647e9)) {
-            PrimitiveFailed.andTransferToInterpreter();
+        if (-2.147483648e9 <= floatValue && floatValue <= 2.147483647e9) {
+            return (int) floatValue;
+        } else {
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
-        return (int) floatValue;
     }
 
     /*
@@ -1735,7 +1739,7 @@ public final class BitBlt {
         bitBltOop = bbObj;
         isWarping = aBool;
         combinationRule = fetchIntegerofObject(BB_RULE_INDEX, bitBltOop);
-        if (failed() || combinationRule < 0 || combinationRule > OP_TABLE_SIZE - 2) {
+        if (combinationRule < 0 || combinationRule > OP_TABLE_SIZE - 2) {
             return false;
         }
         if (combinationRule >= 16 && combinationRule <= 17) {
@@ -1754,9 +1758,6 @@ public final class BitBlt {
         destY = fetchIntOrFloatofObjectifNil(BB_DEST_Y_INDEX, bitBltOop, 0);
         width = fetchIntOrFloatofObjectifNil(BB_WIDTH_INDEX, bitBltOop, destWidth);
         height = fetchIntOrFloatofObjectifNil(BB_HEIGHT_INDEX, bitBltOop, destHeight);
-        if (failed()) {
-            return false;
-        }
         if (noSource) {
             sourceX = sourceY = 0;
         } else {
@@ -1782,9 +1783,6 @@ public final class BitBlt {
         clipY = fetchIntOrFloatofObjectifNil(BB_CLIP_Y_INDEX, bitBltOop, 0);
         clipWidth = fetchIntOrFloatofObjectifNil(BB_CLIP_WIDTH_INDEX, bitBltOop, destWidth);
         clipHeight = fetchIntOrFloatofObjectifNil(BB_CLIP_HEIGHT_INDEX, bitBltOop, destHeight);
-        if (failed()) {
-            return false;
-        }
         if (clipX < 0) {
             clipWidth += clipX;
             clipX = 0;
@@ -2322,24 +2320,24 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#performCopyLoop */
-    private static void performCopyLoop() {
+    private static void performCopyLoop(final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile, final ConditionProfile copyLoopPixMapProfile) {
         destMaskAndPointerInit();
-        if (noSource) {
+        if (noSourceProfile.profile(noSource)) {
             /* Simple fill loop */
-            copyLoopNoSource();
+            copyLoopNoSource(combinationRuleProfile);
         } else {
             /* Loop using source and dest */
             checkSourceOverlap();
-            if (sourceDepth != destDepth || cmFlags != 0 || sourceMSB != destMSB) {
+            if (copyLoopPixMapProfile.profile(sourceDepth != destDepth || cmFlags != 0 || sourceMSB != destMSB)) {
                 /*
                  * If we must convert between pixel depths or use color lookups or swap pixels use
                  * the general version
                  */
-                copyLoopPixMap();
+                copyLoopPixMap(combinationRuleProfile);
             } else {
                 /* Otherwise we simply copy pixels and can use a faster version */
                 sourceSkewAndPointerInit();
-                copyLoop();
+                copyLoop(combinationRuleProfile);
             }
         }
     }
@@ -2518,18 +2516,13 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitiveCopyBits */
-    public static Object primitiveCopyBits(final PointersObject rcvr, final long factor) {
+    public static Object primitiveCopyBits(final PointersObject rcvr, final long factor, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile,
+                    final ConditionProfile copyLoopPixMapProfile) {
         if (!loadBitBltFromwarping(rcvr, false)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        copyBits(factor);
-        if (failed()) {
-            throw SqueakException.create("Should not happen");
-        }
+        copyBits(factor, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         showDisplayBits();
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
         if (combinationRule == 22 || combinationRule == 32) {
             return bitCount;
         } else {
@@ -2538,16 +2531,16 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#primitiveDisplayString */
-    public static Object primitiveDisplayString(final PointersObject bbObj, final NativeObject sourceString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
-                    final ArrayObject xTable, final int kernDelta) {
+    public static PointersObject primitiveDisplayString(final PointersObject bbObj, final NativeObject sourceString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
+                    final ArrayObject xTable, final int kernDelta, final ConditionProfile quickBltProfile, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile,
+                    final ConditionProfile copyLoopPixMapProfile) {
         int ascii;
         int glyphIndex;
         final int left;
         final long maxGlyph;
         final boolean quickBlt;
 
-        if (!(slotSizeOf(glyphMap) == 256 && isBytes(sourceString) && startIndex > 0 && stopIndex >= 0 &&
-                        stopIndex <= sourceString.getByteLength() && loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
+        if (!(loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         if (stopIndex == 0) {
@@ -2558,7 +2551,7 @@ public final class BitBlt {
         /* no point using slower version */
         quickBlt = (destBits != null || destBytes != null) && sourceBits != null &&
                         !noSource && sourceForm != destForm && (cmFlags != 0 || sourceMSB != destMSB || sourceDepth != destDepth);
-        if (quickBlt) {
+        if (quickBltProfile.profile(quickBlt)) {
             endOfSource = sourcePitch * sourceHeight;
             endOfDestination = destPitch * destHeight;
         } else {
@@ -2578,29 +2571,23 @@ public final class BitBlt {
             }
             sourceX = (int) xTableLongs[glyphIndex];
             width = (int) (xTableLongs[glyphIndex + 1] - sourceX);
-            if (failed()) {
-                throw SqueakException.create("return null");
-            }
             clipRange();
             if (bbW > 0 && bbH > 0) {
-                if (quickBlt) {
+                if (quickBltProfile.profile(quickBlt)) {
                     destMaskAndPointerInit();
-                    copyLoopPixMap();
+                    copyLoopPixMap(combinationRuleProfile);
                     affectedL = dx;
                     affectedR = dx + bbW;
                     affectedT = dy;
                     affectedB = dy + bbH;
                 } else {
-                    copyBitsLockedAndClipped();
+                    copyBitsLockedAndClipped(combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
                 }
-            }
-            if (failed()) {
-                throw SqueakException.create("return null");
             }
             destX = destX + width + kernDelta;
         }
         affectedL = left;
-        if (!quickBlt) {
+        if (!quickBltProfile.profile(quickBlt)) {
             unlockSurfaces();
         }
         showDisplayBits();
@@ -2611,15 +2598,15 @@ public final class BitBlt {
     /* Invoke the line drawing primitive. */
 
     /* BitBltSimulation>>#primitiveDrawLoop */
-    public static Object primitiveDrawLoop(final PointersObject rcvr, final long xDelta, final long yDelta) {
-        if (!loadBitBltFromwarping(rcvr, false)) {
-            PrimitiveFailed.andTransferToInterpreter();
-        }
-        if (!failed()) {
-            drawLoopXY(xDelta, yDelta);
+    public static PointersObject primitiveDrawLoop(final PointersObject rcvr, final long xDelta, final long yDelta, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile,
+                    final ConditionProfile copyLoopPixMapProfile) {
+        if (loadBitBltFromwarping(rcvr, false)) {
+            drawLoopXY(xDelta, yDelta, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
             showDisplayBits();
+            return rcvr;
+        } else {
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
-        return rcvr;
     }
 
     /*
@@ -2630,65 +2617,46 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#primitivePixelValueAtX:y: */
     public static long primitivePixelValueAt(final PointersObject rcvr, final long xVal, final long yVal) {
-        final NativeObject bitmap;
-        final long bitsSize;
-        final long depth;
-        final long mask;
-        final long pixel;
-        final long ppW;
-        final long shift;
-        final long stride;
-        final long word;
-
-        if (xVal < 0 || yVal < 0) {
-            return 0L;
-        }
-        if (!(isPointers(rcvr) && slotSizeOf(rcvr) >= 4)) {
-            PrimitiveFailed.andTransferToInterpreter();
-        }
-        bitmap = fetchNativeofObjectOrNull(FORM.BITS, rcvr);
+        final NativeObject bitmap = fetchNativeofObjectOrNull(FORM.BITS, rcvr);
         if (!isWordsOrBytes(bitmap)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        width = fetchIntegerofObject(FORM.WIDTH, rcvr);
-        height = fetchIntegerofObject(FORM.HEIGHT, rcvr);
+        final long currentWidth = fetchIntegerofObject(FORM.WIDTH, rcvr);
+        final long currentHeight = fetchIntegerofObject(FORM.HEIGHT, rcvr);
         /* if width/height/depth are not integer, fail */
-        depth = fetchIntegerofObject(FORM.DEPTH, rcvr);
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
-        if (xVal >= width || yVal >= height) {
+        final long depth = fetchIntegerofObject(FORM.DEPTH, rcvr);
+        if (xVal >= currentWidth || yVal >= currentHeight) {
             return 0L;
         }
         if (depth < 0) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         /* pixels in each word */
-        ppW = div(32, depth);
+        final long ppW = div(32, depth);
         /* how many words per row of pixels */
-        stride = div(width + (ppW - 1), ppW);
+        final long stride = div(currentWidth + ppW - 1, ppW);
         final int[] bitmapWords;
         if (isWords(bitmap)) {
             bitmapWords = bitmap.getIntStorage();
         } else {
             bitmapWords = ArrayConversionUtils.intsFromBytes(bitmap.getByteStorage());
         }
-        bitsSize = bitmapWords.length * 4;
-        if (bitsSize < stride * height * 4) {
+        final long bitsSize = bitmapWords.length * 4;
+        if (bitsSize < stride * currentHeight * 4) {
             /* bytes per word */
             PrimitiveFailed.andTransferToInterpreter();
         }
         /* load the word that contains our target */
-        word = Integer.toUnsignedLong(bitmapWords[(int) (yVal * stride + div(xVal, ppW))]);
+        final long word = Integer.toUnsignedLong(bitmapWords[(int) (yVal * stride + div(xVal, ppW))]);
         /* make a mask to isolate the pixel within that word */
-        mask = shr(0xFFFFFFFFL, 32 - depth);
+        final long mask = shr(0xFFFFFFFFL, 32 - depth);
         /*
          * this is the tricky MSB part - we mask the xVal to find how far into the word we need,
          * then add 1 for the pixel we're looking for, then * depth to get the bit shift
          */
-        shift = 32 - ((xVal & ppW - 1) + 1) * depth;
+        final long shift = 32 - ((xVal & ppW - 1) + 1) * depth;
         /* shift, mask and dim the lights */
-        pixel = shr(word, shift) & mask;
+        final long pixel = shr(word, shift) & mask;
         return pixel;
     }
 
@@ -2697,18 +2665,12 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitiveWarpBits */
-    public static PointersObject primitiveWarpBits(final PointersObject rcvr, final long n, final AbstractSqueakObject sourceMap) {
+    public static PointersObject primitiveWarpBits(final PointersObject rcvr, final long n, final AbstractSqueakObject sourceMap, final ValueProfile combinationRuleProfile) {
         if (!loadWarpBltFrom(rcvr)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        warpBits(n, sourceMap);
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
+        warpBits(n, sourceMap, combinationRuleProfile);
         showDisplayBits();
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
         return rcvr;
     }
 
@@ -3534,11 +3496,12 @@ public final class BitBlt {
     /* We need a source. */
 
     /* BitBltSimulation>>#tryCopyingBitsQuickly */
-    private static boolean tryCopyingBitsQuickly() {
+    private static boolean tryCopyingBitsQuickly(final ValueProfile combinationRuleProfile) {
         if (noSource) {
             return false;
         }
-        if (!(combinationRule == 34 || combinationRule == 41)) {
+        final int finalCombinationRule = combinationRuleProfile.profile(combinationRule);
+        if (!(finalCombinationRule == 34 || finalCombinationRule == 41)) {
             return false;
         }
         if (sourceDepth != 32) {
@@ -3547,7 +3510,7 @@ public final class BitBlt {
         if (sourceForm == destForm) {
             return false;
         }
-        if (combinationRule == 41) {
+        if (finalCombinationRule == 41) {
             if (destDepth == 32) {
                 rgbComponentAlpha32();
                 affectedL = dx;
@@ -3606,7 +3569,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#warpBits */
-    private static void warpBits(final long smoothingCount, final AbstractSqueakObject sourceMap) {
+    private static void warpBits(final long smoothingCount, final AbstractSqueakObject sourceMap, final ValueProfile combinationRuleProfile) {
         final boolean ns = noSource;
         noSource = true;
         clipRange();
@@ -3620,7 +3583,7 @@ public final class BitBlt {
             PrimitiveFailed.andTransferToInterpreter();
         }
         destMaskAndPointerInit();
-        warpLoop(smoothingCount, sourceMap);
+        warpLoop(smoothingCount, sourceMap, combinationRuleProfile);
         if (hDir > 0) {
             affectedL = dx;
             affectedR = dx + bbW;
@@ -3644,7 +3607,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#warpLoop */
-    private static long warpLoop(final long smoothingCountValue, final AbstractSqueakObject sourceMapOopValue) {
+    private static void warpLoop(final long smoothingCountValue, final AbstractSqueakObject sourceMapOopValue, final ValueProfile combinationRuleProfile) {
         final int deltaP12x;
         final int deltaP12y;
         final int deltaP43x;
@@ -3671,7 +3634,7 @@ public final class BitBlt {
         int yDelta;
 
         halftoneWord = 0;
-        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRule + 1];
+        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRuleProfile.profile(combinationRule) + 1];
         if (slotSizeOf(bitBltOop) < BB_WARP_BASE + 12) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -3702,9 +3665,6 @@ public final class BitBlt {
         deltaP43y = deltaFromtonSteps(pBy, words, nSteps);
         if (deltaP43y < 0) {
             pBy = words - nSteps * deltaP43y;
-        }
-        if (failed()) {
-            return 0;
         }
         if (sourceMapOopValue != null) {
             smoothingCount = smoothingCountValue;
@@ -3844,7 +3804,6 @@ public final class BitBlt {
             /* begin incDestIndex: */
             destIndex += destDelta;
         }
-        return 0;
     }
 
     /* Setup values for faster pixel fetching. */
@@ -4046,8 +4005,7 @@ public final class BitBlt {
         if (value instanceof Long) {
             return (int) (long) value;
         } else {
-            successFlag = false;
-            return 0;
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
     }
 
@@ -4107,14 +4065,6 @@ public final class BitBlt {
 
     private static Object nilObject() {
         return bitBltOop.image.nil;
-    }
-
-    private static boolean failed() {
-        return !successFlag;
-    }
-
-    protected static void resetSuccessFlag() {
-        successFlag = true;
     }
 
     private static int div(final long a, final long b) {

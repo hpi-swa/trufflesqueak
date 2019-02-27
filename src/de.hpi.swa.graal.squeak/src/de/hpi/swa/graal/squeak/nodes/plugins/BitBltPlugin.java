@@ -2,10 +2,13 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -31,21 +34,23 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCopyBits")
     protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        private final ValueProfile combinationRuleProfile = ValueProfile.createIdentityProfile();
+        private final ConditionProfile noSourceProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile copyLoopPixMapProfile = ConditionProfile.createBinaryProfile();
 
         protected PrimCopyBitsNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final Object doCopy(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveCopyBits(receiver, -1); // Not provided represented by `-1` here.
+        protected final Object doCopy(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            // Not provided represented by `-1` here.
+            return BitBlt.primitiveCopyBits(receiver, -1, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         }
 
         @Specialization
-        protected static final Object doCopyTranslucent(final PointersObject receiver, final long factor) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveCopyBits(receiver, factor);
+        protected final Object doCopyTranslucent(final PointersObject receiver, final long factor) {
+            return BitBlt.primitiveCopyBits(receiver, factor, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         }
     }
 
@@ -57,12 +62,16 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"startIndex >= 1", "stopIndex >= 0", "aString.isByteType()", "aString.getByteLength() > 0",
-                        "stopIndex <= aString.getByteLength()"})
-        protected static final Object doDisplay(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
-                        final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMap, xTable, (int) kernDelta);
+        @Specialization(guards = {"startIndex > 0", "stopIndex >= 0", "aString.isByteType()", "aString.getByteLength() > 0",
+                        "stopIndex <= aString.getByteLength()", "glyphMap.isLongType()", "glyphMap.getLongLength() == 256"})
+        protected static final PointersObject doDisplay(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
+                        final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta,
+                        @Cached("createBinaryProfile()") final ConditionProfile quickBltProfile,
+                        @Cached("createIdentityProfile()") final ValueProfile combinationRuleProfile,
+                        @Cached("createBinaryProfile()") final ConditionProfile noSourceProfile,
+                        @Cached("createBinaryProfile()") final ConditionProfile copyLoopPixMapProfile) {
+            return BitBlt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMap, xTable, (int) kernDelta, quickBltProfile, combinationRuleProfile, noSourceProfile,
+                            copyLoopPixMapProfile);
         }
 
         @SuppressWarnings("unused")
@@ -76,15 +85,17 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDrawLoop")
     protected abstract static class PrimDrawLoopNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        private final ValueProfile combinationRuleProfile = ValueProfile.createIdentityProfile();
+        private final ConditionProfile noSourceProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile copyLoopPixMapProfile = ConditionProfile.createBinaryProfile();
 
         protected PrimDrawLoopNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final Object doDrawLoop(final PointersObject receiver, final long xDelta, final long yDelta) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveDrawLoop(receiver, xDelta, yDelta);
+        protected final PointersObject doDrawLoop(final PointersObject receiver, final long xDelta, final long yDelta) {
+            return BitBlt.primitiveDrawLoop(receiver, xDelta, yDelta, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         }
     }
 
@@ -105,7 +116,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"xValue >= 0", "yValue >= 0", "receiver.size() > OFFSET"})
         protected static final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
-            BitBlt.resetSuccessFlag();
             return BitBlt.primitivePixelValueAt(receiver, xValue, yValue);
         }
     }
@@ -113,27 +123,25 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWarpBits")
     protected abstract static class PrimWarpBitsNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        private final ValueProfile combinationRuleProfile = ValueProfile.createIdentityProfile();
 
         public PrimWarpBitsNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final Object doValueAt(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NotProvided notProvided) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveWarpBits(receiver, n, null);
+        protected final PointersObject doValueAt(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return BitBlt.primitiveWarpBits(receiver, n, null, combinationRuleProfile);
         }
 
         @Specialization
-        protected static final Object doValueAt(final PointersObject receiver, final long n, final NilObject nil) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveWarpBits(receiver, n, nil);
+        protected final PointersObject doValueAt(final PointersObject receiver, final long n, final NilObject nil) {
+            return BitBlt.primitiveWarpBits(receiver, n, nil, combinationRuleProfile);
         }
 
         @Specialization
-        protected static final Object doValueAt(final PointersObject receiver, final long n, final NativeObject sourceMap) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveWarpBits(receiver, n, sourceMap);
+        protected final PointersObject doValueAt(final PointersObject receiver, final long n, final NativeObject sourceMap) {
+            return BitBlt.primitiveWarpBits(receiver, n, sourceMap, combinationRuleProfile);
         }
     }
 }

@@ -1,6 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -1336,8 +1338,9 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#copyBitsFrom:to:at: */
-    private static void copyBitsFromtoat(final int x0, final int x1, final int yValue) {
-        BitBlt.copyBitsFromtoat(x0, x1, yValue);
+    private static void copyBitsFromtoat(final int x0, final int x1, final int yValue, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile,
+                    final ConditionProfile copyLoopPixMapProfile) {
+        BitBlt.copyBitsFromtoat(x0, x1, yValue, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
     }
 
     /* Create the global edge table */
@@ -1399,21 +1402,14 @@ public final class B2D {
     /* Display the span buffer at the current scan line. */
 
     /* BalloonEngineBase>>#displaySpanBufferAt: */
-    private static void displaySpanBufferAt(final long y) {
+    private static void displaySpanBufferAt(final long y, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile, final ConditionProfile copyLoopPixMapProfile) {
         /* self aaLevelGet > 1 ifTrue:[self adjustAALevel]. */
-        int targetX0 = shr(spanStartGet(), aaShiftGet());
-        if (targetX0 < clipMinXGet()) {
-            targetX0 = clipMinXGet();
-        }
-        int targetX1 = shr(spanEndGet() + aaLevelGet() - 1, aaShiftGet());
-        if (targetX1 > clipMaxXGet()) {
-            targetX1 = clipMaxXGet();
-        }
+        final int targetX0 = Math.max(shr(spanStartGet(), aaShiftGet()), clipMinXGet());
+        final int targetX1 = Math.min(shr(spanEndGet() + aaLevelGet() - 1, aaShiftGet()), clipMaxXGet());
         final int targetY = shr(y, aaShiftGet());
-        if (targetY < clipMinYGet() || targetY >= clipMaxYGet() || targetX1 < clipMinXGet() || targetX0 >= clipMaxXGet()) {
-            return;
+        if (targetY >= clipMinYGet() && targetY < clipMaxYGet() && targetX1 >= clipMinXGet() && targetX0 < clipMaxXGet()) {
+            copyBitsFromtoat(targetX0, targetX1, targetY, combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         }
-        copyBitsFromtoat(targetX0, targetX1, targetY);
     }
 
     /*
@@ -4996,7 +4992,8 @@ public final class B2D {
     /* Note: Must load bitBlt and spanBuffer */
 
     /* BalloonEngineBase>>#primitiveDisplaySpanBuffer */
-    public static PointersObject primitiveDisplaySpanBuffer(final PointersObject receiver) {
+    public static PointersObject primitiveDisplaySpanBuffer(final PointersObject receiver, final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile,
+                    final ConditionProfile copyLoopPixMapProfile) {
         if (doProfileStats) {
             geProfileTime = ioMicroMSecs();
         }
@@ -5010,7 +5007,7 @@ public final class B2D {
         }
         loadBitBltFrom(fetchPointerofObject(BE_BITBLT_INDEX, engine));
         if ((currentYGet() & aaScanMaskGet()) == aaScanMaskGet()) {
-            displaySpanBufferAt(currentYGet());
+            displaySpanBufferAt(currentYGet(), combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
             postDisplayAction();
         }
         if (!finishedProcessing()) {
@@ -5036,7 +5033,7 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveFinishedProcessing */
-    public static Object primitiveFinishedProcessing(final PointersObject receiver) {
+    public static boolean primitiveFinishedProcessing(final PointersObject receiver) {
         if (doProfileStats) {
             geProfileTime = ioMicroMSecs();
         }
@@ -5063,7 +5060,7 @@ public final class B2D {
     }
 
     /* BalloonEnginePlugin>>#primitiveGetBezierStats */
-    public static Object primitiveGetBezierStats(final PointersObject receiver, final NativeObject statOop) {
+    public static PointersObject primitiveGetBezierStats(final PointersObject receiver, final NativeObject statOop) {
         final long failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -5090,7 +5087,7 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveGetCounts */
-    public static Object primitiveGetCounts(final PointersObject receiver, final NativeObject statOop) {
+    public static PointersObject primitiveGetCounts(final PointersObject receiver, final NativeObject statOop) {
         final long failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -5146,7 +5143,7 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveGetTimes */
-    public static Object primitiveGetTimes(final PointersObject receiver, final NativeObject statsArray) {
+    public static PointersObject primitiveGetTimes(final PointersObject receiver, final NativeObject statsArray) {
         final long failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -5229,7 +5226,7 @@ public final class B2D {
     /* Note: No need to load bitBlt but must load spanBuffer */
 
     /* BalloonEngineBase>>#primitiveMergeFillFrom */
-    public static Object primitiveMergeFillFrom(final PointersObject receiver, final NativeObject bitsOop, final PointersObject fillOop) {
+    public static PointersObject primitiveMergeFillFrom(final PointersObject receiver, final NativeObject bitsOop, final PointersObject fillOop) {
         long value;
 
         if (doProfileStats) {
@@ -5289,7 +5286,7 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveNeedsFlushPut */
-    public static Object primitiveNeedsFlushPut(final PointersObject receiver, final boolean needFlush) {
+    public static PointersObject primitiveNeedsFlushPut(final PointersObject receiver, final boolean needFlush) {
         final long failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -5492,28 +5489,31 @@ public final class B2D {
     /* Start/Proceed rendering the entire image */
 
     /* BalloonEngineBase>>#primitiveRenderImage */
-    public static long primitiveRenderImage(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
+    public static long primitiveRenderImage(final PointersObject receiver, final PointersObject edge, final PointersObject fill, final ValueProfile combinationRuleProfile,
+                    final ConditionProfile noSourceProfile, final ConditionProfile copyLoopPixMapProfile) {
         final long failCode = loadRenderingState(receiver, edge, fill);
         if (failCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failCode);
         }
-        proceedRenderingScanline();
+        proceedRenderingScanline(combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         if (engineStopped) {
             return storeRenderingState(edge, fill);
         }
-        proceedRenderingImage();
+        proceedRenderingImage(combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         return storeRenderingState(edge, fill);
     }
 
     /* Start rendering the entire image */
 
     /* BalloonEngineBase>>#primitiveRenderScanline */
-    public static long primitiveRenderScanline(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
+    public static long primitiveRenderScanline(final PointersObject receiver, final PointersObject edge, final PointersObject fill, final ValueProfile combinationRuleProfile,
+                    final ConditionProfile noSourceProfile,
+                    final ConditionProfile copyLoopPixMapProfile) {
         final long failCode = loadRenderingState(receiver, edge, fill);
         if (failCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failCode);
         }
-        proceedRenderingScanline();
+        proceedRenderingScanline(combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
         return storeRenderingState(edge, fill);
     }
 
@@ -5532,12 +5532,10 @@ public final class B2D {
 
     /* BalloonEngineBase>>#primitiveSetBitBltPlugin */
     public static ClassObject primitiveSetBitBltPlugin(final ClassObject receiver, final NativeObject pluginName) {
-        final long length;
-
         /* Must be string to work */
         assert pluginName.isByteType();
         final byte[] ptr = pluginName.getByteStorage();
-        length = ptr.length;
+        final long length = ptr.length;
         if (length >= 256) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -5613,7 +5611,7 @@ public final class B2D {
     /* This is the main rendering entry */
 
     /* BalloonEngineBase>>#proceedRenderingImage */
-    private static void proceedRenderingImage() {
+    private static void proceedRenderingImage(final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile, final ConditionProfile copyLoopPixMapProfile) {
         boolean external;
 
         while (!finishedProcessing()) {
@@ -5664,7 +5662,7 @@ public final class B2D {
                 geProfileTime = ioMicroMSecs();
             }
             if ((currentYGet() & aaScanMaskGet()) == aaScanMaskGet()) {
-                displaySpanBufferAt(currentYGet());
+                displaySpanBufferAt(currentYGet(), combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
                 postDisplayAction();
             }
             if (doProfileStats) {
@@ -5707,7 +5705,7 @@ public final class B2D {
     /* This is the main rendering entry */
 
     /* BalloonEngineBase>>#proceedRenderingScanline */
-    private static void proceedRenderingScanline() {
+    private static void proceedRenderingScanline(final ValueProfile combinationRuleProfile, final ConditionProfile noSourceProfile, final ConditionProfile copyLoopPixMapProfile) {
         boolean external;
 
         long state = stateGet();
@@ -5772,7 +5770,7 @@ public final class B2D {
                 geProfileTime = ioMicroMSecs();
             }
             if ((currentYGet() & aaScanMaskGet()) == aaScanMaskGet()) {
-                displaySpanBufferAt(currentYGet());
+                displaySpanBufferAt(currentYGet(), combinationRuleProfile, noSourceProfile, copyLoopPixMapProfile);
                 postDisplayAction();
             }
             if (doProfileStats) {
