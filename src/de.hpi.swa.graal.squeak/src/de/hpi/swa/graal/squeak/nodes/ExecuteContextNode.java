@@ -31,12 +31,12 @@ import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
+    private static final int STACK_DEPTH_LIMIT = 25000;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
-
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private GetSuccessorNode getSuccessorNode;
 
@@ -67,20 +67,14 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Specialization(guards = "context == null")
     protected final Object doVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context,
                     @Cached("create(code)") final MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode) {
-        if (CompilerDirectives.inInterpreter()) {
-            stackDepth += 1;
-        }
         try {
-            if (stackDepth > 200) {
-                final ContextObject gcontext = getGetOrCreateContextNode().executeGet(frame);
-                gcontext.transferTo(code.image.getActiveProcess());
-                stackDepth = 0;
-                throw new ProcessSwitch(context);
+            if (stackDepth++ > STACK_DEPTH_LIMIT) {
+                throw ProcessSwitch.createWithBoundary(getGetOrCreateContextNode().executeGet(frame));
             }
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
             startBytecode(frame);
+            CompilerAsserts.neverPartOfCompilation();
             throw SqueakException.create("Method did not return");
-
         } catch (final LocalReturn lr) {
             /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleLocalReturnNode().executeHandle(frame, lr);
@@ -96,10 +90,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw ps;
         } finally {
+            stackDepth--;
             materializeContextOnMethodExitNode.execute(frame);
-            if (CompilerDirectives.inInterpreter()) {
-                stackDepth -= 1;
-            }
         }
     }
 
@@ -120,7 +112,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 resumeBytecode(frame, initialPC);
             }
             CompilerAsserts.neverPartOfCompilation();
-
             throw SqueakException.create("Method did not return");
         } catch (final LocalReturn lr) {
             /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
@@ -131,6 +122,10 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         } finally {
             MaterializeContextOnMethodExitNode.stopMaterializationHere();
         }
+    }
+
+    public static void resetStackDepth() {
+        stackDepth = 0;
     }
 
     private GetOrCreateContextNode getGetOrCreateContextNode() {
