@@ -10,7 +10,7 @@ public final class ProcessSwitch extends ControlFlowException {
     private static final long serialVersionUID = 1L;
     private final ContextObject newContext;
 
-    public ProcessSwitch(final ContextObject newContext) {
+    private ProcessSwitch(final ContextObject newContext) {
         this.newContext = newContext;
     }
 
