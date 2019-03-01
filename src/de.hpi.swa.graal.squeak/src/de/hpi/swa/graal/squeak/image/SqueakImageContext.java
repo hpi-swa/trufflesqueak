@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.image;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.math.BigInteger;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,6 +53,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.BigInt;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
@@ -371,7 +371,7 @@ public final class SqueakImageContext {
         return l;
     }
 
-    public AbstractSqueakObject wrap(final BigInteger i) {
+    public AbstractSqueakObject wrap(final BigInt i) {
         return new LargeIntegerObject(this, i);
     }
 
