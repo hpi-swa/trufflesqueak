@@ -125,8 +125,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         }
     }
 
-    public static void resetStackDepth() {
-        stackDepth = 0;
+    public static int getStackDepth() {
+        return stackDepth;
     }
 
     private GetOrCreateContextNode getGetOrCreateContextNode() {
