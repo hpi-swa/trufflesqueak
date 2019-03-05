@@ -14,16 +14,15 @@ aliases:
       export PATH=${PATH}:${MX_PATH}
   - &use-jvmci
     |
-      JVMCI_VERSION="jvmci-0.54"
-      JVMCI_BASE_JDK8="openjdk1.8.0_192"
-      JVMCI_FILE_JDK8="openjdk-8u192"
+      JVMCI_VERSION="jvmci-0.55"
+      JDK8_UPDATE_VERSION="202"
       JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
-      curl -sSL --retry 3 -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/${JVMCI_FILE_JDK8}-${JVMCI_VERSION}-linux-amd64.tar.gz
+      curl -sSL --retry 3 -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/openjdk-8u${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}-linux-amd64.tar.gz
       tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${JDK_TAR}
-      export JAVA_HOME=${TRAVIS_BUILD_DIR}/../${JVMCI_BASE_JDK8}-${JVMCI_VERSION}
+      export JAVA_HOME=${TRAVIS_BUILD_DIR}/../openjdk1.8.0_${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}
   - &use-graal-vm
     |
-      GRAAL_VM_VERSION=1.0.0-rc12
+      GRAAL_VM_VERSION=1.0.0-rc13
       GRAAL_VM_TARBALL=graalvm-ce-${GRAAL_VM_VERSION}-linux-amd64.tar.gz
       pushd ~/ > /dev/null
       curl -sSL --retry 3 -o ${GRAAL_VM_TARBALL} https://github.com/oracle/graal/releases/download/vm-${GRAAL_VM_VERSION}/${GRAAL_VM_TARBALL}

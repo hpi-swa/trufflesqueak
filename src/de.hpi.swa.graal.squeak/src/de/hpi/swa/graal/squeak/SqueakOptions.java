@@ -27,7 +27,7 @@ public final class SqueakOptions {
     @Option(category = OptionCategory.USER, help = "Disable image interrupt handler")
     public static final OptionKey<Boolean> DisableInterruptHandler = new OptionKey<>(false);
 
-    @Option(category = OptionCategory.EXPERT, help = "For internal testing purposes only")
+    @Option(category = OptionCategory.INTERNAL, help = "For internal testing purposes only")
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
     //@formatter:on
 
