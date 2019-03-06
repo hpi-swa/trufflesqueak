@@ -136,16 +136,16 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new LargeIntegerObject(this);
     }
 
-    private Object reduceIfPossible(final LargeIntegerObject value) {
+    private Object reduceIfPossible(final BigInt value) {
         if (value.bitLength() > Long.SIZE - 1) {
-            return this;
+            return newFromBigInt(image, value);
         } else {
             return value.longValue() & MASK_64BIT;
         }
     }
 
     public Object reduceIfPossible() {
-        return reduceIfPossible(this);
+        return reduceIfPossible(this.integer);
     }
 
     public long longValue() {
@@ -197,53 +197,56 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
      */
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject add(final LargeIntegerObject b) {
+    public Object add(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.add(b.integer);
-        return newFromBigInt(image, value);  // TODO: reduce?
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject subtract(final LargeIntegerObject b) {
+    public Object subtract(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.sub(b.integer);
-        return newFromBigInt(image, value);  // TODO: reduce?
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject multiply(final LargeIntegerObject b) {
+    public Object multiply(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.mul(b.integer);
-        return newFromBigInt(image, value);  // TODO: reduce?
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject divide(final LargeIntegerObject b) {
+    public Object divide(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.div(b.integer);
-        return newFromBigInt(image, value);  // TODO: reduce?
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject floorDivide(final LargeIntegerObject b) {
-        return floorDivide(integer, b.integer);  // TODO: reduce?
+    public Object floorDivide(final LargeIntegerObject b) {
+        return reduceIfPossible(floorDivide(integer, b.integer));
     }
 
-    private LargeIntegerObject floorDivide(final BigInt x, final BigInt y) {
-        // final BigInt r = x.copy();
-        x.div(y);
+    private BigInt floorDivide(final BigInt x, final BigInt y) {
+        final BigInt r = x.copy();
+        r.div(y);
+        final BigInt test = r.copy();
+        test.mul(y);
         // if the signs are different and modulo not zero, round down
-// if (x.signum() != y.signum() && !r.mul(y).equals(x)) { TODO
-// r = r.subtract(new BigInt(1));
-// }
-        return this;
+        if (x.signum() != y.signum() && !test.equals(x)) {
+            r.sub(1);
+        }
+        return r;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject floorMod(final LargeIntegerObject b) {
-        integer.sub(floorDivide(integer, b.integer).integer);
-        integer.mul(b.integer);
-        return this;  // TODO: reduce?
+    public Object floorMod(final LargeIntegerObject b) {
+        final BigInt value = integer.copy();
+        value.sub(floorDivide(value, b.integer));
+        value.mul(b.integer);
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -254,10 +257,10 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject remainder(final LargeIntegerObject b) {
+    public Object remainder(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.rem(b.integer);
-        return newFromBigInt(image, value);  // TODO: reduce? \
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -343,38 +346,38 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
      */
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject and(final LargeIntegerObject b) {
+    public Object and(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.and(b.integer);
-        return newFromBigInt(image, value);  // TODO: reduce?
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject or(final LargeIntegerObject b) {
+    public Object or(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.or(b.integer);
-        return newFromBigInt(image, value);  // TODO: reduce?
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject xor(final LargeIntegerObject b) {
+    public Object xor(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.xor(b.integer);
-        return newFromBigInt(image, value);  // TODO: reduce?
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object shiftLeft(final int b) {
         final BigInt value = integer.copy();
         value.shiftLeft(b);
-        return newFromBigInt(image, value);  // TODO: reduce?
+        return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object shiftRight(final int b) {
         final BigInt value = integer.copy();
         value.shiftRight(b);
-        return newFromBigInt(image, value);  // TODO: reduce?
+        return reduceIfPossible(value);
     }
 
     public boolean isNegative() {
