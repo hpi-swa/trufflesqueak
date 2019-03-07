@@ -289,8 +289,9 @@ def _graalsqueak_gate_runner(args, tasks):
     unittest_args = BASE_VM_ARGS
 
     supports_coverage = os.environ.get('JDK') == 'jdk8'  # see `.travis.yml`
-    if supports_coverage:
-        unittest_args += _get_jacoco_agent_args()
+    jacoco_args = mx_gate.get_jacoco_agent_args()
+    if supports_coverage and jacoco_args:
+        unittest_args.extend(jacoco_args)
     unittest_args += ['--suite', 'graalsqueak', '--very-verbose', '--enable-timing']
     with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
@@ -300,30 +301,6 @@ def _graalsqueak_gate_runner(args, tasks):
         with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
             if t:
                 mx.command_function('jacocoreport')(['--format', 'xml', '.'])
-
-
-def _get_jacoco_agent_args():
-    jacocoagent = mx.library('JACOCOAGENT', True)
-
-    includes = []
-    baseExcludes = []
-    for p in mx.projects(limit_to_primary=True):
-        projsetting = getattr(p, 'jacoco', '')
-        if projsetting == 'exclude':
-            baseExcludes.append(p.name)
-        if projsetting == 'include':
-            includes.append(p.name + '.*')
-
-    excludes = [package + '.*' for package in baseExcludes]
-    agentOptions = {
-                    'append': 'false',
-                    'inclbootstrapclasses': 'false',
-                    'includes': ':'.join(includes),
-                    'excludes': ':'.join(excludes),
-                    'destfile': 'jacoco.exec'
-    }
-    return ['-javaagent:' + jacocoagent.get_path(True) + '=' +
-            ','.join([k + '=' + v for k, v in agentOptions.items()])]
 
 
 def _squeak_svm(args):
