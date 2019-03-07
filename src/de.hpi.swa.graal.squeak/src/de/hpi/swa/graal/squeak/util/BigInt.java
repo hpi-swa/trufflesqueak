@@ -457,7 +457,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
      * @complexity O(1)
      */
     public boolean isZero() {
-        return len == 1 && dig[0] == 0;
+        return dig.length == 0 || len == 1 && dig[0] == 0;
     }
 
     /**
@@ -3077,7 +3077,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
     }
 
     public byte getBitAt(final int index) {
-        return (byte) (dig[index / 32] >> 1 * (index % 32 - 1) & 1);
+        return (byte) (dig[index / 32] >> 1 * (index + 1 % 32 - 1) & 1);
     }
 
     public byte[] getBytes() {
