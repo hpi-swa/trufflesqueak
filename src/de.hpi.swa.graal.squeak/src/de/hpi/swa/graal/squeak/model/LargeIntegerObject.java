@@ -136,16 +136,20 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new LargeIntegerObject(this);
     }
 
-    private Object reduceIfPossible(final BigInt value) {
+    public static Object reduceIfPossible(final LargeIntegerObject value) {
         if (value.bitLength() > Long.SIZE - 1) {
-            return newFromBigInt(image, value);
+            return value;
         } else {
             return value.longValue() & MASK_64BIT;
         }
     }
 
     public Object reduceIfPossible() {
-        return reduceIfPossible(this.integer);
+        return reduceIfPossible(this);
+    }
+
+    public Object reduceIfPossible(final BigInt value) {
+        return reduceIfPossible(newFromBigInt(image, value));
     }
 
     public long longValue() {
@@ -315,8 +319,9 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean isIntegralWhenDividedBy(final LargeIntegerObject other) {
-        integer.rem(other.integer);
-        return integer.compareTo(new BigInt(0)) == 0;
+        final BigInt value = integer.copy();
+        value.rem(other.integer);
+        return value.compareTo(new BigInt(0)) == 0;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)

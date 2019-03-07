@@ -645,7 +645,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.floorMod(b);
+            return a.remainder(b);
         }
     }
 
