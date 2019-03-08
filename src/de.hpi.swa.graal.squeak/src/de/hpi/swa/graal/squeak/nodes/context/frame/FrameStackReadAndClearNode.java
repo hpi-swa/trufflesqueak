@@ -32,9 +32,8 @@ public abstract class FrameStackReadAndClearNode extends AbstractNodeWithCode {
     protected static final Object doClear(final Frame frame, final int index,
                     @Cached("index") final int cachedIndex,
                     @Cached("code.getStackSlot(index)") final FrameSlot slot,
-                    @Cached("mustClear(index)") final boolean clear,
-                    @Cached("create(slot)") final FrameSlotReadAndClearNode clearNode) {
-        return clearNode.executeReadAndClear(frame, clear);
+                    @Cached("create(slot, mustClear(index))") final FrameSlotReadAndClearNode clearNode) {
+        return clearNode.executeReadAndClear(frame);
     }
 
     protected final boolean mustClear(final int index) {

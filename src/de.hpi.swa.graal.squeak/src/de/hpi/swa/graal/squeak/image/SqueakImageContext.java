@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.graalvm.collections.EconomicMap;
@@ -23,6 +24,7 @@ import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions.SqueakContextOptions;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.interop.InteropMap;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
@@ -451,7 +453,12 @@ public final class SqueakImageContext {
     }
 
     public String getImageDirectory() {
-        return Paths.get(getImagePath()).getParent().getFileName().toString();
+        final Path parent = Paths.get(getImagePath()).getParent();
+        if (parent != null) {
+            return "" + parent.getFileName(); // Avoids NullPointerExceptions.
+        } else {
+            throw SqueakException.create("`parent` should not be `null`.");
+        }
     }
 
     public String[] getImageArguments() {
