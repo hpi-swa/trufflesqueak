@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -26,7 +25,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @GenerateWrapper
 public abstract class EnterCodeNode extends AbstractNodeWithCode implements InstrumentableNode {
-    @CompilationFinal private SourceSection sourceSection;
+    private SourceSection sourceSection;
 
     @Child private ExecuteContextNode executeContextNode;
     @Child private StackPushNode pushStackNode;
@@ -146,8 +145,8 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
     @Override
     @TruffleBoundary
     public final SourceSection getSourceSection() {
+        CompilerAsserts.neverPartOfCompilation();
         if (sourceSection == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             sourceSection = code.getSource().createSection(1);
         }
         return sourceSection;
