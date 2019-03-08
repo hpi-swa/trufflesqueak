@@ -32,6 +32,7 @@ jacoco.exec
 
 # Diagnostic output directory
 dumps/
+graal_dumps/
 
 # Profile output directory
 profiles/
