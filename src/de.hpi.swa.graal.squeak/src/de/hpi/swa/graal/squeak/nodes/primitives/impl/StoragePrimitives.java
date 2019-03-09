@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -450,6 +451,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        /**
+         * Instantiating a {@link CompiledMethodObject} allocates a {@link FrameDescriptor} which
+         * should never be part of compilation, thus the <code>@TruffleBoundary</code>.
+         */
+        @TruffleBoundary
         @Specialization(guards = "receiver.isCompiledMethodClass()")
         protected final CompiledMethodObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
             final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(method.image, receiver.getBasicInstanceSize() + (int) bytecodeCount);
