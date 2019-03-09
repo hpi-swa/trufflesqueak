@@ -106,4 +106,6 @@ jobs:
           packages:
             - libsdl2-dev
       install: *use-jvmci
+  allow_failures:
+    - language: c # SVM build job
   fast_finish: true
