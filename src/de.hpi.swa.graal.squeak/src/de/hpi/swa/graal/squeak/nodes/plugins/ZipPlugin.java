@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -197,6 +198,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.size() >= 15"})
+        @TruffleBoundary
         protected static final boolean doDeflateBlock(final PointersObject receiver, final long lastIndex, final long chainLength, final long goodMatch) {
             return primitiveDeflateBlock(receiver, (int) lastIndex, (int) chainLength, (int) goodMatch);
         }
@@ -226,6 +228,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"isCorrectSize(receiver)", "llTable.isIntType()", "dTable.isIntType()"})
+        @TruffleBoundary
         protected static final PointersObject doInflateDecompressBlock(final PointersObject receiver, final NativeObject llTable, final NativeObject dTable) {
             primitiveInflateDecompressBlock(receiver, llTable, dTable);
             return receiver;
@@ -285,6 +288,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"isCorrectSize(receiver)", "distTree.size()>= 2", "litTree.size() >= 2", "litStream.size() >= 3", "distStream.size() >= 3"})
+        @TruffleBoundary
         protected static final long doZipSendBlock(final PointersObject receiver, final PointersObject litStream, final PointersObject distStream, final PointersObject litTree,
                         final PointersObject distTree) {
             return primitiveZipSendBlock(receiver, litStream, distStream, litTree, distTree);

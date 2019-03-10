@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -114,6 +115,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"bits.isIntType()", "residualArray.isIntType()", "residualArray.getIntLength() == 3"})
+        @TruffleBoundary
         protected static final Object doColor(final Object receiver, final ArrayObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask) {
             return primitiveColorConvertGrayscaleMCU(receiver, componentArray, bits, residualArray, mask);
         }
@@ -128,6 +130,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"componentArray.size() == 3", "bits.isIntType()", "residualArray.isIntType()", "residualArray.getIntLength() == 3"})
+        @TruffleBoundary
         protected static final Object doColor(final Object receiver, final PointersObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask) {
             return primitiveColorConvertMCU(receiver, componentArray, bits, residualArray, mask);
         }
@@ -144,6 +147,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"sampleBuffer.isIntType()", "sampleBuffer.getIntLength() == DCTSize2", "comp.size() >= MinComponentSize", "dcTableValue.isIntType()", "acTableValue.isIntType()",
                         "jpegStream.size() >= 5"})
+        @TruffleBoundary
         protected static final Object doColor(final Object receiver, final NativeObject sampleBuffer, final PointersObject comp, final NativeObject dcTableValue, final NativeObject acTableValue,
                         final PointersObject jpegStream) {
             return primitiveDecodeMCU(receiver, sampleBuffer, comp, dcTableValue, acTableValue, jpegStream);
@@ -160,6 +164,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"anArray.isIntType()", "anArray.getIntLength() == DCTSize2", "qt.isIntType()", "qt.getIntLength() == DCTSize2"})
+        @TruffleBoundary
         protected static final Object doColor(final Object receiver, final NativeObject anArray, final NativeObject qt) {
             return primitiveIdctInt(receiver, anArray, qt);
         }
@@ -174,7 +179,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject rcvr) {
+        protected final NativeObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject rcvr) {
             return method.image.wrap(moduleName);
         }
     }

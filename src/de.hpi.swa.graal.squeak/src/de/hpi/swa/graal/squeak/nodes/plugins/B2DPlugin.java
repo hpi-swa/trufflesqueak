@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -40,6 +41,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final PointersObject edgeEntry) {
             return B2D.primitiveAddActiveEdgeEntry(receiver, edgeEntry);
         }
@@ -54,6 +56,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start.isPoint()", "stop.isPoint()", "via.isPoint()"})
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject stop, final PointersObject via, final long leftFillIndex,
                         final long rightFillIndex) {
             return B2D.primitiveAddBezier(receiver, start, stop, via, leftFillIndex, rightFillIndex);
@@ -69,6 +72,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth, final long lineFill) {
             return B2D.primitiveAddBezierShape(receiver, points, nSegments, fillStyle, lineWidth, lineFill);
         }
@@ -83,6 +87,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"xIndex > 0", "origin.isPoint()", "direction.isPoint()", "normal.isPoint()"})
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final PointersObject form, final AbstractSqueakObject cmap, final boolean tileFlag, final PointersObject origin,
                         final PointersObject direction, final PointersObject normal, final long xIndex) {
             return B2D.primitiveAddBitmapFill(receiver, form, cmap, tileFlag, origin, direction, normal, xIndex);
@@ -98,6 +103,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final NativeObject points, final long nSegments, final NativeObject leftFills, final NativeObject rightFills,
                         final NativeObject lineWidths, final NativeObject lineFills, final NativeObject fillIndexList) {
             return B2D.primitiveAddCompressedShape(receiver, points, nSegments, leftFills, rightFills, lineWidths, lineFills, fillIndexList);
@@ -113,6 +119,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"colorRamp.isBitmap()", "origin.isPoint()", "direction.isPoint()", "normal.isPoint()"})
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final NativeObject colorRamp, final PointersObject origin, final PointersObject direction, final PointersObject normal,
                         final boolean isRadial) {
             return B2D.primitiveAddGradientFill(receiver, colorRamp, origin, direction, normal, isRadial);
@@ -128,6 +135,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start.isPoint()", "end.isPoint()"})
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long leftFill, final long rightFill) {
             return B2D.primitiveAddLine(receiver, start, end, leftFill, rightFill);
         }
@@ -142,6 +150,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start.isPoint()", "end.isPoint()"})
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width, final long pixelValue32) {
             return B2D.primitiveAddOval(receiver, start, end, fillIndex, width, pixelValue32);
         }
@@ -156,6 +165,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth, final long lineFill) {
             return B2D.primitiveAddPolygon(receiver, points, nSegments, fillStyle, lineWidth, lineFill);
         }
@@ -170,6 +180,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start.isPoint()", "end.isPoint()"})
+        @TruffleBoundary
         protected static final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width, final long pixelValue32) {
             return B2D.primitiveAddRect(receiver, start, end, fillIndex, width, pixelValue32);
         }
@@ -184,6 +195,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doChange(final PointersObject receiver, final PointersObject edgeEntry) {
             return B2D.primitiveChangedActiveEdgeEntry(receiver, edgeEntry);
         }
@@ -198,6 +210,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"oldBuffer.isIntType()", "newBuffer.isIntType()"})
+        @TruffleBoundary
         protected static final Object doCopy(final PointersObject receiver, final NativeObject oldBuffer, final NativeObject newBuffer) {
             return B2D.primitiveCopyBuffer(receiver, oldBuffer, newBuffer);
         }
@@ -212,6 +225,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doDisplay(final PointersObject receiver) {
             return B2D.primitiveDisplaySpanBuffer(receiver);
         }
@@ -226,6 +240,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doProfile(final PointersObject receiver, final boolean aBoolean) {
             return B2D.primitiveDoProfileStats(receiver, aBoolean);
         }
@@ -240,6 +255,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doCopy(final PointersObject receiver) {
             return B2D.primitiveFinishedProcessing(receiver);
         }
@@ -254,6 +270,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doGet(final PointersObject receiver) {
             return B2D.primitiveGetAALevel(receiver);
         }
@@ -268,6 +285,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"statsArray.isIntType()", "statsArray.getIntLength() >= 4"})
+        @TruffleBoundary
         protected static final Object doGet(final PointersObject receiver, final NativeObject statsArray) {
             return B2D.primitiveGetBezierStats(receiver, statsArray);
         }
@@ -282,6 +300,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rect.size() >= 2"})
+        @TruffleBoundary
         protected static final Object doGet(final PointersObject receiver, final PointersObject rect) {
             return B2D.primitiveGetClipRect(receiver, rect);
         }
@@ -296,6 +315,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"statsArray.isIntType()", "statsArray.getIntLength() >= 9"})
+        @TruffleBoundary
         protected static final Object doGet(final PointersObject receiver, final NativeObject statsArray) {
             return B2D.primitiveGetCounts(receiver, statsArray);
         }
@@ -310,6 +330,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doGet(final PointersObject receiver) {
             return B2D.primitiveGetDepth(receiver);
         }
@@ -324,6 +345,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doGet(final PointersObject receiver) {
             return B2D.primitiveGetFailureReason(receiver);
         }
@@ -338,6 +360,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doGet(final PointersObject receiver) {
             return B2D.primitiveGetOffset(receiver);
         }
@@ -352,6 +375,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"statsArray.isIntType()", "statsArray.getIntLength() >= 9"})
+        @TruffleBoundary
         protected static final Object doGet(final PointersObject receiver, final NativeObject statsArray) {
             return B2D.primitiveGetTimes(receiver, statsArray);
         }
@@ -366,6 +390,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"buffer.isIntType()", "hasMinimalSize(buffer)"})
+        @TruffleBoundary
         protected static final Object doInit(final PointersObject receiver, final NativeObject buffer) {
             return B2D.primitiveInitializeBuffer(receiver, buffer);
         }
@@ -384,6 +409,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doCopy(final PointersObject receiver) {
             return B2D.primitiveInitializeProcessing(receiver);
         }
@@ -398,6 +424,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"fillBitmap.isBitmap()"})
+        @TruffleBoundary
         protected static final Object doCopy(final PointersObject receiver, final NativeObject fillBitmap, final PointersObject fill) {
             return B2D.primitiveMergeFillFrom(receiver, fillBitmap, fill);
         }
@@ -412,6 +439,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doNeed(final PointersObject receiver) {
             return B2D.primitiveNeedsFlush(receiver);
         }
@@ -426,6 +454,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doNeed(final PointersObject receiver, final boolean aBoolean) {
             return B2D.primitiveNeedsFlushPut(receiver, aBoolean);
         }
@@ -440,6 +469,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doNext(final PointersObject receiver, final PointersObject edgeEntry) {
             return B2D.primitiveNextActiveEdgeEntry(receiver, edgeEntry);
         }
@@ -454,6 +484,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doNext(final PointersObject receiver, final PointersObject fillEntry) {
             return B2D.primitiveNextFillEntry(receiver, fillEntry);
         }
@@ -468,6 +499,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doNext(final PointersObject receiver, final PointersObject edgeEntry) {
             return B2D.primitiveNextGlobalEdgeEntry(receiver, edgeEntry);
         }
@@ -482,6 +514,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doRegister(final PointersObject receiver, final long index, final long initialX, final long initialY, final long initialZ, final long leftFillIndex,
                         final long rightFillIndex) {
             return B2D.primitiveRegisterExternalEdge(receiver, index, initialX, initialY, initialZ, leftFillIndex, rightFillIndex);
@@ -497,6 +530,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doRegister(final PointersObject receiver, final long index) {
             return B2D.primitiveRegisterExternalFill(receiver, index);
         }
@@ -511,6 +545,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doRender(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
             return B2D.primitiveRenderImage(receiver, edge, fill);
         }
@@ -525,6 +560,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doRender(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
             return B2D.primitiveRenderScanline(receiver, edge, fill);
         }
@@ -539,6 +575,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doSet(final PointersObject receiver, final long level) {
             return B2D.primitiveSetAALevel(receiver, level);
         }
@@ -553,6 +590,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"pluginName.isByteType()"})
+        @TruffleBoundary
         protected static final Object doSet(final ClassObject receiver, final NativeObject pluginName) {
             return B2D.primitiveSetBitBltPlugin(receiver, pluginName);
         }
@@ -567,6 +605,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rect.size() >= 2"})
+        @TruffleBoundary
         protected static final Object doSet(final PointersObject receiver, final PointersObject rect) {
             return B2D.primitiveSetClipRect(receiver, rect);
         }
@@ -581,6 +620,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doSet(final PointersObject receiver, final AbstractSqueakObject transform) {
             return B2D.primitiveSetColorTransform(receiver, transform);
         }
@@ -595,6 +635,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doSet(final PointersObject receiver, final long depth) {
             return B2D.primitiveSetDepth(receiver, depth);
         }
@@ -609,6 +650,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doSet(final PointersObject receiver, final AbstractSqueakObject transform) {
             return B2D.primitiveSetEdgeTransform(receiver, transform);
         }
@@ -623,6 +665,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"point.isPoint()"})
+        @TruffleBoundary
         protected static final Object doSet(final PointersObject receiver, final PointersObject point) {
             return B2D.primitiveSetOffset(receiver, point);
         }
