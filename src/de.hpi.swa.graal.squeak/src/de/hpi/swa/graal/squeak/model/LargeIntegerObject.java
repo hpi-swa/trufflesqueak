@@ -18,6 +18,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public static final long MASK_64BIT = 0xffffffffffffffffL;
     private static final BigInt ONE_HUNDRED_TWENTY_EIGHT = new BigInt(128);
     private static final BigInt LONG_MIN_OVERFLOW_RESULT = new BigInt(Long.MIN_VALUE); // abs?
+    private static final BigInt ONE_SHIFTED_BY_64 = new BigInt("18446744073709551616");
 
     private BigInt integer;
 
@@ -326,22 +327,22 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject toSigned() {
-        final BigInt oneshifted = new BigInt(1);
-        oneshifted.shiftLeft(64);
+        final BigInt value = integer.copy();
         final BigInt shiftback = integer.copy();
         shiftback.shiftRight(56);
         if (shiftback.compareTo(ONE_HUNDRED_TWENTY_EIGHT) >= 0) {
-            integer.sub(oneshifted);
+            value.sub(ONE_SHIFTED_BY_64);
+            return newFromBigInt(image, value);
         }
         return this;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject toUnsigned() {
-        final BigInt oneshifted = new BigInt(1);
-        oneshifted.shiftLeft(64);
+        final BigInt value = integer.copy();
         if (integer.compareTo(new BigInt(0)) < 0) {
-            integer.add(oneshifted);
+            value.add(ONE_SHIFTED_BY_64);
+            return newFromBigInt(image, value);
         }
         return this;
     }
