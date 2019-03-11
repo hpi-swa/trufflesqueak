@@ -1406,7 +1406,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
                 --dig[i];
             }
             if (--dig[i] == 0 && i + 1 == len) {
-                len = ulen;
+                len = ulen + 1;
             }
         }
         while (len > 1 && dig[len - 1] == 0) {
