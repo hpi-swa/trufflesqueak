@@ -245,7 +245,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
                     throw new PrimitiveFailed();
                 }
             }
-            return receiver.size() < readStreamInstSize + 8;
+            return receiver.size() >= readStreamInstSize + 8;
         }
     }
 
@@ -257,7 +257,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"stopIndex >= startIndex", "startIndex > 0", "collection.isByteType()", "stopIndex > collection.getByteLength()"})
+        @Specialization(guards = {"stopIndex >= startIndex", "startIndex > 0", "collection.isByteType()", "stopIndex <= collection.getByteLength()"})
         protected static final long doUpdateAdler32(@SuppressWarnings("unused") final ClassObject receiver, final long adler32, final long startIndex, final long stopIndex,
                         final NativeObject collection) {
             return primitiveUpdateAdler32(adler32, (int) startIndex, (int) stopIndex, collection);
@@ -272,7 +272,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"stopIndex >= startIndex", "startIndex > 0", "collection.isByteType()", "stopIndex > collection.getByteLength()"})
+        @Specialization(guards = {"stopIndex >= startIndex", "startIndex > 0", "collection.isByteType()", "stopIndex <= collection.getByteLength()"})
         protected static final long doUpdateGZipCrc32(@SuppressWarnings("unused") final ClassObject receiver, final long crc, final long startIndex, final long stopIndex,
                         final NativeObject collection) {
             return primitiveUpdateGZipCrc32(collection, (int) startIndex, (int) stopIndex, crc);
