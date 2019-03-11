@@ -396,7 +396,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"repl.isByteType()", "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart)"})
         protected static final LargeIntegerObject doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-            System.arraycopy(repl.getByteStorage(), (int) replStart - 1, rcvr.getBytes(), (int) start - 1, (int) (1 + stop - start));
+            rcvr.setBytes(repl.getByteStorage(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
             return rcvr;
         }
 
