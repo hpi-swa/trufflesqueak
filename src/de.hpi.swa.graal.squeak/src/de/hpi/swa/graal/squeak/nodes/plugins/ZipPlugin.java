@@ -230,23 +230,8 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"llTable.isIntType()", "dTable.isIntType()"})
         @TruffleBoundary
         protected static final PointersObject doInflateDecompressBlock(final PointersObject receiver, final NativeObject llTable, final NativeObject dTable) {
-            isCorrectSize(receiver);
             primitiveInflateDecompressBlock(receiver, llTable, dTable);
             return receiver;
-        }
-
-        protected static final boolean isCorrectSize(final PointersObject receiver) {
-            if (readStreamInstSize == 0) {
-                if (!determineSizeOfReadStream(receiver)) {
-                    throw new PrimitiveFailed();
-                }
-                if (receiver.size() < readStreamInstSize + 8) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    readStreamInstSize = 0;
-                    throw new PrimitiveFailed();
-                }
-            }
-            return receiver.size() < readStreamInstSize + 8;
         }
     }
 
@@ -663,6 +648,17 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
 
     /* InflatePlugin>>#primitiveInflateDecompressBlock */
     private static void primitiveInflateDecompressBlock(final PointersObject rcvr, final NativeObject llTable, final NativeObject dTable) {
+        if (readStreamInstSize == 0) {
+            if (!determineSizeOfReadStream(rcvr)) {
+                throw new PrimitiveFailed();
+            }
+            if (rcvr.size() < readStreamInstSize + 8) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                readStreamInstSize = 0;
+                throw new PrimitiveFailed();
+            }
+        }
+
         zipDistTable = dTable.getIntStorage();
         /* literal table */
         zipDistTableSize = zipDistTable.length;
