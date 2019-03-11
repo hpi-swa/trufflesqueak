@@ -237,12 +237,12 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final boolean isCorrectSize(final PointersObject receiver) {
             if (readStreamInstSize == 0) {
                 if (!determineSizeOfReadStream(receiver)) {
-                    throw new PrimitiveFailed();
+                    return false;
                 }
                 if (receiver.size() < readStreamInstSize + 8) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     readStreamInstSize = 0;
-                    throw new PrimitiveFailed();
+                    return false;
                 }
             }
             return receiver.size() >= readStreamInstSize + 8;
