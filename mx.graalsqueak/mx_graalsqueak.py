@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import shutil
 
@@ -25,9 +26,12 @@ _compiler = mx.suite('compiler', fatalIfMissing=False)
 
 
 def _graal_vm_args(args):
-    graal_args = [
-        '-XX:+UseJVMCINativeLibrary',  # For libgraal (when available)
-    ]
+    graal_args = []
+
+    if not sys.platform.startswith('win32'):
+        graal_args += [
+            '-XX:+UseJVMCINativeLibrary',  # For libgraal (when available)
+        ]
 
     if args.trace_compilation:
         graal_args += [
