@@ -452,10 +452,10 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         }
     }
 
+    @TruffleBoundary
     private void handleTextInputEvent() {
         final TextInputEvent textInputEvent = (TextInputEvent) event;
         key = CTypeConversion.toJavaString(textInputEvent.text()).charAt(0);
-
     }
 
     private long[] getNextKeyEvent(final long event_type, final long time) {
