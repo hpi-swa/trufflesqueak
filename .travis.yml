@@ -14,7 +14,7 @@ aliases:
       export PATH=${PATH}:${MX_PATH}
   - &use-jvmci
     |
-      JVMCI_VERSION="jvmci-0.55"
+      JVMCI_VERSION="jvmci-0.56"
       JDK8_UPDATE_VERSION="202"
       JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
       curl -sSL --retry 3 -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/openjdk-8u${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}-linux-amd64.tar.gz
@@ -106,6 +106,4 @@ jobs:
           packages:
             - libsdl2-dev
       install: *use-jvmci
-  allow_failures:
-    - language: c # SVM build job
   fast_finish: true
