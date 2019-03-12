@@ -25,9 +25,7 @@ _compiler = mx.suite('compiler', fatalIfMissing=False)
 
 
 def _graal_vm_args(args):
-    graal_args = [
-        '-XX:+UseJVMCINativeLibrary',  # For libgraal (when available)
-    ]
+    graal_args = []
 
     if args.trace_compilation:
         graal_args += [
@@ -98,6 +96,7 @@ def _graal_vm_args(args):
     graal_args += [
         '-Djvmci.Compiler=graal',
         '-XX:+UseJVMCICompiler',
+        # '-XX:+UseJVMCINativeLibrary',  # For libgraal (once available)
     ]
     return graal_args
 
