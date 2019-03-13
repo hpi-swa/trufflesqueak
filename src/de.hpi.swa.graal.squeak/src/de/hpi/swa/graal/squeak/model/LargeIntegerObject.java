@@ -1,15 +1,20 @@
 package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.BigInt;
 
 public final class LargeIntegerObject extends AbstractSqueakObject {
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, LargeIntegerObject.class);
+
     public static final long SMALLINTEGER32_MIN = -0x40000000;
     public static final long SMALLINTEGER32_MAX = 0x3fffffff;
     public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
@@ -18,6 +23,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public static final long MASK_64BIT = 0xffffffffffffffffL;
     private static final BigInt ONE_HUNDRED_TWENTY_EIGHT = new BigInt(128);
     private static final BigInt LONG_MIN_OVERFLOW_RESULT = new BigInt(Long.MIN_VALUE); // abs?
+    private static final BigInt INT_MIN_OVERFLOW_RESULT = new BigInt(Integer.MIN_VALUE); // abs?
     private static final BigInt ONE_SHIFTED_BY_64 = new BigInt("18446744073709551616");
 
     private BigInt integer;
@@ -25,16 +31,19 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public LargeIntegerObject(final SqueakImageContext image, final BigInt integer) {
         super(image, integer.compareTo(new BigInt(0)) >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass);
         this.integer = integer;
+        LOG.log(Level.FINE, integer.toString() + " created");
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final long hash, final ClassObject klass, final byte[] bytes) {
         super(image, hash, klass);
         this.integer = new BigInt(klass == image.largeNegativeIntegerClass ? -1 : 1, bytes, bytes.length);
+        LOG.log(Level.FINE, integer.toString() + " created");
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final byte[] bytes) {
         super(image, klass);
         this.integer = new BigInt(klass == image.largeNegativeIntegerClass ? -1 : 1, bytes, bytes.length);
+        LOG.log(Level.FINE, integer.toString() + " created");
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final int size) {
@@ -44,11 +53,13 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
             this.integer.setNegative();
         }
         this.integer.setSize(size);
+        LOG.log(Level.FINE, integer.toString() + " created");
     }
 
     public LargeIntegerObject(final LargeIntegerObject original) {
         super(original.image, original.getSqueakClass());
         this.integer = original.integer;
+        LOG.log(Level.FINE, integer.toString() + " created");
     }
 
     public static LargeIntegerObject createLongMinOverflowResult(final SqueakImageContext image) {
@@ -139,8 +150,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public static Object reduceIfPossible(final LargeIntegerObject value) {
         if (value.bitLength() > Long.SIZE - 1) {
+            value.integer.reduceIfPossible();
+            LOG.log(Level.FINE, value.toString() + " not reduced");
             return value;
         } else {
+            LOG.log(Level.FINE, value.toString() + " reduced to: " + value.longValue());
             return value.longValue() & MASK_64BIT;
         }
     }
@@ -154,6 +168,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public long longValue() {
+        LOG.log(Level.FINE, integer.toString() + " longValue: " + integer.longValue());
         return integer.longValue();
     }
 
@@ -166,11 +181,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public boolean fitsIntoLong() {
-        return bitLength() <= 63;
+        return integer.equals(LONG_MIN_OVERFLOW_RESULT) ? true : bitLength() <= 63;
     }
 
     public boolean fitsIntoInt() {
-        return bitLength() <= 31;
+        return integer.equals(INT_MIN_OVERFLOW_RESULT) ? true : bitLength() <= 31;
     }
 
     public int bitLength() {
@@ -205,6 +220,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public Object add(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.add(b.integer);
+        LOG.log(Level.FINE, integer.toString() + "+" + b.toString() + "=" + value.toString());
         return reduceIfPossible(value);
     }
 
@@ -212,6 +228,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public Object subtract(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.sub(b.integer);
+        LOG.log(Level.FINE, integer.toString() + "-" + b.toString() + "=" + value.toString());
         return reduceIfPossible(value);
     }
 
@@ -219,6 +236,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public Object multiply(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.mul(b.integer);
+        LOG.log(Level.FINE, integer.toString() + "*" + b.toString() + "=" + value.toString());
         return reduceIfPossible(value);
     }
 
@@ -226,6 +244,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public Object divide(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.div(b.integer);
+        LOG.log(Level.FINE, integer.toString() + "/" + b.toString() + "=" + value.toString());
         return reduceIfPossible(value);
     }
 
@@ -249,8 +268,9 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object floorMod(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
-        value.sub(floorDivide(value, b.integer));
-        value.mul(b.integer);
+        final BigInt floor = floorDivide(value, b.integer);
+        floor.mul(b.integer);
+        value.sub(floor);
         return reduceIfPossible(value);
     }
 
@@ -258,6 +278,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public LargeIntegerObject divideNoReduce(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.div(b.integer);
+        LOG.log(Level.FINE, integer.toString() + "/ no reduce" + b.toString() + "=" + value.toString());
         return newFromBigInt(image, value);
     }
 
@@ -265,13 +286,15 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public Object remainder(final LargeIntegerObject b) {
         final BigInt value = integer.copy();
         value.rem(b.integer);
+        LOG.log(Level.FINE, integer.toString() + "%" + b.toString() + "=" + value.toString());
         return reduceIfPossible(value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject negateNoReduce() {
         final BigInt value = integer.copy();
-        value.mul(-1);
+        value.negate();
+        LOG.log(Level.FINE, integer.toString() + "negated =" + value.toString());
         return newFromBigInt(image, value);
     }
 
@@ -376,6 +399,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public Object shiftLeft(final int b) {
         final BigInt value = integer.copy();
         value.shiftLeft(b);
+        LOG.log(Level.FINE, integer.toString() + "<<" + b + "=" + value.toString());
         return reduceIfPossible(value);
     }
 
@@ -383,6 +407,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public Object shiftRight(final int b) {
         final BigInt value = integer.copy();
         value.shiftRight(b);
+        LOG.log(Level.FINE, integer.toString() + ">>" + b + "=" + value.toString());
         return reduceIfPossible(value);
     }
 
