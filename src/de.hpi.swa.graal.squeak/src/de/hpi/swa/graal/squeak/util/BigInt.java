@@ -619,7 +619,12 @@ public class BigInt extends Number implements Comparable<BigInt> {
         if (dig.length == 0) {
             return 0L;
         }
-        return len == 1 ? sign * (dig[0] & mask) : sign * ((dig[1] & 0x7FFFFFFFL) << 32 | dig[0] & mask);
+        // TODO: Submit Huldra issue: -9223372036854775808.longValue()
+        if (sign < 0) {
+            return len == 1 ? sign * (dig[0] & mask) : sign * ((dig[1] & 0xFFFFFFFFL) << 32 | dig[0] & mask);
+        } else {
+            return len == 1 ? sign * (dig[0] & mask) : sign * ((dig[1] & 0x7FFFFFFFL) << 32 | dig[0] & mask);
+        }
     }
 
     /**
@@ -1406,7 +1411,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
                 --dig[i];
             }
             if (--dig[i] == 0 && i + 1 == len) {
-                len = ulen + 1;
+                len -= 1; // TODO: Submit Huldra issue: 1<<64 - 1 1<<96 -1
             }
         }
         while (len > 1 && dig[len - 1] == 0) {
@@ -1907,7 +1912,8 @@ public class BigInt extends Number implements Comparable<BigInt> {
             return;
         }
         if (tmp == 0) {
-            uassign(1, sign * div.sign);
+            // TODO: Submit Hulra issue: 987654321098765432109876 / -987654321098765432109876
+            uassign(sign * div.sign, 1);
             return;
         }
 
@@ -1954,8 +1960,8 @@ public class BigInt extends Number implements Comparable<BigInt> {
         }
         div(dig, div.dig, len, div.len, q);
 
-        for (len = div.len; dig[len - 1] == 0; --len) {
-        }
+        for (len = div.len; len > 1 && dig[len - 1] == 0; --len) {
+        } // TODO: Submit Huldra issue for edge case i%j==0
     }
 
     /**
@@ -2258,9 +2264,18 @@ public class BigInt extends Number implements Comparable<BigInt> {
      * @complexity O(n)
      */
     private void bigShiftRight(final int shift) {
-        System.arraycopy(dig, shift, dig, 0, len - shift);
-        // for(int i = len-shift; i<len; i++) dig[i] = 0; dig[j >= len] are allowed to be anything.
-        len -= shift;
+        // TODO: Submit Huldra issue: 52339921626855613784307183 << 238 (shift > len)
+        if (shift < len) {
+            System.arraycopy(dig, shift, dig, 0, len - shift);
+            // for(int i = len-shift; i<len; i++) dig[i] = 0; dig[j >= len] are allowed to be
+            // anything.
+            len -= shift;
+        } else {
+            for (int i = 0; i < len; i++) {
+                dig[i] = 0;
+                len = 1;
+            }
+        }
     }
 
     /**
@@ -3156,6 +3171,20 @@ public class BigInt extends Number implements Comparable<BigInt> {
         for (int i = 0; i < length; i++) {
             setByte(destPos + i, bytes[srcPos + i]);
         }
+    }
+
+    public void reduceIfPossible() {
+        for (int i = len - 1; i >= 0; i--) {
+            if (dig[i] == 0 && len > 1) {
+                len--;
+            } else {
+                return;
+            }
+        }
+    }
+
+    public void negate() {
+        this.sign = this.sign * -1;
     }
 
     /*** </BitOperations> ***/
