@@ -3174,6 +3174,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
     }
 
     public void reduceIfPossible() {
+        squeaksize = -1;
         for (int i = len - 1; i >= 0; i--) {
             if (dig[i] == 0 && len > 1) {
                 len--;
