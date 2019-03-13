@@ -253,7 +253,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return reduceIfPossible(floorDivide(integer, b.integer));
     }
 
-    private BigInt floorDivide(final BigInt x, final BigInt y) {
+    private static BigInt floorDivide(final BigInt x, final BigInt y) {
         final BigInt r = x.copy();
         r.div(y);
         final BigInt test = r.copy();
