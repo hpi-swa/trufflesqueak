@@ -31,7 +31,7 @@ public final class JumpBytecodes {
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);
-            offset = (bytecode & 7) + 1;
+            offset = shortJumpOffset(bytecode);
             isIfTrue = false;
             popNode = StackPopNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
@@ -39,7 +39,7 @@ public final class JumpBytecodes {
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter, final boolean condition) {
             super(code, index, numBytecodes);
-            offset = ((bytecode & 3) << 8) + parameter;
+            offset = longConditionalJumpOffset(bytecode, parameter);
             isIfTrue = condition;
             popNode = StackPopNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
@@ -119,12 +119,12 @@ public final class JumpBytecodes {
 
         public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);
-            offset = (bytecode & 7) + 1;
+            offset = shortJumpOffset(bytecode);
         }
 
         public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter) {
             super(code, index, numBytecodes);
-            offset = ((bytecode & 7) - 4 << 8) + parameter;
+            offset = longUnconditionalJumpOffset(bytecode, parameter);
         }
 
         @Override
@@ -141,5 +141,17 @@ public final class JumpBytecodes {
             CompilerAsserts.neverPartOfCompilation();
             return "jumpTo: " + offset;
         }
+    }
+
+    public static int shortJumpOffset(final int bytecode) {
+        return (bytecode & 7) + 1;
+    }
+
+    public static int longConditionalJumpOffset(final int bytecode, final int parameter) {
+        return ((bytecode & 3) << 8) + parameter;
+    }
+
+    public static int longUnconditionalJumpOffset(final int bytecode, final int parameter) {
+        return ((bytecode & 7) - 4 << 8) + parameter;
     }
 }

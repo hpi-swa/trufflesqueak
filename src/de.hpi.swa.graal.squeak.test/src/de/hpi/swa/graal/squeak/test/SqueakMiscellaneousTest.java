@@ -182,6 +182,31 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
     }
 
     @Test
+    public void testLoopDecoding() {
+        // Fake Integer>>#timesRepeat:
+        final CompiledCodeObject code1 = makeMethod(
+                        new Object[]{17301507L, image.newSymbol("whileTrue:"), image.newSymbol("#timesRepeat:")},
+                        0x70, 0x69, 0x11, 0x76, 0xB1, 0x81, 0x75, 0xB5, 0x9C, 0x10, 0xC9, 0x87, 0xA3, 0x78);
+// final Integer[] result1 = SqueakBytecodeDecoder.findLoops(code1);
+// assertEquals(1, result1.length);
+// assertSame(12, result1[0]);
+
+        /**
+         * <code>
+         * [10 < 1] whileTrue: [].
+         * [1 < 10] whileFalse: [].
+         * 10 < 1 ifTrue: [24] ifFalse: [42].
+         * </code>
+         */
+        final CompiledCodeObject code2 = makeMethod(
+                        new Object[]{8L, image.newSymbol("someSymbol")},
+                        0x20, 0x76, 0xB2, 0x99, 0xA3, 0x76, 0x20, 0xB2, 0xA8, 0xA3, 0x20, 0x76, 0xB2, 0x99, 0x22, 0x90, 0x21, 0x87, 0x78);
+        final Integer[] result2 = SqueakBytecodeDecoder.findLoops(code2);
+        assertEquals(2, result2.length);
+        assertSame(4, result2[0]);
+    }
+
+    @Test
     public void testFloatDecoding() {
         SqueakImageChunk chunk = newFloatChunk(ArrayConversionUtils.bytesFromIntsReversed(new int[]{0, 1072693248}));
         assertEquals(1.0, getDouble(chunk), 0);

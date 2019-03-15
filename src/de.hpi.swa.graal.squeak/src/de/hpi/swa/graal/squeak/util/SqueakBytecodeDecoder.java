@@ -1,10 +1,14 @@
 package de.hpi.swa.graal.squeak.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
@@ -223,5 +227,40 @@ public final class SqueakBytecodeDecoder {
                 throw SqueakException.create("Unknown bytecode:", b);
         }
         //@formatter:on
+    }
+
+    public static Integer[] findLoops(final CompiledCodeObject code) {
+        final List<Integer> loopIndices = new ArrayList<>();
+        final byte[] bytecode = code.getBytes();
+        for (int index = 0; index < bytecode.length; index++) {
+            final int currentPC = index;
+            final int b = Byte.toUnsignedInt(bytecode[currentPC]);
+            //@formatter:off
+            final int jumpOffset;
+            switch (b) {
+                case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
+                     jumpOffset = JumpBytecodes.shortJumpOffset(b);
+                     break;
+                case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:
+                     jumpOffset = JumpBytecodes.shortJumpOffset(b);
+                     break;
+                case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167:
+                     jumpOffset = JumpBytecodes.longUnconditionalJumpOffset(b, Byte.toUnsignedInt(bytecode[++index]));
+                     break;
+                case 168: case 169: case 170: case 171: // true
+                    jumpOffset = JumpBytecodes.longConditionalJumpOffset(b, Byte.toUnsignedInt(bytecode[++index]));
+                    break;
+                case 172: case 173: case 174: case 175: // false
+                    jumpOffset = JumpBytecodes.longConditionalJumpOffset(b, Byte.toUnsignedInt(bytecode[++index]));
+                    break;
+                default:
+                    continue;
+            }
+            //@formatter:on
+            if (jumpOffset < 0) {
+                loopIndices.add(currentPC);
+            }
+        }
+        return loopIndices.toArray(new Integer[loopIndices.size()]);
     }
 }
