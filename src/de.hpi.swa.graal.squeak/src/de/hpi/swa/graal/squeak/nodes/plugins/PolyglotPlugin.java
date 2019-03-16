@@ -266,7 +266,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 final Object[] keys = new Object[size];
                 for (int index = 0; index < size; index++) {
                     final Object value = ForeignAccess.sendRead(readNode, sendKeysResult, index);
-                    keys[index] = value == null ? "null" : value.toString();
+                    keys[index] = String.valueOf(value);
                 }
                 return wrapNode.executeList(keys);
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {

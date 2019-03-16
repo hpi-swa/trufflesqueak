@@ -124,7 +124,7 @@ public final class ArrayUtils {
     public static String[] toStrings(final Object[] objects) {
         final String[] strings = new String[objects.length];
         for (int i = 0; i < objects.length; i++) {
-            strings[i] = objects[i] == null ? "null" : objects[i].toString();
+            strings[i] = String.valueOf(objects[i]);
         }
         return strings;
     }
