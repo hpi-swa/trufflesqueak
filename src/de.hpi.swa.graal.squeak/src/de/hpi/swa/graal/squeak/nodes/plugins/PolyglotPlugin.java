@@ -71,7 +71,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
             PrimGetLastErrorNode.unsetLastError();
@@ -110,7 +110,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
             PrimGetLastErrorNode.unsetLastError();
@@ -148,7 +148,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.isByteType()", "memberToCall.isByteType()"})
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doEvaluate(final NativeObject receiver, final NativeObject memberToCall) {
             PrimGetLastErrorNode.unsetLastError();
             final String foreignCode = receiver.asString();
@@ -237,7 +237,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "name.isByteType()")
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         public final Object exportSymbol(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject name, final Object value) {
             method.image.env.exportSymbol(name.asString(), value);
             return value;
@@ -341,7 +341,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "languageID.isByteType()")
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected final ArrayObject doGet(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject languageID) {
             final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
             return wrapNode.executeList(languages.stream().//
@@ -361,7 +361,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "lastError != null")
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected final NativeObject doError(@SuppressWarnings("unused") final Object receiver) {
             return method.image.wrap(lastError.toString());
         }
@@ -389,7 +389,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected final TruffleObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return (TruffleObject) method.image.env.getPolyglotBindings();
         }
@@ -403,7 +403,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "name.isByteType()")
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         public final Object importSymbol(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject name) {
             final Object object = method.image.env.importSymbol(name.asString());
             if (object == null) {
@@ -424,7 +424,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected final ArrayObject doList(@SuppressWarnings("unused") final ClassObject receiver) {
             final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
             final Object[] result = languages.stream().filter(l -> !l.isInternal()).map(l -> l.getId()).toArray();
@@ -614,7 +614,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "selector.isByteType()"})
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doWrite(final TruffleObject receiver, final NativeObject selector, final Object value) {
             PrimGetLastErrorNode.unsetLastError();
             try {

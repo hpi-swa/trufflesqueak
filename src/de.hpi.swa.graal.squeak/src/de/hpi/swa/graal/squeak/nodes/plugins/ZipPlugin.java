@@ -198,7 +198,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.size() >= 15"})
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final boolean doDeflateBlock(final PointersObject receiver, final long lastIndex, final long chainLength, final long goodMatch) {
             return primitiveDeflateBlock(receiver, (int) lastIndex, (int) chainLength, (int) goodMatch);
         }
@@ -228,7 +228,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"isCorrectSize(receiver)", "llTable.isIntType()", "dTable.isIntType()"})
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final PointersObject doInflateDecompressBlock(final PointersObject receiver, final NativeObject llTable, final NativeObject dTable) {
             primitiveInflateDecompressBlock(receiver, llTable, dTable);
             return receiver;
@@ -288,7 +288,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"isCorrectSize(receiver)", "distTree.size()>= 2", "litTree.size() >= 2", "litStream.size() >= 3", "distStream.size() >= 3"})
-        @TruffleBoundary
+        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doZipSendBlock(final PointersObject receiver, final PointersObject litStream, final PointersObject distStream, final PointersObject litTree,
                         final PointersObject distTree) {
             return primitiveZipSendBlock(receiver, litStream, distStream, litTree, distTree);
