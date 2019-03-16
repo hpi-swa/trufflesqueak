@@ -262,7 +262,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.trace_primitive_failures:
         parsed_args.log = (
             '%s.nodes.bytecodes.MiscellaneousBytecodes$CallPrimitiveNode=FINE'
-                % PACKAGE_NAME)
+            % PACKAGE_NAME)
     if parsed_args.trace_process_switches:
         parsed_args.log = (
             '%s.nodes.ExecuteTopLevelContextNode=FINE' % PACKAGE_NAME)
@@ -300,7 +300,8 @@ def _graalsqueak_gate_runner(args, tasks):
     jacoco_args = mx_gate.get_jacoco_agent_args()
     if supports_coverage and jacoco_args:
         unittest_args.extend(jacoco_args)
-    unittest_args += ['--suite', 'graalsqueak', '--very-verbose', '--enable-timing']
+    unittest_args += [
+        '--suite', 'graalsqueak', '--very-verbose', '--enable-timing']
     with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
