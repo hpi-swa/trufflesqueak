@@ -258,7 +258,19 @@ public final class SqueakBytecodeDecoder {
             }
             //@formatter:on
             if (jumpOffset < 0) {
-                loopIndices.add(new int[]{index + 1 + jumpOffset, index});
+                final int loopStart = index + 1 + jumpOffset;
+                final int loopEnd = index;
+                int[] nestedLoop = null;
+                for (final int[] loop : loopIndices) {
+                    if (loopStart < loop[0] && loop[1] < loopEnd) {
+                        nestedLoop = loop;
+                        break; // There can only be one nested loop at a time.
+                    }
+                }
+                if (nestedLoop != null) {
+                    loopIndices.remove(nestedLoop);
+                }
+                loopIndices.add(new int[]{loopStart, loopEnd});
             }
         }
         return loopIndices.toArray(new int[loopIndices.size()][2]);

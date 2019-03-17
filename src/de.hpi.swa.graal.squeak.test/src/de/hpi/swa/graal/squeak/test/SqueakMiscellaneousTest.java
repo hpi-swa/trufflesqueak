@@ -206,6 +206,18 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         assertEquals(2, result2.length);
         assertArrayEquals(new int[]{0, 5}, result2[0]);
         assertArrayEquals(new int[]{6, 12}, result2[1]);
+
+        /**
+         * <code>
+         * [10 < 1] whileTrue: [ [10 < 1] whileTrue: [ [10 < 1] whileTrue: [] ] ]
+         * </code>
+         */
+        final CompiledCodeObject code3 = makeMethod(
+                        new Object[]{8L, image.newSymbol("someSymbol")},
+                        0x20, 0x76, 0xB2, 0xAC, 0x0E, 0x20, 0x76, 0xB2, 0x9F, 0x20, 0x76, 0xB2, 0x99, 0xA3, 0xFA, 0xA3, 0xF4, 0xA3, 0xED, 0x78);
+        final int[][] result3 = SqueakBytecodeDecoder.findLoops(code3);
+        assertEquals(1, result3.length);
+        assertArrayEquals(new int[]{0, 18}, result3[0]);
     }
 
     @Test
