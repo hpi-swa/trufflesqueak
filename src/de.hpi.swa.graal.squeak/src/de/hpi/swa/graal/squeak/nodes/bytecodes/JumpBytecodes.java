@@ -2,19 +2,25 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.GetSuccessorNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class JumpBytecodes {
 
@@ -140,6 +146,108 @@ public final class JumpBytecodes {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "jumpTo: " + offset;
+        }
+    }
+
+    public static final class ConditionalWhileNode extends AbstractBytecodeNode {
+        @Child private LoopNode loop;
+        private final int offset;
+
+        public ConditionalWhileNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
+            super(code, index, numBytecodes);
+            offset = shortJumpOffset(bytecode);
+            final AbstractBytecodeNode[] bodyNodes = null;
+            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, false, bodyNodes));
+        }
+
+        public ConditionalWhileNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter, final boolean condition) {
+            super(code, index, numBytecodes);
+            offset = longConditionalJumpOffset(bytecode, parameter);
+            final AbstractBytecodeNode[] bodyNodes = null;
+            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, condition, bodyNodes));
+        }
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            loop.executeLoop(frame);
+        }
+
+        private int getJumpSuccessor() {
+            return getSuccessorIndex() + offset;
+        }
+
+        private static class WhileRepeatingNode extends AbstractNodeWithCode implements RepeatingNode {
+            private final boolean isIfTrue;
+            @Child private StackPopNode stackPopNode;
+            @Children private AbstractBytecodeNode[] bodyNodes;
+            @Child private GetSuccessorNode getSuccessorNode = GetSuccessorNode.create();
+
+            WhileRepeatingNode(final CompiledCodeObject code, final boolean isIfTrue, final AbstractBytecodeNode[] bodyNodes) {
+                super(code);
+                stackPopNode = StackPopNode.create(code);
+                this.isIfTrue = isIfTrue;
+                this.bodyNodes = bodyNodes;
+            }
+
+            @Override
+            @ExplodeLoop// (kind = LoopExplosionKind.MERGE_EXPLODE)
+            public boolean executeRepeating(final VirtualFrame frame) {
+                for (final AbstractBytecodeNode bodyNode : bodyNodes) {
+                    final int successor = getSuccessorNode.executeGeneric(frame, bodyNode);
+                    FrameAccess.setInstructionPointer(frame, code, successor);
+                    bodyNode.executeVoid(frame);
+                }
+                return (boolean) stackPopNode.executeRead(frame) == isIfTrue;
+            }
+        }
+    }
+
+    public static final class UnconditionalWhileNode extends AbstractBytecodeNode {
+        @Child private LoopNode loop;
+        private final int offset;
+
+        public UnconditionalWhileNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
+            super(code, index, numBytecodes);
+            offset = shortJumpOffset(bytecode);
+            final AbstractBytecodeNode[] bodyNodes = null;
+            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, bodyNodes));
+        }
+
+        public UnconditionalWhileNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter) {
+            super(code, index, numBytecodes);
+            offset = longUnconditionalJumpOffset(bytecode, parameter);
+            final AbstractBytecodeNode[] bodyNodes = null;
+            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, bodyNodes));
+        }
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            loop.executeLoop(frame);
+        }
+
+        private int getJumpSuccessor() {
+            return getSuccessorIndex() + offset;
+        }
+
+        private static class WhileRepeatingNode extends AbstractNodeWithCode implements RepeatingNode {
+            @Children private AbstractBytecodeNode[] bodyNodes;
+            @Child private GetSuccessorNode getSuccessorNode = GetSuccessorNode.create();
+
+            WhileRepeatingNode(final CompiledCodeObject code, final AbstractBytecodeNode[] bodyNodes) {
+                super(code);
+                this.bodyNodes = bodyNodes;
+            }
+
+            @Override
+            @ExplodeLoop// (kind = LoopExplosionKind.MERGE_EXPLODE)
+            public boolean executeRepeating(final VirtualFrame frame) {
+                for (final AbstractBytecodeNode bodyNode : bodyNodes) {
+                    final int successor = getSuccessorNode.executeGeneric(frame, bodyNode);
+                    FrameAccess.setInstructionPointer(frame, code, successor);
+                    bodyNode.executeVoid(frame);
+                }
+                return true;
+            }
         }
     }
 

@@ -244,12 +244,12 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         }
     }
 
-    protected abstract static class GetSuccessorNode extends AbstractNode {
-        private static GetSuccessorNode create() {
+    public abstract static class GetSuccessorNode extends AbstractNode {
+        public static GetSuccessorNode create() {
             return GetSuccessorNodeGen.create();
         }
 
-        protected abstract int executeGeneric(VirtualFrame frame, AbstractBytecodeNode node);
+        public abstract int executeGeneric(VirtualFrame frame, AbstractBytecodeNode node);
 
         @Specialization
         protected static final int doClosureNode(final PushClosureNode node) {
