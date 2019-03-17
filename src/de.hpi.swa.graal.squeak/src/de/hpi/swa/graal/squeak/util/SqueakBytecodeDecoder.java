@@ -229,8 +229,8 @@ public final class SqueakBytecodeDecoder {
         //@formatter:on
     }
 
-    public static Integer[] findLoops(final CompiledCodeObject code) {
-        final List<Integer> loopIndices = new ArrayList<>();
+    public static int[][] findLoops(final CompiledCodeObject code) {
+        final List<int[]> loopIndices = new ArrayList<>();
         final byte[] bytecode = code.getBytes();
         for (int index = 0; index < bytecode.length; index++) {
             final int currentPC = index;
@@ -258,9 +258,9 @@ public final class SqueakBytecodeDecoder {
             }
             //@formatter:on
             if (jumpOffset < 0) {
-                loopIndices.add(currentPC);
+                loopIndices.add(new int[]{index + 1 + jumpOffset, index});
             }
         }
-        return loopIndices.toArray(new Integer[loopIndices.size()]);
+        return loopIndices.toArray(new int[loopIndices.size()][2]);
     }
 }

@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -186,10 +187,10 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         // Fake Integer>>#timesRepeat:
         final CompiledCodeObject code1 = makeMethod(
                         new Object[]{17301507L, image.newSymbol("whileTrue:"), image.newSymbol("#timesRepeat:")},
-                        0x70, 0x69, 0x11, 0x76, 0xB1, 0x81, 0x75, 0xB5, 0x9C, 0x10, 0xC9, 0x87, 0xA3, 0x78);
-        final Integer[] result1 = SqueakBytecodeDecoder.findLoops(code1);
+                        0x70, 0x69, 0x11, 0x76, 0xB1, 0x81, 0x41, 0x75, 0xB5, 0x9C, 0x10, 0xC9, 0x87, 0xA3, 0xF3, 0x78);
+        final int[][] result1 = SqueakBytecodeDecoder.findLoops(code1);
         assertEquals(1, result1.length);
-        assertSame(12, result1[0]);
+        assertArrayEquals(new int[]{2, 14}, result1[0]);
 
         /**
          * <code>
@@ -201,10 +202,10 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         final CompiledCodeObject code2 = makeMethod(
                         new Object[]{8L, image.newSymbol("someSymbol")},
                         0x20, 0x76, 0xB2, 0x99, 0xA3, 0xFA, 0x76, 0x20, 0xB2, 0xA8, 0x02, 0xA3, 0xF9, 0x20, 0x76, 0xB2, 0x99, 0x22, 0x90, 0x21, 0x87, 0x78);
-        final Integer[] result2 = SqueakBytecodeDecoder.findLoops(code2);
+        final int[][] result2 = SqueakBytecodeDecoder.findLoops(code2);
         assertEquals(2, result2.length);
-        assertSame(4, result2[0]);
-        assertSame(11, result2[1]);
+        assertArrayEquals(new int[]{0, 5}, result2[0]);
+        assertArrayEquals(new int[]{6, 12}, result2[1]);
     }
 
     @Test
