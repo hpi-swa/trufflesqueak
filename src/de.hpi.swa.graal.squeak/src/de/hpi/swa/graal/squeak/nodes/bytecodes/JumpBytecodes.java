@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -9,7 +8,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -158,28 +156,41 @@ public final class JumpBytecodes {
         @Child private LoopNode loop;
 
         private WhileNode(final CompiledCodeObject code, final int startIndex, final int endIndex) {
-            super(code, startIndex, endIndex - startIndex + 3);
-            final ArrayList<AbstractBytecodeNode> bytecodeNodes = new ArrayList<>();
-            int lastConditionJumpIndex = -1;
-            boolean lastConditionIsIfTrue = true;
-            for (int i = startIndex; i < endIndex - 1; i++) {
+            super(code, startIndex, endIndex - startIndex + 2);
+            final int numBytecodeNodes = endIndex - startIndex;
+            final AbstractBytecodeNode[] bytecodeNodes = new AbstractBytecodeNode[numBytecodeNodes];
+            ConditionalJumpNode lastConditionalJump = null;
+            assert getSuccessorIndex() == SqueakBytecodeDecoder.decodeBytecode(code, endIndex).getSuccessorIndex();
+            for (int i = startIndex; i < endIndex;) {
                 final AbstractBytecodeNode bytecodeNode = SqueakBytecodeDecoder.decodeBytecode(code, i);
                 if (bytecodeNode instanceof ConditionalJumpNode) {
-                    lastConditionJumpIndex = i;
-                    lastConditionIsIfTrue = ((ConditionalJumpNode) bytecodeNode).isIfTrue;
+                    final ConditionalJumpNode conditionalJumpNode = (ConditionalJumpNode) bytecodeNode;
+                    if (conditionalJumpNode.getJumpSuccessor() > endIndex) {
+                        lastConditionalJump = conditionalJumpNode;
+                    }
                 }
-                bytecodeNodes.add(bytecodeNode);
+                bytecodeNodes[i - startIndex] = bytecodeNode;
+                i = bytecodeNode.getSuccessorIndex();
             }
-            assert lastConditionJumpIndex > 0;
-            final List<AbstractBytecodeNode> conditionNodes = bytecodeNodes.subList(0, lastConditionJumpIndex);
-            final List<AbstractBytecodeNode> bodyNodes = bytecodeNodes.subList(lastConditionJumpIndex, bytecodeNodes.size());
-            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, lastConditionIsIfTrue,
-                            conditionNodes.toArray(new AbstractBytecodeNode[conditionNodes.size()]),
-                            bodyNodes.toArray(new AbstractBytecodeNode[bodyNodes.size()])));
+            final boolean condition;
+            final AbstractBytecodeNode[] conditionNodes;
+            final AbstractBytecodeNode[] bodyNodes;
+            if (lastConditionalJump == null) {
+                condition = true;
+                conditionNodes = null;
+                bodyNodes = bytecodeNodes;
+            } else {
+                condition = lastConditionalJump.isIfTrue;
+                final int conditionEndIndex = lastConditionalJump.getIndex() - startIndex;
+                final int bodyStartIndex = lastConditionalJump.getSuccessorIndex() - startIndex;
+                conditionNodes = Arrays.copyOfRange(bytecodeNodes, 0, conditionEndIndex);
+                bodyNodes = bodyStartIndex < numBytecodeNodes ? Arrays.copyOfRange(bytecodeNodes, bodyStartIndex, numBytecodeNodes) : null;
+            }
+            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, startIndex, condition, conditionNodes, bodyNodes));
         }
 
         public static WhileNode create(final CompiledCodeObject code, final int startIndex, final int endIndex) {
-            return new WhileNode(code, startIndex, endIndex - startIndex);
+            return new WhileNode(code, startIndex, endIndex);
         }
 
         @Override
@@ -188,6 +199,7 @@ public final class JumpBytecodes {
         }
 
         private static class WhileRepeatingNode extends AbstractNodeWithCode implements RepeatingNode {
+            private final int startIndex;
             private final boolean isIfTrue;
             @Child private StackPopNode stackPopNode;
             @Children private AbstractBytecodeNode[] conditionNodes;
@@ -195,8 +207,9 @@ public final class JumpBytecodes {
             @Child private GetSuccessorNode getSuccessorNode = GetSuccessorNode.create();
             @Child private HandleConditionResultNode handleConditionResultNode;
 
-            WhileRepeatingNode(final CompiledCodeObject code, final boolean isIfTrue, final AbstractBytecodeNode[] conditionNodes, final AbstractBytecodeNode[] bodyNodes) {
+            WhileRepeatingNode(final CompiledCodeObject code, final int startIndex, final boolean isIfTrue, final AbstractBytecodeNode[] conditionNodes, final AbstractBytecodeNode[] bodyNodes) {
                 super(code);
+                this.startIndex = startIndex;
                 stackPopNode = StackPopNode.create(code);
                 this.isIfTrue = isIfTrue;
                 this.conditionNodes = conditionNodes;
@@ -204,28 +217,62 @@ public final class JumpBytecodes {
                 handleConditionResultNode = HandleConditionResultNode.create(code);
             }
 
-            @ExplodeLoop
+// @ExplodeLoop(kind = LoopExplosionKind.MERGE_EXPLODE)
             public boolean executeCondition(final VirtualFrame frame) {
-                for (final AbstractBytecodeNode conditionNode : conditionNodes) {
-                    conditionNode.executeVoid(frame);
+                AbstractBytecodeNode node = conditionNodes[0];
+                assert startIndex == node.getIndex();
+                int pc = startIndex;
+                while (pc >= 0) {
+                    final int successor = getSuccessorNode.executeGeneric(frame, node);
+                    FrameAccess.setInstructionPointer(frame, code, successor);
+                    node.executeVoid(frame);
+                    pc = successor;
+                    if (pc - startIndex >= conditionNodes.length) {
+                        break;
+                    } else {
+                        node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
+                    }
                 }
                 final Object result = stackPopNode.executeRead(frame);
+                assert result instanceof Boolean; // TODO: remove, for debugging only
                 return handleConditionResultNode.execute(frame, isIfTrue, result);
             }
 
             @Override
-            @ExplodeLoop
+// @ExplodeLoop(kind = LoopExplosionKind.MERGE_EXPLODE)
             public boolean executeRepeating(final VirtualFrame frame) {
-                if (!executeCondition(frame)) {
-                    for (final AbstractBytecodeNode bodyNode : bodyNodes) {
-                        final int successor = getSuccessorNode.executeGeneric(frame, bodyNode);
+                if (conditionNodes == null || !executeCondition(frame)) {
+                    if (bodyNodes == null) {
+                        assert conditionNodes != null;
+                        return true;
+                    }
+                    AbstractBytecodeNode node = bodyNodes[0];
+                    final int bodyStartIndex = node.getIndex();
+                    int pc = bodyStartIndex;
+                    while (pc >= 0) {
+                        final int successor = getSuccessorNode.executeGeneric(frame, node);
                         FrameAccess.setInstructionPointer(frame, code, successor);
-                        bodyNode.executeVoid(frame);
+                        node.executeVoid(frame);
+                        pc = successor;
+                        if (pc - bodyStartIndex >= bodyNodes.length) {
+                            break;
+                        } else {
+                            node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
+                        }
                     }
                     return true;
                 } else {
                     return false;
                 }
+            }
+
+            private AbstractBytecodeNode fetchNextBytecodeNode(final AbstractBytecodeNode[] bytecodeNodes, final int pc, final int offset) {
+                if (bytecodeNodes[pc - offset] == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    bytecodeNodes[pc - offset] = insert(SqueakBytecodeDecoder.decodeBytecodeDetectLoops(code, pc));
+                    // bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
+                }
+                return bytecodeNodes[pc - offset];
             }
         }
     }

@@ -54,7 +54,7 @@ public final class SqueakBytecodeDecoder {
         int index = 0;
         int lineNumber = 1;
         while (index < trailerPosition) {
-            final AbstractBytecodeNode bytecodeNode = decodeBytecodeDetectLoops(code, index);
+            final AbstractBytecodeNode bytecodeNode = decodeBytecode(code, index);
             bytecodeNode.setLineNumber(lineNumber);
             nodes[index] = bytecodeNode;
             index = bytecodeNode.getSuccessorIndex();
@@ -114,9 +114,7 @@ public final class SqueakBytecodeDecoder {
     public static AbstractBytecodeNode decodeBytecodeDetectLoops(final CompiledCodeObject code, final int index) {
         for (final int[] loop : findLoops(code)) {
             if (loop[0] == index) {
-                System.err.println("Decoding loop start");
                 return WhileNode.create(code, loop[0], loop[1]);
-// break; // return loop node
             }
         }
         return decodeBytecode(code, index);
@@ -126,7 +124,6 @@ public final class SqueakBytecodeDecoder {
         CompilerAsserts.neverPartOfCompilation("Bytecodes should always be decoded on slow path.");
         final byte[] bytecode = code.getBytes();
         final int b = Byte.toUnsignedInt(bytecode[index]);
-
         //@formatter:off
         switch (b) {
             case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
@@ -253,20 +250,22 @@ public final class SqueakBytecodeDecoder {
             final int b = Byte.toUnsignedInt(bytecode[currentPC]);
             //@formatter:off
             final int jumpOffset;
+            final int loopStart;
             switch (b) {
                 case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
                      jumpOffset = JumpBytecodes.shortJumpOffset(b);
+                     loopStart = currentPC + 1 + jumpOffset;
                      break;
                 case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167:
                      jumpOffset = JumpBytecodes.longUnconditionalJumpOffset(b, Byte.toUnsignedInt(bytecode[++index]));
+                     loopStart = currentPC + 2 + jumpOffset;
                      break;
                 default:
                     continue;
             }
             //@formatter:on
             if (jumpOffset < 0) {
-                final int loopStart = index + 1 + jumpOffset;
-                final int loopEnd = index;
+                final int loopEnd = currentPC;
                 int[] nestedLoop = null;
                 for (final int[] loop : loopIndices) {
                     if (loopStart < loop[0] && loop[1] < loopEnd) {

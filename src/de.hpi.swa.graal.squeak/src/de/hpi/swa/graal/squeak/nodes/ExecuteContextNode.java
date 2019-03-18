@@ -202,7 +202,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     private AbstractBytecodeNode fetchNextBytecodeNode(final int pc) {
         if (DECODE_BYTECODE_ON_DEMAND && bytecodeNodes[pc] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
+            bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecodeDetectLoops(code, pc));
+// bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
         }
         return bytecodeNodes[pc];
     }
