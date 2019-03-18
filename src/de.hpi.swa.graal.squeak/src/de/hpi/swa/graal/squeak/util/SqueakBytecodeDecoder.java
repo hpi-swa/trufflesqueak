@@ -252,6 +252,15 @@ public final class SqueakBytecodeDecoder {
             final int jumpOffset;
             final int loopStart;
             switch (b) {
+                case 128: case 129: case 130: case 131: case 133: case 134: case 138:
+                    index++;
+                    continue;
+                case 132: case 139: case 140: case 141: case 142:
+                    index += 2;
+                    continue;
+                case 143:
+                    index += 3;
+                    continue;
                 case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
                      jumpOffset = JumpBytecodes.shortJumpOffset(b);
                      loopStart = currentPC + 1 + jumpOffset;
@@ -260,6 +269,9 @@ public final class SqueakBytecodeDecoder {
                      jumpOffset = JumpBytecodes.longUnconditionalJumpOffset(b, Byte.toUnsignedInt(bytecode[++index]));
                      loopStart = currentPC + 2 + jumpOffset;
                      break;
+                case 168: case 169: case 170: case 171: case 172: case 173: case 174: case 175:
+                    index++;
+                    continue;
                 default:
                     continue;
             }
