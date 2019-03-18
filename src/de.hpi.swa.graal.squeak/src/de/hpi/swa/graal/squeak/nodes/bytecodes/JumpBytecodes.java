@@ -8,6 +8,8 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -217,29 +219,56 @@ public final class JumpBytecodes {
                 handleConditionResultNode = HandleConditionResultNode.create(code);
             }
 
-// @ExplodeLoop(kind = LoopExplosionKind.MERGE_EXPLODE)
+            @ExplodeLoop(kind = LoopExplosionKind.MERGE_EXPLODE)
             public boolean executeCondition(final VirtualFrame frame) {
                 AbstractBytecodeNode node = conditionNodes[0];
                 assert startIndex == node.getIndex();
                 int pc = startIndex;
-                while (pc >= 0) {
-                    final int successor = getSuccessorNode.executeGeneric(frame, node);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    node.executeVoid(frame);
-                    pc = successor;
-                    if (pc - startIndex >= conditionNodes.length) {
-                        break;
-                    } else {
+                CompilerAsserts.compilationConstant(conditionNodes.length);
+                while (pc >= 0 && node != null) {
+                    CompilerAsserts.partialEvaluationConstant(pc);
+                    if (node instanceof ConditionalJumpNode) {
+                        final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+                        if (jumpNode.executeCondition(frame)) {
+                            final int successor = jumpNode.getJumpSuccessor();
+// if (CompilerDirectives.inInterpreter() && successor <= pc) {
+// backJumpCounter++;
+// }
+                            pc = successor;
+                            node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
+                            continue;
+                        } else {
+                            final int successor = jumpNode.getSuccessorIndex();
+// if (CompilerDirectives.inInterpreter() && successor <= pc) {
+// backJumpCounter++;
+// }
+                            pc = successor;
+                            node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
+                            continue;
+                        }
+                    } else if (node instanceof UnconditionalJumpNode) {
+                        final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
+// if (CompilerDirectives.inInterpreter() && successor <= pc) {
+// backJumpCounter++;
+// }
+                        pc = successor;
                         node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
+                        continue;
+                    } else {
+                        final int successor = getSuccessorNode.executeGeneric(frame, node);
+                        FrameAccess.setInstructionPointer(frame, code, successor);
+                        node.executeVoid(frame);
+                        pc = successor;
+                        node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
+                        continue;
                     }
                 }
                 final Object result = stackPopNode.executeRead(frame);
-                assert result instanceof Boolean; // TODO: remove, for debugging only
                 return handleConditionResultNode.execute(frame, isIfTrue, result);
             }
 
             @Override
-// @ExplodeLoop(kind = LoopExplosionKind.MERGE_EXPLODE)
+            @ExplodeLoop(kind = LoopExplosionKind.MERGE_EXPLODE)
             public boolean executeRepeating(final VirtualFrame frame) {
                 if (conditionNodes == null || !executeCondition(frame)) {
                     if (bodyNodes == null) {
@@ -249,15 +278,43 @@ public final class JumpBytecodes {
                     AbstractBytecodeNode node = bodyNodes[0];
                     final int bodyStartIndex = node.getIndex();
                     int pc = bodyStartIndex;
-                    while (pc >= 0) {
-                        final int successor = getSuccessorNode.executeGeneric(frame, node);
-                        FrameAccess.setInstructionPointer(frame, code, successor);
-                        node.executeVoid(frame);
-                        pc = successor;
-                        if (pc - bodyStartIndex >= bodyNodes.length) {
-                            break;
-                        } else {
+                    CompilerAsserts.compilationConstant(bodyNodes.length);
+                    while (pc >= 0 && node != null) {
+                        CompilerAsserts.partialEvaluationConstant(pc);
+                        if (node instanceof ConditionalJumpNode) {
+                            final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+                            if (jumpNode.executeCondition(frame)) {
+                                final int successor = jumpNode.getJumpSuccessor();
+// if (CompilerDirectives.inInterpreter() && successor <= pc) {
+// backJumpCounter++;
+// }
+                                pc = successor;
+                                node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
+                                continue;
+                            } else {
+                                final int successor = jumpNode.getSuccessorIndex();
+// if (CompilerDirectives.inInterpreter() && successor <= pc) {
+// backJumpCounter++;
+// }
+                                pc = successor;
+                                node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
+                                continue;
+                            }
+                        } else if (node instanceof UnconditionalJumpNode) {
+                            final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
+// if (CompilerDirectives.inInterpreter() && successor <= pc) {
+// backJumpCounter++;
+// }
+                            pc = successor;
                             node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
+                            continue;
+                        } else {
+                            final int successor = getSuccessorNode.executeGeneric(frame, node);
+                            FrameAccess.setInstructionPointer(frame, code, successor);
+                            node.executeVoid(frame);
+                            pc = successor;
+                            node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
+                            continue;
                         }
                     }
                     return true;
@@ -267,6 +324,9 @@ public final class JumpBytecodes {
             }
 
             private AbstractBytecodeNode fetchNextBytecodeNode(final AbstractBytecodeNode[] bytecodeNodes, final int pc, final int offset) {
+                if (pc - offset >= bytecodeNodes.length) {
+                    return null;
+                }
                 if (bytecodeNodes[pc - offset] == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     bytecodeNodes[pc - offset] = insert(SqueakBytecodeDecoder.decodeBytecodeDetectLoops(code, pc));
