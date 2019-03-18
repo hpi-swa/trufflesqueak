@@ -1,5 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
@@ -15,12 +18,14 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.GetSuccessorNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode.HandleConditionResultNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public final class JumpBytecodes {
 
@@ -149,104 +154,78 @@ public final class JumpBytecodes {
         }
     }
 
-    public static final class ConditionalWhileNode extends AbstractBytecodeNode {
+    public static final class WhileNode extends AbstractBytecodeNode {
         @Child private LoopNode loop;
-        private final int offset;
 
-        public ConditionalWhileNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
-            super(code, index, numBytecodes);
-            offset = shortJumpOffset(bytecode);
-            final AbstractBytecodeNode[] bodyNodes = null;
-            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, false, bodyNodes));
+        private WhileNode(final CompiledCodeObject code, final int startIndex, final int endIndex) {
+            super(code, startIndex, endIndex - startIndex + 3);
+            final ArrayList<AbstractBytecodeNode> bytecodeNodes = new ArrayList<>();
+            int lastConditionJumpIndex = -1;
+            boolean lastConditionIsIfTrue = true;
+            for (int i = startIndex; i < endIndex - 1; i++) {
+                final AbstractBytecodeNode bytecodeNode = SqueakBytecodeDecoder.decodeBytecode(code, i);
+                if (bytecodeNode instanceof ConditionalJumpNode) {
+                    lastConditionJumpIndex = i;
+                    lastConditionIsIfTrue = ((ConditionalJumpNode) bytecodeNode).isIfTrue;
+                }
+                bytecodeNodes.add(bytecodeNode);
+            }
+            assert lastConditionJumpIndex > 0;
+            final List<AbstractBytecodeNode> conditionNodes = bytecodeNodes.subList(0, lastConditionJumpIndex);
+            final List<AbstractBytecodeNode> bodyNodes = bytecodeNodes.subList(lastConditionJumpIndex, bytecodeNodes.size());
+            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, lastConditionIsIfTrue,
+                            conditionNodes.toArray(new AbstractBytecodeNode[conditionNodes.size()]),
+                            bodyNodes.toArray(new AbstractBytecodeNode[bodyNodes.size()])));
         }
 
-        public ConditionalWhileNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter, final boolean condition) {
-            super(code, index, numBytecodes);
-            offset = longConditionalJumpOffset(bytecode, parameter);
-            final AbstractBytecodeNode[] bodyNodes = null;
-            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, condition, bodyNodes));
+        public static WhileNode create(final CompiledCodeObject code, final int startIndex, final int endIndex) {
+            return new WhileNode(code, startIndex, endIndex - startIndex);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
             loop.executeLoop(frame);
-        }
-
-        private int getJumpSuccessor() {
-            return getSuccessorIndex() + offset;
         }
 
         private static class WhileRepeatingNode extends AbstractNodeWithCode implements RepeatingNode {
             private final boolean isIfTrue;
             @Child private StackPopNode stackPopNode;
+            @Children private AbstractBytecodeNode[] conditionNodes;
             @Children private AbstractBytecodeNode[] bodyNodes;
             @Child private GetSuccessorNode getSuccessorNode = GetSuccessorNode.create();
+            @Child private HandleConditionResultNode handleConditionResultNode;
 
-            WhileRepeatingNode(final CompiledCodeObject code, final boolean isIfTrue, final AbstractBytecodeNode[] bodyNodes) {
+            WhileRepeatingNode(final CompiledCodeObject code, final boolean isIfTrue, final AbstractBytecodeNode[] conditionNodes, final AbstractBytecodeNode[] bodyNodes) {
                 super(code);
                 stackPopNode = StackPopNode.create(code);
                 this.isIfTrue = isIfTrue;
+                this.conditionNodes = conditionNodes;
                 this.bodyNodes = bodyNodes;
+                handleConditionResultNode = HandleConditionResultNode.create(code);
+            }
+
+            @ExplodeLoop
+            public boolean executeCondition(final VirtualFrame frame) {
+                for (final AbstractBytecodeNode conditionNode : conditionNodes) {
+                    conditionNode.executeVoid(frame);
+                }
+                final Object result = stackPopNode.executeRead(frame);
+                return handleConditionResultNode.execute(frame, isIfTrue, result);
             }
 
             @Override
-            @ExplodeLoop// (kind = LoopExplosionKind.MERGE_EXPLODE)
+            @ExplodeLoop
             public boolean executeRepeating(final VirtualFrame frame) {
-                for (final AbstractBytecodeNode bodyNode : bodyNodes) {
-                    final int successor = getSuccessorNode.executeGeneric(frame, bodyNode);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    bodyNode.executeVoid(frame);
+                if (!executeCondition(frame)) {
+                    for (final AbstractBytecodeNode bodyNode : bodyNodes) {
+                        final int successor = getSuccessorNode.executeGeneric(frame, bodyNode);
+                        FrameAccess.setInstructionPointer(frame, code, successor);
+                        bodyNode.executeVoid(frame);
+                    }
+                    return true;
+                } else {
+                    return false;
                 }
-                return (boolean) stackPopNode.executeRead(frame) == isIfTrue;
-            }
-        }
-    }
-
-    public static final class UnconditionalWhileNode extends AbstractBytecodeNode {
-        @Child private LoopNode loop;
-        private final int offset;
-
-        public UnconditionalWhileNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
-            super(code, index, numBytecodes);
-            offset = shortJumpOffset(bytecode);
-            final AbstractBytecodeNode[] bodyNodes = null;
-            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, bodyNodes));
-        }
-
-        public UnconditionalWhileNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter) {
-            super(code, index, numBytecodes);
-            offset = longUnconditionalJumpOffset(bytecode, parameter);
-            final AbstractBytecodeNode[] bodyNodes = null;
-            loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(code, bodyNodes));
-        }
-
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            loop.executeLoop(frame);
-        }
-
-        private int getJumpSuccessor() {
-            return getSuccessorIndex() + offset;
-        }
-
-        private static class WhileRepeatingNode extends AbstractNodeWithCode implements RepeatingNode {
-            @Children private AbstractBytecodeNode[] bodyNodes;
-            @Child private GetSuccessorNode getSuccessorNode = GetSuccessorNode.create();
-
-            WhileRepeatingNode(final CompiledCodeObject code, final AbstractBytecodeNode[] bodyNodes) {
-                super(code);
-                this.bodyNodes = bodyNodes;
-            }
-
-            @Override
-            @ExplodeLoop// (kind = LoopExplosionKind.MERGE_EXPLODE)
-            public boolean executeRepeating(final VirtualFrame frame) {
-                for (final AbstractBytecodeNode bodyNode : bodyNodes) {
-                    final int successor = getSuccessorNode.executeGeneric(frame, bodyNode);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    bodyNode.executeVoid(frame);
-                }
-                return true;
             }
         }
     }

@@ -186,11 +186,14 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
     public void testLoopDecoding() {
         // Fake Integer>>#timesRepeat:
         final CompiledCodeObject code1 = makeMethod(
-                        new Object[]{17301507L, image.newSymbol("whileTrue:"), image.newSymbol("#timesRepeat:")},
+                        new Object[]{17301507L, image.newSymbol("whileTrue:"), image.newSymbol("#timesRepeat:"), image.schedulerAssociation},
                         0x70, 0x69, 0x11, 0x76, 0xB1, 0x81, 0x41, 0x75, 0xB5, 0x9C, 0x10, 0xC9, 0x87, 0xA3, 0xF3, 0x78);
         final int[][] result1 = SqueakBytecodeDecoder.findLoops(code1);
         assertEquals(1, result1.length);
         assertArrayEquals(new int[]{2, 14}, result1[0]);
+
+        final AbstractBytecodeNode[] bytecodes1 = SqueakBytecodeDecoder.decode(code1);
+        // assertEquals(12, bytecodes1.length);
 
         /**
          * <code>
