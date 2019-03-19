@@ -7,7 +7,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -132,51 +131,37 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     private void startBytecode(final VirtualFrame frame) {
         int pc = 0;
-        int backJumpCounter = 0;
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
-        try {
-            while (pc >= 0) {
-                CompilerAsserts.partialEvaluationConstant(pc);
-                if (node instanceof ConditionalJumpNode) {
-                    final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                    if (jumpNode.executeCondition(frame)) {
-                        final int successor = jumpNode.getJumpSuccessor();
-                        if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                            backJumpCounter++;
-                        }
-                        pc = successor;
-                        node = fetchNextBytecodeNode(pc);
-                        continue;
-                    } else {
-                        final int successor = jumpNode.getSuccessorIndex();
-                        if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                            backJumpCounter++;
-                        }
-                        pc = successor;
-                        node = fetchNextBytecodeNode(pc);
-                        continue;
-                    }
-                } else if (node instanceof UnconditionalJumpNode) {
-                    final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
-                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                        backJumpCounter++;
-                    }
-                    pc = successor;
+        while (pc >= 0) {
+            CompilerAsserts.partialEvaluationConstant(pc);
+            if (node instanceof ConditionalJumpNode) {
+                final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+                if (jumpNode.executeCondition(frame)) {
+                    assert pc < jumpNode.getJumpSuccessor() : "Unexpected back jump";
+                    pc = jumpNode.getJumpSuccessor();
                     node = fetchNextBytecodeNode(pc);
                     continue;
                 } else {
-                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    node.executeVoid(frame);
-                    pc = successor;
+                    assert pc < jumpNode.getSuccessorIndex() : "Unexpected back jump";
+                    pc = jumpNode.getSuccessorIndex();
                     node = fetchNextBytecodeNode(pc);
                     continue;
                 }
+            } else if (node instanceof UnconditionalJumpNode) {
+                assert pc < ((UnconditionalJumpNode) node).getJumpSuccessor() : "Unexpected back jump";
+                pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                node = fetchNextBytecodeNode(pc);
+                continue;
+            } else {
+                final int successor = getGetSuccessorNode().executeGeneric(frame, node);
+                FrameAccess.setInstructionPointer(frame, code, successor);
+                node.executeVoid(frame);
+                assert pc < successor : "Unexpected back jump";
+                pc = successor;
+                node = fetchNextBytecodeNode(pc);
+                continue;
             }
-        } finally {
-            assert backJumpCounter >= 0;
-            LoopNode.reportLoopCount(this, backJumpCounter);
         }
     }
 

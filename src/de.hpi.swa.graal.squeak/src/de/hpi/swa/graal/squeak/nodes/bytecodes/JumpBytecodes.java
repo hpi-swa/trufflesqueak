@@ -235,50 +235,32 @@ public final class JumpBytecodes {
                 AbstractBytecodeNode node = conditionNodes[0];
                 assert startIndex == node.getIndex();
                 int pc = startIndex;
-                int backJumpCounter = 0;
                 CompilerAsserts.compilationConstant(conditionNodes.length);
-                try {
-                    while (pc >= 0 && node != null) {
-                        CompilerAsserts.partialEvaluationConstant(pc);
-                        if (node instanceof ConditionalJumpNode) {
-                            final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                            if (jumpNode.executeCondition(frame)) {
-                                final int successor = jumpNode.getJumpSuccessor();
-                                if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                                    backJumpCounter++;
-                                }
-                                pc = successor;
-                                node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
-                                continue;
-                            } else {
-                                final int successor = jumpNode.getSuccessorIndex();
-                                if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                                    backJumpCounter++;
-                                }
-                                pc = successor;
-                                node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
-                                continue;
-                            }
-                        } else if (node instanceof UnconditionalJumpNode) {
-                            final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
-                            if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                                backJumpCounter++;
-                            }
-                            pc = successor;
+                while (pc >= 0 && node != null) {
+                    CompilerAsserts.partialEvaluationConstant(pc);
+                    if (node instanceof ConditionalJumpNode) {
+                        final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+                        if (jumpNode.executeCondition(frame)) {
+                            pc = jumpNode.getJumpSuccessor();
                             node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
                             continue;
                         } else {
-                            final int successor = getSuccessorNode.executeGeneric(frame, node);
-                            FrameAccess.setInstructionPointer(frame, code, successor);
-                            node.executeVoid(frame);
-                            pc = successor;
+                            pc = jumpNode.getSuccessorIndex();
                             node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
                             continue;
                         }
+                    } else if (node instanceof UnconditionalJumpNode) {
+                        pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                        node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
+                        continue;
+                    } else {
+                        final int successor = getSuccessorNode.executeGeneric(frame, node);
+                        FrameAccess.setInstructionPointer(frame, code, successor);
+                        node.executeVoid(frame);
+                        pc = successor;
+                        node = fetchNextBytecodeNode(conditionNodes, pc, startIndex);
+                        continue;
                     }
-                } finally {
-                    assert backJumpCounter >= 0;
-                    LoopNode.reportLoopCount(this, backJumpCounter);
                 }
                 final Object result = stackPopNode.executeRead(frame);
                 return handleConditionResultNode.execute(frame, isIfTrue, result);
@@ -295,50 +277,36 @@ public final class JumpBytecodes {
                     AbstractBytecodeNode node = bodyNodes[0];
                     final int bodyStartIndex = node.getIndex();
                     int pc = bodyStartIndex;
-                    int backJumpCounter = 0;
                     CompilerAsserts.compilationConstant(bodyNodes.length);
-                    try {
-                        while (pc >= 0 && node != null) {
-                            CompilerAsserts.partialEvaluationConstant(pc);
-                            if (node instanceof ConditionalJumpNode) {
-                                final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                                if (jumpNode.executeCondition(frame)) {
-                                    final int successor = jumpNode.getJumpSuccessor();
-                                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                                        backJumpCounter++;
-                                    }
-                                    pc = successor;
-                                    node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
-                                    continue;
-                                } else {
-                                    final int successor = jumpNode.getSuccessorIndex();
-                                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                                        backJumpCounter++;
-                                    }
-                                    pc = successor;
-                                    node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
-                                    continue;
-                                }
-                            } else if (node instanceof UnconditionalJumpNode) {
-                                final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
-                                if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                                    backJumpCounter++;
-                                }
-                                pc = successor;
+                    while (pc >= 0 && node != null) {
+                        CompilerAsserts.partialEvaluationConstant(pc);
+                        if (node instanceof ConditionalJumpNode) {
+                            final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+                            if (jumpNode.executeCondition(frame)) {
+                                assert pc < jumpNode.getJumpSuccessor() : "Unexpected back jump";
+                                pc = jumpNode.getJumpSuccessor();
                                 node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
                                 continue;
                             } else {
-                                final int successor = getSuccessorNode.executeGeneric(frame, node);
-                                FrameAccess.setInstructionPointer(frame, code, successor);
-                                node.executeVoid(frame);
-                                pc = successor;
+                                assert pc < jumpNode.getSuccessorIndex() : "Unexpected back jump";
+                                pc = jumpNode.getSuccessorIndex();
                                 node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
                                 continue;
                             }
+                        } else if (node instanceof UnconditionalJumpNode) {
+                            assert pc < ((UnconditionalJumpNode) node).getJumpSuccessor() : "Unexpected back jump";
+                            pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                            node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
+                            continue;
+                        } else {
+                            final int successor = getSuccessorNode.executeGeneric(frame, node);
+                            FrameAccess.setInstructionPointer(frame, code, successor);
+                            node.executeVoid(frame);
+                            assert pc < successor : "Unexpected back jump";
+                            pc = successor;
+                            node = fetchNextBytecodeNode(bodyNodes, pc, bodyStartIndex);
+                            continue;
                         }
-                    } finally {
-                        assert backJumpCounter >= 0;
-                        LoopNode.reportLoopCount(this, backJumpCounter);
                     }
                     return true;
                 } else {
