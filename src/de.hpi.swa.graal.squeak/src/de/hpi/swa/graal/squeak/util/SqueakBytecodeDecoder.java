@@ -54,7 +54,21 @@ public final class SqueakBytecodeDecoder {
         int index = 0;
         int lineNumber = 1;
         while (index < trailerPosition) {
-            final AbstractBytecodeNode bytecodeNode = decodeBytecode(code, index);
+            final AbstractBytecodeNode bytecodeNode = decodeBytecodeDetectLoops(code, index);
+            bytecodeNode.setLineNumber(lineNumber);
+            nodes[index] = bytecodeNode;
+            index = bytecodeNode.getSuccessorIndex();
+            lineNumber++;
+        }
+        return nodes;
+    }
+
+    public static AbstractBytecodeNode[] decodeFromTo(final CompiledCodeObject code, final int startIndex, final int endIndex) {
+        final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[endIndex - startIndex];
+        int index = startIndex;
+        int lineNumber = 1;
+        while (index < endIndex) {
+            final AbstractBytecodeNode bytecodeNode = decodeBytecodeDetectLoops(code, index);
             bytecodeNode.setLineNumber(lineNumber);
             nodes[index] = bytecodeNode;
             index = bytecodeNode.getSuccessorIndex();
@@ -285,9 +299,9 @@ public final class SqueakBytecodeDecoder {
                         break; // There can only be one nested loop at a time.
                     }
                 }
-                if (nestedLoop != null) {
-                    loopIndices.remove(nestedLoop);
-                }
+// if (nestedLoop != null) {
+// loopIndices.remove(nestedLoop);
+// }
                 loopIndices.add(new int[]{loopStart, loopEnd});
             }
         }

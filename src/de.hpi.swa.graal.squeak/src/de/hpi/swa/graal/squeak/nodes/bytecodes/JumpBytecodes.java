@@ -164,7 +164,12 @@ public final class JumpBytecodes {
             ConditionalJumpNode lastConditionalJump = null;
             assert getSuccessorIndex() == SqueakBytecodeDecoder.decodeBytecode(code, endIndex).getSuccessorIndex();
             for (int i = startIndex; i < endIndex;) {
-                final AbstractBytecodeNode bytecodeNode = SqueakBytecodeDecoder.decodeBytecode(code, i);
+                final AbstractBytecodeNode bytecodeNode;
+                if (i == startIndex) {
+                    bytecodeNode = SqueakBytecodeDecoder.decodeBytecode(code, i);
+                } else {
+                    bytecodeNode = SqueakBytecodeDecoder.decodeBytecodeDetectLoops(code, i);
+                }
                 if (bytecodeNode instanceof ConditionalJumpNode) {
                     final ConditionalJumpNode conditionalJumpNode = (ConditionalJumpNode) bytecodeNode;
                     if (conditionalJumpNode.getJumpSuccessor() > endIndex) {
