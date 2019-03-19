@@ -145,6 +145,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     parser.add_argument('--igv', action='store_true', help='dump to igv')
     parser.add_argument('--inspect', help='enable Chrome inspector',
                         dest='inspect', action='store_true', default=False)
+    parser.add_argument('--jdk-ci-time',
+                        help='collect timing information for compilation '
+                        '(contains `JVMCI-native` when libgraal is used)',
+                        dest='jdk_ci_time', action='store_true', default=False)
     parser.add_argument('-l', '--low-level',
                         help='enable low-level optimization output',
                         dest='low_level', action='store_true', default=False)
@@ -231,14 +235,17 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.gc:
         vm_args += ['-XX:+PrintGC', '-XX:+PrintGCDetails']
 
+    if parsed_args.jdk_ci_time:
+        vm_args.append('-XX:+CITime')
+
     if parsed_args.print_defaults:
-        vm_args += ['-XX:+PrintFlagsFinal']
+        vm_args.append('-XX:+PrintFlagsFinal')
 
     if extra_vm_args:
         vm_args += extra_vm_args
 
     if parsed_args.code:
-        vm_args += ['-Djava.awt.headless=true']
+        vm_args.append('-Djava.awt.headless=true')
 
     vm_args.append('%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME)
 
