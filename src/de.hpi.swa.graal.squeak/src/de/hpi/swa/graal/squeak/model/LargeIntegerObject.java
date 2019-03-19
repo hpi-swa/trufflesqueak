@@ -82,7 +82,15 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public byte[] getBytes() {
-        return integer.getBytes();
+        final byte[] result = integer.getBytes();
+        LOG.log(Level.FINE, integer.toString() + " getBytes = " + result.toString());
+        return result;
+    }
+
+    public byte[] getBytesWithoutTrailingZeroes() {
+        final byte[] result = integer.getBytesWithoutTrailingZeroes();
+        LOG.log(Level.FINE, integer.toString() + " getBytes = " + result.toString());
+        return result;
     }
 
     public void setBytes(final byte[] bytes) {

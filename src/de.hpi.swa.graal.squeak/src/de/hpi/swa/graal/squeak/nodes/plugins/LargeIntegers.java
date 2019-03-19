@@ -454,7 +454,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isLongMinValue(a)"})
         protected final long doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromLong(a), b.getBytes());
+            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromLong(a), b.getBytesWithoutTrailingZeroes());
         }
 
         @Specialization(guards = {"isLongMinValue(a)", "b.fitsIntoLong()"})
@@ -474,12 +474,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isLongMinValue(b)"})
         protected final long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return digitCompareLargewith(a.getBytes(), ArrayConversionUtils.largeIntegerBytesFromLong(b));
+            return digitCompareLargewith(a.getBytesWithoutTrailingZeroes(), ArrayConversionUtils.largeIntegerBytesFromLong(b));
         }
 
         @Specialization(guards = {"isLongMinValue(b)"})
         protected final long doLargeIntegerLongMinValue(final LargeIntegerObject a, final long b) {
-            return digitCompareLargewith(a.getBytes(), asFloatObject(b).getBytes());
+            return digitCompareLargewith(a.getBytesWithoutTrailingZeroes(), asFloatObject(b).getBytes());
         }
 
         /*
