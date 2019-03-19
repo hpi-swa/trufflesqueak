@@ -3110,11 +3110,11 @@ public class BigInt extends Number implements Comparable<BigInt> {
 
     public byte[] getBytesWithoutTrailingZeroes() {
         int resultSize = (dig.length - 1) * 4;
-        if (dig[dig.length - 1] >= 16777216) {
+        if ((dig[dig.length - 1] >> 24 | 0x00) != 0x00) {
             resultSize += 4;
-        } else if (dig[dig.length - 1] >= 65536) {
+        } else if ((dig[dig.length - 1] >> 16 | 0x00) != 0x00) {
             resultSize += 3;
-        } else if (dig[dig.length - 1] >= 256) {
+        } else if ((dig[dig.length - 1] >> 8 | 0x00) != 0x00) {
             resultSize += 2;
         } else {
             resultSize += 1;
@@ -3123,13 +3123,13 @@ public class BigInt extends Number implements Comparable<BigInt> {
         final byte[] result = new byte[resultSize];
         for (int i = 0; i < dig.length; i++) {
             result[i * 4] = (byte) (dig[i] & 0xFF);
-            if (i + 1 < dig.length || dig[i] >= 256) {
+            if (i + 1 < dig.length || (dig[i] >> 8 | 0x00) != 0x00) {
                 result[i * 4 + 1] = (byte) (dig[i] >> 8 & 0xFF);
             }
-            if (i + 1 < dig.length || dig[i] >= 65536) {
+            if (i + 1 < dig.length || (dig[i] >> 16 | 0x00) != 0x00) {
                 result[i * 4 + 2] = (byte) (dig[i] >> 16 & 0xFF);
             }
-            if (i + 1 < dig.length || dig[i] >= 16777216) {
+            if (i + 1 < dig.length || (dig[i] >> 24 | 0x00) != 0x00) {
                 result[i * 4 + 3] = (byte) (dig[i] >> 24 & 0xFF);
             }
         }
