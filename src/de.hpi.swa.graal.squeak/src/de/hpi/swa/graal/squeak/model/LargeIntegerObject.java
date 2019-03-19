@@ -83,13 +83,13 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public byte[] getBytes() {
         final byte[] result = integer.getBytes();
-        LOG.log(Level.FINE, integer.toString() + " getBytes = " + result.toString());
+        LOG.log(Level.FINE, integer.toString() + " getBytes = " + result);
         return result;
     }
 
     public byte[] getBytesWithoutTrailingZeroes() {
         final byte[] result = integer.getBytesWithoutTrailingZeroes();
-        LOG.log(Level.FINE, integer.toString() + " getBytes = " + result.toString());
+        LOG.log(Level.FINE, integer.toString() + " getBytes = " + result);
         return result;
     }
 
