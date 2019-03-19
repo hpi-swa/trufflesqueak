@@ -1947,6 +1947,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
 
         final int tmp = compareAbsTo(div);
         if (tmp < 0) {
+            // TODO: Python computes 123456798%-987654321098765432109876 differently?!
             return;
         }
         if (tmp == 0) {
@@ -3103,6 +3104,36 @@ public class BigInt extends Number implements Comparable<BigInt> {
             result[i * 4 + 2] = (byte) (dig[i] >> 16 & 0xFF);
             result[i * 4 + 3] = (byte) (dig[i] >> 24 & 0xFF);
         }
+
+        return result;
+    }
+
+    public byte[] getBytesWithoutTrailingZeroes() {
+        int resultSize = (dig.length - 1) * 4;
+        if (dig[dig.length - 1] >= 16777216) {
+            resultSize += 4;
+        } else if (dig[dig.length - 1] >= 65536) {
+            resultSize += 3;
+        } else if (dig[dig.length - 1] >= 256) {
+            resultSize += 2;
+        } else {
+            resultSize += 1;
+        }
+
+        final byte[] result = new byte[resultSize];
+        for (int i = 0; i < dig.length; i++) {
+            result[i * 4] = (byte) (dig[i] & 0xFF);
+            if (i + 1 < dig.length || dig[i] >= 256) {
+                result[i * 4 + 1] = (byte) (dig[i] >> 8 & 0xFF);
+            }
+            if (i + 1 < dig.length || dig[i] >= 65536) {
+                result[i * 4 + 2] = (byte) (dig[i] >> 16 & 0xFF);
+            }
+            if (i + 1 < dig.length || dig[i] >= 16777216) {
+                result[i * 4 + 3] = (byte) (dig[i] >> 24 & 0xFF);
+            }
+        }
+
         return result;
     }
 
