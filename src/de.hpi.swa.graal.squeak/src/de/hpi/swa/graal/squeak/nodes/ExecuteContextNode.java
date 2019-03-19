@@ -132,35 +132,25 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     private void startBytecode(final VirtualFrame frame) {
         int pc = 0;
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
+        AbstractBytecodeNode node;
         while (pc >= 0) {
             CompilerAsserts.partialEvaluationConstant(pc);
+            node = fetchNextBytecodeNode(pc);
             if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                 if (jumpNode.executeCondition(frame)) {
                     assert pc < jumpNode.getJumpSuccessor() : "Unexpected back jump";
                     pc = jumpNode.getJumpSuccessor();
-                    node = fetchNextBytecodeNode(pc);
-                    continue;
                 } else {
                     assert pc < jumpNode.getSuccessorIndex() : "Unexpected back jump";
                     pc = jumpNode.getSuccessorIndex();
-                    node = fetchNextBytecodeNode(pc);
-                    continue;
                 }
-            } else if (node instanceof UnconditionalJumpNode) {
-                assert pc < ((UnconditionalJumpNode) node).getJumpSuccessor() : "Unexpected back jump";
-                pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
-                node = fetchNextBytecodeNode(pc);
-                continue;
             } else {
                 final int successor = getGetSuccessorNode().executeGeneric(frame, node);
                 FrameAccess.setInstructionPointer(frame, code, successor);
                 node.executeVoid(frame);
                 assert pc < successor : "Unexpected back jump";
                 pc = successor;
-                node = fetchNextBytecodeNode(pc);
-                continue;
             }
         }
     }
@@ -246,6 +236,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         protected static final int doConditionalJump(final VirtualFrame frame, final ConditionalJumpNode node,
                         @Cached("createCountingProfile()") final ConditionProfile jumpProfile) {
             // `executeCondition` should only be called once because it pops value off the stack.
+            // TODO: remove jumpProfile, specialization only called in interpreter anyway?
             if (jumpProfile.profile(node.executeCondition(frame))) {
                 return node.getJumpSuccessor();
             } else {
