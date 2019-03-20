@@ -21,7 +21,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
-public abstract class LookupClassNode extends AbstractNodeWithImage {
+public abstract class LookupClassNode extends AbstractNodeWithImage implements LookupClassNodeInterface {
     protected LookupClassNode(final SqueakImageContext image) {
         super(image);
     }
@@ -30,6 +30,7 @@ public abstract class LookupClassNode extends AbstractNodeWithImage {
         return LookupClassNodeGen.create(image);
     }
 
+    @Override
     public abstract ClassObject executeLookup(Object receiver);
 
     @Specialization(guards = "value == image.sqTrue")
