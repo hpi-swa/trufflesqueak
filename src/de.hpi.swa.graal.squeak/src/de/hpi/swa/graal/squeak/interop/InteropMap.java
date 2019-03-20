@@ -2,18 +2,15 @@ package de.hpi.swa.graal.squeak.interop;
 
 import java.util.Map;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.DICTIONARY;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
-@MessageResolution(receiverType = InteropMap.class)
+@ExportLibrary(InteropLibrary.class)
 public final class InteropMap implements TruffleObject {
     private final Map<Object, Object> map;
 
@@ -25,44 +22,25 @@ public final class InteropMap implements TruffleObject {
         this.map = map;
     }
 
-    @Resolve(message = "HAS_KEYS")
-    public abstract static class HasKeys extends Node {
-        public Object access(@SuppressWarnings("unused") final InteropMap receiver) {
-            return true;
-        }
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasMembers() {
+        return true;
     }
 
-    @Resolve(message = "KEY_INFO")
-    public abstract static class KeyInfoNode extends Node {
-        @TruffleBoundary
-        public Object access(final InteropMap receiver, final Object key) {
-            if (receiver.map.containsKey(key)) {
-                return KeyInfo.READABLE;
-            } else {
-                return KeyInfo.NONE;
-            }
-        }
+    @ExportMessage
+    public boolean isMemberReadable(final String key) {
+        return map.containsKey(key);
     }
 
-    @Resolve(message = "KEYS")
-    public abstract static class GetSize extends Node {
-        @TruffleBoundary
-        public Object access(final InteropMap receiver) {
-            return new InteropArray(receiver.map.keySet().toArray());
-        }
+    @ExportMessage
+    public Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
+        return new InteropArray(map.keySet().toArray());
     }
 
-    @Resolve(message = "READ")
-    public abstract static class Read extends Node {
-        @TruffleBoundary
-        public Object access(final InteropMap receiver, final Object key) {
-            return receiver.map.get(key);
-        }
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return InteropMapForeign.ACCESS;
+    @ExportMessage
+    public Object readMember(final String key) {
+        return map.get(key);
     }
 
     public static boolean isInstance(final TruffleObject object) {

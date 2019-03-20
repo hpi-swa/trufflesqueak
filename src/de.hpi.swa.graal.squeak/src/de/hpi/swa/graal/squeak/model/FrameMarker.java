@@ -3,11 +3,9 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.interop.SqueakObjectMessageResolutionForeign;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -39,10 +37,5 @@ public final class FrameMarker implements TruffleObject {
             assert this == FrameAccess.getMarker(targetFrame) : "Frame does not match";
             return ContextObject.create(targetFrame);
         }
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return SqueakObjectMessageResolutionForeign.ACCESS;
     }
 }

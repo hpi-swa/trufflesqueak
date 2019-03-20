@@ -1,11 +1,9 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -84,10 +82,10 @@ public final class ContextObjectNodes {
             return context.atTemp((int) (index - CONTEXT.TEMP_FRAME_START));
         }
 
-        @Fallback
-        protected static final Object doFail(final ContextObject obj, final long index) {
-            throw SqueakException.create("Unexpected values:", obj, index);
-        }
+// @Fallback
+// protected static final Object doFail(final ContextObject obj, final long index) {
+// throw SqueakException.create("Unexpected values:", obj, index);
+// }
     }
 
     @ImportStatic(CONTEXT.class)
@@ -163,9 +161,10 @@ public final class ContextObjectNodes {
             context.atTempPut((int) (index - CONTEXT.TEMP_FRAME_START), value);
         }
 
-        @Fallback
-        protected static final void doFail(final ContextObject obj, final long index, final Object value) {
-            throw SqueakException.create("Unexpected values:", obj, index, value);
-        }
+// @Fallback
+// protected static final void doFail(final ContextObject obj, final long index, final Object value)
+// {
+// throw SqueakException.create("Unexpected values:", obj, index, value);
+// }
     }
 }

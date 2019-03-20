@@ -32,13 +32,13 @@ public abstract class LookupClassNode extends AbstractNodeWithImage {
 
     public abstract ClassObject executeLookup(Object receiver);
 
-    @Specialization(guards = "object == image.sqTrue")
-    protected final ClassObject doTrue(@SuppressWarnings("unused") final boolean object) {
+    @Specialization(guards = "value == image.sqTrue")
+    protected final ClassObject doTrue(@SuppressWarnings("unused") final boolean value) {
         return image.trueClass;
     }
 
-    @Specialization(guards = "object != image.sqTrue")
-    protected final ClassObject doFalse(@SuppressWarnings("unused") final boolean object) {
+    @Specialization(guards = "value != image.sqTrue")
+    protected final ClassObject doFalse(@SuppressWarnings("unused") final boolean value) {
         return image.falseClass;
     }
 
