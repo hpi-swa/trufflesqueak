@@ -304,7 +304,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver.isActiveProcess()")
         protected final AbstractSqueakObject doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Cached("create()") final StackPushForPrimitivesNode pushNode,
+                        @Cached() final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, method.image.nil);
             wakeHighestPriorityNode.executeWake(frame);
@@ -878,7 +878,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!mutex.isEmptyList()")
         protected static final Object doExitNonEmpty(final VirtualFrame frame, final PointersObject mutex,
-                        @Cached("create()") final StackPushForPrimitivesNode pushNode,
+                        @Cached() final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final ResumeProcessNode resumeProcessNode) {
             pushNode.executeWrite(frame, mutex); // keep receiver on stack
             final PointersObject owningProcess = mutex.removeFirstLinkOfList();
@@ -1065,7 +1065,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!method.image.interruptHandlerDisabled()"})
         protected static final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds,
-                        @Cached("create()") final StackPushForPrimitivesNode pushNode,
+                        @Cached() final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final InterruptHandlerNode interruptNode) {
             // Keep receiver on stack, interrupt handler could trigger.
             pushNode.executeWrite(frame, receiver);

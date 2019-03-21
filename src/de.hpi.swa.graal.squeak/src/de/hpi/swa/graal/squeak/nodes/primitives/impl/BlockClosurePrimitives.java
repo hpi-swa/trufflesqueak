@@ -135,8 +135,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
-                        @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
-                        @Cached("create()") final ArrayObjectToObjectArrayTransformNode getObjectArrayNode) {
+                        @SuppressWarnings("unused") @Cached() final SqueakObjectSizeNode sizeNode,
+                        @Cached() final ArrayObjectToObjectArrayTransformNode getObjectArrayNode) {
             return dispatch.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray)));
         }
     }
@@ -174,8 +174,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
-                        @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
-                        @Cached("create()") final ArrayObjectToObjectArrayTransformNode getObjectArrayNode) {
+                        @SuppressWarnings("unused") @Cached() final SqueakObjectSizeNode sizeNode,
+                        @Cached() final ArrayObjectToObjectArrayTransformNode getObjectArrayNode) {
             final Object[] arguments = FrameAccess.newClosureArguments(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray));
             final boolean wasActive = method.image.interrupt.isActive();
             method.image.interrupt.deactivate();

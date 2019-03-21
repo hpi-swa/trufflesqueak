@@ -35,7 +35,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doArray(final ArrayObject obj, final long index,
-                    @Cached("create()") final ArrayObjectReadNode readNode) {
+                    @Cached() final ArrayObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
@@ -46,13 +46,13 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doContext(final ContextObject obj, final long index,
-                    @Cached("create()") final ContextObjectReadNode readNode) {
+                    @Cached() final ContextObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
     @Specialization
     protected static final Object doClass(final ClassObject obj, final long index,
-                    @Cached("create()") final ClassObjectReadNode readNode) {
+                    @Cached() final ClassObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
@@ -68,7 +68,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doNative(final NativeObject obj, final long index,
-                    @Cached("create()") final NativeObjectReadNode readNode) {
+                    @Cached() final NativeObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
@@ -99,7 +99,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doClosure(final BlockClosureObject obj, final long index,
-                    @Cached("create()") final BlockClosureObjectReadNode readNode) {
+                    @Cached() final BlockClosureObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 

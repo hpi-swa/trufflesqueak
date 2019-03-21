@@ -31,7 +31,7 @@ public abstract class BlockActivationNode extends AbstractNode {
 
     @Specialization(replaces = "doDirect")
     protected static final Object doIndirect(final BlockClosureObject block, final Object[] arguments,
-                    @Cached("create()") final IndirectCallNode indirectCallNode) {
+                    @Cached() final IndirectCallNode indirectCallNode) {
         return indirectCallNode.call(block.getCallTarget(), arguments);
     }
 }

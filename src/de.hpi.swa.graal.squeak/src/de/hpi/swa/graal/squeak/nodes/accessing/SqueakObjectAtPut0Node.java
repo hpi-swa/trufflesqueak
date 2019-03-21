@@ -37,7 +37,7 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doArray(final ArrayObject obj, final long index, final Object value,
-                    @Cached("create()") final ArrayObjectWriteNode writeNode) {
+                    @Cached() final ArrayObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
@@ -48,7 +48,7 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doContext(final ContextObject obj, final long index, final Object value,
-                    @Cached("create()") final ContextObjectWriteNode writeNode) {
+                    @Cached() final ContextObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
@@ -64,13 +64,13 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doClass(final ClassObject obj, final long index, final Object value,
-                    @Cached("create()") final ClassObjectWriteNode writeNode) {
+                    @Cached() final ClassObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
     @Specialization
     protected static final void doNative(final NativeObject obj, final long index, final Object value,
-                    @Cached("create()") final NativeObjectWriteNode writeNode) {
+                    @Cached() final NativeObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
@@ -111,7 +111,7 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doClosure(final BlockClosureObject obj, final long index, final Object value,
-                    @Cached("create()") final BlockClosureObjectWriteNode writeNode) {
+                    @Cached() final BlockClosureObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 

@@ -30,7 +30,7 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     public abstract int execute(Object obj);
 
     @Specialization
-    protected static final int doArray(final ArrayObject obj, @Cached("create()") final ArrayObjectSizeNode sizeNode) {
+    protected static final int doArray(final ArrayObject obj, @Cached() final ArrayObjectSizeNode sizeNode) {
         return sizeNode.execute(obj);
     }
 
@@ -70,7 +70,7 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doNative(final NativeObject obj, @Cached("create()") final NativeObjectSizeNode sizeNode) {
+    protected static final int doNative(final NativeObject obj, @Cached() final NativeObjectSizeNode sizeNode) {
         return sizeNode.execute(obj);
     }
 
