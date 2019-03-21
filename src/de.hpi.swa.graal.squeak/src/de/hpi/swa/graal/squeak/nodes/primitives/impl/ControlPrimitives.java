@@ -9,6 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -546,30 +547,34 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isByteType()"})
-        protected final NativeObject doNativeConvertToBytes(final NativeObject receiver, final NativeObject argument) {
+        protected static final NativeObject doNativeConvertToBytes(final NativeObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached() final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isShortType()"})
-        protected final NativeObject doNativeConvertToShorts(final NativeObject receiver, final NativeObject argument) {
+        protected static final NativeObject doNativeConvertToShorts(final NativeObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached() final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isIntType()"})
-        protected final NativeObject doNativeConvertToInts(final NativeObject receiver, final NativeObject argument) {
+        protected static final NativeObject doNativeConvertToInts(final NativeObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached() final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isLongType()"})
-        protected final NativeObject doNativeConvertToLongs(final NativeObject receiver, final NativeObject argument) {
+        protected static final NativeObject doNativeConvertToLongs(final NativeObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached() final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
@@ -580,9 +585,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!receiver.isByteType()")
-        protected final NativeObject doNativeLargeIntegerConvert(final NativeObject receiver, final LargeIntegerObject argument) {
+        protected static final NativeObject doNativeLargeIntegerConvert(final NativeObject receiver, final LargeIntegerObject argument,
+                        @Shared("getBytesNode") @Cached() final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
@@ -593,9 +599,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!receiver.isByteType()")
-        protected final NativeObject doNativeFloatConvert(final NativeObject receiver, final FloatObject argument) {
+        protected static final NativeObject doNativeFloatConvert(final NativeObject receiver, final FloatObject argument,
+                        @Shared("getBytesNode") @Cached() final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
@@ -607,9 +614,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final LargeIntegerObject doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument) {
+        protected static final LargeIntegerObject doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached() final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(getGetBytesNode().execute(argument));
+            receiver.setBytes(getBytesNode.execute(argument));
             return receiver;
         }
 
@@ -635,9 +643,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final FloatObject doFloatNative(final FloatObject receiver, final NativeObject argument) {
+        protected static final FloatObject doFloatNative(final FloatObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached() final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(getGetBytesNode().execute(argument));
+            receiver.setBytes(getBytesNode.execute(argument));
             return receiver;
         }
 
@@ -645,14 +654,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final AbstractSqueakObject doSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             return receiver;
-        }
-
-        private NativeGetBytesNode getGetBytesNode() {
-            if (getBytesNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getBytesNode = insert(NativeGetBytesNode.create());
-            }
-            return getBytesNode;
         }
     }
 
