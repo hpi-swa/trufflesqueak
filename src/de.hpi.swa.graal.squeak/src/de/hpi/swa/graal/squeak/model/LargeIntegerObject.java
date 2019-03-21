@@ -4,17 +4,23 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
+@ExportLibrary(InteropLibrary.class)
 public final class LargeIntegerObject extends AbstractSqueakObject {
     public static final long SMALLINTEGER32_MIN = -0x40000000;
     public static final long SMALLINTEGER32_MAX = 0x3fffffff;
     public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
     public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
-    public static final long MASK_32BIT = 0xffffffffL;
+    public static final int MASK_32BIT = 0xffffffff;
     public static final long MASK_64BIT = 0xffffffffffffffffL;
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     private static final BigInteger ONE_HUNDRED_TWENTY_EIGHT = BigInteger.valueOf(128);
@@ -190,6 +196,16 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public long longValueExact() throws ArithmeticException {
         return getBigInteger().longValueExact();
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public byte byteValueExact() throws ArithmeticException {
+        return getBigInteger().byteValueExact();
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public short shortValueExact() throws ArithmeticException {
+        return getBigInteger().shortValueExact();
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -378,5 +394,88 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object shiftRight(final int b) {
         return reduceIfPossible(getBigInteger().shiftRight(b));
+    }
+
+    /*
+     * INTEROPERABILITY
+     */
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isNumber() {
+        return true;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInByte() {
+        return bitLength() <= Byte.SIZE - 1;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInShort() {
+        return bitLength() <= Short.SIZE - 1;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInInt() {
+        return bitLength() <= Integer.SIZE - 1;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInLong() {
+        return bitLength() <= Long.SIZE - 1;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInFloat() {
+        return false;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInDouble() {
+        return false;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public byte asByte() {
+        return (byte) (byteValueExact() & MASK_32BIT);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public short asShort() {
+        return (short) (shortValueExact() & MASK_32BIT);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public int asInt() {
+        return intValueExact() & MASK_32BIT;
+    }
+
+    @ExportMessage
+    public long asLong() {
+        return longValueExact() & MASK_64BIT;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public float asFloat() throws UnsupportedMessageException {
+        CompilerDirectives.transferToInterpreter();
+        throw UnsupportedMessageException.create();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public double asDouble() throws UnsupportedMessageException {
+        CompilerDirectives.transferToInterpreter();
+        throw UnsupportedMessageException.create();
     }
 }

@@ -136,6 +136,7 @@ public abstract class LookupClassNode extends AbstractNodeWithImage implements L
 
     @Specialization(guards = {"!isAbstractSqueakObject(value)"})
     protected final ClassObject doTruffleObject(@SuppressWarnings("unused") final TruffleObject value) {
+        assert image.supportsTruffleObject();
         return image.truffleObjectClass;
     }
 

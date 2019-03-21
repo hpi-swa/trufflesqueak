@@ -1,9 +1,15 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
+@ExportLibrary(InteropLibrary.class)
 public final class FloatObject extends AbstractSqueakObject {
     public static final int PRECISION = 53;
     public static final int EMIN = -1022;
@@ -108,4 +114,90 @@ public final class FloatObject extends AbstractSqueakObject {
     public AbstractSqueakObject shallowCopy() {
         return new FloatObject(this);
     }
+
+    /*
+     * INTEROPERABILITY
+     */
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isNumber() {
+        return true;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInByte() {
+        return false; // TODO
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInShort() {
+        return false; // TODO
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInInt() {
+        return false; // TODO
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInLong() {
+        return false; // TODO
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInFloat() {
+        return false; // TODO
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean fitsInDouble() {
+        return true;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public byte asByte() throws UnsupportedMessageException { // TODO
+        CompilerDirectives.transferToInterpreter();
+        throw UnsupportedMessageException.create();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public short asShort() throws UnsupportedMessageException { // TODO
+        CompilerDirectives.transferToInterpreter();
+        throw UnsupportedMessageException.create();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public int asInt() throws UnsupportedMessageException { // TODO
+        CompilerDirectives.transferToInterpreter();
+        throw UnsupportedMessageException.create();
+    }
+
+    @ExportMessage
+    public long asLong() {
+        return (long) doubleValue;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public float asFloat() throws UnsupportedMessageException {
+        CompilerDirectives.transferToInterpreter();
+        throw UnsupportedMessageException.create();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public double asDouble() {
+        return doubleValue;
+    }
+
 }

@@ -112,7 +112,7 @@ public final class SqueakExceptions {
             public SourceSection getSourceSection() {
                 if (sourceSection == null) {
                     // - 1 for previous character.
-                    sourceSection = image.getLastParseRequestSource().createSection(sourceOffset - 1, 1);
+                    sourceSection = image.getLastParseRequestSource().createSection(Math.max(sourceOffset - 1, 0), 1);
                 }
                 return sourceSection;
             }

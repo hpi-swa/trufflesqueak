@@ -97,7 +97,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
 
         try {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
-            final long initialPC = context.getInstructionPointerForBytecodeLoop();
+            final long initialPC = Math.max(context.getInstructionPointerForBytecodeLoop(), 0);
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
