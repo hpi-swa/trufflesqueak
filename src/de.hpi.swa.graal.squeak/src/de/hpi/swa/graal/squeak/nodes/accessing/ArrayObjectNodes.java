@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -11,7 +12,6 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectReadNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectShallowCopyNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayTransformNodeGen;
@@ -20,6 +20,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class ArrayObjectNodes {
 
+    @GenerateUncached
     public abstract static class ArrayObjectReadNode extends AbstractNode {
 
         public static ArrayObjectReadNode create() {
@@ -80,11 +81,8 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class ArrayObjectShallowCopyNode extends AbstractNode {
-
-        public static ArrayObjectShallowCopyNode create() {
-            return ArrayObjectShallowCopyNodeGen.create();
-        }
 
         public abstract ArrayObject execute(ArrayObject obj);
 
@@ -134,6 +132,7 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class ArrayObjectSizeNode extends AbstractNode {
 
         public static ArrayObjectSizeNode create() {
@@ -188,6 +187,7 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class ArrayObjectToObjectArrayNode extends AbstractNode {
 
         public static ArrayObjectToObjectArrayNode create() {
@@ -296,6 +296,7 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class ArrayObjectToObjectArrayTransformNode extends AbstractNode {
 
         public static ArrayObjectToObjectArrayTransformNode create() {
@@ -360,6 +361,7 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateUncached
     @ImportStatic(ArrayObject.class)
     public abstract static class ArrayObjectWriteNode extends AbstractNode {
 

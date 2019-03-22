@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -17,6 +18,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ClassObje
 
 public final class ClassObjectNodes {
 
+    @GenerateUncached
     @ImportStatic(ClassObject.class)
     public abstract static class ClassObjectReadNode extends AbstractNode {
         protected static final int CACHE_LIMIT = 3;
@@ -79,6 +81,7 @@ public final class ClassObjectNodes {
         }
     }
 
+    @GenerateUncached
     @ImportStatic(ClassObject.class)
     public abstract static class ClassObjectWriteNode extends AbstractNode {
 

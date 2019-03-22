@@ -217,7 +217,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected Object newDirect(final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
-                        @Cached() final BranchProfile outOfMemProfile) {
+                        @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(cachedReceiver);
             } catch (final OutOfMemoryError e) {
@@ -228,7 +228,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "newDirect")
         protected final Object newIndirect(final ClassObject receiver,
-                        @Cached() final BranchProfile outOfMemProfile) {
+                        @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver);
             } catch (final OutOfMemoryError e) {
@@ -254,7 +254,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object newWithArgDirect(final ClassObject receiver, final long size,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
-                        @Cached() final BranchProfile outOfMemProfile) {
+                        @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(cachedReceiver, (int) size);
             } catch (final OutOfMemoryError e) {
@@ -265,7 +265,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
         protected final Object newWithArg(final ClassObject receiver, final long size,
-                        @Cached() final BranchProfile outOfMemProfile) {
+                        @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver, (int) size);
             } catch (final OutOfMemoryError e) {
@@ -295,14 +295,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
-                        @SuppressWarnings("unused") @Cached() final SqueakObjectSizeNode sizeNode) {
+                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             return performPointersBecomeOneWay(fromArray, toArray, true);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
         protected static final ArrayObject doFail(final ArrayObject fromArray, final ArrayObject toArray,
-                        @SuppressWarnings("unused") @Cached() final SqueakObjectSizeNode sizeNode) {
+                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
@@ -704,14 +704,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
-                        @SuppressWarnings("unused") @Cached() final SqueakObjectSizeNode sizeNode) {
+                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             return performPointersBecomeOneWay(fromArray, toArray, copyHash);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
         protected static final ArrayObject doFail(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
-                        @SuppressWarnings("unused") @Cached() final SqueakObjectSizeNode sizeNode) {
+                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 

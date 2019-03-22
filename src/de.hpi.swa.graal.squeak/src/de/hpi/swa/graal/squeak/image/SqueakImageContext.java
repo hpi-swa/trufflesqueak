@@ -442,20 +442,8 @@ public final class SqueakImageContext {
 
     public String getImagePath() {
         if (imagePath == null) {
-            if (options.imagePath.isEmpty()) {
-                File currentDirectory = new File(System.getProperty("user.dir"));
-                while (currentDirectory != null) {
-                    final String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "images" + File.separator + "trunk64.image";
-                    if (new File(pathToImage).exists()) {
-                        setImagePath(pathToImage);
-                        return pathToImage;
-                    }
-                    currentDirectory = currentDirectory.getParentFile();
-                }
-                throw SqueakException.create("Unable to find an image file.");
-            } else {
-                setImagePath(options.imagePath);
-            }
+            assert !options.imagePath.isEmpty();
+            setImagePath(options.imagePath);
         }
         return imagePath;
     }

@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
@@ -169,11 +170,11 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     @SuppressWarnings("static-method")
     @ExportMessage
     protected final boolean hasArrayElements() {
-        return true;
+        return squeakClass.isVariable();
     }
 
     @ExportMessage
-    protected final long getArraySize(@Shared("sizeNode") @Cached(value = "create()", allowUncached = true) final SqueakObjectSizeNode sizeNode) {
+    protected final long getArraySize(@Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode) {
         return sizeNode.execute(this);
     }
 
@@ -181,19 +182,22 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     @ExportMessage(name = "isArrayElementReadable")
     @ExportMessage(name = "isArrayElementModifiable")
     @ExportMessage(name = "isArrayElementInsertable")
-    protected final boolean isArrayElementReadable(final long index, @Shared("sizeNode") @Cached(value = "create()", allowUncached = true) final SqueakObjectSizeNode sizeNode) {
+    protected final boolean isArrayElementReadable(final long index, @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode) {
         return 0 <= index && index < sizeNode.execute(this);
     }
 
     @ExportMessage
-    protected final Object readArrayElement(final long index, @Cached(value = "create()", allowUncached = true) final SqueakObjectAt0Node at0Node) {
+    protected final Object readArrayElement(final long index, @Cached final SqueakObjectAt0Node at0Node) {
         return at0Node.execute(this, index);
     }
 
     @ExportMessage
-    protected final void writeArrayElement(final long index, final Object value, @Cached(value = "create()", allowUncached = true) final SqueakObjectAtPut0Node atput0Node) {
-        // TODO: throw InvalidArrayIndexException correctly.
-        atput0Node.execute(this, index, value);
+    protected final void writeArrayElement(final long index, final Object value, @Cached final SqueakObjectAtPut0Node atput0Node) throws InvalidArrayIndexException {
+        try {
+            atput0Node.execute(this, index, value);
+        } catch (final ArrayIndexOutOfBoundsException e) {
+            throw InvalidArrayIndexException.create(index);
+        }
     }
 
     @SuppressWarnings("static-method")

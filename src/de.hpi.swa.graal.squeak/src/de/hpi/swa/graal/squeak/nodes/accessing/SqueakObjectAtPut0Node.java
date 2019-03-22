@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -26,6 +27,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodes.ClassObjectWrite
 import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 
+@GenerateUncached
 @ImportStatic(NativeObject.class)
 public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
@@ -37,7 +39,7 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doArray(final ArrayObject obj, final long index, final Object value,
-                    @Cached() final ArrayObjectWriteNode writeNode) {
+                    @Cached final ArrayObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
@@ -48,7 +50,7 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doContext(final ContextObject obj, final long index, final Object value,
-                    @Cached() final ContextObjectWriteNode writeNode) {
+                    @Cached final ContextObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
@@ -64,13 +66,13 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doClass(final ClassObject obj, final long index, final Object value,
-                    @Cached() final ClassObjectWriteNode writeNode) {
+                    @Cached final ClassObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
     @Specialization
     protected static final void doNative(final NativeObject obj, final long index, final Object value,
-                    @Cached() final NativeObjectWriteNode writeNode) {
+                    @Cached final NativeObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
@@ -111,7 +113,7 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 
     @Specialization
     protected static final void doClosure(final BlockClosureObject obj, final long index, final Object value,
-                    @Cached() final BlockClosureObjectWriteNode writeNode) {
+                    @Cached final BlockClosureObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 

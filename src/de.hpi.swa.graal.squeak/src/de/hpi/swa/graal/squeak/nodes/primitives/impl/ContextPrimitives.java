@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -266,14 +267,14 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210)
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private ContextObjectReadNode readNode = ContextObjectReadNode.create();
 
         protected PrimContextAtNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"index < receiver.getStackSize()"})
-        protected final Object doContextObject(final ContextObject receiver, final long index) {
+        protected static final Object doContextObject(final ContextObject receiver, final long index,
+                        @Cached final ContextObjectReadNode readNode) {
             return readNode.execute(receiver, CONTEXT.TEMP_FRAME_START + index - 1);
         }
     }
@@ -283,14 +284,14 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211)
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        @Child private ContextObjectWriteNode writeNode = ContextObjectWriteNode.create();
 
         protected PrimContextAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = "index < receiver.getStackSize()")
-        protected final Object doContextObject(final ContextObject receiver, final long index, final Object value) {
+        protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
+                        @Cached final ContextObjectWriteNode writeNode) {
             writeNode.execute(receiver, CONTEXT.TEMP_FRAME_START + index - 1, value);
             return value;
         }

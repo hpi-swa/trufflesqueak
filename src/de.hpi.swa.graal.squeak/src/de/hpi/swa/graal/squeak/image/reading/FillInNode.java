@@ -92,7 +92,7 @@ public abstract class FillInNode extends Node {
 
     @Specialization
     protected static final void doArrays(final ArrayObject obj, final SqueakImageChunk chunk,
-                    @Cached() final ArrayObjectWriteNode writeNode) {
+                    @Cached final ArrayObjectWriteNode writeNode) {
         obj.setStorageAndSpecialize(chunk.getPointers(), writeNode);
     }
 

@@ -111,7 +111,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = "inBounds(index, receiver)")
         protected static final Object doNative(final NativeObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("nativeObjectReadNode") @Cached() final NativeObjectReadNode nativeObjectReadNode) {
+                        @Shared("nativeObjectReadNode") @Cached final NativeObjectReadNode nativeObjectReadNode) {
             return nativeObjectReadNode.execute(receiver, index - 1);
         }
 
@@ -134,14 +134,14 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = "inBounds(index, receiver)")
         protected static final Object doArray(final ArrayObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("arrayObjectReadNode") @Cached() final ArrayObjectReadNode arrayObjectReadNode) {
+                        @Shared("arrayObjectReadNode") @Cached final ArrayObjectReadNode arrayObjectReadNode) {
             return arrayObjectReadNode.execute(receiver, index - 1);
         }
 
         @Specialization(guards = {"inBoundsOfSqueakObject(index, receiver)",
                         "!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)", "!isArrayObject(receiver)"})
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("at0Node") @Cached() final SqueakObjectAt0Node at0Node) {
+                        @Shared("at0Node") @Cached final SqueakObjectAt0Node at0Node) {
             return at0Node.execute(receiver, index - 1 + instSizeNode.execute(receiver));
         }
 
@@ -168,7 +168,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = "inBounds(index, target)")
         protected static final Object doNative(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index,
-                        @Shared("nativeObjectReadNode") @Cached() final NativeObjectReadNode nativeObjectReadNode) {
+                        @Shared("nativeObjectReadNode") @Cached final NativeObjectReadNode nativeObjectReadNode) {
             return nativeObjectReadNode.execute(target, index - 1);
         }
 
@@ -191,14 +191,14 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = "inBounds(index, target)")
         protected static final Object doArray(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject target, final long index,
-                        @Shared("arrayObjectReadNode") @Cached() final ArrayObjectReadNode arrayObjectReadNode) {
+                        @Shared("arrayObjectReadNode") @Cached final ArrayObjectReadNode arrayObjectReadNode) {
             return arrayObjectReadNode.execute(target, index - 1);
         }
 
         @Specialization(guards = {"inBoundsOfSqueakObject(index, target)",
                         "!isNativeObject(target)", "!isLargeIntegerObject(target)", "!isFloatObject(target)", "!isArrayObject(target)"})
         protected final Object doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject target, final long index,
-                        @Shared("at0Node") @Cached() final SqueakObjectAt0Node at0Node) {
+                        @Shared("at0Node") @Cached final SqueakObjectAt0Node at0Node) {
             return at0Node.execute(target, index - 1 + getInstSizeNode().execute(target));
         }
     }
@@ -213,32 +213,32 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"inBounds(index, receiver)", "nativeAcceptsValueNode.execute(receiver, value)"}, limit = "1")
         protected static final char doNativeChar(final NativeObject receiver, final long index, final char value, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached() final NativeAcceptsValueNode nativeAcceptsValueNode,
-                        @Shared("nativeObjectWriteNode") @Cached() final NativeObjectWriteNode nativeObjectWriteNode) {
+                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached final NativeAcceptsValueNode nativeAcceptsValueNode,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
             nativeObjectWriteNode.execute(receiver, index - 1, value);
             return value;
         }
 
         @Specialization(guards = {"inBounds(index, receiver)", "nativeAcceptsValueNode.execute(receiver, value)"}, limit = "1")
         protected static final Object doNativeChar(final NativeObject receiver, final long index, final CharacterObject value, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached() final NativeAcceptsValueNode nativeAcceptsValueNode,
-                        @Shared("nativeObjectWriteNode") @Cached() final NativeObjectWriteNode nativeObjectWriteNode) {
+                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached final NativeAcceptsValueNode nativeAcceptsValueNode,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
             nativeObjectWriteNode.execute(receiver, index - 1, value);
             return value;
         }
 
         @Specialization(guards = {"inBounds(index, receiver)", "nativeAcceptsValueNode.execute(receiver, value)"}, limit = "1")
         protected static final long doNativeLong(final NativeObject receiver, final long index, final long value, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached() final NativeAcceptsValueNode nativeAcceptsValueNode,
-                        @Shared("nativeObjectWriteNode") @Cached() final NativeObjectWriteNode nativeObjectWriteNode) {
+                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached final NativeAcceptsValueNode nativeAcceptsValueNode,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
             nativeObjectWriteNode.execute(receiver, index - 1, value);
             return value;
         }
 
         @Specialization(guards = {"inBounds(index, receiver)", "nativeAcceptsValueNode.execute(receiver, value)"}, limit = "1")
         protected static final Object doNativeLargeInteger(final NativeObject receiver, final long index, final LargeIntegerObject value, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached() final NativeAcceptsValueNode nativeAcceptsValueNode,
-                        @Shared("nativeObjectWriteNode") @Cached() final NativeObjectWriteNode nativeObjectWriteNode) {
+                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached final NativeAcceptsValueNode nativeAcceptsValueNode,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
             nativeObjectWriteNode.execute(receiver, index - 1, value);
             return value;
         }
@@ -321,7 +321,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization// (guards = "inBounds(index, receiver)")
         protected static final Object doArray(final ArrayObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("arrayObjectWriteNode") @Cached() final ArrayObjectWriteNode arrayObjectWriteNode) {
+                        @Shared("arrayObjectWriteNode") @Cached final ArrayObjectWriteNode arrayObjectWriteNode) {
             arrayObjectWriteNode.execute(receiver, index - 1, value);
             return value;
         }
@@ -330,7 +330,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                         "!isNativeObject(receiver)", "!isEmptyObject(receiver)", "!isArrayObject(receiver)"})
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
                         @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("atput0Node") @Cached() final SqueakObjectAtPut0Node atput0Node) {
+                        @Shared("atput0Node") @Cached final SqueakObjectAtPut0Node atput0Node) {
             atput0Node.execute(receiver, index - 1 + getInstSizeNode().execute(receiver), value);
             return value;
         }
@@ -341,32 +341,32 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"inBounds(index, target)", "nativeAcceptsValueNode.execute(target, value)"}, limit = "1")
         protected char doNativeChar(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final char value,
-                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached() final NativeAcceptsValueNode nativeAcceptsValueNode,
-                        @Shared("nativeObjectWriteNode") @Cached() final NativeObjectWriteNode nativeObjectWriteNode) {
+                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached final NativeAcceptsValueNode nativeAcceptsValueNode,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
             nativeObjectWriteNode.execute(target, index - 1, value);
             return value;
         }
 
         @Specialization(guards = {"inBounds(index, target)", "nativeAcceptsValueNode.execute(target, value)"}, limit = "1")
         protected CharacterObject doNativeChar(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final CharacterObject value,
-                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached() final NativeAcceptsValueNode nativeAcceptsValueNode,
-                        @Shared("nativeObjectWriteNode") @Cached() final NativeObjectWriteNode nativeObjectWriteNode) {
+                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached final NativeAcceptsValueNode nativeAcceptsValueNode,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
             nativeObjectWriteNode.execute(target, index - 1, value);
             return value;
         }
 
         @Specialization(guards = {"inBounds(index, target)", "nativeAcceptsValueNode.execute(target, value)"}, limit = "1")
         protected long doNativeLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final long value,
-                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached() final NativeAcceptsValueNode nativeAcceptsValueNode,
-                        @Shared("nativeObjectWriteNode") @Cached() final NativeObjectWriteNode nativeObjectWriteNode) {
+                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached final NativeAcceptsValueNode nativeAcceptsValueNode,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
             nativeObjectWriteNode.execute(target, index - 1, value);
             return value;
         }
 
         @Specialization(guards = {"inBounds(index, target)", "nativeAcceptsValueNode.execute(target, value)"}, limit = "1")
         protected Object doNativeLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final LargeIntegerObject value,
-                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached() final NativeAcceptsValueNode nativeAcceptsValueNode,
-                        @Shared("nativeObjectWriteNode") @Cached() final NativeObjectWriteNode nativeObjectWriteNode) {
+                        @SuppressWarnings("unused") @Shared("nativeAcceptsValueNode") @Cached final NativeAcceptsValueNode nativeAcceptsValueNode,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
             nativeObjectWriteNode.execute(target, index - 1, value);
             return value;
         }
@@ -445,7 +445,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = "inBounds(index, target)")
         protected static final Object doArray(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject target, final long index, final Object value,
-                        @Shared("arrayObjectWriteNode") @Cached() final ArrayObjectWriteNode arrayObjectWriteNode) {
+                        @Shared("arrayObjectWriteNode") @Cached final ArrayObjectWriteNode arrayObjectWriteNode) {
             arrayObjectWriteNode.execute(target, index - 1, value);
             return value;
         }
@@ -454,7 +454,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                         "!isNativeObject(target)", "!isEmptyObject(target)", "!isArrayObject(target)"})
         protected Object doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject target, final long index,
                         final Object value,
-                        @Shared("atput0Node") @Cached() final SqueakObjectAtPut0Node atput0Node) {
+                        @Shared("atput0Node") @Cached final SqueakObjectAtPut0Node atput0Node) {
             atput0Node.execute(target, index - 1 + getInstSizeNode().execute(target), value);
             return value;
         }
@@ -474,7 +474,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization
         protected static final long doArrayObject(final ArrayObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("arrayObjectSizeNode") @Cached() final ArrayObjectSizeNode arrayObjectSizeNode) {
+                        @Shared("arrayObjectSizeNode") @Cached final ArrayObjectSizeNode arrayObjectSizeNode) {
             return arrayObjectSizeNode.execute(receiver);
         }
 
@@ -515,7 +515,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization
         protected static final long doNativeObject(final NativeObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("nativeObjectSizeNode") @Cached() final NativeObjectSizeNode nativeObjectSizeNode) {
+                        @Shared("nativeObjectSizeNode") @Cached final NativeObjectSizeNode nativeObjectSizeNode) {
             return nativeObjectSizeNode.execute(receiver);
         }
 
@@ -530,7 +530,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization
         protected static final long doArrayObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject target,
-                        @Shared("arrayObjectSizeNode") @Cached() final ArrayObjectSizeNode arrayObjectSizeNode) {
+                        @Shared("arrayObjectSizeNode") @Cached final ArrayObjectSizeNode arrayObjectSizeNode) {
             return arrayObjectSizeNode.execute(target);
         }
 
@@ -571,7 +571,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization
         protected static final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target,
-                        @Shared("nativeObjectSizeNode") @Cached() final NativeObjectSizeNode nativeObjectSizeNode) {
+                        @Shared("nativeObjectSizeNode") @Cached final NativeObjectSizeNode nativeObjectSizeNode) {
             return nativeObjectSizeNode.execute(target);
         }
     }
