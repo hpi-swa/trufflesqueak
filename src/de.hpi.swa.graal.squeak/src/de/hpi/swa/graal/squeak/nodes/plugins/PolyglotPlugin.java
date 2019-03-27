@@ -37,6 +37,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.nodes.UnwrapFromSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPluginFactory.PrimExecuteNodeFactory;
@@ -206,10 +207,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveExecute")
     protected abstract static class PrimExecuteNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
+        @Child private UnwrapFromSqueakNode unwrapNode;
         @Child private WrapToSqueakNode wrapNode;
 
         protected PrimExecuteNode(final CompiledMethodObject method) {
             super(method);
+            unwrapNode = UnwrapFromSqueakNode.create(method.image);
             wrapNode = WrapToSqueakNode.create(method.image);
         }
 
@@ -217,7 +220,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doExecute(final Object receiver, final ArrayObject argumentArray,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             PrimGetLastErrorNode.unsetLastError();
-            final Object[] arguments = getObjectArrayNode.execute(argumentArray);
+            final Object[] arguments = unwrapNode.executeList(getObjectArrayNode.execute(argumentArray));
             try {
                 return wrapNode.executeWrap(functions.execute(receiver, arguments));
             } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
@@ -423,10 +426,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveInvoke")
     protected abstract static class PrimInvokeNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
+        @Child private UnwrapFromSqueakNode unwrapNode;
         @Child private WrapToSqueakNode wrapNode;
 
         protected PrimInvokeNode(final CompiledMethodObject method) {
             super(method);
+            unwrapNode = UnwrapFromSqueakNode.create(method.image);
             wrapNode = WrapToSqueakNode.create(method.image);
         }
 
@@ -434,7 +439,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doRead(final Object receiver, final NativeObject member, final ArrayObject argumentArray,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             PrimGetLastErrorNode.unsetLastError();
-            final Object[] arguments = getObjectArrayNode.execute(argumentArray);
+            final Object[] arguments = unwrapNode.executeList(getObjectArrayNode.execute(argumentArray));
             try {
                 return wrapNode.executeWrap(functions.invokeMember(receiver, member.asString(), arguments));
             } catch (UnsupportedTypeException | ArityException | UnknownIdentifierException | UnsupportedMessageException e) {

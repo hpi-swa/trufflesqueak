@@ -130,6 +130,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return getSqueakClass() == image.semaphoreClass;
     }
 
+    public final boolean isString() {
+        return getSqueakClass() == image.stringClass;
+    }
+
     public String nameAsClass() {
         return "???NotAClass";
     }
