@@ -420,10 +420,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitCompare")
     public abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        private final BranchProfile secondLargerProfile = BranchProfile.create();
-        private final BranchProfile firstLargerProfile = BranchProfile.create();
-        private final BranchProfile equalProfile = BranchProfile.create();
-
         public PrimDigitCompareNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -452,9 +448,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return -1L;
         }
 
-        @Specialization(guards = {"!isLongMinValue(a)"})
-        protected final long doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return digitCompareLargewith(ArrayConversionUtils.largeIntegerBytesFromLong(a), b.getBytesWithoutTrailingZeroes());
+        @Specialization(guards = {"!isLongMinValue(a)", "b.fitsIntoLong()"})
+        protected static final long doLongLargeInteger(final long a, final LargeIntegerObject b) {
+            final long value = b.longValue();
+            return value == a ? 0L : value < a ? -1L : 1L;
         }
 
         @Specialization(guards = {"isLongMinValue(a)", "b.fitsIntoLong()"})
@@ -462,66 +459,32 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return a == b.longValue() ? 0L : -1L;
         }
 
-        @Specialization(guards = {"isLongMinValue(a)", "!b.fitsIntoLong()"})
+        @Specialization(guards = {"!b.fitsIntoLong()"})
         protected static final long doLongMinValueLargeInteger(@SuppressWarnings("unused") final long a, final LargeIntegerObject b) {
             return b.isNegative() ? -1L : 1L;
         }
 
         @Specialization(guards = {"a != b", "!a.hasSameValueAs(b)"})
-        protected final long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return digitCompareLargewith(a.getBytes(), b.getBytes());
+        protected static final long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.compareTo(b);
         }
 
-        @Specialization(guards = {"!isLongMinValue(b)"})
-        protected final long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return digitCompareLargewith(a.getBytesWithoutTrailingZeroes(), ArrayConversionUtils.largeIntegerBytesFromLong(b));
+        @Specialization(guards = {"!isLongMinValue(b)", "a.fitsIntoLong()"})
+        protected static final long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
+            final long value = a.longValue();
+            return value == b ? 0L : value < b ? -1L : 1L;
         }
 
-        @Specialization(guards = {"isLongMinValue(b)"})
-        protected final long doLargeIntegerLongMinValue(final LargeIntegerObject a, final long b) {
-            return digitCompareLargewith(a.getBytesWithoutTrailingZeroes(), asFloatObject(b).getBytes());
+        @Specialization(guards = {"isLongMinValue(b)", "a.fitsIntoLong()"})
+        protected static final long doLargeIntegerLongMinValueFitsIntoLong(final LargeIntegerObject a, final long b) {
+            return b == a.longValue() ? 0L : -1L;
         }
 
-        /*
-         * Compare the magnitude of firstInteger with that of secondInteger. Return a code of 1, 0,
-         * -1 for firstInteger >, = , < secondInteger
-         */
-        private long digitCompareLargewith(final byte[] firstBytes, final byte[] secondBytes) {
-            final int firstLen = firstBytes.length;
-            final int secondLen = secondBytes.length;
-            if (secondLen != firstLen) {
-                if (secondLen > firstLen) {
-                    secondLargerProfile.enter();
-                    return -1L;
-                } else {
-                    firstLargerProfile.enter();
-                    return 1L;
-                }
-            } else {
-                equalProfile.enter();
-                return cDigitComparewithlen(firstBytes, secondBytes, firstLen);
-            }
+        @Specialization(guards = {"!a.fitsIntoLong()"})
+        protected static final long doLargeIntegerLongMinValue(final LargeIntegerObject a, @SuppressWarnings("unused") final long b) {
+            return a.isNegative() ? -1L : 1L;
         }
 
-        /* Precondition: pFirst len = pSecond len. */
-        private static long cDigitComparewithlen(final byte[] pFirst, final byte[] pSecond, final int len) {
-            int firstDigit;
-            int secondDigit;
-            int ix = len - 1;
-            while (ix >= 0) {
-                firstDigit = Byte.toUnsignedInt(pFirst[ix]);
-                secondDigit = Byte.toUnsignedInt(pSecond[ix]);
-                if (secondDigit != firstDigit) {
-                    if (secondDigit < firstDigit) {
-                        return 1L;
-                    } else {
-                        return -1L;
-                    }
-                }
-                --ix;
-            }
-            return 0L;
-        }
     }
 
     @GenerateNodeFactory

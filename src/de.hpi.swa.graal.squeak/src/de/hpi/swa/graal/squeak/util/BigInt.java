@@ -67,6 +67,10 @@ public class BigInt extends Number implements Comparable<BigInt> {
      */
     private static final long mask = (1L << 32) - 1;
 
+    private static final int INTEGER_BYTE_SIZE = 4;
+    private static final int INTEGER_BIT_SIZE = 32;
+    private static final int BITS_PER_BYTE = 8;
+
     /**
      * The sign of this number. 1 for positive numbers and -1 for negative numbers. Zero can have
      * either sign.
@@ -80,8 +84,6 @@ public class BigInt extends Number implements Comparable<BigInt> {
      * The digits of the number, i.e., the magnitude array.
      */
     private int[] dig;
-
-    private int squeaksize = -1;
 
     /*** <Constructors> ***/
     /**
@@ -123,6 +125,19 @@ public class BigInt extends Number implements Comparable<BigInt> {
      */
     public BigInt(final int sign, final int val) {
         dig = new int[1];
+        uassign(sign, val);
+    }
+
+    /**
+     * Creates a BigInt from the given parameters. The input-value will be interpreted as unsigned.
+     *
+     * @param sign The sign of the number.
+     * @param val The magnitude of the number.
+     * @param size The size of the number to allocate.
+     * @complexity O(1)
+     */
+    public BigInt(final int sign, final int val, final int size) {
+        dig = new int[Math.max(size, 1)];
         uassign(sign, val);
     }
 
@@ -251,7 +266,6 @@ public class BigInt extends Number implements Comparable<BigInt> {
         final int[] res = new int[newLen];
         System.arraycopy(dig, 0, res, 0, len);
         dig = res;
-        squeaksize = -1; // Reset explicit size for squeak
     }
 
     /*** </General Helper> ***/
@@ -265,6 +279,17 @@ public class BigInt extends Number implements Comparable<BigInt> {
      */
     public BigInt copy() {
         return new BigInt(sign, Arrays.copyOf(dig, len), len);
+    }
+
+    /**
+     * Creates a negated copy of this number.
+     *
+     * @return The BigInt negated copy.
+     * @complexity O(n)
+     */
+
+    public BigInt negated() {
+        return new BigInt(sign * -1, Arrays.copyOf(dig, len), len);
     }
 
     /**
@@ -3089,55 +3114,19 @@ public class BigInt extends Number implements Comparable<BigInt> {
     }
 
     public byte getByteAt(final int index) {
-        return (byte) (dig[index / 4] >> 8 * (index % 4) & 0xFF);
-    }
-
-    public byte getBitAt(final int index) {
-        return (byte) (dig[index / 32] >> 1 * (index + 1 % 32 - 1) & 1);
+        return (byte) (dig[index / 4] >> 8 * (index % 4));
     }
 
     public byte[] getBytes() {
-        final byte[] result = new byte[dig.length * 4];
-        for (int i = 0; i < dig.length; i++) {
-            result[i * 4] = (byte) (dig[i] & 0xFF);
-            result[i * 4 + 1] = (byte) (dig[i] >> 8 & 0xFF);
-            result[i * 4 + 2] = (byte) (dig[i] >> 16 & 0xFF);
-            result[i * 4 + 3] = (byte) (dig[i] >> 24 & 0xFF);
+        final byte[] result = new byte[byteLength()];
+        for (int i = 0; i < result.length - 1; i++) {
+            result[i] = (byte) (dig[i / 4] >> 8 * (i % 4));
         }
-
-        return result;
-    }
-
-    public byte[] getBytesWithoutTrailingZeroes() {
-        int resultSize = (dig.length - 1) * 4;
-        if ((dig[dig.length - 1] >> 24 | 0x00) != 0x00) {
-            resultSize += 4;
-        } else if ((dig[dig.length - 1] >> 16 | 0x00) != 0x00) {
-            resultSize += 3;
-        } else if ((dig[dig.length - 1] >> 8 | 0x00) != 0x00) {
-            resultSize += 2;
-        } else {
-            resultSize += 1;
-        }
-
-        final byte[] result = new byte[resultSize];
-        for (int i = 0; i < dig.length; i++) {
-            result[i * 4] = (byte) (dig[i] & 0xFF);
-            if (i + 1 < dig.length || (dig[i] >> 8 | 0x00) != 0x00) {
-                result[i * 4 + 1] = (byte) (dig[i] >> 8 & 0xFF);
-            }
-            if (i + 1 < dig.length || (dig[i] >> 16 | 0x00) != 0x00) {
-                result[i * 4 + 2] = (byte) (dig[i] >> 16 & 0xFF);
-            }
-            if (i + 1 < dig.length || (dig[i] >> 24 | 0x00) != 0x00) {
-                result[i * 4 + 3] = (byte) (dig[i] >> 24 & 0xFF);
-            }
-        }
-
         return result;
     }
 
     public void setByte(final int index, final byte value) {
+        // TODO: solve without bytes, use ints
         if (index / 4 + 1 > len) {
             len++;
         }
@@ -3157,45 +3146,12 @@ public class BigInt extends Number implements Comparable<BigInt> {
         }
     }
 
-    public int length() {
-        if (squeaksize != -1) {
-            return squeaksize;
-        }
-        for (int i = dig.length * 4 - 1; i >= 0; i--) {
-            if (getByteAt(i) != 0) {
-                return i + 1;
-            }
-        }
-        return 0;
+    public int byteLength() {
+        return len * INTEGER_BYTE_SIZE - Integer.numberOfLeadingZeros(dig[Math.max(0, len - 1)]) / BITS_PER_BYTE;
     }
 
     public int bitLength() {
-        if (squeaksize == 0) {
-            return 0;
-        }
-        for (int i = len * 32 - 1; i >= 0; i--) {
-            if (getBitAt(i) != 0) {
-                return i + 1;
-            }
-        }
-        return 0;
-    }
-
-    public void setSize(final int size) {
-        if (size == 0) {
-            dig = new int[0];
-        } else {
-            this.realloc((int) Math.ceil(size / 4.0)); // 4 bytes per integer
-        }
-        squeaksize = size;
-    }
-
-    public void setNegative() {
-        this.sign = -1;
-    }
-
-    public void setPositive() {
-        this.sign = 1;
+        return len * INTEGER_BIT_SIZE - Integer.numberOfLeadingZeros(dig[Math.max(0, len - 1)]);
     }
 
     public void setBytes(final byte[] bytes, final int srcPos, final int destPos, final int length) {
@@ -3205,7 +3161,6 @@ public class BigInt extends Number implements Comparable<BigInt> {
     }
 
     public void reduceIfPossible() {
-        squeaksize = -1;
         for (int i = len - 1; i >= 0; i--) {
             if (dig[i] == 0 && len > 1) {
                 len--;
@@ -3213,10 +3168,6 @@ public class BigInt extends Number implements Comparable<BigInt> {
                 return;
             }
         }
-    }
-
-    public void negate() {
-        this.sign = this.sign * -1;
     }
 
     /*** </BitOperations> ***/
