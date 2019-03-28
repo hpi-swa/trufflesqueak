@@ -24,33 +24,36 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     private BigInt integer;
 
+    private final int exposedSize;
+
     public LargeIntegerObject(final SqueakImageContext image, final BigInt integer) {
         super(image, integer.compareTo(new BigInt(0)) >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass);
         this.integer = integer;
+        exposedSize = integer.byteLength();
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final long hash, final ClassObject klass, final byte[] bytes) {
         super(image, hash, klass);
-        this.integer = new BigInt(klass == image.largeNegativeIntegerClass ? -1 : 1, bytes, bytes.length);
+        exposedSize = bytes.length;
+        this.integer = new BigInt(klass == image.largeNegativeIntegerClass ? -1 : 1, bytes, exposedSize);
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final byte[] bytes) {
         super(image, klass);
-        this.integer = new BigInt(klass == image.largeNegativeIntegerClass ? -1 : 1, bytes, bytes.length);
+        exposedSize = bytes.length;
+        this.integer = new BigInt(klass == image.largeNegativeIntegerClass ? -1 : 1, bytes, exposedSize);
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final int size) {
         super(image, klass);
-        this.integer = new BigInt(0);
-        if (klass == image.largeNegativeIntegerClass) {
-            this.integer.setNegative();
-        }
-        this.integer.setSize(size);
+        this.integer = new BigInt(klass == image.largeNegativeIntegerClass ? -1 : 1, 0, size);
+        exposedSize = size;
     }
 
     public LargeIntegerObject(final LargeIntegerObject original) {
         super(original.image, original.getSqueakClass());
         this.integer = original.integer;
+        exposedSize = original.exposedSize;
     }
 
     public static LargeIntegerObject createLongMinOverflowResult(final SqueakImageContext image) {
@@ -73,11 +76,8 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public byte[] getBytes() {
+        // TODO: digitCompare vereinfachen
         return integer.getBytes();
-    }
-
-    public byte[] getBytesWithoutTrailingZeroes() {
-        return integer.getBytesWithoutTrailingZeroes();
     }
 
     public void setBytes(final byte[] bytes) {
@@ -95,7 +95,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @Override
     public int size() {
-        return integer.length();
+        return exposedSize;
     }
 
     public void setInteger(final LargeIntegerObject other) {
@@ -278,9 +278,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject negateNoReduce() {
-        final BigInt value = integer.copy();
-        value.negate();
-        return newFromBigInt(image, value);
+        return newFromBigInt(image, integer.negated());
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
