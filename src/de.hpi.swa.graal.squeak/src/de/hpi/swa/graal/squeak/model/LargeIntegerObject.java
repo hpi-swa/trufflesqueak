@@ -1,12 +1,9 @@
 package de.hpi.swa.graal.squeak.model;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.BigInt;
 
 public final class LargeIntegerObject extends AbstractSqueakObject {
@@ -56,12 +53,18 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         exposedSize = original.exposedSize;
     }
 
+    public LargeIntegerObject(final ClassObject klass, final LargeIntegerObject original) {
+        super(original.image, klass);
+        this.integer = klass == image.largeNegativeIntegerClass ? original.integer.negated() : original.integer;
+        exposedSize = original.exposedSize;
+    }
+
     public static LargeIntegerObject createLongMinOverflowResult(final SqueakImageContext image) {
         return new LargeIntegerObject(image, LONG_MIN_OVERFLOW_RESULT);
     }
 
     public static byte[] getLongMinOverflowResultBytes() {
-        return bigIntToBytes(LONG_MIN_OVERFLOW_RESULT);
+        return LONG_MIN_OVERFLOW_RESULT.getBytes();
     }
 
     public long getNativeAt0(final long index) {
@@ -78,6 +81,14 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public byte[] getBytes() {
         // TODO: digitCompare vereinfachen
         return integer.getBytes();
+    }
+
+    public void replaceInternalValue(final LargeIntegerObject original) {
+        integer = original.getSqueakClass() == this.getSqueakClass() ? original.integer : original.integer.negated();
+    }
+
+    public void replaceInternalValue(final byte[] bytes) {
+        integer = new BigInt(this.getSqueakClass() == image.largeNegativeIntegerClass ? -1 : 1, bytes, exposedSize);
     }
 
     public void setBytes(final byte[] bytes) {
@@ -100,15 +111,6 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public void setInteger(final LargeIntegerObject other) {
         this.integer = other.integer;
-    }
-
-    public static byte[] bigIntToBytes(final BigInt bigInt) {
-        final byte[] bytes = bigInt.getBytes(); // Todo: byteValue
-        if (bytes[0] == 0) {
-            return ArrayUtils.swapOrderInPlace(Arrays.copyOfRange(bytes, 1, bytes.length));
-        } else {
-            return ArrayUtils.swapOrderInPlace(bytes);
-        }
     }
 
     @Override
