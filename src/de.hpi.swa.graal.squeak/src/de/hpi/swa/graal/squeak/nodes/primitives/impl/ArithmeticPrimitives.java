@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.List;
 
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -37,8 +38,21 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return Math.addExact(a, b);
         }
 
-        @Specialization
+        @Specialization(guards = "a == 0")
+        protected static final long doLongWithZero1(@SuppressWarnings("unused") final long a, final long b) {
+            return b;
+        }
+
+        @Specialization(guards = "b == 0")
+        protected static final long doLongWithZero2(final long a, @SuppressWarnings("unused") final long b) {
+            return a;
+        }
+
+        @Specialization(guards = {"a != 0", "b != 0"})
         protected final Object doLongWithOverflow(final long a, final long b) {
+            if (a == 0L || b == 0L) {
+                Truffle.getRuntime();
+            }
             return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
         }
 
@@ -1124,32 +1138,42 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             throw SqueakException.create("Should have been overriden: ", a, "-", b);
         }
 
-        @Specialization(guards = "b.fitsIntoLong()", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = {"b.fitsIntoLong()", "a!=0"}, rewriteOn = ArithmeticException.class)
         protected final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
             return doLong(a, b.longValue());
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
+        @Specialization(guards = "a==0")
+        protected static final Object doLargeIntegerZero(@SuppressWarnings("unused") final long a, final LargeIntegerObject b) {
+            return b;
+        }
+
+        @Specialization(guards = {"b.fitsIntoLong()", "a!=0"})
         protected final Object doLongLargeIntegerOverflow(final long a, final LargeIntegerObject b) {
             return doLongLargeInteger(a, b);
         }
 
-        @Specialization(guards = "!b.fitsIntoLong()")
+        @Specialization(guards = {"!b.fitsIntoLong()", "a!=0"})
         protected final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
             return doLargeInteger(asLargeInteger(a), b);
         }
 
-        @Specialization(guards = "a.fitsIntoLong()", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = "b==0")
+        protected static final Object doLargeIntegerZero(final LargeIntegerObject a, @SuppressWarnings("unused") final long b) {
+            return a;
+        }
+
+        @Specialization(guards = {"a.fitsIntoLong()", "b!=0"}, rewriteOn = ArithmeticException.class)
         protected final long doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
             return doLong(a.longValue(), b);
         }
 
-        @Specialization(guards = "a.fitsIntoLong()")
+        @Specialization(guards = {"a.fitsIntoLong()", "b!=0"})
         protected final Object doLargeIntegerAsLongLongOverflow(final LargeIntegerObject a, final long b) {
             return doLargeIntegerLong(a, b);
         }
 
-        @Specialization(guards = "!a.fitsIntoLong()")
+        @Specialization(guards = {"!a.fitsIntoLong()", "b!=0"})
         protected final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
             return doLargeInteger(a, asLargeInteger(b));
         }
