@@ -57,6 +57,7 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
     }
 
     protected final LargeIntegerObject asLargeInteger(final long value) {
+        // TODO: don't allocate for long operations
         return LargeIntegerObject.valueOf(method.image, value);
     }
 

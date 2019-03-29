@@ -79,7 +79,6 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public byte[] getBytes() {
-        // TODO: digitCompare vereinfachen
         return integer.getBytes();
     }
 
@@ -145,21 +144,26 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new LargeIntegerObject(this);
     }
 
-    public static Object reduceIfPossible(final LargeIntegerObject value) {
+    public Object reduceIfPossible(final BigInt value) {
         if (value.bitLength() > Long.SIZE - 1) {
-            value.integer.reduceIfPossible();
-            return value;
+            value.reduceIfPossible();
+            return newFromBigInt(image, value);
+        } else {
+            return value.longValue() & MASK_64BIT;
+        }
+    }
+
+    public static Object reduceIfPossible(final SqueakImageContext image, final BigInt value) {
+        if (value.bitLength() > Long.SIZE - 1) {
+            value.reduceIfPossible();
+            return newFromBigInt(image, value);
         } else {
             return value.longValue() & MASK_64BIT;
         }
     }
 
     public Object reduceIfPossible() {
-        return reduceIfPossible(this);
-    }
-
-    public Object reduceIfPossible(final BigInt value) {
-        return reduceIfPossible(newFromBigInt(image, value));
+        return reduceIfPossible(this.integer);
     }
 
     public long longValue() {
@@ -215,6 +219,20 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         final BigInt value = integer.copy();
         value.add(b.integer);
         return reduceIfPossible(value);
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object add(final long b) {
+        final BigInt value = integer.copy();
+        value.add(new BigInt(b));
+        return reduceIfPossible(value);
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object add(final SqueakImageContext image, final long a, final long b) {
+        final BigInt value = new BigInt(a);
+        value.add(new BigInt(b));
+        return reduceIfPossible(image, value);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
