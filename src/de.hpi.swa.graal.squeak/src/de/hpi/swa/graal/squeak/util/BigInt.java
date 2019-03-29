@@ -3119,7 +3119,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
 
     public byte[] getBytes() {
         final byte[] result = new byte[byteLength()];
-        for (int i = 0; i < result.length - 1; i++) {
+        for (int i = 0; i < result.length; i++) {
             result[i] = (byte) (dig[i / 4] >> 8 * (i % 4));
         }
         return result;
