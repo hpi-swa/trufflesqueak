@@ -145,8 +145,8 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public Object reduceIfPossible(final BigInt value) {
+        value.reduceIfPossible();
         if (value.bitLength() > Long.SIZE - 1) {
-            value.reduceIfPossible();
             return newFromBigInt(image, value);
         } else {
             return value.longValue() & MASK_64BIT;
