@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,7 +18,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.graal.squeak.util.BigInt;
 
 public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
@@ -80,7 +80,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         protected static final long MAX_VALUE_SIGNED_1 = 1L << 8 * 1 - 1;
         protected static final long MAX_VALUE_SIGNED_2 = 1L << 8 * 2 - 1;
         protected static final long MAX_VALUE_SIGNED_4 = 1L << 8 * 4 - 1;
-        // protected static final BigInt MAX_VALUE_SIGNED_8 = BigInt.ONE.shiftLeft(8 * 8 - 1);
+        protected static final BigInteger MAX_VALUE_SIGNED_8 = BigInteger.ONE.shiftLeft(8 * 8 - 1);
         protected static final long MAX_VALUE_UNSIGNED_1 = 1L << 8 * 1;
         protected static final long MAX_VALUE_UNSIGNED_2 = 1L << 8 * 2;
         protected static final long MAX_VALUE_UNSIGNED_4 = 1L << 8 * 4;
@@ -167,7 +167,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "isSigned", "inSignedBounds(value)"})
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "isSigned", "inSignedBounds(value, MAX_VALUE_SIGNED_8)"})
         protected static final Object doAtPut8SignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize, final boolean isSigned) {
             return doAtPut8UnsignedLarge(byteArray, byteOffsetLong, value, byteSize, isSigned);
         }
@@ -195,12 +195,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        protected static final boolean inSignedBounds(final LargeIntegerObject value) {
-            final BigInt max = new BigInt(1);
-            max.shiftLeft(8 * 8 - 1);
-            final BigInt subtract = new BigInt(0);
-            subtract.sub(max);
-            return value.compareTo(subtract) >= 0 && value.compareTo(max) < 0;
+        protected static final boolean inSignedBounds(final LargeIntegerObject value, final BigInteger max) {
+            return value.getBigInteger().compareTo(BigInteger.ZERO.subtract(max)) >= 0 && value.getBigInteger().compareTo(max) < 0;
         }
 
         @TruffleBoundary

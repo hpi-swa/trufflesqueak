@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 
@@ -9,7 +11,6 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.util.BigInt;
 
 public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
 
@@ -57,7 +58,7 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
     }
 
     @Specialization
-    protected final Object doBigInt(final BigInt value) {
+    protected final Object doBigInteger(final BigInteger value) {
         return image.wrap(value);
     }
 

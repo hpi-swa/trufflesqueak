@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -377,9 +378,19 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         public abstract Object executeReplace(VirtualFrame frame);
 
-        @Specialization(guards = "!isSmallInteger(repl)")
-        protected final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
-            return doLargeInteger(rcvr, start, stop, asLargeInteger(repl), replStart);
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isSmallInteger(repl)", "inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, 0, 8, replStart)"})
+        protected static final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
+            rcvr.replaceInternalValue(repl);
+            return rcvr;
+        }
+
+        @Specialization(guards = {"!isSmallInteger(repl)", "!inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, 0, 8, replStart)"})
+        protected static final Object replaceEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
+            final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+            buffer.putLong(repl);
+            rcvr.setBytes(buffer.array(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+            return rcvr;
         }
 
         @SuppressWarnings("unused")
@@ -389,10 +400,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)",
-                        "!inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)"})
+        @Specialization(guards = {"!inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)",
+                        "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
-            rcvr.setBytes(repl.getBytes(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+            rcvr.setBytes(repl, (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
             return rcvr;
         }
 

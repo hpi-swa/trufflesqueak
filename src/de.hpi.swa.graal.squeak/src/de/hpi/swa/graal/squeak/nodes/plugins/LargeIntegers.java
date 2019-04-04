@@ -448,15 +448,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return -1L;
         }
 
-        @Specialization(guards = {"!isLongMinValue(a)", "b.fitsIntoLong()"})
+        @Specialization(guards = {"b.fitsIntoLong()"})
         protected static final long doLongLargeInteger(final long a, final LargeIntegerObject b) {
             final long value = b.longValue();
             return value == a ? 0L : value < a ? -1L : 1L;
-        }
-
-        @Specialization(guards = {"isLongMinValue(a)", "b.fitsIntoLong()"})
-        protected static final long doLongMinValueLargeIntegerFitsIntoLong(final long a, final LargeIntegerObject b) {
-            return a == b.longValue() ? 0L : -1L;
         }
 
         @Specialization(guards = {"!b.fitsIntoLong()"})
@@ -469,15 +464,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return a.compareTo(b);
         }
 
-        @Specialization(guards = {"!isLongMinValue(b)", "a.fitsIntoLong()"})
+        @Specialization(guards = {"a.fitsIntoLong()"})
         protected static final long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
             final long value = a.longValue();
             return value == b ? 0L : value < b ? -1L : 1L;
-        }
-
-        @Specialization(guards = {"isLongMinValue(b)", "a.fitsIntoLong()"})
-        protected static final long doLargeIntegerLongMinValueFitsIntoLong(final LargeIntegerObject a, final long b) {
-            return b == a.longValue() ? 0L : -1L;
         }
 
         @Specialization(guards = {"!a.fitsIntoLong()"})
