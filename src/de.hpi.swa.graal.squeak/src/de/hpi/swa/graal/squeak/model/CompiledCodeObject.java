@@ -165,10 +165,15 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final FrameSlot getStackSlot(final int i) {
         assert 0 <= i && i < stackSlots.length : "Bad stack access";
+        if (stackSlots[i] == null) {
+            // Lazily add frame slots.
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
+        }
         return stackSlots[i];
     }
 
-    public final FrameSlot[] getStackSlots() {
+    public final FrameSlot[] getStackSlotsUnsafe() {
         return stackSlots;
     }
 
@@ -218,9 +223,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         if (stackSlots == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stackSlots = new FrameSlot[requiredNumberOfStackSlots];
-            for (int i = 0; i < requiredNumberOfStackSlots; i++) {
-                stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
-            }
             return;
         }
         final int currentNumberOfStackSlots = stackSlots.length;
@@ -228,9 +230,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
             // Grow number of stack slots.
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stackSlots = Arrays.copyOf(stackSlots, requiredNumberOfStackSlots);
-            for (int i = currentNumberOfStackSlots; i < requiredNumberOfStackSlots; i++) {
-                stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
-            }
         } else if (currentNumberOfStackSlots > requiredNumberOfStackSlots) {
             // Shrink number of stack slots.
             CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -130,8 +130,11 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
             if (context != null) {
                 pending.add(context);
             }
-            final FrameSlot[] stackSlots = blockOrMethod.getStackSlots();
+            final FrameSlot[] stackSlots = blockOrMethod.getStackSlotsUnsafe();
             for (final FrameSlot slot : stackSlots) {
+                if (slot == null) {
+                    return null; // Stop here, slot has not (yet) been created.
+                }
                 final FrameSlotKind currentSlotKind = frameDescriptor.getFrameSlotKind(slot);
                 if (currentSlotKind == FrameSlotKind.Object) {
                     addIfAbstractSqueakObject(pending, FrameUtil.getObjectSafe(current, slot));
