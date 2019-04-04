@@ -54,6 +54,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -497,6 +498,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 149)
     protected abstract static class PrimGetAttributeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        private static final DateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy HH:mm:ss zzz", Locale.US);
+
         protected PrimGetAttributeNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -535,19 +538,26 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1005:  // window system name
                     return method.image.wrap("Aqua");
                 case 1006:  // vm build id
-                    // Example output under Squeak: 'Win32 built on Oct 8 2018 09:19:35 GMT ...
-                    // LanguageEnvironment>>win32VMUsesUnicode expects a Date after 'on'
-                    final DateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy HH:mm:ss zzz", Locale.US);
-                    return method.image.wrap(String.format("%s (Java %s) on %s", Truffle.getRuntime().getName(), System.getProperty("java.version"), dateFormat.format(new Date())));
-                // case 1007: // Interpreter class (Cog VM only)
-                // case 1008: // Cogit class (Cog VM only)
-                // case 1009: // Platform source version (Cog VM only?)
+                    final String osName = System.getProperty("os.name");
+                    final String osVersion = System.getProperty("os.version");
+                    final String osArch = System.getProperty("os.arch");
+                    return method.image.wrap(String.format("%s %s (%s) built on %s", osName, osVersion, osArch, dateFormat.format(new Date(MiscUtils.getStartTime()))));
+                case 1007: // Interpreter class (Cog VM only)
+                    return method.image.wrap(MiscUtils.getGraalVMInformation());
+                case 1008: // Cogit class (Cog VM only)
+                    return method.image.wrap(MiscUtils.getSystemProperties());
+                case 1009: // Platform source version
+                    return method.image.wrap(MiscUtils.getVMInformation());
                 case 1201: // max filename length (Mac OS only)
                     if (method.image.os.isMacOS()) {
                         return method.image.wrap("255");
                     }
                     break;
-                // case 1202: // file last error (Mac OS only)
+                case 1202: // file last error (Mac OS only)
+                    if (method.image.os.isMacOS()) {
+                        return method.image.wrap("0");
+                    }
+                    break;
                 // case 10001: // hardware details (Win32 only)
                 // case 10002: // operating system details (Win32 only)
                 // case 10003: // graphics hardware details (Win32 only)
@@ -811,9 +821,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 4: return method.image.nil; // nil (was allocationCount (read-only))
                 case 5: return method.image.nil; // nil (was allocations between GCs (read-write)
                 case 6: return 0L; // survivor count tenuring threshold (read-write)
-                case 7: return 1L; // full GCs since startup (read-only) -> used in InterpreterProxy>>#statNumGCs
-                case 8: return 1L; // total milliseconds in full GCs since startup (read-only)
-                case 9: return 1L; // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only) -> used in InterpreterProxy>>#statNumGCs
+                case 7: return MiscUtils.getCollectionCount(); // full GCs since startup (read-only)
+                case 8: return MiscUtils.getCollectionTime(); // total milliseconds in full GCs since startup (read-only)
+                case 9: return 1L; // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
                 case 10: return 1L; // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
                 case 11: return 1L; // tenures of surving objects since startup (read-only)
                 case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: return 0L; // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
@@ -836,7 +846,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 36: return 0L; // millisecond clock when current IGC/FGC completed (read-only)
                 case 37: return 0L; // number of marked objects for Roots of the world, not including Root Table entries for current IGC/FGC (read-only)
                 case 38: return 0L; // milliseconds taken by current IGC (read-only)
-                case 39: return 0L; // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
+                case 39: return MiscUtils.getObjectPendingFinalizationCount(); // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
                 case 40: return 4L; // BytesPerOop for this image
                 case 41: return method.image.flags.getImageFormatVersion(); // imageFormatVersion for the VM
                 case 42: return 1L; // number of stack pages in use
