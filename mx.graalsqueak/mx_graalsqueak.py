@@ -15,7 +15,7 @@ BASE_VM_ARGS = [
 
     # Tweak GC for faster image loading
     '-Xms2G',  # Initial heap size
-    '-XX:MetaspaceSize=64M',  # Initial size of Metaspaces
+    '-XX:MetaspaceSize=48M',  # Initial size of Metaspaces
 ]
 SVM_BINARY = 'graalsqueak-svm'
 SVM_TARGET = os.path.join('bin', SVM_BINARY)

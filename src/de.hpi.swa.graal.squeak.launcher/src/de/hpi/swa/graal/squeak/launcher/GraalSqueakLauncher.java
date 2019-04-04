@@ -27,7 +27,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
 
     public static void main(final String[] arguments) throws RuntimeException {
         final String[] argumentsForLauncher;
-        if (arguments.length >= 1) {
+        if (arguments.length > 1 || arguments.length == 1 && !"--polyglot".equals(arguments[0])) {
             argumentsForLauncher = arguments;
         } else {
             if (TruffleOptions.AOT) {
