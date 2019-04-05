@@ -379,13 +379,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeReplace(VirtualFrame frame);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isSmallInteger(repl)", "inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, 0, 8, replStart)"})
+        @Specialization(guards = {"!isSmallInteger(repl)", "inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, replStart)"})
         protected static final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
             rcvr.replaceInternalValue(repl);
             return rcvr;
         }
 
-        @Specialization(guards = {"!isSmallInteger(repl)", "!inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, 0, 8, replStart)"})
+        @Specialization(guards = {"!isSmallInteger(repl)", "!inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, replStart)"})
         protected static final Object replaceEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
             final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
             buffer.putLong(repl);

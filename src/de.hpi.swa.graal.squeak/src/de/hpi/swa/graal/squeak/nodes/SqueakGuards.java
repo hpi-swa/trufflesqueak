@@ -170,6 +170,10 @@ public final class SqueakGuards {
         }
     }
 
+    public static boolean inLongBoundsEntirely(final SqueakImageContext image, final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final long replStart) {
+        return start == 1 && replStart == 1 && stop == (image.flags.is64bit() ? Long.BYTES : Long.BYTES - 1) && stop == rcvrSize + rcvrInstSize;
+    }
+
     public static boolean isZero(final double value) {
         return value == 0;
     }
