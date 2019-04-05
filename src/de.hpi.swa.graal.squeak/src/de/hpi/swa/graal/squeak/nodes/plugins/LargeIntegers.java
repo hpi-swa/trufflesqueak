@@ -342,6 +342,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"arg >= 0", "isLShiftLongOverflow(receiver, arg)"})
         protected final Object doLongLargeInteger(final long receiver, final long arg) {
+            // TODO: only use LargeIntegerObject if it is actually needed
             return doLargeInteger(asLargeInteger(receiver), arg);
         }
 

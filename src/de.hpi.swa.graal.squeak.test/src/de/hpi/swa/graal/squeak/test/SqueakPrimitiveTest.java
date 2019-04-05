@@ -6,12 +6,13 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigInteger;
+
 import org.junit.Test;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.WrapToSqueakNode;
-import de.hpi.swa.graal.squeak.util.BigInt;
 
 public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
@@ -43,14 +44,10 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testAdd() {
-        final BigInt maxtimestwo = new BigInt(Long.MAX_VALUE);
-        maxtimestwo.mul(2);
-        final BigInt maxplusmin = new BigInt(Long.MAX_VALUE);
-        maxplusmin.add(new BigInt(Long.MIN_VALUE));
         final Object[][] testValues = new Object[][]{
                         {(long) Integer.MAX_VALUE, (long) Integer.MAX_VALUE, 2 * (long) Integer.MAX_VALUE},
-                        {Long.MAX_VALUE, Long.MAX_VALUE, maxtimestwo},
-                        {Long.MAX_VALUE, Long.MIN_VALUE, maxplusmin.longValue()}};
+                        {Long.MAX_VALUE, Long.MAX_VALUE, BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(2))},
+                        {Long.MAX_VALUE, Long.MIN_VALUE, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.valueOf(Long.MIN_VALUE)).longValue()}};
         final WrapToSqueakNode wrapNode = WrapToSqueakNode.create(image);
         for (int i = 0; i < testValues.length; i++) {
             final Object[] values = testValues[i];
@@ -60,18 +57,14 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testSub() {
-        final BigInt minoverflow = new BigInt(Long.MIN_VALUE);
-        minoverflow.sub(1);
-        final BigInt maxoverflow = new BigInt(Long.MAX_VALUE);
-        maxoverflow.add(1);
         final Object[][] testValues = new Object[][]{
                         {(long) Integer.MAX_VALUE, (long) Integer.MAX_VALUE, 0L},
                         {Long.MAX_VALUE, Long.MAX_VALUE, 0L},
                         {Long.MAX_VALUE, Long.MAX_VALUE - 1, 1L},
                         {Long.MAX_VALUE, Long.MAX_VALUE - Integer.MAX_VALUE, (long) Integer.MAX_VALUE},
-                        {Long.MIN_VALUE, 1L, minoverflow},
+                        {Long.MIN_VALUE, 1L, BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE)},
                         {Long.MAX_VALUE, Long.MAX_VALUE - Integer.MAX_VALUE, (long) Integer.MAX_VALUE},
-                        {maxoverflow, 1L, Long.MAX_VALUE}};
+                        {BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 1L, Long.MAX_VALUE}};
         final WrapToSqueakNode wrapNode = WrapToSqueakNode.create(image);
         for (int i = 0; i < testValues.length; i++) {
             final Object[] values = testValues[i];
