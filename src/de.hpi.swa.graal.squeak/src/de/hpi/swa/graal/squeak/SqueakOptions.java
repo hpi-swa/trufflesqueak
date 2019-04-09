@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptors;
 import org.graalvm.options.OptionKey;
+import org.graalvm.options.OptionStability;
 import org.graalvm.options.OptionValues;
 
 import com.oracle.truffle.api.Option;
@@ -13,23 +14,21 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 @Option.Group(SqueakLanguageConfig.ID)
 public final class SqueakOptions {
 
-    //@formatter:off
-    @Option(category = OptionCategory.USER, help = "Path to image")
+    @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Path to image")//
     public static final OptionKey<String> ImagePath = new OptionKey<>("");
 
     // TODO: use ImageArguments
-    @Option(category = OptionCategory.USER, help = "Image arguments")
+    @Option(category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = "Image arguments")//
     public static final OptionKey<String> ImageArguments = new OptionKey<>("");
 
-    @Option(category = OptionCategory.USER, help = "Run without a display")
+    @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Run without a display")//
     public static final OptionKey<Boolean> Headless = new OptionKey<>(true);
 
-    @Option(category = OptionCategory.USER, help = "Disable image interrupt handler")
+    @Option(category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = "Disable image interrupt handler")//
     public static final OptionKey<Boolean> DisableInterruptHandler = new OptionKey<>(false);
 
-    @Option(category = OptionCategory.INTERNAL, help = "For internal testing purposes only")
+    @Option(category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = "For internal testing purposes only")//
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
-    //@formatter:on
 
     private SqueakOptions() { // no instances
     }
