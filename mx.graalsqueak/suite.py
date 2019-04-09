@@ -138,18 +138,18 @@ suite = {
             "sourcesPath": "graalsqueak-launcher.src.zip",
         },
 
-        "GRAALSQUEAK_TCK": {
-            "description": "TCK-based interoperability tests",
-            "dependencies": [
-                "de.hpi.swa.graal.squeak.tck",
-            ],
-            "exclude": ["mx:JUNIT"],
-            "distDependencies": [
-                "sdk:POLYGLOT_TCK",
-            ],
-            "sourcesPath": "graalsqueak.tck-tests.src.zip",
-            "testDistribution": True,
-        },
+        # "GRAALSQUEAK_TCK": {
+        #     "description": "TCK-based interoperability tests",
+        #     "dependencies": [
+        #         "de.hpi.swa.graal.squeak.tck",
+        #     ],
+        #     "exclude": ["mx:JUNIT"],
+        #     "distDependencies": [
+        #         "sdk:POLYGLOT_TCK",
+        #     ],
+        #     "sourcesPath": "graalsqueak.tck-tests.src.zip",
+        #     "testDistribution": True,
+        # },
 
         "GRAALSQUEAK_GRAALVM_SUPPORT": {
             "native": True,
