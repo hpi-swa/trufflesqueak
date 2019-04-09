@@ -381,7 +381,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isSmallInteger(repl)", "isLongMinValue(repl)", "inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), repl, start, stop, replStart)"})
         protected static final Object replaceMinValueEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
-            rcvr.replaceInternalMinValue(repl);
+            rcvr.replaceInternalMinValue();
             return rcvr;
         }
 
