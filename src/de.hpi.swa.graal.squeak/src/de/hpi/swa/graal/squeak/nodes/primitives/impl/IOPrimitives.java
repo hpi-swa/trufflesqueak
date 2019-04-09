@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -48,6 +47,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPri
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -379,17 +379,22 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeReplace(VirtualFrame frame);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isSmallInteger(repl)", "inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, replStart)"})
-        protected static final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
+        @Specialization(guards = {"!isSmallInteger(repl)", "isLongMinValue(repl)", "inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), repl, start, stop, replStart)"})
+        protected static final Object replaceMinValueEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
+            rcvr.replaceInternalMinValue(repl);
+            return rcvr;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isSmallInteger(repl)", "!isLongMinValue(repl)", "inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), repl, start, stop, replStart)"})
+        protected static final Object replaceEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
             rcvr.replaceInternalValue(repl);
             return rcvr;
         }
 
-        @Specialization(guards = {"!isSmallInteger(repl)", "!inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, replStart)"})
-        protected static final Object replaceEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
-            final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-            buffer.putLong(repl);
-            rcvr.setBytes(buffer.array(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+        @Specialization(guards = {"!isSmallInteger(repl)", "!inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), repl, start, stop, replStart)"})
+        protected static final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
+            rcvr.setBytes(ArrayConversionUtils.largeIntegerBytesFromLong(repl), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
             return rcvr;
         }
 
@@ -780,6 +785,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean inBoundsEntirely(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize,
                         final long replStart) {
             return start == 1 && replStart == 1 && stop == replSize + replInstSize && stop == rcvrSize + rcvrInstSize;
+        }
+
+        protected static final boolean inLongBoundsEntirely(final int rcvrInstSize, final int rcvrSize, final long repl, final long start, final long stop, final long replStart) {
+            return start == 1 && replStart == 1 && stop == rcvrSize + rcvrInstSize && stop == ArrayConversionUtils.largeIntegerByteSizeForLong(repl);
         }
 
         private static void replaceGeneric(final Object[] dstArray, final long start, final long stop, final Object[] srcArray, final long replStart) {
