@@ -103,7 +103,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public void replaceInternalMinValue(final long original) {
-        integer = this.getSqueakClass() == image.largeNegativeIntegerClass ? LONG_MIN_OVERFLOW_RESULT : LONG_MIN_OVERFLOW_RESULT.negate();
+        integer = this.getSqueakClass() == image.largeNegativeIntegerClass ? LONG_MIN_OVERFLOW_RESULT.negate() : LONG_MIN_OVERFLOW_RESULT;
     }
 
     public void replaceInternalValue(final LargeIntegerObject original) {
