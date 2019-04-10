@@ -256,6 +256,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(asLargeInteger(a), b);
         }
 
+        @SuppressWarnings("unused")
         @Specialization(guards = {"b==0"})
         protected final Object doLargeIntegerLongZero(final LargeIntegerObject a, final long b) {
             return new LargeIntegerObject(method.image, BigInteger.ZERO);
