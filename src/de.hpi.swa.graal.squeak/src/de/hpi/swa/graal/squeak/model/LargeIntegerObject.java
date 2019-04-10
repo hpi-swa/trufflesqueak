@@ -68,7 +68,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public static byte[] bigIntegerToBytes(final BigInteger bigInteger) {
         final byte[] bytes = bigInteger.abs().toByteArray();
         if (bytes[0] == 0) {
-            return ArrayUtils.swapOrderInPlace(Arrays.copyOfRange(bytes, bytes.length - byteLength(bigInteger), byteLength(bigInteger)));
+            return ArrayUtils.swapOrderInPlace(Arrays.copyOfRange(bytes, bytes.length - byteLength(bigInteger), byteLength(bigInteger) + 1));
         } else {
             return ArrayUtils.swapOrderInPlace(bytes);
         }
@@ -80,7 +80,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public static byte[] bigIntegerToBigEndianBytes(final BigInteger bigInteger) {
         final byte[] bytes = bigInteger.abs().toByteArray();
-        return bytes[0] != 0 ? bytes : Arrays.copyOfRange(bytes, bytes.length - byteLength(bigInteger), byteLength(bigInteger));
+        return bytes[0] != 0 ? bytes : Arrays.copyOfRange(bytes, bytes.length - byteLength(bigInteger), byteLength(bigInteger) + 1);
     }
 
     public long getNativeAt0(final long index) {
