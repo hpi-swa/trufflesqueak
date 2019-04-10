@@ -100,8 +100,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+        @Specialization(guards = "a.signum() == b.signum()")
+        protected final LargeIntegerObject doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.addNoReduce(b);
+        }
+
+        @Specialization(guards = "a.signum() != b.signum()")
+        protected static final Object doLargeIntegerNegative(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.add(b);
         }
 

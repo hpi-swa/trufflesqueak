@@ -21,7 +21,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     private static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
 
     private BigInteger integer;
-    private int exposedSize;
+    private final int exposedSize;
 
     public LargeIntegerObject(final SqueakImageContext image, final BigInteger integer) {
         super(image, integer.compareTo(BigInteger.ZERO) >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass);
@@ -295,6 +295,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
+    public LargeIntegerObject addNoReduce(final LargeIntegerObject b) {
+        return new LargeIntegerObject(image, integer.add(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object add(final long b) {
         return this.reduceIfPossible(integer.add(BigInteger.valueOf(b)));
     }
@@ -452,5 +457,9 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public BigInteger getBigInteger() {
         return integer;
+    }
+
+    public int signum() {
+        return integer.signum();
     }
 }
