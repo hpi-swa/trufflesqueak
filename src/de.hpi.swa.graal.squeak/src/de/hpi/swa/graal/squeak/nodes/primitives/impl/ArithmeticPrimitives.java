@@ -497,11 +497,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization(guards = {"b!=0", "!a.fitsIntoLong()"})
         protected final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return doLargeInteger(a, asLargeInteger(b));
+            return doLargeIntegerNoReduce(a, asLargeInteger(b));
+        }
+
+        @Specialization(guards = {"!a.fitsIntoLong() || !b.fitsIntoLong()", "!a.isZero()", "!b.isZero()"})
+        protected static final LargeIntegerObject doLargeIntegerNoReduce(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.multiplyNoReduce(b);
         }
 
         @Override
-        @Specialization
+        @Specialization(guards = {"a.fitsIntoLong()", "b.fitsIntoLong()"})
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.multiply(b);
         }
