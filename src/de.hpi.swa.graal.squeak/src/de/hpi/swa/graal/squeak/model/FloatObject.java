@@ -32,13 +32,8 @@ public final class FloatObject extends AbstractSqueakObject {
         this.doubleValue = doubleValue;
     }
 
-    private FloatObject(final SqueakImageContext image, final long hash, final long high, final long low) {
+    private FloatObject(final SqueakImageContext image, final long hash, final int high, final int low) {
         super(image, hash, image.floatClass);
-        setWords(high, low);
-    }
-
-    public FloatObject(final SqueakImageContext image, final long high, final long low) {
-        this(image);
         setWords(high, low);
     }
 
@@ -68,10 +63,12 @@ public final class FloatObject extends AbstractSqueakObject {
         setWords(getHigh(), value);
     }
 
+    private void setWords(final int high, final int low) {
+        setWords(Integer.toUnsignedLong(high), Integer.toUnsignedLong(low));
+    }
+
     private void setWords(final long high, final long low) {
-        final long highMasked = high & LargeIntegerObject.MASK_32BIT;
-        final long lowMasked = low & LargeIntegerObject.MASK_32BIT;
-        doubleValue = Double.longBitsToDouble(highMasked << 32 | lowMasked);
+        doubleValue = Double.longBitsToDouble(high << 32 | low);
     }
 
     public void setBytes(final byte[] bytes) {
