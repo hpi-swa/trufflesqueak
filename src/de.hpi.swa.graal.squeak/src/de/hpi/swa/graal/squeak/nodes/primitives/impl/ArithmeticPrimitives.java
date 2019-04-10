@@ -100,12 +100,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        @Specialization(guards = "a.signum() == b.signum()")
+        @Specialization(guards = {"sameSign(a,b)", "!a.fitsIntoLong() || !b.fitsIntoLong()"})
         protected final LargeIntegerObject doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.addNoReduce(b);
         }
 
-        @Specialization(guards = "a.signum() != b.signum()")
+        @Specialization(guards = "!sameSign(a,b)")
         protected static final Object doLargeIntegerNegative(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.add(b);
         }
@@ -1224,6 +1224,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     public abstract static class AbstractArithmeticPrimitiveNode extends AbstractPrimitiveNode {
         public AbstractArithmeticPrimitiveNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        protected static final boolean sameSign(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.getSqueakClass() == b.getSqueakClass();
         }
 
         protected static final boolean isAnExactFloat(final long value) {

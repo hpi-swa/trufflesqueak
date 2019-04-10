@@ -57,6 +57,10 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new LargeIntegerObject(image, LONG_MIN_OVERFLOW_RESULT);
     }
 
+    public static boolean isZero(final LargeIntegerObject lio) {
+        return lio.integer == BigInteger.ZERO;
+    }
+
     public static byte[] getLongMinOverflowResultBytes() {
         return bigIntegerToBytes(LONG_MIN_OVERFLOW_RESULT);
     }
@@ -317,6 +321,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object multiply(final LargeIntegerObject b) {
         return this.reduceIfPossible(integer.multiply(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public LargeIntegerObject multiplyNoReduce(final LargeIntegerObject b) {
+        return new LargeIntegerObject(image, integer.multiply(b.integer));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)

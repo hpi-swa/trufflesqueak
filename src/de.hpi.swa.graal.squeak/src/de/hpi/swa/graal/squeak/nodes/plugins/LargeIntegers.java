@@ -260,7 +260,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(a, asLargeInteger(b));
         }
 
-        @Specialization
+        @Specialization(guards = {"!a.fitsIntoLong() || !b.fitsIntoLong()", "!a.isZero()", "!b.isZero()"})
+        protected static final LargeIntegerObject doLargeIntegerNoReduce(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.multiplyNoReduce(b);
+        }
+
+        @Specialization(guards = {"a.fitsIntoLong()", "b.fitsIntoLong()"})
         protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.multiply(b);
         }
@@ -752,9 +757,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return a.isPositive() && b >= 0 || !a.isPositive() && b < 0;
         }
 
-        protected static final boolean sameSign(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.getSqueakClass() == b.getSqueakClass();
-        }
     }
 
     @Override
