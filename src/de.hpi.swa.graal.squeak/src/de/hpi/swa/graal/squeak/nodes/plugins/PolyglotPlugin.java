@@ -160,8 +160,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             final String cFile = method.image.imageRelativeFilePathFor(C_FILENAME);
             final String llvmFile = method.image.imageRelativeFilePathFor(LLVM_FILENAME);
             try {
-                generateLLVMBitcode(foreignCode, cFile, llvmFile);
-                final Source source = Source.newBuilder("llvm", method.image.env.getTruffleFile(llvmFile)).build();
+                final Source source = generateSourcefromCCode(foreignCode, cFile, llvmFile);
                 final CallTarget foreignCallTarget = method.image.env.parse(source);
                 final TruffleObject library = (TruffleObject) foreignCallTarget.call();
                 final Object cFunction = readNode.executeWithArguments(frame, library, memberToCall);
@@ -174,10 +173,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary(transferToInterpreterOnException = false)
-        private static void generateLLVMBitcode(final String foreignCode, final String cFile, final String llvmFile) throws IOException, InterruptedException {
+        private Source generateSourcefromCCode(final String foreignCode, final String cFile, final String llvmFile) throws IOException, InterruptedException {
             Files.write(Paths.get(cFile), foreignCode.getBytes());
             final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
             p.waitFor();
+            return Source.newBuilder("llvm", method.image.env.getTruffleFile(llvmFile)).build();
         }
     }
 
@@ -473,7 +473,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return method.image.wrap(functions.asBoolean(receiver));
             } catch (final UnsupportedMessageException e) {
-                e.printStackTrace();
+                PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             }
         }
@@ -508,7 +508,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return method.image.wrap(functions.asString(receiver));
             } catch (final UnsupportedMessageException e) {
-                e.printStackTrace();
+                PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             }
         }
@@ -543,7 +543,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return functions.asLong(receiver);
             } catch (final UnsupportedMessageException e) {
-                e.printStackTrace();
+                PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             }
         }
@@ -578,7 +578,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return functions.asDouble(receiver);
             } catch (final UnsupportedMessageException e) {
-                e.printStackTrace();
+                PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             }
         }

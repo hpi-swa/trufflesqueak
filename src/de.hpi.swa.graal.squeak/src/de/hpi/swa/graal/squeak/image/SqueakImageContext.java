@@ -453,6 +453,7 @@ public final class SqueakImageContext {
         imagePath = path;
     }
 
+    @TruffleBoundary
     public String getImageDirectory() {
         final Path parent = Paths.get(getImagePath()).getParent();
         if (parent != null) {
