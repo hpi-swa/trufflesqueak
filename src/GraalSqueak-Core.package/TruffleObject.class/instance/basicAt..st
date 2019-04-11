@@ -1,4 +1,4 @@
 accessing
 basicAt: index
 
-	^ index - 1 "FIXME"
+	^ self primitiveRead: index - 1

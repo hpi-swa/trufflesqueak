@@ -9,4 +9,4 @@ importStatementFor: aLanguage named: aName
 			'R'. [:name | '{1} <- import("bindings"); ' format: {name}].
 			'ruby'. [:name | '{1} = Polyglot.import("bindings"); ' format: {name}].
 			'squeaksmalltalk'. [:name | '{1} := Polyglot import: ''bindings''. ' format: {name}]}
-		]) at: aLanguage ifAbsent: [^ nil]) value: aName
+		]) at: aLanguage ifAbsent: [self error: 'unsupported language: ', aLanguage]) value: aName

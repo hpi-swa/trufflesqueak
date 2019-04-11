@@ -7,6 +7,6 @@ explorerContents
 			model: self]) ,
 		((1 to: self basicSize) collect: [:index |
 			ObjectExplorerWrapper
-				with: (self  basicAt: index)
+				with: (self basicAt: index)
 				name: index printString
 				model: self ])

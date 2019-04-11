@@ -1,4 +1,3 @@
 accessing
-at: index
-	^ self instVarNamed: (self class instVarNames at: index)
-	
+at: identifier
+	^ self primitiveRead: identifier

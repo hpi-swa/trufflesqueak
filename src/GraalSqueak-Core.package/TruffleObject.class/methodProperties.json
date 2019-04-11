@@ -2,14 +2,14 @@
 	"class" : {
 		"initialize" : "fn 11/22/2018 00:50" },
 	"instance" : {
-		"allInstVarNames" : "fn 11/19/2018 21:48",
+		"allInstVarNames" : "fn 3/25/2019 15:11",
 		"asSmalltalk" : "fn 11/19/2018 21:47",
-		"at:" : "GraalSqueak 8/9/2018 18:55",
-		"at:put:" : "GraalSqueak 8/9/2018 18:56",
-		"basicAt:" : "fn 11/22/2018 01:26",
+		"at:" : "fn 3/25/2019 15:11",
+		"at:put:" : "fn 3/25/2019 15:11",
+		"basicAt:" : "fn 3/25/2019 15:14",
 		"basicSize" : "fn 11/19/2018 21:51",
 		"doesNotUnderstand:" : "fn 12/13/2018 17:46",
-		"explorerContents" : "fn 11/22/2018 13:30",
+		"explorerContents" : "fn 3/25/2019 15:18",
 		"hasContentsInExplorer" : "fn 11/22/2018 13:38",
 		"inspectorClass" : "GraalSqueak 8/13/2018 15:50",
 		"instSize" : "fn 11/22/2018 01:18",
@@ -39,5 +39,6 @@
 		"primitiveStringRepresentation" : "GraalSqueak 11/11/2018 21:44",
 		"primitiveUnbox" : "fn 11/12/2018 11:05",
 		"primitiveWrite:value:" : "fn 11/12/2018 11:05",
+		"printOn:" : "fn 3/25/2019 15:11",
 		"send:" : "fn 12/18/2018 15:06",
 		"size" : "fn 11/22/2018 01:18" } }

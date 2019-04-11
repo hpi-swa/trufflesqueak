@@ -1,3 +1,3 @@
 accessing
-at: index put: value
-	^ self instVarNamed: (self class instVarNames at: index) put: value
+at: identifier put: value
+	^ self primitiveWrite: identifier value: value
