@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -258,8 +257,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"b==0"})
-        protected final Object doLargeIntegerLongZero(final LargeIntegerObject a, final long b) {
-            return new LargeIntegerObject(method.image, BigInteger.ZERO);
+        protected static final long doLargeIntegerLongZero(final LargeIntegerObject a, final long b) {
+            return 0L;
         }
 
         @Specialization(guards = {"b!=0", "a.fitsIntoLong()"})
@@ -268,7 +267,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"b!=0", "!a.fitsIntoLong()"})
-        protected final Object doLargeIntegerLongNoReduce(final LargeIntegerObject a, final long b) {
+        protected final LargeIntegerObject doLargeIntegerLongNoReduce(final LargeIntegerObject a, final long b) {
             return doLargeIntegerNoReduce(a, asLargeInteger(b));
         }
 

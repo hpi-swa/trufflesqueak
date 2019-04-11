@@ -455,6 +455,10 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return this.reduceIfPossible(integer.shiftLeft(b));
     }
 
+    public LargeIntegerObject shiftLeftNoReduce(final int b) {
+        return new LargeIntegerObject(image, integer.shiftLeft(b));
+    }
+
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object shiftRight(final int b) {
         return this.reduceIfPossible(integer.shiftRight(b));
