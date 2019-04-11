@@ -160,19 +160,24 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             final String cFile = method.image.imageRelativeFilePathFor(C_FILENAME);
             final String llvmFile = method.image.imageRelativeFilePathFor(LLVM_FILENAME);
             try {
-                Files.write(Paths.get(cFile), foreignCode.getBytes());
-                final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
-                p.waitFor();
+                generateLLVMBitcode(foreignCode, cFile, llvmFile);
                 final Source source = Source.newBuilder("llvm", method.image.env.getTruffleFile(llvmFile)).build();
                 final CallTarget foreignCallTarget = method.image.env.parse(source);
                 final TruffleObject library = (TruffleObject) foreignCallTarget.call();
                 final Object cFunction = readNode.executeWithArguments(frame, library, memberToCall);
                 final Object result = executeNode.executeWithArguments(frame, cFunction);
                 return wrapNode.executeWrap(result);
-            } catch (IOException | RuntimeException | InterruptedException e) {
+            } catch (final Exception e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             }
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static void generateLLVMBitcode(final String foreignCode, final String cFile, final String llvmFile) throws IOException, InterruptedException {
+            Files.write(Paths.get(cFile), foreignCode.getBytes());
+            final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
+            p.waitFor();
         }
     }
 
