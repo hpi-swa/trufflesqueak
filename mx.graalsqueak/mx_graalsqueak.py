@@ -345,7 +345,7 @@ _svmsuite = mx.suite('substratevm', fatalIfMissing=False)
 if _svmsuite:
     _svmsuite.extensions.flag_suitename_map['squeak'] = (
         'graalsqueak',
-        ['GRAALSQUEAK', 'GRAALSQUEAK-LAUNCHER', 'GRAALSQUEAK-SHARED'], [])
+        ['GRAALSQUEAK', 'GRAALSQUEAK_LAUNCHER', 'GRAALSQUEAK_SHARED'], [])
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,
@@ -356,7 +356,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     third_party_license_files=[],
     truffle_jars=[
         'graalsqueak:GRAALSQUEAK',
-        'graalsqueak:GRAALSQUEAK-SHARED',
+        'graalsqueak:GRAALSQUEAK_SHARED',
     ],
     support_distributions=[
         'graalsqueak:GRAALSQUEAK_GRAALVM_SUPPORT',
@@ -365,8 +365,8 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         mx_sdk.LanguageLauncherConfig(
             destination=SVM_TARGET,
             jar_distributions=[
-                'graalsqueak:GRAALSQUEAK-LAUNCHER',
-                'graalsqueak:GRAALSQUEAK-SHARED',
+                'graalsqueak:GRAALSQUEAK_LAUNCHER',
+                'graalsqueak:GRAALSQUEAK_SHARED',
             ],
             main_class='%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME,
             build_args=[
