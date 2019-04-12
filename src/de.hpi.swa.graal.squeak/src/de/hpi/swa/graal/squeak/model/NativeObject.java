@@ -224,7 +224,8 @@ public final class NativeObject extends AbstractSqueakObject {
 
     @ExportMessage
     public boolean isString() {
-        return getSqueakClass() == image.stringClass;
+        /** ByteString or ByteSymbol. */
+        return getSqueakClass() == image.stringClass || getSqueakClass() == image.aboutToReturnSelector.getSqueakClass();
     }
 
     @ExportMessage

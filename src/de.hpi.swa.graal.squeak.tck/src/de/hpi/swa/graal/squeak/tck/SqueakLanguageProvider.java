@@ -140,6 +140,7 @@ public final class SqueakLanguageProvider implements LanguageProvider {
     }
 
     private static class ComparisonVerifier implements ResultVerifier {
+        private static final ComparisonVerifier INSTANCE = new ComparisonVerifier();
 
         @Override
         public void accept(final SnippetRun snippetRun) throws PolyglotException {
@@ -149,36 +150,33 @@ public final class SqueakLanguageProvider implements LanguageProvider {
             final Value par0 = parameters.get(0);
             final Value par1 = parameters.get(1);
 
-            if (isSqueakNumber(par0) && isSqueakNumber(par1)) {
+            if (isSqueakNumberOrCharacter(par0) && isSqueakNumberOrCharacter(par1)) {
                 if (snippetRun.getException() != null) {
                     throw new AssertionError("Squeak Numbers and Characters should not throw exception: " + snippetRun.getException());
                 }
-            } else if (par0.isString() && par1.isString()) {
+            } else if (isSqueakString(par0) && isSqueakString(par1)) {
                 if (snippetRun.getException() != null) {
                     throw new AssertionError("Squeak Strings and Strings should not throw exception: " + snippetRun.getException());
                 }
-            } else if (par0.isString() || par1.isString()) {
+            } else if (isSqueakString(par0) || isSqueakString(par1)) {
                 if (snippetRun.getException() == null) {
-                    throw new AssertionError("Squeak Strings and Numbers should raise an exception");
+                    throw new AssertionError("Squeak Strings and Numbers should raise an exception, result: " + snippetRun.getResult());
                 }
             } else {
                 ResultVerifier.getDefaultResultVerifier().accept(snippetRun);
             }
         }
 
-        private static boolean isSqueakNumber(final Value val) {
-            if (val.isNumber()) {
-                return true;
-            } else {
-                try {
-                    val.as(Character.class);
-                } catch (final ClassCastException e) {
-                    return false;
-                }
-                return true;
-            }
+        private static boolean isSqueakNumberOrCharacter(final Value val) {
+            return val.isNumber() || isSqueakCharacter(val);
         }
 
-        private static final ComparisonVerifier INSTANCE = new ComparisonVerifier();
+        private static boolean isSqueakCharacter(final Value val) {
+            return val.isString() && val.asString().length() == 1;
+        }
+
+        private static boolean isSqueakString(final Value val) {
+            return val.isString() && val.asString().length() != 1;
+        }
     }
 }
