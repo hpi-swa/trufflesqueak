@@ -5,6 +5,9 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -86,6 +89,15 @@ public final class JumpBytecodes {
             @Specialization
             protected static final boolean doBoolean(final boolean expected, final boolean result) {
                 return expected == result;
+            }
+
+            @Specialization(guards = "resultLib.isBoolean(result)", limit = "2")
+            protected static final boolean doBoolean(final boolean expected, final Object result, @CachedLibrary("result") final InteropLibrary resultLib) {
+                try {
+                    return expected == resultLib.asBoolean(result);
+                } catch (final UnsupportedMessageException e) {
+                    throw SqueakException.illegalState(e);
+                }
             }
 
             @Fallback

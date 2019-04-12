@@ -14,6 +14,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SYNTAX_ERROR_NOTIFICATION;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -43,6 +44,11 @@ public final class SqueakExceptions {
         public static SqueakException create(final Object... messageParts) {
             CompilerDirectives.transferToInterpreter();
             return new SqueakException(messageParts);
+        }
+
+        public static SqueakException illegalState(final Throwable cause) {
+            CompilerDirectives.transferToInterpreter();
+            return new SqueakException("Illegal state in " + SqueakLanguageConfig.NAME, cause);
         }
 
         private static void printSqueakStackTrace() {

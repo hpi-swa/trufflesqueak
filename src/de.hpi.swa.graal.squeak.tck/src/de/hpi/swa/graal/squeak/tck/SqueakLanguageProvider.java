@@ -26,7 +26,6 @@ import org.graalvm.polyglot.tck.TypeDescriptor;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class SqueakLanguageProvider implements LanguageProvider {
-    private static final TypeDescriptor COLLECTION = TypeDescriptor.union(array(union(BOOLEAN, NUMBER, OBJECT)), STRING);
     private static final TypeDescriptor NUMBER_AND_STRING = TypeDescriptor.union(NUMBER, STRING);
 
     @Override
@@ -62,20 +61,20 @@ public final class SqueakLanguageProvider implements LanguageProvider {
     public Collection<? extends Snippet> createExpressions(final Context context) {
         final Collection<Snippet> snippets = new ArrayList<>();
         // addition
-// addExpressionSnippet(context, snippets, "+", "[ :x :y | x + y ]", NUMBER,
-// ComparisonVerifier.INSTANCE, NUMBER, NUMBER_AND_STRING);
+        // addExpressionSnippet(context, snippets, "+", "[ :x :y | x + y ]", NUMBER, NUMBER,
+        // NUMBER_AND_STRING);
 
         // subtraction
-// addExpressionSnippet(context, snippets, "-", "[ :x :y | x - y ]", NUMBER,
-// ComparisonVerifier.INSTANCE, NUMBER, NUMBER_AND_STRING);
+        // addExpressionSnippet(context, snippets, "-", "[ :x :y | x - y ]", NUMBER, NUMBER,
+        // NUMBER_AND_STRING);
 
         // multiplication
-// addExpressionSnippet(context, snippets, "*", "[ :x :y | x * y ]", NUMBER,
-// ComparisonVerifier.INSTANCE, NUMBER, NUMBER_AND_STRING);
+        // addExpressionSnippet(context, snippets, "*", "[ :x :y | x * y ]", NUMBER, NUMBER,
+        // NUMBER_AND_STRING);
 
         // division
-// addExpressionSnippet(context, snippets, "/", "[ :x :y | x / y ]", NUMBER,
-// ComparisonVerifier.INSTANCE, NUMBER, NUMBER);
+        // addExpressionSnippet(context, snippets, "/", "[ :x :y | x / y ]", NUMBER, NUMBER,
+        // NUMBER);
 
         // comparison
         addExpressionSnippet(context, snippets, ">", "[ :x :y | x > y ]", BOOLEAN, ComparisonVerifier.INSTANCE, NUMBER_AND_STRING, NUMBER_AND_STRING);
@@ -94,13 +93,16 @@ public final class SqueakLanguageProvider implements LanguageProvider {
         addStatementSnippet(context, statements, "basicSize", "[ :p | p basicSize ]", TypeDescriptor.NUMBER, TypeDescriptor.ANY);
         addStatementSnippet(context, statements, "hash", "[ :p | p hash ]", TypeDescriptor.NUMBER, TypeDescriptor.ANY);
 
-// addStatementSnippet(context, statements, "ifTrue:ifFalse:", "[ :p | p ifTrue: [ 1 ] ifFalse: [ -1
-// ] ]", TypeDescriptor.NUMBER, TypeDescriptor.BOOLEAN);
-// addStatementSnippet(context, statements, "ifNil:ifNotNil:", "[ :p | p ifNil: [ 1 ] ifNotNil: [ -1
-// ] ]", TypeDescriptor.NUMBER, TypeDescriptor.ANY);
+        addStatementSnippet(context, statements, "ifTrue:ifFalse:", "[ :p | p ifTrue: [ true ] ifFalse: [ false ] ]", TypeDescriptor.BOOLEAN, TypeDescriptor.BOOLEAN);
+        addStatementSnippet(context, statements, "ifFalse:ifTrue:", "[ :p | p ifFalse: [ -1 ] ifTrue: [ 1 ] ]", TypeDescriptor.NUMBER, TypeDescriptor.BOOLEAN);
+        addStatementSnippet(context, statements, "ifTrue:", "[ :p | p ifTrue: [ true ] ]", TypeDescriptor.ANY, TypeDescriptor.BOOLEAN);
+        addStatementSnippet(context, statements, "ifFalse:", "[ :p | p ifFalse: [ true ] ]", TypeDescriptor.ANY, TypeDescriptor.BOOLEAN);
 
-// addStatementSnippet(context, statements, "sorted", "[ :p | p asArray sorted ]", COLLECTION,
-// COLLECTION);
+        addStatementSnippet(context, statements, "and:", "[ :p1 :p2 | p1 and: p2 ]", TypeDescriptor.ANY, TypeDescriptor.BOOLEAN, TypeDescriptor.ANY);
+        addStatementSnippet(context, statements, "or:", "[ :p1 :p2 | p1 or: p2 ]", TypeDescriptor.ANY, TypeDescriptor.BOOLEAN, TypeDescriptor.ANY);
+
+        addStatementSnippet(context, statements, "ifNil:ifNotNil:", "[ :p | p ifNil: [ true ] ifNotNil: [ false ] ]", TypeDescriptor.BOOLEAN, TypeDescriptor.ANY);
+        addStatementSnippet(context, statements, "ifNotNil:ifNil:", "[ :p | p ifNotNil: [ 1 ] ifNil: [ -1 ] ]", TypeDescriptor.NUMBER, TypeDescriptor.ANY);
 
         return statements;
     }
@@ -123,10 +125,12 @@ public final class SqueakLanguageProvider implements LanguageProvider {
         snippets.add(Snippet.newBuilder(id, context.eval(SqueakLanguageConfig.ID, code), returnType).build());
     }
 
-    private static void addExpressionSnippet(final Context context, final Collection<Snippet> snippets, final String id, final String code, final TypeDescriptor returnType,
-                    final TypeDescriptor... parameterTypes) {
-        snippets.add(Snippet.newBuilder(id, context.eval(SqueakLanguageConfig.ID, code), returnType).parameterTypes(parameterTypes).build());
-    }
+    // private static void addExpressionSnippet(final Context context, final Collection<Snippet>
+    // snippets, final String id, final String code, final TypeDescriptor returnType,
+    // final TypeDescriptor... parameterTypes) {
+    // snippets.add(Snippet.newBuilder(id, context.eval(SqueakLanguageConfig.ID, code),
+    // returnType).parameterTypes(parameterTypes).build());
+    // }
 
     private static void addExpressionSnippet(final Context context, final Collection<Snippet> snippets, final String id, final String code, final TypeDescriptor returnType, final ResultVerifier rv,
                     final TypeDescriptor... parameterTypes) {
