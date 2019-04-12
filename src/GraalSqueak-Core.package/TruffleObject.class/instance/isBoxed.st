@@ -1,3 +1,0 @@
-polyglot
-isBoxed
-	^ self primitiveIsBoxed

@@ -1,0 +1,3 @@
+overrides
+hash
+	^ self primitiveIdentityHash

@@ -1,3 +1,3 @@
-polyglot
+interop
 isNull
 	^ self primitiveIsNull

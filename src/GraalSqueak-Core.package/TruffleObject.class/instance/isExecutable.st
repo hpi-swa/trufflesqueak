@@ -1,3 +1,3 @@
-polyglot
+interop
 isExecutable
 	^ self primitiveIsExecutable

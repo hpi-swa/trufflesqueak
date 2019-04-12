@@ -1,3 +1,3 @@
 accessing
 at: identifier
-	^ self primitiveRead: identifier
+	^ self primitiveReadMember: identifier

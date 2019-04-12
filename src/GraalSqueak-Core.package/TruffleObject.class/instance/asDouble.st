@@ -1,0 +1,3 @@
+interop
+asDouble
+	^ self primitiveAsDouble

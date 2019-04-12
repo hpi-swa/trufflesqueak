@@ -1,0 +1,3 @@
+testing
+isNil
+	^ self isNull

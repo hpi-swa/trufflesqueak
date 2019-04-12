@@ -1,3 +1,3 @@
-polyglot
+interop
 inspectorClass
 	^ PolyglotInspector

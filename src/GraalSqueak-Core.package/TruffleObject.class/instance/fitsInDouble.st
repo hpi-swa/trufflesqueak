@@ -1,0 +1,3 @@
+interop
+fitsInDouble
+	^ self primitiveFitsInDouble

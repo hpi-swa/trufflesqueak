@@ -1,0 +1,3 @@
+interop
+isString
+	^ self primitiveIsString

@@ -1,3 +1,4 @@
 accessing
 basicSize
-	^ self primitiveGetSize
+	self isString ifTrue: [ ^ self asString basicSize ].
+	^ self primitiveGetArraySize

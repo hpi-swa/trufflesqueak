@@ -1,7 +1,7 @@
 printing
 printOn: aStream
 	| title |
-	title := self primitiveIsBoxed
-		ifTrue: [ self primitiveUnbox ]
+	title := self primitiveIsString
+		ifTrue: [ self primitiveAsString ]
 		ifFalse: [ self primitiveStringRepresentation ].
 	aStream nextPutAll: title

@@ -1,0 +1,3 @@
+interop
+asBoolean
+	^ self primitiveAsBoolean

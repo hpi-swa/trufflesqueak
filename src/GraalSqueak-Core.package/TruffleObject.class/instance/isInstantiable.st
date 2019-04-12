@@ -1,3 +1,3 @@
-polyglot
+interop
 isInstantiable
 	^ self primitiveIsInstantiable
