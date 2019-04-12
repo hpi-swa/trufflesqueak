@@ -68,12 +68,12 @@ public abstract class UnwrapFromSqueakNode extends AbstractNodeWithImage {
         return value;
     }
 
-    @Specialization(guards = "value.isString()")
+    @Specialization(guards = "value.isStringOrSymbol()")
     protected static final String doString(final NativeObject value) {
         return value.asString();
     }
 
-    @Specialization(guards = {"!value.isString()", "value.isByteType()"})
+    @Specialization(guards = {"!value.isStringOrSymbol()", "value.isByteType()"})
     protected static final byte[] doBytes(final NativeObject value) {
         return value.getByteStorage();
     }
