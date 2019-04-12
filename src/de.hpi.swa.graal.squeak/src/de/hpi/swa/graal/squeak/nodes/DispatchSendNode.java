@@ -9,6 +9,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakError;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -45,9 +46,9 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"image.isHeadless()", "selector.isDebugErrorSelector()", "lookupResult != null"})
-    protected static final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
+    protected final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
-        throw SqueakException.create(MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
+        throw new SqueakError(this, MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
     }
 
     @SuppressWarnings("unused")

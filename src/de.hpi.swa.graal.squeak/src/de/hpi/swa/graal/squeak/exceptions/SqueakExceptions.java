@@ -56,6 +56,21 @@ public final class SqueakExceptions {
         }
     }
 
+    public static final class SqueakError extends RuntimeException implements TruffleException {
+        private static final long serialVersionUID = 1L;
+        private final Node location;
+
+        public SqueakError(final Node location, final String message) {
+            super(message);
+            this.location = location;
+        }
+
+        @Override
+        public Node getLocation() {
+            return location;
+        }
+    }
+
     public static final class SqueakAbortException extends RuntimeException implements TruffleException {
         private static final long serialVersionUID = 1L;
 

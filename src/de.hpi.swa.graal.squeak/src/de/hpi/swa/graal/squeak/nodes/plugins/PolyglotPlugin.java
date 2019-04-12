@@ -445,7 +445,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsBooolean")
+    @SqueakPrimitive(names = "primitiveIsBoolean")
     protected abstract static class PrimIsBooleanNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimIsBooleanNode(final CompiledMethodObject method) {
@@ -460,7 +460,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveAsBooolean")
+    @SqueakPrimitive(names = "primitiveAsBoolean")
     protected abstract static class PrimAsBooleanNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimAsBooleanNode(final CompiledMethodObject method) {
