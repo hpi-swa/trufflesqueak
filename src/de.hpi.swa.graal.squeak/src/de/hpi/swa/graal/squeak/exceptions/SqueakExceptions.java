@@ -14,6 +14,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SYNTAX_ERROR_NOTIFICATION;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -45,6 +46,11 @@ public final class SqueakExceptions {
             return new SqueakException(messageParts);
         }
 
+        public static SqueakException illegalState(final Throwable cause) {
+            CompilerDirectives.transferToInterpreter();
+            return new SqueakException("Illegal state in " + SqueakLanguageConfig.NAME, cause);
+        }
+
         private static void printSqueakStackTrace() {
             final FrameInstance currentFrame = Truffle.getRuntime().getCurrentFrame();
             if (currentFrame != null) {
@@ -53,6 +59,21 @@ public final class SqueakExceptions {
                     FrameAccess.getMethod(frame).image.printSqStackTrace();
                 }
             }
+        }
+    }
+
+    public static final class SqueakError extends RuntimeException implements TruffleException {
+        private static final long serialVersionUID = 1L;
+        private final Node location;
+
+        public SqueakError(final Node location, final String message) {
+            super(message);
+            this.location = location;
+        }
+
+        @Override
+        public Node getLocation() {
+            return location;
         }
     }
 
@@ -112,7 +133,7 @@ public final class SqueakExceptions {
             public SourceSection getSourceSection() {
                 if (sourceSection == null) {
                     // - 1 for previous character.
-                    sourceSection = image.getLastParseRequestSource().createSection(sourceOffset - 1, 1);
+                    sourceSection = image.getLastParseRequestSource().createSection(Math.max(sourceOffset - 1, 0), 1);
                 }
                 return sourceSection;
             }

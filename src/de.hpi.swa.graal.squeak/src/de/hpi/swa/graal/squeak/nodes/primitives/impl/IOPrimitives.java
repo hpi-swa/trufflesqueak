@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -365,11 +367,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
         @Child private SqueakObjectInstSizeNode instSizeNode;
         @Child private SqueakObjectSizeNode sizeNode;
-        @Child private ArrayObjectReadNode arrayObjectReadNode;
         @Child private ArrayObjectWriteNode arrayObjectWriteNode;
-        @Child private NativeObjectReadNode nativeObjectReadNode;
-        @Child private NativeObjectWriteNode nativeObjectWriteNode;
-        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode;
 
         protected PrimStringReplaceNode(final CompiledMethodObject method) {
             super(method);
@@ -404,24 +402,28 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rcvr.haveSameStorageType(repl)", "inBounds(rcvr, start, stop, repl, replStart)"})
-        protected final NativeObject doNative(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+        protected static final NativeObject doNative(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode,
+                        @Cached final NativeObjectReadNode nativeObjectReadNode) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
-                getNativeObjectWriteNode().execute(rcvr, i, getNativeObjectReadNode().execute(repl, repOff + i));
+                nativeObjectWriteNode.execute(rcvr, i, nativeObjectReadNode.execute(repl, repOff + i));
             }
             return rcvr;
         }
 
         @Specialization(guards = "!isSmallInteger(repl)")
-        protected final NativeObject doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final long repl, final long replStart) {
-            return doNativeLargeInteger(rcvr, start, stop, asLargeInteger(repl), replStart);
+        protected final NativeObject doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final long repl, final long replStart,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
+            return doNativeLargeInteger(rcvr, start, stop, asLargeInteger(repl), replStart, nativeObjectWriteNode);
         }
 
         @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
-        protected final NativeObject doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
+        protected static final NativeObject doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
+                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
-                getNativeObjectWriteNode().execute(rcvr, i, repl.getNativeAt0(repOff + i));
+                nativeObjectWriteNode.execute(rcvr, i, repl.getNativeAt0(repOff + i));
             }
             return rcvr;
         }
@@ -490,9 +492,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rcvr.isAbstractSqueakObjectType()", "!repl.isAbstractSqueakObjectType()", "inBounds(rcvr, start, stop, repl, replStart)"})
-        protected final ArrayObject doArraysOfSqueakObjectsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+        protected static final ArrayObject doArraysOfSqueakObjectsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @Shared("arrayObjectToObjectArrayNode") @Cached final ArrayObjectToObjectArrayNode arrayObjectToObjectArrayNode) {
             rcvr.transitionFromAbstractSqueakObjectsToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, getGetObjectArrayNode().execute(repl), replStart);
+            replaceGeneric(rcvr.getObjectStorage(), start, stop, arrayObjectToObjectArrayNode.execute(repl), replStart);
             return rcvr;
         }
 
@@ -505,9 +508,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"rcvr.isBooleanType()", "!repl.isBooleanType()",
                         "inBounds(rcvr.instsize(), rcvr.getBooleanLength(), start, stop, repl.instsize(), repl.getBooleanLength(), replStart)"})
-        protected final ArrayObject doArraysOfBooleansTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+        protected static final ArrayObject doArraysOfBooleansTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @Shared("arrayObjectToObjectArrayNode") @Cached final ArrayObjectToObjectArrayNode arrayObjectToObjectArrayNode) {
             rcvr.transitionFromBooleansToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, getGetObjectArrayNode().execute(repl), replStart);
+            replaceGeneric(rcvr.getObjectStorage(), start, stop, arrayObjectToObjectArrayNode.execute(repl), replStart);
             return rcvr;
         }
 
@@ -518,9 +522,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rcvr.isCharType()", "!repl.isCharType()", "inBounds(rcvr, start, stop, repl, replStart)"})
-        protected final ArrayObject doArraysOfCharsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+        protected static final ArrayObject doArraysOfCharsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @Shared("arrayObjectToObjectArrayNode") @Cached final ArrayObjectToObjectArrayNode arrayObjectToObjectArrayNode) {
             rcvr.transitionFromCharsToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, getGetObjectArrayNode().execute(repl), replStart);
+            replaceGeneric(rcvr.getObjectStorage(), start, stop, arrayObjectToObjectArrayNode.execute(repl), replStart);
             return rcvr;
         }
 
@@ -531,9 +536,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rcvr.isLongType()", "!repl.isLongType()", "inBounds(rcvr, start, stop, repl, replStart)"})
-        protected final ArrayObject doArraysOfLongsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+        protected static final ArrayObject doArraysOfLongsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @Shared("arrayObjectToObjectArrayNode") @Cached final ArrayObjectToObjectArrayNode arrayObjectToObjectArrayNode) {
             rcvr.transitionFromLongsToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, getGetObjectArrayNode().execute(repl), replStart);
+            replaceGeneric(rcvr.getObjectStorage(), start, stop, arrayObjectToObjectArrayNode.execute(repl), replStart);
             return rcvr;
         }
 
@@ -544,9 +550,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rcvr.isDoubleType()", "!repl.isDoubleType()", "inBounds(rcvr, start, stop, repl, replStart)"})
-        protected final ArrayObject doArraysOfDoublesTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+        protected static final ArrayObject doArraysOfDoublesTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @Shared("arrayObjectToObjectArrayNode") @Cached final ArrayObjectToObjectArrayNode arrayObjectToObjectArrayNode) {
             rcvr.transitionFromDoublesToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, getGetObjectArrayNode().execute(repl), replStart);
+            replaceGeneric(rcvr.getObjectStorage(), start, stop, arrayObjectToObjectArrayNode.execute(repl), replStart);
             return rcvr;
         }
 
@@ -558,9 +565,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rcvr.isNativeObjectType()", "!repl.isNativeObjectType()", "inBounds(rcvr, start, stop, repl, replStart)"})
-        protected final ArrayObject doArraysOfNativesTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+        protected static final ArrayObject doArraysOfNativesTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @Shared("arrayObjectToObjectArrayNode") @Cached final ArrayObjectToObjectArrayNode arrayObjectToObjectArrayNode) {
             rcvr.transitionFromNativesToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, getGetObjectArrayNode().execute(repl), replStart);
+            replaceGeneric(rcvr.getObjectStorage(), start, stop, arrayObjectToObjectArrayNode.execute(repl), replStart);
             return rcvr;
         }
 
@@ -571,8 +579,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rcvr.isObjectType()", "!repl.isObjectType()", "inBounds(rcvr, start, stop, repl, replStart)"})
-        protected final ArrayObject doArraysOfObjectsNonObject(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            System.arraycopy(getGetObjectArrayNode().execute(repl), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
+        protected static final ArrayObject doArraysOfObjectsNonObject(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @Shared("arrayObjectToObjectArrayNode") @Cached final ArrayObjectToObjectArrayNode arrayObjectToObjectArrayNode) {
+            System.arraycopy(arrayObjectToObjectArrayNode.execute(repl), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
             return rcvr;
         }
 
@@ -699,10 +708,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
-        protected final WeakPointersObject doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+        protected static final WeakPointersObject doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @Cached final ArrayObjectReadNode arrayObjectReadNode) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.atput0(i, getArrayObjectReadNode().execute(repl, repOff + i));
+                rcvr.atput0(i, arrayObjectReadNode.execute(repl, repOff + i));
             }
             return rcvr;
         }
@@ -765,44 +775,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return sizeNode;
         }
 
-        private ArrayObjectReadNode getArrayObjectReadNode() {
-            if (arrayObjectReadNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                arrayObjectReadNode = insert(ArrayObjectReadNode.create());
-            }
-            return arrayObjectReadNode;
-        }
-
         private ArrayObjectWriteNode getArrayObjectWriteNode() {
             if (arrayObjectWriteNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 arrayObjectWriteNode = insert(ArrayObjectWriteNode.create());
             }
             return arrayObjectWriteNode;
-        }
-
-        private NativeObjectReadNode getNativeObjectReadNode() {
-            if (nativeObjectReadNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                nativeObjectReadNode = insert(NativeObjectReadNode.create());
-            }
-            return nativeObjectReadNode;
-        }
-
-        private NativeObjectWriteNode getNativeObjectWriteNode() {
-            if (nativeObjectWriteNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                nativeObjectWriteNode = insert(NativeObjectWriteNode.create());
-            }
-            return nativeObjectWriteNode;
-        }
-
-        private ArrayObjectToObjectArrayNode getGetObjectArrayNode() {
-            if (getObjectArrayNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getObjectArrayNode = insert(ArrayObjectToObjectArrayNode.create());
-            }
-            return getObjectArrayNode;
         }
     }
 

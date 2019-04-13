@@ -411,6 +411,10 @@ public final class SqueakImageContext {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 
+    public ArrayObject newArrayOfNativeObjects(final NativeObject... elements) {
+        return ArrayObject.createWithStorage(this, arrayClass, elements);
+    }
+
     public ArrayObject newArrayOfObjects(final Object... elements) {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
@@ -442,6 +446,7 @@ public final class SqueakImageContext {
 
     public String getImagePath() {
         if (imagePath == null) {
+            assert !options.imagePath.isEmpty();
             setImagePath(options.imagePath);
         }
         return imagePath;
@@ -452,6 +457,7 @@ public final class SqueakImageContext {
         imagePath = path;
     }
 
+    @TruffleBoundary
     public String getImageDirectory() {
         final Path parent = Paths.get(getImagePath()).getParent();
         if (parent != null) {

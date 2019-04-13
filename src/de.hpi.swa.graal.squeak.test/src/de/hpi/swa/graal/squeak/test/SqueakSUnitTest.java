@@ -95,7 +95,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     private boolean isReloadOnException() {
-        final String value = System.getProperty(RELOAD_IMAGE_PROPERTY, RELOAD_ON_EXCEPTION);
+        final String value = System.getProperty(RELOAD_IMAGE_PROPERTY, RELOAD_NEVER);
         switch (value) {
             case RELOAD_NEVER:
                 return false;

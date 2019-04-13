@@ -124,10 +124,10 @@ public abstract class AbstractSqueakTestCase {
     protected static void loadImageContext(final String imagePath) {
         assert context == null && image == null;
         final Builder contextBuilder = Context.newBuilder();
+        contextBuilder.allowAllAccess(true);
         contextBuilder.option(SqueakLanguageConfig.ID + ".ImagePath", imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + ".Headless", "true");
         contextBuilder.option(SqueakLanguageConfig.ID + ".Testing", "true");
-        contextBuilder.allowIO(true);
         context = contextBuilder.build();
         context.enter();
         context.initialize(SqueakLanguageConfig.ID);

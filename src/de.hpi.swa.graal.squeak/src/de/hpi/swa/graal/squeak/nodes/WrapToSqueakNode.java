@@ -22,15 +22,19 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
         return WrapToSqueakNodeGen.create(image);
     }
 
-    public final ArrayObject executeList(final Object... values) {
+    public abstract Object executeWrap(Object value);
+
+    public final Object[] executeObjects(final Object... values) {
         final Object[] wrappedElements = new Object[values.length];
         for (int i = 0; i < values.length; i++) {
             wrappedElements[i] = executeWrap(values[i]);
         }
-        return image.newArrayOfObjects(wrappedElements);
+        return wrappedElements;
     }
 
-    public abstract Object executeWrap(Object value);
+    public final ArrayObject executeList(final Object... values) {
+        return image.newArrayOfObjects(executeObjects(values));
+    }
 
     @Specialization(guards = "nullValue == null")
     protected final NilObject doNull(@SuppressWarnings("unused") final Object nullValue) {
@@ -39,6 +43,16 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
 
     @Specialization
     protected static final boolean doBoolean(final boolean value) {
+        return value;
+    }
+
+    @Specialization
+    protected static final long doByte(final byte value) {
+        return value;
+    }
+
+    @Specialization
+    protected static final long doShort(final short value) {
         return value;
     }
 
@@ -53,7 +67,12 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
     }
 
     @Specialization
-    protected static final double doInteger(final double value) {
+    protected static final double doFloat(final float value) {
+        return value;
+    }
+
+    @Specialization
+    protected static final double doDouble(final double value) {
         return value;
     }
 

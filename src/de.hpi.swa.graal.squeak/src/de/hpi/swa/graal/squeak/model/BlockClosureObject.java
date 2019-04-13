@@ -8,14 +8,22 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
+import de.hpi.swa.graal.squeak.nodes.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
+@ExportLibrary(InteropLibrary.class)
 public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal private ContextObject outerContext;
@@ -252,5 +260,26 @@ public final class BlockClosureObject extends AbstractSqueakObject {
 
     public AbstractSqueakObject shallowCopy() {
         return new BlockClosureObject(this);
+    }
+
+    /*
+     * INTEROPERABILITY
+     */
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isExecutable() {
+        return true;
+    }
+
+    @ExportMessage
+    public Object execute(final Object[] arguments,
+                    @Cached(value = "create(this.image)", allowUncached = true) final WrapToSqueakNode wrapNode) throws ArityException {
+        if (getNumArgs() == arguments.length) {
+            final Object[] frameArguments = FrameAccess.newClosureArguments(this, image.nil, wrapNode.executeObjects(arguments));
+            return getCallTarget().call(frameArguments);
+        } else {
+            throw ArityException.create((int) getNumArgs(), arguments.length);
+        }
     }
 }

@@ -2,15 +2,28 @@ package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.interop.SqueakObjectMessageResolutionForeign;
+import de.hpi.swa.graal.squeak.interop.InteropArray;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
+import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
+@ExportLibrary(InteropLibrary.class)
 public abstract class AbstractSqueakObject implements TruffleObject {
     public static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     private static final byte PINNED_BIT_SHIFT = 30;
@@ -53,11 +66,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         final ClassObject otherSqClass = other.squeakClass;
         other.setSqueakClass(squeakClass);
         setSqueakClass(otherSqClass);
-    }
-
-    @Override
-    public final ForeignAccess getForeignAccess() {
-        return SqueakObjectMessageResolutionForeign.ACCESS;
     }
 
     public final ClassObject getSqueakClass() {
@@ -122,6 +130,11 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return getSqueakClass() == image.semaphoreClass;
     }
 
+    public final boolean isStringOrSymbol() {
+        /** ByteString or ByteSymbol. */
+        return getSqueakClass() == image.stringClass || getSqueakClass() == image.aboutToReturnSelector.getSqueakClass();
+    }
+
     public String nameAsClass() {
         return "???NotAClass";
     }
@@ -153,5 +166,101 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         final CompiledMethodObject method = (CompiledMethodObject) getSqueakClass().lookup(selector);
         final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(ArrayUtils.EMPTY_ARRAY, method.getFrameDescriptor());
         return DispatchSendNode.create(image).executeSend(frame, method.getCompiledInSelector(), method, getSqueakClass(), ArrayUtils.copyWithFirst(arguments, this), image.nil);
+    }
+
+    /*
+     * INTEROPERABILITY
+     */
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected final boolean hasArrayElements() {
+        return squeakClass.isVariable();
+    }
+
+    @ExportMessage
+    protected final long getArraySize(@Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode) {
+        return sizeNode.execute(this);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage(name = "isArrayElementReadable")
+    @ExportMessage(name = "isArrayElementModifiable")
+    @ExportMessage(name = "isArrayElementInsertable")
+    protected final boolean isArrayElementReadable(final long index, @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode) {
+        return 0 <= index && index < sizeNode.execute(this);
+    }
+
+    @ExportMessage
+    protected final Object readArrayElement(final long index, @Cached final SqueakObjectAt0Node at0Node) {
+        return at0Node.execute(this, index);
+    }
+
+    @ExportMessage
+    protected final void writeArrayElement(final long index, final Object value, @Cached final SqueakObjectAtPut0Node atput0Node) throws InvalidArrayIndexException {
+        try {
+            atput0Node.execute(this, index, value);
+        } catch (final ArrayIndexOutOfBoundsException e) {
+            throw InvalidArrayIndexException.create(index);
+        }
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected final boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    protected final Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
+        return new InteropArray(getSqueakClass().listMethods());
+    }
+
+    @ExportMessage
+    public boolean isMemberReadable(@SuppressWarnings("unused") final String key) {
+        return true;
+    }
+
+    @ExportMessage
+    public Object readMember(final String key) {
+        return getSqueakClass().lookup(toSelector(key));
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected final boolean isInstantiable() {
+        return this instanceof ClassObject;
+    }
+
+    @ExportMessage
+    protected final Object instantiate(final Object[] arguments, @Cached(value = "create(this.image)", allowUncached = true) final NewObjectNode newObjectNode)
+                    throws UnsupportedTypeException, ArityException, UnsupportedMessageException {
+        if (!(this instanceof ClassObject)) {
+            throw UnsupportedMessageException.create();
+        }
+        final int numArguments = arguments.length;
+        switch (numArguments) {
+            case 0:
+                return newObjectNode.execute((ClassObject) this);
+            case 1:
+                if (arguments[0] instanceof Integer) {
+                    return newObjectNode.execute((ClassObject) this, (int) arguments[0]);
+                } else {
+                    throw UnsupportedTypeException.create(arguments, "Second argument must be the size as an integer.");
+                }
+            default:
+                throw ArityException.create(1, numArguments);
+        }
+    }
+
+    /**
+     * Converts an interop identifier to a Smalltalk selector. Most languages do not allow colons in
+     * identifiers, so treat underscores as colons as well.
+     *
+     * @param identifier for interop
+     * @return Smalltalk selector
+     */
+    private static String toSelector(final String identifier) {
+        return identifier.replace('_', ':');
     }
 }

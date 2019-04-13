@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.test;
 
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -50,8 +49,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void reloadImage(final TestRequest request) {
-        // Reloading the image does not work correctly (multiple nil objects, etc...), fail instead.
-        assertTrue("Previous test failed with an exception. Debug locally! Cannot reload image yet.", false);
         if (request.reloadImageOnException) {
             cleanUp();
             loadTestImage();

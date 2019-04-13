@@ -1,7 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -13,19 +13,15 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodesFactory.ContextObjectReadNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodesFactory.ContextObjectWriteNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ContextObjectNodes {
 
+    @GenerateUncached
     @ImportStatic(CONTEXT.class)
     public abstract static class ContextObjectReadNode extends AbstractNode {
-        public static ContextObjectReadNode create() {
-            return ContextObjectReadNodeGen.create();
-        }
 
         public abstract Object execute(ContextObject context, long index);
 
@@ -73,8 +69,8 @@ public final class ContextObjectNodes {
                         limit = "2" /** thisContext and sender */
         )
         protected static final Object doTempCached(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @SuppressWarnings("unused") @Cached("context.getBlockOrMethod()") final CompiledCodeObject codeObject,
-                        @Cached("create(codeObject)") final FrameStackReadNode readNode) {
+                        @SuppressWarnings("unused") @Cached(value = "context.getBlockOrMethod()", allowUncached = true) final CompiledCodeObject codeObject,
+                        @Cached(value = "create(codeObject)", allowUncached = true) final FrameStackReadNode readNode) {
             final Object value = readNode.execute(context.getTruffleFrame(), (int) (index - CONTEXT.TEMP_FRAME_START));
             return value == null ? context.image.nil : value;
         }
@@ -84,18 +80,15 @@ public final class ContextObjectNodes {
             return context.atTemp((int) (index - CONTEXT.TEMP_FRAME_START));
         }
 
-        @Fallback
+        @Specialization(guards = "index < 0")
         protected static final Object doFail(final ContextObject obj, final long index) {
-            throw SqueakException.create("Unexpected values:", obj, index);
+            throw SqueakException.create("Negative index:", obj, index);
         }
     }
 
+    @GenerateUncached
     @ImportStatic(CONTEXT.class)
     public abstract static class ContextObjectWriteNode extends AbstractNode {
-
-        public static ContextObjectWriteNode create() {
-            return ContextObjectWriteNodeGen.create();
-        }
 
         public abstract void execute(ContextObject context, long index, Object value);
 
@@ -151,8 +144,8 @@ public final class ContextObjectNodes {
                         limit = "2"/** thisContext and sender */
         )
         protected static final void doTempCached(final ContextObject context, final long index, final Object value,
-                        @SuppressWarnings("unused") @Cached("context.getBlockOrMethod()") final CompiledCodeObject codeObject,
-                        @Cached("create(codeObject)") final FrameStackWriteNode writeNode) {
+                        @SuppressWarnings("unused") @Cached(value = "context.getBlockOrMethod()", allowUncached = true) final CompiledCodeObject codeObject,
+                        @Cached(value = "create(codeObject)", allowUncached = true) final FrameStackWriteNode writeNode) {
             final int stackIndex = (int) (index - CONTEXT.TEMP_FRAME_START);
             FrameAccess.setArgumentIfInRange(context.getTruffleFrame(), stackIndex, value);
             writeNode.execute(context.getTruffleFrame(), stackIndex, value);
@@ -163,7 +156,7 @@ public final class ContextObjectNodes {
             context.atTempPut((int) (index - CONTEXT.TEMP_FRAME_START), value);
         }
 
-        @Fallback
+        @Specialization(guards = "index < 0")
         protected static final void doFail(final ContextObject obj, final long index, final Object value) {
             throw SqueakException.create("Unexpected values:", obj, index, value);
         }

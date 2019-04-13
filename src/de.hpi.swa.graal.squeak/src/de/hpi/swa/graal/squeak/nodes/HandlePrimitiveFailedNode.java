@@ -34,15 +34,15 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
      */
     @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() < sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
     protected final void doHandleWithLookup(final VirtualFrame frame, final PrimitiveFailed e,
-                    @SuppressWarnings("unused") @Cached("create()") final ArrayObjectSizeNode sizeNode,
+                    @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                     @Cached("create(code)") final StackPushNode pushNode,
-                    @Cached("create()") final ArrayObjectReadNode readNode) {
+                    @Cached final ArrayObjectReadNode readNode) {
         pushNode.executeWrite(frame, readNode.execute(code.image.primitiveErrorTable, e.getReasonCode()));
     }
 
     @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() >= sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
     protected static final void doHandleRawValue(final VirtualFrame frame, final PrimitiveFailed e,
-                    @SuppressWarnings("unused") @Cached("create()") final ArrayObjectSizeNode sizeNode,
+                    @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                     @Cached("create(code)") final StackPushNode pushNode) {
         pushNode.executeWrite(frame, e.getReasonCode());
     }

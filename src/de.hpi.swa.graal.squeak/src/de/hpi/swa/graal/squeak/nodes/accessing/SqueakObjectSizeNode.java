@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -21,6 +22,7 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 
+@GenerateUncached
 public abstract class SqueakObjectSizeNode extends AbstractNode {
 
     public static SqueakObjectSizeNode create() {
@@ -30,7 +32,7 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     public abstract int execute(Object obj);
 
     @Specialization
-    protected static final int doArray(final ArrayObject obj, @Cached("create()") final ArrayObjectSizeNode sizeNode) {
+    protected static final int doArray(final ArrayObject obj, @Cached final ArrayObjectSizeNode sizeNode) {
         return sizeNode.execute(obj);
     }
 
@@ -70,7 +72,7 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doNative(final NativeObject obj, @Cached("create()") final NativeObjectSizeNode sizeNode) {
+    protected static final int doNative(final NativeObject obj, @Cached final NativeObjectSizeNode sizeNode) {
         return sizeNode.execute(obj);
     }
 

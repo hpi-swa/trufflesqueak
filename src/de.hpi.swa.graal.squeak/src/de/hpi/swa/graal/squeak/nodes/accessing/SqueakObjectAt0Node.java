@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -25,6 +26,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodes.ClassObjectReadN
 import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
 
+@GenerateUncached
 public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     public static SqueakObjectAt0Node create() {
@@ -35,7 +37,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doArray(final ArrayObject obj, final long index,
-                    @Cached("create()") final ArrayObjectReadNode readNode) {
+                    @Cached final ArrayObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
@@ -46,13 +48,13 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doContext(final ContextObject obj, final long index,
-                    @Cached("create()") final ContextObjectReadNode readNode) {
+                    @Cached final ContextObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
     @Specialization
     protected static final Object doClass(final ClassObject obj, final long index,
-                    @Cached("create()") final ClassObjectReadNode readNode) {
+                    @Cached final ClassObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
@@ -68,7 +70,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doNative(final NativeObject obj, final long index,
-                    @Cached("create()") final NativeObjectReadNode readNode) {
+                    @Cached final NativeObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 
@@ -99,7 +101,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doClosure(final BlockClosureObject obj, final long index,
-                    @Cached("create()") final BlockClosureObjectReadNode readNode) {
+                    @Cached final BlockClosureObjectReadNode readNode) {
         return readNode.execute(obj, index);
     }
 

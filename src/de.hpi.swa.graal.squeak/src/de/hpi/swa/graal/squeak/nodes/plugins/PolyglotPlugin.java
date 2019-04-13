@@ -15,34 +15,39 @@ import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.LanguageInfo;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.LiteralBuilder;
 import com.oracle.truffle.api.source.Source.SourceBuilder;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.nodes.UnwrapFromSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPluginFactory.PrimExecuteNodeFactory;
+import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPluginFactory.PrimReadMemberNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
@@ -74,7 +79,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
-            PrimGetLastErrorNode.unsetLastError();
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asString();
             final String sourceText = sourceObject.asString();
             final Env env = method.image.env;
@@ -113,7 +117,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
-            PrimGetLastErrorNode.unsetLastError();
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asString();
             final String pathString = path.asString();
             final Env env = method.image.env;
@@ -138,93 +141,87 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimEvalCNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         private static final String C_FILENAME = "temp.c";
         private static final String LLVM_FILENAME = "temp.bc";
-        @Child private Node readNode = Message.READ.createNode();
-        @Child private Node executeNode = Message.EXECUTE.createNode();
+        @Child private PrimReadMemberNode readNode;
+        @Child private PrimExecuteNode executeNode;
         @Child private WrapToSqueakNode wrapNode;
 
         protected PrimEvalCNode(final CompiledMethodObject method) {
             super(method);
+            readNode = PrimReadMemberNodeFactory.create(method, null);
+            executeNode = PrimExecuteNodeFactory.create(method, null);
             wrapNode = WrapToSqueakNode.create(method.image);
         }
 
         @Specialization(guards = {"receiver.isByteType()", "memberToCall.isByteType()"})
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doEvaluate(final NativeObject receiver, final NativeObject memberToCall) {
-            PrimGetLastErrorNode.unsetLastError();
+        protected final Object doEvaluate(final VirtualFrame frame, final NativeObject receiver, final NativeObject memberToCall) {
             final String foreignCode = receiver.asString();
             final String cFile = method.image.imageRelativeFilePathFor(C_FILENAME);
             final String llvmFile = method.image.imageRelativeFilePathFor(LLVM_FILENAME);
             try {
-                Files.write(Paths.get(cFile), foreignCode.getBytes());
-                final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
-                p.waitFor();
-                final Source source = Source.newBuilder("llvm", method.image.env.getTruffleFile(llvmFile)).build();
+                final Source source = generateSourcefromCCode(foreignCode, cFile, llvmFile);
                 final CallTarget foreignCallTarget = method.image.env.parse(source);
                 final TruffleObject library = (TruffleObject) foreignCallTarget.call();
-                final TruffleObject cFunction;
-                try {
-                    cFunction = (TruffleObject) ForeignAccess.sendRead(readNode, library, memberToCall.asString());
-                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                    PrimGetLastErrorNode.setLastError(e);
-                    throw new PrimitiveFailed();
-                }
-                final Object result;
-                try {
-                    result = ForeignAccess.sendExecute(executeNode, cFunction);
-                } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
-                    PrimGetLastErrorNode.setLastError(e);
-                    throw new PrimitiveFailed();
-                }
+                final Object cFunction = readNode.executeWithArguments(frame, library, memberToCall);
+                final Object result = executeNode.executeWithArguments(frame, cFunction);
                 return wrapNode.executeWrap(result);
-            } catch (IOException | RuntimeException | InterruptedException e) {
+            } catch (final Exception e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             }
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private Source generateSourcefromCCode(final String foreignCode, final String cFile, final String llvmFile) throws IOException, InterruptedException {
+            Files.write(Paths.get(cFile), foreignCode.getBytes());
+            final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
+            p.waitFor();
+            return Source.newBuilder("llvm", method.image.env.getTruffleFile(llvmFile)).build();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAsPointer")
     protected abstract static class PrimAsPointerNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node asPointerNode = Message.AS_POINTER.createNode();
 
         protected PrimAsPointerNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
-        protected final long doExecute(final TruffleObject receiver) {
-            PrimGetLastErrorNode.unsetLastError();
+        @Specialization(guards = {"functions.isPointer(receiver)"}, limit = "2")
+        protected final long doAsPointer(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                return method.image.wrap(ForeignAccess.sendAsPointer(asPointerNode, receiver));
+                return method.image.wrap(functions.asPointer(receiver));
             } catch (final UnsupportedMessageException e) {
-                PrimGetLastErrorNode.setLastError(e);
-                throw new PrimitiveFailed();
+                throw SqueakException.illegalState(e);
             }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveExecute")
-    protected abstract static class PrimExecuteNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        @Child private Node executeNode = Message.EXECUTE.createNode();
+    protected abstract static class PrimExecuteNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
+        @Child private UnwrapFromSqueakNode unwrapNode;
         @Child private WrapToSqueakNode wrapNode;
 
         protected PrimExecuteNode(final CompiledMethodObject method) {
             super(method);
+            unwrapNode = UnwrapFromSqueakNode.create(method.image);
             wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "identifier.isByteType()"})
-        protected final Object doExecute(final TruffleObject receiver, final NativeObject identifier, final ArrayObject argumentArray) {
-            PrimGetLastErrorNode.unsetLastError();
-            final Object[] arguments = getObjectArrayNode.execute(argumentArray);
+        @Specialization(guards = {"functions.isExecutable(receiver)"}, limit = "2")
+        protected final Object doExecute(final Object receiver, final ArrayObject argumentArray,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            final Object[] arguments = unwrapNode.executeList(getObjectArrayNode.execute(argumentArray));
             try {
-                return wrapNode.executeWrap(ForeignAccess.sendExecute(executeNode, receiver, identifier.asString(), arguments));
-            } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+                return wrapNode.executeWrap(functions.execute(receiver, arguments));
+            } catch (UnsupportedTypeException | ArityException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -245,87 +242,68 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveGetKeys")
-    protected abstract static class PrimGetKeysNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node keysNode = Message.KEYS.createNode();
-        @Child private Node getSizeNode = Message.GET_SIZE.createNode();
-        @Child private Node readNode = Message.READ.createNode();
-        @Child private WrapToSqueakNode wrapNode;
-
-        protected PrimGetKeysNode(final CompiledMethodObject method) {
+    @SqueakPrimitive(names = "primitiveGetMembers")
+    protected abstract static class PrimGetMembersNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimGetMembersNode(final CompiledMethodObject method) {
             super(method);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @Specialization(guards = "!isAbstractSqueakObject(receiver)")
-        protected final ArrayObject doKeys(final TruffleObject receiver) {
-            PrimGetLastErrorNode.unsetLastError();
+        @Specialization(guards = {"functions.hasMembers(receiver)"}, limit = "2")
+        protected static final Object doGetMembers(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                final TruffleObject sendKeysResult = ForeignAccess.sendKeys(keysNode, receiver);
-                final int size = (int) ForeignAccess.sendGetSize(getSizeNode, sendKeysResult);
-                final Object[] keys = new Object[size];
-                for (int index = 0; index < size; index++) {
-                    final Object value = ForeignAccess.sendRead(readNode, sendKeysResult, index);
-                    keys[index] = String.valueOf(value);
-                }
-                return wrapNode.executeList(keys);
-            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                PrimGetLastErrorNode.setLastError(e);
-                throw new PrimitiveFailed();
+                return functions.getMembers(receiver, true);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveGetInstSize")
-    protected abstract static class PrimGetInstSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node hasKeysNode = Message.HAS_KEYS.createNode();
-        @Child private Node getKeysNode = Message.KEYS.createNode();
-        @Child private Node getSizeNode = Message.GET_SIZE.createNode();
+    @SqueakPrimitive(names = "primitiveHasArrayElements")
+    protected abstract static class PrimHasArrayElementsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
-        protected PrimGetInstSizeNode(final CompiledMethodObject method) {
+        protected PrimHasArrayElementsNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = "!isAbstractSqueakObject(receiver)")
-        protected final long doInstSize(final TruffleObject receiver) {
-            PrimGetLastErrorNode.unsetLastError();
-            try {
-                if (ForeignAccess.sendHasKeys(hasKeysNode, receiver)) {
-                    final TruffleObject keys = ForeignAccess.sendKeys(getKeysNode, receiver);
-                    return (int) ForeignAccess.sendGetSize(getSizeNode, keys);
-                } else {
-                    return 0L;
-                }
-            } catch (final UnsupportedMessageException e) {
-                PrimGetLastErrorNode.setLastError(e);
-                throw new PrimitiveFailed();
-            }
+        @Specialization
+        protected final boolean doHasArrayElements(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary functions) {
+            return method.image.wrap(functions.hasArrayElements(receiver));
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveGetSize")
-    protected abstract static class PrimGetSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node hasSizeNode = Message.HAS_SIZE.createNode();
-        @Child private Node getSizeNode = Message.GET_SIZE.createNode();
+    @SqueakPrimitive(names = "primitiveHasMembers")
+    protected abstract static class PrimHasMembersNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
-        protected PrimGetSizeNode(final CompiledMethodObject method) {
+        protected PrimHasMembersNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = "!isAbstractSqueakObject(receiver)")
-        protected final long doSize(final TruffleObject receiver) {
-            PrimGetLastErrorNode.unsetLastError();
+        @Specialization
+        protected final boolean doHasArrayElements(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary functions) {
+            return method.image.wrap(functions.hasMembers(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetArraySize")
+    protected abstract static class PrimGetArraySizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimGetArraySizeNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "functions.hasArrayElements(receiver)", limit = "2")
+        protected final long doGetArraySize(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                if (ForeignAccess.sendHasSize(hasSizeNode, receiver)) {
-                    return (int) ForeignAccess.sendGetSize(getSizeNode, receiver);
-                } else {
-                    return 0L;
-                }
+                return method.image.wrap(functions.getArraySize(receiver));
             } catch (final UnsupportedMessageException e) {
-                PrimGetLastErrorNode.setLastError(e);
-                throw new PrimitiveFailed();
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -354,30 +332,20 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetLastError")
     protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        protected static Exception lastError = null;
+        protected static Exception lastError = SqueakException.create("");
 
         protected PrimGetLastErrorNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = "lastError != null")
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final NativeObject doError(@SuppressWarnings("unused") final Object receiver) {
+        @TruffleBoundary
+        protected final NativeObject doGetLastError(@SuppressWarnings("unused") final Object receiver) {
             return method.image.wrap(lastError.toString());
-        }
-
-        @Specialization(guards = "lastError == null")
-        protected final NilObject doNil(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.nil;
         }
 
         protected static final void setLastError(final Exception e) {
             LOG.fine(() -> MiscUtils.toString(e));
             lastError = e;
-        }
-
-        protected static final void unsetLastError() {
-            lastError = null;
         }
     }
 
@@ -435,193 +403,344 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInvoke")
     protected abstract static class PrimInvokeNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        @Child private Node invokeNode = Message.INVOKE.createNode();
         @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
+        @Child private UnwrapFromSqueakNode unwrapNode;
         @Child private WrapToSqueakNode wrapNode;
 
         protected PrimInvokeNode(final CompiledMethodObject method) {
             super(method);
+            unwrapNode = UnwrapFromSqueakNode.create(method.image);
             wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "identifier.isByteType()"})
-        protected final Object doInvoke(final TruffleObject receiver, final NativeObject identifier, final ArrayObject argumentArray) {
-            PrimGetLastErrorNode.unsetLastError();
-            final Object[] arguments = getObjectArrayNode.execute(argumentArray);
+        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())"}, limit = "2")
+        protected final Object doRead(final Object receiver, final NativeObject member, final ArrayObject argumentArray,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            final Object[] arguments = unwrapNode.executeList(getObjectArrayNode.execute(argumentArray));
             try {
-                return wrapNode.executeWrap(ForeignAccess.sendInvoke(invokeNode, receiver, identifier.asString(), arguments));
-            } catch (UnsupportedTypeException | ArityException | UnknownIdentifierException | UnsupportedMessageException e) {
+                return wrapNode.executeWrap(functions.invokeMember(receiver, member.asString(), arguments));
+            } catch (UnsupportedTypeException | ArityException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
+            } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsBoxed")
-    protected abstract static class PrimIsBoxedNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node isExecutableNode = Message.IS_BOXED.createNode();
+    @SqueakPrimitive(names = "primitiveIsBoolean")
+    protected abstract static class PrimIsBooleanNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimIsBoxedNode(final CompiledMethodObject method) {
+        protected PrimIsBooleanNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
-        protected final boolean doIsBoxed(final TruffleObject receiver) {
-            return method.image.wrap(ForeignAccess.sendIsBoxed(isExecutableNode, receiver));
+        @Specialization(limit = "2")
+        protected final boolean doIsBoolean(final TruffleObject receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            return method.image.wrap(functions.isBoolean(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsBoolean")
+    protected abstract static class PrimAsBooleanNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimAsBooleanNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "functions.isBoolean(receiver)", limit = "2")
+        protected final boolean doAsBoolean(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            try {
+                return method.image.wrap(functions.asBoolean(receiver));
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsString")
+    protected abstract static class PrimIsStringNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimIsStringNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(limit = "2")
+        protected final boolean doIsString(final TruffleObject receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            return method.image.wrap(functions.isString(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsString")
+    protected abstract static class PrimAsStringNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimAsStringNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "functions.isString(receiver)", limit = "2")
+        protected final NativeObject doAsString(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            try {
+                return method.image.wrap(functions.asString(receiver));
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFitsInLong")
+    protected abstract static class PrimFitsInLongNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimFitsInLongNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(limit = "2")
+        protected final boolean doFitsInLong(final TruffleObject receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            return method.image.wrap(functions.fitsInLong(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsLong")
+    protected abstract static class PrimAsLongNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimAsLongNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"functions.fitsInLong(receiver)"}, limit = "2")
+        protected static final long doAsLong(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            try {
+                return functions.asLong(receiver);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFitsInDouble")
+    protected abstract static class PrimFitsInDoubleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimFitsInDoubleNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(limit = "2")
+        protected final boolean doFitsInDouble(final TruffleObject receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            return method.image.wrap(functions.fitsInDouble(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsDouble")
+    protected abstract static class PrimAsDoubleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimAsDoubleNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"functions.fitsInDouble(receiver)"}, limit = "2")
+        protected static final double doAsDouble(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            try {
+                return functions.asDouble(receiver);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIdentityHash")
+    protected abstract static class PrimPolyglotIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimPolyglotIdentityHashNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final long doIdentityHash(final TruffleObject receiver) {
+            return method.image.wrap(receiver.hashCode() & AbstractSqueakObject.IDENTITY_HASH_MASK);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsExecutable")
     protected abstract static class PrimIsExecutableNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node isExecutableNode = Message.IS_EXECUTABLE.createNode();
 
         protected PrimIsExecutableNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
-        protected final boolean doIsExecutable(final TruffleObject receiver) {
-            return method.image.wrap(ForeignAccess.sendIsExecutable(isExecutableNode, receiver));
+        @Specialization(limit = "2")
+        protected final boolean doIsExecutable(final TruffleObject receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            return method.image.wrap(functions.isExecutable(receiver));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsInstantiable")
     protected abstract static class PrimIsInstantiableNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node isIntantiable = Message.IS_INSTANTIABLE.createNode();
 
         protected PrimIsInstantiableNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
-        protected final boolean doIsInstantiable(final TruffleObject receiver) {
-            return method.image.wrap(ForeignAccess.sendIsInstantiable(isIntantiable, receiver));
+        @Specialization(limit = "2")
+        protected final boolean doIsInstantiable(final TruffleObject receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            return method.image.wrap(functions.isInstantiable(receiver));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsNull")
     protected abstract static class PrimIsNullNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node isNullNode = Message.IS_NULL.createNode();
 
         protected PrimIsNullNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
-        protected final boolean doIsNull(final TruffleObject receiver) {
-            return method.image.wrap(ForeignAccess.sendIsNull(isNullNode, receiver));
+        @Specialization(limit = "2")
+        protected final boolean doIsNull(final TruffleObject receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            return method.image.wrap(functions.isNull(receiver));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsPointer")
     protected abstract static class PrimIsPointerNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node isPointerNode = Message.IS_POINTER.createNode();
 
         protected PrimIsPointerNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
-        protected final boolean doIsPointer(final TruffleObject receiver) {
-            return method.image.wrap(ForeignAccess.sendIsPointer(isPointerNode, receiver));
+        @Specialization(limit = "2")
+        protected final boolean doIsPointer(final TruffleObject receiver,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            return method.image.wrap(functions.isPointer(receiver));
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveRead")
-    protected abstract static class PrimReadNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private Node readNode = Message.READ.createNode();
+    @SqueakPrimitive(names = "primitiveReadArrayElement")
+    protected abstract static class PrimReadArrayElementNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child private WrapToSqueakNode wrapNode;
 
-        protected PrimReadNode(final CompiledMethodObject method) {
+        protected PrimReadArrayElementNode(final CompiledMethodObject method) {
             super(method);
             wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
-        protected final Object doRead(final TruffleObject receiver, final long index) {
-            return readIdentifier(receiver, index);
-        }
-
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "selector.isByteType()"})
-        protected final Object doRead(final TruffleObject receiver, final NativeObject selector) {
-            return readIdentifier(receiver, selector.asString());
-        }
-
-        private Object readIdentifier(final TruffleObject receiver, final Object identifier) {
-            PrimGetLastErrorNode.unsetLastError();
+        @Specialization(guards = {"isArrayElementReadable(functions, receiver, index)"}, limit = "2")
+        protected final Object doReadArrayElement(final Object receiver, final long index,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                return wrapNode.executeWrap(ForeignAccess.sendRead(readNode, receiver, identifier));
-            } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                return wrapNode.executeWrap(functions.readArrayElement(receiver, index - 1));
+            } catch (final InvalidArrayIndexException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+
+        protected static final boolean isArrayElementReadable(final InteropLibrary functions, final Object receiver, final long index) {
+            return functions.isArrayElementReadable(receiver, index - 1);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveReadMember")
+    protected abstract static class PrimReadMemberNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        @Child private WrapToSqueakNode wrapNode;
+
+        protected PrimReadMemberNode(final CompiledMethodObject method) {
+            super(method);
+            wrapNode = WrapToSqueakNode.create(method.image);
+        }
+
+        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())"}, limit = "2")
+        protected final Object doReadMember(final Object receiver, final NativeObject member,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            try {
+                return wrapNode.executeWrap(functions.readMember(receiver, member.asString()));
+            } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveStringRepresentation")
-    protected abstract static class PrimStringRepresentationNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node readNode = Message.READ.createNode();
+    protected abstract static class PrimStringRepresentationNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimStringRepresentationNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
-        protected final NativeObject doRead(final TruffleObject receiver) {
+        @Specialization
+        protected final NativeObject doRead(final Object receiver) {
             return method.image.wrap(MiscUtils.toString(receiver));
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveUnbox")
-    protected abstract static class PrimUnboxNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private Node unboxNode = Message.UNBOX.createNode();
-        @Child private WrapToSqueakNode wrapNode;
-
-        protected PrimUnboxNode(final CompiledMethodObject method) {
+    @SqueakPrimitive(names = "primitiveWriteArrayElement")
+    protected abstract static class PrimWriteArrayElementNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        protected PrimWriteArrayElementNode(final CompiledMethodObject method) {
             super(method);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
-        protected final Object doRead(final TruffleObject receiver) {
-            PrimGetLastErrorNode.unsetLastError();
+        @Specialization(guards = {"functions.isArrayElementWritable(receiver, index)"}, limit = "2")
+        protected static final Object doWrite(final Object receiver, final long index, final Object value,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                return wrapNode.executeWrap(ForeignAccess.sendUnbox(unboxNode, receiver));
-            } catch (final UnsupportedMessageException e) {
+                functions.writeArrayElement(receiver, index, value);
+                return value;
+            } catch (final UnsupportedTypeException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
+            } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveWrite")
-    protected abstract static class PrimWriteNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        @Child private Node writeNode = Message.WRITE.createNode();
-        @Child private WrapToSqueakNode wrapNode;
-
-        protected PrimWriteNode(final CompiledMethodObject method) {
+    @SqueakPrimitive(names = "primitiveWriteMember")
+    protected abstract static class PrimWriteMemberNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        protected PrimWriteMemberNode(final CompiledMethodObject method) {
             super(method);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "selector.isByteType()"})
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doWrite(final TruffleObject receiver, final NativeObject selector, final Object value) {
-            PrimGetLastErrorNode.unsetLastError();
+        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())"}, limit = "2")
+        protected static final Object doWrite(final Object receiver, final NativeObject member, final Object value,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                return wrapNode.executeWrap(ForeignAccess.sendWrite(writeNode, receiver, selector.asString(), value));
-            } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
+                functions.writeMember(receiver, member.asString(), value);
+                return value;
+            } catch (final UnsupportedTypeException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
+            } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }

@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -19,6 +20,7 @@ import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class NativeObjectNodes {
 
+    @GenerateUncached
     public abstract static class NativeAcceptsValueNode extends AbstractNode {
 
         public static NativeAcceptsValueNode create() {
@@ -106,6 +108,7 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class NativeObjectReadNode extends AbstractNode {
 
         public static NativeObjectReadNode create() {
@@ -145,6 +148,7 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateUncached
     @ImportStatic(NativeObject.class)
     public abstract static class NativeObjectWriteNode extends AbstractNode {
 
@@ -245,6 +249,7 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class NativeObjectSizeNode extends AbstractNode {
 
         public static NativeObjectSizeNode create() {
@@ -279,6 +284,7 @@ public final class NativeObjectNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class NativeGetBytesNode extends AbstractNode {
 
         public static NativeGetBytesNode create() {

@@ -1,5 +1,5 @@
 suite = {
-    "mxversion": "5.214.7",
+    "mxversion": "5.215.6",
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
@@ -7,7 +7,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "1b9ef745ae8fa19416e405f8eec43156e36d6a5c",
+            "version": "7ff983abe01289adb8c67fd4730a61171d34a6e6",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
@@ -32,7 +32,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "BOUNCY_CASTLE_CRYPTO_LIB",
-                "graalsqueak:GRAALSQUEAK-SHARED",
+                "graalsqueak:GRAALSQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
             ],
@@ -46,7 +46,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "graalsqueak:GRAALSQUEAK-SHARED",
+                "graalsqueak:GRAALSQUEAK_SHARED",
                 "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
                 "truffle:TRUFFLE_API",
@@ -66,6 +66,19 @@ suite = {
             "jacoco": "include",
             "javaCompliance": "8+",
             "workingSets": "GraalSqueak",
+        },
+        "de.hpi.swa.graal.squeak.tck": {
+            "subDir": "src",
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "graalsqueak:GRAALSQUEAK_TEST",
+                "sdk:POLYGLOT_TCK",
+                "mx:JUNIT"
+            ],
+            "checkstyle": "de.hpi.swa.graal.squeak",
+            "javaCompliance": "8+",
+            "workingSets": "GraalSqueak",
+            "testProject": True,
         },
         "de.hpi.swa.graal.squeak.test": {
             "subDir": "src",
@@ -93,7 +106,7 @@ suite = {
                 "de.hpi.swa.graal.squeak",
             ],
             "distDependencies": [
-                "GRAALSQUEAK-SHARED",
+                "GRAALSQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
             ],
@@ -101,7 +114,7 @@ suite = {
             "sourcesPath": "graalsqueak.src.zip",
         },
 
-        "GRAALSQUEAK-SHARED": {
+        "GRAALSQUEAK_SHARED": {
             "dependencies": [
                 "de.hpi.swa.graal.squeak.shared",
             ],
@@ -112,17 +125,31 @@ suite = {
             "sourcesPath": "graalsqueak-shared.src.zip",
         },
 
-        "GRAALSQUEAK-LAUNCHER": {
+        "GRAALSQUEAK_LAUNCHER": {
             "path": "graalsqueak-launcher.jar",
             "dependencies": [
                 "de.hpi.swa.graal.squeak.launcher",
             ],
             "distDependencies": [
-                "GRAALSQUEAK-SHARED",
+                "GRAALSQUEAK_SHARED",
                 "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
             ],
             "sourcesPath": "graalsqueak-launcher.src.zip",
+        },
+
+        "GRAALSQUEAK_TCK": {
+            "description": "TCK-based interoperability tests",
+            "dependencies": [
+                "de.hpi.swa.graal.squeak.tck",
+            ],
+            "exclude": ["mx:JUNIT"],
+            "distDependencies": [
+                "GRAALSQUEAK_TEST",
+                "sdk:POLYGLOT_TCK",
+            ],
+            "sourcesPath": "graalsqueak.tck.src.zip",
+            "testDistribution": True,
         },
 
         "GRAALSQUEAK_GRAALVM_SUPPORT": {

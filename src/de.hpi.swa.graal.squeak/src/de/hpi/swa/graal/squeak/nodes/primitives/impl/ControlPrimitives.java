@@ -9,6 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -41,12 +42,12 @@ import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.InheritsFromNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
+import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayTransformNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -303,7 +304,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver.isActiveProcess()")
         protected final AbstractSqueakObject doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Cached("create()") final StackPushForPrimitivesNode pushNode,
+                        @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, method.image.nil);
             wakeHighestPriorityNode.executeWake(frame);
@@ -546,30 +547,34 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isByteType()"})
-        protected final NativeObject doNativeConvertToBytes(final NativeObject receiver, final NativeObject argument) {
+        protected static final NativeObject doNativeConvertToBytes(final NativeObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isShortType()"})
-        protected final NativeObject doNativeConvertToShorts(final NativeObject receiver, final NativeObject argument) {
+        protected static final NativeObject doNativeConvertToShorts(final NativeObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isIntType()"})
-        protected final NativeObject doNativeConvertToInts(final NativeObject receiver, final NativeObject argument) {
+        protected static final NativeObject doNativeConvertToInts(final NativeObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isLongType()"})
-        protected final NativeObject doNativeConvertToLongs(final NativeObject receiver, final NativeObject argument) {
+        protected static final NativeObject doNativeConvertToLongs(final NativeObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
@@ -580,9 +585,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!receiver.isByteType()")
-        protected final NativeObject doNativeLargeIntegerConvert(final NativeObject receiver, final LargeIntegerObject argument) {
+        protected static final NativeObject doNativeLargeIntegerConvert(final NativeObject receiver, final LargeIntegerObject argument,
+                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
@@ -593,9 +599,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!receiver.isByteType()")
-        protected final NativeObject doNativeFloatConvert(final NativeObject receiver, final FloatObject argument) {
+        protected static final NativeObject doNativeFloatConvert(final NativeObject receiver, final FloatObject argument,
+                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getGetBytesNode().execute(receiver));
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             return receiver;
         }
 
@@ -607,9 +614,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final LargeIntegerObject doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument) {
+        protected static final LargeIntegerObject doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(getGetBytesNode().execute(argument));
+            receiver.setBytes(getBytesNode.execute(argument));
             return receiver;
         }
 
@@ -635,9 +643,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final FloatObject doFloatNative(final FloatObject receiver, final NativeObject argument) {
+        protected static final FloatObject doFloatNative(final FloatObject receiver, final NativeObject argument,
+                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(getGetBytesNode().execute(argument));
+            receiver.setBytes(getBytesNode.execute(argument));
             return receiver;
         }
 
@@ -645,14 +654,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final AbstractSqueakObject doSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             return receiver;
-        }
-
-        private NativeGetBytesNode getGetBytesNode() {
-            if (getBytesNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getBytesNode = insert(NativeGetBytesNode.create());
-            }
-            return getBytesNode;
         }
     }
 
@@ -877,7 +878,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!mutex.isEmptyList()")
         protected static final Object doExitNonEmpty(final VirtualFrame frame, final PointersObject mutex,
-                        @Cached("create()") final StackPushForPrimitivesNode pushNode,
+                        @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final ResumeProcessNode resumeProcessNode) {
             pushNode.executeWrite(frame, mutex); // keep receiver on stack
             final PointersObject owningProcess = mutex.removeFirstLinkOfList();
@@ -1064,7 +1065,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!method.image.interruptHandlerDisabled()"})
         protected static final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds,
-                        @Cached("create()") final StackPushForPrimitivesNode pushNode,
+                        @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final InterruptHandlerNode interruptNode) {
             // Keep receiver on stack, interrupt handler could trigger.
             pushNode.executeWrite(frame, receiver);

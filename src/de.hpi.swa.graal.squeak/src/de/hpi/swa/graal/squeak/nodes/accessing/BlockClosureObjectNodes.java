@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -14,6 +15,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.BlockClosureObjectNodesFactory.Bl
 
 public final class BlockClosureObjectNodes {
 
+    @GenerateUncached
     @ImportStatic(BLOCK_CLOSURE.class)
     public abstract static class BlockClosureObjectReadNode extends AbstractNode {
         public static BlockClosureObjectReadNode create() {
@@ -48,6 +50,7 @@ public final class BlockClosureObjectNodes {
         }
     }
 
+    @GenerateUncached
     @ImportStatic(BLOCK_CLOSURE.class)
     public abstract static class BlockClosureObjectWriteNode extends AbstractNode {
 

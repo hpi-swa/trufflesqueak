@@ -609,9 +609,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         "!isNativeObject(receiver)", "!isPointersObject(receiver)", "!isContextObject(receiver)",
                         "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"}, limit = "1")
         protected static final AbstractSqueakObject doCopy(final AbstractSqueakObject receiver, final AbstractSqueakObject anotherObject,
-                        @Cached("create()") final SqueakObjectSizeNode sizeNode,
-                        @Cached("create()") final SqueakObjectAtPut0Node atput0Node,
-                        @Cached("create()") final SqueakObjectAt0Node at0Node) {
+                        @Cached final SqueakObjectSizeNode sizeNode,
+                        @Cached final SqueakObjectAtPut0Node atput0Node,
+                        @Cached final SqueakObjectAt0Node at0Node) {
             for (int i = 0; i < sizeNode.execute(receiver); i++) {
                 atput0Node.execute(receiver, i, at0Node.execute(anotherObject, i));
             }

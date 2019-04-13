@@ -1,15 +1,15 @@
 package de.hpi.swa.graal.squeak;
 
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.interop.CanResolve;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.interop.InteropArray;
 
+@ExportLibrary(InteropLibrary.class)
 public final class SqueakImage implements TruffleObject {
     private final SqueakImageContext image;
 
@@ -21,52 +21,60 @@ public final class SqueakImage implements TruffleObject {
         return image.getImagePath();
     }
 
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return SqueakImageMessageResolutionForeign.ACCESS;
-    }
-
     protected static boolean isInstance(final TruffleObject object) {
         return object instanceof SqueakImage;
     }
 
-    @MessageResolution(receiverType = SqueakImage.class)
-    public abstract static class SqueakImageMessageResolution {
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasMembers() {
+        return true;
+    }
 
-        @Resolve(message = "READ")
-        public abstract static class ReadNode extends Node {
-            public Object access(final SqueakImage squeakImage, final String name) {
-                if ("Compiler".equals(name)) {
-                    return squeakImage.image.getCompilerClass();
-                } else {
-                    // TODO:
-                    return squeakImage.image.getGlobals();
-                }
-            }
-        }
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isMemberReadable(@SuppressWarnings("unused") final String member) {
+        return true;
+    }
 
-        @Resolve(message = "IS_EXECUTABLE")
-        public abstract static class IsExecutableNode extends Node {
-            public boolean access(@SuppressWarnings("unused") final SqueakImage squeakImage) {
-                return true;
-            }
+    @ExportMessage
+    public Object getMembers(final boolean includeInternal) {
+        final Object[] members;
+        if (includeInternal) {
+            members = new Object[]{image.getGlobals(), image.getCompilerClass()};
+        } else {
+            members = new Object[]{image.getGlobals()};
         }
+        return new InteropArray(members);
+    }
 
-        @Resolve(message = "EXECUTE")
-        public abstract static class ExecuteNode extends Node {
-            public Object access(final SqueakImage squeakImage, final Object[] args) {
-                assert args.length == 0;
-                squeakImage.image.interrupt.start();
-                squeakImage.image.disableHeadless();
-                return Truffle.getRuntime().createCallTarget(squeakImage.image.getActiveContextNode()).call();
-            }
+    @ExportMessage
+    public Object readMember(final String key) {
+        if ("Compiler".equals(key)) {
+            return image.getCompilerClass();
+        } else {
+            // TODO:
+            return image.getGlobals();
         }
+    }
 
-        @CanResolve
-        public abstract static class CanResolveSqueakImage extends Node {
-            public boolean test(final TruffleObject object) {
-                return object instanceof SqueakImage;
-            }
-        }
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isExecutable() {
+        return true;
+    }
+
+    @ExportMessage
+    public Object execute(final Object... arguments) {
+        assert arguments.length == 0;
+        image.interrupt.start();
+        image.disableHeadless();
+        return Truffle.getRuntime().createCallTarget(image.getActiveContextNode()).call();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public static boolean accepts(@SuppressWarnings("unused") final SqueakImage receiver) {
+        return true;
     }
 }

@@ -4,12 +4,16 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
+@ExportLibrary(InteropLibrary.class)
 public final class NativeObject extends AbstractSqueakObject {
     public static final short BYTE_MAX = (short) (Math.pow(2, Byte.SIZE) - 1);
     public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
@@ -90,10 +94,6 @@ public final class NativeObject extends AbstractSqueakObject {
     @Override
     public int size() {
         throw SqueakException.create("Use NativeObjectSizeNode");
-    }
-
-    public String asString() {
-        return ArrayConversionUtils.bytesToString(getByteStorage());
     }
 
     public void become(final NativeObject other) {
@@ -216,5 +216,19 @@ public final class NativeObject extends AbstractSqueakObject {
 
     public boolean isDoesNotUnderstand() {
         return this == image.doesNotUnderstand;
+    }
+
+    /*
+     * INTEROPERABILITY
+     */
+
+    @ExportMessage
+    public boolean isString() {
+        return isStringOrSymbol();
+    }
+
+    @ExportMessage
+    public String asString() {
+        return ArrayConversionUtils.bytesToString(getByteStorage());
     }
 }

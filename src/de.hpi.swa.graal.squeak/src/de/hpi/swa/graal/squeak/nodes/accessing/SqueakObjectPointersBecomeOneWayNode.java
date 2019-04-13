@@ -134,8 +134,8 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
 
     @Specialization
     protected final void doContext(final ContextObject obj, final Object[] from, final Object[] to, final boolean copyHash,
-                    @Cached("create()") final ContextObjectReadNode readNode,
-                    @Cached("create()") final ContextObjectWriteNode writeNode) {
+                    @Cached final ContextObjectReadNode readNode,
+                    @Cached final ContextObjectWriteNode writeNode) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             // Skip sender (for performance), pc, and sp.
@@ -153,7 +153,7 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
 
     @Specialization
     protected final void doArray(final ArrayObject obj, final Object[] from, final Object[] to, final boolean copyHash,
-                    @Cached("create()") final ArrayObjectToObjectArrayNode getObjectArrayNode) {
+                    @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode) {
         pointersBecomeOneWay(getObjectArrayNode.execute(obj), from, to, copyHash);
     }
 

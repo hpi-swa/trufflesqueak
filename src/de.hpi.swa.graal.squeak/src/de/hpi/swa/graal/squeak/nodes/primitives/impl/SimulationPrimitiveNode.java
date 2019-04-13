@@ -19,8 +19,8 @@ import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
-import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
 

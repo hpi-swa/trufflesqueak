@@ -35,10 +35,10 @@ public abstract class DispatchNode extends AbstractNode {
                     @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
                     @Cached("cachedMethod.image.primitiveNodeFactory.forIndex(cachedMethod, cachedMethod.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
-                    @Cached("create()") final CreateEagerArgumentsNode createEagerArgumentsNode,
+                    @Cached final CreateEagerArgumentsNode createEagerArgumentsNode,
                     @Cached("cachedMethod.getCallTarget()") final RootCallTarget cachedTarget,
                     @Cached("create(cachedTarget)") final DirectCallNode callNode,
-                    @Cached("create()") final BranchProfile failedProfile) {
+                    @Cached final BranchProfile failedProfile) {
         try {
             return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
         } catch (final PrimitiveFailed e) {
@@ -58,7 +58,7 @@ public abstract class DispatchNode extends AbstractNode {
 
     @Specialization(replaces = "doDirect")
     protected static final Object doIndirect(final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
-                    @Cached("create()") final IndirectCallNode callNode) {
+                    @Cached final IndirectCallNode callNode) {
         return callNode.call(method.getCallTarget(), FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
     }
 }
