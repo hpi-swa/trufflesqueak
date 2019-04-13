@@ -26,7 +26,7 @@ import org.graalvm.polyglot.tck.TypeDescriptor;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class SqueakLanguageProvider implements LanguageProvider {
-    private static final TypeDescriptor NUMBER_AND_STRING = TypeDescriptor.union(NUMBER, STRING);
+    private static final TypeDescriptor NUMBER_AND_STRING = union(NUMBER, STRING);
 
     @Override
     public String getId() {
@@ -88,21 +88,21 @@ public final class SqueakLanguageProvider implements LanguageProvider {
     @Override
     public Collection<? extends Snippet> createStatements(final Context context) {
         final Collection<Snippet> statements = new ArrayList<>();
-        addStatementSnippet(context, statements, "IdentityBlock", "[ :p | p ]", TypeDescriptor.ANY, TypeDescriptor.ANY);
-        addStatementSnippet(context, statements, "class", "[ :p | p class ]", TypeDescriptor.OBJECT, TypeDescriptor.ANY);
-        addStatementSnippet(context, statements, "basicSize", "[ :p | p basicSize ]", TypeDescriptor.NUMBER, TypeDescriptor.ANY);
-        addStatementSnippet(context, statements, "hash", "[ :p | p hash ]", TypeDescriptor.NUMBER, TypeDescriptor.ANY);
+        addStatementSnippet(context, statements, "IdentityBlock", "[ :p | p ]", ANY, ANY);
+        addStatementSnippet(context, statements, "class", "[ :p | p class ]", OBJECT, ANY);
+        addStatementSnippet(context, statements, "basicSize", "[ :p | p basicSize ]", NUMBER, ANY);
+        addStatementSnippet(context, statements, "hash", "[ :p | p hash ]", NUMBER, ANY);
 
-        addStatementSnippet(context, statements, "ifTrue:ifFalse:", "[ :p | p ifTrue: [ true ] ifFalse: [ false ] ]", TypeDescriptor.BOOLEAN, TypeDescriptor.BOOLEAN);
-        addStatementSnippet(context, statements, "ifFalse:ifTrue:", "[ :p | p ifFalse: [ -1 ] ifTrue: [ 1 ] ]", TypeDescriptor.NUMBER, TypeDescriptor.BOOLEAN);
-        addStatementSnippet(context, statements, "ifTrue:", "[ :p | p ifTrue: [ true ] ]", TypeDescriptor.ANY, TypeDescriptor.BOOLEAN);
-        addStatementSnippet(context, statements, "ifFalse:", "[ :p | p ifFalse: [ true ] ]", TypeDescriptor.ANY, TypeDescriptor.BOOLEAN);
+        addStatementSnippet(context, statements, "ifTrue:ifFalse:", "[ :p | p ifTrue: [ true ] ifFalse: [ false ] ]", BOOLEAN, BOOLEAN);
+        addStatementSnippet(context, statements, "ifFalse:ifTrue:", "[ :p | p ifFalse: [ -1 ] ifTrue: [ 1 ] ]", NUMBER, BOOLEAN);
+        addStatementSnippet(context, statements, "ifTrue:", "[ :p | p ifTrue: [ true ] ]", ANY, BOOLEAN);
+        addStatementSnippet(context, statements, "ifFalse:", "[ :p | p ifFalse: [ true ] ]", ANY, BOOLEAN);
 
-        addStatementSnippet(context, statements, "and:", "[ :p1 :p2 | p1 and: p2 ]", TypeDescriptor.ANY, TypeDescriptor.BOOLEAN, TypeDescriptor.ANY);
-        addStatementSnippet(context, statements, "or:", "[ :p1 :p2 | p1 or: p2 ]", TypeDescriptor.ANY, TypeDescriptor.BOOLEAN, TypeDescriptor.ANY);
+        addStatementSnippet(context, statements, "and:", "[ :p1 :p2 | p1 and: p2 ]", ANY, BOOLEAN, ANY);
+        addStatementSnippet(context, statements, "or:", "[ :p1 :p2 | p1 or: p2 ]", ANY, BOOLEAN, ANY);
 
-        addStatementSnippet(context, statements, "ifNil:ifNotNil:", "[ :p | p ifNil: [ true ] ifNotNil: [ false ] ]", TypeDescriptor.BOOLEAN, TypeDescriptor.ANY);
-        addStatementSnippet(context, statements, "ifNotNil:ifNil:", "[ :p | p ifNotNil: [ 1 ] ifNil: [ -1 ] ]", TypeDescriptor.NUMBER, TypeDescriptor.ANY);
+        addStatementSnippet(context, statements, "ifNil:ifNotNil:", "[ :p | p ifNil: [ true ] ifNotNil: [ false ] ]", BOOLEAN, ANY);
+        addStatementSnippet(context, statements, "ifNotNil:ifNil:", "[ :p | p ifNotNil: [ 1 ] ifNil: [ -1 ] ]", NUMBER, ANY);
 
         return statements;
     }
