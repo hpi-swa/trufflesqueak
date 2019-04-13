@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -74,11 +73,6 @@ public final class ArrayObjectNodes {
         protected static final Object doArrayOfObjects(final ArrayObject obj, final long index) {
             return obj.at0Object(index);
         }
-
-        @Fallback
-        protected static final Object doFail(final ArrayObject obj, final long index) {
-            throw SqueakException.create("Unexpected values:", obj, index);
-        }
     }
 
     @GenerateUncached
@@ -124,11 +118,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isObjectType()")
         protected static final ArrayObject doArrayOfObjects(final ArrayObject obj) {
             return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getObjectStorage().clone());
-        }
-
-        @Fallback
-        protected static final ArrayObject doFail(final ArrayObject object) {
-            throw SqueakException.create("Unexpected value:", object);
         }
     }
 
@@ -179,11 +168,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isObjectType()")
         protected static final int doArrayObjectOfObjects(final ArrayObject obj) {
             return obj.getObjectLength();
-        }
-
-        @Fallback
-        protected static final int doFail(final ArrayObject object) {
-            throw SqueakException.create("Unexpected value:", object);
         }
     }
 
@@ -289,11 +273,6 @@ public final class ArrayObjectNodes {
         protected static final Object[] doArrayOfObjects(final ArrayObject obj) {
             return obj.getObjectStorage();
         }
-
-        @Fallback
-        protected static final Object[] doFail(final ArrayObject object) {
-            throw SqueakException.create("Unexpected value:", object);
-        }
     }
 
     @GenerateUncached
@@ -353,11 +332,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object[] doArrayOfObjects(final ArrayObject obj) {
             return obj.getObjectStorage();
-        }
-
-        @Fallback
-        protected static final Object[] doFail(final ArrayObject object) {
-            throw SqueakException.create("Unexpected value:", object);
         }
     }
 
@@ -541,11 +515,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isObjectType()")
         protected static final void doArrayOfObjects(final ArrayObject obj, final long index, final Object value) {
             obj.atput0Object(index, value);
-        }
-
-        @Fallback
-        protected static final void doFail(final ArrayObject obj, final long index, final Object value) {
-            throw SqueakException.create("Unexpected values:", obj, index, value);
         }
     }
 }
