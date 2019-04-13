@@ -1,3 +1,3 @@
-interop
+overrides
 inspectorClass
 	^ PolyglotInspector

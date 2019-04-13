@@ -1,0 +1,4 @@
+model
+currentSelection
+
+	^ 1

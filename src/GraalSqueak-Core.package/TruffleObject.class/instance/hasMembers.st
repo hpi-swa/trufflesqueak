@@ -1,0 +1,3 @@
+interop
+hasMembers
+	^ self primitiveHasMembers

@@ -1,0 +1,15 @@
+{
+	"category" : "GraalSqueak-Support",
+	"classinstvars" : [
+		"Default" ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"formatter",
+		"lexers" ],
+	"name" : "PolyglotTextStyler",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

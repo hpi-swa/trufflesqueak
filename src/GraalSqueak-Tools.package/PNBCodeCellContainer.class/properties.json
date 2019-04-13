@@ -1,0 +1,15 @@
+{
+	"category" : "GraalSqueak-Tools-Notebooks",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"executionCounter",
+		"notebook" ],
+	"name" : "PNBCodeCellContainer",
+	"pools" : [
+		 ],
+	"super" : "Morph",
+	"type" : "normal" }

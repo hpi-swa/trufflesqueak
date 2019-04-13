@@ -1,3 +1,5 @@
 accessing
 at: identifier put: value
-	^ self primitiveWrite: identifier value: value
+	^ identifier isInteger
+		ifTrue: [ self primitiveWriteArrayElement: identifier ]
+		ifFalse: [ self primitiveWriteMember: identifier ]

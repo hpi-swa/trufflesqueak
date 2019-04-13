@@ -1,0 +1,14 @@
+{
+	"class" : {
+		"for:" : "fn 3/25/2019 18:57" },
+	"instance" : {
+		"codeCell" : "fn 3/19/2019 18:19",
+		"codeCell:" : "fn 3/19/2019 18:19",
+		"handleMouseDown:" : "fn 4/13/2019 23:19",
+		"handlesMouseOver:" : "fn 3/26/2019 18:11",
+		"handlesMouseOverDragging:" : "fn 3/26/2019 18:11",
+		"iconFor:" : "fn 4/13/2019 23:19",
+		"indicateKeyboardFocus" : "fn 3/19/2019 19:06",
+		"initialize" : "fn 3/27/2019 10:38",
+		"labelFor:" : "fn 4/13/2019 23:19",
+		"refresh" : "fn 4/13/2019 23:19" } }

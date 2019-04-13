@@ -1,0 +1,3 @@
+interop
+hasArrayElements
+	^ self primitiveHasArrayElements

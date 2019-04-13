@@ -1,3 +1,5 @@
 accessing
 at: identifier
-	^ self primitiveReadMember: identifier
+	^ identifier isInteger
+		ifTrue: [ self primitiveReadArrayElement: identifier ]
+		ifFalse: [ self primitiveReadMember: identifier ]

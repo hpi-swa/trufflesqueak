@@ -1,0 +1,3 @@
+helpers
+resetCells
+	self removeAllMorphs

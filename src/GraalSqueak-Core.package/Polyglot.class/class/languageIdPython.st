@@ -1,0 +1,3 @@
+constants
+languageIdPython
+	^ 'python'

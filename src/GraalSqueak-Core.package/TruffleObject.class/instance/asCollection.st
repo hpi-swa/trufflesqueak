@@ -1,0 +1,3 @@
+converting
+asCollection
+	^ self asArray

@@ -1,0 +1,3 @@
+actions
+actionAddCell
+	self cellContainer addCodeCell

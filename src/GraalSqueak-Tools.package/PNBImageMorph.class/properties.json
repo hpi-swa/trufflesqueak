@@ -1,0 +1,14 @@
+{
+	"category" : "GraalSqueak-Tools-Notebooks",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"fileName" ],
+	"name" : "PNBImageMorph",
+	"pools" : [
+		 ],
+	"super" : "ImageMorph",
+	"type" : "normal" }

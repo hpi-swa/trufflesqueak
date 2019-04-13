@@ -1,0 +1,11 @@
+{
+	"class" : {
+		"default" : "fn 3/26/2019 21:33" },
+	"instance" : {
+		"enabled" : "fn 4/13/2019 13:51",
+		"formatter" : "fn 3/26/2019 22:00",
+		"lexerFor:" : "fn 3/26/2019 13:46",
+		"lexerNameFor:" : "fn 3/26/2019 13:46",
+		"startUp" : "fn 4/13/2019 14:37",
+		"style:language:" : "fn 4/13/2019 14:37",
+		"styleold:language:" : "fn 4/12/2019 16:42" } }

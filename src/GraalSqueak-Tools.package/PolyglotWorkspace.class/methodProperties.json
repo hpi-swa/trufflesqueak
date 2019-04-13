@@ -1,6 +1,8 @@
 {
 	"class" : {
-		"open" : "fn 12/3/2018 11:48" },
+		"initialize" : "fn 4/14/2019 00:01",
+		"open" : "fn 12/3/2018 11:48",
+		"registerInWorldMenu" : "fn 4/14/2019 00:00" },
 	"instance" : {
 		"addModelItemsToWindowMenu:" : "fn 11/25/2018 16:26",
 		"evaluateExpression:" : "fn 12/19/2018 11:50",

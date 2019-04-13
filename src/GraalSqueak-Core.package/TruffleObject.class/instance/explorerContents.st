@@ -1,9 +1,9 @@
 explorer
 explorerContents
-	^ (self allInstVarNames asOrderedCollection withIndexCollect: [:each :index |
+	^ (self explorableMembers asOrderedCollection withIndexCollect: [:member :index |
 		ObjectExplorerWrapper
-			with: (self instVarAt: index)
-			name: each
+			with: (self readMember: member)
+			name: member
 			model: self]) ,
 		((1 to: self basicSize) collect: [:index |
 			ObjectExplorerWrapper
