@@ -4,6 +4,7 @@ import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
@@ -16,8 +17,10 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ExecuteTopLevelContextNode.class);
@@ -61,7 +64,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private void executeLoop() {
         ContextObject activeContext = initialContext;
-        activeContext.restartIfTerminated();
+        ensureCachedContextCanRunAgain(activeContext);
         while (true) {
             CompilerDirectives.transferToInterpreter();
             assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
@@ -91,6 +94,21 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                 LOG.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
+        }
+    }
+
+    private void ensureCachedContextCanRunAgain(final ContextObject activeContext) {
+        if (activeContext.isTerminated() && image.getLastParseRequestSource().isCached()) {
+            /**
+             * Reset instruction pointer and stack pointer of the context (see
+             * {@link EnterCodeNode#initializeSlots}) in case it has previously been executed and
+             * needs to run again, because the Source has been cached.
+             */
+            assert !activeContext.hasClosure() : "activeContext is expected to have no closure";
+            final CompiledMethodObject method = activeContext.getMethod();
+            final MaterializedFrame truffleFrame = activeContext.getTruffleFrame();
+            FrameAccess.setInstructionPointer(truffleFrame, method, 0);
+            FrameAccess.setStackPointer(truffleFrame, method, 0);
         }
     }
 
