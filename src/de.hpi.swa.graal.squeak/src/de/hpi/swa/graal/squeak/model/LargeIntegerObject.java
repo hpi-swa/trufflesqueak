@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -406,76 +405,79 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return true;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInByte() {
-        return bitLength() <= Byte.SIZE - 1;
+        return bitLength() < Byte.SIZE;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInShort() {
-        return bitLength() <= Short.SIZE - 1;
+        return bitLength() < Short.SIZE;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInInt() {
-        return bitLength() <= Integer.SIZE - 1;
+        return bitLength() < Integer.SIZE;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInLong() {
-        return bitLength() <= Long.SIZE - 1;
+        return bitLength() < Long.SIZE;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInFloat() {
-        return false;
+        return bitLength() < Float.SIZE;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInDouble() {
-        return false;
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public byte asByte() {
-        return (byte) (byteValueExact() & MASK_32BIT);
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public short asShort() {
-        return (short) (shortValueExact() & MASK_32BIT);
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public int asInt() {
-        return intValueExact() & MASK_32BIT;
+        return bitLength() < Double.SIZE;
     }
 
     @ExportMessage
-    public long asLong() {
-        return longValueExact() & MASK_64BIT;
+    public byte asByte() throws UnsupportedMessageException {
+        try {
+            return byteValueExact();
+        } catch (final ArithmeticException e) {
+            throw UnsupportedMessageException.create();
+        }
     }
 
-    @SuppressWarnings("static-method")
+    @ExportMessage
+    public short asShort() throws UnsupportedMessageException {
+        try {
+            return shortValueExact();
+        } catch (final ArithmeticException e) {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportMessage
+    public int asInt() throws UnsupportedMessageException {
+        try {
+            return intValueExact();
+        } catch (final ArithmeticException e) {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportMessage
+    public long asLong() throws UnsupportedMessageException {
+        try {
+            return longValueExact();
+        } catch (final ArithmeticException e) {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
     @ExportMessage
     public float asFloat() throws UnsupportedMessageException {
-        CompilerDirectives.transferToInterpreter();
-        throw UnsupportedMessageException.create();
+        return asInt();
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public double asDouble() throws UnsupportedMessageException {
-        CompilerDirectives.transferToInterpreter();
-        throw UnsupportedMessageException.create();
+        return asLong();
     }
 }

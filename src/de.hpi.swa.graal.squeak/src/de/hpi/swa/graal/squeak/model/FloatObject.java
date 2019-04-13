@@ -1,9 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
@@ -122,34 +120,29 @@ public final class FloatObject extends AbstractSqueakObject {
         return true;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInByte() {
-        return false; // TODO
+        return (byte) doubleValue == doubleValue;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInShort() {
-        return false; // TODO
+        return (short) doubleValue == doubleValue;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInInt() {
-        return false; // TODO
+        return (int) doubleValue == doubleValue;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInLong() {
-        return false; // TODO
+        return (long) doubleValue == doubleValue;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public boolean fitsInFloat() {
-        return false; // TODO
+        return (float) doubleValue == doubleValue;
     }
 
     @SuppressWarnings("static-method")
@@ -158,25 +151,19 @@ public final class FloatObject extends AbstractSqueakObject {
         return true;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
-    public byte asByte() throws UnsupportedMessageException { // TODO
-        CompilerDirectives.transferToInterpreter();
-        throw UnsupportedMessageException.create();
+    public byte asByte() {
+        return (byte) doubleValue;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
-    public short asShort() throws UnsupportedMessageException { // TODO
-        CompilerDirectives.transferToInterpreter();
-        throw UnsupportedMessageException.create();
+    public short asShort() {
+        return (short) doubleValue;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
-    public int asInt() throws UnsupportedMessageException { // TODO
-        CompilerDirectives.transferToInterpreter();
-        throw UnsupportedMessageException.create();
+    public int asInt() {
+        return (int) doubleValue;
     }
 
     @ExportMessage
@@ -184,14 +171,11 @@ public final class FloatObject extends AbstractSqueakObject {
         return (long) doubleValue;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
-    public float asFloat() throws UnsupportedMessageException {
-        CompilerDirectives.transferToInterpreter();
-        throw UnsupportedMessageException.create();
+    public float asFloat() {
+        return (float) doubleValue;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
     public double asDouble() {
         return doubleValue;
