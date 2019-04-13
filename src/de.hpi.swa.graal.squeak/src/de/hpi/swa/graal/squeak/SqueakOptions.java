@@ -24,7 +24,7 @@ public final class SqueakOptions {
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Run without a display")//
     public static final OptionKey<Boolean> Headless = new OptionKey<>(true);
 
-    @Option(category = OptionCategory.USER, stability = OptionStability.EXPERIMENTAL, help = "Disable image interrupt handler")//
+    @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Disable image interrupt handler")//
     public static final OptionKey<Boolean> DisableInterruptHandler = new OptionKey<>(false);
 
     @Option(category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = "For internal testing purposes only")//
