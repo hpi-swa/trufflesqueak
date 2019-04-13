@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.io.File;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Arrays;
@@ -498,7 +497,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 149)
     protected abstract static class PrimGetAttributeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        private static final DateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy HH:mm:ss zzz", Locale.US);
+        private static final String VM_BUILD_ID_DATE_FORMAT = "MMM dd yyyy HH:mm:ss zzz";
 
         protected PrimGetAttributeNode(final CompiledMethodObject method) {
             super(method);
@@ -541,7 +540,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                     final String osName = System.getProperty("os.name");
                     final String osVersion = System.getProperty("os.version");
                     final String osArch = System.getProperty("os.arch");
-                    return method.image.wrap(String.format("%s %s (%s) built on %s", osName, osVersion, osArch, dateFormat.format(new Date(MiscUtils.getStartTime()))));
+                    final String date = new SimpleDateFormat(VM_BUILD_ID_DATE_FORMAT, Locale.US).format(new Date(MiscUtils.getStartTime()));
+                    return method.image.wrap(String.format("%s %s (%s) built on %s", osName, osVersion, osArch, date));
                 case 1007: // Interpreter class (Cog VM only)
                     return method.image.wrap(MiscUtils.getGraalVMInformation());
                 case 1008: // Cogit class (Cog VM only)
