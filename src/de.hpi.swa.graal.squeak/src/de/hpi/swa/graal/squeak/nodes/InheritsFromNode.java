@@ -6,7 +6,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
+import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 
 public abstract class InheritsFromNode extends AbstractNode {
     protected static final int CACHE_SIZE = 3;

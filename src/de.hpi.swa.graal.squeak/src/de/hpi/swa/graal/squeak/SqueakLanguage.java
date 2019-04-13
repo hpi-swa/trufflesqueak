@@ -22,7 +22,7 @@ import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.WrapToSqueakNode;
-import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
+import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 

@@ -106,6 +106,22 @@ public final class SqueakGuards {
         return object instanceof LargeIntegerObject;
     }
 
+    public static boolean isLargeNegativeInteger(final SqueakImageContext image, final long value) {
+        if (image.flags.is64bit()) {
+            return value < LargeIntegerObject.SMALLINTEGER64_MIN;
+        } else {
+            return value < LargeIntegerObject.SMALLINTEGER32_MIN;
+        }
+    }
+
+    public static boolean isLargePositiveInteger(final SqueakImageContext image, final long value) {
+        if (image.flags.is64bit()) {
+            return value > LargeIntegerObject.SMALLINTEGER64_MAX;
+        } else {
+            return value > LargeIntegerObject.SMALLINTEGER32_MAX;
+        }
+    }
+
     public static boolean isLong(final Object value) {
         return value instanceof Long;
     }
