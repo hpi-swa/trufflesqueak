@@ -150,6 +150,10 @@ public final class SqueakGuards {
         return obj instanceof PointersObject;
     }
 
+    public static boolean isPowerOfTwo(final long value) {
+        return value != 1 && (value & value - 1) == 0;
+    }
+
     public static boolean isPrimitive(final Object obj) {
         return obj instanceof Boolean || obj instanceof Character || obj instanceof Long || obj instanceof Double;
     }

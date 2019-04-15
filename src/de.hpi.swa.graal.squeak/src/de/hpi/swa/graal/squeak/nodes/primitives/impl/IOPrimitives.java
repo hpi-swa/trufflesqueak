@@ -794,11 +794,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected static final boolean inBoundsEntirely(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize,
                         final long replStart) {
+            // Specialization for Integer>>copy:to:
             return start == 1 && replStart == 1 && stop == replSize + replInstSize && stop == rcvrSize + rcvrInstSize;
         }
 
         protected static final boolean inLongBoundsEntirely(final int rcvrInstSize, final int rcvrSize, final long repl, final long start, final long stop, final long replStart) {
-            return start == 1 && replStart == 1 && stop == rcvrSize + rcvrInstSize && stop == ArrayConversionUtils.largeIntegerByteSizeForLong(repl);
+            // Specialization for Integer>>copy:to:
+            return start == 1 && replStart == 1 && stop == rcvrSize + rcvrInstSize && ArrayConversionUtils.largeIntegerByteSizeForLong(repl) == stop;
         }
 
         private static void replaceGeneric(final Object[] dstArray, final long start, final long stop, final Object[] srcArray, final long replStart) {
