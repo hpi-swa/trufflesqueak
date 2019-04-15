@@ -676,7 +676,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())"}, limit = "2")
+        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())", "!functions.hasMemberReadSideEffects(receiver, member.asString())"}, limit = "2")
         protected final Object doReadMember(final Object receiver, final NativeObject member,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
@@ -684,6 +684,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())", "functions.hasMemberReadSideEffects(receiver, member.asString())"}, limit = "2")
+        protected final NativeObject doReadMemberWithSideEffects(final Object receiver, final NativeObject member,
+                        @CachedLibrary("receiver") final InteropLibrary functions) {
+            return method.image.wrap("[side-effect]");
         }
     }
 
