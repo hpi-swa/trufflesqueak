@@ -80,11 +80,12 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         try (Context context = contextBuilder.allowAllAccess(true).build()) {
             println("[graalsqueak] Running " + SqueakLanguageConfig.NAME + " on " + getRuntimeName() + "...");
             if (sourceCode != null) {
-                final Object result = context.eval(Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
+                final Object result = context.eval(
+                                Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).cached(false).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
                 println("[graalsqueak] Result: " + result);
                 return 0;
             } else {
-                context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute();
+                context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute();
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
         } catch (final PolyglotException e) {
