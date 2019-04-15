@@ -1,9 +1,13 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
+@ExportLibrary(InteropLibrary.class)
 public final class NilObject extends AbstractSqueakObject {
 
     public NilObject(final SqueakImageContext img) {
@@ -28,5 +32,11 @@ public final class NilObject extends AbstractSqueakObject {
 
     public AbstractSqueakObject shallowCopy() {
         return this;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isNull() {
+        return true;
     }
 }
