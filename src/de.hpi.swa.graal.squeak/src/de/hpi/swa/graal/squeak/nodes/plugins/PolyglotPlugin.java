@@ -331,13 +331,14 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetLastError")
-    protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected static Exception lastError = SqueakException.create("");
 
         protected PrimGetLastErrorNode(final CompiledMethodObject method) {
             super(method);
         }
 
+        @Specialization
         @TruffleBoundary
         protected final NativeObject doGetLastError(@SuppressWarnings("unused") final Object receiver) {
             return method.image.wrap(lastError.toString());
