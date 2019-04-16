@@ -119,6 +119,10 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return (PointersObject) literals[literals.length - 1];
     }
 
+    public boolean hasCompiledInClass() {
+        return getMethodClassAssociation().at0(CLASS_BINDING.VALUE) != image.nil;
+    }
+
     public ClassObject getCompiledInClass() {
         return (ClassObject) getMethodClassAssociation().at0(CLASS_BINDING.VALUE);
     }

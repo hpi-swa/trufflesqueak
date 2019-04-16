@@ -120,14 +120,16 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
                 updateHashNode.executeUpdate(oldClass, newClass, copyHash);
             }
         }
-        final ClassObject oldCompiledInClass = obj.getCompiledInClass();
-        for (int i = 0; i < from.length; i++) {
-            if (from[i] == oldCompiledInClass) {
-                final ClassObject newCompiledInClass = (ClassObject) to[i];  // must be a
-                                                                             // ClassObject
-                obj.setCompiledInClass(newCompiledInClass);
-                updateHashNode.executeUpdate(oldCompiledInClass, newCompiledInClass, copyHash);
-                // TODO: flush method caches
+        if (obj.hasCompiledInClass()) {
+            final ClassObject oldCompiledInClass = obj.getCompiledInClass();
+            for (int i = 0; i < from.length; i++) {
+                if (from[i] == oldCompiledInClass) {
+                    final ClassObject newCompiledInClass = (ClassObject) to[i];  // must be a
+                                                                                 // ClassObject
+                    obj.setCompiledInClass(newCompiledInClass);
+                    updateHashNode.executeUpdate(oldCompiledInClass, newCompiledInClass, copyHash);
+                    // TODO: flush method caches
+                }
             }
         }
     }
