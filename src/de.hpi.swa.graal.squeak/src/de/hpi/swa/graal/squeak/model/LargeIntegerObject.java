@@ -121,17 +121,18 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return this.bigIntegerToBytes();
     }
 
-    public void replaceInternalValue(final long original) {
-        integer = getSqueakClass() == image.largeNegativeIntegerClass ^ original < 0 ? BigInteger.valueOf(-original) : BigInteger.valueOf(original);
+    public void replaceInternalValue(final long other) {
+        // If signums differ, negate other
+        integer = getSqueakClass() == image.largeNegativeIntegerClass == other < 0 ? BigInteger.valueOf(other) : BigInteger.valueOf(-other);
     }
 
     public void replaceInternalMinValue() {
         integer = getSqueakClass() == image.largeNegativeIntegerClass ? LONG_MIN_OVERFLOW_RESULT.negate() : LONG_MIN_OVERFLOW_RESULT;
     }
 
-    public void replaceInternalValue(final LargeIntegerObject original) {
-        assert exposedSize == original.exposedSize;
-        integer = original.getSqueakClass() == getSqueakClass() ? original.integer : original.integer.negate();
+    public void replaceInternalValue(final LargeIntegerObject other) {
+        assert exposedSize == other.exposedSize;
+        integer = other.getSqueakClass() == getSqueakClass() ? other.integer : other.integer.negate();
     }
 
     public void replaceInternalValue(final byte[] bytes) {
