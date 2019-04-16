@@ -10,19 +10,30 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
+import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 /*
  * Represents all subclasses of ClassDescription (Class, Metaclass, TraitBehavior, ...).
  */
+@ExportLibrary(InteropLibrary.class)
 public final class ClassObject extends AbstractSqueakObject {
     private final CyclicAssumption classHierarchyStable = new CyclicAssumption("Class hierarchy stability");
     private final CyclicAssumption methodDictStable = new CyclicAssumption("Method dictionary stability");
@@ -439,5 +450,39 @@ public final class ClassObject extends AbstractSqueakObject {
 
     public boolean isSmallIntegerClass() {
         return this == image.smallIntegerClass;
+    }
+
+    /*
+     * INTEROPERABILITY
+     */
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected boolean isInstantiable() {
+        return true;
+    }
+
+    @ExportMessage
+    protected Object instantiate(final Object[] arguments,
+                    @CachedLibrary(limit = "2") final InteropLibrary functions,
+                    @Cached(value = "create(this.image)", allowUncached = true) final NewObjectNode newObjectNode)
+                    throws UnsupportedTypeException, ArityException {
+        final int numArguments = arguments.length;
+        switch (numArguments) {
+            case 0:
+                return newObjectNode.execute(this);
+            case 1:
+                if (functions.fitsInInt(arguments[0])) {
+                    try {
+                        return newObjectNode.execute(this, functions.asInt(arguments[0]));
+                    } catch (final UnsupportedMessageException e) {
+                        throw SqueakException.illegalState(e);
+                    }
+                } else {
+                    throw UnsupportedTypeException.create(arguments, "Second argument must be the size as an integer.");
+                }
+            default:
+                throw ArityException.create(1, numArguments);
+        }
     }
 }

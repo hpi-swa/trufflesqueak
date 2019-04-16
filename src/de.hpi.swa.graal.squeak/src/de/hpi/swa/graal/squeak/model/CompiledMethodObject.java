@@ -1,9 +1,16 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 
+@ExportLibrary(InteropLibrary.class)
 public final class CompiledMethodObject extends CompiledCodeObject {
 
     public CompiledMethodObject(final SqueakImageContext image, final int hash) {
@@ -147,5 +154,27 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     @Override
     public int size() {
         return getBytecodeOffset() + bytes.length;
+    }
+
+    /*
+     * INTEROPERABILITY
+     */
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isExecutable() {
+        return true;
+    }
+
+    @ExportMessage
+    public Object execute(final Object[] receiverAndArguments,
+                    @Cached(allowUncached = true) final DispatchNode dispatchNode) throws ArityException {
+        final int actualArity = receiverAndArguments.length;
+        final int expectedArity = 1 + getNumArgs(); // receiver + arguments
+        if (actualArity == expectedArity) {
+            return dispatchNode.executeDispatch(null, this, receiverAndArguments, null);
+        } else {
+            throw ArityException.create(expectedArity, actualArity);
+        }
     }
 }
