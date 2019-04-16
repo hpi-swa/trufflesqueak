@@ -412,6 +412,10 @@ public final class ClassObject extends AbstractSqueakObject {
         return methodDictStable.getAssumption();
     }
 
+    public void invalidateMethodDictStableAssumption() {
+        methodDictStable.invalidate();
+    }
+
     public Assumption getClassFormatStable() {
         return classFormatStable.getAssumption();
     }

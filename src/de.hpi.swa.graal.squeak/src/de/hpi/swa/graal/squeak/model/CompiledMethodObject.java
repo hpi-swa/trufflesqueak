@@ -8,6 +8,8 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.ADDITIONAL_METHOD_STATE;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 
 @ExportLibrary(InteropLibrary.class)
@@ -79,49 +81,50 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     }
 
     public NativeObject getCompiledInSelector() {
+        /**
+         *
+         * By convention the penultimate literal of a method is either its selector or an instance
+         * of AdditionalMethodState. AdditionalMethodState holds the method's selector and any
+         * pragmas and properties of the method. AdditionalMethodState may also be used to add
+         * instance variables to a method, albeit ones held in the method's AdditionalMethodState.
+         * Subclasses of CompiledMethod that want to add state should subclass AdditionalMethodState
+         * to add the state they want, and implement methodPropertiesClass on the class side of the
+         * CompiledMethod subclass to answer the specialized subclass of AdditionalMethodState.
+         * Enterprising programmers are encouraged to try and implement this support automatically
+         * through suitable modifications to the compiler and class builder.
+         */
         CompilerAsserts.neverPartOfCompilation("Do not use getCompiledInSelector() in compiled code");
-        if (literals.length > 1) {
-            final Object lit = literals[literals.length - 2];
-            if (lit == null) {
-                return null;
-            } else if (lit instanceof NativeObject) {
-                return (NativeObject) lit;
-            } else if (lit instanceof PointersObject && ((PointersObject) lit).size() >= 2) {
-                final Object secondValue = ((PointersObject) lit).at0(1);
-                if (secondValue instanceof NativeObject) {
-                    return (NativeObject) secondValue;
-                }
-            }
+        final Object penultimateLiteral = literals[literals.length - 2];
+        if (penultimateLiteral instanceof NativeObject) {
+            return (NativeObject) penultimateLiteral;
+        } else if (penultimateLiteral instanceof PointersObject) {
+            final PointersObject penultimateLiteralAsPointer = (PointersObject) penultimateLiteral;
+            assert penultimateLiteralAsPointer.size() >= ADDITIONAL_METHOD_STATE.SELECTOR;
+            return (NativeObject) penultimateLiteralAsPointer.at0(ADDITIONAL_METHOD_STATE.SELECTOR);
+        } else {
+            return null;
         }
-        return null;
+    }
+
+    private PointersObject getMethodClassAssociation() {
+        /**
+         * From the CompiledMethod class description:
+         *
+         * The last literal in a CompiledMethod must be its methodClassAssociation, a binding whose
+         * value is the class the method is installed in. The methodClassAssociation is used to
+         * implement super sends. If a method contains no super send then its methodClassAssociation
+         * may be nil (as would be the case for example of methods providing a pool of inst var
+         * accessors).
+         */
+        return (PointersObject) literals[literals.length - 1];
     }
 
     public ClassObject getCompiledInClass() {
-        if (literals.length == 0) {
-            return null;
-        }
-        Object baseSqueakObject = literals[literals.length - 1];
-        if (baseSqueakObject instanceof PointersObject && ((PointersObject) baseSqueakObject).size() == 2) {
-            baseSqueakObject = ((PointersObject) baseSqueakObject).at0(1);
-        }
-        if (baseSqueakObject instanceof ClassObject) {
-            return (ClassObject) baseSqueakObject;
-        }
-        return null;
+        return (ClassObject) getMethodClassAssociation().at0(CLASS_BINDING.VALUE);
     }
 
     public void setCompiledInClass(final ClassObject newClass) {
-        if (literals.length == 0) {
-            return;
-        }
-        final Object baseSqueakObject = literals[literals.length - 1];
-        if (baseSqueakObject instanceof PointersObject && ((PointersObject) baseSqueakObject).size() == 2) {
-            ((PointersObject) baseSqueakObject).atput0(1, newClass);
-            return;
-        }
-        if (baseSqueakObject instanceof ClassObject) {
-            literals[literals.length - 1] = newClass;
-        }
+        getMethodClassAssociation().atput0(CLASS_BINDING.VALUE, newClass);
     }
 
     public void setHeader(final long header) {
