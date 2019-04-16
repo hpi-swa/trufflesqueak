@@ -27,14 +27,28 @@ public final class SqueakImage implements TruffleObject {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    public boolean hasMembers() {
+    public boolean isExecutable() {
         return true;
+    }
+
+    @ExportMessage
+    public Object execute(final Object... arguments) {
+        assert arguments.length == 0;
+        image.interrupt.start();
+        image.disableHeadless();
+        return Truffle.getRuntime().createCallTarget(image.getActiveContextNode()).call();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasMembers() {
+        return false; // TODO: rework members interop integration and re-enable.
     }
 
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean isMemberReadable(@SuppressWarnings("unused") final String member) {
-        return true;
+        return false; // TODO: rework members interop integration and re-enable.
     }
 
     @ExportMessage
@@ -56,25 +70,5 @@ public final class SqueakImage implements TruffleObject {
             // TODO:
             return image.getGlobals();
         }
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public boolean isExecutable() {
-        return true;
-    }
-
-    @ExportMessage
-    public Object execute(final Object... arguments) {
-        assert arguments.length == 0;
-        image.interrupt.start();
-        image.disableHeadless();
-        return Truffle.getRuntime().createCallTarget(image.getActiveContextNode()).call();
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public static boolean accepts(@SuppressWarnings("unused") final SqueakImage receiver) {
-        return true;
     }
 }

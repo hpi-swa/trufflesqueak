@@ -1,20 +1,27 @@
 package de.hpi.swa.graal.squeak.interop;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.spi.FileTypeDetector;
+import java.nio.charset.Charset;
+
+import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
-public class SqueakFileDetector extends FileTypeDetector {
+public class SqueakFileDetector implements TruffleFile.FileTypeDetector {
+
     @Override
-    public String probeContentType(final Path path) throws IOException {
-        final String pathString = path.toString();
-        if (pathString.endsWith(".image")) {
+    public String findMimeType(final TruffleFile file) throws IOException {
+        final String fileName = file.getName().toString();
+        if (fileName.endsWith(".image")) {
             return SqueakLanguageConfig.MIME_TYPE;
-        } else if (pathString.endsWith(".st")) {
+        } else if (fileName.endsWith(".st")) {
             return SqueakLanguageConfig.ST_MIME_TYPE;
         }
+        return null;
+    }
+
+    @Override
+    public Charset findEncoding(final TruffleFile file) throws IOException {
         return null;
     }
 }
