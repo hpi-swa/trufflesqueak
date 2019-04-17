@@ -172,7 +172,8 @@ public final class ClassObject extends AbstractSqueakObject {
     public void setInstancesAreClasses(final String className) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // TODO: think about better check for the below.
-        instancesAreClasses = isMetaClass() || isAMetaClass() || "Behavior".equals(className) || "ClassDescription".equals(className) || "Class".equals(className);
+        instancesAreClasses = isMetaClass() || isAMetaClass() || "Behavior".equals(className) || "ClassDescription".equals(className) || "Class".equals(className) ||
+                        "TraitBehavior".equals(className) || "TraitDescription".equals(className) || "ClassTrait".equals(className) || "Trait".equals(className);
     }
 
     public boolean instancesAreClasses() {

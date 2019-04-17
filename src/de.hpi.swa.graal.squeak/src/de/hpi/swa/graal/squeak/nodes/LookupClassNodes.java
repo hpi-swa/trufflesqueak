@@ -167,13 +167,9 @@ public final class LookupClassNodes {
 
         @Override
         public ClassObject executeLookup(final Object receiver) {
-            final ClassObject compiledInClass = getMethodNode.execute(code).getCompiledInClass();
-            final Object superclass = compiledInClass.getSuperclass();
-            if (superclass == code.image.nil) {
-                return compiledInClass;
-            } else {
-                return (ClassObject) superclass;
-            }
+            final ClassObject methodClass = getMethodNode.execute(code).getMethodClass();
+            final ClassObject superclass = methodClass.getSuperclassOrNull();
+            return superclass == null ? methodClass : superclass;
         }
     }
 }

@@ -665,9 +665,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "receiver.hasCompiledInClass()")
+        @Specialization(guards = "receiver.hasMethodClass()")
         protected static final CompiledMethodObject doFlush(final CompiledMethodObject receiver) {
-            receiver.getCompiledInClass().invalidateMethodDictStableAssumption();
+            receiver.getMethodClass().invalidateMethodDictStableAssumption();
             return receiver;
         }
     }

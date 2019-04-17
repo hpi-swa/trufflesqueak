@@ -49,23 +49,15 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
         String selector = "unknownSelector";
-        final ClassObject classObject = getCompiledInClass();
-        if (classObject != null) {
-            className = classObject.nameAsClass();
+        final ClassObject methodClass = outerMethod.getMethodClass();
+        if (methodClass != null) {
+            className = methodClass.nameAsClass();
         }
-        final NativeObject selectorObj = getCompiledInSelector();
+        final NativeObject selectorObj = outerMethod.getCompiledInSelector();
         if (selectorObj != null) {
             selector = selectorObj.asString();
         }
         return className + ">>" + selector;
-    }
-
-    public NativeObject getCompiledInSelector() {
-        return outerMethod.getCompiledInSelector();
-    }
-
-    public ClassObject getCompiledInClass() {
-        return outerMethod.getCompiledInClass();
     }
 
     public CompiledMethodObject getMethod() {

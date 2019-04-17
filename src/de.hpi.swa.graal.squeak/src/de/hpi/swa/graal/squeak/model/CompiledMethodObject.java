@@ -69,9 +69,9 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
         String selector = "unknownSelector";
-        final ClassObject classObject = getCompiledInClass();
-        if (classObject != null) {
-            className = classObject.nameAsClass();
+        final ClassObject methodClass = getMethodClass();
+        if (methodClass != null) {
+            className = methodClass.nameAsClass();
         }
         final NativeObject selectorObj = getCompiledInSelector();
         if (selectorObj != null) {
@@ -106,6 +106,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
     }
 
+    /** CompiledMethod>>#methodClassAssociation. */
     private PointersObject getMethodClassAssociation() {
         /**
          * From the CompiledMethod class description:
@@ -119,15 +120,17 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return (PointersObject) literals[literals.length - 1];
     }
 
-    public boolean hasCompiledInClass() {
+    public boolean hasMethodClass() {
         return getMethodClassAssociation().at0(CLASS_BINDING.VALUE) != image.nil;
     }
 
-    public ClassObject getCompiledInClass() {
+    /** CompiledMethod>>#methodClass. */
+    public ClassObject getMethodClass() {
         return (ClassObject) getMethodClassAssociation().at0(CLASS_BINDING.VALUE);
     }
 
-    public void setCompiledInClass(final ClassObject newClass) {
+    /** CompiledMethod>>#methodClass:. */
+    public void setMethodClass(final ClassObject newClass) {
         getMethodClassAssociation().atput0(CLASS_BINDING.VALUE, newClass);
     }
 
