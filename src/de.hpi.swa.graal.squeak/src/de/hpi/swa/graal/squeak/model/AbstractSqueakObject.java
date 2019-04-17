@@ -22,7 +22,9 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 @ExportLibrary(InteropLibrary.class)
 public abstract class AbstractSqueakObject implements TruffleObject {
     public static final int IDENTITY_HASH_MASK = 0x400000 - 1;
-    private static final byte PINNED_BIT_SHIFT = 30;
+    private static final long HASH_UNINITIALIZED = -1;
+    private static final int PINNED_BIT_SHIFT = 30;
+    private static final int PINNED_BIT_MASK = 1 << PINNED_BIT_SHIFT;
 
     public final SqueakImageContext image;
     private long squeakHash;
@@ -31,20 +33,20 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     // For special/well-known objects only.
     protected AbstractSqueakObject(final SqueakImageContext image) {
         this.image = image;
-        squeakHash = -1;
+        squeakHash = HASH_UNINITIALIZED;
         squeakClass = null;
     }
 
     protected AbstractSqueakObject(final SqueakImageContext image, final ClassObject klass) {
         this.image = image;
-        squeakHash = hashCode() & IDENTITY_HASH_MASK;
+        squeakHash = HASH_UNINITIALIZED;
         squeakClass = klass;
     }
 
     protected AbstractSqueakObject(final SqueakImageContext image, final int hash) {
         this.image = image;
-        // Generate new hash if hash is `0`. This might have something to do with compact classes?
-        squeakHash = hash != 0 ? hash : hashCode() & IDENTITY_HASH_MASK;
+        // TODO: Generate new hash if `0`. This might have something to do with compact classes?
+        squeakHash = hash != 0 ? hash : HASH_UNINITIALIZED;
         squeakClass = null;
     }
 
@@ -81,15 +83,19 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     public abstract int size();
 
     public final long getSqueakHash() {
+        if (needsSqueakHash()) {
+            /** Lazily initialize squeakHash and derive value from hashCode. */
+            squeakHash = hashCode() & IDENTITY_HASH_MASK;
+        }
         return squeakHash;
     }
 
-    public final boolean hasSqueakClass() {
-        return squeakClass != null;
+    public boolean needsSqueakHash() {
+        return squeakHash == HASH_UNINITIALIZED;
     }
 
-    public final boolean hasSqueakHash() {
-        return squeakHash >= 0;
+    public final boolean needsSqueakClass() {
+        return squeakClass == null;
     }
 
     public final boolean isBitmap() {
@@ -136,7 +142,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public final void setPinned() {
-        setSqueakHash(squeakHash | 1 << PINNED_BIT_SHIFT);
+        setSqueakHash(getSqueakHash() | PINNED_BIT_MASK);
     }
 
     public final void setSqueakClass(final ClassObject newClass) {
@@ -154,7 +160,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public final void unsetPinned() {
-        setSqueakHash(squeakHash & ~(1 << PINNED_BIT_SHIFT));
+        setSqueakHash(getSqueakHash() & ~PINNED_BIT_MASK);
     }
 
     public final Object send(final String selector, final Object... arguments) {
