@@ -17,13 +17,13 @@ public abstract class FillInClassAndHashNode extends Node {
     // For special objects (known selectors, classes, ...) which do not have a hash yet.
     @Specialization(guards = {"obj.needsSqueakClass()", "obj.needsSqueakHash()"})
     protected static final void doClassObjectClassAndHash(final AbstractSqueakObject obj, final SqueakImageChunk chunk) {
-        obj.setSqueakClass(chunk.getSqClass());
-        obj.setSqueakHash(chunk.getHash());
+        obj.setSqueakClassUnsafe(chunk.getSqClass());
+        obj.setSqueakHashUnsafe(chunk.getHash());
     }
 
     @Specialization(guards = {"obj.needsSqueakClass()", "!obj.needsSqueakHash()"})
     protected static final void doClassObjectClass(final AbstractSqueakObject obj, final SqueakImageChunk chunk) {
-        obj.setSqueakClass(chunk.getSqClass());
+        obj.setSqueakClassUnsafe(chunk.getSqClass());
     }
 
     @SuppressWarnings("unused")

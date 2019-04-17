@@ -7,6 +7,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -41,6 +42,8 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObj
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
@@ -413,8 +416,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isCharacterObject(receiver)", "!isFloatObject(receiver)"})
-        protected static final long doSqueakObject(final AbstractSqueakObject receiver) {
-            return receiver.getSqueakHash();
+        protected static final long doSqueakObject(final AbstractSqueakObject receiver,
+                        @Cached final SqueakObjectHashNode hashNode) {
+            return hashNode.executeHash(receiver);
         }
     }
 
@@ -435,14 +439,16 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "sqObject.getSqueakClass().isImmediateClassType()")
-        protected static final NilObject doImmediateObjects(final AbstractSqueakObject sqObject) {
+        @Specialization(guards = "classNode.executeClass(sqObject).isImmediateClassType()", limit = "1")
+        protected static final NilObject doImmediateObjects(final AbstractSqueakObject sqObject,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
             return NilObject.SINGLETON;
         }
 
-        @Specialization(guards = {"!sqObject.getSqueakClass().isNilClass()", "!sqObject.getSqueakClass().isImmediateClassType()"})
-        protected final TruffleObject doNext(final AbstractSqueakObject sqObject) {
-            final AbstractCollection<AbstractSqueakObject> instances = objectGraphNode.executeAllInstancesOf(sqObject.getSqueakClass());
+        @Specialization(guards = {"!classNode.executeClass(sqObject).isImmediateClassType()"}, limit = "1")
+        protected final TruffleObject doNext(final AbstractSqueakObject sqObject,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            final AbstractCollection<AbstractSqueakObject> instances = objectGraphNode.executeAllInstancesOf(classNode.executeClass(sqObject));
             boolean foundMyself = false;
             for (final AbstractSqueakObject instance : instances) {
                 if (instance == sqObject) {

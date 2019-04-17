@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -81,38 +83,45 @@ public final class ArrayObjectNodes {
         public abstract ArrayObject execute(ArrayObject obj);
 
         @Specialization(guards = "obj.isEmptyType()")
-        protected static final ArrayObject doEmptyArray(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getEmptyStorage());
+        protected static final ArrayObject doEmptyArray(final ArrayObject obj,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return ArrayObject.createWithStorage(obj.image, classNode.executeClass(obj), obj.getEmptyStorage());
         }
 
         @Specialization(guards = "obj.isBooleanType()")
-        protected static final ArrayObject doArrayOfBooleans(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getBooleanStorage().clone());
+        protected static final ArrayObject doArrayOfBooleans(final ArrayObject obj,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return ArrayObject.createWithStorage(obj.image, classNode.executeClass(obj), obj.getBooleanStorage().clone());
         }
 
         @Specialization(guards = "obj.isCharType()")
-        protected static final ArrayObject doArrayOfChars(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getCharStorage().clone());
+        protected static final ArrayObject doArrayOfChars(final ArrayObject obj,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return ArrayObject.createWithStorage(obj.image, classNode.executeClass(obj), obj.getCharStorage().clone());
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final ArrayObject doArrayOfLongs(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getLongStorage().clone());
+        protected static final ArrayObject doArrayOfLongs(final ArrayObject obj,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return ArrayObject.createWithStorage(obj.image, classNode.executeClass(obj), obj.getLongStorage().clone());
         }
 
         @Specialization(guards = "obj.isDoubleType()")
-        protected static final ArrayObject doArrayOfDoubles(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getDoubleStorage().clone());
+        protected static final ArrayObject doArrayOfDoubles(final ArrayObject obj,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return ArrayObject.createWithStorage(obj.image, classNode.executeClass(obj), obj.getDoubleStorage().clone());
         }
 
         @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final ArrayObject doArrayOfNatives(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getNativeObjectStorage().clone());
+        protected static final ArrayObject doArrayOfNatives(final ArrayObject obj,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return ArrayObject.createWithStorage(obj.image, classNode.executeClass(obj), obj.getNativeObjectStorage().clone());
         }
 
         @Specialization(guards = "obj.isObjectType()")
-        protected static final ArrayObject doArrayOfObjects(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getObjectStorage().clone());
+        protected static final ArrayObject doArrayOfObjects(final ArrayObject obj,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return ArrayObject.createWithStorage(obj.image, classNode.executeClass(obj), obj.getObjectStorage().clone());
         }
     }
 

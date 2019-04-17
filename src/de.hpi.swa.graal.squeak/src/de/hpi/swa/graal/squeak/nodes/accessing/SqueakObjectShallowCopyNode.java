@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -84,23 +85,27 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage 
     }
 
     @Specialization(guards = "receiver.isByteType()")
-    protected static final Object doNativeBytes(final NativeObject receiver) {
-        return NativeObject.newNativeBytes(receiver.image, receiver.getSqueakClass(), receiver.getByteStorage().clone());
+    protected static final Object doNativeBytes(final NativeObject receiver,
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return NativeObject.newNativeBytes(receiver.image, classNode.executeClass(receiver), receiver.getByteStorage().clone());
     }
 
     @Specialization(guards = "receiver.isShortType()")
-    protected static final Object doNativeShorts(final NativeObject receiver) {
-        return NativeObject.newNativeShorts(receiver.image, receiver.getSqueakClass(), receiver.getShortStorage().clone());
+    protected static final Object doNativeShorts(final NativeObject receiver,
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return NativeObject.newNativeShorts(receiver.image, classNode.executeClass(receiver), receiver.getShortStorage().clone());
     }
 
     @Specialization(guards = "receiver.isIntType()")
-    protected static final Object doNativeInts(final NativeObject receiver) {
-        return NativeObject.newNativeInts(receiver.image, receiver.getSqueakClass(), receiver.getIntStorage().clone());
+    protected static final Object doNativeInts(final NativeObject receiver,
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return NativeObject.newNativeInts(receiver.image, classNode.executeClass(receiver), receiver.getIntStorage().clone());
     }
 
     @Specialization(guards = "receiver.isLongType()")
-    protected static final Object doNativeLongs(final NativeObject receiver) {
-        return NativeObject.newNativeLongs(receiver.image, receiver.getSqueakClass(), receiver.getLongStorage().clone());
+    protected static final Object doNativeLongs(final NativeObject receiver,
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return NativeObject.newNativeLongs(receiver.image, classNode.executeClass(receiver), receiver.getLongStorage().clone());
     }
 
     @Specialization

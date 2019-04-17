@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -24,6 +26,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.LookupClassNodesFactory.LookupClassNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetCompiledMethodNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 
 public final class LookupClassNodes {
 
@@ -78,13 +81,15 @@ public final class LookupClassNodes {
         }
 
         @Specialization
-        protected static final ClassObject doAbstractPointers(final AbstractPointersObject value) {
-            return value.getSqueakClass();
+        protected static final ClassObject doAbstractPointers(final AbstractPointersObject value,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return classNode.executeClass(value);
         }
 
         @Specialization
-        protected static final ClassObject doArray(final ArrayObject value) {
-            return value.getSqueakClass();
+        protected static final ClassObject doArray(final ArrayObject value,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return classNode.executeClass(value);
         }
 
         @Specialization
@@ -100,8 +105,9 @@ public final class LookupClassNodes {
         }
 
         @Specialization
-        protected static final ClassObject doClass(@SuppressWarnings("unused") final ClassObject value) {
-            return value.getSqueakClass();
+        protected static final ClassObject doClass(final ClassObject value,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return classNode.executeClass(value);
         }
 
         @Specialization
@@ -122,8 +128,9 @@ public final class LookupClassNodes {
         }
 
         @Specialization
-        protected static final ClassObject doEmpty(final EmptyObject value) {
-            return value.getSqueakClass();
+        protected static final ClassObject doEmpty(final EmptyObject value,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return classNode.executeClass(value);
         }
 
         @Specialization
@@ -133,13 +140,15 @@ public final class LookupClassNodes {
         }
 
         @Specialization
-        protected static final ClassObject doLargeInteger(final LargeIntegerObject value) {
-            return value.getSqueakClass();
+        protected static final ClassObject doLargeInteger(final LargeIntegerObject value,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return classNode.executeClass(value);
         }
 
         @Specialization
-        protected static final ClassObject doNative(final NativeObject value) {
-            return value.getSqueakClass();
+        protected static final ClassObject doNative(final NativeObject value,
+                        @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+            return classNode.executeClass(value);
         }
 
         @Specialization(guards = {"!isAbstractSqueakObject(value)"})

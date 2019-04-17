@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -35,6 +36,9 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     public final SqueakImageContext image;
     private long squeakHash;
     private ClassObject squeakClass;
+
+    private Assumption squeakHashStableAssumption = Truffle.getRuntime().createAssumption("Squeak hash stability");
+    private Assumption squeakClassStableAssumption = Truffle.getRuntime().createAssumption("Squeak class stability");
 
     // For special/well-known objects only.
     protected AbstractSqueakObject(final SqueakImageContext image) {
@@ -72,6 +76,14 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return squeakClass;
     }
 
+    public final boolean needsSqueakClass() {
+        return squeakClass == null;
+    }
+
+    public final Assumption getSqueakClassStableAssumption() {
+        return squeakClassStableAssumption;
+    }
+
     public final String getSqueakClassName() {
         if (isClass()) {
             return nameAsClass() + " class";
@@ -87,7 +99,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     public final long getSqueakHash() {
         if (needsSqueakHash()) {
             /** Lazily initialize squeakHash and derive value from hashCode. */
-            squeakHash = hashCode() & IDENTITY_HASH_MASK;
+            setSqueakHash(hashCode() & IDENTITY_HASH_MASK);
         }
         return squeakHash;
     }
@@ -96,8 +108,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return squeakHash == HASH_UNINITIALIZED;
     }
 
-    public final boolean needsSqueakClass() {
-        return squeakClass == null;
+    public final Assumption getSqueakHashStableAssumption() {
+        return squeakHashStableAssumption;
     }
 
     public final boolean isBitmap() {
@@ -144,10 +156,22 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public final void setSqueakClass(final ClassObject newClass) {
+        squeakClassStableAssumption.invalidate();
+        squeakClass = newClass;
+    }
+
+    public final void setSqueakClassUnsafe(final ClassObject newClass) {
+        assert needsSqueakClass();
         squeakClass = newClass;
     }
 
     public final void setSqueakHash(final long newHash) {
+        squeakHashStableAssumption.invalidate();
+        squeakHash = newHash;
+    }
+
+    public final void setSqueakHashUnsafe(final long newHash) {
+        assert needsSqueakHash();
         squeakHash = newHash;
     }
 

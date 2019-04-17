@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
@@ -29,23 +31,27 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doArray(final ArrayObject obj) {
-        return obj.instsize();
+    protected static final int doArray(final ArrayObject obj,
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return classNode.executeClass(obj).getBasicInstanceSize();
     }
 
     @Specialization
-    protected static final int doPointers(final AbstractPointersObject obj) {
-        return obj.instsize();
+    protected static final int doPointers(final AbstractPointersObject obj,
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return classNode.executeClass(obj).getBasicInstanceSize();
     }
 
     @Specialization
-    protected static final int doClass(final ClassObject obj) {
-        return obj.instsize();
+    protected static final int doClass(final ClassObject obj,
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return classNode.executeClass(obj).getBasicInstanceSize();
     }
 
     @Specialization
-    protected static final int doContext(final ContextObject obj) {
-        return obj.instsize();
+    protected static final int doContext(final ContextObject obj,
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return classNode.executeClass(obj).getBasicInstanceSize();
     }
 
     @Specialization
