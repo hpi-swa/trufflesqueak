@@ -1011,7 +1011,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 188)
-    protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode implements QuaternaryPrimitive {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
         @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
@@ -1020,8 +1020,16 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        /** Deprecated since Kernel-eem.1204. Kept for backward compatibility. */
         @Specialization
-        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledMethodObject methodObject) {
+        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledMethodObject methodObject,
+                        @SuppressWarnings("unused") final NotProvided notProvided) {
+            return doExecute(frame, null, receiver, argArray, methodObject);
+        }
+
+        @Specialization
+        protected final Object doExecute(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
+                        final CompiledMethodObject methodObject) {
             final int numArgs = sizeNode.execute(argArray);
             final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
             dispatchRcvrAndArgs[0] = receiver;
