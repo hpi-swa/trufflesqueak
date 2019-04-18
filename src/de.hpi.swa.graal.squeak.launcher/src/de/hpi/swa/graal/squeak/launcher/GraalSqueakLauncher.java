@@ -21,13 +21,14 @@ import com.oracle.truffle.api.TruffleOptions;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
+    private static final String POLYGLOT_FLAG = "--polyglot";
     private String[] remainingArguments;
     private String imagePath = "Squeak.image";
     private String sourceCode = null;
 
     public static void main(final String[] arguments) throws RuntimeException {
         final String[] argumentsForLauncher;
-        if (arguments.length > 1 || arguments.length == 1 && !"--polyglot".equals(arguments[0])) {
+        if (arguments.length > 1 || arguments.length == 1 && !POLYGLOT_FLAG.equals(arguments[0])) {
             argumentsForLauncher = arguments;
         } else {
             if (TruffleOptions.AOT) {
@@ -35,7 +36,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             } else {
                 final String image = FileChooser.run();
                 if (image != null) {
-                    argumentsForLauncher = new String[]{image};
+                    argumentsForLauncher = new String[]{POLYGLOT_FLAG, image};
                 } else {
                     argumentsForLauncher = new String[]{"--help"};
                 }
