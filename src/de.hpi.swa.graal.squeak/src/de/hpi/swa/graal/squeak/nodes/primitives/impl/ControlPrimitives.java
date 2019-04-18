@@ -9,7 +9,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -27,8 +26,6 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FloatObject;
-import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -46,8 +43,8 @@ import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayTransformNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -531,130 +528,21 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 115)
     protected abstract static class PrimChangeClassNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private NativeGetBytesNode getBytesNode;
 
         protected PrimChangeClassNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = "receiver.haveSameStorageType(argument)")
-        protected static final NativeObject doNative(final NativeObject receiver, final NativeObject argument) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            return receiver;
-        }
-
-        @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isByteType()"})
-        protected static final NativeObject doNativeConvertToBytes(final NativeObject receiver, final NativeObject argument,
-                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            return receiver;
-        }
-
-        @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isShortType()"})
-        protected static final NativeObject doNativeConvertToShorts(final NativeObject receiver, final NativeObject argument,
-                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            return receiver;
-        }
-
-        @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isIntType()"})
-        protected static final NativeObject doNativeConvertToInts(final NativeObject receiver, final NativeObject argument,
-                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            return receiver;
-        }
-
-        @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isLongType()"})
-        protected static final NativeObject doNativeConvertToLongs(final NativeObject receiver, final NativeObject argument,
-                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            return receiver;
-        }
-
-        @Specialization(guards = "receiver.isByteType()")
-        protected static final NativeObject doNativeLargeInteger(final NativeObject receiver, final LargeIntegerObject argument) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            return receiver;
-        }
-
-        @Specialization(guards = "!receiver.isByteType()")
-        protected static final NativeObject doNativeLargeIntegerConvert(final NativeObject receiver, final LargeIntegerObject argument,
-                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            return receiver;
-        }
-
-        @Specialization(guards = "receiver.isByteType()")
-        protected static final NativeObject doNativeFloat(final NativeObject receiver, final FloatObject argument) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            return receiver;
-        }
-
-        @Specialization(guards = "!receiver.isByteType()")
-        protected static final NativeObject doNativeFloatConvert(final NativeObject receiver, final FloatObject argument,
-                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            return receiver;
-        }
-
         @Specialization
-        protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject argument) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setInteger(argument);
-            return receiver;
+        protected static final AbstractSqueakObject doPrimChangeClass(final AbstractSqueakObject receiver, final AbstractSqueakObject argument,
+                        @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
+            return changeClassOfToNode.execute(receiver, argument.getSqueakClass());
         }
 
-        @Specialization
-        protected static final LargeIntegerObject doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument,
-                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(getBytesNode.execute(argument));
-            return receiver;
-        }
-
-        @Specialization
-        protected static final LargeIntegerObject doLargeIntegerFloat(final LargeIntegerObject receiver, final FloatObject argument) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(argument.getBytes());
-            return receiver;
-        }
-
-        @Specialization
-        protected static final FloatObject doFloat(final FloatObject receiver, final FloatObject argument) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(argument.getBytes());
-            return receiver;
-        }
-
-        @Specialization
-        protected static final FloatObject doFloatLargeInteger(final FloatObject receiver, final LargeIntegerObject argument) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(argument.getBytes());
-            return receiver;
-        }
-
-        @Specialization
-        protected static final FloatObject doFloatNative(final FloatObject receiver, final NativeObject argument,
-                        @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            receiver.setBytes(getBytesNode.execute(argument));
-            return receiver;
-        }
-
-        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)"})
-        protected static final AbstractSqueakObject doSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject argument) {
-            receiver.setSqueakClass(argument.getSqueakClass());
-            return receiver;
-        }
     }
 
     @GenerateNodeFactory
@@ -801,6 +689,23 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final long doIncrementalGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             // It is not possible to suggest incremental GCs, so do not do anything here
             return MiscUtils.runtimeFreeMemory();
+        }
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 160)
+    protected abstract static class PrimAdoptInstanceNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        protected PrimAdoptInstanceNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final ClassObject doPrimAdoptInstance(final ClassObject receiver, final AbstractSqueakObject argument,
+                        @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
+            changeClassOfToNode.execute(argument, receiver);
+            return receiver;
         }
     }
 
