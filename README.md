@@ -6,11 +6,11 @@ A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 ## Getting Started
 
 1. Clone or download GraalSqueak.
-2. Download the latest [Oracle Labs JDK][labsjdk] for your platform.
-3. Ensure your `JAVA_HOME` environment variable is unset or set it to
-   Oracle Labs JDK's home directory.
+2. Download the latest [GraalVM][graalvm_download] for your platform.
+3. Ensure your `JAVA_HOME` environment variable is unset or set it to your
+   GraalVM's home directory.
 4. Run [`bin/graalsqueak`][graalsqueak] to build and start GraalSqueak with
-   [mx] using the Oracle Labs JDK.
+   [mx] on the GraalVM.
 5. Open a recent [Squeak/Smalltalk image][squeak_downloads] (Squeak-5.2 or later).
 
 To list all available options, run `bin/graalsqueak -h`.
@@ -55,7 +55,14 @@ Proceedings of [the Workshop on Implementation, Compilation, Optimization of
 Object-Oriented Languages, Programs and Systems (ICOOOLPS) 2018][icooolps18],
 co-located with [the European Conference on Object-oriented Programming
 (ECOOP)][ecoop], Amsterdam, Netherlands, July 17, 2018, ACM DL.  
-   [![doi][icooolps18_doi]][icooolps18_paper] [![Preprint][icooolps18_preprint]][icooolps18_pdf]
+   [![doi][icooolps18_doi]][icooolps18_paper] [![Preprint][preprint]][icooolps18_pdf]
+- Fabio Niephaus, Tim Felgentreff, Tobias Pape, and Robert Hirschfeld.
+*Efficient Implementation of Smalltalk Activation Records in Language
+Implementation Frameworks*. [Workshop on Modern Language Runtimes, Ecosystems,
+and VMs (MoreVMs) 2019][morevms19], co-located with [the International Conference
+on the Art, Science, and Engineering of Programming
+(‹Programming›)][programming19], Genoa, Italy, April 2, 2019.  
+   [![Preprint][preprint]][morevms19_pdf]
 
 
 [codacy]: https://app.codacy.com/app/fniephaus/graalsqueak/dashboard
@@ -67,7 +74,6 @@ co-located with [the European Conference on Object-oriented Programming
 [ecoop]: https://2018.ecoop.org/
 [graal]: https://github.com/oracle/graal
 [graalsqueak]: bin/graalsqueak
-[graalsqueak_image]: https://github.com/hpi-swa-lab/graalsqueak/releases/latest
 [graalsqueak_launcher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/GraalSqueakLauncher.java
 [graalvm]: http://www.graalvm.org/
 [graalvm_download]: http://www.graalvm.org/downloads/
@@ -75,11 +81,13 @@ co-located with [the European Conference on Object-oriented Programming
 [icooolps18_doi]: https://img.shields.io/badge/doi-10.1145/3242947.3242948-blue.svg
 [icooolps18_paper]: https://doi.org/10.1145/3242947.3242948
 [icooolps18_pdf]: https://fniephaus.com/2018/icooolps18-graalsqueak.pdf
-[icooolps18_preprint]: https://img.shields.io/badge/preprint-download-blue.svg
 [issues]: ../../issues/new
-[labsjdk]: http://www.oracle.com/technetwork/oracle-labs/program-languages/downloads/index.html
 [master]: ../../tree/master
+[morevms19]: https://2019.programming-conference.org/track/MoreVMs-2019
+[morevms19_pdf]: https://fniephaus.com/2019/morevms19-efficient-activation-records.pdf
 [mx]: https://github.com/graalvm/mx
+[preprint]: https://img.shields.io/badge/preprint-download-blue.svg
+[programming19]: https://2019.programming-conference.org/
 [pull_request]: ../../compare/dev...
 [squeak]: https://squeak.org
 [squeak_downloads]: https://squeak.org/downloads/
