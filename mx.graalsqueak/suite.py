@@ -1,13 +1,46 @@
 suite = {
-    "mxversion": "5.215.6",
+
+    # ==========================================================================
+    #  METADATA
+    # ==========================================================================
+    "mxversion": "5.215.7",
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
+    "version": "1.0.0-rc16",
+    "release": False,
+    "groupId": "de.hpi.swa.graal.squeak",
+    "url": "https://github.com/hpi-swa-lab/graalsqueak/",
+
+    "developer": {
+        "name": "Fabio Niephaus and contributors",
+        "email": "code+graalsqueak@fniephaus.com",
+        "organization": "Software Architecture Group, HPI, Potsdam, Germany",
+        "organizationUrl": "https://www.hpi.uni-potsdam.de/swa/",
+    },
+
+    "scm": {
+        "url": "https://github.com/hpi-swa-lab/graalsqueak/",
+        "read": "https://github.com/hpi-swa-lab/graalsqueak.git",
+        "write": "git@github.com:hpi-swa-lab/graalsqueak.git",
+    },
+
+    "defaultLicense": "BSD-3-Clause",
+    "licenses": {
+        "BSD-3-Clause": {
+            "name": "The 3-Clause BSD License",
+            "url": "http://opensource.org/licenses/BSD-3-Clause",
+        },
+    },
+
+    # ==========================================================================
+    #  DEPENDENCIES
+    # ==========================================================================
     "imports": {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "7ff983abe01289adb8c67fd4730a61171d34a6e6",
+            "version": "648f1969f3d2da2d0b18fceac7f1b3e7652a8624",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
@@ -15,6 +48,9 @@ suite = {
         }],
     },
 
+    # ==========================================================================
+    #  LIBRARIES
+    # ==========================================================================
     "libraries": {
         "BOUNCY_CASTLE_CRYPTO_LIB":  {
             "sha1": "bd47ad3bd14b8e82595c7adaa143501e60842a84",
@@ -26,6 +62,9 @@ suite = {
         },
     },
 
+    # ==========================================================================
+    #  PROJECTS
+    # ==========================================================================
     "projects": {
         "de.hpi.swa.graal.squeak": {
             "subDir": "src",
@@ -91,14 +130,9 @@ suite = {
         },
     },
 
-    "defaultLicense": "BSD-3-Clause",
-    "licenses": {
-        "BSD-3-Clause": {
-            "name": "The 3-Clause BSD License",
-            "url": "http://opensource.org/licenses/BSD-3-Clause",
-        },
-    },
-
+    # ==========================================================================
+    #  DISTRIBUTIONS
+    # ==========================================================================
     "distributions": {
         "GRAALSQUEAK": {
             "path": "graalsqueak.jar",

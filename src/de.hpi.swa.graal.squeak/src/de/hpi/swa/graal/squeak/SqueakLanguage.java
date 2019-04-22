@@ -33,6 +33,7 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
                 defaultMimeType = SqueakLanguageConfig.ST_MIME_TYPE, //
                 fileTypeDetectors = SqueakFileDetector.class, //
                 id = SqueakLanguageConfig.ID, //
+                implementationName = SqueakLanguageConfig.IMPLEMENTATION_NAME, //
                 interactive = true, //
                 internal = false, //
                 name = SqueakLanguageConfig.NAME, //
