@@ -413,7 +413,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected static final LargeIntegerObject doLargeIntegerFloatEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
-            rcvr.replaceInternalValue(repl.getBytes());
+            rcvr.setBytes(repl.getBytes());
             return rcvr;
         }
 
@@ -427,7 +427,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"repl.isByteType()", "inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart)"})
         protected static final LargeIntegerObject doLargeIntegerNativeEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-            rcvr.replaceInternalValue(repl.getByteStorage());
+            rcvr.setBytes(repl.getByteStorage());
             return rcvr;
         }
 

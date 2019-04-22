@@ -19,17 +19,17 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public static final long SMALLINTEGER32_MAX = 0x3fffffff;
     public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
     public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
-    public static final int MASK_32BIT = 0xffffffff;
-    public static final long MASK_64BIT = 0xffffffffffffffffL;
+    private static final long MASK_64BIT = 0xffffffffffffffffL;
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     private static final BigInteger ONE_HUNDRED_TWENTY_EIGHT = BigInteger.valueOf(128);
     private static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
+    private static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = bigIntegerToBytes(LONG_MIN_OVERFLOW_RESULT);
 
     private BigInteger integer;
     private final int exposedSize;
 
     public LargeIntegerObject(final SqueakImageContext image, final BigInteger integer) {
-        super(image, integer.compareTo(BigInteger.ZERO) >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass);
+        super(image, integer.signum() >= 0 ? image.largePositiveIntegerClass : image.largeNegativeIntegerClass);
         this.integer = integer;
         exposedSize = byteLength(integer);
     }
@@ -37,13 +37,13 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public LargeIntegerObject(final SqueakImageContext image, final long hash, final ClassObject klass, final byte[] bytes) {
         super(image, hash, klass);
         exposedSize = bytes.length;
-        integer = new BigInteger(klass == image.largeNegativeIntegerClass ? -1 : 1, ArrayUtils.swapOrderCopy(bytes));
+        integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderCopy(bytes));
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final byte[] bytes) {
         super(image, klass);
         exposedSize = bytes.length;
-        integer = new BigInteger(klass == image.largeNegativeIntegerClass ? -1 : 1, ArrayUtils.swapOrderCopy(bytes));
+        integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderCopy(bytes));
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final int size) {
@@ -62,34 +62,21 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new LargeIntegerObject(image, LONG_MIN_OVERFLOW_RESULT);
     }
 
-    public static boolean isZero(final LargeIntegerObject lio) {
-        return lio.integer == BigInteger.ZERO;
-    }
-
     public static byte[] getLongMinOverflowResultBytes() {
-        return bigIntegerToBytes(LONG_MIN_OVERFLOW_RESULT);
+        return LONG_MIN_OVERFLOW_RESULT_BYTES;
     }
 
-    public byte[] bigIntegerToBytes() {
-        return bigIntegerToBytes(integer);
+    private static byte[] bigIntegerToBytes(final BigInteger bigInteger) {
+        return ArrayUtils.swapOrderInPlace(bigIntegerToBigEndianBytes(bigInteger));
     }
 
-    public static byte[] bigIntegerToBytes(final BigInteger bigInteger) {
-        final byte[] bytes = bigInteger.abs().toByteArray();
-        if (bytes[0] == 0) {
-            return ArrayUtils.swapOrderInPlace(Arrays.copyOfRange(bytes, bytes.length - byteLength(bigInteger), byteLength(bigInteger) + 1));
-        } else {
-            return ArrayUtils.swapOrderInPlace(bytes);
-        }
-    }
-
-    public byte[] bigIntegerToBigEndianBytes() {
+    private byte[] bigIntegerToBigEndianBytes() {
         return bigIntegerToBigEndianBytes(integer);
     }
 
-    public static byte[] bigIntegerToBigEndianBytes(final BigInteger bigInteger) {
+    private static byte[] bigIntegerToBigEndianBytes(final BigInteger bigInteger) {
         final byte[] bytes = bigInteger.abs().toByteArray();
-        return bytes[0] != 0 ? bytes : Arrays.copyOfRange(bytes, bytes.length - byteLength(bigInteger), byteLength(bigInteger) + 1);
+        return bytes[0] != 0 ? bytes : Arrays.copyOfRange(bytes, 1, bytes.length);
     }
 
     public long getNativeAt0(final long index) {
@@ -114,20 +101,21 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
             bytes = bigIntegerBytes;
         }
         bytes[bytes.length - 1 - (int) index] = (byte) value;
-        integer = new BigInteger(getSqueakClass() == image.largeNegativeIntegerClass ? -1 : 1, bytes);
+        integer = new BigInteger(isPositive() ? 1 : -1, bytes);
     }
 
     public byte[] getBytes() {
-        return this.bigIntegerToBytes();
+        return bigIntegerToBytes(integer);
     }
 
+    @TruffleBoundary
     public void replaceInternalValue(final long other) {
         // If signums differ, negate other
-        integer = getSqueakClass() == image.largeNegativeIntegerClass == other < 0 ? BigInteger.valueOf(other) : BigInteger.valueOf(-other);
+        integer = isNegative() == other < 0 ? BigInteger.valueOf(other) : BigInteger.valueOf(-other);
     }
 
     public void replaceInternalMinValue() {
-        integer = getSqueakClass() == image.largeNegativeIntegerClass ? LONG_MIN_OVERFLOW_RESULT.negate() : LONG_MIN_OVERFLOW_RESULT;
+        integer = isNegative() ? LONG_MIN_OVERFLOW_RESULT.negate() : LONG_MIN_OVERFLOW_RESULT;
     }
 
     public void replaceInternalValue(final LargeIntegerObject other) {
@@ -135,14 +123,9 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         integer = other.getSqueakClass() == getSqueakClass() ? other.integer : other.integer.negate();
     }
 
-    public void replaceInternalValue(final byte[] bytes) {
-        assert exposedSize == bytes.length;
-        integer = new BigInteger(getSqueakClass() == image.largeNegativeIntegerClass ? -1 : 1, ArrayUtils.swapOrderCopy(bytes));
-    }
-
     public void setBytes(final byte[] bytes) {
         assert exposedSize == bytes.length;
-        integer = new BigInteger(getSqueakClass() == image.largeNegativeIntegerClass ? -1 : 1, ArrayUtils.swapOrderCopy(bytes));
+        integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderCopy(bytes));
     }
 
     public void setBytes(final LargeIntegerObject src, final int srcPos, final int destPos, final int length) {
@@ -158,7 +141,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         for (int i = 0; i < length; i++) {
             bytes[bytes.length - 1 - (destPos + i)] = srcBytes[srcBytes.length - 1 - (srcPos + i)];
         }
-        integer = new BigInteger(getSqueakClass() == image.largeNegativeIntegerClass ? -1 : 1, bytes);
+        integer = new BigInteger(isPositive() ? 1 : -1, bytes);
     }
 
     public void setBytes(final byte[] srcBytes, final int srcPos, final int destPos, final int length) {
@@ -174,10 +157,10 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         for (int i = 0; i < length; i++) {
             bytes[bytes.length - 1 - (destPos + i)] = srcBytes[srcPos + i];
         }
-        integer = new BigInteger(getSqueakClass() == image.largeNegativeIntegerClass ? -1 : 1, bytes);
+        integer = new BigInteger(isPositive() ? 1 : -1, bytes);
     }
 
-    public static int byteLength(final BigInteger integer) {
+    private static int byteLength(final BigInteger integer) {
         // TODO: BigInteger.valueOf(-1).bitLength() == 0 ?!
         // TODO: BigInteger.valueOf(0).bitLength() == 0 ?!
         final int bitLength;
@@ -213,7 +196,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return integer.toString();
     }
 
-    public boolean hasSameValueAs(final LargeIntegerObject other) {
+    public boolean equals(final LargeIntegerObject other) {
         return integer.equals(other.integer);
     }
 
@@ -223,7 +206,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
             return true;
         }
         if (other instanceof LargeIntegerObject) {
-            return hasSameValueAs((LargeIntegerObject) other);
+            return equals((LargeIntegerObject) other);
         } else {
             return super.equals(other);
         }
@@ -238,20 +221,21 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return new LargeIntegerObject(this);
     }
 
-    public Object reduceIfPossible(final BigInteger value) {
-        return LargeIntegerObject.reduceIfPossible(image, value);
+    private Object reduceIfPossible(final BigInteger value) {
+        return reduceIfPossible(image, value);
     }
 
-    public static Object reduceIfPossible(final SqueakImageContext image, final BigInteger value) {
-        if (value.bitLength() > Long.SIZE - 1) {
-            return new LargeIntegerObject(image, value);
-        } else {
+    private static Object reduceIfPossible(final SqueakImageContext image, final BigInteger value) {
+        if (value.bitLength() < Long.SIZE) {
+            assert value.longValueExact() <= Long.MAX_VALUE : "Should never throw an ArithmeticException";
             return value.longValue() & MASK_64BIT;
+        } else {
+            return new LargeIntegerObject(image, value);
         }
     }
 
     public Object reduceIfPossible() {
-        return this.reduceIfPossible(integer);
+        return reduceIfPossible(integer);
     }
 
     public long longValue() {
@@ -263,12 +247,12 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public byte byteValueExact() throws ArithmeticException {
+    private byte byteValueExact() throws ArithmeticException {
         return integer.byteValueExact();
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public short shortValueExact() throws ArithmeticException {
+    private short shortValueExact() throws ArithmeticException {
         return integer.shortValueExact();
     }
 
@@ -298,6 +282,10 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return getSqueakClass() == image.largePositiveIntegerClass;
     }
 
+    public boolean isNegative() {
+        return getSqueakClass() == image.largeNegativeIntegerClass;
+    }
+
     public boolean sizeLessThanWordSize() {
         /**
          * See `InterpreterPrimitives>>#positiveMachineIntegerValueOf:`.
@@ -312,17 +300,17 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     // TODO: Find out when reduceIfPossible is really necessary
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object add(final LargeIntegerObject b) {
-        return this.reduceIfPossible(integer.add(b.integer));
+        return reduceIfPossible(integer.add(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object add(final long b) {
+        return reduceIfPossible(integer.add(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject addNoReduce(final LargeIntegerObject b) {
         return new LargeIntegerObject(image, integer.add(b.integer));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public Object add(final long b) {
-        return this.reduceIfPossible(integer.add(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -332,12 +320,37 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object subtract(final LargeIntegerObject b) {
-        return this.reduceIfPossible(integer.subtract(b.integer));
+        return reduceIfPossible(integer.subtract(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public LargeIntegerObject subtractNoReduce(final LargeIntegerObject b) {
+        return new LargeIntegerObject(image, integer.subtract(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object subtract(final long b) {
+        return reduceIfPossible(integer.subtract(BigInteger.valueOf(b)));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object subtract(final SqueakImageContext image, final long a, final long b) {
+        return reduceIfPossible(image, BigInteger.valueOf(a).subtract(BigInteger.valueOf(b)));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object subtract(final long a, final LargeIntegerObject b) {
+        return reduceIfPossible(b.image, BigInteger.valueOf(a).subtract(b.integer));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object multiply(final LargeIntegerObject b) {
-        return this.reduceIfPossible(integer.multiply(b.integer));
+        return reduceIfPossible(integer.multiply(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object multiply(final long b) {
+        return reduceIfPossible(integer.multiply(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -346,13 +359,38 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object multiply(final SqueakImageContext image, final long a, final long b) {
+        return reduceIfPossible(image, BigInteger.valueOf(a).multiply(BigInteger.valueOf(b)));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public Object divide(final LargeIntegerObject b) {
-        return this.reduceIfPossible(integer.divide(b.integer));
+        return reduceIfPossible(integer.divide(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object divide(final long b) {
+        return reduceIfPossible(integer.divide(BigInteger.valueOf(b)));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object divide(final long a, final LargeIntegerObject b) {
+        return reduceIfPossible(b.image, BigInteger.valueOf(a).divide(b.integer));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object floorDivide(final LargeIntegerObject b) {
-        return this.reduceIfPossible(floorDivide(integer, b.integer));
+        return reduceIfPossible(floorDivide(integer, b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object floorDivide(final long b) {
+        return reduceIfPossible(floorDivide(integer, BigInteger.valueOf(b)));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object floorDivide(final long a, final LargeIntegerObject b) {
+        return reduceIfPossible(b.image, floorDivide(BigInteger.valueOf(a), b.integer));
     }
 
     private static BigInteger floorDivide(final BigInteger x, final BigInteger y) {
@@ -366,7 +404,19 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object floorMod(final LargeIntegerObject b) {
-        return this.reduceIfPossible(integer.subtract(floorDivide(integer, b.integer).multiply(b.integer)));
+        return reduceIfPossible(integer.subtract(floorDivide(integer, b.integer).multiply(b.integer)));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object floorMod(final long b) {
+        final BigInteger bValue = BigInteger.valueOf(b);
+        return reduceIfPossible(integer.subtract(floorDivide(integer, bValue).multiply(bValue)));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object floorMod(final long a, final LargeIntegerObject b) {
+        final BigInteger aValue = BigInteger.valueOf(a);
+        return reduceIfPossible(b.image, aValue.subtract(floorDivide(aValue, b.integer).multiply(b.integer)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -376,11 +426,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object remainder(final LargeIntegerObject b) {
-        return this.reduceIfPossible(integer.remainder(b.integer));
+        return reduceIfPossible(integer.remainder(b.integer));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject negateNoReduce() {
+    public LargeIntegerObject negate() {
         return new LargeIntegerObject(image, integer.negate());
     }
 
@@ -395,18 +445,23 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
+    public int compareTo(final long b) {
+        return integer.compareTo(BigInteger.valueOf(b));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public double doubleValue() {
         return integer.doubleValue();
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean isZero() {
-        return integer.equals(BigInteger.ZERO);
+        return integer.signum() == 0;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean isZeroOrPositive() {
-        return integer.compareTo(BigInteger.ZERO) >= 0;
+        return integer.signum() >= 0;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -427,7 +482,20 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean isIntegralWhenDividedBy(final LargeIntegerObject other) {
-        return integer.remainder(other.integer).compareTo(BigInteger.ZERO) == 0;
+        return integer.remainder(other.integer).signum() == 0;
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public boolean isIntegralWhenDividedBy(final long other) {
+        return integer.remainder(BigInteger.valueOf(other)).signum() == 0;
+    }
+
+    public boolean sameSign(final LargeIntegerObject other) {
+        return getSqueakClass() == other.getSqueakClass();
+    }
+
+    public boolean sameSign(final long other) {
+        return isPositive() && other >= 0 || isNegative() && other < 0;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -441,7 +509,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public LargeIntegerObject toUnsigned() {
-        if (integer.compareTo(BigInteger.ZERO) < 0) {
+        if (isNegative()) {
             return new LargeIntegerObject(image, integer.add(ONE_SHIFTED_BY_64));
         } else {
             return this;
@@ -454,22 +522,42 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object and(final LargeIntegerObject b) {
-        return this.reduceIfPossible(integer.and(b.integer));
+        return reduceIfPossible(integer.and(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object and(final long b) {
+        return reduceIfPossible(integer.and(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object or(final LargeIntegerObject b) {
-        return this.reduceIfPossible(integer.or(b.integer));
+        return reduceIfPossible(integer.or(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object or(final long b) {
+        return reduceIfPossible(integer.or(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object xor(final LargeIntegerObject b) {
-        return this.reduceIfPossible(integer.xor(b.integer));
+        return reduceIfPossible(integer.xor(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public Object xor(final long b) {
+        return reduceIfPossible(integer.xor(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object shiftLeft(final int b) {
-        return this.reduceIfPossible(integer.shiftLeft(b));
+        return reduceIfPossible(integer.shiftLeft(b));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object shiftLeft(final SqueakImageContext image, final long a, final int b) {
+        return reduceIfPossible(image, BigInteger.valueOf(a).shiftLeft(b));
     }
 
     public LargeIntegerObject shiftLeftNoReduce(final int b) {
@@ -478,19 +566,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object shiftRight(final int b) {
-        return this.reduceIfPossible(integer.shiftRight(b));
-    }
-
-    public boolean isNegative() {
-        return integer.signum() == -1;
+        return reduceIfPossible(integer.shiftRight(b));
     }
 
     public BigInteger getBigInteger() {
         return integer;
-    }
-
-    public int signum() {
-        return integer.signum();
     }
 
     /*
