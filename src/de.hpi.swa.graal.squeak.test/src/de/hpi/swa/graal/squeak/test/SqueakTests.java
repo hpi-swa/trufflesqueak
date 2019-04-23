@@ -23,14 +23,16 @@ public final class SqueakTests {
     private static final String FILENAME = "tests.properties";
 
     public enum TestType {
-        PASSING("Passing"),
+        BROKEN_IN_SQUEAK("Broken in Squeak"),
+        EXPECTED_FAILURE("Expected failure"),
         FAILING("Failing"),
         FLAKY("Flaky"),
-        NOT_TERMINATING("Not Terminating"),
-        BROKEN_IN_SQUEAK("Broken in Squeak"),
         IGNORED("Ignored"), // unable to run (e.g., OOM, ...)
-        SLOWLY_PASSING("Passing, but slow"),
-        SLOWLY_FAILING("Failing and slow");
+        NOT_TERMINATING("Not Terminating"),
+        PASSING("Passing"),
+        PASSING_64BIT("Passing only on 64-bit"),
+        SLOWLY_FAILING("Failing and slow"),
+        SLOWLY_PASSING("Passing, but slow");
 
         private final String message;
 
