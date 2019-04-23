@@ -850,7 +850,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 39: return MiscUtils.getObjectPendingFinalizationCount(); // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
                 case 40: return 8L; // BytesPerOop for this image
                 case 41: return SqueakImageReaderNode.IMAGE_64BIT_VERSION; // imageFormatVersion for the VM
-                case 42: return method.image.nil; // number of stack pages in use (see SmalltalkImage>>lowSpaceThreshold)
+                case 42: return 50L; // number of stack pages in use (see SmalltalkImage>>isRunningCog)
                 case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
                 case 44: return 0L; // size of eden, in bytes
                 case 45: return 0L; // desired size of eden, in bytes (stored in image file header)
