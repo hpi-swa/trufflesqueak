@@ -90,34 +90,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return a.add(b);
         }
 
-        @Specialization(guards = "is64bit(a)")
-        protected static final double doLongDouble64bit(final long a, final double b) {
-            return doDouble64bit(a, b);
+        @Specialization
+        protected static final double doLongDouble(final long a, final double b) {
+            return doDouble(a, b);
         }
 
-        @Specialization(guards = "is64bit(a)")
-        protected static final double doDoubleLong64bit(final double a, final long b) {
-            return doDouble64bit(a, b);
+        @Specialization
+        protected static final double doDoubleLong(final double a, final long b) {
+            return doDouble(a, b);
         }
 
-        @Specialization(guards = "is64bit(a)")
-        protected static final double doDouble64bit(final double a, final double b) {
+        @Specialization
+        protected static final double doDouble(final double a, final double b) {
             return a + b;
-        }
-
-        @Specialization(guards = "!is64bit(a)")
-        protected final FloatObject doLongDouble32bit(final long a, final double b) {
-            return doDouble32bit(a, b);
-        }
-
-        @Specialization(guards = "!is64bit(a)")
-        protected final FloatObject doDoubleLong32bit(final double a, final long b) {
-            return doDouble32bit(a, b);
-        }
-
-        @Specialization(guards = "!is64bit(a)")
-        protected final FloatObject doDouble32bit(final double a, final double b) {
-            return asFloatObject(doDouble64bit(a, b));
         }
     }
 
@@ -188,34 +173,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return a.subtractNoReduce(b); // Value can only grow, no need to try to reduce.
         }
 
-        @Specialization(guards = "is64bit(a)")
-        protected static final double doLongDouble64bit(final long a, final double b) {
-            return doDouble64bit(a, b);
+        @Specialization
+        protected static final double doLongDouble(final long a, final double b) {
+            return doDouble(a, b);
         }
 
-        @Specialization(guards = "is64bit(a)")
-        protected static final double doDoubleLong64bit(final double a, final long b) {
-            return doDouble64bit(a, b);
+        @Specialization
+        protected static final double doDoubleLong(final double a, final long b) {
+            return doDouble(a, b);
         }
 
-        @Specialization(guards = "is64bit(a)")
-        protected static final double doDouble64bit(final double a, final double b) {
+        @Specialization
+        protected static final double doDouble(final double a, final double b) {
             return a - b;
-        }
-
-        @Specialization(guards = "!is64bit(a)")
-        protected final FloatObject doLongDouble32bit(final long a, final double b) {
-            return doDouble32bit(a, b);
-        }
-
-        @Specialization(guards = "!is64bit(a)")
-        protected final FloatObject doDoubleLong32bit(final double a, final long b) {
-            return doDouble32bit(a, b);
-        }
-
-        @Specialization(guards = "!is64bit(a)")
-        protected final FloatObject doDouble32bit(final double a, final double b) {
-            return asFloatObject(doDouble64bit(a, b));
         }
     }
 
@@ -644,34 +614,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return a.multiply(b);
         }
 
-        @Specialization(guards = "is64bit(a)")
-        protected static final double doLongDouble64bit(final long a, final double b) {
-            return doDouble64bit(a, b);
+        @Specialization
+        protected static final double doLongDouble(final long a, final double b) {
+            return doDouble(a, b);
         }
 
-        @Specialization(guards = "is64bit(a)")
-        protected static final double doDoubleLong64bit(final double a, final long b) {
-            return doDouble64bit(a, b);
+        @Specialization
+        protected static final double doDoubleLong(final double a, final long b) {
+            return doDouble(a, b);
         }
 
-        @Specialization(guards = "is64bit(a)")
-        protected static final double doDouble64bit(final double a, final double b) {
+        @Specialization
+        protected static final double doDouble(final double a, final double b) {
             return a * b;
-        }
-
-        @Specialization(guards = "!is64bit(a)")
-        protected final FloatObject doLongDouble32bit(final long a, final double b) {
-            return doDouble32bit(a, b);
-        }
-
-        @Specialization(guards = "!is64bit(a)")
-        protected final FloatObject doDoubleLong32bit(final double a, final long b) {
-            return doDouble32bit(a, b);
-        }
-
-        @Specialization(guards = "!is64bit(a)")
-        protected final FloatObject doDouble32bit(final double a, final double b) {
-            return asFloatObject(doDouble64bit(a, b));
         }
     }
 
@@ -719,34 +674,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
          * (isIntegralWhenDividedBy is always `false`).
          */
 
-        @Specialization(guards = {"is64bit(a)", "!isZero(b)"})
-        protected static final double doLongDouble64bit(final long a, final double b) {
-            return doDouble64bit(a, b);
+        @Specialization(guards = {"!isZero(b)"})
+        protected static final double doLongDouble(final long a, final double b) {
+            return doDouble(a, b);
         }
 
-        @Specialization(guards = {"is64bit(a)", "b != 0"})
-        protected static final double doDoubleLong64bit(final double a, final long b) {
-            return doDouble64bit(a, b);
+        @Specialization(guards = {"b != 0"})
+        protected static final double doDoubleLong(final double a, final long b) {
+            return doDouble(a, b);
         }
 
-        @Specialization(guards = {"is64bit(a)", "!isZero(b)"})
-        protected static final double doDouble64bit(final double a, final double b) {
+        @Specialization(guards = {"!isZero(b)"})
+        protected static final double doDouble(final double a, final double b) {
             return a / b;
-        }
-
-        @Specialization(guards = {"!is64bit(a)", "!isZero(b)"})
-        protected final FloatObject doLongDouble32bit(final long a, final double b) {
-            return doDouble32bit(a, b);
-        }
-
-        @Specialization(guards = {"!is64bit(a)", "b != 0"})
-        protected final FloatObject doDoubleLong32bit(final double a, final long b) {
-            return doDouble32bit(a, b);
-        }
-
-        @Specialization(guards = {"!is64bit(a)", "!isZero(b)"})
-        protected final FloatObject doDouble32bit(final double a, final double b) {
-            return asFloatObject(doDouble64bit(a, b));
         }
     }
 
@@ -1031,14 +971,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "is64bit(receiver)")
-        protected static final double doLong64bit(final long receiver) {
+        @Specialization
+        protected static final double doLong(final long receiver) {
             return receiver;
-        }
-
-        @Specialization(guards = "!is64bit(receiver)")
-        protected final FloatObject doLong32bit(final long receiver) {
-            return asFloatObject(receiver);
         }
     }
 
@@ -1068,14 +1003,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "is64bit(receiver)")
-        protected static final double doDouble64bit(final double receiver) {
+        @Specialization
+        protected static final double doDouble(final double receiver) {
             return receiver - (long) receiver;
-        }
-
-        @Specialization(guards = "!is64bit(receiver)")
-        protected final FloatObject doDouble32bit(final double receiver) {
-            return asFloatObject(doDouble64bit(receiver));
         }
     }
 
@@ -1134,18 +1064,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)", "exponent != 0"})
-        protected static final double doDoubleLong64bit(final double matissa, final long exponent) {
-            return doDouble64bit(matissa, exponent);
+        @Specialization(guards = {"!isZero(matissa)", "!isInfinite(matissa)", "exponent != 0"})
+        protected static final double doDoubleLong(final double matissa, final long exponent) {
+            return doDouble(matissa, exponent);
         }
 
-        @Specialization(guards = {"!is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)", "exponent != 0"})
-        protected final FloatObject doDoubleLong32bit(final double matissa, final long exponent) {
-            return doDouble32bit(matissa, exponent);
-        }
-
-        @Specialization(guards = {"is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)", "!isZero(exponent)"})
-        protected static final double doDouble64bit(final double matissa, final double exponent) {
+        @Specialization(guards = {"!isZero(matissa)", "!isInfinite(matissa)", "!isZero(exponent)"})
+        protected static final double doDouble(final double matissa, final double exponent) {
             final double steps = Math.min(3, Math.ceil(Math.abs(exponent) / 1023));
             double result = matissa;
             for (int i = 0; i < steps; i++) {
@@ -1156,51 +1081,26 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return result;
         }
 
-        @Specialization(guards = {"!is64bit(matissa)", "!isZero(matissa)", "!isInfinite(matissa)", "!isZero(exponent)"})
-        protected final FloatObject doDouble32bit(final double matissa, final double exponent) {
-            return asFloatObject(doDouble64bit(matissa, exponent));
-        }
-
         @SuppressWarnings("unused")
-        @Specialization(guards = {"is64bit(matissa)", "isZero(matissa)"})
-        protected static final double doDoubleMatissaZero64bit(final double matissa, final Object exponent) {
+        @Specialization(guards = {"isZero(matissa)"})
+        protected static final double doDoubleMatissaZero(final double matissa, final Object exponent) {
             return 0D;
         }
 
-        @Specialization(guards = {"!is64bit(matissa)", "isZero(matissa)"})
-        protected final FloatObject doDoubleMatissaZero32bit(final double matissa, final Object exponent) {
-            return asFloatObject(doDoubleMatissaZero64bit(matissa, exponent));
-        }
-
-        @Specialization(guards = {"is64bit(matissa)", "exponent == 0"})
-        protected static final double doDoubleExponentZero64bit(final double matissa, @SuppressWarnings("unused") final long exponent) {
+        @Specialization(guards = {"exponent == 0"})
+        protected static final double doDoubleExponentZero(final double matissa, @SuppressWarnings("unused") final long exponent) {
             return matissa;
         }
 
-        @Specialization(guards = {"is64bit(matissa)", "isZero(exponent)"})
-        protected static final double doDoubleExponentZero64bit(final double matissa, @SuppressWarnings("unused") final double exponent) {
+        @Specialization(guards = {"isZero(exponent)"})
+        protected static final double doDoubleExponentZero(final double matissa, @SuppressWarnings("unused") final double exponent) {
             return matissa;
-        }
-
-        @Specialization(guards = {"!is64bit(matissa)", "exponent == 0"})
-        protected final FloatObject doDoubleExponentZero32bit(final double matissa, @SuppressWarnings("unused") final long exponent) {
-            return asFloatObject(matissa);
-        }
-
-        @Specialization(guards = {"!is64bit(matissa)", "isZero(exponent)"})
-        protected final FloatObject doDoubleExponentZero32bit(final double matissa, @SuppressWarnings("unused") final double exponent) {
-            return asFloatObject(matissa);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"is64bit(matissa)", "isInfinite(matissa)"})
-        protected static final double doDoubleNaN64bit(final double matissa, final Object exponent) {
+        @Specialization(guards = {"isInfinite(matissa)"})
+        protected static final double doDoubleNaN(final double matissa, final Object exponent) {
             return matissa;
-        }
-
-        @Specialization(guards = {"!is64bit(matissa)", "isInfinite(matissa)"})
-        protected final FloatObject doDoubleNaN32bit(final double matissa, final Object exponent) {
-            return asFloatObject(doDoubleNaN64bit(matissa, exponent));
         }
     }
 
@@ -1211,34 +1111,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "is64bit(receiver)")
-        protected static final double doLong64bit(final long receiver) {
+        @Specialization
+        protected static final double doLong(final long receiver) {
             return Math.sqrt(receiver);
         }
 
-        @Specialization(guards = "is64bit(receiver)")
-        protected static final double doLargeInteger64bit(final LargeIntegerObject receiver) {
-            return doDouble64bit(receiver.doubleValue());
+        @Specialization
+        protected static final double doLargeInteger(final LargeIntegerObject receiver) {
+            return doDouble(receiver.doubleValue());
         }
 
-        @Specialization(guards = "is64bit(receiver)")
-        protected static final double doDouble64bit(final double receiver) {
+        @Specialization
+        protected static final double doDouble(final double receiver) {
             return Math.sqrt(receiver);
-        }
-
-        @Specialization(guards = "!is64bit(receiver)")
-        protected final FloatObject doLong32bit(final long receiver) {
-            return asFloatObject(doLong64bit(receiver));
-        }
-
-        @Specialization(guards = "!is64bit(receiver)")
-        protected final FloatObject doLargeInteger32bit(final LargeIntegerObject receiver) {
-            return asFloatObject(doLargeInteger64bit(receiver));
-        }
-
-        @Specialization(guards = "!is64bit(receiver)")
-        protected final FloatObject doDouble32bit(final double receiver) {
-            return asFloatObject(doDouble64bit(receiver));
         }
     }
 
@@ -1249,14 +1134,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "is64bit(receiver)")
-        protected static final double doDouble64bit(final double receiver) {
+        @Specialization
+        protected static final double doDouble(final double receiver) {
             return Math.sin(receiver);
-        }
-
-        @Specialization(guards = "!is64bit(receiver)")
-        protected final FloatObject doDouble32bit(final double receiver) {
-            return asFloatObject(doDouble64bit(receiver));
         }
     }
 
@@ -1267,14 +1147,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "is64bit(receiver)")
-        protected static final double doDouble64bit(final double receiver) {
+        @Specialization
+        protected static final double doDouble(final double receiver) {
             return Math.atan(receiver);
-        }
-
-        @Specialization(guards = "!is64bit(receiver)")
-        protected final FloatObject doDouble32bit(final double receiver) {
-            return asFloatObject(doDouble64bit(receiver));
         }
     }
 
@@ -1285,14 +1160,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "is64bit(receiver)")
-        protected static final double doDouble64bit(final double receiver) {
+        @Specialization
+        protected static final double doDouble(final double receiver) {
             return Math.log(receiver);
-        }
-
-        @Specialization(guards = "!is64bit(receiver)")
-        protected final FloatObject doDouble32bit(final double receiver) {
-            return asFloatObject(doDouble64bit(receiver));
         }
     }
 
@@ -1303,14 +1173,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "is64bit(receiver)")
-        protected static final double doDouble64bit(final double receiver) {
+        @Specialization
+        protected static final double doDouble(final double receiver) {
             return Math.exp(receiver);
-        }
-
-        @Specialization(guards = "!is64bit(receiver)")
-        protected final FloatObject doDouble32bit(final double receiver) {
-            return asFloatObject(doDouble64bit(receiver));
         }
     }
 

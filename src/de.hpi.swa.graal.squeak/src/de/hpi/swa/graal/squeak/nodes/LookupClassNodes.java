@@ -62,7 +62,6 @@ public final class LookupClassNodes {
 
         @Specialization
         protected final ClassObject doDouble(@SuppressWarnings("unused") final double value) {
-            assert image.flags.is64bit() : "Unexpected double value. 32-bit image does not support immediate floats.";
             return image.smallFloatClass;
         }
 

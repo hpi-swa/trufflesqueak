@@ -23,13 +23,8 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
             assertEquals(i + 1, evaluate(i + " + 1"));
         }
         assertEquals(4L, evaluate("-1 \\\\ 5"));
-        if (image.flags.is64bit()) {
-            assertEquals(Long.MIN_VALUE, evaluate("SmallInteger minVal"));
-            assertEquals(Long.MAX_VALUE, evaluate("SmallInteger maxVal"));
-        } else {
-            assertEquals(Long.MIN_VALUE, evaluate("SmallInteger minVal"));
-            assertEquals(Long.MAX_VALUE, evaluate("SmallInteger maxVal"));
-        }
+        assertEquals(Long.MIN_VALUE, evaluate("SmallInteger minVal"));
+        assertEquals(Long.MAX_VALUE, evaluate("SmallInteger maxVal"));
         // Long.MIN_VALUE / -1
         assertEquals("9223372036854775808", evaluate("-9223372036854775808 / -1").toString());
     }

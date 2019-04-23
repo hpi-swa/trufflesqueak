@@ -427,7 +427,6 @@ public final class SqueakImageReaderNode extends RootNode {
         for (final SqueakImageChunk chunk : chunktable.values()) {
             fillInContextNode.execute(chunk.asObject(), chunk);
         }
-
         fillInSmallFloatClass();
     }
 
@@ -456,11 +455,11 @@ public final class SqueakImageReaderNode extends RootNode {
         final ArrayObject classTableFirstPage = (ArrayObject) getChunk(hiddenRootsChunk.getWords()[0]).asObject();
         assert arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_INTEGER) == image.smallIntegerClass;
         assert arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.CHARACTER) == image.characterClass;
-        final Object smallFloatClassOrNil = arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_FLOAT);
         if (image.flags.is64bit()) {
+            final Object smallFloatClassOrNil = arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_FLOAT);
             image.setSmallFloat((ClassObject) smallFloatClassOrNil);
         } else {
-            assert smallFloatClassOrNil == image.nil : "smallFloatClass is not nil on 32-bit";
+            assert image.smallFloatClass != null : "smallFloatClass was not found when filling in objects of a 32bit image.";
         }
     }
 
