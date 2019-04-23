@@ -377,26 +377,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeReplace(VirtualFrame frame);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isSmallInteger(repl)", "isLongMinValue(repl)", "inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), repl, start, stop, replStart)"})
-        protected static final Object replaceMinValueEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
-            rcvr.replaceInternalMinValue();
-            return rcvr;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isSmallInteger(repl)", "!isLongMinValue(repl)", "inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), repl, start, stop, replStart)"})
-        protected static final Object replaceEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
-            rcvr.replaceInternalValue(repl);
-            return rcvr;
-        }
-
-        @Specialization(guards = {"!isSmallInteger(repl)", "!inLongBoundsEntirely(rcvr.instsize(), rcvr.size(), repl, start, stop, replStart)"})
-        protected static final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
-            rcvr.setBytes(ArrayConversionUtils.largeIntegerBytesFromLong(repl), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @SuppressWarnings("unused")
         @Specialization(guards = {"inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected static final LargeIntegerObject doEntireLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             rcvr.replaceInternalValue(repl);
@@ -447,12 +427,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 nativeObjectWriteNode.execute(rcvr, i, nativeObjectReadNode.execute(repl, repOff + i));
             }
             return rcvr;
-        }
-
-        @Specialization(guards = "!isSmallInteger(repl)")
-        protected final NativeObject doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final long repl, final long replStart,
-                        @Shared("nativeObjectWriteNode") @Cached final NativeObjectWriteNode nativeObjectWriteNode) {
-            return doNativeLargeInteger(rcvr, start, stop, asLargeInteger(repl), replStart, nativeObjectWriteNode);
         }
 
         @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
@@ -866,12 +840,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "method.image.hasDisplay()")
         protected final long doMouseButtons(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(method.image.getDisplay().getLastMouseButton());
+            return method.image.getDisplay().getLastMouseButton();
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
-        protected final long doMouseButtonsHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(0L);
+        protected static final long doMouseButtonsHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return 0L;
         }
     }
 
@@ -885,12 +859,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "method.image.hasDisplay()")
         protected final Object doNext(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            final int keyboardNext = method.image.getDisplay().keyboardNext();
-            if (keyboardNext == 0) {
-                return method.image.nil;
-            } else {
-                return method.image.wrap(keyboardNext);
-            }
+            final long keyboardNext = method.image.getDisplay().keyboardNext();
+            return keyboardNext == 0 ? method.image.nil : keyboardNext;
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
@@ -909,12 +879,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "method.image.hasDisplay()")
         protected final Object doPeek(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            final int keyboardPeek = method.image.getDisplay().keyboardPeek();
-            if (keyboardPeek == 0) {
-                return method.image.nil;
-            } else {
-                return method.image.wrap(keyboardPeek);
-            }
+            final long keyboardPeek = method.image.getDisplay().keyboardPeek();
+            return keyboardPeek == 0 ? method.image.nil : keyboardPeek;
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")

@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -106,22 +105,6 @@ public final class SqueakGuards {
         return object instanceof LargeIntegerObject;
     }
 
-    public static boolean isLargeNegativeInteger(final SqueakImageContext image, final long value) {
-        if (image.flags.is64bit()) {
-            return value < LargeIntegerObject.SMALLINTEGER64_MIN;
-        } else {
-            return value < LargeIntegerObject.SMALLINTEGER32_MIN;
-        }
-    }
-
-    public static boolean isLargePositiveInteger(final SqueakImageContext image, final long value) {
-        if (image.flags.is64bit()) {
-            return value > LargeIntegerObject.SMALLINTEGER64_MAX;
-        } else {
-            return value > LargeIntegerObject.SMALLINTEGER32_MAX;
-        }
-    }
-
     public static boolean isLong(final Object value) {
         return value instanceof Long;
     }
@@ -156,38 +139,6 @@ public final class SqueakGuards {
 
     public static boolean isPrimitive(final Object obj) {
         return obj instanceof Boolean || obj instanceof Character || obj instanceof Long || obj instanceof Double;
-    }
-
-    public static boolean isSmallInteger(final SqueakImageContext image, final long value) {
-        if (image.flags.is64bit()) {
-            return isSmallInteger64bit(value);
-        } else {
-            return isSmallInteger32bit(value);
-        }
-    }
-
-    public static boolean isSmallInteger32bit(final long value) {
-        return LargeIntegerObject.SMALLINTEGER32_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
-    }
-
-    public static boolean isSmallInteger32bitPositive(final long value) {
-        return 0 <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
-    }
-
-    public static boolean isSmallInteger64bit(final long value) {
-        return LargeIntegerObject.SMALLINTEGER64_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER64_MAX;
-    }
-
-    public static boolean isSmallInteger64bitPositive(final long value) {
-        return 0 <= value && value <= LargeIntegerObject.SMALLINTEGER64_MAX;
-    }
-
-    public static boolean isSmallIntegerPositive(final SqueakImageContext image, final long value) {
-        if (image.flags.is64bit()) {
-            return isSmallInteger64bitPositive(value);
-        } else {
-            return isSmallInteger32bitPositive(value);
-        }
     }
 
     public static boolean isZero(final double value) {

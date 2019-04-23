@@ -1503,8 +1503,9 @@ public final class BitBlt {
     private static int fetchIntOrFloatofObject(final int fieldIndex, final PointersObject objectPointer) {
         final Object fieldOop = fetchPointerofObject(fieldIndex, objectPointer);
         if (fieldOop instanceof Long) {
-            if (SqueakGuards.isSmallInteger(objectPointer.image, (long) fieldOop)) {
-                return (int) (long) fieldOop;
+            final long longValue = (long) fieldOop;
+            if (Integer.MIN_VALUE <= longValue && longValue <= Integer.MAX_VALUE) {
+                return (int) longValue;
             }
             PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         } else if (fieldOop instanceof FloatObject) {
@@ -1513,7 +1514,7 @@ public final class BitBlt {
             return floatToLong((double) fieldOop);
         } else if (fieldOop instanceof LargeIntegerObject) {
             final LargeIntegerObject fieldLarge = (LargeIntegerObject) fieldOop;
-            if (fieldLarge.fitsIntoInt() && SqueakGuards.isSmallInteger(objectPointer.image, fieldLarge.intValueExact())) {
+            if (fieldLarge.fitsIntoInt()) {
                 return fieldLarge.intValueExact();
             }
             PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
@@ -1538,7 +1539,8 @@ public final class BitBlt {
     private static int fetchIntOrFloatofObjectifNil(final int fieldIndex, final PointersObject objectPointer, final long defaultValue) {
         final Object fieldOop = fetchPointerofObject(fieldIndex, objectPointer);
         if (fieldOop instanceof Long) {
-            if (SqueakGuards.isSmallInteger(objectPointer.image, (long) fieldOop)) {
+            final long longValue = (long) fieldOop;
+            if (Integer.MIN_VALUE <= longValue && longValue <= Integer.MAX_VALUE) {
                 return (int) (long) fieldOop;
             }
             PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
@@ -1551,7 +1553,7 @@ public final class BitBlt {
             return floatToLong(((FloatObject) fieldOop).getValue());
         } else if (fieldOop instanceof LargeIntegerObject) {
             final LargeIntegerObject fieldLarge = (LargeIntegerObject) fieldOop;
-            if (fieldLarge.fitsIntoInt() && SqueakGuards.isSmallInteger(objectPointer.image, fieldLarge.intValueExact())) {
+            if (fieldLarge.fitsIntoInt()) {
                 return fieldLarge.intValueExact();
             }
             PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.

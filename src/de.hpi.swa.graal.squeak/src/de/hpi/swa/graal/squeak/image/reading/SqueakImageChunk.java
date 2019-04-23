@@ -190,7 +190,7 @@ public final class SqueakImageChunk {
                     final SqueakImageChunk chunk = reader.getChunk(ptr);
                     if (chunk == null) {
                         logBogusPointer(ptr);
-                        return image.wrap(ptr >>> 3);
+                        return ptr >>> 3;
                     } else {
                         return chunk.asObject();
                     }
@@ -212,7 +212,7 @@ public final class SqueakImageChunk {
                 final SqueakImageChunk chunk = reader.getChunk(ptr);
                 if (chunk == null) {
                     logBogusPointer(ptr);
-                    return image.wrap(ptr >> 1);
+                    return ptr >> 1;
                 } else {
                     return chunk.asObject();
                 }

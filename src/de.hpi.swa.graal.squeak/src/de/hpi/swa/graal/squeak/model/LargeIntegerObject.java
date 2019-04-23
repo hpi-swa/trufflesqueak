@@ -15,11 +15,6 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class LargeIntegerObject extends AbstractSqueakObject {
-    public static final long SMALLINTEGER32_MIN = -0x40000000;
-    public static final long SMALLINTEGER32_MAX = 0x3fffffff;
-    public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
-    public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
-    private static final long MASK_64BIT = 0xffffffffffffffffL;
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     private static final BigInteger ONE_HUNDRED_TWENTY_EIGHT = BigInteger.valueOf(128);
     private static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
@@ -228,7 +223,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     private static Object reduceIfPossible(final SqueakImageContext image, final BigInteger value) {
         if (value.bitLength() < Long.SIZE) {
             assert value.longValueExact() <= Long.MAX_VALUE : "Should never throw an ArithmeticException";
-            return value.longValue() & MASK_64BIT;
+            return value.longValue();
         } else {
             return new LargeIntegerObject(image, value);
         }

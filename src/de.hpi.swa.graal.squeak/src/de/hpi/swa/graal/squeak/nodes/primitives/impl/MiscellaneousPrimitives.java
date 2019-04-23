@@ -340,7 +340,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
-            return method.image.wrap(System.currentTimeMillis() - method.image.startUpMillis);
+            return System.currentTimeMillis() - method.image.startUpMillis;
         }
     }
 
@@ -375,7 +375,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
-            return method.image.wrap(currentMicrosecondsLocal() / 1000000);
+            return currentMicrosecondsLocal() / 1000000;
         }
     }
 

@@ -23,7 +23,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPr
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -412,11 +411,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
-        @Specialization(guards = {"!isSmallInteger(value)", "!isLongMinValue(value)"})
-        protected static final long doLong(final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromLong(value));
-        }
-
         @Specialization(guards = {"isLongMinValue(value)"})
         protected static final long doLongMinValue(@SuppressWarnings("unused") final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
             return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
@@ -432,11 +426,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject largeInteger, final long initialHash) {
             return calculateHash(initialHash, largeInteger.getBytes());
-        }
-
-        @Specialization(guards = {"!isSmallInteger(value)", "!isLongMinValue(value)"})
-        protected static final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final long initialHash) {
-            return calculateHash(initialHash, ArrayConversionUtils.largeIntegerBytesFromLong(value));
         }
 
         @Specialization(guards = {"isLongMinValue(value)"})

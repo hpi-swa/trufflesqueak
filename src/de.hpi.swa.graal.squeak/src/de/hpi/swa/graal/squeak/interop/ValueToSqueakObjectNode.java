@@ -32,13 +32,13 @@ public abstract class ValueToSqueakObjectNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = {"value.fitsInLong()"})
-    protected final Object doLong(final Value value) {
-        return code.image.wrap(value.asLong());
+    protected static final long doLong(final Value value) {
+        return value.asLong();
     }
 
     @Specialization(guards = {"value.fitsInDouble()"})
-    protected final Object doDouble(final Value value) {
-        return code.image.wrap(value.asDouble());
+    protected static final double doDouble(final Value value) {
+        return value.asDouble();
     }
 
     @Specialization(guards = {"value.isString()"})

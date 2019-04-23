@@ -11,8 +11,8 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakArithmeticTypes;
-import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers.PrimDigitBitShiftMagnitudeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -487,6 +487,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final boolean doDouble(final double a, final double b) {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final boolean doNil(final Object a, final NilObject b) {
+            return method.image.sqFalse;
         }
     }
 
@@ -1044,16 +1050,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final long doDouble(final double receiver) {
-            final long truncated = (long) (receiver >= 0 ? Math.floor(receiver) : Math.ceil(receiver));
-            if (!isSmallInteger(truncated)) {
+        protected static final long doDouble(final double receiver) {
+            final double rounded = receiver >= 0 ? Math.floor(receiver) : Math.ceil(receiver);
+            final long value = (long) rounded;
+            if (value == rounded) {
+                return value;
+            } else {
                 throw new PrimitiveExceptions.PrimitiveFailed();
             }
-            return truncated;
-        }
-
-        protected final boolean isSmallInteger(final double value) {
-            return SqueakGuards.isSmallInteger(method.image, (long) value);
         }
     }
 

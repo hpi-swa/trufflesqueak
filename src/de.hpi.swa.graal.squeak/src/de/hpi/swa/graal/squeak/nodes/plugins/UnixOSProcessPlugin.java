@@ -177,8 +177,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
 
         @Specialization
-        protected final long doNumber(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(20);
+        protected static final long doNumber(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return 20L;
         }
     }
 
