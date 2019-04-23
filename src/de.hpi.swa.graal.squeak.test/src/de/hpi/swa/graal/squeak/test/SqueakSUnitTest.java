@@ -116,17 +116,27 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         switch (test.type) {
             case PASSING: // falls through
             case SLOWLY_PASSING:
-
                 if (result.reason != null) {
                     throw result.reason;
                 }
-
                 assertTrue(result.message, result.passed);
+                break;
+
+            case PASSING_64BIT:
+                if (image.flags.is64bit()) {
+                    if (result.reason != null) {
+                        throw result.reason;
+                    }
+                    assertTrue(result.message, result.passed);
+                } else {
+                    assertFalse(result.message, result.passed);
+                }
                 break;
 
             case FAILING: // falls through
             case SLOWLY_FAILING: // falls through
-            case BROKEN_IN_SQUEAK:
+            case BROKEN_IN_SQUEAK: // falls through
+            case EXPECTED_FAILURE:
                 assertFalse(result.message, result.passed);
                 break;
 

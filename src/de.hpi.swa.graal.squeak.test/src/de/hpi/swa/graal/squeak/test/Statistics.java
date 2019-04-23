@@ -19,8 +19,10 @@ public final class Statistics {
         final Map<TestType, Long> counts = countByType(tests);
 
         print(TestType.PASSING, counts, AnsiCodes.GREEN);
+        print(TestType.PASSING_64BIT, counts, AnsiCodes.GREEN);
         print(TestType.SLOWLY_PASSING, counts, AnsiCodes.GREEN);
         print(TestType.FLAKY, counts, AnsiCodes.YELLOW);
+        print(TestType.EXPECTED_FAILURE, counts, AnsiCodes.YELLOW);
         print(TestType.SLOWLY_FAILING, counts, AnsiCodes.RED);
         print(TestType.FAILING, counts, AnsiCodes.RED);
         print(TestType.NOT_TERMINATING, counts, AnsiCodes.RED);
