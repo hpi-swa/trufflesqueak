@@ -35,7 +35,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
             if (country.isEmpty()) {
                 throw new PrimitiveFailed();
             }
-            return method.image.wrap(country);
+            return method.image.asByteString(country);
         }
     }
 
@@ -117,7 +117,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
             if (language.isEmpty()) {
                 throw new PrimitiveFailed();
             }
-            return method.image.wrap(language);
+            return method.image.asByteString(language);
         }
     }
 

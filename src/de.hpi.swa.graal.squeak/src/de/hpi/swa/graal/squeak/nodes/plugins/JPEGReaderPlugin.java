@@ -180,7 +180,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final NativeObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject rcvr) {
-            return method.image.wrap(moduleName);
+            return method.image.asByteString(moduleName);
         }
     }
 

@@ -71,7 +71,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final byte[] bytes = new byte[4];
             ArrayUtils.fillRandomly(bytes);
-            sessionByteArray = method.image.wrap(bytes);
+            sessionByteArray = method.image.asByteArray(bytes);
         }
     }
 }

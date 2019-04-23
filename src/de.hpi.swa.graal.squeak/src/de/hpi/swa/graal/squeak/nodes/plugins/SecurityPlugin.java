@@ -23,7 +23,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doCanWrite(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.wrap(method.image.env.getCurrentWorkingDirectory().isWritable());
+            return method.image.asBoolean(method.image.env.getCurrentWorkingDirectory().isWritable());
         }
     }
 

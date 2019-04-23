@@ -5032,7 +5032,7 @@ public final class B2D {
     public static boolean primitiveDoProfileStats(final PointersObject receiver, final boolean newValue) {
         final boolean oldValue = doProfileStats;
         doProfileStats = newValue;
-        return receiver.image.wrap(oldValue);
+        return receiver.image.asBoolean(oldValue);
     }
 
     /* BalloonEngineBase>>#primitiveFinishedProcessing */
@@ -5050,7 +5050,7 @@ public final class B2D {
             incrementStatby(GW_COUNT_FINISH_TEST, 1);
             incrementStatby(GW_TIME_FINISH_TEST, ioMicroMSecs() - geProfileTime);
         }
-        return receiver.image.wrap(finished);
+        return receiver.image.asBoolean(finished);
     }
 
     /* BalloonEngineBase>>#primitiveGetAALevel */
@@ -5082,9 +5082,9 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        PointersObject pointOop = receiver.image.newPoint(clipMinXGet(), clipMinYGet());
+        PointersObject pointOop = receiver.image.asPoint(clipMinXGet(), clipMinYGet());
         storeValue(0, rectOop, pointOop);
-        pointOop = receiver.image.newPoint(clipMaxXGet(), clipMaxYGet());
+        pointOop = receiver.image.asPoint(clipMaxXGet(), clipMaxYGet());
         storeValue(1, rectOop, pointOop);
         return rectOop;
     }
@@ -5142,7 +5142,7 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        return receiver.image.newPoint(destOffsetXGet(), destOffsetYGet());
+        return receiver.image.asPoint(destOffsetXGet(), destOffsetYGet());
     }
 
     /* BalloonEngineBase>>#primitiveGetTimes */
@@ -5285,7 +5285,7 @@ public final class B2D {
         }
         needFlush = needsFlush();
         storeEngineStateInto(engine);
-        return receiver.image.wrap(needFlush);
+        return receiver.image.asBoolean(needFlush);
     }
 
     /* BalloonEngineBase>>#primitiveNeedsFlushPut */
@@ -5336,7 +5336,7 @@ public final class B2D {
             incrementStatby(GW_COUNT_NEXT_AET_ENTRY, 1);
             incrementStatby(GW_TIME_NEXT_AET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
-        return receiver.image.wrap(!hasEdge);
+        return receiver.image.asBoolean(!hasEdge);
     }
 
     /* Note: No need to load bitBlt but must load spanBuffer */
@@ -5387,7 +5387,7 @@ public final class B2D {
             incrementStatby(GW_COUNT_NEXT_FILL_ENTRY, 1);
             incrementStatby(GW_TIME_NEXT_FILL_ENTRY, ioMicroMSecs() - geProfileTime);
         }
-        return receiver.image.wrap(!hasFill);
+        return receiver.image.asBoolean(!hasFill);
     }
 
     /* Note: No need to load either bitBlt or spanBuffer */
@@ -5427,7 +5427,7 @@ public final class B2D {
             incrementStatby(GW_COUNT_NEXT_GET_ENTRY, 1);
             incrementStatby(GW_TIME_NEXT_GET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
-        return receiver.image.wrap(!hasEdge);
+        return receiver.image.asBoolean(!hasEdge);
     }
 
     /* BalloonEngineBase>>#primitiveRegisterExternalEdge */

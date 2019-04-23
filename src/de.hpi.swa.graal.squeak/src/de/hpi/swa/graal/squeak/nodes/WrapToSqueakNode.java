@@ -33,7 +33,7 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
     }
 
     public final ArrayObject executeList(final Object... values) {
-        return image.newArrayOfObjects(executeObjects(values));
+        return image.asArrayOfObjects(executeObjects(values));
     }
 
     @Specialization(guards = "nullValue == null")
@@ -78,12 +78,12 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
 
     @Specialization
     protected final Object doBigInteger(final BigInteger value) {
-        return image.wrap(value);
+        return image.asLargeInteger(value);
     }
 
     @Specialization
     protected final NativeObject doString(final String value) {
-        return image.wrap(value);
+        return image.asByteString(value);
     }
 
     @Specialization
@@ -93,7 +93,7 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
 
     @Specialization
     protected final NativeObject doBytes(final byte[] value) {
-        return image.wrap(value);
+        return image.asByteArray(value);
     }
 
     @Specialization
@@ -103,7 +103,7 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
 
     @Specialization
     protected final PointersObject doDisplayPoint(final DisplayPoint value) {
-        return image.wrap(value);
+        return image.asPoint(value);
     }
 
     @Specialization

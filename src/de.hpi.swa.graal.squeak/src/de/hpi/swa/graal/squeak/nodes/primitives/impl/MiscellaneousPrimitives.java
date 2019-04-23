@@ -141,7 +141,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final NativeObject doName(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(method.image.getImagePath());
+            return method.image.asByteString(method.image.getImagePath());
         }
     }
 
@@ -391,14 +391,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization(guards = "method.image.hasDisplay()")
         protected final NativeObject getClipboardText(final Object receiver, final NotProvided value) {
-            return method.image.wrap(method.image.getDisplay().getClipboardData());
+            return method.image.asByteString(method.image.getDisplay().getClipboardData());
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!method.image.hasDisplay()")
         protected final NativeObject getClipboardTextHeadless(final Object receiver, final NotProvided value) {
             if (headlessValue == null) {
-                headlessValue = method.image.wrap("");
+                headlessValue = method.image.asByteString("");
             }
             return headlessValue;
         }
@@ -427,7 +427,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         @TruffleBoundary
         protected final NativeObject doVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(System.getProperty("java.home") + File.separatorChar);
+            return method.image.asByteString(System.getProperty("java.home") + File.separatorChar);
         }
     }
 
@@ -509,53 +509,53 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             final int index = (int) longIndex;
             if (index == 0) {
                 final String separator = File.separator;
-                return method.image.wrap(System.getProperty("java.home") + separator + "bin" + separator + "java");
+                return method.image.asByteString(System.getProperty("java.home") + separator + "bin" + separator + "java");
             } else if (index == 1) {
-                return method.image.wrap(method.image.getImagePath());
+                return method.image.asByteString(method.image.getImagePath());
             }
             if (index >= 2 && index <= 1000) {
                 final String[] restArgs = method.image.getImageArguments();
                 if (restArgs.length > index - 2) {
-                    return method.image.wrap(restArgs[index - 2]);
+                    return method.image.asByteString(restArgs[index - 2]);
                 } else {
                     return method.image.nil;
                 }
             }
             switch (index) {
                 case 1001:  // this platform's operating system 'Mac OS', 'Win32', 'unix', ...
-                    return method.image.wrap(method.image.os.getSqOSName());
+                    return method.image.asByteString(method.image.os.getSqOSName());
                 case 1002:  // operating system version
                     if (method.image.os.isMacOS()) {
                         /* The image expects things like 1095, so convert 10.10.5 into 1010.5 */
-                        return method.image.wrap(System.getProperty("os.version").replaceFirst("\\.", ""));
+                        return method.image.asByteString(System.getProperty("os.version").replaceFirst("\\.", ""));
                     }
-                    return method.image.wrap(System.getProperty("os.version"));
+                    return method.image.asByteString(System.getProperty("os.version"));
                 case 1003:  // this platform's processor type
-                    return method.image.wrap("intel");
+                    return method.image.asByteString("intel");
                 case 1004:  // vm version
-                    return method.image.wrap(SqueakLanguageConfig.NAME + " " + SqueakLanguageConfig.VERSION);
+                    return method.image.asByteString(SqueakLanguageConfig.NAME + " " + SqueakLanguageConfig.VERSION);
                 case 1005:  // window system name
-                    return method.image.wrap("Aqua");
+                    return method.image.asByteString("Aqua");
                 case 1006:  // vm build id
                     final String osName = System.getProperty("os.name");
                     final String osVersion = System.getProperty("os.version");
                     final String osArch = System.getProperty("os.arch");
                     final String date = new SimpleDateFormat(VM_BUILD_ID_DATE_FORMAT, Locale.US).format(new Date(MiscUtils.getStartTime()));
-                    return method.image.wrap(String.format("%s %s (%s) built on %s", osName, osVersion, osArch, date));
+                    return method.image.asByteString(String.format("%s %s (%s) built on %s", osName, osVersion, osArch, date));
                 case 1007: // Interpreter class (Cog VM only)
-                    return method.image.wrap(MiscUtils.getGraalVMInformation());
+                    return method.image.asByteString(MiscUtils.getGraalVMInformation());
                 case 1008: // Cogit class (Cog VM only)
-                    return method.image.wrap(MiscUtils.getSystemProperties());
+                    return method.image.asByteString(MiscUtils.getSystemProperties());
                 case 1009: // Platform source version
-                    return method.image.wrap(MiscUtils.getVMInformation());
+                    return method.image.asByteString(MiscUtils.getVMInformation());
                 case 1201: // max filename length (Mac OS only)
                     if (method.image.os.isMacOS()) {
-                        return method.image.wrap("255");
+                        return method.image.asByteString("255");
                     }
                     break;
                 case 1202: // file last error (Mac OS only)
                     if (method.image.os.isMacOS()) {
-                        return method.image.wrap("0");
+                        return method.image.asByteString("0");
                     }
                     break;
                 // case 10001: // hardware details (Win32 only)
@@ -656,17 +656,17 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject.isImmediateClassType()")
         protected final ArrayObject noInstances(final ClassObject classObject) {
-            return method.image.newArrayEmpty();
+            return method.image.newEmptyArray();
         }
 
         @Specialization(guards = {"!classObject.isNilClass()", "!classObject.isImmediateClassType()"})
         protected final ArrayObject allInstances(final ClassObject classObject) {
-            return method.image.newArrayOfAbstractSqueakObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstancesOf(classObject)));
+            return method.image.asArrayOfAbstractSqueakObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstancesOf(classObject)));
         }
 
         @Specialization(guards = "classObject.isNilClass()")
         protected final ArrayObject doNil(@SuppressWarnings("unused") final ClassObject classObject) {
-            return method.image.newArrayOfAbstractSqueakObjects(method.image.nil);
+            return method.image.asArrayOfAbstractSqueakObjects(method.image.nil);
         }
     }
 
@@ -797,7 +797,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             for (int i = 0; i < PARAMS_ARRAY_SIZE; i++) {
                 vmParameters[i] = vmParameterAt(i + 1);
             }
-            return method.image.newArrayOfObjects(vmParameters);
+            return method.image.asArrayOfObjects(vmParameters);
         }
 
         @SuppressWarnings("unused")
@@ -925,7 +925,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "inBounds1(index, getExternalModuleNames().length)")
         protected final NativeObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
-            return method.image.wrap(getExternalModuleNames()[(int) index - 1]);
+            return method.image.asByteString(getExternalModuleNames()[(int) index - 1]);
         }
 
         protected final String[] getExternalModuleNames() {

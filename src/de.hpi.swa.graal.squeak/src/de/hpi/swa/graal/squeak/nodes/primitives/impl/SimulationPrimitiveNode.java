@@ -39,8 +39,8 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
 
     protected SimulationPrimitiveNode(final CompiledMethodObject method, @SuppressWarnings("unused") final String moduleName, final String functionName) {
         super(method);
-        this.functionName = method.image.wrap(functionName);
-        emptyList = method.image.newArrayEmpty();
+        this.functionName = method.image.asByteString(functionName);
+        emptyList = method.image.newEmptyArray();
     }
 
     public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName) {
@@ -64,41 +64,41 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
     @Specialization(guards = {"!isNotProvided(arg1)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final NotProvided arg2, final NotProvided arg3, final NotProvided arg4, final NotProvided arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, method.image.newArrayOfObjects(arg1));
+        return doSimulation(frame, receiver, method.image.asArrayOfObjects(arg1));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final NotProvided arg3, final NotProvided arg4, final NotProvided arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, method.image.newArrayOfObjects(arg1, arg2));
+        return doSimulation(frame, receiver, method.image.asArrayOfObjects(arg1, arg2));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final Object arg3, final NotProvided arg4, final NotProvided arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, method.image.newArrayOfObjects(arg1, arg2, arg3));
+        return doSimulation(frame, receiver, method.image.asArrayOfObjects(arg1, arg2, arg3));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final Object arg3, final Object arg4, final NotProvided arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, method.image.newArrayOfObjects(arg1, arg2, arg3, arg4));
+        return doSimulation(frame, receiver, method.image.asArrayOfObjects(arg1, arg2, arg3, arg4));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final NotProvided arg6) {
-        return doSimulation(frame, receiver, method.image.newArrayOfObjects(arg1, arg2, arg3, arg4, arg5));
+        return doSimulation(frame, receiver, method.image.asArrayOfObjects(arg1, arg2, arg3, arg4, arg5));
     }
 
     @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)"})
     protected final Object doSimulation(final VirtualFrame frame, final Object receiver,
                     final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6) {
-        return doSimulation(frame, receiver, method.image.newArrayOfObjects(arg1, arg2, arg3, arg4, arg5, arg6));
+        return doSimulation(frame, receiver, method.image.asArrayOfObjects(arg1, arg2, arg3, arg4, arg5, arg6));
     }
 
     private Object doSimulation(final VirtualFrame frame, final Object receiver, final ArrayObject arguments) {

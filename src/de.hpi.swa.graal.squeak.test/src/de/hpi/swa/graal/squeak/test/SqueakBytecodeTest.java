@@ -494,7 +494,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testCallPrimitiveFailure() {
         final int primCode = 1;
         final long rcvr = 1L;
-        final NativeObject argument = image.wrap("foo");
+        final NativeObject argument = image.asByteString("foo");
         // similar to SmallInteger>>#+ callPrimitive 1, returnTop
         final CompiledMethodObject method = makeMethod(new Object[]{makeHeader(1, 1, 0, true, false)}, 139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 124);
         assertEquals(argument, runMethod(method, rcvr, argument));

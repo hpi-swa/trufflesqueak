@@ -51,7 +51,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @Specialization(guards = "inBounds1(index, method.image.getImageArguments().length)")
         protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
-            return method.image.wrap(method.image.getImageArguments()[(int) index - 1]);
+            return method.image.asByteString(method.image.getImageArguments()[(int) index - 1]);
         }
 
         @SuppressWarnings("unused")
@@ -76,7 +76,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             assert key != null : "key should not be null";
             final String value = systemGetEnv(key);
             assert value != null : "value should not be null";
-            return method.image.wrap(key + "=" + value);
+            return method.image.asByteString(key + "=" + value);
         }
 
         protected static final Object[] getEnvironmentKeys() {
@@ -107,7 +107,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             if (value == null) {
                 throw new PrimitiveFailed();
             } else {
-                return method.image.wrap(value);
+                return method.image.asByteString(value);
             }
         }
     }
