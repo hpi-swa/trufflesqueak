@@ -494,8 +494,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final long doBytesLeft(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(MiscUtils.runtimeFreeMemory());
+        protected static final long doBytesLeft(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return MiscUtils.runtimeFreeMemory();
         }
     }
 
@@ -772,7 +772,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (hasPendingFinalizations()) {
                 method.image.interrupt.setPendingFinalizations(true);
             }
-            return method.image.wrap(MiscUtils.runtimeFreeMemory());
+            return MiscUtils.runtimeFreeMemory();
         }
 
         @TruffleBoundary
@@ -798,9 +798,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final long doIncrementalGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doIncrementalGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             // It is not possible to suggest incremental GCs, so do not do anything here
-            return method.image.wrap(MiscUtils.runtimeFreeMemory());
+            return MiscUtils.runtimeFreeMemory();
         }
     }
 

@@ -178,9 +178,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             }
             if (path.exists()) {
                 final NativeObject pathNameNative = method.image.wrap(path.getName());
-                final long pathLastModified = method.image.wrap(path.lastModified());
+                final long pathLastModified = path.lastModified();
                 final boolean pathIsDirectory = method.image.wrap(path.isDirectory());
-                final long pathLength = method.image.wrap(path.length());
+                final long pathLength = path.length();
                 return method.image.newArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             }
             return method.image.nil;
@@ -210,9 +210,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 // Use getPath here, getName returns empty string on root path.
                 // Squeak strips the trailing backslash from C:\ on Windows.
                 final NativeObject pathNameNative = method.image.wrap(file.getPath().replace("\\", ""));
-                final long pathLastModified = method.image.wrap(file.lastModified());
+                final long pathLastModified = file.lastModified();
                 final boolean pathIsDirectory = method.image.wrap(file.isDirectory());
-                final long pathLength = method.image.wrap(file.length());
+                final long pathLength = file.length();
                 return method.image.newArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             } else {
                 return method.image.nil;
@@ -235,9 +235,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             if (files != null && index < files.length) {
                 final File file = files[index];
                 final NativeObject pathNameNative = method.image.wrap(file.getName());
-                final long pathLastModified = method.image.wrap(file.lastModified());
+                final long pathLastModified = file.lastModified();
                 final boolean pathIsDirectory = method.image.wrap(file.isDirectory());
-                final long pathLength = method.image.wrap(file.length());
+                final long pathLength = file.length();
                 return method.image.newArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             } else {
                 return method.image.nil;
@@ -375,9 +375,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
+        protected final long doGet(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
-                return method.image.wrap(getFileOrPrimFail(fileDescriptor).position());
+                return getFileOrPrimFail(fileDescriptor).position();
             } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
@@ -514,9 +514,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doSize(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
+        protected final long doSize(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
-                return method.image.wrap(getFileOrPrimFail(fileDescriptor).size());
+                return getFileOrPrimFail(fileDescriptor).size();
             } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }

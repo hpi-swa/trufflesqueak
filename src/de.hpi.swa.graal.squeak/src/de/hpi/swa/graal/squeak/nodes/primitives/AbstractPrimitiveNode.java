@@ -13,7 +13,6 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.AbstractPrimitive;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -46,14 +45,6 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
      */
     protected final boolean is64bit(@SuppressWarnings("unused") final Object value) {
         return method.image.flags.is64bit();
-    }
-
-    protected final boolean isSmallInteger(final long value) {
-        return SqueakGuards.isSmallInteger(method.image, value);
-    }
-
-    protected final boolean isSmallIntegerPositive(final long value) {
-        return SqueakGuards.isSmallIntegerPositive(method.image, value);
     }
 
     protected final LargeIntegerObject asLargeInteger(final long value) {

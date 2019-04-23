@@ -100,15 +100,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return receiver.getValue();
         }
 
-        @Specialization(guards = "!isSmallInteger(receiver)")
-        protected final long doLong(final long receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                return asLargeInteger(receiver).getNativeAt0(index - 1);
-            } catch (final IndexOutOfBoundsException e) {
-                return 0L; // inline fallback code
-            }
-        }
-
         @Specialization(guards = "inBounds(index, receiver)")
         protected static final Object doNative(final NativeObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("nativeObjectReadNode") @Cached final NativeObjectReadNode nativeObjectReadNode) {
@@ -159,11 +150,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = "index == 1")
         protected static final long doCharacter(final AbstractSqueakObject receiver, final CharacterObject target, final long index) {
             return target.getValue();
-        }
-
-        @Specialization(guards = "!isSmallInteger(target)")
-        protected final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long target, final long index) {
-            return asLargeInteger(target).getNativeAt0(index - 1);
         }
 
         @Specialization(guards = "inBounds(index, target)")
@@ -307,16 +293,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             throw new PrimitiveFailed();
         }
 
-        @Specialization(guards = "!isSmallInteger(receiver)")
-        protected final Object doSqueakObject(final long receiver, final long index, final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                asLargeInteger(receiver).setNativeAt0(index - 1, value);
-            } catch (final IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
-            return value;
-        }
-
         @Specialization// (guards = "inBounds(index, receiver)")
         protected static final Object doArray(final ArrayObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("arrayObjectWriteNode") @Cached final ArrayObjectWriteNode arrayObjectWriteNode) {
@@ -431,12 +407,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             throw new PrimitiveFailed();
         }
 
-        @Specialization(guards = {"!isSmallInteger(target)", "inBounds1(value, BYTE_MAX)"})
-        protected Object doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long target, final long index, final long value) {
-            asLargeInteger(target).setNativeAt0(index - 1, value);
-            return value;
-        }
-
         @Specialization(guards = "inBounds(index, target)")
         protected static final Object doArray(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject target, final long index, final Object value,
                         @Shared("arrayObjectWriteNode") @Cached final ArrayObjectWriteNode arrayObjectWriteNode) {
@@ -513,11 +483,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return receiver.size() - receiver.instsize();
         }
 
-        @Specialization(guards = "!isSmallInteger(value)")
-        protected final long doLongAsLargeInteger(final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return doLargeInteger(asLargeInteger(value), notProvided);
-        }
-
         @Specialization
         protected static final long doNativeObject(final NativeObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("nativeObjectSizeNode") @Cached final NativeObjectSizeNode nativeObjectSizeNode) {
@@ -567,11 +532,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization
         protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject target) {
             return target.size() - target.instsize();
-        }
-
-        @Specialization(guards = "!isSmallInteger(target)")
-        protected final long doLongAsLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject value, final long target) {
-            return doLargeInteger(value, asLargeInteger(target));
         }
 
         @Specialization

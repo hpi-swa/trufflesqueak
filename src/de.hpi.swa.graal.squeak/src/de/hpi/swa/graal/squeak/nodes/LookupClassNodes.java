@@ -50,17 +50,7 @@ public final class LookupClassNodes {
             return image.falseClass;
         }
 
-        @Specialization(guards = "isLargeNegativeInteger(image, value)")
-        protected final ClassObject doLargeNegative(@SuppressWarnings("unused") final long value) {
-            return image.largeNegativeIntegerClass;
-        }
-
-        @Specialization(guards = "isLargePositiveInteger(image, value)")
-        protected final ClassObject doLargePositive(@SuppressWarnings("unused") final long value) {
-            return image.largePositiveIntegerClass;
-        }
-
-        @Specialization(guards = {"!isLargePositiveInteger(image, value)", "!isLargeNegativeInteger(image, value)"})
+        @Specialization
         protected final ClassObject doSmallInteger(@SuppressWarnings("unused") final long value) {
             return image.smallIntegerClass;
         }

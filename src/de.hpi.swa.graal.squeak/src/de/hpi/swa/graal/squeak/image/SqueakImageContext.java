@@ -366,17 +366,8 @@ public final class SqueakImageContext {
         return value ? sqTrue : sqFalse;
     }
 
-    @SuppressWarnings("static-method")
-    public long wrap(final long l) {
-        return l;
-    }
-
     public AbstractSqueakObject wrap(final BigInteger i) {
         return new LargeIntegerObject(this, i);
-    }
-
-    public FloatObject wrap(final double value) {
-        return new FloatObject(this, value);
     }
 
     public NativeObject wrap(final String value) {
@@ -417,6 +408,10 @@ public final class SqueakImageContext {
 
     public ArrayObject newArrayOfObjects(final Object... elements) {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
+    }
+
+    public FloatObject newFloatObject(final double value) {
+        return new FloatObject(this, value);
     }
 
     public NativeObject newSymbol(final String value) {
