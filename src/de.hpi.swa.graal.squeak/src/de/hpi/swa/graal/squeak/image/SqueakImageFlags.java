@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.image;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
@@ -51,10 +50,6 @@ public final class SqueakImageFlags {
 
     public DisplayPoint getLastWindowSize() {
         return lastWindowSize;
-    }
-
-    public long getImageFormatVersion() {
-        return is64bit ? SqueakImageReaderNode.IMAGE_64BIT_VERSION : SqueakImageReaderNode.IMAGE_32BIT_VERSION;
     }
 
     public boolean is64bit() {

@@ -38,7 +38,7 @@ public abstract class FillInNode extends Node {
     }
 
     @Specialization
-    protected static final void doClassObj(final ClassObject obj, final SqueakImageChunk chunk) {
+    protected final void doClassObj(final ClassObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
         if (obj.size() > 6) {
             final String className = ((NativeObject) obj.getClassName()).asString();
@@ -47,6 +47,8 @@ public abstract class FillInNode extends Node {
                 obj.image.setCompilerClass(obj);
             } else if ("Parser".equals(className)) {
                 obj.image.setParserClass(obj);
+            } else if (!image.flags.is64bit() && "SmallFloat64".equals(className)) {
+                obj.image.setSmallFloat(obj);
             }
         }
     }

@@ -73,14 +73,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"is64bit(receiver)", "receiver.isIntType()", "index <= receiver.getIntLength()"})
-        protected static final double doAt64bit(final NativeObject receiver, final long index) {
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
+        protected static final double doAt(final NativeObject receiver, final long index) {
             return Float.intBitsToFloat(receiver.getIntStorage()[(int) index - 1]);
-        }
-
-        @Specialization(guards = {"!is64bit(receiver)", "receiver.isIntType()", "index <= receiver.getIntLength()"})
-        protected final FloatObject doAt32bit(final NativeObject receiver, final long index) {
-            return asFloatObject(Float.intBitsToFloat(receiver.getIntStorage()[(int) index - 1]));
         }
     }
 
@@ -103,14 +98,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             return asFloatObject(doDouble(receiver, index, value.getValue()));
         }
 
-        @Specialization(guards = {"is64bit(receiver)", "receiver.isIntType()", "index <= receiver.getIntLength()"})
-        protected static final double doFloat64bit(final NativeObject receiver, final long index, final long value) {
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
+        protected static final double doFloat(final NativeObject receiver, final long index, final long value) {
             return doDouble(receiver, index, value);
-        }
-
-        @Specialization(guards = {"!is64bit(receiver)", "receiver.isIntType()", "index <= receiver.getIntLength()"})
-        protected final FloatObject doFloat32bit(final NativeObject receiver, final long index, final long value) {
-            return asFloatObject(doDouble(receiver, index, value));
         }
     }
 
@@ -162,7 +152,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"is64bit(receiver)", "receiver.isIntType()", "aFloatVector.isIntType()", "receiver.getIntLength() == aFloatVector.getIntLength()"})
+        @Specialization(guards = {"receiver.isIntType()", "aFloatVector.isIntType()", "receiver.getIntLength() == aFloatVector.getIntLength()"})
         protected static final double doDot64bit(final NativeObject receiver, final NativeObject aFloatVector) {
             final int[] ints1 = receiver.getIntStorage();
             final int[] ints2 = aFloatVector.getIntStorage();
@@ -171,12 +161,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
                 result += Float.intBitsToFloat(ints1[i]) * Float.intBitsToFloat(ints2[i]);
             }
             return result;
-        }
-
-        @Specialization(guards = {"!is64bit(receiver)", "receiver.isIntType()", "aFloatVector.isIntType()",
-                        "receiver.getIntLength() == aFloatVector.getIntLength()"})
-        protected final FloatObject doDot32bit(final NativeObject receiver, final NativeObject aFloatVector) {
-            return asFloatObject(doDot64bit(receiver, aFloatVector));
         }
     }
 
@@ -324,19 +308,14 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"is64bit(receiver)", "receiver.isIntType()"})
-        protected static final double doSum64bit(final NativeObject receiver) {
+        @Specialization(guards = {"receiver.isIntType()"})
+        protected static final double doSum(final NativeObject receiver) {
             final int[] words = receiver.getIntStorage();
             double sum = 0;
             for (final int word : words) {
                 sum += Float.intBitsToFloat(word);
             }
             return sum;
-        }
-
-        @Specialization(guards = {"!is64bit(receiver)", "receiver.isIntType()"})
-        protected final FloatObject doSum32bit(final NativeObject receiver) {
-            return asFloatObject(doSum64bit(receiver));
         }
     }
 }

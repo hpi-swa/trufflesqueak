@@ -281,13 +281,6 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return getSqueakClass() == image.largeNegativeIntegerClass;
     }
 
-    public boolean sizeLessThanWordSize() {
-        /**
-         * See `InterpreterPrimitives>>#positiveMachineIntegerValueOf:`.
-         */
-        return size() <= image.flags.wordSize();
-    }
-
     /*
      * Arithmetic Operations
      */
