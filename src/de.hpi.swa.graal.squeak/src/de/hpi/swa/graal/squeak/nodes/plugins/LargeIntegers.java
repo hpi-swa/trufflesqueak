@@ -509,7 +509,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 signProfile.enter();
                 divide = Math.negateExact(divide);
             }
-            return method.image.newArrayOfLongs(divide, rcvr % arg);
+            return method.image.asArrayOfLongs(divide, rcvr % arg);
         }
 
         @Specialization
@@ -525,7 +525,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 divide = divide.negate();
             }
             final Object remainder = rcvr.remainder(arg);
-            return method.image.newArrayOfObjects(divide.reduceIfPossible(), remainder);
+            return method.image.asArrayOfObjects(divide.reduceIfPossible(), remainder);
         }
 
         @Specialization
@@ -549,7 +549,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject rcvr) {
-            return method.image.wrap(MODULE_NAME);
+            return method.image.asByteString(MODULE_NAME);
         }
     }
 

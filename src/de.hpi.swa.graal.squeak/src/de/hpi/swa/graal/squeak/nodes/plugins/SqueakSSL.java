@@ -853,7 +853,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             }
 
             final String value = getStringPropertyValue(impl, property);
-            return value == null ? method.image.nil : method.image.wrap(value);
+            return value == null ? method.image.nil : method.image.asByteString(value);
         }
 
         private static String getStringPropertyValue(final SqSSL impl, final StringProperty property) {

@@ -177,11 +177,11 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 path = new File(pathName + File.separator + fileName);
             }
             if (path.exists()) {
-                final NativeObject pathNameNative = method.image.wrap(path.getName());
+                final NativeObject pathNameNative = method.image.asByteString(path.getName());
                 final long pathLastModified = path.lastModified();
-                final boolean pathIsDirectory = method.image.wrap(path.isDirectory());
+                final boolean pathIsDirectory = method.image.asBoolean(path.isDirectory());
                 final long pathLength = path.length();
-                return method.image.newArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
+                return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             }
             return method.image.nil;
         }
@@ -209,11 +209,11 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 final File file = files[index];
                 // Use getPath here, getName returns empty string on root path.
                 // Squeak strips the trailing backslash from C:\ on Windows.
-                final NativeObject pathNameNative = method.image.wrap(file.getPath().replace("\\", ""));
+                final NativeObject pathNameNative = method.image.asByteString(file.getPath().replace("\\", ""));
                 final long pathLastModified = file.lastModified();
-                final boolean pathIsDirectory = method.image.wrap(file.isDirectory());
+                final boolean pathIsDirectory = method.image.asBoolean(file.isDirectory());
                 final long pathLength = file.length();
-                return method.image.newArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
+                return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             } else {
                 return method.image.nil;
             }
@@ -234,11 +234,11 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final int index = (int) longIndex - 1;
             if (files != null && index < files.length) {
                 final File file = files[index];
-                final NativeObject pathNameNative = method.image.wrap(file.getName());
+                final NativeObject pathNameNative = method.image.asByteString(file.getName());
                 final long pathLastModified = file.lastModified();
-                final boolean pathIsDirectory = method.image.wrap(file.isDirectory());
+                final boolean pathIsDirectory = method.image.asBoolean(file.isDirectory());
                 final long pathLength = file.length();
-                return method.image.newArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
+                return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             } else {
                 return method.image.nil;
             }
@@ -303,7 +303,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doAtEnd(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
                 final SeekableByteChannel file = getFileOrPrimFail(fileDescriptor);
-                return method.image.wrap(file.position() >= file.size() - 1);
+                return method.image.asBoolean(file.position() >= file.size() - 1);
             } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
@@ -532,7 +532,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object getHandles(@SuppressWarnings("unused") final ClassObject receiver) {
-            return method.image.newArrayOfLongs(STDIO_HANDLES.ALL);
+            return method.image.asArrayOfLongs(STDIO_HANDLES.ALL);
         }
     }
 

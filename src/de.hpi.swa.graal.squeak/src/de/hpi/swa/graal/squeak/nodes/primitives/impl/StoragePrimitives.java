@@ -169,7 +169,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final PointersObject doObject(final Object xPos, final Object yPos) {
-            return method.image.newPoint(xPos, yPos);
+            return method.image.asPoint(xPos, yPos);
         }
     }
 
@@ -646,7 +646,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final ArrayObject doAll(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.newArrayOfAbstractSqueakObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
+            return method.image.asArrayOfAbstractSqueakObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
         }
     }
 

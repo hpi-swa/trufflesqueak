@@ -265,7 +265,7 @@ public final class SqueakImageContext {
 
         final AbstractSqueakObject parser = (AbstractSqueakObject) parserClass.send("new");
         final AbstractSqueakObject methodNode = (AbstractSqueakObject) parser.send(
-                        "parse:class:noPattern:notifying:ifFail:", wrap(source), nilClass, sqTrue, nil, new BlockClosureObject(this));
+                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, sqTrue, nil, new BlockClosureObject(this));
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
@@ -277,6 +277,10 @@ public final class SqueakImageContext {
         doItContext.atput0(CONTEXT.SENDER_OR_NIL, nil);
         return ExecuteTopLevelContextNode.create(getLanguage(), doItContext, false);
     }
+
+    /*
+     * ACCESSING
+     */
 
     public PrintWriter getOutput() {
         return output;
@@ -362,62 +366,6 @@ public final class SqueakImageContext {
         return (PointersObject) getScheduler().at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
-    public boolean wrap(final boolean value) {
-        return value ? sqTrue : sqFalse;
-    }
-
-    public AbstractSqueakObject wrap(final BigInteger i) {
-        return new LargeIntegerObject(this, i);
-    }
-
-    public NativeObject wrap(final String value) {
-        return NativeObject.newNativeBytes(this, stringClass, ArrayConversionUtils.stringToBytes(value));
-    }
-
-    public NativeObject wrap(final byte[] bytes) {
-        return NativeObject.newNativeBytes(this, byteArrayClass, bytes);
-    }
-
-    public static char wrap(final char character) {
-        return character;
-    }
-
-    public PointersObject wrap(final DisplayPoint point) {
-        return newPoint((long) point.getWidth(), (long) point.getHeight());
-    }
-
-    public PointersObject newPoint(final Object xPos, final Object yPos) {
-        return new PointersObject(this, pointClass, new Object[]{xPos, yPos});
-    }
-
-    public ArrayObject newArrayEmpty() {
-        return ArrayObject.createWithStorage(this, arrayClass, ArrayUtils.EMPTY_ARRAY);
-    }
-
-    public ArrayObject newArrayOfAbstractSqueakObjects(final AbstractSqueakObject... elements) {
-        return ArrayObject.createWithStorage(this, arrayClass, elements);
-    }
-
-    public ArrayObject newArrayOfLongs(final long... elements) {
-        return ArrayObject.createWithStorage(this, arrayClass, elements);
-    }
-
-    public ArrayObject newArrayOfNativeObjects(final NativeObject... elements) {
-        return ArrayObject.createWithStorage(this, arrayClass, elements);
-    }
-
-    public ArrayObject newArrayOfObjects(final Object... elements) {
-        return ArrayObject.createWithStorage(this, arrayClass, elements);
-    }
-
-    public FloatObject newFloatObject(final double value) {
-        return new FloatObject(this, value);
-    }
-
-    public NativeObject newSymbol(final String value) {
-        return NativeObject.newNativeBytes(this, doesNotUnderstand.getSqueakClass(), value.getBytes());
-    }
-
     public void setSemaphore(final long index, final AbstractSqueakObject semaphore) {
         assert semaphore.isSemaphore() || semaphore == nil;
         specialObjectsArray.atput0Object(index, semaphore);
@@ -490,6 +438,68 @@ public final class SqueakImageContext {
         return options.isTesting;
     }
 
+    public TruffleObject getGlobals() {
+        final PointersObject environment = (PointersObject) smalltalk.at0(SMALLTALK_IMAGE.GLOBALS);
+        final PointersObject bindings = (PointersObject) environment.at0(ENVIRONMENT.BINDINGS);
+        return new InteropMap(bindings);
+    }
+
+    /*
+     * INSTANCE CREATION
+     */
+
+    public ArrayObject asArrayOfAbstractSqueakObjects(final AbstractSqueakObject... elements) {
+        return ArrayObject.createWithStorage(this, arrayClass, elements);
+    }
+
+    public ArrayObject asArrayOfLongs(final long... elements) {
+        return ArrayObject.createWithStorage(this, arrayClass, elements);
+    }
+
+    public ArrayObject asArrayOfNativeObjects(final NativeObject... elements) {
+        return ArrayObject.createWithStorage(this, arrayClass, elements);
+    }
+
+    public ArrayObject asArrayOfObjects(final Object... elements) {
+        return ArrayObject.createWithStorage(this, arrayClass, elements);
+    }
+
+    public boolean asBoolean(final boolean value) {
+        return value ? sqTrue : sqFalse;
+    }
+
+    public NativeObject asByteArray(final byte[] bytes) {
+        return NativeObject.newNativeBytes(this, byteArrayClass, bytes);
+    }
+
+    public NativeObject asByteString(final String value) {
+        return NativeObject.newNativeBytes(this, stringClass, ArrayConversionUtils.stringToBytes(value));
+    }
+
+    public FloatObject asFloatObject(final double value) {
+        return new FloatObject(this, value);
+    }
+
+    public LargeIntegerObject asLargeInteger(final BigInteger i) {
+        return new LargeIntegerObject(this, i);
+    }
+
+    public PointersObject asPoint(final Object xPos, final Object yPos) {
+        return new PointersObject(this, pointClass, new Object[]{xPos, yPos});
+    }
+
+    public PointersObject asPoint(final DisplayPoint point) {
+        return asPoint((long) point.getWidth(), (long) point.getHeight());
+    }
+
+    public ArrayObject newEmptyArray() {
+        return ArrayObject.createWithStorage(this, arrayClass, ArrayUtils.EMPTY_ARRAY);
+    }
+
+    /*
+     * PRINTING
+     */
+
     @TruffleBoundary
     public void printToStdOut(final Object... arguments) {
         getOutput().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
@@ -500,24 +510,6 @@ public final class SqueakImageContext {
         getError().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
     }
 
-    public TruffleObject getGlobals() {
-        final PointersObject environment = (PointersObject) smalltalk.at0(SMALLTALK_IMAGE.GLOBALS);
-        final PointersObject bindings = (PointersObject) environment.at0(ENVIRONMENT.BINDINGS);
-        return new InteropMap(bindings);
-    }
-
-    public void reportNewAllocationRequest() {
-        allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
-    }
-
-    public Object reportNewAllocationResult(final Object value) {
-        allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
-        return value;
-    }
-
-    /*
-     * Helper function for debugging purposes.
-     */
     @TruffleBoundary
     public void printSqStackTrace() {
         CompilerDirectives.transferToInterpreter();
@@ -546,5 +538,18 @@ public final class SqueakImageContext {
         if (lastSender[0] instanceof ContextObject) {
             ((ContextObject) lastSender[0]).printSqStackTrace();
         }
+    }
+
+    /*
+     * INSTRUMENTATION
+     */
+
+    public void reportNewAllocationRequest() {
+        allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
+    }
+
+    public Object reportNewAllocationResult(final Object value) {
+        allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
+        return value;
     }
 }

@@ -69,12 +69,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "method.image.hasDisplay()")
         protected final PointersObject doMousePoint(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(method.image.getDisplay().getLastMousePosition());
+            return method.image.asPoint(method.image.getDisplay().getLastMousePosition());
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
         protected final PointersObject doMousePointHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(NULL_POINT);
+            return method.image.asPoint(NULL_POINT);
         }
     }
 
@@ -214,7 +214,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
              * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
              * some tests (e.g. BitmapStreamTests) run quickly.
              */
-            return method.image.newArrayEmpty();
+            return method.image.newEmptyArray();
         }
     }
 
@@ -816,12 +816,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"hasVisibleDisplay(receiver)"})
         protected final PointersObject doSize(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(method.image.getDisplay().getWindowSize());
+            return method.image.asPoint(method.image.getDisplay().getWindowSize());
         }
 
         @Specialization(guards = "!hasVisibleDisplay(receiver)")
         protected final PointersObject doSizeHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.wrap(method.image.flags.getLastWindowSize());
+            return method.image.asPoint(method.image.flags.getLastWindowSize());
         }
 
         // guard helper to work around code generation issue.

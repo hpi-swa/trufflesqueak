@@ -270,7 +270,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final boolean doHasArrayElements(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary functions) {
-            return method.image.wrap(functions.hasArrayElements(receiver));
+            return method.image.asBoolean(functions.hasArrayElements(receiver));
         }
     }
 
@@ -285,7 +285,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final boolean doHasArrayElements(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary functions) {
-            return method.image.wrap(functions.hasMembers(receiver));
+            return method.image.asBoolean(functions.hasMembers(receiver));
         }
     }
 
@@ -341,7 +341,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         protected final NativeObject doGetLastError(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.wrap(lastError.toString());
+            return method.image.asByteString(lastError.toString());
         }
 
         protected static final void setLastError(final Exception e) {
@@ -440,7 +440,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "2")
         protected final boolean doIsBoolean(final TruffleObject receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.wrap(functions.isBoolean(receiver));
+            return method.image.asBoolean(functions.isBoolean(receiver));
         }
     }
 
@@ -456,7 +456,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final boolean doAsBoolean(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                return method.image.wrap(functions.asBoolean(receiver));
+                return method.image.asBoolean(functions.asBoolean(receiver));
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -474,7 +474,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "2")
         protected final boolean doIsString(final TruffleObject receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.wrap(functions.isString(receiver));
+            return method.image.asBoolean(functions.isString(receiver));
         }
     }
 
@@ -490,7 +490,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final NativeObject doAsString(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                return method.image.wrap(functions.asString(receiver));
+                return method.image.asByteString(functions.asString(receiver));
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -508,7 +508,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "2")
         protected final boolean doFitsInLong(final TruffleObject receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.wrap(functions.fitsInLong(receiver));
+            return method.image.asBoolean(functions.fitsInLong(receiver));
         }
     }
 
@@ -542,7 +542,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "2")
         protected final boolean doFitsInDouble(final TruffleObject receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.wrap(functions.fitsInDouble(receiver));
+            return method.image.asBoolean(functions.fitsInDouble(receiver));
         }
     }
 
@@ -590,7 +590,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "2")
         protected final boolean doIsExecutable(final TruffleObject receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.wrap(functions.isExecutable(receiver));
+            return method.image.asBoolean(functions.isExecutable(receiver));
         }
     }
 
@@ -605,7 +605,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "2")
         protected final boolean doIsInstantiable(final TruffleObject receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.wrap(functions.isInstantiable(receiver));
+            return method.image.asBoolean(functions.isInstantiable(receiver));
         }
     }
 
@@ -620,7 +620,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "2")
         protected final boolean doIsNull(final TruffleObject receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.wrap(functions.isNull(receiver));
+            return method.image.asBoolean(functions.isNull(receiver));
         }
     }
 
@@ -635,7 +635,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "2")
         protected final boolean doIsPointer(final TruffleObject receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.wrap(functions.isPointer(receiver));
+            return method.image.asBoolean(functions.isPointer(receiver));
         }
     }
 
@@ -705,7 +705,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final NativeObject doRead(final Object receiver) {
-            return method.image.wrap(MiscUtils.toString(receiver));
+            return method.image.asByteString(MiscUtils.toString(receiver));
         }
     }
 

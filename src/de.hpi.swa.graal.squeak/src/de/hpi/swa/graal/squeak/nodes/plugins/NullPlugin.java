@@ -26,7 +26,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         protected final ArrayObject doUTC(@SuppressWarnings("unused") final ClassObject receiver) {
-            return method.image.newArrayOfLongs(System.currentTimeMillis() * 1000L, java.time.ZonedDateTime.now().getOffset().getTotalSeconds());
+            return method.image.asArrayOfLongs(System.currentTimeMillis() * 1000L, java.time.ZonedDateTime.now().getOffset().getTotalSeconds());
         }
     }
 

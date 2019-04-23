@@ -59,7 +59,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "dropIndex <= getFileListSize(method.image)")
         protected final Object doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex) {
-            return method.image.wrap(getFileList(method.image)[(int) dropIndex - 1]);
+            return method.image.asByteString(getFileList(method.image)[(int) dropIndex - 1]);
         }
     }
 }

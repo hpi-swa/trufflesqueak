@@ -28,7 +28,7 @@ public abstract class ValueToSqueakObjectNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"value.isBoolean()"})
     protected final Object doBoolean(final Value value) {
-        return code.image.wrap(value.asBoolean());
+        return code.image.asBoolean(value.asBoolean());
     }
 
     @Specialization(guards = {"value.fitsInLong()"})
@@ -43,7 +43,7 @@ public abstract class ValueToSqueakObjectNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"value.isString()"})
     protected final Object doString(final Value value) {
-        return code.image.wrap(value.asString());
+        return code.image.asByteString(value.asString());
     }
 
     @Fallback

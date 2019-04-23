@@ -148,7 +148,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testSourceAllBytecodes() {
-        final Object[] literals = new Object[]{17235971L, image.wrap("someSelector"), image.wrap("someOtherSelector"), 63};
+        final Object[] literals = new Object[]{17235971L, image.asByteString("someSelector"), image.asByteString("someOtherSelector"), 63};
         final CompiledCodeObject code = makeMethod(literals,
                         15, 31, 32, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
                         117, 118, 119, 120, 121, 122, 123, 124, 126, 127,

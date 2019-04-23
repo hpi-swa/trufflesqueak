@@ -48,7 +48,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"id == 1"})
         protected final Object doSize(final AbstractSqueakObject receiver, final long id) {
-            return method.image.newPoint(0L, 0L);
+            return method.image.asPoint(0L, 0L);
         }
     }
 
