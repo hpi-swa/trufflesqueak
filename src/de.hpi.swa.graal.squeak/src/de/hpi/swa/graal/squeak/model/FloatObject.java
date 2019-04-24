@@ -25,7 +25,7 @@ public final class FloatObject extends AbstractSqueakObject {
         doubleValue = original.doubleValue;
     }
 
-    public FloatObject(final SqueakImageContext image, final double doubleValue) {
+    private FloatObject(final SqueakImageContext image, final double doubleValue) {
         this(image);
         this.doubleValue = doubleValue;
     }
@@ -34,9 +34,14 @@ public final class FloatObject extends AbstractSqueakObject {
         return new FloatObject(image, value);
     }
 
-    public static double newFromChunkWords(final int[] ints) {
+    public static Object newFromChunkWords(final SqueakImageContext image, final int[] ints) {
         assert ints.length == 2 : "Unexpected number of int values for double conversion";
-        return Double.longBitsToDouble(Integer.toUnsignedLong(ints[1]) << 32 | Integer.toUnsignedLong(ints[0]));
+        final double value = Double.longBitsToDouble(Integer.toUnsignedLong(ints[1]) << 32 | Integer.toUnsignedLong(ints[0]));
+        if (Double.isNaN(value)) {
+            return new FloatObject(image, value);
+        } else {
+            return value;
+        }
     }
 
     public long getHigh() {
@@ -80,6 +85,10 @@ public final class FloatObject extends AbstractSqueakObject {
         final long bits = Double.doubleToRawLongBits(value);
         return new byte[]{(byte) (bits >> 56), (byte) (bits >> 48), (byte) (bits >> 40), (byte) (bits >> 32),
                         (byte) (bits >> 24), (byte) (bits >> 16), (byte) (bits >> 8), (byte) bits};
+    }
+
+    public boolean isNaN() {
+        return Double.isNaN(doubleValue);
     }
 
     @Override

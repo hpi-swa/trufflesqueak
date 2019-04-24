@@ -477,7 +477,7 @@ public final class SqueakImageContext {
     }
 
     public FloatObject asFloatObject(final double value) {
-        return new FloatObject(this, value);
+        return FloatObject.valueOf(this, value);
     }
 
     public LargeIntegerObject asLargeInteger(final BigInteger i) {
