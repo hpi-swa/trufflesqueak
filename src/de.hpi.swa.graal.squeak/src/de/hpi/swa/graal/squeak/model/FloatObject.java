@@ -30,17 +30,13 @@ public final class FloatObject extends AbstractSqueakObject {
         this.doubleValue = doubleValue;
     }
 
-    private FloatObject(final SqueakImageContext image, final long hash, final int high, final int low) {
-        super(image, hash, image.floatClass);
-        setWords(high, low);
-    }
-
-    public static FloatObject newFromChunkWords(final SqueakImageContext image, final long hash, final int[] ints) {
-        return new FloatObject(image, hash, ints[1], ints[0]);
-    }
-
     public static FloatObject valueOf(final SqueakImageContext image, final double value) {
         return new FloatObject(image, value);
+    }
+
+    public static double newFromChunkWords(final int[] ints) {
+        assert ints.length == 2 : "Unexpected number of int values for double conversion";
+        return Double.longBitsToDouble(Integer.toUnsignedLong(ints[1]) << 32 | Integer.toUnsignedLong(ints[0]));
     }
 
     public long getHigh() {

@@ -100,7 +100,7 @@ public final class SqueakImageChunk {
                 object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
                 if (getSqClass() == image.floatClass) {
-                    object = FloatObject.newFromChunkWords(image, hash, getInts());
+                    object = FloatObject.newFromChunkWords(getInts());
                 } else {
                     object = NativeObject.newNativeInts(this);
                 }
