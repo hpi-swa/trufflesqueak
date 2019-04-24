@@ -691,7 +691,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())", "functions.hasMemberReadSideEffects(receiver, member.asString())"}, limit = "2")
         protected final NativeObject doReadMemberWithSideEffects(final Object receiver, final NativeObject member,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.wrap("[side-effect]");
+            return method.image.asByteString("[side-effect]");
         }
     }
 
