@@ -73,7 +73,7 @@ public final class SqueakMouse extends MouseInputAdapter {
 
         display.buttons = buttons | display.recordModifiers(e);
         if (display.usesEventQueue) {
-            display.addEvent(EVENT_TYPE.MOUSE, e.getX(), e.getY(), display.buttons & MOUSE.ALL, display.buttons >> 3);
+            display.addEvent(EVENT_TYPE.MOUSE, e.getX() * 2, e.getY() * 2, display.buttons & MOUSE.ALL, display.buttons >> 3);
         }
     }
 

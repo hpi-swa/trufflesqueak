@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.io;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -148,15 +149,19 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                 case 32: // use words directly
                     final int[] words = bitmap.getIntStorage();
                     assert words.length / width / height == 1;
-                    final int drawWidth = Math.min(width, frame.getWidth());
-                    final int drawHeight = Math.min(height, frame.getHeight());
+                    final int drawWidth = Math.min(width, frame.getWidth() * 2);
+                    final int drawHeight = Math.min(height, frame.getHeight() * 2);
                     bufferedImage.setRGB(0, 0, drawWidth, drawHeight, words, 0, width);
                     break;
                 default:
                     throw SqueakException.create("Unsupported form depth:",  depth);
             }
             //@formatter:on
-            g.drawImage(bufferedImage, 0, 0, null);
+            final Graphics2D g2 = (Graphics2D) g;
+            g2.scale(0.5, 0.5);
+            g2.drawImage(bufferedImage, 0, 0, null);
+            g2.scale(1.0, 1.0);
+            g2.dispose();
         }
 
         private int[] decodeColors() {
@@ -223,7 +228,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @TruffleBoundary
     public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
         if (left < right && top < bottom && !deferUpdates && destForm.isDisplay()) {
-            canvas.paintImmediately(left, top, right - left, bottom - top);
+            canvas.paintImmediately(left / 2, top / 2, (right - left) / 2, (bottom - top) / 2);
         }
     }
 
@@ -238,9 +243,9 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
          * expensive but avoids strange visual artifacts.
          */
         if (hasVisibleHardwareCursor) {
-            canvas.repaint(0, left, top, right - left, bottom - top);
+            canvas.repaint(0, left / 2, top / 2, (right - left) / 2, (bottom - top) / 2);
         } else {
-            canvas.paintImmediately(left, top, right - left, bottom - top);
+            canvas.paintImmediately(left / 2, top / 2, (right - left) / 2, (bottom - top) / 2);
         }
     }
 
@@ -300,7 +305,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.getImagePath() + ")");
         if (!frame.isVisible()) {
             final DisplayPoint lastWindowSize = image.flags.getLastWindowSize();
-            frame.getContentPane().setPreferredSize(new Dimension(lastWindowSize.getWidth(), lastWindowSize.getHeight()));
+            frame.getContentPane().setPreferredSize(new Dimension(lastWindowSize.getWidth() / 2, lastWindowSize.getHeight() / 2));
             frame.pack();
             frame.setVisible(true);
             frame.requestFocus();

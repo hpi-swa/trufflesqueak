@@ -812,12 +812,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"hasVisibleDisplay(receiver)"})
         protected final PointersObject doSize(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.asPoint(method.image.getDisplay().getWindowSize());
+            final DisplayPoint point = method.image.getDisplay().getWindowSize();
+            return method.image.asPoint((long) point.getWidth() * 2, (long) point.getHeight() * 2);
         }
 
         @Specialization(guards = "!hasVisibleDisplay(receiver)")
         protected final PointersObject doSizeHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.asPoint(method.image.flags.getLastWindowSize());
+            final DisplayPoint point = method.image.flags.getLastWindowSize();
+            return method.image.asPoint((long) point.getWidth() * 2, (long) point.getHeight() * 2);
         }
 
         // guard helper to work around code generation issue.
