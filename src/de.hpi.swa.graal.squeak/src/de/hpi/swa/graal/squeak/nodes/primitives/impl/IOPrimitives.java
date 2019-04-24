@@ -333,12 +333,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 final long sourceX1;
                 final long sourceX2;
-                try {
-                    sourceX1 = (long) readNode.execute(scanXTable, glyphIndex);
-                    sourceX2 = (long) readNode.execute(scanXTable, glyphIndex + 1);
-                } catch (final ClassCastException e) {
-                    throw PrimitiveFailed.andTransferToInterpreter();
-                }
+                sourceX1 = (long) readNode.execute(scanXTable, glyphIndex);
+                sourceX2 = (long) readNode.execute(scanXTable, glyphIndex + 1);
                 final long nextDestX = scanDestX + sourceX2 - sourceX1;
                 if (nextDestX > rightX) {
                     storeStateInReceiver(receiver, scanDestX, scanLastIndex);
