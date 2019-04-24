@@ -8,10 +8,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakArithmeticTypes;
 import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers.PrimDigitBitShiftMagnitudeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -459,9 +459,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return a == b ? method.image.sqTrue : method.image.sqFalse;
         }
 
+        /*
+         * Quick return false if b is not a Number or Complex.
+         */
         @SuppressWarnings("unused")
-        @Specialization
-        protected final boolean doNil(final Object a, final NilObject b) {
+        @Specialization(guards = {"!isFloatObject(b)", "!isLargeIntegerObject(b)", "!isPointersObject(b)"})
+        protected final boolean doFail(final Object a, final AbstractSqueakObject b) {
             return method.image.sqFalse;
         }
     }

@@ -93,14 +93,14 @@ public final class MiscUtils {
     public static String getSystemProperties() {
         final Properties properties = System.getProperties();
         final StringBuilder sb = new StringBuilder();
-        sb.append("\n\n== System Properties =============================================>\n");
+        sb.append("\n\n== System Properties =================================>\n");
         final Object[] keys = properties.keySet().toArray();
         Arrays.sort(keys);
         for (final Object systemKey : keys) {
             final String key = (String) systemKey;
             sb.append(String.format("%s = %s\n", key, System.getProperty(key, "n/a")));
         }
-        sb.append("<= System Properties ===============================================\n\n");
+        sb.append("<= System Properties ===================================\n\n");
         return sb.toString();
     }
 
