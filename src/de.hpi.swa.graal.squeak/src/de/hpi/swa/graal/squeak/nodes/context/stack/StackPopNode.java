@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public final class StackPopNode extends SqueakNodeWithCode {
     @Child private FrameStackReadAndClearNode readAndClearNode;
 
-    protected StackPopNode(final CompiledCodeObject code) {
+    private StackPopNode(final CompiledCodeObject code) {
         super(code);
         readAndClearNode = FrameStackReadAndClearNode.create(code);
     }

@@ -10,9 +10,9 @@ import java.math.BigInteger;
 
 import org.junit.Test;
 
+import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.WrapToSqueakNode;
 
 public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test

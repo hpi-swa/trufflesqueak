@@ -22,9 +22,6 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 public final class JumpBytecodes {
 
     public static final class ConditionalJumpNode extends AbstractBytecodeNode {
-        public static final int FALSE_SUCCESSOR = 0;
-        public static final int TRUE_SUCCESSOR = 1;
-
         private final int offset;
         private final boolean isIfTrue;
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();

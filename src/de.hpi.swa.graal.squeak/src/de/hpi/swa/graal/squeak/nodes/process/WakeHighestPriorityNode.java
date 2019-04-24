@@ -19,7 +19,7 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
     private final BranchProfile errorProfile = BranchProfile.create();
     @Child private GetOrCreateContextNode contextNode;
 
-    protected WakeHighestPriorityNode(final CompiledCodeObject code) {
+    private WakeHighestPriorityNode(final CompiledCodeObject code) {
         super(code.image);
         contextNode = GetOrCreateContextNode.create(code);
     }

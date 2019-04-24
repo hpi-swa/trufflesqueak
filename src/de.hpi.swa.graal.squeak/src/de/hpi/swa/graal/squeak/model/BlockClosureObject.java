@@ -17,9 +17,9 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
-import de.hpi.swa.graal.squeak.nodes.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -34,11 +34,6 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private RootCallTarget callTarget;
 
     private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
-
-    public BlockClosureObject(final SqueakImageContext image, final long hash) {
-        super(image, hash, image.blockClosureClass);
-        copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
-    }
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
@@ -80,39 +75,6 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         pc = (long) pointers[BLOCK_CLOSURE.START_PC];
         numArgs = (long) pointers[BLOCK_CLOSURE.ARGUMENT_COUNT];
         copied = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FIRST_COPIED_VALUE, pointers.length);
-    }
-
-    public Object at0(final long longIndex) {
-        final int index = (int) longIndex;
-        switch (index) {
-            case BLOCK_CLOSURE.OUTER_CONTEXT:
-                return getOuterContext();
-            case BLOCK_CLOSURE.START_PC:
-                return getStartPC();
-            case BLOCK_CLOSURE.ARGUMENT_COUNT:
-                return getNumArgs();
-            default:
-                return getCopiedAt0(index);
-        }
-    }
-
-    public void atput0(final long longIndex, final Object obj) {
-        final int index = (int) longIndex;
-        switch (index) {
-            case BLOCK_CLOSURE.OUTER_CONTEXT:
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                outerContext = (ContextObject) obj;
-                break;
-            case BLOCK_CLOSURE.START_PC:
-                setStartPC((int) (long) obj);
-                break;
-            case BLOCK_CLOSURE.ARGUMENT_COUNT:
-                setNumArgs((int) (long) obj);
-                break;
-            default:
-                setCopiedAt0(index, obj);
-                break;
-        }
     }
 
     public AbstractSqueakObject getOuterContext() {

@@ -56,10 +56,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         squeakClass = klass;
     }
 
-    public static final boolean isInstance(final TruffleObject obj) {
-        return obj instanceof AbstractSqueakObject;
-    }
-
     public final void becomeOtherClass(final AbstractSqueakObject other) {
         final ClassObject otherSqClass = other.squeakClass;
         other.setSqueakClass(squeakClass);

@@ -48,7 +48,7 @@ public final class ContextObject extends AbstractSqueakObject {
         size = blockOrMethod.getSqueakContextSize();
     }
 
-    public ContextObject(final ContextObject original) {
+    private ContextObject(final ContextObject original) {
         super(original.image, original.image.methodContextClass);
         final CompiledCodeObject code = FrameAccess.getBlockOrMethod(original.truffleFrame);
         hasModifiedSender = original.hasModifiedSender();

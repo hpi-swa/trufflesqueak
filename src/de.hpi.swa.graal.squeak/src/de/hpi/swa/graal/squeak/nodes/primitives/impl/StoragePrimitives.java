@@ -658,6 +658,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Specialization
         protected static final long doBasicSize(final ClassObject receiver, @SuppressWarnings("unused") final NotProvided value) {
             return postProcessSize(receiver.getBasicInstanceSize());
         }

@@ -15,8 +15,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
-    public String[] fileList = new String[0];
-
     public static void updateFileList(final SqueakImageContext image, final String[] newList) {
         image.dropPluginFileList = newList;
     }

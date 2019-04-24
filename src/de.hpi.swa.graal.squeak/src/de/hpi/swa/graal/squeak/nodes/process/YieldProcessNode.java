@@ -14,7 +14,7 @@ public final class YieldProcessNode extends AbstractNodeWithCode {
     @Child private LinkProcessToListNode linkProcessToListNode;
     @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
 
-    protected YieldProcessNode(final CompiledCodeObject code) {
+    private YieldProcessNode(final CompiledCodeObject code) {
         super(code);
     }
 

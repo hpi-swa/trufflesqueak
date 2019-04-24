@@ -12,7 +12,7 @@ public final class StackPopNReversedNode extends AbstractNodeWithCode {
     @Child private FrameStackReadAndClearNode readAndClearNode;
     private final int numPop;
 
-    protected StackPopNReversedNode(final CompiledCodeObject code, final int numPop) {
+    private StackPopNReversedNode(final CompiledCodeObject code, final int numPop) {
         super(code);
         this.numPop = numPop;
         readAndClearNode = FrameStackReadAndClearNode.create(code);

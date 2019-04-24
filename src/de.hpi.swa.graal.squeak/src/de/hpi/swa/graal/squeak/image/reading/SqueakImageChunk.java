@@ -35,7 +35,7 @@ public final class SqueakImageChunk {
 
     public final SqueakImageContext image;
     private final SqueakImageReaderNode reader;
-    protected final int format;
+    private final int format;
     private final int hash;
     @CompilationFinal(dimensions = 1) private final byte[] data;
     private long[] words;

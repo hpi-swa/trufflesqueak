@@ -65,9 +65,9 @@ public final class PushBytecodes {
     }
 
     public static final class PushClosureNode extends AbstractPushNode {
-        protected final int blockSize;
-        protected final int numArgs;
-        protected final int numCopied;
+        private final int blockSize;
+        private final int numArgs;
+        private final int numCopied;
 
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private GetOrCreateContextNode getOrCreateContextNode;

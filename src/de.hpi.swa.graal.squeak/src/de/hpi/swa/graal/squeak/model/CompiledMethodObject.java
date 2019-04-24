@@ -26,17 +26,13 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         bytes = bc;
     }
 
-    public CompiledMethodObject(final int size, final SqueakImageContext image) {
+    private CompiledMethodObject(final int size, final SqueakImageContext image) {
         super(image, 0, 0);
         bytes = new byte[size];
     }
 
     private CompiledMethodObject(final CompiledMethodObject original) {
         super(original);
-    }
-
-    public static CompiledMethodObject newWithHash(final SqueakImageContext image, final int hash) {
-        return new CompiledMethodObject(image, hash);
     }
 
     public static CompiledMethodObject newOfSize(final SqueakImageContext image, final int size) {

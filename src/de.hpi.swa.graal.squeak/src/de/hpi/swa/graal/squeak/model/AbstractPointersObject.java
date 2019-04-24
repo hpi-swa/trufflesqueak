@@ -12,10 +12,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObject {
         super(image);
     }
 
-    protected AbstractPointersObject(final SqueakImageContext image, final int hash) {
-        super(image, hash);
-    }
-
     protected AbstractPointersObject(final SqueakImageContext image, final ClassObject sqClass) {
         super(image, sqClass);
     }

@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWithCode {
-    protected static ContextObject lastSeenContext;
+    private static ContextObject lastSeenContext;
 
     protected MaterializeContextOnMethodExitNode(final CompiledCodeObject code) {
         super(code);

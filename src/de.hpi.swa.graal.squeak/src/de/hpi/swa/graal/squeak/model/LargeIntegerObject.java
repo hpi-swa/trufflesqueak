@@ -47,7 +47,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         integer = BigInteger.ZERO;
     }
 
-    public LargeIntegerObject(final LargeIntegerObject original) {
+    private LargeIntegerObject(final LargeIntegerObject original) {
         super(original.image, original.getSqueakClass());
         exposedSize = original.exposedSize;
         integer = original.integer;
@@ -101,16 +101,6 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public byte[] getBytes() {
         return bigIntegerToBytes(integer);
-    }
-
-    @TruffleBoundary
-    public void replaceInternalValue(final long other) {
-        // If signums differ, negate other
-        integer = isNegative() == other < 0 ? BigInteger.valueOf(other) : BigInteger.valueOf(-other);
-    }
-
-    public void replaceInternalMinValue() {
-        integer = isNegative() ? LONG_MIN_OVERFLOW_RESULT.negate() : LONG_MIN_OVERFLOW_RESULT;
     }
 
     public void replaceInternalValue(final LargeIntegerObject other) {
@@ -425,11 +415,6 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary(transferToInterpreterOnException = false)
     public int compareTo(final LargeIntegerObject b) {
         return integer.compareTo(b.integer);
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public int compareTo(final BigInteger b) {
-        return integer.compareTo(b);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)

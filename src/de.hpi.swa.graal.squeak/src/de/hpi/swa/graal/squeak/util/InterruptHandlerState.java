@@ -18,14 +18,14 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 public final class InterruptHandlerState {
     private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
 
-    public final SqueakImageContext image;
+    private final SqueakImageContext image;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    protected final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
+    private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
     protected long nextWakeupTick = 0;
     protected boolean interruptPending = false;
     private boolean isActive = false;
-    protected boolean pendingFinalizationSignals = false;
+    private boolean pendingFinalizationSignals = false;
 
     /**
      * `shouldTrigger` is set to `true` by a dedicated thread. To guarantee atomicity, it would be
@@ -38,7 +38,7 @@ public final class InterruptHandlerState {
     @CompilationFinal private PointersObject interruptSemaphore;
     private PointersObject timerSemaphore;
 
-    protected InterruptHandlerState(final SqueakImageContext image) {
+    private InterruptHandlerState(final SqueakImageContext image) {
         this.image = image;
         if (image.options.disableInterruptHandler) {
             image.printToStdOut("Interrupt handler disabled...");

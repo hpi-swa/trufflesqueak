@@ -218,7 +218,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         ensureCorrectNumberOfStackSlots();
     }
 
-    public final void ensureCorrectNumberOfStackSlots() {
+    private void ensureCorrectNumberOfStackSlots() {
         final int requiredNumberOfStackSlots = getNumStackSlots();
         if (stackSlots == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

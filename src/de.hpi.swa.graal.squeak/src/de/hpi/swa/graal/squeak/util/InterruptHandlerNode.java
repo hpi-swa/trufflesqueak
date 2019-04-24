@@ -17,7 +17,7 @@ import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 @ImportStatic(SqueakImageContext.class)
 public abstract class InterruptHandlerNode extends Node {
     protected final SqueakImageContext image;
-    protected final InterruptHandlerState istate;
+    private final InterruptHandlerState istate;
 
     @Child private SignalSemaphoreNode signalSemaporeNode;
 

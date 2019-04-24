@@ -49,7 +49,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPri
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -748,11 +747,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
         }
 
-        protected static final boolean inBounds(final AbstractPointersObject target, final long start, final long stop, final AbstractPointersObject repl, final long replStart) {
-            return start >= 1 && start - 1 <= stop && stop + target.instsize() <= target.size() &&
-                            replStart >= 1 && stop - start + replStart + repl.instsize() <= repl.size();
-        }
-
         protected static final boolean inBounds(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize, final long replStart) {
             return start >= 1 && start - 1 <= stop && stop + rcvrInstSize <= rcvrSize && replStart >= 1 && stop - start + replStart + replInstSize <= replSize;
         }
@@ -766,11 +760,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         final long replStart) {
             // Specialization for Integer>>copy:to:
             return start == 1 && replStart == 1 && stop == replSize + replInstSize && stop == rcvrSize + rcvrInstSize;
-        }
-
-        protected static final boolean inLongBoundsEntirely(final int rcvrInstSize, final int rcvrSize, final long repl, final long start, final long stop, final long replStart) {
-            // Specialization for Integer>>copy:to:
-            return start == 1 && replStart == 1 && stop == rcvrSize + rcvrInstSize && ArrayConversionUtils.largeIntegerByteSizeForLong(repl) == stop;
         }
 
         private static void replaceGeneric(final Object[] dstArray, final long start, final long stop, final Object[] srcArray, final long replStart) {

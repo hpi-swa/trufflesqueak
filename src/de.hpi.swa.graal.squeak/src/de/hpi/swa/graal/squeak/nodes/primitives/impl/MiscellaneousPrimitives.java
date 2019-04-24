@@ -918,7 +918,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 573)
     protected abstract static class PrimListExternalModuleNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @CompilationFinal(dimensions = 1) protected String[] externalModuleNames;
+        @CompilationFinal(dimensions = 1) private String[] externalModuleNames;
 
         public PrimListExternalModuleNode(final CompiledMethodObject method) {
             super(method);

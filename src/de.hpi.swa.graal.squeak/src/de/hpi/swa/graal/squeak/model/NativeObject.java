@@ -26,13 +26,13 @@ public final class NativeObject extends AbstractSqueakObject {
         storage = new byte[0];
     }
 
-    protected NativeObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
+    private NativeObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
         super(image, classObject);
         assert storage != null;
         this.storage = storage;
     }
 
-    protected NativeObject(final SqueakImageContext image, final long hash, final ClassObject classObject, final Object storage) {
+    private NativeObject(final SqueakImageContext image, final long hash, final ClassObject classObject, final Object storage) {
         super(image, hash, classObject);
         assert storage != null;
         this.storage = storage;

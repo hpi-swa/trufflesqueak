@@ -12,7 +12,7 @@ public final class EmptyObject extends AbstractSqueakObject {
         super(image, hash, classObject);
     }
 
-    public EmptyObject(final EmptyObject original) {
+    private EmptyObject(final EmptyObject original) {
         super(original.image, original.getSqueakClass());
     }
 

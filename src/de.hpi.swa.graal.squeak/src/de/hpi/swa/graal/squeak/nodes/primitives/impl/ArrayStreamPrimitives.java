@@ -56,7 +56,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Child protected SqueakObjectInstSizeNode instSizeNode;
         @Child private SqueakObjectSizeNode sizeNode;
 
-        public AbstractBasicAtOrAtPutNode(final CompiledMethodObject method) {
+        protected AbstractBasicAtOrAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -193,7 +193,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 61)
     protected abstract static class PrimBasicAtPutNode extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitive {
-        @Child protected NativeAcceptsValueNode nativeAcceptsValueNode;
+        @Child private NativeAcceptsValueNode nativeAcceptsValueNode;
 
         protected PrimBasicAtPutNode(final CompiledMethodObject method) {
             super(method);

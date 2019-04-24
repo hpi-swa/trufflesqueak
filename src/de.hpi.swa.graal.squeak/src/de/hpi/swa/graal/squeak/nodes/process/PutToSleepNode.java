@@ -12,7 +12,7 @@ public final class PutToSleepNode extends AbstractNodeWithImage {
     @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
     @Child private LinkProcessToListNode linkProcessToList;
 
-    protected PutToSleepNode(final SqueakImageContext image) {
+    private PutToSleepNode(final SqueakImageContext image) {
         super(image);
         linkProcessToList = LinkProcessToListNode.create(image);
     }

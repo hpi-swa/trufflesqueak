@@ -196,11 +196,11 @@ public final class MiscellaneousBytecodes {
             }
         }
 
-        protected static byte variableIndex(final int i) {
+        private static byte variableIndex(final int i) {
             return (byte) (i & 63);
         }
 
-        protected static byte variableType(final int i) {
+        private static byte variableType(final int i) {
             return (byte) (i >> 6 & 3);
         }
     }

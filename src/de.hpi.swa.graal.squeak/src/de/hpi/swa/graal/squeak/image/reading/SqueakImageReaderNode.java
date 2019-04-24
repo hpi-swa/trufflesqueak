@@ -38,7 +38,7 @@ public final class SqueakImageReaderNode extends RootNode {
     private static final int HIDDEN_ROOTS_CHUNK_INDEX = 4;
 
     @CompilationFinal protected boolean is64bit = false;
-    @CompilationFinal protected int wordSize = 4;
+    @CompilationFinal private int wordSize = 4;
     @CompilationFinal protected SqueakImageChunk hiddenRootsChunk;
 
     private final BufferedInputStream stream;
