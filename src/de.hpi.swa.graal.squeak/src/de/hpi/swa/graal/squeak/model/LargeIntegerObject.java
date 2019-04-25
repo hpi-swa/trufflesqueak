@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 
@@ -553,7 +554,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean isNumber() {
-        return true;
+        return fitsInLong() || fitsInDouble();
     }
 
     @ExportMessage
@@ -577,13 +578,31 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @ExportMessage
+    @TruffleBoundary
     public boolean fitsInFloat() {
-        return bitLength() < Float.SIZE;
+        if (bitLength() <= 24) { // 24 = size of float mantissa + 1
+            return true;
+        } else {
+            final float floatValue = integer.floatValue();
+            if (!Float.isFinite(floatValue)) {
+                return false;
+            }
+            return new BigDecimal(floatValue).toBigIntegerExact().equals(integer);
+        }
     }
 
     @ExportMessage
+    @TruffleBoundary
     public boolean fitsInDouble() {
-        return bitLength() < Double.SIZE;
+        if (bitLength() <= 53) { // 53 = size of double mantissa + 1
+            return true;
+        } else {
+            final double doubleValue = doubleValue();
+            if (!Double.isFinite(doubleValue)) {
+                return false;
+            }
+            return new BigDecimal(doubleValue).toBigIntegerExact().equals(integer);
+        }
     }
 
     @ExportMessage
@@ -623,12 +642,22 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @ExportMessage
+    @TruffleBoundary
     public float asFloat() throws UnsupportedMessageException {
-        return asInt();
+        if (fitsInFloat()) {
+            return integer.floatValue();
+        } else {
+            throw UnsupportedMessageException.create();
+        }
     }
 
     @ExportMessage
+    @TruffleBoundary
     public double asDouble() throws UnsupportedMessageException {
-        return asLong();
+        if (fitsInDouble()) {
+            return doubleValue();
+        } else {
+            throw UnsupportedMessageException.create();
+        }
     }
 }
