@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -78,8 +79,8 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         copied = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FIRST_COPIED_VALUE, pointers.length);
     }
 
-    public AbstractSqueakObject getOuterContext() {
-        return outerContext == null ? image.nil : outerContext;
+    public TruffleObject getOuterContext() {
+        return NilObject.convert(outerContext);
     }
 
     public ContextObject getOuterContextOrNull() {

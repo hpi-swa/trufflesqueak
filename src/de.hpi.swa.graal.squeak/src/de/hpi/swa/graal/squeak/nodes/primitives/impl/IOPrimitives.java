@@ -446,13 +446,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr; // Nothing to do.
         }
 
-        @Specialization(guards = {"rcvr.isEmptyType()", "repl.isAbstractSqueakObjectType()",
-                        "inBounds(rcvr.instsize(), rcvr.getEmptyLength(), start, stop, repl.instsize(), repl.getAbstractSqueakObjectLength(), replStart)"})
-        protected static final ArrayObject doEmptyArrayToSqueakObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            rcvr.transitionFromEmptyToAbstractSqueakObjects();
-            return doArraysOfSqueakObjects(rcvr, start, stop, repl, replStart);
-        }
-
         @Specialization(guards = {"rcvr.isEmptyType()", "repl.isBooleanType()", "inBounds(rcvr.instsize(), rcvr.getEmptyLength(), start, stop, repl.instsize(), repl.getBooleanLength(), replStart)"})
         protected static final ArrayObject doEmptyArrayToBooleans(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromEmptyToBooleans();
@@ -488,21 +481,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final ArrayObject doEmptyArrayToObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromEmptyToObjects();
             return doArraysOfObjects(rcvr, start, stop, repl, replStart);
-        }
-
-        @Specialization(guards = {"rcvr.isAbstractSqueakObjectType()", "repl.isAbstractSqueakObjectType()",
-                        "inBounds(rcvr.instsize(), rcvr.getAbstractSqueakObjectLength(), start, stop, repl.instsize(), repl.getAbstractSqueakObjectLength(), replStart)"})
-        protected static final ArrayObject doArraysOfSqueakObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            System.arraycopy(repl.getAbstractSqueakObjectStorage(), (int) replStart - 1, rcvr.getAbstractSqueakObjectStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isAbstractSqueakObjectType()", "!repl.isAbstractSqueakObjectType()", "inBounds(rcvr, start, stop, repl, replStart)"})
-        protected static final ArrayObject doArraysOfSqueakObjectsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                        @Shared("arrayObjectToObjectArrayNode") @Cached final ArrayObjectToObjectArrayNode arrayObjectToObjectArrayNode) {
-            rcvr.transitionFromAbstractSqueakObjectsToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, arrayObjectToObjectArrayNode.execute(repl), replStart);
-            return rcvr;
         }
 
         @Specialization(guards = {"rcvr.isBooleanType()", "repl.isBooleanType()",
@@ -596,11 +574,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return doArrayOfSpecializedPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"rcvr.isAbstractSqueakObjectType()", "inBounds(rcvr.instsize(), rcvr.getAbstractSqueakObjectLength(), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected final ArrayObject doArrayOfSqueakObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
-            return doArrayOfSpecializedPointers(rcvr, start, stop, repl, replStart);
-        }
-
         @Specialization(guards = {"rcvr.isBooleanType()", "inBounds(rcvr.instsize(), rcvr.getBooleanLength(), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected final ArrayObject doArrayOfBooleansPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             return doArrayOfSpecializedPointers(rcvr, start, stop, repl, replStart);
@@ -636,11 +609,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"rcvr.isEmptyType()", "inBounds(rcvr.instsize(), rcvr.getEmptyLength(), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected final ArrayObject doEmptyArrayWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
-            return doArrayOfSpecializedWeakPointers(rcvr, start, stop, repl, replStart);
-        }
-
-        @Specialization(guards = {"rcvr.isAbstractSqueakObjectType()", "inBounds(rcvr.instsize(), rcvr.getAbstractSqueakObjectLength(), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected final ArrayObject doArrayOfSqueakObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             return doArrayOfSpecializedWeakPointers(rcvr, start, stop, repl, replStart);
         }
 

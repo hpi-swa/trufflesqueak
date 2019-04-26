@@ -116,8 +116,8 @@ public final class ArrayUtils {
     }
 
     @TruffleBoundary
-    public static AbstractSqueakObject[] toArray(final AbstractCollection<AbstractSqueakObject> list) {
-        return list.toArray(new AbstractSqueakObject[list.size()]);
+    public static Object[] toArray(final AbstractCollection<AbstractSqueakObject> list) {
+        return list.toArray(new Object[list.size()]);
     }
 
     @TruffleBoundary

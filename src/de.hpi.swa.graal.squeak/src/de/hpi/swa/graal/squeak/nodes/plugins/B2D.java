@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -9,6 +10,7 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
@@ -3477,7 +3479,7 @@ public final class B2D {
     /* Load the bitmap fill. */
 
     /* BalloonEnginePlugin>>#loadBitmapFill:colormap:tile:from:along:normal:xIndex: */
-    private static long loadBitmapFillcolormaptilefromalongnormalxIndex(final PointersObject formOop, final AbstractSqueakObject cmOop, final boolean tileFlag, final long xIndex) {
+    private static long loadBitmapFillcolormaptilefromalongnormalxIndex(final PointersObject formOop, final TruffleObject cmOop, final boolean tileFlag, final long xIndex) {
         final NativeObject bmBits;
         final long bmBitsSize;
         final long bmDepth;
@@ -3489,11 +3491,11 @@ public final class B2D {
         final long cmSize;
         final long ppw;
 
-        if (cmOop.isNil()) {
+        if (cmOop == NilObject.SINGLETON) {
             cmSize = 0;
             cmBits = null;
         } else {
-            if (!cmOop.isBitmap()) {
+            if (!((AbstractSqueakObject) cmOop).isBitmap()) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
             cmBits = ((NativeObject) cmOop).getIntStorage();
@@ -4127,8 +4129,8 @@ public final class B2D {
      */
 
     /* BalloonEngineBase>>#loadTransformFrom:into:length: */
-    private static boolean loadTransformFromintolength(final AbstractSqueakObject transformOop, final int destPtr, final long n) {
-        if (transformOop.isNil()) {
+    private static boolean loadTransformFromintolength(final TruffleObject transformOop, final int destPtr, final long n) {
+        if (transformOop == NilObject.SINGLETON) {
             return false;
         }
 
@@ -7468,19 +7470,13 @@ public final class B2D {
 
     private static PointersObject fetchPointerofObject(final int index, final ArrayObject object) {
         // TODO: Use node for ArrayObject here instead.
-        if (object.isAbstractSqueakObjectType()) {
-            return (PointersObject) object.getAbstractSqueakObjectStorage()[index];
-        } else {
-            return (PointersObject) object.getObjectStorage()[index];
-        }
+        return (PointersObject) object.getObjectStorage()[index];
     }
 
     private static int slotSizeOf(final ArrayObject object) {
         // TODO: Use node for ArrayObject here instead.
         if (object.isEmptyType()) {
             return object.getEmptyLength();
-        } else if (object.isAbstractSqueakObjectType()) {
-            return object.getAbstractSqueakObjectLength();
         } else {
             return object.getObjectLength();
         }

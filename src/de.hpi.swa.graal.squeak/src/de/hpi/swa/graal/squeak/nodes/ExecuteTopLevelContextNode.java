@@ -6,6 +6,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
@@ -31,14 +32,13 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private final boolean needsShutdown;
 
     @Child private ExecuteContextNode executeContextNode;
-    @Child private UnwindContextChainNode unwindContextChainNode;
+    @Child private UnwindContextChainNode unwindContextChainNode = UnwindContextChainNode.create();
 
     private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean needsShutdown) {
         super(language, code.getFrameDescriptor());
         image = code.image;
         initialContext = context;
         this.needsShutdown = needsShutdown;
-        unwindContextChainNode = UnwindContextChainNode.create(image);
     }
 
     public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean needsShutdown) {
@@ -69,7 +69,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         while (true) {
             CompilerDirectives.transferToInterpreter();
             assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
-            final AbstractSqueakObject sender = activeContext.getSender();
+            final TruffleObject sender = activeContext.getSender();
             assert sender == image.nil || ((ContextObject) sender).hasTruffleFrame();
             try {
                 MaterializeContextOnMethodExitNode.reset();

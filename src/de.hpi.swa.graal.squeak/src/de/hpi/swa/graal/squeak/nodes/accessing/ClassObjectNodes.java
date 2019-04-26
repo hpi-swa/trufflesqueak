@@ -5,9 +5,9 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -30,7 +30,7 @@ public final class ClassObjectNodes {
         public abstract Object execute(ClassObject obj, long index);
 
         @Specialization(guards = "isSuperclassIndex(index)")
-        protected static final AbstractSqueakObject doClassSuperclass(final ClassObject obj, @SuppressWarnings("unused") final long index) {
+        protected static final TruffleObject doClassSuperclass(final ClassObject obj, @SuppressWarnings("unused") final long index) {
             return obj.getSuperclass();
         }
 
@@ -61,12 +61,12 @@ public final class ClassObjectNodes {
         }
 
         @Specialization(guards = "isInstanceVariablesIndex(index)")
-        protected static final AbstractSqueakObject doClassInstanceVariables(final ClassObject obj, @SuppressWarnings("unused") final long index) {
+        protected static final TruffleObject doClassInstanceVariables(final ClassObject obj, @SuppressWarnings("unused") final long index) {
             return obj.getInstanceVariables();
         }
 
         @Specialization(guards = "isOrganizationIndex(index)")
-        protected static final AbstractSqueakObject doClassOrganization(final ClassObject obj, @SuppressWarnings("unused") final long index) {
+        protected static final TruffleObject doClassOrganization(final ClassObject obj, @SuppressWarnings("unused") final long index) {
             return obj.getOrganization();
         }
 

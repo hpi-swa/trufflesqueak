@@ -63,7 +63,7 @@ public final class SqueakImageContext {
     public final boolean sqFalse = false;
     public final boolean sqTrue = true;
     // Special objects
-    public final NilObject nil = new NilObject(this);
+    public final NilObject nil = NilObject.SINGLETON;
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
     public final PointersObject schedulerAssociation = new PointersObject(this);
@@ -366,8 +366,8 @@ public final class SqueakImageContext {
         return (PointersObject) getScheduler().at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
-    public void setSemaphore(final long index, final AbstractSqueakObject semaphore) {
-        assert semaphore.isSemaphore() || semaphore == nil;
+    public void setSemaphore(final long index, final TruffleObject semaphore) {
+        assert semaphore == nil || ((AbstractSqueakObject) semaphore).isSemaphore();
         specialObjectsArray.atput0Object(index, semaphore);
     }
 
@@ -447,10 +447,6 @@ public final class SqueakImageContext {
     /*
      * INSTANCE CREATION
      */
-
-    public ArrayObject asArrayOfAbstractSqueakObjects(final AbstractSqueakObject... elements) {
-        return ArrayObject.createWithStorage(this, arrayClass, elements);
-    }
 
     public ArrayObject asArrayOfLongs(final long... elements) {
         return ArrayObject.createWithStorage(this, arrayClass, elements);

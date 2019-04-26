@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -60,9 +61,7 @@ public final class ArrayObject extends AbstractSqueakObject {
 
     public Object at0(final long index) {
         CompilerAsserts.neverPartOfCompilation("Slow operation, not meant to be used on fast path");
-        if (isAbstractSqueakObjectType()) {
-            return at0AbstractSqueakObject(index);
-        } else if (isBooleanType()) {
+        if (isBooleanType()) {
             return at0Boolean(index);
         } else if (isCharType()) {
             return at0Char(index);
@@ -75,11 +74,6 @@ public final class ArrayObject extends AbstractSqueakObject {
         } else {
             return at0Object(index);
         }
-    }
-
-    public AbstractSqueakObject at0AbstractSqueakObject(final long index) {
-        final AbstractSqueakObject value = getAbstractSqueakObjectStorage()[(int) index];
-        return value == null ? image.nil : value;
     }
 
     public Object at0Boolean(final long index) {
@@ -109,7 +103,7 @@ public final class ArrayObject extends AbstractSqueakObject {
         return value == LONG_NIL_TAG ? image.nil : value;
     }
 
-    public AbstractSqueakObject at0NativeObject(final long index) {
+    public TruffleObject at0NativeObject(final long index) {
         final NativeObject value = getNativeObjectStorage()[(int) index];
         return value == null ? image.nil : value;
     }
@@ -167,10 +161,6 @@ public final class ArrayObject extends AbstractSqueakObject {
         atput0Object((int) index, value);
     }
 
-    public void atput0SqueakObject(final long index, final AbstractSqueakObject value) {
-        getAbstractSqueakObjectStorage()[(int) index] = value;
-    }
-
     public void atputNil0Boolean(final long index) {
         getBooleanStorage()[(int) index] = BOOLEAN_NIL_TAG;
     }
@@ -196,15 +186,6 @@ public final class ArrayObject extends AbstractSqueakObject {
         final Object otherStorage = other.storage;
         other.setStorage(storage);
         setStorage(otherStorage);
-    }
-
-    public int getAbstractSqueakObjectLength() {
-        return getAbstractSqueakObjectStorage().length;
-    }
-
-    public AbstractSqueakObject[] getAbstractSqueakObjectStorage() {
-        assert isAbstractSqueakObjectType();
-        return (AbstractSqueakObject[]) storage;
     }
 
     public int getBooleanLength() {
@@ -288,10 +269,6 @@ public final class ArrayObject extends AbstractSqueakObject {
         throw SqueakException.create("Use ArrayObjectSizeNode");
     }
 
-    public boolean isAbstractSqueakObjectType() {
-        return storage.getClass() == AbstractSqueakObject[].class;
-    }
-
     public boolean isBooleanType() {
         return storage.getClass() == byte[].class;
     }
@@ -321,7 +298,7 @@ public final class ArrayObject extends AbstractSqueakObject {
     }
 
     public boolean isTraceableObjectType() {
-        return isAbstractSqueakObjectType() || isObjectType();
+        return isObjectType();
     }
 
     public void setStorage(final Object newStorage) {
@@ -341,12 +318,6 @@ public final class ArrayObject extends AbstractSqueakObject {
                 writeNode.execute(this, i, values[i]);
             }
         }
-    }
-
-    public void transitionFromAbstractSqueakObjectsToObjects() {
-        LOG.finer("transition from AbstractSqueakObjects to Objects");
-        final AbstractSqueakObject[] abstractSqueakObjects = getAbstractSqueakObjectStorage();
-        storage = Arrays.copyOf(abstractSqueakObjects, abstractSqueakObjects.length, Object[].class);
     }
 
     public void transitionFromBooleansToObjects() {
@@ -385,12 +356,6 @@ public final class ArrayObject extends AbstractSqueakObject {
             objects[i] = doubles[i] == DOUBLE_NIL_TAG ? image.nil : doubles[i];
         }
         storage = objects;
-    }
-
-    public void transitionFromEmptyToAbstractSqueakObjects() {
-        final AbstractSqueakObject[] squeakObjects = new AbstractSqueakObject[getEmptyStorage()];
-        Arrays.fill(squeakObjects, image.nil);
-        storage = squeakObjects;
     }
 
     public void transitionFromEmptyToBooleans() {

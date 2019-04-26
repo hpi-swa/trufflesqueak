@@ -8,7 +8,6 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -82,10 +81,10 @@ public abstract class InterruptHandlerNode extends Node {
     private void checkSemaphoresToSignal(final VirtualFrame frame) {
         if (istate.hasSemaphoresToSignal()) {
             assert !image.externalObjectsArray.isEmptyType();
-            final AbstractSqueakObject[] semaphores = image.externalObjectsArray.getAbstractSqueakObjectStorage();
+            final Object[] semaphores = image.externalObjectsArray.getObjectStorage();
             while (istate.hasSemaphoresToSignal()) {
                 final int semaIndex = istate.nextSemaphoreToSignal();
-                final AbstractSqueakObject semaphore = semaphores[semaIndex - 1];
+                final Object semaphore = semaphores[semaIndex - 1];
                 signalSemaporeIfNotNil(frame, semaphore);
             }
         }

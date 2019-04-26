@@ -1,11 +1,13 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -39,11 +41,6 @@ public final class ArrayObjectNodes {
             throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
         }
 
-        @Specialization(guards = "obj.isAbstractSqueakObjectType()")
-        protected static final AbstractSqueakObject doArrayOfSqueakObjects(final ArrayObject obj, final long index) {
-            return obj.at0AbstractSqueakObject(index);
-        }
-
         @Specialization(guards = "obj.isBooleanType()")
         protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index) {
             return obj.at0Boolean(index);
@@ -65,7 +62,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final AbstractSqueakObject doArrayOfNativeObjects(final ArrayObject obj, final long index) {
+        protected static final TruffleObject doArrayOfNativeObjects(final ArrayObject obj, final long index) {
             return obj.at0NativeObject(index);
         }
 
@@ -83,11 +80,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isEmptyType()")
         protected static final ArrayObject doEmptyArray(final ArrayObject obj) {
             return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getEmptyStorage());
-        }
-
-        @Specialization(guards = "obj.isAbstractSqueakObjectType()")
-        protected static final ArrayObject doArrayOfSqueakObjects(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getAbstractSqueakObjectStorage().clone());
         }
 
         @Specialization(guards = "obj.isBooleanType()")
@@ -133,11 +125,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isEmptyType()")
         protected static final int doEmptyArrayObject(final ArrayObject obj) {
             return obj.getEmptyStorage();
-        }
-
-        @Specialization(guards = "obj.isAbstractSqueakObjectType()")
-        protected static final int doArrayObjectOfSqueakObjects(final ArrayObject obj) {
-            return obj.getAbstractSqueakObjectLength();
         }
 
         @Specialization(guards = "obj.isBooleanType()")
@@ -187,11 +174,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isEmptyType()")
         protected static final Object[] doEmptyArray(final ArrayObject obj) {
             return ArrayUtils.withAll(obj.getEmptyStorage(), obj.getNil());
-        }
-
-        @Specialization(guards = "obj.isAbstractSqueakObjectType()")
-        protected static final Object[] doArrayOfSqueakObjects(final ArrayObject obj) {
-            return obj.getAbstractSqueakObjectStorage();
         }
 
         @Specialization(guards = "obj.isBooleanType()")
@@ -294,13 +276,9 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final Object[] doEmptyArray(final ArrayObject obj) {
-            obj.transitionFromEmptyToAbstractSqueakObjects();
-            return doArrayOfSqueakObjects(obj);
-        }
-
-        @Specialization(guards = "obj.isAbstractSqueakObjectType()")
-        protected static final Object[] doArrayOfSqueakObjects(final ArrayObject obj) {
-            return obj.getAbstractSqueakObjectStorage();
+            final Object[] nilArray = new Object[obj.getEmptyLength()];
+            Arrays.fill(nilArray, NilObject.SINGLETON);
+            return nilArray;
         }
 
         @Specialization(guards = "obj.isBooleanType()")
@@ -363,13 +341,6 @@ public final class ArrayObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()", "!isNativeObject(value)"})
-        protected static final void doEmptyArray(final ArrayObject obj, final long index, final AbstractSqueakObject value) {
-            obj.transitionFromEmptyToAbstractSqueakObjects();
-            doArrayOfSqueakObjects(obj, index, value);
-        }
-
-        @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
         protected static final void doEmptyArrayToBoolean(final ArrayObject obj, final long index, final boolean value) {
             obj.transitionFromEmptyToBooleans();
@@ -398,8 +369,7 @@ public final class ArrayObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()", "!isAbstractSqueakObject(value)", "!isBoolean(value)", "!isCharacter(value)", "!isLong(value)",
-                        "!isDouble(value)"})
+        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()", "!isBoolean(value)", "!isCharacter(value)", "!isLong(value)", "!isDouble(value)"})
         protected static final void doEmptyArrayToObject(final ArrayObject obj, final long index, final Object value) {
             obj.transitionFromEmptyToObjects();
             doArrayOfObjects(obj, index, value);
@@ -409,17 +379,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = {"obj.isEmptyType()", "index >= obj.getEmptyStorage()"})
         protected static final void doEmptyArrayOutOfBounds(final ArrayObject obj, final long index, final Object value) {
             throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
-        }
-
-        @Specialization(guards = "obj.isAbstractSqueakObjectType()")
-        protected static final void doArrayOfSqueakObjects(final ArrayObject obj, final long index, final AbstractSqueakObject value) {
-            obj.atput0SqueakObject(index, value);
-        }
-
-        @Specialization(guards = {"obj.isAbstractSqueakObjectType()", "!isAbstractSqueakObject(value)"})
-        protected static final void doArrayOfSqueakObjects(final ArrayObject obj, final long index, final Object value) {
-            obj.transitionFromAbstractSqueakObjectsToObjects();
-            doArrayOfObjects(obj, index, value);
         }
 
         @Specialization(guards = "obj.isBooleanType()")

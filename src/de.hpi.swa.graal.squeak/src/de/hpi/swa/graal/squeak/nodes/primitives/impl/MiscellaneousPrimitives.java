@@ -18,6 +18,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -123,7 +124,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "!classObject.isImmediateClassType()")
-        protected final AbstractSqueakObject doSomeInstance(final ClassObject classObject) {
+        protected final TruffleObject doSomeInstance(final ClassObject classObject) {
             try {
                 return objectGraphNode.executeSomeInstanceOf(classObject);
             } catch (final IndexOutOfBoundsException e) {
@@ -216,11 +217,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = {"receiver.isEmptyType()", "receiver.getEmptyStorage() > 0"})
         protected final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
             return thang == method.image.nil ? method.image.sqTrue : method.image.sqFalse;
-        }
-
-        @Specialization(guards = "receiver.isAbstractSqueakObjectType()")
-        protected final boolean doArrayOfSqueakObjects(final ArrayObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getAbstractSqueakObjectStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
@@ -662,12 +658,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"!classObject.isNilClass()", "!classObject.isImmediateClassType()"})
         protected final ArrayObject allInstances(final ClassObject classObject) {
-            return method.image.asArrayOfAbstractSqueakObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstancesOf(classObject)));
+            return method.image.asArrayOfObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstancesOf(classObject)));
         }
 
         @Specialization(guards = "classObject.isNilClass()")
         protected final ArrayObject doNil(@SuppressWarnings("unused") final ClassObject classObject) {
-            return method.image.asArrayOfAbstractSqueakObjects(method.image.nil);
+            return method.image.asArrayOfObjects(method.image.nil);
         }
     }
 

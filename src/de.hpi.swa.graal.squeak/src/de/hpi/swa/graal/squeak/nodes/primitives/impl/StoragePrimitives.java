@@ -17,6 +17,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -371,6 +372,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Specialization
+        protected static final long doNil(@SuppressWarnings("unused") final NilObject receiver) {
+            return NilObject.getSqueakHash();
+        }
+
         @Specialization(guards = "obj == method.image.sqFalse")
         protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean obj) {
             return 2L;
@@ -429,7 +435,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!sqObject.getSqueakClass().isNilClass()", "!sqObject.getSqueakClass().isImmediateClassType()"})
-        protected final AbstractSqueakObject doNext(final AbstractSqueakObject sqObject) {
+        protected final TruffleObject doNext(final AbstractSqueakObject sqObject) {
             final AbstractCollection<AbstractSqueakObject> instances = objectGraphNode.executeAllInstancesOf(sqObject.getSqueakClass());
             boolean foundMyself = false;
             for (final AbstractSqueakObject instance : instances) {
@@ -646,7 +652,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final ArrayObject doAll(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.asArrayOfAbstractSqueakObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
+            return method.image.asArrayOfObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
         }
     }
 

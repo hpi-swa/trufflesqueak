@@ -12,6 +12,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -94,7 +95,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    public AbstractSqueakObject executeSomeInstanceOf(final ClassObject classObj) {
+    public TruffleObject executeSomeInstanceOf(final ClassObject classObj) {
         assert classObj != image.nilClass;
         final HashSet<AbstractSqueakObject> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
         final ArrayDeque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
@@ -198,10 +199,6 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
             final ArrayObject array = (ArrayObject) object;
             if (array.isObjectType()) {
                 for (final Object value : array.getObjectStorage()) {
-                    addIfAbstractSqueakObject(pending, value);
-                }
-            } else if (array.isAbstractSqueakObjectType()) {
-                for (final Object value : array.getAbstractSqueakObjectStorage()) {
                     addIfAbstractSqueakObject(pending, value);
                 }
             }

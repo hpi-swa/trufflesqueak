@@ -2,30 +2,24 @@ package de.hpi.swa.graal.squeak.nodes.context;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 
-public abstract class UnwindContextChainNode extends AbstractNodeWithImage {
-
-    protected UnwindContextChainNode(final SqueakImageContext image) {
-        super(image);
+public abstract class UnwindContextChainNode extends AbstractNode {
+    public static UnwindContextChainNode create() {
+        return UnwindContextChainNodeGen.create();
     }
 
-    public static UnwindContextChainNode create(final SqueakImageContext image) {
-        return UnwindContextChainNodeGen.create(image);
-    }
-
-    public abstract ContextObject executeUnwind(AbstractSqueakObject startContext, AbstractSqueakObject targetContext, Object returnValue);
+    public abstract ContextObject executeUnwind(Object startContext, Object targetContext, Object returnValue);
 
     @SuppressWarnings("unused")
     @Specialization
-    protected static final ContextObject doTopLevelReturn(final NilObject startContext, final AbstractSqueakObject targetContext, final Object returnValue) {
+    protected static final ContextObject doTopLevelReturn(final NilObject startContext, final Object targetContext, final Object returnValue) {
         throw new TopLevelReturn(returnValue);
     }
 
@@ -45,9 +39,9 @@ public abstract class UnwindContextChainNode extends AbstractNodeWithImage {
     protected static final ContextObject doUnwind(final ContextObject startContext, final ContextObject targetContext, final Object returnValue) {
         ContextObject context = startContext;
         while (context != targetContext) {
-            final AbstractSqueakObject sender = context.getSender();
-            if (sender.isNil()) {
-                sender.image.printToStdErr("Unwind error: sender of", context, "is nil, unwinding towards", targetContext, "with return value:", returnValue);
+            final TruffleObject sender = context.getSender();
+            if (sender == NilObject.SINGLETON) {
+                context.image.printToStdErr("Unwind error: sender of", context, "is nil, unwinding towards", targetContext, "with return value:", returnValue);
                 break;
             }
             context.terminate();
@@ -57,16 +51,8 @@ public abstract class UnwindContextChainNode extends AbstractNodeWithImage {
         return targetContext;
     }
 
-    @Specialization
-    protected final ContextObject doFail(final AbstractSqueakObject startContext, final ContextObject targetContext, final Object returnValue) {
-        image.printToStdErr("Unable to unwind context chain (start: " + startContext + "; target: " + targetContext + ")");
-        image.printSqStackTrace();
-        targetContext.push(returnValue);
-        return targetContext;
-    }
-
     @Fallback
-    protected static final ContextObject doFail(final AbstractSqueakObject startContext, final AbstractSqueakObject targetContext, final Object returnValue) {
+    protected static final ContextObject doFail(final Object startContext, final Object targetContext, final Object returnValue) {
         throw SqueakException.create("Failed to unwind context chain (start:", startContext, ", target:", targetContext, ", returnValue:", returnValue, ")");
     }
 }

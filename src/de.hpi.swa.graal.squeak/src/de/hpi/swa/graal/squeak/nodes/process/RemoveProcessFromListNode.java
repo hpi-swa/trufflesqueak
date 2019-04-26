@@ -63,7 +63,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!identical(process, first)")
+    @Specialization
     protected static final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final NilObject first, final AbstractSqueakObject last) {
         throw new PrimitiveFailed(); // TODO: make sure this is needed (and make it better).
     }

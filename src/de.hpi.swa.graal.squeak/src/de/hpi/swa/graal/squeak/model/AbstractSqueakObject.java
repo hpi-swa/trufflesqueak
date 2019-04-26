@@ -122,10 +122,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return this == image.metaClass;
     }
 
-    public final boolean isNil() {
-        return this == image.nil;
-    }
-
     public final boolean isPinned() {
         return (squeakHash >> PINNED_BIT_SHIFT & 1) == 1;
     }

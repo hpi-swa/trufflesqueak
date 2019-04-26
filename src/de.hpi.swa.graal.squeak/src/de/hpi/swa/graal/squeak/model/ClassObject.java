@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -221,7 +222,7 @@ public final class ClassObject extends AbstractSqueakObject {
         return index >= CLASS_DESCRIPTION.SIZE;
     }
 
-    public AbstractSqueakObject getSuperclass() {
+    public TruffleObject getSuperclass() {
         return superclass == null ? image.nil : superclass;
     }
 
@@ -241,7 +242,7 @@ public final class ClassObject extends AbstractSqueakObject {
         return instanceVariables != null;
     }
 
-    public AbstractSqueakObject getInstanceVariables() {
+    public TruffleObject getInstanceVariables() {
         return hasInstanceVariables() ? instanceVariables : image.nil;
     }
 
@@ -253,8 +254,8 @@ public final class ClassObject extends AbstractSqueakObject {
         this.instanceVariables = instanceVariables;
     }
 
-    public AbstractSqueakObject getOrganization() {
-        return organization == null ? image.nil : organization;
+    public TruffleObject getOrganization() {
+        return NilObject.convert(organization);
     }
 
     public PointersObject getOrganizationOrNull() {

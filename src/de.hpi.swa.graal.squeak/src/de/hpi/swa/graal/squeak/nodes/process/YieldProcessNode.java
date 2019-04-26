@@ -26,7 +26,7 @@ public final class YieldProcessNode extends AbstractNodeWithCode {
         final PointersObject activeProcess = code.image.getActiveProcess();
         final long priority = (long) activeProcess.at0(PROCESS.PRIORITY);
         final ArrayObject processLists = (ArrayObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
-        final PointersObject processList = (PointersObject) processLists.at0AbstractSqueakObject(priority - 1);
+        final PointersObject processList = (PointersObject) processLists.at0Object(priority - 1);
         if (!processList.isEmptyList()) {
             getLinkProcessToListNode().executeLink(activeProcess, processList);
             getWakeHighestPriorityNode().executeWake(frame);

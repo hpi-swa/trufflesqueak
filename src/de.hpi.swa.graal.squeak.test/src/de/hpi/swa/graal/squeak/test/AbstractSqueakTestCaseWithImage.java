@@ -16,6 +16,7 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -144,7 +145,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void resetProcessLists() {
-        final AbstractSqueakObject[] lists = ((ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS)).getAbstractSqueakObjectStorage();
+        final Object[] lists = ((ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
             final PointersObject linkedList = (PointersObject) lists[i];
             final Object key = linkedList.at0(LINKED_LIST.FIRST_LINK);
@@ -205,7 +206,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         for (int i = 0; i < sizeNode.execute(array); i++) {
-            final AbstractSqueakObject value = (AbstractSqueakObject) at0Node.execute(array, i);
+            final TruffleObject value = (AbstractSqueakObject) at0Node.execute(array, i);
             assert value != image.nil;
             output.add(((PointersObject) value).at0(0) + suffix);
         }

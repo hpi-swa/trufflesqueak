@@ -1,11 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -24,7 +21,12 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
         return SqueakObjectInstSizeNodeGen.create();
     }
 
-    public abstract int execute(AbstractSqueakObject obj);
+    public abstract int execute(Object obj);
+
+    @Specialization
+    protected static final int doNil(@SuppressWarnings("unused") final NilObject obj) {
+        return NilObject.instsize();
+    }
 
     @Specialization
     protected static final int doArray(final ArrayObject obj) {
@@ -74,15 +76,5 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
     @Specialization
     protected static final int doLarge(final LargeIntegerObject obj) {
         return obj.instsize();
-    }
-
-    @Specialization
-    protected static final int doNil(final NilObject obj) {
-        return obj.instsize();
-    }
-
-    @Fallback
-    protected static final int doFail(final AbstractSqueakObject object) {
-        throw SqueakException.create("Unexpected value:", object);
     }
 }

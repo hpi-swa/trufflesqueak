@@ -5,6 +5,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
@@ -53,10 +54,10 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
     }
 
-    public AbstractSqueakObject penultimateLiteral() {
+    public TruffleObject penultimateLiteral() {
         final int index = numLiterals - 1;
         if (index > 0) {
-            return (AbstractSqueakObject) literals[index];
+            return (TruffleObject) literals[index];
         } else {
             return image.nil;
         }

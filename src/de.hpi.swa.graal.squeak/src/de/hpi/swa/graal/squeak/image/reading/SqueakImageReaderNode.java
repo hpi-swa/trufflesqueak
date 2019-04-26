@@ -363,7 +363,6 @@ public final class SqueakImageReaderNode extends RootNode {
 
         // also cache nil, true, and false classes
         specialObjectChunk(SPECIAL_OBJECT.NIL_OBJECT).getClassChunk().object = image.nilClass;
-        image.nil.setSqueakClass(image.nilClass);
         specialObjectChunk(SPECIAL_OBJECT.FALSE_OBJECT).getClassChunk().object = image.falseClass;
         specialObjectChunk(SPECIAL_OBJECT.TRUE_OBJECT).getClassChunk().object = image.trueClass;
 

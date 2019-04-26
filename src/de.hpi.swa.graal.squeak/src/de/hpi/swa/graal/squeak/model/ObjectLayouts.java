@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
 
@@ -81,8 +82,8 @@ public final class ObjectLayouts {
 
         public static String getClassComment(final ClassObject squeakClass) {
             CompilerAsserts.neverPartOfCompilation("For instrumentation access only.");
-            final AbstractSqueakObject organization = squeakClass.getOrganization();
-            if (organization.isNil()) {
+            final TruffleObject organization = squeakClass.getOrganization();
+            if (organization == NilObject.SINGLETON) {
                 return null;
             }
             final AbstractSqueakObject classComment = (AbstractSqueakObject) ((PointersObject) organization).at0(CLASS_ORGANIZER.CLASS_COMMENT);

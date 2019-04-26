@@ -12,8 +12,8 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.interop.TruffleObject;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -92,7 +92,7 @@ public final class FrameAccess {
         return (ContextObject) getSender(frame);
     }
 
-    public static void setSender(final Frame frame, final AbstractSqueakObject value) {
+    public static void setSender(final Frame frame, final TruffleObject value) {
         frame.getArguments()[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = value;
     }
 

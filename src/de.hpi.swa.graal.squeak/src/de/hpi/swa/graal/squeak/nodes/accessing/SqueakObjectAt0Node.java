@@ -12,11 +12,9 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -106,20 +104,8 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected static final Object doEmpty(final EmptyObject obj, final long index) {
-        throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected static final Object doNil(final NilObject obj, final long index) {
-        throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
-    }
-
-    @SuppressWarnings("unused")
     @Fallback
     protected static final Object doFallback(final Object obj, final long index) {
-        throw SqueakException.create("Object does not support at0:", obj);
+        throw SqueakException.create(obj, "does not support at0:", index, "(validate index before using this node)");
     }
 }

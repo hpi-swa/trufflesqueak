@@ -32,6 +32,11 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     public abstract int execute(Object obj);
 
     @Specialization
+    protected static final int doNil(@SuppressWarnings("unused") final NilObject obj) {
+        return NilObject.size();
+    }
+
+    @Specialization
     protected static final int doArray(final ArrayObject obj, @Cached final ArrayObjectSizeNode sizeNode) {
         return sizeNode.execute(obj);
     }
@@ -83,11 +88,6 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
 
     @Specialization
     protected static final int doLargeInteger(final LargeIntegerObject obj) {
-        return obj.size();
-    }
-
-    @Specialization
-    protected static final int doNil(final NilObject obj) {
         return obj.size();
     }
 
