@@ -17,15 +17,14 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.MESSAGE;
-import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchSendNode extends AbstractNodeWithImage {
-    @Child private DispatchNode dispatchNode = DispatchNode.create();
-    @Child private LookupClassNode lookupClassNode;
+    @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
     @Child private LookupMethodNode lookupNode;
 
     protected DispatchSendNode(final SqueakImageContext image) {
@@ -48,7 +47,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Specialization(guards = {"image.isHeadless()", "selector.isDebugErrorSelector()", "lookupResult != null"})
     protected final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
-        throw new SqueakError(this, MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
+        throw new SqueakError(this, MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asStringUnsafe()));
     }
 
     @SuppressWarnings("unused")
@@ -69,9 +68,10 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Specialization(guards = {"!isCompiledMethodObject(targetObject)"})
     protected final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, @SuppressWarnings("unused") final ClassObject rcvrClass,
                     final Object[] rcvrAndArgs, final Object contextOrMarker,
+                    @Cached final LookupClassNode lookupClassNode,
                     @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
-        final ClassObject targetClass = getLookupClassNode().executeLookup(targetObject);
+        final ClassObject targetClass = lookupClassNode.executeLookup(targetObject);
         final Object newLookupResult = getLookupNode().executeLookup(targetClass, image.runWithInSelector);
         if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
             final Object doesNotUnderstandMethod = getLookupNode().executeLookup(targetClass, image.doesNotUnderstand);
@@ -91,14 +91,6 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
 
     protected static final boolean isAllowedInHeadlessMode(final NativeObject selector) {
         return !selector.isDebugErrorSelector() && !selector.isDebugSyntaxErrorSelector();
-    }
-
-    private LookupClassNode getLookupClassNode() {
-        if (lookupClassNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lookupClassNode = insert(LookupClassNode.create(image));
-        }
-        return lookupClassNode;
     }
 
     private LookupMethodNode getLookupNode() {

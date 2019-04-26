@@ -9,6 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -236,7 +237,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
 
     @ExportMessage
     public Object execute(final Object[] arguments,
-                    @Cached(value = "create(this.image)", allowUncached = true) final WrapToSqueakNode wrapNode) throws ArityException {
+                    @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws ArityException {
         if (getNumArgs() == arguments.length) {
             final Object[] frameArguments = FrameAccess.newClosureArguments(this, image.nil, wrapNode.executeObjects(arguments));
             return getCallTarget().call(frameArguments);

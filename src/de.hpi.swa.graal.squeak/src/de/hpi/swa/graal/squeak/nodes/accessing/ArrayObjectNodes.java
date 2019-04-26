@@ -178,6 +178,10 @@ public final class ArrayObjectNodes {
             return ArrayObjectToObjectArrayNodeGen.create();
         }
 
+        public static ArrayObjectToObjectArrayNode getUncached() {
+            return ArrayObjectToObjectArrayNodeGen.getUncached();
+        }
+
         public abstract Object[] execute(ArrayObject obj);
 
         @Specialization(guards = "obj.isEmptyType()")

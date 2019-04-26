@@ -18,12 +18,12 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class DispatchNode extends AbstractNode {
+public abstract class DispatchEagerlyNode extends AbstractNode {
     protected static final int PRIMITIVE_CACHE_SIZE = 2;
     protected static final int INLINE_CACHE_SIZE = 3;
 
-    public static DispatchNode create() {
-        return DispatchNodeGen.create();
+    public static DispatchEagerlyNode create() {
+        return DispatchEagerlyNodeGen.create();
     }
 
     public abstract Object executeDispatch(VirtualFrame frame, CompiledMethodObject method, Object[] receiverAndArguments, Object contextOrMarker);

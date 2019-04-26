@@ -87,7 +87,7 @@ public final class ObjectLayouts {
             }
             final AbstractSqueakObject classComment = (AbstractSqueakObject) ((PointersObject) organization).at0(CLASS_ORGANIZER.CLASS_COMMENT);
             final NativeObject string = (NativeObject) classComment.send("string");
-            return string.asString();
+            return string.asStringUnsafe();
         }
     }
 
@@ -118,7 +118,7 @@ public final class ObjectLayouts {
             final ArrayObject classBindings = (ArrayObject) dictionary.at0(HASHED_COLLECTION.ARRAY);
             final Map<Object, Object> keyValues = new HashMap<>();
             // TODO: Avoid node allocation in next line.
-            for (final Object classBinding : ArrayObjectToObjectArrayNode.create().execute(classBindings)) {
+            for (final Object classBinding : ArrayObjectToObjectArrayNode.getUncached().execute(classBindings)) {
                 if (classBinding != dictionary.image.nil) {
                     final PointersObject classBindingPointer = (PointersObject) classBinding;
                     keyValues.put(classBindingPointer.at0(CLASS_BINDING.KEY), classBindingPointer.at0(CLASS_BINDING.VALUE));

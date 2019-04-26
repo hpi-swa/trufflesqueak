@@ -5,6 +5,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
@@ -193,12 +194,16 @@ public final class NativeObject extends AbstractSqueakObject {
         this.storage = storage;
     }
 
+    public String asStringUnsafe() {
+        return ArrayConversionUtils.bytesToString(getByteStorage());
+    }
+
     @TruffleBoundary
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         if (isByteType()) {
-            return asString();
+            return asStringUnsafe();
         } else if (isShortType()) {
             return "ShortArray(size=" + getShortLength() + ")";
         } else if (isIntType()) {
@@ -232,7 +237,11 @@ public final class NativeObject extends AbstractSqueakObject {
     }
 
     @ExportMessage
-    public String asString() {
-        return ArrayConversionUtils.bytesToString(getByteStorage());
+    public String asString() throws UnsupportedMessageException {
+        if (isStringOrSymbol()) {
+            return asStringUnsafe();
+        } else {
+            throw UnsupportedMessageException.create();
+        }
     }
 }

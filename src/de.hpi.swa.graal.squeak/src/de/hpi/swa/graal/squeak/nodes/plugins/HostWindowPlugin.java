@@ -83,7 +83,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"method.image.hasDisplay()", "id == 1", "title.isByteType()"})
         @TruffleBoundary
         protected final Object doTitle(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id, final NativeObject title) {
-            method.image.getDisplay().setWindowTitle(title.asString());
+            method.image.getDisplay().setWindowTitle(title.asStringUnsafe());
             return receiver;
         }
 

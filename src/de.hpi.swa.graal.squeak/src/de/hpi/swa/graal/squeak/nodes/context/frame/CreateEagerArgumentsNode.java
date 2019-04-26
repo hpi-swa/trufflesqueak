@@ -3,11 +3,13 @@ package de.hpi.swa.graal.squeak.nodes.context.frame;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 
+@GenerateUncached
 public abstract class CreateEagerArgumentsNode extends AbstractNode {
     public static CreateEagerArgumentsNode create() {
         return CreateEagerArgumentsNodeGen.create();

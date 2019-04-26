@@ -406,7 +406,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"method.image.hasDisplay()", "value.isByteType()"})
         protected final NativeObject setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
-            method.image.getDisplay().setClipboardData(value.asString());
+            method.image.getDisplay().setClipboardData(value.asStringUnsafe());
             return value;
         }
 

@@ -16,7 +16,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.nodes.DispatchNode;
+import de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode;
 import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
@@ -35,7 +35,7 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
     private final ArrayObject emptyList;
     private final BranchProfile simulationFailedProfile = BranchProfile.create();
 
-    @Child private DispatchNode dispatchNode = DispatchNode.create();
+    @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
 
     protected SimulationPrimitiveNode(final CompiledMethodObject method, @SuppressWarnings("unused") final String moduleName, final String functionName) {
         super(method);
@@ -128,7 +128,7 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
             if (receiver instanceof ClassObject) {
                 lookupResult = lookupMethodNode.executeLookup((ClassObject) receiver, method.image.getSimulatePrimitiveArgsSelector());
             } else {
-                final ClassObject rcvrClass = LookupClassNode.create(method.image).executeLookup(receiver);
+                final ClassObject rcvrClass = LookupClassNode.getUncached().executeLookup(receiver);
                 lookupResult = lookupMethodNode.executeLookup(rcvrClass, method.image.getSimulatePrimitiveArgsSelector());
             }
             if (lookupResult instanceof CompiledMethodObject) {

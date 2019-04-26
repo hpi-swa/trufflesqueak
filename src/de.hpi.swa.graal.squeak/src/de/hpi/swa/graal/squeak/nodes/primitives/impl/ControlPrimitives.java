@@ -35,7 +35,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
-import de.hpi.swa.graal.squeak.nodes.DispatchNode;
+import de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.InheritsFromNode;
 import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
@@ -128,7 +128,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final ClassObject lookupClass(final Object object) {
-            return getLookupClassNode().executeLookup(object);
+            if (lookupClassNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                lookupClassNode = insert(LookupClassNode.create());
+            }
+            return lookupClassNode.executeLookup(object);
         }
 
         private DispatchSendNode getDispatchSendNode() {
@@ -137,14 +141,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 dispatchSendNode = insert(DispatchSendNode.create(method.image));
             }
             return dispatchSendNode;
-        }
-
-        private LookupClassNode getLookupClassNode() {
-            if (lookupClassNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                lookupClassNode = insert(LookupClassNode.create(method.image));
-            }
-            return lookupClassNode;
         }
     }
 
@@ -346,11 +342,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 100)
     protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode implements QuinaryPrimitive {
         @Child private ArrayObjectToObjectArrayTransformNode getObjectArrayNode = ArrayObjectToObjectArrayTransformNode.create();
-        @Child protected InheritsFromNode inheritsFromNode;
+        @Child protected InheritsFromNode inheritsFromNode = InheritsFromNode.create();
 
         protected PrimPerformWithArgumentsInSuperclassNode(final CompiledMethodObject method) {
             super(method);
-            inheritsFromNode = InheritsFromNode.create(method.image);
         }
 
         /*
@@ -464,11 +459,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 111)
     protected abstract static class PrimClassNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        private @Child LookupClassNode node;
+        private @Child LookupClassNode node = LookupClassNode.create();
 
         protected PrimClassNode(final CompiledMethodObject method) {
             super(method);
-            node = LookupClassNode.create(method.image);
         }
 
         @Specialization
@@ -917,7 +911,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 188)
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode implements QuaternaryPrimitive {
-        @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
         @Child private ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
         @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
 

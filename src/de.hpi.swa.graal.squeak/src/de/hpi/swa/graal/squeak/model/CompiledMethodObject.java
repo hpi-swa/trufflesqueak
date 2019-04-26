@@ -2,15 +2,17 @@ package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ADDITIONAL_METHOD_STATE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS_BINDING;
-import de.hpi.swa.graal.squeak.nodes.DispatchNode;
+import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
 
 @ExportLibrary(InteropLibrary.class)
 public final class CompiledMethodObject extends CompiledCodeObject {
@@ -71,7 +73,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
         final NativeObject selectorObj = getCompiledInSelector();
         if (selectorObj != null) {
-            selector = selectorObj.asString();
+            selector = selectorObj.asStringUnsafe();
         }
         return className + ">>" + selector;
     }
@@ -174,11 +176,12 @@ public final class CompiledMethodObject extends CompiledCodeObject {
 
     @ExportMessage
     public Object execute(final Object[] receiverAndArguments,
-                    @Cached(allowUncached = true) final DispatchNode dispatchNode) throws ArityException {
+                    @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
+                    @Shared("dispatchNode") @Cached final DispatchUneagerlyNode dispatchNode) throws ArityException {
         final int actualArity = receiverAndArguments.length;
         final int expectedArity = 1 + getNumArgs(); // receiver + arguments
         if (actualArity == expectedArity) {
-            return dispatchNode.executeDispatch(null, this, receiverAndArguments, null);
+            return dispatchNode.executeDispatch(this, wrapNode.executeObjects(receiverAndArguments), image.nil);
         } else {
             throw ArityException.create(expectedArity, actualArity);
         }

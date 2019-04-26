@@ -48,7 +48,7 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
                         {(long) Integer.MAX_VALUE, (long) Integer.MAX_VALUE, 2 * (long) Integer.MAX_VALUE},
                         {Long.MAX_VALUE, Long.MAX_VALUE, BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(2))},
                         {Long.MAX_VALUE, Long.MIN_VALUE, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.valueOf(Long.MIN_VALUE)).longValue()}};
-        final WrapToSqueakNode wrapNode = WrapToSqueakNode.create(image);
+        final WrapToSqueakNode wrapNode = WrapToSqueakNode.getUncached();
         for (int i = 0; i < testValues.length; i++) {
             final Object[] values = testValues[i];
             assertEquals(wrapNode.executeWrap(values[2]), runBinaryPrimitive(21, wrapNode.executeWrap(values[0]), wrapNode.executeWrap(values[1])));
@@ -65,7 +65,7 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
                         {Long.MIN_VALUE, 1L, BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE)},
                         {Long.MAX_VALUE, Long.MAX_VALUE - Integer.MAX_VALUE, (long) Integer.MAX_VALUE},
                         {BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 1L, Long.MAX_VALUE}};
-        final WrapToSqueakNode wrapNode = WrapToSqueakNode.create(image);
+        final WrapToSqueakNode wrapNode = WrapToSqueakNode.getUncached();
         for (int i = 0; i < testValues.length; i++) {
             final Object[] values = testValues[i];
             assertEquals(wrapNode.executeWrap(values[2]), runBinaryPrimitive(22, wrapNode.executeWrap(values[0]), wrapNode.executeWrap(values[1])));

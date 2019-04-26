@@ -102,7 +102,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @Specialization(guards = "aSymbol.isByteType()")
         protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final NativeObject aSymbol) {
-            final String key = aSymbol.asString();
+            final String key = aSymbol.asStringUnsafe();
             final String value = systemGetEnv(key);
             if (value == null) {
                 throw new PrimitiveFailed();

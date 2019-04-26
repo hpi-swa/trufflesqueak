@@ -117,13 +117,13 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         assertSame(DupNode.class, bytecodeNodes[1].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[2].getClass());
 
-        assertEquals("send: " + image.equivalent.asString(), bytecodeNodes[3].toString());
+        assertEquals("send: " + image.equivalent.asStringUnsafe(), bytecodeNodes[3].toString());
 
         assertSame(ConditionalJumpNode.class, bytecodeNodes[4].getClass());
         assertSame(PopNode.class, bytecodeNodes[5].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[6].getClass());
 
-        assertEquals("send: " + image.klass.asString(), bytecodeNodes[7].toString());
+        assertEquals("send: " + image.klass.asStringUnsafe(), bytecodeNodes[7].toString());
 
         assertSame(PopNode.class, bytecodeNodes[8].getClass());
         assertTrue(ReturnReceiverNode.class.isAssignableFrom(bytecodeNodes[9].getClass()));

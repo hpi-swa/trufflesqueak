@@ -1,9 +1,11 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
@@ -29,39 +31,49 @@ public final class LookupClassNodes {
         public abstract ClassObject executeLookup(Object receiver);
     }
 
+    @GenerateUncached
     public abstract static class LookupClassNode extends AbstractLookupClassNode {
-        protected final SqueakImageContext image;
-
-        protected LookupClassNode(final SqueakImageContext image) {
-            this.image = image;
+        public static LookupClassNode create() {
+            return LookupClassNodeGen.create();
         }
 
-        public static LookupClassNode create(final SqueakImageContext image) {
-            return LookupClassNodeGen.create(image);
+        public static LookupClassNode getUncached() {
+            return LookupClassNodeGen.getUncached();
+        }
+
+        @Specialization
+        protected static final ClassObject doNil(@SuppressWarnings("unused") final NilObject value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.nilClass;
         }
 
         @Specialization(guards = "value == image.sqTrue")
-        protected final ClassObject doTrue(@SuppressWarnings("unused") final boolean value) {
+        protected static final ClassObject doTrue(@SuppressWarnings("unused") final boolean value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.trueClass;
         }
 
         @Specialization(guards = "value != image.sqTrue")
-        protected final ClassObject doFalse(@SuppressWarnings("unused") final boolean value) {
+        protected static final ClassObject doFalse(@SuppressWarnings("unused") final boolean value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.falseClass;
         }
 
         @Specialization
-        protected final ClassObject doSmallInteger(@SuppressWarnings("unused") final long value) {
+        protected static final ClassObject doSmallInteger(@SuppressWarnings("unused") final long value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.smallIntegerClass;
         }
 
         @Specialization
-        protected final ClassObject doChar(@SuppressWarnings("unused") final char value) {
+        protected static final ClassObject doChar(@SuppressWarnings("unused") final char value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.characterClass;
         }
 
         @Specialization
-        protected final ClassObject doDouble(@SuppressWarnings("unused") final double value) {
+        protected static final ClassObject doDouble(@SuppressWarnings("unused") final double value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.smallFloatClass;
         }
 
@@ -76,12 +88,14 @@ public final class LookupClassNodes {
         }
 
         @Specialization
-        protected final ClassObject doClosure(@SuppressWarnings("unused") final BlockClosureObject value) {
+        protected static final ClassObject doClosure(@SuppressWarnings("unused") final BlockClosureObject value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.blockClosureClass;
         }
 
         @Specialization
-        protected final ClassObject doCharacter(@SuppressWarnings("unused") final CharacterObject value) {
+        protected static final ClassObject doCharacter(@SuppressWarnings("unused") final CharacterObject value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.characterClass;
         }
 
@@ -96,12 +110,14 @@ public final class LookupClassNodes {
         }
 
         @Specialization
-        protected final ClassObject doMethod(@SuppressWarnings("unused") final CompiledMethodObject value) {
+        protected static final ClassObject doMethod(@SuppressWarnings("unused") final CompiledMethodObject value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.compiledMethodClass;
         }
 
         @Specialization
-        protected final ClassObject doContext(@SuppressWarnings("unused") final ContextObject value) {
+        protected static final ClassObject doContext(@SuppressWarnings("unused") final ContextObject value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.methodContextClass;
         }
 
@@ -111,7 +127,8 @@ public final class LookupClassNodes {
         }
 
         @Specialization
-        protected final ClassObject doFloat(@SuppressWarnings("unused") final FloatObject value) {
+        protected static final ClassObject doFloat(@SuppressWarnings("unused") final FloatObject value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.floatClass;
         }
 
@@ -125,20 +142,11 @@ public final class LookupClassNodes {
             return value.getSqueakClass();
         }
 
-        @Specialization
-        protected final ClassObject doNil(@SuppressWarnings("unused") final NilObject value) {
-            return image.nilClass;
-        }
-
         @Specialization(guards = {"!isAbstractSqueakObject(value)"})
-        protected final ClassObject doTruffleObject(@SuppressWarnings("unused") final TruffleObject value) {
+        protected static final ClassObject doTruffleObject(@SuppressWarnings("unused") final TruffleObject value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             assert image.supportsTruffleObject();
             return image.truffleObjectClass;
-        }
-
-        @Fallback
-        protected static final ClassObject doFail(final Object value) {
-            throw SqueakException.create("Unexpected value: " + value);
         }
     }
 

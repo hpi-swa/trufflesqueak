@@ -1,26 +1,21 @@
 package de.hpi.swa.graal.squeak.interop;
 
-import java.math.BigInteger;
-
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 
-public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
+@GenerateUncached
+public abstract class WrapToSqueakNode extends AbstractNode {
 
-    protected WrapToSqueakNode(final SqueakImageContext image) {
-        super(image);
-    }
-
-    public static WrapToSqueakNode create(final SqueakImageContext image) {
-        return WrapToSqueakNodeGen.create(image);
+    public static WrapToSqueakNode getUncached() {
+        return WrapToSqueakNodeGen.getUncached();
     }
 
     public abstract Object executeWrap(Object value);
@@ -34,12 +29,7 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
     }
 
     public final ArrayObject executeList(final Object... values) {
-        return image.asArrayOfObjects(executeObjects(values));
-    }
-
-    @Specialization(guards = "nullValue == null")
-    protected final NilObject doNull(@SuppressWarnings("unused") final Object nullValue) {
-        return image.nil;
+        return (ArrayObject) executeWrap(values);
     }
 
     @Specialization
@@ -78,12 +68,8 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
     }
 
     @Specialization
-    protected final Object doBigInteger(final BigInteger value) {
-        return image.asLargeInteger(value);
-    }
-
-    @Specialization
-    protected final NativeObject doString(final String value) {
+    protected static final NativeObject doString(final String value,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         return image.asByteString(value);
     }
 
@@ -93,22 +79,13 @@ public abstract class WrapToSqueakNode extends AbstractNodeWithImage {
     }
 
     @Specialization
-    protected final NativeObject doBytes(final byte[] value) {
-        return image.asByteArray(value);
+    protected final ArrayObject doObjects(final Object[] values,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return image.asArrayOfObjects(executeObjects(values));
     }
 
-    @Specialization
-    protected final ArrayObject doObjects(final Object[] value) {
-        return executeList(value);
-    }
-
-    @Specialization
-    protected final PointersObject doDisplayPoint(final DisplayPoint value) {
-        return image.asPoint(value);
-    }
-
-    @Specialization
-    protected static final TruffleObject doTruffleObject(final TruffleObject value) {
+    @Fallback
+    protected static final Object doTruffleObject(final Object value) {
         return value;
     }
 }

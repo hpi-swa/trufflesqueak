@@ -41,7 +41,7 @@ public abstract class FillInNode extends Node {
     protected final void doClassObj(final ClassObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
         if (obj.size() > 6) {
-            final String className = ((NativeObject) obj.getClassName()).asString();
+            final String className = obj.getClassName();
             obj.setInstancesAreClasses(className);
             if ("Compiler".equals(className)) {
                 obj.image.setCompilerClass(obj);

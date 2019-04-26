@@ -3,13 +3,11 @@ package de.hpi.swa.graal.squeak.model;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -80,24 +78,18 @@ public final class ClassObject extends AbstractSqueakObject {
 
     @Override
     public String nameAsClass() {
+        CompilerAsserts.neverPartOfCompilation();
         assert isClass();
         if (isAMetaClass()) {
-            final Object classInstance = getThisClass();
-            if (classInstance instanceof ClassObject) {
-                final NativeObject name = (NativeObject) ((ClassObject) classInstance).getClassName();
-                return "Metaclass (" + name.asString() + ")";
-            }
+            final ClassObject classInstance = getThisClass();
+            return "Metaclass (" + classInstance.getClassName() + ")";
         } else {
-            final Object nameObj = getClassName();
-            if (nameObj instanceof NativeObject) {
-                return ((NativeObject) nameObj).asString();
-            }
+            return getClassName();
         }
-        return "UnknownClass";
     }
 
-    private Object getThisClass() {
-        return pointers[METACLASS.THIS_CLASS];
+    private ClassObject getThisClass() {
+        return (ClassObject) pointers[METACLASS.THIS_CLASS];
     }
 
     private boolean isAMetaClass() {
@@ -241,8 +233,8 @@ public final class ClassObject extends AbstractSqueakObject {
         return methodDict;
     }
 
-    public Object getClassName() {
-        return pointers[CLASS.NAME];
+    public String getClassName() {
+        return ((NativeObject) pointers[CLASS.NAME]).asStringUnsafe();
     }
 
     public boolean hasInstanceVariables() {
@@ -301,30 +293,6 @@ public final class ClassObject extends AbstractSqueakObject {
     public void setMethodDict(final PointersObject methodDict) {
         methodDictStable.invalidate();
         this.methodDict = methodDict;
-    }
-
-    @TruffleBoundary
-    public Object lookup(final String selector) {
-        return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
-    }
-
-    // TODO: cache the methoddict in a better structure than what Squeak provides
-    // ... or use the Squeak hash to decide where to put stuff
-    private Object lookup(final Predicate<Object> predicate) {
-        CompilerAsserts.neverPartOfCompilation("This is only for finding the active context on startup, use LookupNode instead.");
-        ClassObject lookupClass = this;
-        while (lookupClass != null) {
-            final PointersObject methodDictObject = lookupClass.getMethodDict();
-            for (int i = METHOD_DICT.NAMES; i < methodDictObject.size(); i++) {
-                final Object methodSelector = methodDictObject.at0(i);
-                if (predicate.test(methodSelector)) {
-                    final ArrayObject values = (ArrayObject) methodDictObject.at0(METHOD_DICT.VALUES);
-                    return values.at0(i - METHOD_DICT.NAMES);
-                }
-            }
-            lookupClass = lookupClass.getSuperclassOrNull();
-        }
-        return lookup(methodSelector -> methodSelector == image.doesNotUnderstand);
     }
 
     public Object[] listMethods() {

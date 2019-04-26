@@ -55,7 +55,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         }
         final NativeObject selectorObj = outerMethod.getCompiledInSelector();
         if (selectorObj != null) {
-            selector = selectorObj.asString();
+            selector = selectorObj.asStringUnsafe();
         }
         return className + ">>" + selector;
     }

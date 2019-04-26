@@ -898,7 +898,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 return 0L;
             }
 
-            final String value = aString.asString();
+            final String value = aString.asStringUnsafe();
 
             switch (property) {
                 case CERTIFICATE_NAME:

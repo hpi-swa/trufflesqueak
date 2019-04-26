@@ -105,7 +105,7 @@ public final class SqueakExceptions {
         private final FakeSourceCodeObjectNode dummyCodeObjectNode;
 
         public SqueakSyntaxError(final PointersObject syntaxErrorNotification) {
-            super(((NativeObject) syntaxErrorNotification.at0(SYNTAX_ERROR_NOTIFICATION.ERROR_MESSAGE)).asString());
+            super(((NativeObject) syntaxErrorNotification.at0(SYNTAX_ERROR_NOTIFICATION.ERROR_MESSAGE)).asStringUnsafe());
             final int sourceOffset = (int) ((long) syntaxErrorNotification.at0(SYNTAX_ERROR_NOTIFICATION.LOCATION) - 1);
             dummyCodeObjectNode = new FakeSourceCodeObjectNode(syntaxErrorNotification.image, sourceOffset);
         }

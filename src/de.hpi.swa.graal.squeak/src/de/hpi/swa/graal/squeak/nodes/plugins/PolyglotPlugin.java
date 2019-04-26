@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -32,7 +33,6 @@ import com.oracle.truffle.api.source.Source.SourceBuilder;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.interop.UnwrapFromSqueakNode;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -69,18 +69,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEvalString")
     protected abstract static class PrimEvalStringNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        @Child private WrapToSqueakNode wrapNode;
-
         protected PrimEvalStringNode(final CompiledMethodObject method) {
             super(method);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
-        protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
-            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asString();
-            final String sourceText = sourceObject.asString();
+        protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
+            final String sourceText = sourceObject.asStringUnsafe();
             final Env env = method.image.env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
@@ -117,8 +115,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
-            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asString();
-            final String pathString = path.asString();
+            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
+            final String pathString = path.asStringUnsafe();
             final Env env = method.image.env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
@@ -143,18 +141,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         private static final String LLVM_FILENAME = "temp.bc";
         @Child private PrimReadMemberNode readNode;
         @Child private PrimExecuteNode executeNode;
-        @Child private WrapToSqueakNode wrapNode;
 
         protected PrimEvalCNode(final CompiledMethodObject method) {
             super(method);
             readNode = PrimReadMemberNodeFactory.create(method, null);
             executeNode = PrimExecuteNodeFactory.create(method, null);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
         @Specialization(guards = {"receiver.isByteType()", "memberToCall.isByteType()"})
-        protected final Object doEvaluate(final VirtualFrame frame, final NativeObject receiver, final NativeObject memberToCall) {
-            final String foreignCode = receiver.asString();
+        protected final Object doEvaluate(final VirtualFrame frame, final NativeObject receiver, final NativeObject memberToCall,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            final String foreignCode = receiver.asStringUnsafe();
             final String cFile = method.image.imageRelativeFilePathFor(C_FILENAME);
             final String llvmFile = method.image.imageRelativeFilePathFor(LLVM_FILENAME);
             try {
@@ -201,22 +198,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveExecute")
     protected abstract static class PrimExecuteNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
-        @Child private UnwrapFromSqueakNode unwrapNode;
-        @Child private WrapToSqueakNode wrapNode;
-
         protected PrimExecuteNode(final CompiledMethodObject method) {
             super(method);
-            unwrapNode = UnwrapFromSqueakNode.create(method.image);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
         @Specialization(guards = {"functions.isExecutable(receiver)"}, limit = "2")
-        protected final Object doExecute(final Object receiver, final ArrayObject argumentArray,
+        protected static final Object doExecute(final Object receiver, final ArrayObject argumentArray,
+                        @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode,
+                        @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            final Object[] arguments = unwrapNode.executeList(getObjectArrayNode.execute(argumentArray));
             try {
-                return wrapNode.executeWrap(functions.execute(receiver, arguments));
+                return wrapNode.executeWrap(functions.execute(receiver, getObjectArrayNode.execute(argumentArray)));
             } catch (UnsupportedTypeException | ArityException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
@@ -236,7 +228,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
         public final Object exportSymbol(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject name, final Object value) {
-            method.image.env.exportSymbol(name.asString(), value);
+            method.image.env.exportSymbol(name.asStringUnsafe(), value);
             return value;
         }
     }
@@ -311,19 +303,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetLanguageInfo")
     protected abstract static class PrimGetLanguageInfoNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private WrapToSqueakNode wrapNode;
-
         protected PrimGetLanguageInfoNode(final CompiledMethodObject method) {
             super(method);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
         @Specialization(guards = "languageID.isByteType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final ArrayObject doGet(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject languageID) {
+        protected final ArrayObject doGet(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject languageID,
+                        @Cached final WrapToSqueakNode wrapNode) {
             final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
             return wrapNode.executeList(languages.stream().//
-                            filter(l -> !l.isInternal() && l.getId().equals(languageID.asString())).//
+                            filter(l -> !l.isInternal() && l.getId().equals(languageID.asStringUnsafe())).//
                             map(l -> new Object[]{l.getId(), l.getName(), l.getVersion(), l.getDefaultMimeType(), l.getMimeTypes().toArray()}).//
                             findFirst().orElseThrow(PrimitiveFailed::new));
         }
@@ -374,7 +364,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
         public final Object importSymbol(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject name) {
-            final Object object = method.image.env.importSymbol(name.asString());
+            final Object object = method.image.env.importSymbol(name.asStringUnsafe());
             if (object == null) {
                 return method.image.nil;
             }
@@ -385,16 +375,14 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveListAvailableLanguageIDs")
     protected abstract static class PrimListAvailableLanguageIDsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private WrapToSqueakNode wrapNode;
-
         protected PrimListAvailableLanguageIDsNode(final CompiledMethodObject method) {
             super(method);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final ArrayObject doList(@SuppressWarnings("unused") final ClassObject receiver) {
+        protected final ArrayObject doList(@SuppressWarnings("unused") final ClassObject receiver,
+                        @Cached final WrapToSqueakNode wrapNode) {
             final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
             final Object[] result = languages.stream().filter(l -> !l.isInternal()).map(l -> l.getId()).toArray();
             return wrapNode.executeList(result);
@@ -404,22 +392,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInvoke")
     protected abstract static class PrimInvokeNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
-        @Child private UnwrapFromSqueakNode unwrapNode;
-        @Child private WrapToSqueakNode wrapNode;
-
         protected PrimInvokeNode(final CompiledMethodObject method) {
             super(method);
-            unwrapNode = UnwrapFromSqueakNode.create(method.image);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())"}, limit = "2")
-        protected final Object doRead(final Object receiver, final NativeObject member, final ArrayObject argumentArray,
+        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asStringUnsafe())"}, limit = "2")
+        protected static final Object doRead(final Object receiver, final NativeObject member, final ArrayObject argumentArray,
+                        @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode,
+                        @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
-            final Object[] arguments = unwrapNode.executeList(getObjectArrayNode.execute(argumentArray));
             try {
-                return wrapNode.executeWrap(functions.invokeMember(receiver, member.asString(), arguments));
+                return wrapNode.executeWrap(functions.invokeMember(receiver, member.asStringUnsafe(), getObjectArrayNode.execute(argumentArray)));
             } catch (UnsupportedTypeException | ArityException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
@@ -642,15 +625,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveReadArrayElement")
     protected abstract static class PrimReadArrayElementNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private WrapToSqueakNode wrapNode;
-
         protected PrimReadArrayElementNode(final CompiledMethodObject method) {
             super(method);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
         @Specialization(guards = {"isArrayElementReadable(functions, receiver, index)"}, limit = "2")
-        protected final Object doReadArrayElement(final Object receiver, final long index,
+        protected static final Object doReadArrayElement(final Object receiver, final long index,
+                        @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
                 return wrapNode.executeWrap(functions.readArrayElement(receiver, index - 1));
@@ -670,25 +651,25 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveReadMember")
     protected abstract static class PrimReadMemberNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private WrapToSqueakNode wrapNode;
-
         protected PrimReadMemberNode(final CompiledMethodObject method) {
             super(method);
-            wrapNode = WrapToSqueakNode.create(method.image);
         }
 
-        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())", "!functions.hasMemberReadSideEffects(receiver, member.asString())"}, limit = "2")
-        protected final Object doReadMember(final Object receiver, final NativeObject member,
+        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asStringUnsafe())",
+                        "!functions.hasMemberReadSideEffects(receiver, member.asStringUnsafe())"}, limit = "2")
+        protected static final Object doReadMember(final Object receiver, final NativeObject member,
+                        @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                return wrapNode.executeWrap(functions.readMember(receiver, member.asString()));
+                return wrapNode.executeWrap(functions.readMember(receiver, member.asStringUnsafe()));
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asString())", "functions.hasMemberReadSideEffects(receiver, member.asString())"}, limit = "2")
+        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asStringUnsafe())",
+                        "functions.hasMemberReadSideEffects(receiver, member.asStringUnsafe())"}, limit = "2")
         protected final NativeObject doReadMemberWithSideEffects(final Object receiver, final NativeObject member,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             return method.image.asByteString("[side-effect]");
@@ -738,11 +719,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"member.isByteType()", "functions.isMemberWritable(receiver, member.asString())"}, limit = "2")
+        @Specialization(guards = {"member.isByteType()", "functions.isMemberWritable(receiver, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doWrite(final Object receiver, final NativeObject member, final Object value,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             try {
-                functions.writeMember(receiver, member.asString(), value);
+                functions.writeMember(receiver, member.asStringUnsafe(), value);
                 return value;
             } catch (final UnsupportedTypeException e) {
                 PrimGetLastErrorNode.setLastError(e);

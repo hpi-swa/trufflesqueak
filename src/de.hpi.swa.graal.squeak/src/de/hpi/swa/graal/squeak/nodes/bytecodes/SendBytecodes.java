@@ -36,7 +36,7 @@ public final class SendBytecodes {
         private final BranchProfile nvrProfile = BranchProfile.create();
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
-            this(code, index, numBytecodes, sel, argcount, LookupClassNode.create(code.image));
+            this(code, index, numBytecodes, sel, argcount, LookupClassNode.create());
         }
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount, final AbstractLookupClassNode lookupClassNode) {
@@ -111,7 +111,7 @@ public final class SendBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "send: " + selector.asString();
+            return "send: " + selector.asStringUnsafe();
         }
     }
 
@@ -169,7 +169,7 @@ public final class SendBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "sendSuper: " + selector.asString();
+            return "sendSuper: " + selector.asStringUnsafe();
         }
     }
 }

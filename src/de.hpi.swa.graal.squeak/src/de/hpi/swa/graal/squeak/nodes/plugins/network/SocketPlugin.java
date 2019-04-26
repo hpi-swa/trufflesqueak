@@ -86,7 +86,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected static Object doWork(final Object receiver, final NativeObject hostName) {
             try {
                 LOG.finer(() -> "Starting lookup for host name " + hostName);
-                Resolver.startHostNameLookUp(hostName.asString());
+                Resolver.startHostNameLookUp(hostName.asStringUnsafe());
             } catch (final UnknownHostException e) {
                 LOG.log(Level.FINE, "Host name lookup failed", e);
             }
@@ -296,7 +296,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected final ArrayObject doSet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long socketID, final NativeObject option, final NativeObject value) {
             try {
                 final SqueakSocket socket = getSocketOrPrimFail(method, socketID);
-                return setSocketOption(socket, option.asString(), value.asString());
+                return setSocketOption(socket, option.asStringUnsafe(), value.asStringUnsafe());
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Set socket option failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -416,7 +416,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doGetOption(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long socketID, final NativeObject option) {
             try {
                 final SqueakSocket socket = getSocketOrPrimFail(method, socketID);
-                final String value = socket.getOption(option.asString());
+                final String value = socket.getOption(option.asStringUnsafe());
                 return method.image.asArrayOfObjects(0L, method.image.asByteString(value));
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving socket option failed", e);

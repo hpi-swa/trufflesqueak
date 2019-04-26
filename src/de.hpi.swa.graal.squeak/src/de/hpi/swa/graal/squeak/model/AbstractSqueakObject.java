@@ -5,15 +5,21 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.InteropArray;
+import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
+import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
+import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -161,9 +167,14 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final Object send(final String selector, final Object... arguments) {
         CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
-        final CompiledMethodObject method = (CompiledMethodObject) getSqueakClass().lookup(selector);
-        final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(ArrayUtils.EMPTY_ARRAY, method.getFrameDescriptor());
-        return DispatchSendNode.create(image).executeSend(frame, method.getCompiledInSelector(), method, getSqueakClass(), ArrayUtils.copyWithFirst(arguments, this), image.nil);
+        final Object methodObject = LookupMethodByStringNode.getUncached().executeLookup(getSqueakClass(), selector);
+        if (methodObject instanceof CompiledMethodObject) {
+            final CompiledMethodObject method = (CompiledMethodObject) methodObject;
+            final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(ArrayUtils.EMPTY_ARRAY, method.getFrameDescriptor());
+            return DispatchSendNode.create(image).executeSend(frame, method.getCompiledInSelector(), method, getSqueakClass(), ArrayUtils.copyWithFirst(arguments, this), image.nil);
+        } else {
+            throw SqueakExceptions.SqueakException.create("CompiledMethodObject expected, got: " + methodObject);
+        }
     }
 
     /*
@@ -195,9 +206,11 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     @ExportMessage
-    protected final void writeArrayElement(final long index, final Object value, @Cached final SqueakObjectAtPut0Node atput0Node) throws InvalidArrayIndexException {
+    protected final void writeArrayElement(final long index, final Object value,
+                    @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
+                    @Cached final SqueakObjectAtPut0Node atput0Node) throws InvalidArrayIndexException {
         try {
-            atput0Node.execute(this, index, value);
+            atput0Node.execute(this, index, wrapNode.executeWrap(value));
         } catch (final ArrayIndexOutOfBoundsException e) {
             throw InvalidArrayIndexException.create(index);
         }
@@ -214,14 +227,61 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return new InteropArray(getSqueakClass().listMethods());
     }
 
-    @ExportMessage
-    public boolean isMemberReadable(@SuppressWarnings("unused") final String key) {
-        return true;
+    @ExportMessage(name = "isMemberReadable")
+    @ExportMessage(name = "isMemberModifiable")
+    @ExportMessage(name = "isMemberInvocable")
+    public boolean isMemberReadable(final String key,
+                    @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode) {
+        return lookupNode.executeLookup(getSqueakClass(), toSelector(key)) != null;
     }
 
     @ExportMessage
-    public Object readMember(final String key) {
-        return getSqueakClass().lookup(toSelector(key));
+    public Object readMember(final String key,
+                    @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode) {
+        return lookupNode.executeLookup(getSqueakClass(), toSelector(key));
+    }
+
+    @ExportMessage
+    public boolean isMemberInsertable(@SuppressWarnings("unused") final String member) {
+        return false;
+    }
+
+    @ExportMessage
+    public void writeMember(final String member, final Object value,
+                    @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
+                    @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
+                    @Shared("dispatchNode") @Cached final DispatchUneagerlyNode dispatchNode) throws UnsupportedMessageException {
+        final Object methodObject = lookupNode.executeLookup(getSqueakClass(), toSelector(member));
+        if (methodObject instanceof CompiledMethodObject) {
+            final CompiledMethodObject method = (CompiledMethodObject) methodObject;
+            if (method.getNumArgs() == 1) {
+                dispatchNode.executeDispatch(method, new Object[]{this, wrapNode.executeWrap(value)}, method.image.nil);
+            } else {
+                throw UnsupportedMessageException.create();
+            }
+        } else {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportMessage
+    public Object invokeMember(final String member, final Object[] arguments,
+                    @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
+                    @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
+                    @Shared("dispatchNode") @Cached final DispatchUneagerlyNode dispatchNode) throws UnsupportedMessageException, ArityException {
+        final Object methodObject = lookupNode.executeLookup(getSqueakClass(), toSelector(member));
+        if (methodObject instanceof CompiledMethodObject) {
+            final CompiledMethodObject method = (CompiledMethodObject) methodObject;
+            final int actualArity = arguments.length;
+            final int expectedArity = method.getNumArgs();
+            if (actualArity == expectedArity) {
+                return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), this), method.image.nil);
+            } else {
+                throw ArityException.create(1 + expectedArity, 1 + actualArity);  // +1 for receiver
+            }
+        } else {
+            throw UnsupportedMessageException.create();
+        }
     }
 
     /**
