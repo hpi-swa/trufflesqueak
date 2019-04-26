@@ -122,9 +122,14 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     protected static Object evaluate(final String expression) {
-        ensureCleanImageState();
-        final ExecuteTopLevelContextNode doItContextNode = image.getDoItContextNode(expression);
-        return Truffle.getRuntime().createCallTarget(doItContextNode).call();
+        context.enter();
+        try {
+            ensureCleanImageState();
+            final ExecuteTopLevelContextNode doItContextNode = image.getDoItContextNode(expression);
+            return Truffle.getRuntime().createCallTarget(doItContextNode).call();
+        } finally {
+            context.leave();
+        }
     }
 
     private static void ensureCleanImageState() {
@@ -165,7 +170,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     protected static TestResult runTestCase(final TestRequest request) {
         return runWithTimeout(request, () -> {
             final String testCommand = testCommand(request);
-            return extractFailuresAndErrorsFromTestResult(evaluate(testCommand));
+            context.enter();
+            try {
+                return extractFailuresAndErrorsFromTestResult(evaluate(testCommand));
+            } finally {
+                context.leave();
+            }
         });
     }
 

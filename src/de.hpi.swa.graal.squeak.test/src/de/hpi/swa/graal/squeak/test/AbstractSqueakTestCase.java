@@ -31,7 +31,7 @@ public abstract class AbstractSqueakTestCase {
 
     @ClassRule public static final TestLog.Rule TEST_LOG = new TestLog.Rule();
 
-    private static Context context;
+    protected static Context context;
     protected static SqueakImageContext image;
 
     protected CompiledCodeObject makeMethod(final byte[] bytes) {
@@ -129,19 +129,22 @@ public abstract class AbstractSqueakTestCase {
         contextBuilder.option(SqueakLanguageConfig.ID + ".Headless", "true");
         contextBuilder.option(SqueakLanguageConfig.ID + ".Testing", "true");
         context = contextBuilder.build();
-        context.enter();
         context.initialize(SqueakLanguageConfig.ID);
-        image = SqueakLanguage.getContext();
-        image.setImagePath(imagePath);
-        if (Files.exists(Paths.get(imagePath))) {
-            image.ensureLoaded();
+        context.enter();
+        try {
+            image = SqueakLanguage.getContext();
+            image.setImagePath(imagePath);
+            if (Files.exists(Paths.get(imagePath))) {
+                image.ensureLoaded();
+            }
+            image.getSqueakImage(); // Pretend image has been loaded.
+        } finally {
+            context.leave();
         }
-        image.getSqueakImage(); // Pretend image has been loaded.
     }
 
     protected static void destroyImageContext() {
         // Close context if existing (for reloading mechanism).
-        context.leave();
         context.close(true);
         context = null;
         image = null;
