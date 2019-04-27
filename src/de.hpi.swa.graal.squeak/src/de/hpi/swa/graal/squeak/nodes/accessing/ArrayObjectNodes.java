@@ -358,7 +358,7 @@ public final class ArrayObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()", "!isBoolean(value)", "!isCharacter(value)", "!isLong(value)", "!isDouble(value)"})
+        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()", "!isBoolean(value)", "!isCharacter(value)", "!isLong(value)", "!isDouble(value)", "!isNativeObject(value)"})
         protected static final void doEmptyArrayToObject(final ArrayObject obj, final long index, final Object value) {
             obj.transitionFromEmptyToObjects();
             doArrayOfObjects(obj, index, value);
