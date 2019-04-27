@@ -11,13 +11,13 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 public final class WeakPointersObject extends AbstractPointersObject {
     public static final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
 
-    public WeakPointersObject(final SqueakImageContext img, final long hash, final ClassObject sqClass) {
-        super(img, hash, sqClass);
+    public WeakPointersObject(final SqueakImageContext image, final long hash, final ClassObject sqClass) {
+        super(image, hash, sqClass);
     }
 
-    public WeakPointersObject(final SqueakImageContext img, final ClassObject classObject, final int size) {
-        super(img, classObject);
-        setPointers(ArrayUtils.withAll(size, img.nil));
+    public WeakPointersObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
+        super(image, classObject);
+        setPointers(ArrayUtils.withAll(size, NilObject.SINGLETON));
     }
 
     private WeakPointersObject(final WeakPointersObject original) {
@@ -36,7 +36,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
         if (value instanceof WeakReference) {
             final Object wrappedValue = ((WeakReference<?>) value).get();
             if (wrappedValue == null) {
-                return image.nil;
+                return NilObject.SINGLETON;
             } else {
                 return wrappedValue;
             }

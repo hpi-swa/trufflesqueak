@@ -22,6 +22,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
@@ -111,7 +112,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
             }
         }
         lastSeenObjects = seen.size();
-        return image.nil;
+        return NilObject.SINGLETON;
     }
 
     @TruffleBoundary

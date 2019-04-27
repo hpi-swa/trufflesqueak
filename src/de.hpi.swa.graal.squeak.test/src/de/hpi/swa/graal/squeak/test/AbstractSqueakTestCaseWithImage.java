@@ -21,11 +21,13 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 
@@ -57,18 +59,18 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void patchImageForTesting() {
-        image.getActiveProcess().atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
+        image.getActiveProcess().atputNil0(PROCESS.SUSPENDED_CONTEXT);
         image.getOutput().println("Modifying StartUpList for testing...");
         evaluate("{Delay. EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
         image.getOutput().println("Processing StartUpList...");
         evaluate("Smalltalk processStartUpList: true");
         final ArrayObject lists = (ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
-        final PointersObject priority10List = (PointersObject) lists.at0(PRIORITY_10_LIST_INDEX);
+        final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
         final Object firstLink = priority10List.at0(LINKED_LIST.FIRST_LINK);
         final Object lastLink = priority10List.at0(LINKED_LIST.LAST_LINK);
-        assert firstLink != image.nil && firstLink == lastLink : "Unexpected idleProcess state";
+        assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
         idleProcess = (PointersObject) firstLink;
-        assert idleProcess.at0(PROCESS.NEXT_LINK) == image.nil : "Idle process expected to have `nil` successor";
+        assert idleProcess.at0(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
         image.getOutput().println("Setting author information...");
         evaluate("Utilities authorName: 'GraalSqueak'");
         evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
@@ -136,9 +138,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static void ensureCleanImageState() {
         image.interrupt.reset();
         if (idleProcess != null) {
-            if (idleProcess.at0(PROCESS.NEXT_LINK) != image.nil) {
+            if (idleProcess.at0(PROCESS.NEXT_LINK) != NilObject.SINGLETON) {
                 image.printToStdErr("Resetting dirty idle process...");
-                idleProcess.atput0(PROCESS.NEXT_LINK, image.nil);
+                idleProcess.atput0(PROCESS.NEXT_LINK, NilObject.SINGLETON);
             }
             resetProcessLists();
         }
@@ -150,7 +152,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             final PointersObject linkedList = (PointersObject) lists[i];
             final Object key = linkedList.at0(LINKED_LIST.FIRST_LINK);
             final Object value = linkedList.at0(LINKED_LIST.LAST_LINK);
-            final Object expectedValue = i == PRIORITY_10_LIST_INDEX ? idleProcess : image.nil;
+            final Object expectedValue = i == PRIORITY_10_LIST_INDEX ? idleProcess : NilObject.SINGLETON;
             if (key != expectedValue || value != expectedValue) {
                 image.printToStdErr(String.format("Removing inconsistent entry (%s->%s) from scheduler list #%s...", key, value, i + 1));
                 linkedList.atput0(LINKED_LIST.FIRST_LINK, expectedValue);
@@ -165,7 +167,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         final Object patchResult = evaluate(String.join(" ",
                         className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
                         "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
-        assertNotEquals(image.nil, patchResult);
+        assertNotEquals(NilObject.SINGLETON, patchResult);
     }
 
     protected static TestResult runTestCase(final TestRequest request) {
@@ -207,7 +209,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         for (int i = 0; i < sizeNode.execute(array); i++) {
             final TruffleObject value = (AbstractSqueakObject) at0Node.execute(array, i);
-            assert value != image.nil;
+            assert value != NilObject.SINGLETON;
             output.add(((PointersObject) value).at0(0) + suffix);
         }
     }

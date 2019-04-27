@@ -36,8 +36,8 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.getInstructionPointer() < 0"})
-        protected static final Object doInstructionPointerTerminated(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.image.nil;
+        protected static final Object doInstructionPointerTerminated(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index) {
+            return NilObject.SINGLETON;
         }
 
         @Specialization(guards = "index == STACKPOINTER")
@@ -56,8 +56,8 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.getClosure() == null"})
-        protected static final Object doClosureNil(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.image.nil;
+        protected static final Object doClosureNil(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index) {
+            return NilObject.SINGLETON;
         }
 
         @Specialization(guards = "index == RECEIVER")
@@ -72,7 +72,7 @@ public final class ContextObjectNodes {
                         @SuppressWarnings("unused") @Cached(value = "context.getBlockOrMethod()", allowUncached = true) final CompiledCodeObject codeObject,
                         @Cached(value = "create(codeObject)", allowUncached = true) final FrameStackReadNode readNode) {
             final Object value = readNode.execute(context.getTruffleFrame(), (int) (index - CONTEXT.TEMP_FRAME_START));
-            return value == null ? context.image.nil : value;
+            return NilObject.nullToNil(value);
         }
 
         @Specialization(guards = "index >= TEMP_FRAME_START")

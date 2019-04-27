@@ -99,7 +99,7 @@ public final class ContextObject extends AbstractSqueakObject {
         final Object closureOrNil = pointers[CONTEXT.CLOSURE_OR_NIL];
         final BlockClosureObject closure;
         final CompiledCodeObject code;
-        if (closureOrNil == image.nil) {
+        if (closureOrNil == NilObject.SINGLETON) {
             closure = null;
             code = method;
         } else {
@@ -138,14 +138,13 @@ public final class ContextObject extends AbstractSqueakObject {
                 return getSender();
             case CONTEXT.INSTRUCTION_POINTER:
                 final int pc = getInstructionPointer();
-                return pc < 0 ? image.nil : (long) pc;  // Must return a long here.
+                return pc < 0 ? NilObject.SINGLETON : (long) pc;  // Must return a long here.
             case CONTEXT.STACKPOINTER:
                 return (long) getStackPointer(); // Must return a long here.
             case CONTEXT.METHOD:
                 return getMethod();
             case CONTEXT.CLOSURE_OR_NIL:
-                final BlockClosureObject closure = getClosure();
-                return closure == null ? image.nil : closure;
+                return NilObject.nullToNil(getClosure());
             case CONTEXT.RECEIVER:
                 return getReceiver();
             default:
@@ -159,7 +158,7 @@ public final class ContextObject extends AbstractSqueakObject {
         assert value != null : "null indicates a problem";
         switch (index) {
             case CONTEXT.SENDER_OR_NIL:
-                if (value == image.nil) {
+                if (value == NilObject.SINGLETON) {
                     removeSender();
                 } else {
                     setSender((ContextObject) value);
@@ -173,7 +172,7 @@ public final class ContextObject extends AbstractSqueakObject {
                  * active. So it might need to be necessary to extend ContextObjects with an
                  * `isActive` field to avoid the use of iterateFrames.
                  */
-                setInstructionPointer(value == image.nil ? -1 : (int) (long) value);
+                setInstructionPointer(value == NilObject.SINGLETON ? -1 : (int) (long) value);
                 break;
             case CONTEXT.STACKPOINTER:
                 setStackPointer((int) (long) value);
@@ -182,7 +181,7 @@ public final class ContextObject extends AbstractSqueakObject {
                 setMethod((CompiledMethodObject) value);
                 break;
             case CONTEXT.CLOSURE_OR_NIL:
-                setClosure(value == image.nil ? null : (BlockClosureObject) value);
+                setClosure(value == NilObject.SINGLETON ? null : (BlockClosureObject) value);
                 break;
             case CONTEXT.RECEIVER:
                 setReceiver(value);
@@ -198,7 +197,7 @@ public final class ContextObject extends AbstractSqueakObject {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // Method is unknown, use dummy frame instead
             final int guessedArgumentSize = size > CONTEXT.LARGE_FRAMESIZE ? size - CONTEXT.LARGE_FRAMESIZE : size - CONTEXT.SMALL_FRAMESIZE;
-            final Object[] dummyArguments = FrameAccess.newDummyWith(null, image.nil, null, new Object[guessedArgumentSize]);
+            final Object[] dummyArguments = FrameAccess.newDummyWith(null, NilObject.SINGLETON, null, new Object[guessedArgumentSize]);
             truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments);
         }
         return truffleFrame;
@@ -227,7 +226,7 @@ public final class ContextObject extends AbstractSqueakObject {
             } else {
                 // Receiver plus arguments.
                 final Object[] squeakArguments = new Object[1 + method.getNumArgsAndCopied()];
-                frameArguments = FrameAccess.newDummyWith(method, image.nil, null, squeakArguments);
+                frameArguments = FrameAccess.newDummyWith(method, NilObject.SINGLETON, null, squeakArguments);
                 instructionPointer = 0;
                 stackPointer = 0;
             }
@@ -270,7 +269,7 @@ public final class ContextObject extends AbstractSqueakObject {
             } else {
                 // Receiver plus arguments.
                 final Object[] squeakArguments = new Object[1 + compiledBlock.getNumArgsAndCopied()];
-                frameArguments = FrameAccess.newDummyWith(null, image.nil, null, squeakArguments);
+                frameArguments = FrameAccess.newDummyWith(null, NilObject.SINGLETON, null, squeakArguments);
                 instructionPointer = 0;
                 stackPointer = 0;
             }
@@ -318,7 +317,7 @@ public final class ContextObject extends AbstractSqueakObject {
         if (hasModifiedSender) {
             hasModifiedSender = false;
         }
-        FrameAccess.setSender(getOrCreateTruffleFrame(), image.nil);
+        FrameAccess.setSender(getOrCreateTruffleFrame(), NilObject.SINGLETON);
     }
 
     public int getInstructionPointer() {
@@ -400,8 +399,7 @@ public final class ContextObject extends AbstractSqueakObject {
     public Object atTemp(final int index) {
         final CompiledCodeObject blockOrMethod = getBlockOrMethod();
         assert index < blockOrMethod.getNumStackSlots() : "Invalid context stack access at #" + index;
-        final Object value = truffleFrame.getValue(blockOrMethod.getStackSlot(index));
-        return value == null ? image.nil : value;
+        return NilObject.nullToNil(truffleFrame.getValue(blockOrMethod.getStackSlot(index)));
     }
 
     public void atTempPut(final int index, final Object value) {
@@ -414,12 +412,12 @@ public final class ContextObject extends AbstractSqueakObject {
 
     public void terminate() {
         // Remove pc and sender.
-        atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
-        atput0(CONTEXT.SENDER_OR_NIL, image.nil);
+        atput0(CONTEXT.INSTRUCTION_POINTER, NilObject.SINGLETON);
+        atput0(CONTEXT.SENDER_OR_NIL, NilObject.SINGLETON);
     }
 
     public boolean isTerminated() {
-        return getInstructionPointerForBytecodeLoop() < 0 && getSender() == image.nil;
+        return getInstructionPointerForBytecodeLoop() < 0 && getSender() == NilObject.SINGLETON;
     }
 
     public AbstractSqueakObject shallowCopy() {
@@ -511,7 +509,7 @@ public final class ContextObject extends AbstractSqueakObject {
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         currentProcess.atput0(PROCESS.SUSPENDED_CONTEXT, this);
         final ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
-        newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
+        newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
             throw ProcessSwitch.create(newActiveContext);
         } else {
@@ -531,7 +529,7 @@ public final class ContextObject extends AbstractSqueakObject {
             final Object[] rcvrAndArgs = current.getReceiverAndNArguments(code.getNumArgsAndCopied());
             image.getOutput().println(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
             final Object sender = current.getSender();
-            if (sender == image.nil) {
+            if (sender == NilObject.SINGLETON) {
                 break;
             } else {
                 current = (ContextObject) sender;

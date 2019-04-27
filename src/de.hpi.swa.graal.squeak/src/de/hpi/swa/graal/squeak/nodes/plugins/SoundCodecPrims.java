@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -23,8 +24,8 @@ public final class SoundCodecPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doFakeNewState(@SuppressWarnings("unused") final PointersObject receiver) {
-            return method.image.nil;
+        protected static final Object doFakeNewState(@SuppressWarnings("unused") final PointersObject receiver) {
+            return NilObject.SINGLETON;
         }
     }
 

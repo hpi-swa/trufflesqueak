@@ -167,7 +167,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         if (methodObject instanceof CompiledMethodObject) {
             final CompiledMethodObject method = (CompiledMethodObject) methodObject;
             final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(ArrayUtils.EMPTY_ARRAY, method.getFrameDescriptor());
-            return DispatchSendNode.create(image).executeSend(frame, method.getCompiledInSelector(), method, getSqueakClass(), ArrayUtils.copyWithFirst(arguments, this), image.nil);
+            return DispatchSendNode.create(image).executeSend(frame, method.getCompiledInSelector(), method, getSqueakClass(), ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);
         } else {
             throw SqueakExceptions.SqueakException.create("CompiledMethodObject expected, got: " + methodObject);
         }
@@ -251,7 +251,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         if (methodObject instanceof CompiledMethodObject) {
             final CompiledMethodObject method = (CompiledMethodObject) methodObject;
             if (method.getNumArgs() == 1) {
-                dispatchNode.executeDispatch(method, new Object[]{this, wrapNode.executeWrap(value)}, method.image.nil);
+                dispatchNode.executeDispatch(method, new Object[]{this, wrapNode.executeWrap(value)}, NilObject.SINGLETON);
             } else {
                 throw UnsupportedMessageException.create();
             }
@@ -271,7 +271,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             final int actualArity = arguments.length;
             final int expectedArity = method.getNumArgs();
             if (actualArity == expectedArity) {
-                return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), this), method.image.nil);
+                return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), this), NilObject.SINGLETON);
             } else {
                 throw ArityException.create(1 + expectedArity, 1 + actualArity);  // +1 for receiver
             }

@@ -1,10 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.SqueakNodeWithCode;
@@ -30,10 +28,5 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
     @Specialization(guards = {"argumentIndex > code.getNumArgs()"})
     protected static final Object doArgumentsExhausted() {
         return NotProvided.INSTANCE;
-    }
-
-    @Fallback
-    protected static final Object doFail() {
-        throw SqueakException.create("Should never happend");
     }
 }

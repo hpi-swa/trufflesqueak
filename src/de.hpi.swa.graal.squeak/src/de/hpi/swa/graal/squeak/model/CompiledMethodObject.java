@@ -59,7 +59,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         if (index > 0) {
             return (TruffleObject) literals[index];
         } else {
-            return image.nil;
+            return NilObject.SINGLETON;
         }
     }
 
@@ -120,7 +120,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     }
 
     public boolean hasMethodClass() {
-        return getMethodClassAssociation().at0(CLASS_BINDING.VALUE) != image.nil;
+        return getMethodClassAssociation().at0(CLASS_BINDING.VALUE) != NilObject.SINGLETON;
     }
 
     /** CompiledMethod>>#methodClass. */
@@ -139,7 +139,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         literals = new Object[1 + numLiterals];
         literals[0] = header;
         for (int i = 1; i < literals.length; i++) {
-            literals[i] = image.nil;
+            literals[i] = NilObject.SINGLETON;
         }
     }
 
@@ -182,7 +182,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         final int actualArity = receiverAndArguments.length;
         final int expectedArity = 1 + getNumArgs(); // receiver + arguments
         if (actualArity == expectedArity) {
-            return dispatchNode.executeDispatch(this, wrapNode.executeObjects(receiverAndArguments), image.nil);
+            return dispatchNode.executeDispatch(this, wrapNode.executeObjects(receiverAndArguments), NilObject.SINGLETON);
         } else {
             throw ArityException.create(expectedArity, actualArity);
         }

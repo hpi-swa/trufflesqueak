@@ -1,10 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
@@ -35,11 +33,5 @@ public abstract class TemporaryWriteNode extends AbstractNodeWithCode {
     protected final void doWriteOther(final VirtualFrame frame, final Object value) {
         assert value != null;
         writeNode.executeWrite(frame, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    protected static final void doFail(final VirtualFrame frame, final Object value) {
-        throw SqueakException.create("Should never happen");
     }
 }

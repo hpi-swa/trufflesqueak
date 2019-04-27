@@ -101,7 +101,6 @@ public final class JumpBytecodes {
             protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result) {
                 getPushNode().executeWrite(frame, result);
                 getSendMustBeBooleanNode().executeSend(frame);
-                CompilerDirectives.transferToInterpreter();
                 throw SqueakException.create("Should not be reached");
             }
 

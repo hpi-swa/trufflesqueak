@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -84,10 +83,4 @@ public abstract class SqueakObjectBecomeNode extends AbstractNode {
         // TODO: implement or remove?
         throw SqueakException.create("become not implemented for WeakPointersObjects");
     }
-
-    @Fallback
-    protected static final boolean doFail(final Object left, final Object right) {
-        throw SqueakException.create("Unexpected left:", left, "and right:", right);
-    }
-
 }

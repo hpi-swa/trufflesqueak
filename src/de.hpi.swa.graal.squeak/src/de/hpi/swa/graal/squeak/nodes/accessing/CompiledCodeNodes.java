@@ -1,9 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -27,11 +25,6 @@ public final class CompiledCodeNodes {
         @Specialization
         protected static final CompiledMethodObject doMethod(final CompiledMethodObject object) {
             return object;
-        }
-
-        @Fallback
-        protected static final CompiledMethodObject doFail(final CompiledCodeObject object) {
-            throw SqueakException.create("Unexpected value: ", object);
         }
     }
 }

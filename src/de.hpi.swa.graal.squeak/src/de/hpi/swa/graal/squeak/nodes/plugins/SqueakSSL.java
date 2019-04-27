@@ -28,6 +28,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -850,11 +851,11 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             final SqSSL impl = getSSL(method, sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (impl == null || property == null) {
-                return method.image.nil;
+                return NilObject.SINGLETON;
             }
 
             final String value = getStringPropertyValue(impl, property);
-            return value == null ? method.image.nil : method.image.asByteString(value);
+            return value == null ? NilObject.SINGLETON : method.image.asByteString(value);
         }
 
         private static String getStringPropertyValue(final SqSSL impl, final StringProperty property) {

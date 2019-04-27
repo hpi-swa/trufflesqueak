@@ -120,7 +120,7 @@ public final class ObjectLayouts {
             final Map<Object, Object> keyValues = new HashMap<>();
             // TODO: Avoid node allocation in next line.
             for (final Object classBinding : ArrayObjectToObjectArrayNode.getUncached().execute(classBindings)) {
-                if (classBinding != dictionary.image.nil) {
+                if (classBinding != NilObject.SINGLETON) {
                     final PointersObject classBindingPointer = (PointersObject) classBinding;
                     keyValues.put(classBindingPointer.at0(CLASS_BINDING.KEY), classBindingPointer.at0(CLASS_BINDING.VALUE));
                 }

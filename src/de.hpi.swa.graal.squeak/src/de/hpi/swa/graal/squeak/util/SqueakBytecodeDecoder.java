@@ -4,6 +4,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -136,7 +137,7 @@ public final class SqueakBytecodeDecoder {
             case 114:
                 return new PushConstantNode(code, index, false);
             case 115:
-                return new PushConstantNode(code, index, code.image.nil);
+                return new PushConstantNode(code, index, NilObject.SINGLETON);
             case 116:
                 return new PushConstantNode(code, index, -1L);
             case 117:
@@ -152,7 +153,7 @@ public final class SqueakBytecodeDecoder {
             case 122:
                 return ReturnConstantNode.create(code, index, false);
             case 123:
-                return ReturnConstantNode.create(code, index, code.image.nil);
+                return ReturnConstantNode.create(code, index, NilObject.SINGLETON);
             case 124:
                 return ReturnTopFromMethodNode.create(code, index);
             case 125:

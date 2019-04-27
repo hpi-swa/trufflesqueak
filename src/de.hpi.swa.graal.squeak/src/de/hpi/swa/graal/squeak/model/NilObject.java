@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -10,7 +9,14 @@ import com.oracle.truffle.api.library.ExportMessage;
 public final class NilObject implements TruffleObject {
     public static final NilObject SINGLETON = new NilObject();
 
-    public static TruffleObject convert(final AbstractSqueakObject object) {
+    private NilObject() {
+    }
+
+    public static TruffleObject nullToNil(final TruffleObject object) {
+        return object == null ? SINGLETON : object;
+    }
+
+    public static Object nullToNil(final Object object) {
         return object == null ? SINGLETON : object;
     }
 
@@ -32,7 +38,6 @@ public final class NilObject implements TruffleObject {
 
     @Override
     public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
         return "nil";
     }
 

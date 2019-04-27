@@ -1546,7 +1546,7 @@ public final class BitBlt {
             }
             PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         }
-        if (fieldOop == objectPointer.image.nil) {
+        if (fieldOop == NilObject.SINGLETON) {
             return (int) defaultValue;
         } else if (fieldOop instanceof Double) {
             return floatToLong((double) fieldOop);
@@ -1860,7 +1860,7 @@ public final class BitBlt {
         cmMaskTable = null;
         cmLookupTable = null;
         cmOop = fetchPointerofObject(BB_COLOR_MAP_INDEX, bitBltOop);
-        if (cmOop == nilObject()) {
+        if (cmOop == NilObject.SINGLETON) {
             return true;
         }
 
@@ -4056,7 +4056,7 @@ public final class BitBlt {
 
     private static PointersObject fetchPointerofObjectOrNull(final int index, final PointersObject object) {
         final Object value = fetchPointerofObject(index, object);
-        if (value == object.image.nil) {
+        if (value == NilObject.SINGLETON) {
             return null;
         } else {
             return (PointersObject) value;
@@ -4065,7 +4065,7 @@ public final class BitBlt {
 
     private static NativeObject fetchNativeofObjectOrNull(final int index, final PointersObject object) {
         final Object value = fetchPointerofObject(index, object);
-        if (value == object.image.nil) {
+        if (value == NilObject.SINGLETON) {
             return null;
         } else {
             return (NativeObject) value;
@@ -4106,10 +4106,6 @@ public final class BitBlt {
 
     private static boolean isPointers(final Object object) {
         return object != null && object instanceof PointersObject;
-    }
-
-    private static Object nilObject() {
-        return bitBltOop.image.nil;
     }
 
     private static boolean failed() {

@@ -21,9 +21,6 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
  */
 @ImportStatic(FrameAccess.class)
 public abstract class StackPushForPrimitivesNode extends AbstractNode {
-    public static StackPushForPrimitivesNode create() {
-        return StackPushForPrimitivesNodeGen.create();
-    }
 
     public abstract void executeWrite(VirtualFrame frame, Object value);
 

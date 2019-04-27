@@ -216,7 +216,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.isEmptyType()", "receiver.getEmptyStorage() > 0"})
         protected final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
-            return thang == method.image.nil ? method.image.sqTrue : method.image.sqFalse;
+            return thang == NilObject.SINGLETON ? method.image.sqTrue : method.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
@@ -230,7 +230,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"receiver.isBooleanType()", "!isBoolean(thang)", "!isNilObject(thang)"})
+        @Specialization(guards = {"receiver.isBooleanType()", "!isBoolean(thang)", "!isNil(thang)"})
         protected final boolean doArrayOfBooleans(final ArrayObject receiver, final Object thang) {
             return method.image.sqFalse;
         }
@@ -246,7 +246,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"receiver.isCharType()", "!isCharacter(thang)", "!isNilObject(thang)"})
+        @Specialization(guards = {"receiver.isCharType()", "!isCharacter(thang)", "!isNil(thang)"})
         protected final boolean doArrayOfChars(final ArrayObject receiver, final Object thang) {
             return method.image.sqFalse;
         }
@@ -262,7 +262,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"receiver.isLongType()", "!isLong(thang)", "!isNilObject(thang)"})
+        @Specialization(guards = {"receiver.isLongType()", "!isLong(thang)", "!isNil(thang)"})
         protected final boolean doArrayOfLongss(final ArrayObject receiver, final Object thang) {
             return method.image.sqFalse;
         }
@@ -278,7 +278,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"receiver.isDoubleType()", "!isDouble(thang)", "!isNilObject(thang)"})
+        @Specialization(guards = {"receiver.isDoubleType()", "!isDouble(thang)", "!isNil(thang)"})
         protected final boolean doArrayOfDoubles(final ArrayObject receiver, final Object thang) {
             return method.image.sqFalse;
         }
@@ -515,7 +515,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 if (restArgs.length > index - 2) {
                     return method.image.asByteString(restArgs[index - 2]);
                 } else {
-                    return method.image.nil;
+                    return NilObject.SINGLETON;
                 }
             }
             switch (index) {
@@ -559,9 +559,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 // case 10002: // operating system details (Win32 only)
                 // case 10003: // graphics hardware details (Win32 only)
                 default:
-                    return method.image.nil;
+                    return NilObject.SINGLETON;
             }
-            return method.image.nil;
+            return NilObject.SINGLETON;
         }
     }
 
@@ -663,7 +663,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "classObject.isNilClass()")
         protected final ArrayObject doNil(@SuppressWarnings("unused") final ClassObject classObject) {
-            return method.image.asArrayOfObjects(method.image.nil);
+            return method.image.asArrayOfObjects(NilObject.SINGLETON);
         }
     }
 
@@ -799,24 +799,24 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"})
-        protected final Object getVMParameters(final Object receiver, final long index, final NotProvided value) {
+        protected static final Object getVMParameters(final Object receiver, final long index, final NotProvided value) {
             return vmParameterAt((int) index);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!isNotProvided(value)")
-        protected final NilObject getVMParameters(final Object receiver, final long index, final Object value) {
-            return method.image.nil; // ignore writes
+        protected static final NilObject getVMParameters(final Object receiver, final long index, final Object value) {
+            return NilObject.SINGLETON; // ignore writes
         }
 
-        private Object vmParameterAt(final int index) {
+        private static Object vmParameterAt(final int index) {
             //@formatter:off
             switch (index) {
                 case 1: return 1L; // end (v3)/size(Spur) of old-space (0-based, read-only)
                 case 2: return 1L; // end (v3)/size(Spur) of young/new-space (read-only)
                 case 3: return 1L; // end (v3)/size(Spur) of heap (read-only)
-                case 4: return method.image.nil; // nil (was allocationCount (read-only))
-                case 5: return method.image.nil; // nil (was allocations between GCs (read-write)
+                case 4: return NilObject.SINGLETON; // nil (was allocationCount (read-only))
+                case 5: return NilObject.SINGLETON; // nil (was allocations between GCs (read-write)
                 case 6: return 0L; // survivor count tenuring threshold (read-write)
                 case 7: return MiscUtils.getCollectionCount(); // full GCs since startup (read-only)
                 case 8: return MiscUtils.getCollectionTime(); // total milliseconds in full GCs since startup (read-only)
@@ -850,23 +850,23 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
                 case 44: return 0L; // size of eden, in bytes
                 case 45: return 0L; // desired size of eden, in bytes (stored in image file header)
-                case 46: return method.image.nil; // machine code zone size, in bytes (Cog only; otherwise nil)
-                case 47: return method.image.nil; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
+                case 46: return NilObject.SINGLETON; // machine code zone size, in bytes (Cog only; otherwise nil)
+                case 47: return NilObject.SINGLETON; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
                 case 48: return 0L; // various header flags.  See getCogVMFlags.
                 case 49: return 256L; // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
-                case 50: case 51: return method.image.nil; // nil; reserved for VM parameters that persist in the image (such as eden above)
+                case 50: case 51: return NilObject.SINGLETON; // nil; reserved for VM parameters that persist in the image (such as eden above)
                 case 52: return 65536L; // root table capacity
                 case 53: return 2L; // number of segments (Spur only; otherwise nil)
                 case 54: return 1L; // total size of free old space (Spur only, otherwise nil)
                 case 55: return 0L; // ratio of growth and image size at or above which a GC will be performed post scavenge
-                case 56: return method.image.nil; // number of process switches since startup (read-only)
+                case 56: return NilObject.SINGLETON; // number of process switches since startup (read-only)
                 case 57: return 0L; // number of ioProcessEvents calls since startup (read-only)
                 case 58: return 0L; // number of ForceInterruptCheck calls since startup (read-only)
                 case 59: return 0L; // number of check event calls since startup (read-only)
                 case 60: return 0L; // number of stack page overflows since startup (read-only)
                 case 61: return 0L; // number of stack page divorces since startup (read-only)
-                case 62: return method.image.nil; // compiled code compactions since startup (read-only; Cog only; otherwise nil)
-                case 63: return method.image.nil; // total milliseconds in compiled code compactions since startup (read-only; Cog only; otherwise nil)
+                case 62: return NilObject.SINGLETON; // compiled code compactions since startup (read-only; Cog only; otherwise nil)
+                case 63: return NilObject.SINGLETON; // total milliseconds in compiled code compactions since startup (read-only; Cog only; otherwise nil)
                 case 64: return 0L; // the number of methods that currently have jitted machine-code
                 case 65: return 0L; // whether the VM supports a certain feature, MULTIPLE_BYTECODE_SETS is bit 0, IMMTABILITY is bit 1
                 case 66: return 4096L; // the byte size of a stack page
@@ -875,7 +875,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 69: return 16L; // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become et al)
                 case 70: return 1L; // the vmProxyMajorVersion (the interpreterProxy VM_MAJOR_VERSION)
                 case 71: return 13L; // the vmProxyMinorVersion (the interpreterProxy VM_MINOR_VERSION)
-                default: return method.image.nil;
+                default: return NilObject.SINGLETON;
             }
             //@formatter:on
         }
@@ -936,8 +936,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "!inBounds1(index, getExternalModuleNames().length)")
         @SuppressWarnings("unused")
-        protected final NilObject doGetOutOfBounds(final AbstractSqueakObject receiver, final long index) {
-            return method.image.nil;
+        protected static final NilObject doGetOutOfBounds(final AbstractSqueakObject receiver, final long index) {
+            return NilObject.SINGLETON;
         }
     }
 }

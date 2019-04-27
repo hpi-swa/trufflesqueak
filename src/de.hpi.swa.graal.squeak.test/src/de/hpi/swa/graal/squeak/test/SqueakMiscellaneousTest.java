@@ -9,6 +9,7 @@ import org.junit.Test;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
@@ -131,8 +132,9 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testSource() {
-        final Object[] literals = new Object[]{14548994L, image.nil, image.nil}; // header with
-                                                                                 // numTemp=55
+        final Object[] literals = new Object[]{14548994L, NilObject.SINGLETON, NilObject.SINGLETON}; // header
+                                                                                                     // with
+        // numTemp=55
         final CompiledCodeObject code = makeMethod(literals, 0x70, 0x68, 0x10, 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, 0xC9, 0x7C);
         final CharSequence source = CompiledCodeObjectPrinter.getString(code);
         assertEquals(String.join("\n",

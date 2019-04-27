@@ -80,7 +80,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     }
 
     public TruffleObject getOuterContext() {
-        return NilObject.convert(outerContext);
+        return NilObject.nullToNil(outerContext);
     }
 
     public ContextObject getOuterContextOrNull() {
@@ -240,7 +240,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     public Object execute(final Object[] arguments,
                     @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws ArityException {
         if (getNumArgs() == arguments.length) {
-            final Object[] frameArguments = FrameAccess.newClosureArguments(this, image.nil, wrapNode.executeObjects(arguments));
+            final Object[] frameArguments = FrameAccess.newClosureArguments(this, NilObject.SINGLETON, wrapNode.executeObjects(arguments));
             return getCallTarget().call(frameArguments);
         } else {
             throw ArityException.create((int) getNumArgs(), arguments.length);

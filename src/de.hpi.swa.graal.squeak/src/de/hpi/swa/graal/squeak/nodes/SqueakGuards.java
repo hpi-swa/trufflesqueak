@@ -117,8 +117,8 @@ public final class SqueakGuards {
         return object instanceof NativeObject;
     }
 
-    public static boolean isNilObject(final Object object) {
-        return object instanceof NilObject;
+    public static boolean isNil(final Object object) {
+        return object == NilObject.SINGLETON;
     }
 
     public static boolean isNotProvided(final Object obj) {

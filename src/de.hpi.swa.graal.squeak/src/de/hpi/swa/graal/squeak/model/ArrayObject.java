@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.TruffleObject;
 
@@ -10,6 +9,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class ArrayObject extends AbstractSqueakObject {
     public static final byte BOOLEAN_NIL_TAG = 0;
@@ -17,7 +17,7 @@ public final class ArrayObject extends AbstractSqueakObject {
     public static final byte BOOLEAN_FALSE_TAG = -1;
     public static final char CHAR_NIL_TAG = Character.MAX_VALUE - 1; // Rather unlikely char.
     public static final long LONG_NIL_TAG = Long.MIN_VALUE + 42; // Rather unlikely long.
-    public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L); // Nan.
+    public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L); // NaN+1.
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
     public static final boolean ENABLE_STORAGE_STRATEGIES = true;
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ArrayObject.class);
@@ -43,7 +43,7 @@ public final class ArrayObject extends AbstractSqueakObject {
 
     public static ArrayObject createObjectStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
         final Object[] objects = new Object[size];
-        Arrays.fill(objects, image.nil);
+        Arrays.fill(objects, NilObject.SINGLETON);
         return new ArrayObject(image, classObject, objects);
     }
 
@@ -59,23 +59,6 @@ public final class ArrayObject extends AbstractSqueakObject {
         return value == LONG_NIL_TAG;
     }
 
-    public Object at0(final long index) {
-        CompilerAsserts.neverPartOfCompilation("Slow operation, not meant to be used on fast path");
-        if (isBooleanType()) {
-            return at0Boolean(index);
-        } else if (isCharType()) {
-            return at0Char(index);
-        } else if (isDoubleType()) {
-            return at0Double(index);
-        } else if (isLongType()) {
-            return at0Long(index);
-        } else if (isNativeObjectType()) {
-            return at0NativeObject(index);
-        } else {
-            return at0Object(index);
-        }
-    }
-
     public Object at0Boolean(final long index) {
         final byte value = getBooleanStorage()[(int) index];
         if (value == BOOLEAN_FALSE_TAG) {
@@ -84,28 +67,27 @@ public final class ArrayObject extends AbstractSqueakObject {
             return image.sqTrue;
         } else {
             assert value == BOOLEAN_NIL_TAG;
-            return image.nil;
+            return NilObject.SINGLETON;
         }
     }
 
     public Object at0Char(final long index) {
         final char value = getCharStorage()[(int) index];
-        return value == CHAR_NIL_TAG ? image.nil : value;
+        return value == CHAR_NIL_TAG ? NilObject.SINGLETON : value;
     }
 
     public Object at0Double(final long index) {
         final double value = getDoubleStorage()[(int) index];
-        return Double.doubleToRawLongBits(value) == DOUBLE_NIL_TAG_LONG ? image.nil : value;
+        return Double.doubleToRawLongBits(value) == DOUBLE_NIL_TAG_LONG ? NilObject.SINGLETON : value;
     }
 
     public Object at0Long(final long index) {
         final long value = getLongStorage()[(int) index];
-        return value == LONG_NIL_TAG ? image.nil : value;
+        return value == LONG_NIL_TAG ? NilObject.SINGLETON : value;
     }
 
     public TruffleObject at0NativeObject(final long index) {
-        final NativeObject value = getNativeObjectStorage()[(int) index];
-        return value == null ? image.nil : value;
+        return NilObject.nullToNil(getNativeObjectStorage()[(int) index]);
     }
 
     public Object at0Object(final int index) {
@@ -242,10 +224,6 @@ public final class ArrayObject extends AbstractSqueakObject {
         return (NativeObject[]) storage;
     }
 
-    public NilObject getNil() {
-        return image.nil;
-    }
-
     public int getObjectLength() {
         return getObjectStorage().length;
     }
@@ -332,7 +310,7 @@ public final class ArrayObject extends AbstractSqueakObject {
                 objects[i] = image.sqTrue;
             } else {
                 assert value == BOOLEAN_NIL_TAG;
-                objects[i] = image.nil;
+                objects[i] = NilObject.SINGLETON;
             }
         }
         storage = objects;
@@ -343,7 +321,7 @@ public final class ArrayObject extends AbstractSqueakObject {
         final char[] chars = getCharStorage();
         final Object[] objects = new Object[chars.length];
         for (int i = 0; i < chars.length; i++) {
-            objects[i] = chars[i] == CHAR_NIL_TAG ? image.nil : chars[i];
+            objects[i] = chars[i] == CHAR_NIL_TAG ? NilObject.SINGLETON : chars[i];
         }
         storage = objects;
     }
@@ -353,7 +331,7 @@ public final class ArrayObject extends AbstractSqueakObject {
         final double[] doubles = getDoubleStorage();
         final Object[] objects = new Object[doubles.length];
         for (int i = 0; i < doubles.length; i++) {
-            objects[i] = doubles[i] == DOUBLE_NIL_TAG ? image.nil : doubles[i];
+            objects[i] = doubles[i] == DOUBLE_NIL_TAG ? NilObject.SINGLETON : doubles[i];
         }
         storage = objects;
     }
@@ -386,9 +364,7 @@ public final class ArrayObject extends AbstractSqueakObject {
     }
 
     public void transitionFromEmptyToObjects() {
-        final Object[] objects = new Object[getEmptyStorage()];
-        Arrays.fill(objects, image.nil);
-        storage = objects;
+        storage = ArrayUtils.withAll(getEmptyLength(), NilObject.SINGLETON);
     }
 
     public void transitionFromLongsToObjects() {
@@ -396,7 +372,7 @@ public final class ArrayObject extends AbstractSqueakObject {
         final long[] longs = getLongStorage();
         final Object[] objects = new Object[longs.length];
         for (int i = 0; i < longs.length; i++) {
-            objects[i] = longs[i] == LONG_NIL_TAG ? image.nil : longs[i];
+            objects[i] = longs[i] == LONG_NIL_TAG ? NilObject.SINGLETON : longs[i];
         }
         storage = objects;
     }
@@ -406,7 +382,7 @@ public final class ArrayObject extends AbstractSqueakObject {
         final NativeObject[] natives = getNativeObjectStorage();
         final Object[] objects = new Object[natives.length];
         for (int i = 0; i < natives.length; i++) {
-            objects[i] = natives[i] == null ? image.nil : natives[i];
+            objects[i] = NilObject.nullToNil(natives[i]);
         }
         storage = objects;
     }

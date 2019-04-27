@@ -11,6 +11,7 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
@@ -78,7 +79,7 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             if (fromPointer == newSuperclass) {
-                newSuperclass = to[i] == obj.image.nil ? null : (ClassObject) to[i];
+                newSuperclass = to[i] == NilObject.SINGLETON ? null : (ClassObject) to[i];
                 updateHashNode.executeUpdate(fromPointer, newSuperclass, copyHash);
             }
             if (fromPointer == newMethodDict) {
@@ -86,11 +87,11 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
                 updateHashNode.executeUpdate(fromPointer, newMethodDict, copyHash);
             }
             if (fromPointer == newInstanceVariables) {
-                newInstanceVariables = to[i] == obj.image.nil ? null : (ArrayObject) to[i];
+                newInstanceVariables = to[i] == NilObject.SINGLETON ? null : (ArrayObject) to[i];
                 updateHashNode.executeUpdate(fromPointer, newInstanceVariables, copyHash);
             }
             if (fromPointer == newOrganization) {
-                newOrganization = to[i] == obj.image.nil ? null : (PointersObject) to[i];
+                newOrganization = to[i] == NilObject.SINGLETON ? null : (PointersObject) to[i];
                 updateHashNode.executeUpdate(fromPointer, newOrganization, copyHash);
             }
         }

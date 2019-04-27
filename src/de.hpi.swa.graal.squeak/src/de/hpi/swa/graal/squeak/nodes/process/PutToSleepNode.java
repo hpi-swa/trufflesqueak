@@ -10,11 +10,10 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadN
 
 public final class PutToSleepNode extends AbstractNodeWithImage {
     @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
-    @Child private LinkProcessToListNode linkProcessToList;
+    @Child private LinkProcessToListNode linkProcessToList = LinkProcessToListNode.create();
 
     private PutToSleepNode(final SqueakImageContext image) {
         super(image);
-        linkProcessToList = LinkProcessToListNode.create(image);
     }
 
     public static PutToSleepNode create(final SqueakImageContext image) {

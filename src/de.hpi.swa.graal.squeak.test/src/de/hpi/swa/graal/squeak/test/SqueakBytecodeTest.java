@@ -26,6 +26,7 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -47,8 +48,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testPopAndPushTemporaryLocations() {
-        final Object[] literals = new Object[]{2097154L, image.nil, image.nil}; // header with
-                                                                                // numTemp=8
+        final Object[] literals = new Object[]{2097154L, NilObject.SINGLETON, NilObject.SINGLETON}; // header
+                                                                                                    // with
+        // numTemp=8
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 8; i++) {
             // push true, popIntoTemp i, pushTemp i, returnTop
@@ -125,7 +127,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPushConstants() {
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
-        final Object[] expectedResults = {true, false, image.nil, -1L, 0L, 1L, 2L};
+        final Object[] expectedResults = {true, false, NilObject.SINGLETON, -1L, 0L, 1L, 2L};
         for (int i = 0; i < expectedResults.length; i++) {
             assertSame(expectedResults[i], runMethod(rcvr, 113 + i, 124));
         }
@@ -140,7 +142,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testReturnConstants() {
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
-        final Object[] expectedResults = {true, false, image.nil};
+        final Object[] expectedResults = {true, false, NilObject.SINGLETON};
         for (int i = 0; i < expectedResults.length; i++) {
             assertSame(expectedResults[i], runMethod(rcvr, 121 + i));
         }
@@ -298,7 +300,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testExtendedPopIntoTemporaryVariables() {
         final int maxNumTemps = CONTEXT.MAX_STACK_SIZE - 2; // two stack slots required for code
-        final Object[] literals = new Object[]{makeHeader(0, maxNumTemps, 0, false, true), image.nil, image.nil};
+        final Object[] literals = new Object[]{makeHeader(0, maxNumTemps, 0, false, true), NilObject.SINGLETON, NilObject.SINGLETON};
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < maxNumTemps; i++) {
             // push true, push 1, popIntoTemp i, pushTemp i, quickReturnTop
@@ -502,7 +504,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testPushRemoteTemp() {
-        final Object[] literals = new Object[]{2097154L /* header with numTemp=8 */, image.nil, image.nil};
+        final Object[] literals = new Object[]{2097154L /* header with numTemp=8 */, NilObject.SINGLETON, NilObject.SINGLETON};
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // push true, pushNewArray (size 1 and pop), popIntoTemp 2, pushRemoteTemp
         // (at(0), temp 2), returnTop
@@ -521,8 +523,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
 
-        final Object[] literals = new Object[]{2097154L, image.nil, image.nil}; // header with
-                                                                                // numTemp=8
+        final Object[] literals = new Object[]{2097154L, NilObject.SINGLETON, NilObject.SINGLETON}; // header
+                                                                                                    // with
+        // numTemp=8
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // pushNewArray (size 2), popIntoTemp 3, push true, push false,
         // storeIntoRemoteTemp (0, temp 3), storeIntoRemoteTemp (1, temp 3), pushTemp 3,
@@ -546,8 +549,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
 
-        final Object[] literals = new Object[]{2097154L, image.nil, image.nil}; // header with
-                                                                                // numTemp=8
+        final Object[] literals = new Object[]{2097154L, NilObject.SINGLETON, NilObject.SINGLETON}; // header
+                                                                                                    // with
+        // numTemp=8
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // pushNewArray (size 2), popIntoTemp 3, push true, push false,
         // storeIntoRemoteTemp (0, temp 3), storeIntoRemoteTemp (1, temp 3), pushTemp 3,
@@ -569,7 +573,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPushClosure() {
         // ^ [ :arg1 :arg2 | arg1 + arg2 ]
-        final Object[] literals = new Object[]{2L, image.nil, image.nil};
+        final Object[] literals = new Object[]{2L, NilObject.SINGLETON, NilObject.SINGLETON};
         final long rcvr = 1L;
         final CompiledMethodObject method = makeMethod(literals, 0x8F, 0x02, 0x00, 0x04, 0x10, 0x11, 0xB0, 0x7D, 0x7C);
         final VirtualFrame frame = createTestFrame(method);
@@ -657,7 +661,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     private static PointersObject getTestObject() {
         return new PointersObject(image, image.arrayClass,
-                        new Object[]{image.nil, image.sqFalse, image.sqTrue, image.characterClass, image.metaClass,
+                        new Object[]{NilObject.SINGLETON, image.sqFalse, image.sqTrue, image.characterClass, image.metaClass,
                                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                                         image.specialObjectsArray});
     }

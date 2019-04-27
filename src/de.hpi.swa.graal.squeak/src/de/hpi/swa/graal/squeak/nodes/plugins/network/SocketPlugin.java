@@ -18,6 +18,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -139,7 +140,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
             LOG.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
-            return lastNameLookup == null ? method.image.nil : method.image.asByteArray(lastNameLookup);
+            return lastNameLookup == null ? NilObject.SINGLETON : method.image.asByteArray(lastNameLookup);
         }
     }
 
@@ -158,7 +159,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected final TruffleObject doWork(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final String lastAddressLookup = Resolver.lastAddressLookUpResult();
             LOG.finer(() -> ">> Address Lookup Result: " + lastAddressLookup);
-            return lastAddressLookup == null ? method.image.nil : method.image.asByteString(lastAddressLookup);
+            return lastAddressLookup == null ? NilObject.SINGLETON : method.image.asByteString(lastAddressLookup);
         }
     }
 

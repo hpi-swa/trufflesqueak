@@ -19,6 +19,7 @@ import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
@@ -117,7 +118,7 @@ public final class SqueakImageChunk {
             }
         }
         if (object == SqueakImageReaderNode.NIL_OBJECT_PLACEHOLDER) {
-            return image.nil;
+            return NilObject.SINGLETON;
         } else {
             return object;
         }

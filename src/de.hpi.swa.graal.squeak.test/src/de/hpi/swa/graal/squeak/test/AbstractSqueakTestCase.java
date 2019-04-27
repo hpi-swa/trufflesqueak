@@ -21,6 +21,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
@@ -81,15 +82,15 @@ public abstract class AbstractSqueakTestCase {
         testContext.atput0(CONTEXT.RECEIVER, receiver);
         testContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) code.getInitialPC());
         testContext.atput0(CONTEXT.STACKPOINTER, 0L);
-        testContext.atput0(CONTEXT.CLOSURE_OR_NIL, code.image.nil);
-        testContext.atput0(CONTEXT.SENDER_OR_NIL, code.image.nil);
+        testContext.atput0(CONTEXT.CLOSURE_OR_NIL, NilObject.SINGLETON);
+        testContext.atput0(CONTEXT.SENDER_OR_NIL, NilObject.SINGLETON);
         for (int i = 0; i < arguments.length; i++) {
             testContext.push(arguments[i]);
         }
         // Initialize temporary variables with nil in newContext.
         final int numTemps = code.getNumTemps();
         for (int i = 0; i < numTemps - arguments.length; i++) {
-            testContext.push(code.image.nil);
+            testContext.push(NilObject.SINGLETON);
         }
         return ExecuteTopLevelContextNode.create(null, testContext, false);
     }
@@ -117,7 +118,7 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static VirtualFrame createTestFrame(final CompiledMethodObject code) {
-        final Object[] arguments = FrameAccess.newWith(code, code.image.nil, null, new Object[]{code.image.nil});
+        final Object[] arguments = FrameAccess.newWith(code, NilObject.SINGLETON, null, new Object[]{NilObject.SINGLETON});
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 

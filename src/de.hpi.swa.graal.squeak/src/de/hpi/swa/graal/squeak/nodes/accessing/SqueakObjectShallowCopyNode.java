@@ -1,10 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -130,10 +128,4 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage 
     protected static final Object doWeakPointers(final WeakPointersObject receiver) {
         return receiver.shallowCopy();
     }
-
-    @Fallback
-    protected static final Object doFail(final Object object) {
-        throw SqueakException.create("Unsupported value:", object);
-    }
-
 }

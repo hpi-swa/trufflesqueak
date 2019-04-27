@@ -1,21 +1,18 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 
-public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
+public abstract class SignalSemaphoreNode extends AbstractNode {
     @Child private ResumeProcessNode resumeProcessNode;
 
     protected SignalSemaphoreNode(final CompiledCodeObject code) {
-        super(code.image);
         resumeProcessNode = ResumeProcessNode.create(code);
     }
 
@@ -43,10 +40,5 @@ public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
     @Specialization(guards = "object == null")
     protected static final void doNothing(@SuppressWarnings("unused") final Object object) {
         // nothing to do
-    }
-
-    @Fallback
-    protected static final void doFallback(@SuppressWarnings("unused") final VirtualFrame frame, final Object semaphore) {
-        throw SqueakException.create("Unexpected object in SignalSemaphoreNode:", semaphore);
     }
 }

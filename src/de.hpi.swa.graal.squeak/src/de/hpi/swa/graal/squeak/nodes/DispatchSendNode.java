@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -10,7 +9,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakError;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -80,13 +78,6 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
             return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, image.asArrayOfObjects(arguments), rcvrAndArgs[0]},
                             contextOrMarker);
         }
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    protected static final Object doFail(final VirtualFrame frame, final NativeObject selector, final Object targetObject, final ClassObject rcvrClass, final Object[] rcvrAndArgs,
-                    final Object contextOrMarker) {
-        throw SqueakException.create("Should never happen");
     }
 
     protected static final boolean isAllowedInHeadlessMode(final NativeObject selector) {

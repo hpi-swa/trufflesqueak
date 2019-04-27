@@ -39,6 +39,7 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPluginFactory.PrimExecuteNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPluginFactory.PrimReadMemberNodeFactory;
@@ -366,7 +367,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         public final Object importSymbol(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject name) {
             final Object object = method.image.env.importSymbol(name.asStringUnsafe());
             if (object == null) {
-                return method.image.nil;
+                return NilObject.SINGLETON;
             }
             return object;
         }

@@ -1,11 +1,9 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
@@ -43,11 +41,6 @@ public final class BlockClosureObjectNodes {
         protected static final Object doClosureCopiedValues(final BlockClosureObject closure, final long index) {
             return closure.getCopiedAt0((int) index);
         }
-
-        @Fallback
-        protected static final Object doFail(final BlockClosureObject closure, final long index) {
-            throw SqueakException.create("Unexpected values:", closure, index);
-        }
     }
 
     @GenerateUncached
@@ -78,11 +71,6 @@ public final class BlockClosureObjectNodes {
         @Specialization(guards = "index > ARGUMENT_COUNT")
         protected static final void doClosureCopiedValues(final BlockClosureObject closure, final long index, final Object value) {
             closure.setCopiedAt0((int) index, value);
-        }
-
-        @Fallback
-        protected static final void doFail(final BlockClosureObject closure, final long index, final Object value) {
-            throw SqueakException.create("Unexpected values:", closure, index, value);
         }
     }
 }

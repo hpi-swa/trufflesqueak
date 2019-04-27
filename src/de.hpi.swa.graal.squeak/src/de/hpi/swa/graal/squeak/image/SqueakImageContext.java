@@ -63,7 +63,6 @@ public final class SqueakImageContext {
     public final boolean sqFalse = false;
     public final boolean sqTrue = true;
     // Special objects
-    public final NilObject nil = NilObject.SINGLETON;
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
     public final PointersObject schedulerAssociation = new PointersObject(this);
@@ -192,7 +191,7 @@ public final class SqueakImageContext {
             // Load image.
             Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(this)).call();
             // Remove active context.
-            getActiveProcess().atput0(PROCESS.SUSPENDED_CONTEXT, nil);
+            getActiveProcess().atputNil0(PROCESS.SUSPENDED_CONTEXT);
             // Modify StartUpList for headless execution.
             // TODO: Also start ProcessorScheduler and WeakArray (see SqueakSUnitTest).
             evaluate("{EventSensor. ProcessorScheduler. Project. WeakArray} do: [:ea | Smalltalk removeFromStartUpList: ea]");
@@ -246,7 +245,7 @@ public final class SqueakImageContext {
         assert lastParseRequestSource == null : "Image should not have been executed manually before.";
         final PointersObject activeProcess = getActiveProcess();
         final ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
-        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
+        activeProcess.atputNil0(PROCESS.SUSPENDED_CONTEXT);
         return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
     }
 
@@ -265,7 +264,7 @@ public final class SqueakImageContext {
 
         final AbstractSqueakObject parser = (AbstractSqueakObject) parserClass.send("new");
         final AbstractSqueakObject methodNode = (AbstractSqueakObject) parser.send(
-                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, sqTrue, nil, new BlockClosureObject(this));
+                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, sqTrue, NilObject.SINGLETON, new BlockClosureObject(this));
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
@@ -273,8 +272,8 @@ public final class SqueakImageContext {
         doItContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) doItMethod.getInitialPC());
         doItContext.atput0(CONTEXT.RECEIVER, nilClass);
         doItContext.atput0(CONTEXT.STACKPOINTER, 0L);
-        doItContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
-        doItContext.atput0(CONTEXT.SENDER_OR_NIL, nil);
+        doItContext.atput0(CONTEXT.CLOSURE_OR_NIL, NilObject.SINGLETON);
+        doItContext.atput0(CONTEXT.SENDER_OR_NIL, NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(getLanguage(), doItContext, false);
     }
 
@@ -367,7 +366,7 @@ public final class SqueakImageContext {
     }
 
     public void setSemaphore(final long index, final TruffleObject semaphore) {
-        assert semaphore == nil || ((AbstractSqueakObject) semaphore).isSemaphore();
+        assert semaphore == NilObject.SINGLETON || ((AbstractSqueakObject) semaphore).isSemaphore();
         specialObjectsArray.atput0Object(index, semaphore);
     }
 

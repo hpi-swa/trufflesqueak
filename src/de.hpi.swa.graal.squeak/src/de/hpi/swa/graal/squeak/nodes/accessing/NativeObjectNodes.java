@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -101,11 +100,6 @@ public final class NativeObjectNodes {
         protected static final boolean doNativeLongsLargeInteger(@SuppressWarnings("unused") final NativeObject obj, final LargeIntegerObject value) {
             return value.isZeroOrPositive() && value.lessThanOneShiftedBy64();
         }
-
-        @Fallback
-        protected static final boolean doFail(final NativeObject object, final Object value) {
-            throw SqueakException.create("Unexpected values:", object, value);
-        }
     }
 
     @GenerateUncached
@@ -140,11 +134,6 @@ public final class NativeObjectNodes {
             } else {
                 return LargeIntegerObject.valueOf(obj.image, value).toUnsigned();
             }
-        }
-
-        @Fallback
-        protected static final long doFail(final NativeObject obj, final long index) {
-            throw SqueakException.create("Unexpected values:", obj, index);
         }
     }
 
@@ -242,11 +231,6 @@ public final class NativeObjectNodes {
         protected static final void doNativeLongsLargeIntegerSigned(final NativeObject obj, final long index, final LargeIntegerObject value) {
             doNativeLongs(obj, index, value.toSigned().longValueExact());
         }
-
-        @Fallback
-        protected static final void doFail(final NativeObject obj, final long index, final Object value) {
-            throw SqueakException.create("Unexpected values:", obj, index, value);
-        }
     }
 
     @GenerateUncached
@@ -276,11 +260,6 @@ public final class NativeObjectNodes {
         @Specialization(guards = "obj.isLongType()")
         protected static final int doNativeLongs(final NativeObject obj) {
             return obj.getLongLength();
-        }
-
-        @Fallback
-        protected static final int doFail(final NativeObject object) {
-            throw SqueakException.create("Unexpected value:", object);
         }
     }
 
@@ -316,11 +295,6 @@ public final class NativeObjectNodes {
         @Specialization(guards = "obj.isLongType()")
         protected static final byte[] doNativeLongs(final NativeObject obj) {
             return ArrayConversionUtils.bytesFromLongsReversed(obj.getLongStorage());
-        }
-
-        @Fallback
-        protected static final byte[] doFail(final NativeObject object) {
-            throw SqueakException.create("Unexpected value:", object);
         }
     }
 }

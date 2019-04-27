@@ -19,6 +19,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
 /**
@@ -218,7 +219,7 @@ public final class FrameAccess {
 
     public static void terminate(final Frame frame, final CompiledCodeObject blockOrMethod) {
         FrameAccess.setInstructionPointer(frame, blockOrMethod, -1);
-        FrameAccess.setSender(frame, blockOrMethod.image.nil);
+        FrameAccess.setSender(frame, NilObject.SINGLETON);
     }
 
     public static boolean isGraalSqueakFrame(final Frame frame) {

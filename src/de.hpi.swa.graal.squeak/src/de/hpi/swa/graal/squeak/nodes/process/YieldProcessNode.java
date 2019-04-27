@@ -36,7 +36,7 @@ public final class YieldProcessNode extends AbstractNodeWithCode {
     private LinkProcessToListNode getLinkProcessToListNode() {
         if (linkProcessToListNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            linkProcessToListNode = insert(LinkProcessToListNode.create(code.image));
+            linkProcessToListNode = insert(LinkProcessToListNode.create());
         }
         return linkProcessToListNode;
     }

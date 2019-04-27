@@ -1,13 +1,11 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -36,7 +34,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * that this however does not check if the current context isDead nor does it terminate contexts
      * (this may be a problem).
      */
-    @Specialization(guards = {"code.isUnwindMarked()", "!hasModifiedSender(frame)", "isNil(frame, completeTempReadNode)"}, limit = "1")
+    @Specialization(guards = {"code.isUnwindMarked()", "!hasModifiedSender(frame)", "isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                     @Cached("createTemporaryWriteNode(0)") final FrameSlotReadNode blockArgumentNode,
                     @SuppressWarnings("unused") @Cached("createTemporaryWriteNode(1)") final FrameSlotReadNode completeTempReadNode,
@@ -51,7 +49,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"code.isUnwindMarked()", "!hasModifiedSender(frame)", "!isNil(frame, completeTempReadNode)"}, limit = "1")
+    @Specialization(guards = {"code.isUnwindMarked()", "!hasModifiedSender(frame)", "!isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
     protected final void doAboutToReturnVirtualizedNothing(final VirtualFrame frame, final NonLocalReturn nlr,
                     @Cached("createTemporaryWriteNode(1)") final FrameSlotReadNode completeTempReadNode) {
         // Nothing to do.
@@ -72,15 +70,6 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Specialization(guards = {"!code.isUnwindMarked()"})
     protected final void doNothing(final VirtualFrame frame, final NonLocalReturn nlr) {
         // Nothing to do.
-    }
-
-    @Fallback
-    protected static final void doFail(final NonLocalReturn nlr) {
-        throw SqueakException.create("Should never happend:", nlr);
-    }
-
-    protected final boolean isNil(final VirtualFrame frame, final FrameSlotReadNode completeTempReadNode) {
-        return completeTempReadNode.executeRead(frame) == code.image.nil;
     }
 
     protected final FrameSlotReadNode createTemporaryWriteNode(final int tempIndex) {

@@ -20,6 +20,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.UnwindContextChainNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -70,7 +71,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             CompilerDirectives.transferToInterpreter();
             assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
             final TruffleObject sender = activeContext.getSender();
-            assert sender == image.nil || ((ContextObject) sender).hasTruffleFrame();
+            assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 MaterializeContextOnMethodExitNode.reset();
                 final CompiledCodeObject code = activeContext.getBlockOrMethod();

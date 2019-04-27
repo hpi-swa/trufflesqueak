@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -63,11 +62,6 @@ public final class ReturnBytecodes {
         protected final void doClosureReturn(final VirtualFrame frame, final BlockClosureObject closure) {
             // Target is sender of closure's home context.
             throw new NonLocalReturn(getReturnValue(frame), closure.getHomeContext().getFrameSender());
-        }
-
-        @Fallback
-        protected static final void doFail(final Object closure) {
-            throw SqueakException.create("Unexpected closure argument:" + closure);
         }
     }
 
@@ -150,11 +144,6 @@ public final class ReturnBytecodes {
         @Specialization(guards = {"closureOrNull != null", "hasModifiedSender(frame)"})
         protected final void doNonLocalReturn(final VirtualFrame frame, final BlockClosureObject closureOrNull) {
             throw new NonLocalReturn(getReturnValue(frame), closureOrNull.getHomeContext().getFrameSender());
-        }
-
-        @Fallback
-        protected static final void doFail(final Object closure) {
-            throw SqueakException.create("Unexpected closure argument:" + closure);
         }
 
         @Override

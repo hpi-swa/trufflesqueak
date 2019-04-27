@@ -15,6 +15,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.B2DPlugin;
@@ -124,9 +125,9 @@ public final class PrimitiveNodeFactory {
 
     public AbstractPrimitiveNode namedFor(final CompiledMethodObject method) {
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
-        if (values[1] == method.image.nil) {
+        if (values[1] == NilObject.SINGLETON) {
             return PrimitiveFailedNode.create(method);
-        } else if (values[0] == method.image.nil) {
+        } else if (values[0] == NilObject.SINGLETON) {
             final NativeObject functionName = (NativeObject) values[1];
             return forName(method, NULL_MODULE_NAME, functionName.getByteStorage());
         } else {

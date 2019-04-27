@@ -1,12 +1,10 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -113,11 +111,5 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     protected static final void doClosure(final BlockClosureObject obj, final long index, final Object value,
                     @Cached final BlockClosureObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    protected static final void doFallback(final Object obj, final long index, final Object value) {
-        throw SqueakException.create(obj, "does not support atput0:", index, value, "(validate index before using this node)");
     }
 }

@@ -1,13 +1,11 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -74,11 +72,6 @@ public final class ClassObjectNodes {
         protected static final Object doClass(final ClassObject obj, final long index) {
             return obj.getOtherPointer((int) index);
         }
-
-        @Fallback
-        protected static final void doFail(final ClassObject object, final long index) {
-            throw SqueakException.create("Unexpected value:", object, index);
-        }
     }
 
     @GenerateUncached
@@ -134,11 +127,6 @@ public final class ClassObjectNodes {
         @Specialization(guards = "isOtherIndex(index)")
         protected static final void doClass(final ClassObject obj, final long index, final Object value) {
             obj.setOtherPointer((int) index, value);
-        }
-
-        @Fallback
-        protected static final void doFail(final ClassObject object, final long index, final Object value) {
-            throw SqueakException.create("Unexpected value:", object, index, value);
         }
     }
 }

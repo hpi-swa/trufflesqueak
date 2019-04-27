@@ -28,6 +28,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -183,7 +184,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 final long pathLength = path.length();
                 return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             }
-            return method.image.nil;
+            return NilObject.SINGLETON;
         }
     }
 
@@ -215,7 +216,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 final long pathLength = file.length();
                 return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             } else {
-                return method.image.nil;
+                return NilObject.SINGLETON;
             }
         }
 
@@ -240,14 +241,14 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 final long pathLength = file.length();
                 return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             } else {
-                return method.image.nil;
+                return NilObject.SINGLETON;
             }
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"longIndex <= 0"})
-        protected final Object doNil(final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
-            return method.image.nil;
+        protected static final Object doNil(final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
+            return NilObject.SINGLETON;
         }
     }
 

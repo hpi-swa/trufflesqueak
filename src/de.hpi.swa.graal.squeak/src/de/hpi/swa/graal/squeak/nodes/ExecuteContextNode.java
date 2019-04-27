@@ -247,12 +247,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         protected final void doNothing(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
             // Do not trigger.
         }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        protected static final void doFail(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
-            throw SqueakException.create("Should not happen");
-        }
     }
 
     protected abstract static class GetSuccessorNode extends AbstractNode {

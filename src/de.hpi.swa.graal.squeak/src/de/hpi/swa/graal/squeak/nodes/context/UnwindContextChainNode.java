@@ -1,11 +1,9 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.TopLevelReturn;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -49,10 +47,5 @@ public abstract class UnwindContextChainNode extends AbstractNode {
         }
         targetContext.push(returnValue);
         return targetContext;
-    }
-
-    @Fallback
-    protected static final ContextObject doFail(final Object startContext, final Object targetContext, final Object returnValue) {
-        throw SqueakException.create("Failed to unwind context chain (start:", startContext, ", target:", targetContext, ", returnValue:", returnValue, ")");
     }
 }

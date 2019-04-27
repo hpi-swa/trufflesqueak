@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -8,7 +7,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -46,10 +44,5 @@ public abstract class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode 
     @Specialization(guards = {"!isNativeObject(object)", "!isContextObject(value)"})
     protected final void doSqueakObject(final AbstractSqueakObject object, final Object value) {
         atPut0Node.execute(object, index, value);
-    }
-
-    @Fallback
-    protected final void doFail(final Object object, final Object value) {
-        throw SqueakException.create(object, "at:", index, "put:", value, "failed");
     }
 }

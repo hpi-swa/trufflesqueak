@@ -319,7 +319,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             while (scanLastIndex <= stopIndex) {
                 final long ascii = sourceBytes[(int) (scanLastIndex - 1)] & 0xFF;
                 final Object stopReason = readNode.execute(stops, ascii);
-                if (stopReason != method.image.nil) {
+                if (stopReason != NilObject.SINGLETON) {
                     storeStateInReceiver(receiver, scanDestX, scanLastIndex);
                     return stopReason;
                 }
@@ -813,12 +813,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "method.image.hasDisplay()")
         protected final Object doNext(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final long keyboardNext = method.image.getDisplay().keyboardNext();
-            return keyboardNext == 0 ? method.image.nil : keyboardNext;
+            return keyboardNext == 0 ? NilObject.SINGLETON : keyboardNext;
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
-        protected final NilObject doNextHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.nil;
+        protected static final NilObject doNextHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return NilObject.SINGLETON;
         }
     }
 
@@ -833,12 +833,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "method.image.hasDisplay()")
         protected final Object doPeek(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final long keyboardPeek = method.image.getDisplay().keyboardPeek();
-            return keyboardPeek == 0 ? method.image.nil : keyboardPeek;
+            return keyboardPeek == 0 ? NilObject.SINGLETON : keyboardPeek;
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
-        protected final NilObject doPeekHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.nil;
+        protected static final NilObject doPeekHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return NilObject.SINGLETON;
         }
     }
 

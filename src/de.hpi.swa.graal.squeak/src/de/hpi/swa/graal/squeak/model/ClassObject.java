@@ -73,7 +73,7 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        this(image, classObject, ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), image.nil));
+        this(image, classObject, ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON));
         // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
     }
 
@@ -175,11 +175,11 @@ public final class ClassObject extends AbstractSqueakObject {
 
     public void fillin(final SqueakImageChunk chunk) {
         final Object[] chunkPointers = chunk.getPointers();
-        superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == image.nil ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
+        superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
         methodDict = (PointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
         format = (long) chunkPointers[CLASS_DESCRIPTION.FORMAT];
-        instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == image.nil ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
-        organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == image.nil ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
+        instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
+        organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
         pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
     }
 
@@ -223,7 +223,7 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     public TruffleObject getSuperclass() {
-        return superclass == null ? image.nil : superclass;
+        return NilObject.nullToNil(superclass);
     }
 
     public ClassObject getSuperclassOrNull() {
@@ -243,7 +243,7 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     public TruffleObject getInstanceVariables() {
-        return hasInstanceVariables() ? instanceVariables : image.nil;
+        return hasInstanceVariables() ? instanceVariables : NilObject.SINGLETON;
     }
 
     public ArrayObject getInstanceVariablesOrNull() {
@@ -255,7 +255,7 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     public TruffleObject getOrganization() {
-        return NilObject.convert(organization);
+        return NilObject.nullToNil(organization);
     }
 
     public PointersObject getOrganizationOrNull() {
@@ -304,7 +304,7 @@ public final class ClassObject extends AbstractSqueakObject {
             final PointersObject methodDictObject = lookupClass.getMethodDict();
             for (int i = METHOD_DICT.NAMES; i < methodDictObject.size(); i++) {
                 final Object methodSelector = methodDictObject.at0(i);
-                if (methodSelector != image.nil) {
+                if (methodSelector != NilObject.SINGLETON) {
                     methodNames.add(methodSelector.toString());
                 }
             }

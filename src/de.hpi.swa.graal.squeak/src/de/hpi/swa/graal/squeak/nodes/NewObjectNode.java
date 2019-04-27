@@ -1,9 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -124,10 +122,5 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
     @Specialization(guards = {"classObject.isCompiledMethodClassType()"})
     protected final Object doCompiledMethod(final ClassObject classObject, final int extraSize) {
         return CompiledMethodObject.newOfSize(image, classObject.getBasicInstanceSize() + extraSize);
-    }
-
-    @Fallback
-    protected static final Object doFail(final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {
-        throw SqueakException.create("Cannot instantiate class:", classObject, "(Spec: " + classObject.getInstanceSpecification() + ")");
     }
 }

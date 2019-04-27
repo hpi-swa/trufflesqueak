@@ -85,7 +85,7 @@ public abstract class WrapToSqueakNode extends AbstractNode {
     }
 
     @Fallback
-    protected static final Object doTruffleObject(final Object value) {
+    protected static final Object doObject(final Object value) {
         return value;
     }
 }

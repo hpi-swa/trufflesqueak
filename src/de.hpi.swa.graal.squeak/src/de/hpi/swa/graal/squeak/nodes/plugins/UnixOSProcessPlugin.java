@@ -56,8 +56,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @SuppressWarnings("unused")
         @Fallback
-        protected final NilObject doNil(final Object receiver, final Object index) {
-            return method.image.nil;
+        protected static final NilObject doNil(final Object receiver, final Object index) {
+            return NilObject.SINGLETON;
         }
     }
 
@@ -121,8 +121,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
 
         @Specialization
-        protected final Object doAt(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.nil; // TODO: implement parent pid
+        protected static final Object doAt(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return NilObject.SINGLETON; // TODO: implement parent pid
         }
     }
 

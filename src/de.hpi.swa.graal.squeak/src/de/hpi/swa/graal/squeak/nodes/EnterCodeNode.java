@@ -20,6 +20,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -116,7 +117,7 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
         // Initialize remaining temporary variables with nil in newContext.
         final int remainingTemps = code.getNumTemps() - code.getNumArgs();
         for (int i = 0; i < remainingTemps; i++) {
-            pushStackNode.executeWrite(frame, code.image.nil);
+            pushStackNode.executeWrite(frame, NilObject.SINGLETON);
         }
         assert FrameAccess.getStackPointer(frame, code) >= remainingTemps;
     }

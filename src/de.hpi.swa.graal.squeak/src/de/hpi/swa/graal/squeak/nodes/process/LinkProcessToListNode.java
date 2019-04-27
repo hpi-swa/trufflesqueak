@@ -3,19 +3,14 @@ package de.hpi.swa.graal.squeak.nodes.process;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 
-public abstract class LinkProcessToListNode extends AbstractNodeWithImage {
-    protected LinkProcessToListNode(final SqueakImageContext image) {
-        super(image);
-    }
-
-    public static LinkProcessToListNode create(final SqueakImageContext image) {
-        return LinkProcessToListNodeGen.create(image);
+public abstract class LinkProcessToListNode extends AbstractNode {
+    public static LinkProcessToListNode create() {
+        return LinkProcessToListNodeGen.create();
     }
 
     public abstract void executeLink(PointersObject process, PointersObject list);

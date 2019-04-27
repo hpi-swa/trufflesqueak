@@ -9,6 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -144,15 +145,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    private abstract static class AbstractPrimitiveWithPushNode extends AbstractPrimitiveNode {
-        @Child protected StackPushForPrimitivesNode pushNode;
-
-        protected AbstractPrimitiveWithPushNode(final CompiledMethodObject method) {
-            super(method);
-            pushNode = StackPushForPrimitivesNode.create();
-        }
-    }
-
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
     protected abstract static class PrimPerformNode extends AbstractPerformPrimitiveNode implements SeptenaryPrimitive {
@@ -220,7 +212,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 85)
-    protected abstract static class PrimSignalNode extends AbstractPrimitiveWithPushNode implements UnaryPrimitive {
+    protected abstract static class PrimSignalNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private SignalSemaphoreNode signalSemaphoreNode;
 
         protected PrimSignalNode(final CompiledMethodObject method) {
@@ -229,7 +221,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isSemaphore()")
-        protected final AbstractSqueakObject doSignal(final VirtualFrame frame, final PointersObject receiver) {
+        protected final AbstractSqueakObject doSignal(final VirtualFrame frame, final PointersObject receiver,
+                        @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             signalSemaphoreNode.executeSignal(frame, receiver);
             throw new PrimitiveWithoutResultException();
@@ -238,16 +231,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 86)
-    protected abstract static class PrimWaitNode extends AbstractPrimitiveWithPushNode implements UnaryPrimitive {
-        @Child private LinkProcessToListNode linkProcessToListNode;
+    protected abstract static class PrimWaitNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimWaitNode(final CompiledMethodObject method) {
             super(method);
-            linkProcessToListNode = LinkProcessToListNode.create(method.image);
         }
 
         @Specialization(guards = {"receiver.isSemaphore()", "hasExcessSignals(receiver)"})
-        protected final AbstractSqueakObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver) {
+        protected static final AbstractSqueakObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
+                        @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             final long excessSignals = (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
             receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
@@ -256,6 +248,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver.isSemaphore()", "!hasExcessSignals(receiver)"})
         protected final AbstractSqueakObject doWait(final VirtualFrame frame, final PointersObject receiver,
+                        @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode,
+                        @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             linkProcessToListNode.executeLink(method.image.getActiveProcess(), receiver);
@@ -270,7 +264,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 87)
-    protected abstract static class PrimResumeNode extends AbstractPrimitiveWithPushNode implements UnaryPrimitive {
+    protected abstract static class PrimResumeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private ResumeProcessNode resumeProcessNode;
 
         protected PrimResumeNode(final CompiledMethodObject method) {
@@ -279,7 +273,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final AbstractSqueakObject doResume(final VirtualFrame frame, final PointersObject receiver) {
+        protected final AbstractSqueakObject doResume(final VirtualFrame frame, final PointersObject receiver,
+                        @Cached final StackPushForPrimitivesNode pushNode) {
             // keep receiver on stack before resuming other process
             pushNode.executeWrite(frame, receiver);
             resumeProcessNode.executeResume(frame, receiver);
@@ -296,20 +291,20 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isActiveProcess()")
-        protected final AbstractSqueakObject doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+        protected static final AbstractSqueakObject doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
-            pushNode.executeWrite(frame, method.image.nil);
+            pushNode.executeWrite(frame, NilObject.SINGLETON);
             wakeHighestPriorityNode.executeWake(frame);
             throw new PrimitiveWithoutResultException(); // result already pushed above
         }
 
         @Specialization(guards = {"!receiver.isActiveProcess()", "!hasNilList(receiver)"})
-        protected final PointersObject doSuspendOtherProcess(final PointersObject receiver,
-                        @Cached("create(method.image)") final RemoveProcessFromListNode removeProcessNode) {
+        protected static final PointersObject doSuspendOtherProcess(final PointersObject receiver,
+                        @Cached final RemoveProcessFromListNode removeProcessNode) {
             final PointersObject oldList = (PointersObject) receiver.at0(PROCESS.LIST);
             removeProcessNode.executeRemove(receiver, oldList);
-            receiver.atput0(PROCESS.LIST, method.image.nil);
+            receiver.atput0(PROCESS.LIST, NilObject.SINGLETON);
             return oldList;
         }
 
@@ -318,8 +313,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
-        protected final boolean hasNilList(final PointersObject process) {
-            return process.at0(PROCESS.LIST) == method.image.nil;
+        protected static final boolean hasNilList(final PointersObject process) {
+            return process.at0(PROCESS.LIST) == NilObject.SINGLETON;
         }
     }
 
@@ -705,7 +700,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 167)
-    protected abstract static class PrimYieldNode extends AbstractPrimitiveWithPushNode implements UnaryPrimitive {
+    protected abstract static class PrimYieldNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private YieldProcessNode yieldProcessNode;
 
         public PrimYieldNode(final CompiledMethodObject method) {
@@ -714,7 +709,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler) {
+        protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
+                        @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, scheduler); // keep receiver on stack
             yieldProcessNode.executeYield(frame, scheduler);
             throw new PrimitiveWithoutResultException();
@@ -770,8 +766,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "mutex.isEmptyList()")
-        protected final PointersObject doExitEmpty(final PointersObject mutex) {
-            mutex.atput0(MUTEX.OWNER, method.image.nil);
+        protected static final PointersObject doExitEmpty(final PointersObject mutex) {
+            mutex.atputNil0(MUTEX.OWNER);
             return mutex;
         }
 
@@ -789,10 +785,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 186)
-    protected abstract static class PrimEnterCriticalSectionNode extends AbstractPrimitiveWithPushNode implements BinaryPrimitive {
-        @Child private LinkProcessToListNode linkProcessToListNode;
-        @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
-
+    protected abstract static class PrimEnterCriticalSectionNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         public PrimEnterCriticalSectionNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -810,10 +803,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!activeProcessMutexOwner(mutex)"})
-        protected final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided) {
-            getPushNode().executeWrite(frame, method.image.sqFalse);
-            getLinkProcessToListNode().executeLink(method.image.getActiveProcess(), mutex);
-            getWakeHighestPriorityNode().executeWake(frame);
+        protected final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided,
+                        @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode,
+                        @Shared("linkProcessToListNode") @Cached final LinkProcessToListNode linkProcessToListNode,
+                        @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
+            pushNode.executeWrite(frame, method.image.sqFalse);
+            linkProcessToListNode.executeLink(method.image.getActiveProcess(), mutex);
+            wakeHighestPriorityNode.executeWake(frame);
             throw new PrimitiveWithoutResultException();
         }
 
@@ -830,15 +826,18 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!isMutexOwner(mutex, effectiveProcess)"})
-        protected final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess) {
-            getPushNode().executeWrite(frame, method.image.sqFalse);
-            getLinkProcessToListNode().executeLink(effectiveProcess, mutex);
-            getWakeHighestPriorityNode().executeWake(frame);
+        protected final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess,
+                        @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode,
+                        @Shared("linkProcessToListNode") @Cached final LinkProcessToListNode linkProcessToListNode,
+                        @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
+            pushNode.executeWrite(frame, method.image.sqFalse);
+            linkProcessToListNode.executeLink(effectiveProcess, mutex);
+            wakeHighestPriorityNode.executeWake(frame);
             throw new PrimitiveWithoutResultException();
         }
 
-        protected final boolean ownerIsNil(final PointersObject mutex) {
-            return mutex.at0(MUTEX.OWNER) == method.image.nil;
+        protected static final boolean ownerIsNil(final PointersObject mutex) {
+            return mutex.at0(MUTEX.OWNER) == NilObject.SINGLETON;
         }
 
         protected final boolean activeProcessMutexOwner(final PointersObject mutex) {
@@ -847,30 +846,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected static final boolean isMutexOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
             return mutex.at0(MUTEX.OWNER) == effectiveProcess;
-        }
-
-        private StackPushForPrimitivesNode getPushNode() {
-            if (pushNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                pushNode = insert(StackPushForPrimitivesNode.create());
-            }
-            return pushNode;
-        }
-
-        private LinkProcessToListNode getLinkProcessToListNode() {
-            if (linkProcessToListNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                linkProcessToListNode = insert(LinkProcessToListNode.create(method.image));
-            }
-            return linkProcessToListNode;
-        }
-
-        private WakeHighestPriorityNode getWakeHighestPriorityNode() {
-            if (wakeHighestPriorityNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                wakeHighestPriorityNode = insert(WakeHighestPriorityNode.create(method));
-            }
-            return wakeHighestPriorityNode;
         }
     }
 
@@ -895,12 +870,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!ownerIsNil(rcvrMutex)", "!ownerIsActiveProcess(rcvrMutex)"})
-        protected final Object doFallback(@SuppressWarnings("unused") final PointersObject rcvrMutex) {
-            return method.image.nil;
+        protected static final Object doFallback(@SuppressWarnings("unused") final PointersObject rcvrMutex) {
+            return NilObject.SINGLETON;
         }
 
-        protected final boolean ownerIsNil(final PointersObject mutex) {
-            return mutex.at0(MUTEX.OWNER) == method.image.nil;
+        protected static final boolean ownerIsNil(final PointersObject mutex) {
+            return mutex.at0(MUTEX.OWNER) == NilObject.SINGLETON;
         }
 
         protected final boolean ownerIsActiveProcess(final PointersObject mutex) {
@@ -1069,8 +1044,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final NilObject returnValue(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.nil;
+        protected static final NilObject returnValue(@SuppressWarnings("unused") final Object receiver) {
+            return NilObject.SINGLETON;
         }
     }
 

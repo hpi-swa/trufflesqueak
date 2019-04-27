@@ -5,7 +5,6 @@ import java.util.logging.Level;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -75,11 +74,6 @@ public final class MiscellaneousBytecodes {
         @Specialization(guards = {"primitiveNode == null"})
         protected final void doFallbackCode() {
             /** continue with fallback code immediately. */
-        }
-
-        @Fallback
-        protected static final void doFallback() {
-            throw SqueakException.create("Should never happen");
         }
 
         private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {

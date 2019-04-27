@@ -429,9 +429,15 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "sqObject.getSqueakClass().isNilClass() || sqObject.getSqueakClass().isImmediateClassType()")
-        protected final NilObject doNil(final AbstractSqueakObject sqObject) {
-            return method.image.nil;
+        @Specialization
+        protected static final NilObject doNil(final NilObject nil) {
+            return nil;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "sqObject.getSqueakClass().isImmediateClassType()")
+        protected static final NilObject doImmediateObjects(final AbstractSqueakObject sqObject) {
+            return NilObject.SINGLETON;
         }
 
         @Specialization(guards = {"!sqObject.getSqueakClass().isNilClass()", "!sqObject.getSqueakClass().isImmediateClassType()"})
@@ -445,7 +451,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     return instance;
                 }
             }
-            return method.image.nil;
+            return NilObject.SINGLETON;
         }
     }
 
