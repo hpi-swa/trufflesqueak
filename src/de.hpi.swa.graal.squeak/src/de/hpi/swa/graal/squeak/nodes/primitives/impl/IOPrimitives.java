@@ -494,9 +494,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"inBounds(rcvr.instsize(), arraySizeNode.execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"}, limit = "1")
+        @Specialization(guards = {"inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected static final ArrayObject doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
-                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode arraySizeNode,
                         @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -505,9 +504,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"inBounds(rcvr.instsize(), arraySizeNode.execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"}, limit = "1")
+        @Specialization(guards = {"inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected static final ArrayObject doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
-                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode arraySizeNode,
                         @Shared("weakPointersReadNode") @Cached final WeakPointersObjectReadNode readNode,
                         @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
             final long repOff = replStart - start;
@@ -623,7 +621,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return instSizeNode;
         }
 
-        private SqueakObjectSizeNode getSizeNode() {
+        protected SqueakObjectSizeNode getSizeNode() {
             if (sizeNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 sizeNode = insert(SqueakObjectSizeNode.create());
