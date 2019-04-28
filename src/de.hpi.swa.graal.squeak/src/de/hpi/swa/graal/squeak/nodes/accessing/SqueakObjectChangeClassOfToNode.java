@@ -19,13 +19,13 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
     public abstract AbstractSqueakObject execute(AbstractSqueakObject receiver, ClassObject argument);
 
-    @Specialization(guards = "receiver.haveSameFormat(argument)")
+    @Specialization(guards = "receiver.hasSameFormat(argument)")
     protected static final NativeObject doNative(final NativeObject receiver, final ClassObject argument) {
         receiver.setSqueakClass(argument);
         return receiver;
     }
 
-    @Specialization(guards = {"!receiver.haveSameFormat(argument)", "argument.isBytes()"})
+    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isBytes()"})
     protected static final NativeObject doNativeConvertToBytes(final NativeObject receiver, final ClassObject argument,
                     @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
         receiver.setSqueakClass(argument);
@@ -33,7 +33,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
         return receiver;
     }
 
-    @Specialization(guards = {"!receiver.haveSameFormat(argument)", "argument.isShorts()"})
+    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isShorts()"})
     protected static final NativeObject doNativeConvertToShorts(final NativeObject receiver, final ClassObject argument,
                     @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
         receiver.setSqueakClass(argument);
@@ -41,7 +41,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
         return receiver;
     }
 
-    @Specialization(guards = {"!receiver.haveSameFormat(argument)", "argument.isWords()"})
+    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isWords()"})
     protected static final NativeObject doNativeConvertToInts(final NativeObject receiver, final ClassObject argument,
                     @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
         receiver.setSqueakClass(argument);
@@ -49,7 +49,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
         return receiver;
     }
 
-    @Specialization(guards = {"!receiver.haveSameFormat(argument)", "argument.isLongs()"})
+    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isLongs()"})
     protected static final NativeObject doNativeConvertToLongs(final NativeObject receiver, final ClassObject argument,
                     @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
         receiver.setSqueakClass(argument);

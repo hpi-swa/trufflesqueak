@@ -31,43 +31,8 @@ public final class WeakPointersObject extends AbstractPointersObject {
         return "WeakPointersObject: " + getSqueakClass();
     }
 
-    public Object at0(final long index) {
-        final Object value = getPointer((int) index);
-        if (value instanceof WeakReference) {
-            final Object wrappedValue = ((WeakReference<?>) value).get();
-            if (wrappedValue == null) {
-                return NilObject.SINGLETON;
-            } else {
-                return wrappedValue;
-            }
-        } else {
-            return value;
-        }
-    }
-
-    public void atput0(final long index, final Object obj) {
-        assert obj != null : "`null` indicates a problem";
-        if (obj instanceof AbstractSqueakObject && inVariablePart(index)) {
-            setWeakPointer((int) index, obj);
-        } else {
-            setPointer((int) index, obj);
-        }
-    }
-
     public void setWeakPointer(final int index, final Object value) {
         setPointer(index, new WeakReference<>(value, weakPointersQueue));
-    }
-
-    public boolean inVariablePart(final long index) {
-        return instsize() <= index;
-    }
-
-    public void setWeakPointers(final Object[] pointers) {
-        final int length = pointers.length;
-        setPointers(new Object[length]);
-        for (int i = 0; i < length; i++) {
-            atput0(i, pointers[i]);
-        }
     }
 
     public AbstractSqueakObject shallowCopy() {

@@ -279,6 +279,10 @@ public final class ArrayObject extends AbstractSqueakObject {
         return isObjectType();
     }
 
+    public boolean hasSameStorageType(final ArrayObject other) {
+        return storage.getClass() == other.storage.getClass();
+    }
+
     public void setStorage(final Object newStorage) {
         storage = newStorage;
     }

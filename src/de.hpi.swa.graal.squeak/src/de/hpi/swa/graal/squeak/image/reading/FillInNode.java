@@ -17,6 +17,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.WeakPointersObjectNodes.WeakPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.SimulationPrimitiveNode;
 
 public abstract class FillInNode extends Node {
@@ -104,8 +105,14 @@ public abstract class FillInNode extends Node {
     }
 
     @Specialization
-    protected static final void doWeakPointers(final WeakPointersObject obj, final SqueakImageChunk chunk) {
-        obj.setWeakPointers(chunk.getPointers());
+    protected static final void doWeakPointers(final WeakPointersObject obj, final SqueakImageChunk chunk,
+                    @Cached final WeakPointersObjectWriteNode writeNode) {
+        final Object[] pointers = chunk.getPointers();
+        final int length = pointers.length;
+        obj.setPointers(new Object[length]);
+        for (int i = 0; i < length; i++) {
+            writeNode.execute(obj, i, pointers[i]);
+        }
     }
 
     @SuppressWarnings("unused")
