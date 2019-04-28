@@ -1,7 +1,10 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import java.util.logging.Level;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -12,8 +15,8 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
-import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -24,21 +27,35 @@ import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.TriggerInterruptHandl
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnConstantNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromBlockNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromMethodNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public abstract class ExecuteContextNode extends AbstractNodeWithCode {
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
-    @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private GetSuccessorNode getSuccessorNode;
+
+    @Child private FrameStackReadAndClearNode readAndClearNode;
+    @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
 
     private static int stackDepth = 0;
 
@@ -50,6 +67,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
         triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
+        readAndClearNode = FrameStackReadAndClearNode.create(code);
     }
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
@@ -72,12 +90,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 throw ProcessSwitch.createWithBoundary(getGetOrCreateContextNode().executeGet(frame));
             }
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
-            startBytecode(frame);
-            CompilerAsserts.neverPartOfCompilation();
-            throw SqueakException.create("Method did not return");
-        } catch (final LocalReturn lr) {
-            /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
-            return getHandleLocalReturnNode().executeHandle(frame, lr);
+            return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -106,17 +119,12 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             final long initialPC = context.getInstructionPointerForBytecodeLoop();
             assert initialPC >= 0 : "Trying to execute a terminated/illegal context";
             if (initialPC == 0) {
-                startBytecode(frame);
+                return startBytecode(frame);
             } else {
                 // Avoid optimizing cases in which a context is resumed.
                 CompilerDirectives.transferToInterpreter();
-                resumeBytecode(frame, initialPC);
+                return resumeBytecode(frame, initialPC);
             }
-            CompilerAsserts.neverPartOfCompilation();
-            throw SqueakException.create("Method did not return");
-        } catch (final LocalReturn lr) {
-            /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
-            return getHandleLocalReturnNode().executeHandle(frame, lr);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -141,7 +149,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
      * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://goo.gl/4LMzfX).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private void startBytecode(final VirtualFrame frame) {
+    private Object startBytecode(final VirtualFrame frame) {
         int pc = 0;
         int backJumpCounter = 0;
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
@@ -176,6 +184,52 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     pc = successor;
                     node = fetchNextBytecodeNode(pc);
                     continue;
+                } else if (node instanceof CallPrimitiveNode) {
+                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
+                    FrameAccess.setInstructionPointer(frame, code, successor);
+                    final AbstractPrimitiveNode primitiveNode = ((CallPrimitiveNode) node).primitiveNode;
+                    if (primitiveNode != null) {
+                        try {
+                            return primitiveNode.executePrimitive(frame);
+                        } catch (final PrimitiveFailed e) {
+                            /** getHandlePrimitiveFailedNode() acts as branch profile. */
+                            getHandlePrimitiveFailedNode().executeHandle(frame, e);
+                            LOG.log(Level.FINE, () -> (primitiveNode instanceof PrimitiveFailedNode ? FrameAccess.getMethod(frame) : primitiveNode) +
+                                            " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
+                            /** continue with fallback code. */
+                        }
+                    }
+                    pc = successor;
+                    node = fetchNextBytecodeNode(pc);
+                    continue;
+                } else if (node instanceof ReturnConstantNode) {
+                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
+                    FrameAccess.setInstructionPointer(frame, code, successor);
+                    final Object value = ((ReturnConstantNode) node).executeReturn(frame, readAndClearNode);
+                    assert !hasModifiedSender(frame);
+                    FrameAccess.terminate(frame, code);
+                    return value;
+                } else if (node instanceof ReturnReceiverNode) {
+                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
+                    FrameAccess.setInstructionPointer(frame, code, successor);
+                    final Object value = ((ReturnReceiverNode) node).executeReturn(frame, readAndClearNode);
+                    assert !hasModifiedSender(frame);
+                    FrameAccess.terminate(frame, code);
+                    return value;
+                } else if (node instanceof ReturnTopFromBlockNode) {
+                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
+                    FrameAccess.setInstructionPointer(frame, code, successor);
+                    final Object value = ((ReturnTopFromBlockNode) node).executeReturn(frame, readAndClearNode);
+                    assert !hasModifiedSender(frame);
+                    FrameAccess.terminate(frame, code);
+                    return value;
+                } else if (node instanceof ReturnTopFromMethodNode) {
+                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
+                    FrameAccess.setInstructionPointer(frame, code, successor);
+                    final Object value = ((ReturnTopFromMethodNode) node).executeReturn(frame, readAndClearNode);
+                    assert !hasModifiedSender(frame);
+                    FrameAccess.terminate(frame, code);
+                    return value;
                 } else {
                     final int successor = getGetSuccessorNode().executeGeneric(frame, node);
                     FrameAccess.setInstructionPointer(frame, code, successor);
@@ -185,25 +239,54 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     continue;
                 }
             }
+            throw SqueakException.create("Method did not return");
         } finally {
             assert backJumpCounter >= 0;
             LoopNode.reportLoopCount(this, backJumpCounter);
         }
     }
 
+    private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
+        if (handlePrimitiveFailedNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            handlePrimitiveFailedNode = HandlePrimitiveFailedNode.create(code);
+        }
+        return handlePrimitiveFailedNode;
+    }
+
     /*
      * Non-optimized version of startBytecode which is used to resume contexts.
      */
-    private void resumeBytecode(final VirtualFrame frame, final long initialPC) {
+    private Object resumeBytecode(final VirtualFrame frame, final long initialPC) {
         int pc = (int) initialPC;
         AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
         while (pc >= 0) {
             final int successor = getGetSuccessorNode().executeGeneric(frame, node);
             FrameAccess.setInstructionPointer(frame, code, successor);
-            node.executeVoid(frame);
-            pc = successor;
-            node = fetchNextBytecodeNode(pc);
+            if (node instanceof AbstractReturnNode) {
+                return ((AbstractReturnNode) node).executeReturn(frame, readAndClearNode);
+            } else if (node instanceof CallPrimitiveNode) {
+                final AbstractPrimitiveNode primitiveNode = ((CallPrimitiveNode) node).primitiveNode;
+                if (primitiveNode != null) {
+                    try {
+                        return primitiveNode.executePrimitive(frame);
+                    } catch (final PrimitiveFailed e) {
+                        /** getHandlePrimitiveFailedNode() acts as branch profile. */
+                        getHandlePrimitiveFailedNode().executeHandle(frame, e);
+                        LOG.log(Level.FINE, () -> (primitiveNode instanceof PrimitiveFailedNode ? FrameAccess.getMethod(frame) : primitiveNode) +
+                                        " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
+                        /** continue with fallback code. */
+                    }
+                }
+                pc = successor;
+                node = fetchNextBytecodeNode(pc);
+            } else {
+                node.executeVoid(frame);
+                pc = successor;
+                node = fetchNextBytecodeNode(pc);
+            }
         }
+        throw SqueakException.create("Method did not return");
     }
 
     /*
@@ -281,14 +364,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         protected static final int doNormal(final AbstractBytecodeNode node) {
             return node.getSuccessorIndex();
         }
-    }
-
-    private HandleLocalReturnNode getHandleLocalReturnNode() {
-        if (handleLocalReturnNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            handleLocalReturnNode = insert(HandleLocalReturnNode.create(code));
-        }
-        return handleLocalReturnNode;
     }
 
     private HandleNonLocalReturnNode getHandleNonLocalReturnNode() {

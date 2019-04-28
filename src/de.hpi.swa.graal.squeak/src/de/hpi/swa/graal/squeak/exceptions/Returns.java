@@ -20,20 +20,6 @@ public final class Returns {
         }
     }
 
-    public static final class LocalReturn extends AbstractReturn {
-        private static final long serialVersionUID = 1L;
-
-        public LocalReturn(final Object returnValue) {
-            super(returnValue);
-        }
-
-        @Override
-        public String toString() {
-            CompilerAsserts.neverPartOfCompilation();
-            return "LR (value: " + returnValue + ")";
-        }
-    }
-
     public static final class NonLocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
         private final Object targetContextOrMarker;
