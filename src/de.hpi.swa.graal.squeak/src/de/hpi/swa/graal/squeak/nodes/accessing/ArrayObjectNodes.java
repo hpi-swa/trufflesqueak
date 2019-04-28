@@ -442,7 +442,7 @@ public final class ArrayObjectNodes {
         @Specialization(guards = {"obj.isDoubleType()", "isDoubleNilTag(value)"})
         protected static final void doArrayOfDoublesNilTagClash(final ArrayObject obj, final long index, final double value) {
             // `value` happens to be double nil tag, need to despecialize to be able store it.
-            obj.transitionFromLongsToObjects();
+            obj.transitionFromDoublesToObjects();
             obj.atput0Object(index, value);
         }
 
