@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import java.lang.ref.WeakReference;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -39,9 +38,8 @@ public final class WeakPointersObjectNodes {
 
         public abstract void execute(WeakPointersObject pointers, long index, Object value);
 
-        @Specialization(guards = "classNode.executeClass(pointers).getBasicInstanceSize() <= index", limit = "1")
-        protected static final void doWeakInVariablePart(final WeakPointersObject pointers, final long index, final AbstractSqueakObject value,
-                        @SuppressWarnings("unused") @Cached final SqueakObjectClassNode classNode) {
+        @Specialization(guards = "pointers.getSqueakClass().getBasicInstanceSize() <= index")
+        protected static final void doWeakInVariablePart(final WeakPointersObject pointers, final long index, final AbstractSqueakObject value) {
             pointers.setWeakPointer((int) index, value);
         }
 

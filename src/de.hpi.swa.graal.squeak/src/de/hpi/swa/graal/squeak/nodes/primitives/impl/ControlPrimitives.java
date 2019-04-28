@@ -223,9 +223,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             signalSemaphoreNode = SignalSemaphoreNode.create(method);
         }
 
-        @Specialization(guards = "classNode.executeClass(receiver).isSemaphoreClass()", limit = "1")
+        @Specialization(guards = "receiver.getSqueakClass().isSemaphoreClass()")
         protected final AbstractSqueakObject doSignal(final VirtualFrame frame, final PointersObject receiver,
-                        @SuppressWarnings("unused") @Cached final SqueakObjectClassNode classNode,
                         @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             signalSemaphoreNode.executeSignal(frame, receiver);
@@ -241,9 +240,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"classNode.executeClass(receiver).isSemaphoreClass()", "hasExcessSignals(receiver)"}, limit = "1")
+        @Specialization(guards = {"receiver.getSqueakClass().isSemaphoreClass()", "hasExcessSignals(receiver)"})
         protected static final AbstractSqueakObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             final long excessSignals = (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
@@ -251,9 +249,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveWithoutResultException();
         }
 
-        @Specialization(guards = {"classNode.executeClass(receiver).isSemaphoreClass()", "!hasExcessSignals(receiver)"}, limit = "1")
+        @Specialization(guards = {"receiver.getSqueakClass().isSemaphoreClass()", "!hasExcessSignals(receiver)"})
         protected final AbstractSqueakObject doWait(final VirtualFrame frame, final PointersObject receiver,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {

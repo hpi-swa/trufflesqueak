@@ -70,9 +70,8 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
     }
 
     @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)",
-                    "classNode.executeClass(receiver).getFormat() == argument.getFormat()"}, limit = "1")
-    protected static final AbstractSqueakObject doSqueakObject(final AbstractSqueakObject receiver, final ClassObject argument,
-                    @SuppressWarnings("unused") @Cached final SqueakObjectClassNode classNode) {
+                    "receiver.getSqueakClass().getFormat() == argument.getFormat()"})
+    protected static final AbstractSqueakObject doSqueakObject(final AbstractSqueakObject receiver, final ClassObject argument) {
         receiver.setSqueakClass(argument);
         return receiver;
     }
