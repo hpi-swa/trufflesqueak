@@ -137,10 +137,6 @@ public final class SqueakGuards {
         return value != 1 && (value & value - 1) == 0;
     }
 
-    public static boolean isPrimitive(final Object obj) {
-        return obj instanceof Boolean || obj instanceof Character || obj instanceof Long || obj instanceof Double;
-    }
-
     public static boolean isZero(final double value) {
         return value == 0;
     }

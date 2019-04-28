@@ -38,12 +38,14 @@ public final class PrimitiveInterfaces {
         }
     }
 
-    public interface TernaryPrimitive extends AbstractPrimitive {
+    public interface TernaryPrimitiveWithoutFallback extends AbstractPrimitive {
         @Override
         default int getNumArguments() {
             return 3;
         }
+    }
 
+    public interface TernaryPrimitive extends TernaryPrimitiveWithoutFallback {
         @SuppressWarnings("unused")
         @Fallback
         default Object doPrimitiveFail(final Object arg1, final Object arg2, final Object arg3) {
