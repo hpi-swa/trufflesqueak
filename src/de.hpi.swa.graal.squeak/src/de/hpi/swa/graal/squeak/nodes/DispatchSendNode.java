@@ -96,8 +96,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         final PointersObject message = new PointersObject(image, image.messageClass, image.messageClass.getBasicInstanceSize());
         message.atput0(MESSAGE.SELECTOR, selector);
         message.atput0(MESSAGE.ARGUMENTS, image.asArrayOfObjects(arguments));
-        if (image.messageClass.getBasicInstanceSize() > MESSAGE.LOOKUP_CLASS) {
-            // Early versions do not have lookupClass.
+        if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // Early versions do not have lookupClass.
             message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
         }
         return message;

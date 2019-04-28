@@ -14,7 +14,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -43,7 +42,6 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
@@ -576,55 +574,49 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method);
         }
 
-        @Specialization(guards = {"classNode.executeClass(receiver) == classNode.executeClass(anotherObject)", "receiver.size() == anotherObject.size()"}, limit = "1")
-        protected static final AbstractPointersObject doCopyAbstractPointers(final AbstractPointersObject receiver, final AbstractPointersObject anotherObject,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        @Specialization(guards = {"!isContextObject(receiver)", "receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        protected static final AbstractPointersObject doCopyAbstractPointers(final AbstractPointersObject receiver, final AbstractPointersObject anotherObject) {
             final Object[] destStorage = receiver.getPointers();
             System.arraycopy(anotherObject.getPointers(), 0, destStorage, 0, destStorage.length);
             return receiver;
         }
 
-        @Specialization(guards = {"classNode.executeClass(receiver) == classNode.executeClass(anotherObject)",
-                        "receiver.isByteType()", "anotherObject.isByteType()", "receiver.getByteLength() == anotherObject.getByteLength()"}, limit = "1")
-        protected static final NativeObject doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+                        "receiver.isByteType()", "anotherObject.isByteType()", "receiver.getByteLength() == anotherObject.getByteLength()"})
+        protected static final NativeObject doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject) {
             final byte[] destStorage = receiver.getByteStorage();
             System.arraycopy(anotherObject.getByteStorage(), 0, destStorage, 0, destStorage.length);
             return receiver;
         }
 
-        @Specialization(guards = {"classNode.executeClass(receiver) == classNode.executeClass(anotherObject)",
-                        "receiver.isShortType()", "anotherObject.isShortType()", "receiver.getShortLength() == anotherObject.getShortLength()"}, limit = "1")
-        protected static final NativeObject doCopyNativeShort(final NativeObject receiver, final NativeObject anotherObject,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+                        "receiver.isShortType()", "anotherObject.isShortType()", "receiver.getShortLength() == anotherObject.getShortLength()"})
+        protected static final NativeObject doCopyNativeShort(final NativeObject receiver, final NativeObject anotherObject) {
             final short[] destStorage = receiver.getShortStorage();
             System.arraycopy(anotherObject.getShortStorage(), 0, destStorage, 0, destStorage.length);
             return receiver;
         }
 
-        @Specialization(guards = {"classNode.executeClass(receiver) == classNode.executeClass(anotherObject)",
-                        "receiver.isIntType()", "anotherObject.isIntType()", "receiver.getIntLength() == anotherObject.getIntLength()"}, limit = "1")
-        protected static final NativeObject doCopyNativeInt(final NativeObject receiver, final NativeObject anotherObject,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+                        "receiver.isIntType()", "anotherObject.isIntType()", "receiver.getIntLength() == anotherObject.getIntLength()"})
+        protected static final NativeObject doCopyNativeInt(final NativeObject receiver, final NativeObject anotherObject) {
             final int[] destStorage = receiver.getIntStorage();
             System.arraycopy(anotherObject.getIntStorage(), 0, destStorage, 0, destStorage.length);
             return receiver;
         }
 
-        @Specialization(guards = {"classNode.executeClass(receiver) == classNode.executeClass(anotherObject)",
-                        "receiver.isLongType()", "anotherObject.isLongType()", "receiver.getLongLength() == anotherObject.getLongLength()"}, limit = "1")
-        protected static final NativeObject doCopyNativeLong(final NativeObject receiver, final NativeObject anotherObject,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+                        "receiver.isLongType()", "anotherObject.isLongType()", "receiver.getLongLength() == anotherObject.getLongLength()"})
+        protected static final NativeObject doCopyNativeLong(final NativeObject receiver, final NativeObject anotherObject) {
             final long[] destStorage = receiver.getLongStorage();
             System.arraycopy(anotherObject.getLongStorage(), 0, destStorage, 0, destStorage.length);
             return receiver;
         }
 
-        @Specialization(guards = {"classNode.executeClass(receiver) == classNode.executeClass(anotherObject)",
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "!isNativeObject(receiver)", "!isPointersObject(receiver)", "!isContextObject(receiver)",
                         "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"}, limit = "1")
         protected static final AbstractSqueakObject doCopy(final AbstractSqueakObject receiver, final AbstractSqueakObject anotherObject,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final SqueakObjectAt0Node at0Node) {

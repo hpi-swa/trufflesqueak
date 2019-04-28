@@ -35,7 +35,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSiz
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectInstSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -443,10 +442,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             super(method);
         }
 
-        @Specialization(guards = "classNode.executeClass(receiver).isVariable()", limit = "1")
-        protected static final long doAbstractPointers(final AbstractPointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
-            return receiver.size() - classNode.executeClass(receiver).getBasicInstanceSize();
+        @Specialization(guards = "receiver.getSqueakClass().isVariable()")
+        protected static final long doAbstractPointers(final AbstractPointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return receiver.size() - receiver.instsize();
         }
 
         @Specialization
@@ -495,10 +493,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
          * Context>>#objectSize:
          */
 
-        @Specialization(guards = "classNode.executeClass(target).isVariable()", limit = "1")
-        protected static final long doAbstractPointers(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractPointersObject target,
-                        @SuppressWarnings("unused") @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
-            return target.size() - classNode.executeClass(target).getBasicInstanceSize();
+        @Specialization(guards = "target.getSqueakClass().isVariable()")
+        protected static final long doAbstractPointers(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractPointersObject target) {
+            return target.size() - target.instsize();
         }
 
         @Specialization

@@ -47,7 +47,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeN
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayTransformNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectChangeClassOfToNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -523,9 +522,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final AbstractSqueakObject doPrimChangeClass(final AbstractSqueakObject receiver, final AbstractSqueakObject argument,
-                        @Cached final SqueakObjectClassNode classNode,
                         @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
-            return changeClassOfToNode.execute(receiver, classNode.executeClass(argument));
+            return changeClassOfToNode.execute(receiver, argument.getSqueakClass());
         }
 
     }
