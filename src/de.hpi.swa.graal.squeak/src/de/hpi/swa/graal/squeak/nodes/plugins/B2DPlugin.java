@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -12,6 +13,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -118,10 +120,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"colorRamp.isBitmap()", "origin.isPoint()", "direction.isPoint()", "normal.isPoint()"})
+        @Specialization(guards = {"classNode.executeClass(colorRamp).isBitmapClass()", "origin.isPoint()", "direction.isPoint()", "normal.isPoint()"}, limit = "1")
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final Object doAdd(final PointersObject receiver, final NativeObject colorRamp, final PointersObject origin, final PointersObject direction, final PointersObject normal,
-                        final boolean isRadial) {
+                        final boolean isRadial,
+                        @SuppressWarnings("unused") @Cached final SqueakObjectClassNode classNode) {
             return B2D.primitiveAddGradientFill(receiver, colorRamp, origin, direction, normal, isRadial);
         }
     }
@@ -423,9 +426,10 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"fillBitmap.isBitmap()"})
+        @Specialization(guards = {"classNode.executeClass(fillBitmap).isBitmapClass()"}, limit = "1")
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doCopy(final PointersObject receiver, final NativeObject fillBitmap, final PointersObject fill) {
+        protected static final Object doCopy(final PointersObject receiver, final NativeObject fillBitmap, final PointersObject fill,
+                        @SuppressWarnings("unused") @Cached final SqueakObjectClassNode classNode) {
             return B2D.primitiveMergeFillFrom(receiver, fillBitmap, fill);
         }
     }

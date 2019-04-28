@@ -366,7 +366,7 @@ public final class SqueakImageContext {
     }
 
     public void setSemaphore(final long index, final TruffleObject semaphore) {
-        assert semaphore == NilObject.SINGLETON || ((AbstractSqueakObject) semaphore).isSemaphore();
+        assert semaphore == NilObject.SINGLETON || ((AbstractSqueakObject) semaphore).getSqueakClass().isSemaphoreClass();
         specialObjectsArray.atput0Object(index, semaphore);
     }
 

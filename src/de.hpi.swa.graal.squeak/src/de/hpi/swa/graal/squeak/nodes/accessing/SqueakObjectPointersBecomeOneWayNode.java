@@ -113,7 +113,7 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
 
     @Specialization
     protected final void doMethod(final CompiledMethodObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
-        final ClassObject oldClass = obj.getSqueakClass();
+        final ClassObject oldClass = obj.image.compiledMethodClass;
         for (int i = 0; i < from.length; i++) {
             if (from[i] == oldClass) {
                 final ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject

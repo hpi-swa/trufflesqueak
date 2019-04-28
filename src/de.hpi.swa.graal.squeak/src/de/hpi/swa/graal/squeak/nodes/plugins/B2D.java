@@ -3495,7 +3495,7 @@ public final class B2D {
             cmSize = 0;
             cmBits = null;
         } else {
-            if (!((AbstractSqueakObject) cmOop).isBitmap()) {
+            if (!((AbstractSqueakObject) cmOop).getSqueakClass().isBitmapClass()) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
             cmBits = ((NativeObject) cmOop).getIntStorage();
@@ -3508,7 +3508,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter();
         }
         bmBits = fetchNativeofObject(0, formOop);
-        if (!bmBits.isBitmap()) {
+        if (!bmBits.getSqueakClass().isBitmapClass()) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         bmBitsSize = slotSizeOf(bmBits);
@@ -3845,7 +3845,7 @@ public final class B2D {
                 return false;
             }
             bmBits = fetchNativeofObject(0, formOop);
-            if (!bmBits.isBitmap()) {
+            if (!bmBits.getSqueakClass().isBitmapClass()) {
                 return false;
             }
             bmBitsSize = slotSizeOf(bmBits);
@@ -3874,7 +3874,7 @@ public final class B2D {
         final long fill;
         final long rampWidth;
 
-        assert rampOop.isBitmap();
+        assert rampOop.getSqueakClass().isBitmapClass();
         rampWidth = slotSizeOf(rampOop);
         fill = allocateGradientFillrampWidthisRadial(rampOop.getIntStorage(), rampWidth, isRadial);
         if (engineStopped) {
@@ -4113,7 +4113,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#loadSpanBufferFrom: */
     private static long loadSpanBufferFrom(final NativeObject spanOop) {
-        if (!spanOop.isBitmap()) {
+        if (!spanOop.getSqueakClass().isBitmapClass()) {
             return GEF_CLASS_MISMATCH;
         }
         /* Leave last entry unused to avoid complications */

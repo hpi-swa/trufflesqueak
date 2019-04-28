@@ -112,22 +112,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return squeakHashStableAssumption;
     }
 
-    public final boolean isBitmap() {
-        return getSqueakClass() == image.bitmapClass;
-    }
-
     public final boolean isClass() {
         assert !(this instanceof ClassObject) || getSqueakClass().isMetaClass() || getSqueakClass().getSqueakClass().isMetaClass();
         CompilerAsserts.neverPartOfCompilation();
         return this instanceof ClassObject;
-    }
-
-    public final boolean isLargeInteger() {
-        return getSqueakClass() == image.largePositiveIntegerClass || getSqueakClass() == image.largeNegativeIntegerClass;
-    }
-
-    public final boolean isMessage() {
-        return getSqueakClass() == image.messageClass;
     }
 
     public final boolean isMetaClass() {
@@ -136,15 +124,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final boolean isPinned() {
         return (squeakHash >> PINNED_BIT_SHIFT & 1) == 1;
-    }
-
-    public final boolean isSemaphore() {
-        return getSqueakClass() == image.semaphoreClass;
-    }
-
-    public final boolean isStringOrSymbol() {
-        /** ByteString or ByteSymbol. */
-        return getSqueakClass() == image.stringClass || getSqueakClass() == image.aboutToReturnSelector.getSqueakClass();
     }
 
     public String nameAsClass() {

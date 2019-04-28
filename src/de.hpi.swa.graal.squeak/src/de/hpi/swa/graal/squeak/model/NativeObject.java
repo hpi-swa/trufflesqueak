@@ -233,12 +233,12 @@ public final class NativeObject extends AbstractSqueakObject {
 
     @ExportMessage
     public boolean isString() {
-        return isStringOrSymbol();
+        return getSqueakClass().isStringOrSymbolClass();
     }
 
     @ExportMessage
     public String asString() throws UnsupportedMessageException {
-        if (isStringOrSymbol()) {
+        if (isString()) {
             return asStringUnsafe();
         } else {
             throw UnsupportedMessageException.create();

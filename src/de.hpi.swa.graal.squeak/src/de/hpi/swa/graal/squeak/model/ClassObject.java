@@ -173,6 +173,27 @@ public final class ClassObject extends AbstractSqueakObject {
         return instancesAreClasses;
     }
 
+    public boolean isBitmapClass() {
+        return this == image.bitmapClass;
+    }
+
+    public boolean isLargeIntegerClass() {
+        return this == image.largePositiveIntegerClass || this == image.largeNegativeIntegerClass;
+    }
+
+    public boolean isMessageClass() {
+        return this == image.messageClass;
+    }
+
+    public boolean isSemaphoreClass() {
+        return this == image.semaphoreClass;
+    }
+
+    public boolean isStringOrSymbolClass() {
+        /** ByteString or ByteSymbol. */
+        return this == image.stringClass || this == image.aboutToReturnSelector.getSqueakClass();
+    }
+
     public void fillin(final SqueakImageChunk chunk) {
         final Object[] chunkPointers = chunk.getPointers();
         superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];

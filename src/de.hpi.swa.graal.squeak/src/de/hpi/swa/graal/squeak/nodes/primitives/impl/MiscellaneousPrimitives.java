@@ -351,8 +351,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method);
         }
 
-        @Specialization(guards = "semaphore.isSemaphore()")
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long msTime) {
+        @Specialization(guards = "classNode.executeClass(semaphore).isSemaphoreClass()", limit = "1")
+        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long msTime,
+                        @SuppressWarnings("unused") @Cached final SqueakObjectClassNode classNode) {
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
@@ -761,8 +762,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method);
         }
 
-        @Specialization(guards = "semaphore.isSemaphore()")
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long usecsUTC) {
+        @Specialization(guards = "classNode.executeClass(semaphore).isSemaphoreClass()", limit = "1")
+        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long usecsUTC,
+                        @SuppressWarnings("unused") @Cached final SqueakObjectClassNode classNode) {
             final long msTime = (usecsUTC - AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS) / 1000;
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
