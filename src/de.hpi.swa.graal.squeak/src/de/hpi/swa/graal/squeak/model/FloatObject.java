@@ -8,7 +8,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 @ExportLibrary(InteropLibrary.class)
-public final class FloatObject extends AbstractSqueakObject {
+public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
     public static final int PRECISION = 53;
     public static final int EMIN = -1022;
     public static final int EMAX = 1023;

@@ -6,7 +6,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
@@ -70,7 +69,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         while (true) {
             CompilerDirectives.transferToInterpreter();
             assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
-            final TruffleObject sender = activeContext.getSender();
+            final AbstractSqueakObject sender = activeContext.getSender();
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 MaterializeContextOnMethodExitNode.reset();

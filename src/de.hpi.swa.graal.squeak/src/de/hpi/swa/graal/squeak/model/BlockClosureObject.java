@@ -12,7 +12,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -26,7 +25,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ExportLibrary(InteropLibrary.class)
-public final class BlockClosureObject extends AbstractSqueakObject {
+public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private Object receiver;
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
@@ -79,7 +78,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         copied = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FIRST_COPIED_VALUE, pointers.length);
     }
 
-    public TruffleObject getOuterContext() {
+    public AbstractSqueakObject getOuterContext() {
         return NilObject.nullToNil(outerContext);
     }
 

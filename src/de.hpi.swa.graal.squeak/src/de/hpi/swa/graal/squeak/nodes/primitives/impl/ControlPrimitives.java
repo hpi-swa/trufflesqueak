@@ -24,6 +24,7 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutRe
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -518,7 +519,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final AbstractSqueakObject doPrimChangeClass(final AbstractSqueakObject receiver, final AbstractSqueakObject argument,
+        protected static final AbstractSqueakObject doPrimChangeClass(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash argument,
                         @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
             return changeClassOfToNode.execute(receiver, argument.getSqueakClass());
         }
@@ -682,7 +683,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final ClassObject doPrimAdoptInstance(final ClassObject receiver, final AbstractSqueakObject argument,
+        protected static final ClassObject doPrimAdoptInstance(final ClassObject receiver, final AbstractSqueakObjectWithClassAndHash argument,
                         @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
             changeClassOfToNode.execute(argument, receiver);
             return receiver;

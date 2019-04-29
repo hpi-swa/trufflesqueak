@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -143,7 +142,7 @@ public final class LookupClassNodes {
         }
 
         @Specialization(guards = {"!isAbstractSqueakObject(value)"})
-        protected static final ClassObject doTruffleObject(@SuppressWarnings("unused") final TruffleObject value,
+        protected static final ClassObject doTruffleObject(@SuppressWarnings("unused") final Object value,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             assert image.supportsTruffleObject();
             return image.truffleObjectClass;

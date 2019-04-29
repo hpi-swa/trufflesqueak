@@ -36,7 +36,7 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.getInstructionPointer() < 0"})
-        protected static final Object doInstructionPointerTerminated(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index) {
+        protected static final NilObject doInstructionPointerTerminated(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index) {
             return NilObject.SINGLETON;
         }
 
@@ -56,7 +56,7 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.getClosure() == null"})
-        protected static final Object doClosureNil(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index) {
+        protected static final NilObject doClosureNil(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index) {
             return NilObject.SINGLETON;
         }
 

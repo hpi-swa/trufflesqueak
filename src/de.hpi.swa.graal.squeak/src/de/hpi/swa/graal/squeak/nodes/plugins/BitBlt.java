@@ -2,11 +2,11 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.function.LongBinaryOperator;
 
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -153,7 +153,7 @@ public final class BitBlt {
     private static long endOfDestination;
     private static long endOfSource;
     private static long[] gammaLookupTable;
-    private static TruffleObject halftoneForm;
+    private static AbstractSqueakObject halftoneForm;
     private static int[] halftoneBits;
     private static long halftoneHeight;
     private static boolean hasSurfaceLock;
@@ -1746,7 +1746,7 @@ public final class BitBlt {
         }
         sourceForm = fetchPointerofObjectOrNull(BB_SOURCE_FORM_INDEX, bitBltOop);
         noSource = ignoreSourceOrHalftone(sourceForm);
-        halftoneForm = (TruffleObject) fetchPointerofObject(BB_HALFTONE_FORM_INDEX, bitBltOop);
+        halftoneForm = (AbstractSqueakObject) fetchPointerofObject(BB_HALFTONE_FORM_INDEX, bitBltOop);
         noHalftone = ignoreSourceOrHalftone(halftoneForm == NilObject.SINGLETON ? null : halftoneForm);
         destForm = fetchPointerofObjectOrNull(BB_DEST_FORM_INDEX, bbObj);
         ok = loadBitBltDestForm();
@@ -2700,7 +2700,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitiveWarpBits */
-    public static PointersObject primitiveWarpBits(final PointersObject rcvr, final long n, final TruffleObject sourceMap) {
+    public static PointersObject primitiveWarpBits(final PointersObject rcvr, final long n, final AbstractSqueakObject sourceMap) {
         if (!loadWarpBltFrom(rcvr)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -3609,7 +3609,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#warpBits */
-    private static void warpBits(final long smoothingCount, final TruffleObject sourceMap) {
+    private static void warpBits(final long smoothingCount, final AbstractSqueakObject sourceMap) {
         final boolean ns = noSource;
         noSource = true;
         clipRange();
@@ -3647,7 +3647,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#warpLoop */
-    private static long warpLoop(final long smoothingCountValue, final TruffleObject sourceMapOopValue) {
+    private static long warpLoop(final long smoothingCountValue, final AbstractSqueakObject sourceMapOopValue) {
         final int deltaP12x;
         final int deltaP12y;
         final int deltaP43x;

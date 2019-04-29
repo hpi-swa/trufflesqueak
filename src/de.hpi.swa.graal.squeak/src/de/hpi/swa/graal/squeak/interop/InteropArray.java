@@ -38,8 +38,4 @@ public final class InteropArray implements TruffleObject {
         }
         return keys[(int) index];
     }
-
-    public static boolean isInstance(final TruffleObject object) {
-        return object instanceof InteropArray;
-    }
 }

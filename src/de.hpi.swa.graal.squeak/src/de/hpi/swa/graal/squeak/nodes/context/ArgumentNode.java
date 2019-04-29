@@ -27,6 +27,6 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
 
     @Specialization(guards = {"argumentIndex > code.getNumArgs()"})
     protected static final Object doArgumentsExhausted() {
-        return NotProvided.INSTANCE;
+        return NotProvided.SINGLETON;
     }
 }

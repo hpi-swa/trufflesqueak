@@ -1,9 +1,9 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
@@ -23,7 +23,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
 
     @Specialization(guards = "process == first")
     protected static final void doRemoveEqual(final PointersObject process, final PointersObject list, @SuppressWarnings("unused") final PointersObject first,
-                    final TruffleObject last) {
+                    final AbstractSqueakObject last) {
         final Object next = process.at0(PROCESS.NEXT_LINK);
         list.atput0(LINKED_LIST.FIRST_LINK, next);
         if (process == last) {
@@ -32,7 +32,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
     }
 
     @Specialization(guards = "process != first")
-    protected static final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final PointersObject first, final TruffleObject last) {
+    protected static final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final PointersObject first, final AbstractSqueakObject last) {
         PointersObject temp = first;
         Object next;
         while (true) {
@@ -54,7 +54,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected static final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final NilObject first, final TruffleObject last) {
+    protected static final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final NilObject first, final AbstractSqueakObject last) {
         throw new PrimitiveFailed(); // TODO: make sure this is needed (and make it better).
     }
 }

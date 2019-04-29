@@ -18,7 +18,6 @@ import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.graal.squeak.SqueakImage;
@@ -31,6 +30,7 @@ import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.io.SqueakDisplayInterface;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -262,8 +262,8 @@ public final class SqueakImageContext {
         assert parserClass != null;
         assert compilerClass != null;
 
-        final AbstractSqueakObject parser = (AbstractSqueakObject) parserClass.send("new");
-        final AbstractSqueakObject methodNode = (AbstractSqueakObject) parser.send(
+        final AbstractSqueakObjectWithClassAndHash parser = (AbstractSqueakObjectWithClassAndHash) parserClass.send("new");
+        final AbstractSqueakObjectWithClassAndHash methodNode = (AbstractSqueakObjectWithClassAndHash) parser.send(
                         "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, sqTrue, NilObject.SINGLETON, new BlockClosureObject(this));
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
@@ -365,8 +365,8 @@ public final class SqueakImageContext {
         return (PointersObject) getScheduler().at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
-    public void setSemaphore(final long index, final TruffleObject semaphore) {
-        assert semaphore == NilObject.SINGLETON || ((AbstractSqueakObject) semaphore).getSqueakClass().isSemaphoreClass();
+    public void setSemaphore(final long index, final AbstractSqueakObject semaphore) {
+        assert semaphore == NilObject.SINGLETON || ((AbstractSqueakObjectWithClassAndHash) semaphore).getSqueakClass().isSemaphoreClass();
         specialObjectsArray.atput0Object(index, semaphore);
     }
 
@@ -437,7 +437,7 @@ public final class SqueakImageContext {
         return options.isTesting;
     }
 
-    public TruffleObject getGlobals() {
+    public Object getGlobals() {
         final PointersObject environment = (PointersObject) smalltalk.at0(SMALLTALK_IMAGE.GLOBALS);
         final PointersObject bindings = (PointersObject) environment.at0(ENVIRONMENT.BINDINGS);
         return new InteropMap(bindings);

@@ -3,9 +3,9 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -65,7 +65,7 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final TruffleObject doArrayOfNativeObjects(final ArrayObject obj, final long index) {
+        protected static final AbstractSqueakObject doArrayOfNativeObjects(final ArrayObject obj, final long index) {
             return obj.at0NativeObject(index);
         }
 

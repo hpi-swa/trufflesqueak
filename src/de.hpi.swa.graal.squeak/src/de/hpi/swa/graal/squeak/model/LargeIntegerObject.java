@@ -15,7 +15,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
-public final class LargeIntegerObject extends AbstractSqueakObject {
+public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHash {
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     private static final BigInteger ONE_HUNDRED_TWENTY_EIGHT = BigInteger.valueOf(128);
     private static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();

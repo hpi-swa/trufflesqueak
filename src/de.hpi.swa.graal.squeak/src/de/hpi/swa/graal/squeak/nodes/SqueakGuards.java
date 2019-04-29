@@ -122,7 +122,7 @@ public final class SqueakGuards {
     }
 
     public static boolean isNotProvided(final Object obj) {
-        return NotProvided.isInstance(obj);
+        return obj == NotProvided.SINGLETON;
     }
 
     public static boolean isOverflowDivision(final long a, final long b) {

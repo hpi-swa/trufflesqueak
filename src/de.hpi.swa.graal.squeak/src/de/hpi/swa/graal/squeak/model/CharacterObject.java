@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
-public final class CharacterObject extends AbstractSqueakObject {
+public final class CharacterObject extends AbstractSqueakObjectWithClassAndHash {
     private final int value;
 
     private CharacterObject(final SqueakImageContext image, final int value) {

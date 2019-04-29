@@ -11,7 +11,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -23,7 +22,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
-public final class ContextObject extends AbstractSqueakObject {
+public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private MaterializedFrame truffleFrame;
     @CompilationFinal private int size;
     private boolean hasModifiedSender = false;
@@ -94,7 +93,7 @@ public final class ContextObject extends AbstractSqueakObject {
         size = pointers.length;
         assert size > CONTEXT.TEMP_FRAME_START;
         final CompiledMethodObject method = (CompiledMethodObject) pointers[CONTEXT.METHOD];
-        final TruffleObject sender = (TruffleObject) pointers[CONTEXT.SENDER_OR_NIL];
+        final AbstractSqueakObject sender = (AbstractSqueakObject) pointers[CONTEXT.SENDER_OR_NIL];
         assert sender != null : "sender should not be null";
         final Object closureOrNil = pointers[CONTEXT.CLOSURE_OR_NIL];
         final BlockClosureObject closure;
@@ -289,12 +288,12 @@ public final class ContextObject extends AbstractSqueakObject {
         return FrameAccess.getSender(truffleFrame);
     }
 
-    public TruffleObject getSender() {
+    public AbstractSqueakObject getSender() {
         final Object value = FrameAccess.getSender(truffleFrame);
         if (value instanceof FrameMarker) {
             return ((FrameMarker) value).getMaterializedContext();
         } else {
-            return (TruffleObject) value;
+            return (AbstractSqueakObject) value;
         }
     }
 

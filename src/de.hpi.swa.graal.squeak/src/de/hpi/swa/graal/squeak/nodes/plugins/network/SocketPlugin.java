@@ -11,7 +11,6 @@ import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -136,8 +135,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         @TruffleBoundary
-        protected final TruffleObject doWork(
-                        @SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
             LOG.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
             return lastNameLookup == null ? NilObject.SINGLETON : method.image.asByteArray(lastNameLookup);
@@ -156,7 +154,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * lookup was unsuccessful.
          */
         @Specialization
-        protected final TruffleObject doWork(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final String lastAddressLookup = Resolver.lastAddressLookUpResult();
             LOG.finer(() -> ">> Address Lookup Result: " + lastAddressLookup);
             return lastAddressLookup == null ? NilObject.SINGLETON : method.image.asByteString(lastAddressLookup);

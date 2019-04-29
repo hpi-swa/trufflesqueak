@@ -5,7 +5,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
-public abstract class AbstractPointersObject extends AbstractSqueakObject {
+public abstract class AbstractPointersObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal(dimensions = 0) private Object[] pointers;
 
     protected AbstractPointersObject(final SqueakImageContext image) {

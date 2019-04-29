@@ -4,7 +4,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 
 public abstract class FillInClassAndHashNode extends Node {
 
@@ -16,13 +16,13 @@ public abstract class FillInClassAndHashNode extends Node {
 
     // For special objects (known selectors, classes, ...) which do not have a hash yet.
     @Specialization(guards = {"obj.needsSqueakClass()", "obj.needsSqueakHash()"})
-    protected static final void doClassObjectClassAndHash(final AbstractSqueakObject obj, final SqueakImageChunk chunk) {
+    protected static final void doClassObjectClassAndHash(final AbstractSqueakObjectWithClassAndHash obj, final SqueakImageChunk chunk) {
         obj.setSqueakClass(chunk.getSqClass());
         obj.setSqueakHash(chunk.getHash());
     }
 
     @Specialization(guards = {"obj.needsSqueakClass()", "!obj.needsSqueakHash()"})
-    protected static final void doClassObjectClass(final AbstractSqueakObject obj, final SqueakImageChunk chunk) {
+    protected static final void doClassObjectClass(final AbstractSqueakObjectWithClassAndHash obj, final SqueakImageChunk chunk) {
         obj.setSqueakClass(chunk.getSqClass());
     }
 

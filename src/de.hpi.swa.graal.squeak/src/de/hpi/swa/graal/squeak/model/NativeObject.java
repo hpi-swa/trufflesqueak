@@ -15,7 +15,7 @@ import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 @ExportLibrary(InteropLibrary.class)
-public final class NativeObject extends AbstractSqueakObject {
+public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public static final short BYTE_MAX = (short) (Math.pow(2, Byte.SIZE) - 1);
     public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
     public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);

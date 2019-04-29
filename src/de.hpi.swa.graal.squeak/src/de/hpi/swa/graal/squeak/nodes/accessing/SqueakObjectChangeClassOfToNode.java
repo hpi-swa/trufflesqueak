@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -17,7 +18,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesN
 /** This node should only be used in primitive nodes as it may throw a PrimitiveFailed exception. */
 public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
-    public abstract AbstractSqueakObject execute(AbstractSqueakObject receiver, ClassObject argument);
+    public abstract AbstractSqueakObject execute(AbstractSqueakObjectWithClassAndHash receiver, ClassObject argument);
 
     @Specialization(guards = "receiver.hasSameFormat(argument)")
     protected static final NativeObject doNative(final NativeObject receiver, final ClassObject argument) {
@@ -71,14 +72,14 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
     @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)",
                     "receiver.getSqueakClass().getFormat() == argument.getFormat()"})
-    protected static final AbstractSqueakObject doSqueakObject(final AbstractSqueakObject receiver, final ClassObject argument) {
+    protected static final AbstractSqueakObject doSqueakObject(final AbstractSqueakObjectWithClassAndHash receiver, final ClassObject argument) {
         receiver.setSqueakClass(argument);
         return receiver;
     }
 
     @SuppressWarnings("unused")
     @Fallback
-    protected static final AbstractSqueakObject doFail(final AbstractSqueakObject receiver, final ClassObject argument) {
+    protected static final AbstractSqueakObject doFail(final AbstractSqueakObjectWithClassAndHash receiver, final ClassObject argument) {
         throw new PrimitiveFailed();
     }
 }

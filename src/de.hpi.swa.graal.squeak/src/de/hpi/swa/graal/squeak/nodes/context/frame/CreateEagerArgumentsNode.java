@@ -25,7 +25,7 @@ public abstract class CreateEagerArgumentsNode extends AbstractNode {
     @Fallback
     protected static final Object[] doResize(final int size, final Object[] receiverAndArguments) {
         final Object[] array = Arrays.copyOf(receiverAndArguments, size);
-        Arrays.fill(array, receiverAndArguments.length, size, NotProvided.INSTANCE);
+        Arrays.fill(array, receiverAndArguments.length, size, NotProvided.SINGLETON);
         return array;
     }
 }

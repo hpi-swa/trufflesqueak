@@ -42,8 +42,4 @@ public final class InteropMap implements TruffleObject {
     public Object readMember(final String key) {
         return map.get(key);
     }
-
-    public static boolean isInstance(final TruffleObject object) {
-        return object instanceof InteropMap;
-    }
 }

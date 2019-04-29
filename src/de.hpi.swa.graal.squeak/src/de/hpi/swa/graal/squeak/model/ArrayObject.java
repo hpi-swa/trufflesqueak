@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.model;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -11,7 +10,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWrite
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-public final class ArrayObject extends AbstractSqueakObject {
+public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public static final byte BOOLEAN_NIL_TAG = 0;
     public static final byte BOOLEAN_TRUE_TAG = 1;
     public static final byte BOOLEAN_FALSE_TAG = -1;
@@ -86,7 +85,7 @@ public final class ArrayObject extends AbstractSqueakObject {
         return value == LONG_NIL_TAG ? NilObject.SINGLETON : value;
     }
 
-    public TruffleObject at0NativeObject(final long index) {
+    public AbstractSqueakObject at0NativeObject(final long index) {
         return NilObject.nullToNil(getNativeObjectStorage()[(int) index]);
     }
 

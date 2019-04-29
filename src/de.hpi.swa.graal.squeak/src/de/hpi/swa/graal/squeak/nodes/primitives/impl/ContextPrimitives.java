@@ -12,10 +12,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -61,7 +61,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.hasMaterializedSender()")
-        protected static final TruffleObject doFindNext(final ContextObject receiver, final TruffleObject previousContextOrNil) {
+        protected static final AbstractSqueakObject doFindNext(final ContextObject receiver, final AbstractSqueakObject previousContextOrNil) {
             ContextObject current = receiver;
             while (current != previousContextOrNil) {
                 final Object sender = current.getSender();
@@ -78,10 +78,10 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!receiver.hasMaterializedSender()")
-        protected static final TruffleObject doFindNextAvoidingMaterialization(final ContextObject receiver, final ContextObject previousContext) {
+        protected static final AbstractSqueakObject doFindNextAvoidingMaterialization(final ContextObject receiver, final ContextObject previousContext) {
             // Sender is not materialized, so avoid materialization by walking Truffle frames.
             final boolean[] foundMyself = {false};
-            final TruffleObject result = Truffle.getRuntime().iterateFrames((frameInstance) -> {
+            final AbstractSqueakObject result = Truffle.getRuntime().iterateFrames((frameInstance) -> {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (!FrameAccess.isGraalSqueakFrame(current)) {
                     return null; // Foreign frame cannot be unwind marked.
@@ -106,11 +106,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 return null;
             });
             assert foundMyself[0] : "Did not find receiver with virtual sender on Truffle stack";
-            return result != null ? result : NilObject.SINGLETON;
+            return NilObject.nullToNil(result);
         }
 
         @Specialization(guards = "!receiver.hasMaterializedSender()")
-        protected static final Object doFindNextAvoidingMaterializationNil(final ContextObject receiver, @SuppressWarnings("unused") final NilObject nil) {
+        protected static final AbstractSqueakObject doFindNextAvoidingMaterializationNil(final ContextObject receiver, @SuppressWarnings("unused") final NilObject nil) {
             return doFindNext(receiver, nil);
         }
     }
@@ -142,7 +142,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         private void terminateBetween(final ContextObject start, final ContextObject end) {
             ContextObject current = start;
             while (current.hasMaterializedSender()) {
-                final TruffleObject sender = start.getSender();
+                final AbstractSqueakObject sender = start.getSender();
                 current.terminate();
                 if (sender == NilObject.SINGLETON || sender == end) {
                     return;
@@ -203,14 +203,14 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.hasMaterializedSender()"})
-        protected static final TruffleObject findNext(final ContextObject receiver) {
+        protected static final AbstractSqueakObject findNext(final ContextObject receiver) {
             ContextObject context = receiver;
             while (true) {
                 if (context.getMethod().isExceptionHandlerMarked()) {
                     assert context.getClosure() == null;
                     return context;
                 }
-                final TruffleObject sender = context.getSender();
+                final AbstractSqueakObject sender = context.getSender();
                 if (sender instanceof ContextObject) {
                     context = (ContextObject) sender;
                 } else {
@@ -221,7 +221,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!receiver.hasMaterializedSender()"})
-        protected static final TruffleObject findNextAvoidingMaterialization(final ContextObject receiver) {
+        protected static final AbstractSqueakObject findNextAvoidingMaterialization(final ContextObject receiver) {
             final boolean[] foundMyself = new boolean[1];
             final Object[] lastSender = new Object[1];
             final ContextObject result = Truffle.getRuntime().iterateFrames(frameInstance -> {

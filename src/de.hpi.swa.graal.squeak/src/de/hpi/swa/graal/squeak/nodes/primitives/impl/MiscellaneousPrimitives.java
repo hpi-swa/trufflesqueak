@@ -18,7 +18,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -28,6 +27,7 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiv
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -124,7 +124,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "!classObject.isImmediateClassType()")
-        protected final TruffleObject doSomeInstance(final ClassObject classObject) {
+        protected final AbstractSqueakObject doSomeInstance(final ClassObject classObject) {
             try {
                 return objectGraphNode.executeSomeInstanceOf(classObject);
             } catch (final IndexOutOfBoundsException e) {
@@ -170,7 +170,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore) {
+        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObjectWithClassAndHash semaphore) {
             method.image.setSemaphore(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE, semaphore);
             return receiver;
         }
@@ -615,7 +615,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "!isNativeObject(receiver)", "!isPointersObject(receiver)", "!isContextObject(receiver)",
                         "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"}, limit = "1")
-        protected static final AbstractSqueakObject doCopy(final AbstractSqueakObject receiver, final AbstractSqueakObject anotherObject,
+        protected static final AbstractSqueakObject doCopy(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash anotherObject,
                         @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final SqueakObjectAt0Node at0Node) {
@@ -636,7 +636,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final long doMaxHash(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return AbstractSqueakObject.IDENTITY_HASH_MASK;
+            return AbstractSqueakObjectWithClassAndHash.IDENTITY_HASH_MASK;
         }
     }
 
@@ -676,7 +676,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final boolean isPinned(final AbstractSqueakObject receiver) {
+        protected final boolean isPinned(final AbstractSqueakObjectWithClassAndHash receiver) {
             PrimPinNode.printWarningIfNotTesting(method);
             return receiver.isPinned() ? method.image.sqTrue : method.image.sqFalse;
         }
@@ -691,7 +691,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "enable")
-        protected final boolean doPinEnable(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
+        protected final boolean doPinEnable(final AbstractSqueakObjectWithClassAndHash receiver, @SuppressWarnings("unused") final boolean enable) {
             printWarningIfNotTesting(method);
             final boolean wasPinned = receiver.isPinned();
             receiver.setPinned();
@@ -699,7 +699,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "!enable")
-        protected final boolean doPinDisable(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
+        protected final boolean doPinDisable(final AbstractSqueakObjectWithClassAndHash receiver, @SuppressWarnings("unused") final boolean enable) {
             printWarningIfNotTesting(method);
             final boolean wasPinned = receiver.isPinned();
             receiver.unsetPinned();

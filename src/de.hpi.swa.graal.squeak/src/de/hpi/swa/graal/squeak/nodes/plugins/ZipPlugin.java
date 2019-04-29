@@ -10,7 +10,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -417,7 +417,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
      */
 
     /* InflatePlugin>>#determineSizeOfReadStream: */
-    private static boolean determineSizeOfReadStream(final AbstractSqueakObject rcvr) {
+    private static boolean determineSizeOfReadStream(final AbstractSqueakObjectWithClassAndHash rcvr) {
         ClassObject squeakClass = rcvr.getSqueakClass();
         while (squeakClass != null && squeakClass.getBasicInstanceSize() >= 13) {
             squeakClass = squeakClass.getSuperclassOrNull();
@@ -436,7 +436,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
      */
 
     /* DeflatePlugin>>#determineSizeOfWriteStream: */
-    private static boolean determineSizeOfWriteStream(final AbstractSqueakObject rcvr) {
+    private static boolean determineSizeOfWriteStream(final AbstractSqueakObjectWithClassAndHash rcvr) {
         ClassObject squeakClass = rcvr.getSqueakClass();
         while (squeakClass != null && squeakClass.getBasicInstanceSize() >= 7) {
             squeakClass = squeakClass.getSuperclassOrNull();

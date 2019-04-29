@@ -21,10 +21,6 @@ public final class SqueakImage implements TruffleObject {
         return image.getImagePath();
     }
 
-    protected static boolean isInstance(final TruffleObject object) {
-        return object instanceof SqueakImage;
-    }
-
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean isExecutable() {

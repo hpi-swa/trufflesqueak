@@ -22,7 +22,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -847,7 +846,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the property value or {@code nil}
          */
         @Specialization
-        protected final TruffleObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle, final long propertyId) {
+        protected final AbstractSqueakObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle, final long propertyId) {
             final SqSSL impl = getSSL(method, sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (impl == null || property == null) {

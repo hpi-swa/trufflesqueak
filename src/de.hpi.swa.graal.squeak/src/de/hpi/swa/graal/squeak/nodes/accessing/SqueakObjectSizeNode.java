@@ -30,8 +30,8 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     public abstract int execute(Object obj);
 
     @Specialization
-    protected static final int doNil(@SuppressWarnings("unused") final NilObject obj) {
-        return NilObject.size();
+    protected static final int doNil(final NilObject obj) {
+        return obj.size();
     }
 
     @Specialization

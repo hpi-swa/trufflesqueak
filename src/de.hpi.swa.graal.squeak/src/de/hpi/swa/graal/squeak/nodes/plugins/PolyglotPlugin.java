@@ -20,7 +20,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
@@ -35,6 +34,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -158,7 +158,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 final Source source = generateSourcefromCCode(foreignCode, cFile, llvmFile);
                 final CallTarget foreignCallTarget = method.image.env.parse(source);
-                final TruffleObject library = (TruffleObject) foreignCallTarget.call();
+                final Object library = foreignCallTarget.call();
                 final Object cFunction = readNode.executeWithArguments(frame, library, memberToCall);
                 final Object result = executeNode.executeWithArguments(frame, cFunction);
                 return wrapNode.executeWrap(result);
@@ -350,8 +350,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final TruffleObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return (TruffleObject) method.image.env.getPolyglotBindings();
+        protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return method.image.env.getPolyglotBindings();
         }
     }
 
@@ -422,7 +422,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(limit = "2")
-        protected final boolean doIsBoolean(final TruffleObject receiver,
+        protected final boolean doIsBoolean(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             return method.image.asBoolean(functions.isBoolean(receiver));
         }
@@ -456,7 +456,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(limit = "2")
-        protected final boolean doIsString(final TruffleObject receiver,
+        protected final boolean doIsString(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             return method.image.asBoolean(functions.isString(receiver));
         }
@@ -490,7 +490,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(limit = "2")
-        protected final boolean doFitsInLong(final TruffleObject receiver,
+        protected final boolean doFitsInLong(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             return method.image.asBoolean(functions.fitsInLong(receiver));
         }
@@ -524,7 +524,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(limit = "2")
-        protected final boolean doFitsInDouble(final TruffleObject receiver,
+        protected final boolean doFitsInDouble(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             return method.image.asBoolean(functions.fitsInDouble(receiver));
         }
@@ -558,8 +558,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doIdentityHash(final TruffleObject receiver) {
-            return receiver.hashCode() & AbstractSqueakObject.IDENTITY_HASH_MASK;
+        protected static final long doIdentityHash(final Object receiver) {
+            return receiver.hashCode() & AbstractSqueakObjectWithClassAndHash.IDENTITY_HASH_MASK;
         }
     }
 
@@ -572,7 +572,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(limit = "2")
-        protected final boolean doIsExecutable(final TruffleObject receiver,
+        protected final boolean doIsExecutable(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             return method.image.asBoolean(functions.isExecutable(receiver));
         }
@@ -587,7 +587,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(limit = "2")
-        protected final boolean doIsInstantiable(final TruffleObject receiver,
+        protected final boolean doIsInstantiable(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             return method.image.asBoolean(functions.isInstantiable(receiver));
         }
@@ -602,7 +602,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(limit = "2")
-        protected final boolean doIsNull(final TruffleObject receiver,
+        protected final boolean doIsNull(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             return method.image.asBoolean(functions.isNull(receiver));
         }
@@ -617,7 +617,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(limit = "2")
-        protected final boolean doIsPointer(final TruffleObject receiver,
+        protected final boolean doIsPointer(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary functions) {
             return method.image.asBoolean(functions.isPointer(receiver));
         }

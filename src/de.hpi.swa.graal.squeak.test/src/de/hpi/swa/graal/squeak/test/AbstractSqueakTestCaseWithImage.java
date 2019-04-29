@@ -16,10 +16,10 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
@@ -195,8 +195,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (hasPassed) {
             return TestResult.success("passed");
         }
-        final AbstractSqueakObject failures = (AbstractSqueakObject) testResult.send("failures");
-        final AbstractSqueakObject errors = (AbstractSqueakObject) testResult.send("errors");
+        final AbstractSqueakObjectWithClassAndHash failures = (AbstractSqueakObjectWithClassAndHash) testResult.send("failures");
+        final AbstractSqueakObjectWithClassAndHash errors = (AbstractSqueakObjectWithClassAndHash) testResult.send("errors");
         final List<String> output = new ArrayList<>();
         appendTestResult(output, (ArrayObject) failures.send("asArray"), " (F)");
         appendTestResult(output, (ArrayObject) errors.send("asArray"), " (E)");
@@ -208,7 +208,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         for (int i = 0; i < sizeNode.execute(array); i++) {
-            final TruffleObject value = (AbstractSqueakObject) at0Node.execute(array, i);
+            final AbstractSqueakObject value = (AbstractSqueakObject) at0Node.execute(array, i);
             assert value != NilObject.SINGLETON;
             output.add(((PointersObject) value).at0(0) + suffix);
         }
