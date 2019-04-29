@@ -9,7 +9,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -274,7 +273,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         break;
                     }
                     default:
-                        throw SqueakException.create("primitiveDecompressFromByteArray: should not happen");
+                        break; // cannot happen
                 }
             }
             return receiver;

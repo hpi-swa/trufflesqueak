@@ -3515,9 +3515,7 @@ public final class B2D {
         bmWidth = fetchIntegerofObject(1, formOop);
         bmHeight = fetchIntegerofObject(2, formOop);
         bmDepth = fetchIntegerofObject(3, formOop);
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
+        assert !failed();
         if (!(bmWidth >= 0 && bmHeight >= 0)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -3533,9 +3531,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter();
         }
         bmFill = allocateBitmapFillcolormap(cmSize, cmBits);
-        if (engineStopped) {
-            throw SqueakException.create("return null");
-        }
+        assert !engineStopped;
         bitmapWidthOfput(bmFill, bmWidth);
         bitmapHeightOfput(bmFill, bmHeight);
         bitmapDepthOfput(bmFill, bmDepth);
@@ -3759,9 +3755,7 @@ public final class B2D {
 
         hasEdgeTransformPut(0);
         okay = loadTransformFromintolength(transformOop, GW_EDGE_TRANSFORM, 6);
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
+        assert !failed();
         if (!okay) {
             return false;
         }
@@ -3877,9 +3871,7 @@ public final class B2D {
         assert rampOop.getSqueakClass().isBitmapClass();
         rampWidth = slotSizeOf(rampOop);
         fill = allocateGradientFillrampWidthisRadial(rampOop.getIntStorage(), rampWidth, isRadial);
-        if (engineStopped) {
-            throw SqueakException.create("return null");
-        }
+        assert !engineStopped;
         loadFillOrientationfromalongnormalwidthheight(fill, rampWidth, rampWidth);
         return fill;
     }
@@ -5330,9 +5322,7 @@ public final class B2D {
                 statePut(GE_STATE_ADDING_FROM_GET);
             }
         }
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
+        assert !failed();
         storeEngineStateInto(engine);
         if (doProfileStats) {
             incrementStatby(GW_COUNT_NEXT_AET_ENTRY, 1);
@@ -6761,9 +6751,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#storeRenderingState */
     private static long storeRenderingState(final PointersObject edgeOop, final PointersObject fillOop) {
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
+        assert !failed();
         if (engineStopped) {
             /* Check the stop reason and store the required information */
             storeStopStateIntoEdgefill(edgeOop, fillOop);

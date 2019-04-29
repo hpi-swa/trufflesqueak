@@ -10,11 +10,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayTransformNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -31,103 +29,85 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
-    private abstract static class AbstractClosureValuePrimitiveNode extends AbstractPrimitiveNode {
-        @Child protected BlockActivationNode dispatch = BlockActivationNode.create();
-
-        protected AbstractClosureValuePrimitiveNode(final CompiledMethodObject method) {
-            super(method);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 200)
-    public abstract static class PrimClosureCopyWithCopiedValuesNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
-        protected PrimClosureCopyWithCopiedValuesNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final ArrayObject copiedValues) {
-            throw SqueakException.create("Not implemented and not used in Squeak anymore");
-        }
-    }
-
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 201)
-    public abstract static class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode implements UnaryPrimitive {
+    public abstract static class PrimClosureValue0Node extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimClosureValue0Node(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
-        protected final Object doClosure(final VirtualFrame frame, final BlockClosureObject block) {
-            return dispatch.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY));
+        protected final Object doClosure(final VirtualFrame frame, final BlockClosureObject block,
+                        @Cached final BlockActivationNode activationNode) {
+            return activationNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 202)
-    protected abstract static class PrimClosureValue1Node extends AbstractClosureValuePrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimClosureValue1Node extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimClosureValue1Node(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 1"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg) {
-            return dispatch.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg}));
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg,
+                        @Cached final BlockActivationNode activationNode) {
+            return activationNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg}));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 203)
-    protected abstract static class PrimClosureValue2Node extends AbstractClosureValuePrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimClosureValue2Node extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimClosureValue2Node(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 2"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2) {
-            return dispatch.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg1, arg2}));
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2,
+                        @Cached final BlockActivationNode activationNode) {
+            return activationNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg1, arg2}));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 204)
-    protected abstract static class PrimClosureValue3Node extends AbstractClosureValuePrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimClosureValue3Node extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
         protected PrimClosureValue3Node(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 3"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3) {
-            return dispatch.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3}));
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3,
+                        @Cached final BlockActivationNode activationNode) {
+            return activationNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3}));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 205)
-    protected abstract static class PrimClosureValue4Node extends AbstractClosureValuePrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimClosureValue4Node extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         protected PrimClosureValue4Node(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 4"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-            return dispatch.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3, arg4}));
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        @Cached final BlockActivationNode activationNode) {
+            return activationNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3, arg4}));
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 206)
-    protected abstract static class PrimClosureValueAryNode extends AbstractClosureValuePrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimClosureValueAryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimClosureValueAryNode(final CompiledMethodObject method) {
             super(method);
@@ -136,26 +116,28 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
+                        @Cached final BlockActivationNode activationNode,
                         @Cached final ArrayObjectToObjectArrayTransformNode getObjectArrayNode) {
-            return dispatch.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray)));
+            return activationNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray)));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 221)
-    public abstract static class PrimClosureValueNoContextSwitchNode extends AbstractClosureValuePrimitiveNode implements UnaryPrimitive {
+    public abstract static class PrimClosureValueNoContextSwitchNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimClosureValueNoContextSwitchNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block) {
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block,
+                        @Cached final BlockActivationNode activationNode) {
             final Object[] arguments = FrameAccess.newClosureArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY);
             final boolean wasActive = method.image.interrupt.isActive();
             method.image.interrupt.deactivate();
             try {
-                return dispatch.executeBlock(block, arguments);
+                return activationNode.executeBlock(block, arguments);
             } finally {
                 if (wasActive) {
                     method.image.interrupt.activate();
@@ -166,7 +148,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 222)
-    protected abstract static class PrimClosureValueAryNoContextSwitchNode extends AbstractClosureValuePrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimClosureValueAryNoContextSwitchNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimClosureValueAryNoContextSwitchNode(final CompiledMethodObject method) {
             super(method);
@@ -175,12 +157,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
+                        @Cached final BlockActivationNode activationNode,
                         @Cached final ArrayObjectToObjectArrayTransformNode getObjectArrayNode) {
             final Object[] arguments = FrameAccess.newClosureArguments(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray));
             final boolean wasActive = method.image.interrupt.isActive();
             method.image.interrupt.deactivate();
             try {
-                return dispatch.executeBlock(block, arguments);
+                return activationNode.executeBlock(block, arguments);
             } finally {
                 if (wasActive) {
                     method.image.interrupt.activate();

@@ -2526,13 +2526,9 @@ public final class BitBlt {
             PrimitiveFailed.andTransferToInterpreter();
         }
         copyBits(factor);
-        if (failed()) {
-            throw SqueakException.create("Should not happen");
-        }
+        assert !failed();
         showDisplayBits();
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
+        assert !failed();
         if (combinationRule == 22 || combinationRule == 32) {
             return bitCount;
         } else {
@@ -2581,9 +2577,7 @@ public final class BitBlt {
             }
             sourceX = (int) xTableLongs[glyphIndex];
             width = (int) (xTableLongs[glyphIndex + 1] - sourceX);
-            if (failed()) {
-                throw SqueakException.create("return null");
-            }
+            assert !failed();
             clipRange();
             if (bbW > 0 && bbH > 0) {
                 if (quickBlt) {
@@ -2597,9 +2591,7 @@ public final class BitBlt {
                     copyBitsLockedAndClipped();
                 }
             }
-            if (failed()) {
-                throw SqueakException.create("return null");
-            }
+            assert !failed();
             destX = destX + width + kernDelta;
         }
         affectedL = left;
@@ -2657,9 +2649,7 @@ public final class BitBlt {
         height = fetchIntegerofObject(FORM.HEIGHT, rcvr);
         /* if width/height/depth are not integer, fail */
         depth = fetchIntegerofObject(FORM.DEPTH, rcvr);
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
+        assert !failed();
         if (xVal >= width || yVal >= height) {
             return 0L;
         }
@@ -2705,13 +2695,9 @@ public final class BitBlt {
             PrimitiveFailed.andTransferToInterpreter();
         }
         warpBits(n, sourceMap);
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
+        assert !failed();
         showDisplayBits();
-        if (failed()) {
-            throw SqueakException.create("return null");
-        }
+        assert !failed();
         return rcvr;
     }
 

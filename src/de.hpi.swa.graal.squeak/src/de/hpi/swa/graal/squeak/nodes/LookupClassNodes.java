@@ -5,14 +5,12 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -101,11 +99,6 @@ public final class LookupClassNodes {
         @Specialization
         protected static final ClassObject doClass(@SuppressWarnings("unused") final ClassObject value) {
             return value.getSqueakClass();
-        }
-
-        @Specialization
-        protected static final ClassObject doBlock(@SuppressWarnings("unused") final CompiledBlockObject value) {
-            throw SqueakException.create("Should never happen?");
         }
 
         @Specialization

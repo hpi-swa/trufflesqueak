@@ -5,7 +5,6 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -79,11 +78,6 @@ public final class ContextObjectNodes {
         protected static final Object doTemp(final ContextObject context, final long index) {
             return context.atTemp((int) (index - CONTEXT.TEMP_FRAME_START));
         }
-
-        @Specialization(guards = "index < 0")
-        protected static final Object doFail(final ContextObject obj, final long index) {
-            throw SqueakException.create("Negative index:", obj, index);
-        }
     }
 
     @GenerateUncached
@@ -154,11 +148,6 @@ public final class ContextObjectNodes {
         @Specialization(guards = "index >= TEMP_FRAME_START")
         protected static final void doTemp(final ContextObject context, final long index, final Object value) {
             context.atTempPut((int) (index - CONTEXT.TEMP_FRAME_START), value);
-        }
-
-        @Specialization(guards = "index < 0")
-        protected static final void doFail(final ContextObject obj, final long index, final Object value) {
-            throw SqueakException.create("Unexpected values:", obj, index, value);
         }
     }
 }

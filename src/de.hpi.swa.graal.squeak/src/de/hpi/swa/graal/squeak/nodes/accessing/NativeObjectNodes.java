@@ -5,7 +5,6 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -214,12 +213,6 @@ public final class NativeObjectNodes {
         @Specialization(guards = {"obj.isIntType()", "value.inRange(0, INTEGER_MAX)"})
         protected static final void doNativeIntsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
             doNativeInts(obj, index, value.longValueExact());
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isIntType()", "!value.inRange(0, INTEGER_MAX)"})
-        protected static final void doNativeIntsLargeIntegerIllegal(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            throw SqueakException.create("Illegal value for int array: " + value);
         }
 
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "value.fitsIntoLong()"})

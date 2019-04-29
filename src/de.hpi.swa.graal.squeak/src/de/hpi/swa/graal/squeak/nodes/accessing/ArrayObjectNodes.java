@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -36,12 +35,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = {"obj.isEmptyType()", "index >= 0", "index < obj.getEmptyStorage()"})
         protected static final NilObject doEmptyArray(final ArrayObject obj, final long index) {
             return NilObject.SINGLETON;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < 0 || index >= obj.getEmptyStorage()"})
-        protected static final long doEmptyArrayOutOfBounds(final ArrayObject obj, final long index) {
-            throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
         }
 
         @Specialization(guards = "obj.isBooleanType()")
@@ -362,12 +355,6 @@ public final class ArrayObjectNodes {
         protected static final void doEmptyArrayToObject(final ArrayObject obj, final long index, final Object value) {
             obj.transitionFromEmptyToObjects();
             doArrayOfObjects(obj, index, value);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index >= obj.getEmptyStorage()"})
-        protected static final void doEmptyArrayOutOfBounds(final ArrayObject obj, final long index, final Object value) {
-            throw SqueakException.create("IndexOutOfBounds:", index, "(validate index before using this node)");
         }
 
         @Specialization(guards = "obj.isBooleanType()")

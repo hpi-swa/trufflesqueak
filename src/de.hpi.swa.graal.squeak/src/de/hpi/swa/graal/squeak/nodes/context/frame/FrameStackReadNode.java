@@ -8,7 +8,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
@@ -34,11 +33,5 @@ public abstract class FrameStackReadNode extends AbstractNodeWithCode {
                     @Cached("code.getStackSlot(index)") final FrameSlot slot,
                     @Cached("create(slot)") final FrameSlotReadNode readNode) {
         return readNode.executeRead(frame);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(replaces = "doRead")
-    protected static final Object doFail(final Frame frame, final int stackIndex) {
-        throw SqueakException.create("Unexpected failure in FrameStackReadNode");
     }
 }

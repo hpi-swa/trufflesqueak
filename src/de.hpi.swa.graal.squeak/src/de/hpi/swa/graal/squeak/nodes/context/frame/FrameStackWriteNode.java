@@ -8,7 +8,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
@@ -34,11 +33,5 @@ public abstract class FrameStackWriteNode extends AbstractNodeWithCode {
                     @Cached("code") final CompiledCodeObject cacheCode,
                     @Cached("create(cacheCode.getStackSlot(index))") final FrameSlotWriteNode writeNode) {
         writeNode.executeWrite(frame, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(replaces = "doWrite")
-    protected static final void doFail(final Frame frame, final int stackIndex, final Object value) {
-        throw SqueakException.create("Unexpected failure in FrameStackWriteNode");
     }
 }
