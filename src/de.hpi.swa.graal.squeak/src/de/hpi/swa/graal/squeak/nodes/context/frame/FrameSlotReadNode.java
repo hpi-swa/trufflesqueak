@@ -5,7 +5,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 
-public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
+public abstract class FrameSlotReadNode extends AbstractFrameSlotReadNode {
 
     protected FrameSlotReadNode(final FrameSlot frameSlot) {
         super(frameSlot);
@@ -14,8 +14,6 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
     public static FrameSlotReadNode create(final FrameSlot frameSlot) {
         return FrameSlotReadNodeGen.create(frameSlot);
     }
-
-    public abstract Object executeRead(Frame frame);
 
     @Specialization(rewriteOn = FrameSlotTypeException.class)
     protected final boolean readBoolean(final Frame frame) throws FrameSlotTypeException {
@@ -39,7 +37,8 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
 
     @Specialization(replaces = {"readBoolean", "readLong", "readDouble", "readObject"})
     protected final Object readAny(final Frame frame) {
-        assert frame.getValue(frameSlot) != null;
+        final Object value = frame.getValue(frameSlot);
+        assert value != null;
         return frame.getValue(frameSlot);
     }
 }
