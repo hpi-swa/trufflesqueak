@@ -39,7 +39,7 @@ touch "${MANIFEST}"
 echo "Bundle-Name: GraalSqueak" >> "${MANIFEST}"
 echo "Bundle-Symbolic-Name: de.hpi.swa.graal.squeak" >> "${MANIFEST}"
 echo "Bundle-Version: ${GRAALVM_VERSION}" >> "${MANIFEST}"
-echo 'Bundle-RequireCapability: org.graalvm; filter:="(&(graalvm_version=${GRAALVM_VERSION})(os_arch=amd64))"' >> "${MANIFEST}"
+echo "Bundle-RequireCapability: org.graalvm; filter:=\"(&(graalvm_version=${GRAALVM_VERSION})(os_arch=amd64))\"" >> "${MANIFEST}"
 echo "x-GraalVM-Polyglot-Part: True" >> "${MANIFEST}"
 
 pushd "${COMPONENT_DIR}" > /dev/null
