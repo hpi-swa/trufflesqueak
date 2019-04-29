@@ -14,7 +14,8 @@ public abstract class UpdateSqueakObjectHashNode extends Node {
     public abstract void executeUpdate(Object fromPointer, Object toPointer, boolean copyHash);
 
     @Specialization(guards = "copyHash")
-    protected static final void doCopy(final AbstractSqueakObjectWithClassAndHash fromPointer, final AbstractSqueakObjectWithClassAndHash toPointer, @SuppressWarnings("unused") final boolean copyHash) {
+    protected static final void doCopy(final AbstractSqueakObjectWithClassAndHash fromPointer, final AbstractSqueakObjectWithClassAndHash toPointer,
+                    @SuppressWarnings("unused") final boolean copyHash) {
         toPointer.setSqueakHash(fromPointer.getSqueakHash());
     }
 
