@@ -384,16 +384,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return receiver.shiftRight((int) -arg);
         }
 
-        @Specialization(guards = {"arg >= 0", "receiver.isByteType()"})
-        protected static final Object doNativeObject(final NativeObject receiver, final long arg) {
-            return doLargeInteger(receiver.normalize(), arg);
-        }
-
-        @Specialization(guards = {"arg < 0", "receiver.isByteType()"})
-        protected static final Object doNativeObjectNegative(final NativeObject receiver, final long arg) {
-            return doLargeIntegerNegative(receiver.normalize(), arg);
-        }
-
         protected static final boolean isLShiftLongOverflow(final long receiver, final long arg) {
             // -1 needed, because we do not want to shift a positive long into negative long (most
             // significant bit indicates positive/negative)
@@ -740,18 +730,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doLong(final long value) {
-            return value;
-        }
-
-        @Specialization
         public static final Object doLargeInteger(final LargeIntegerObject value) {
             return value.reduceIfPossible();
-        }
-
-        @Specialization(guards = "receiver.isByteType()")
-        protected static final Object doNativeObject(final NativeObject receiver) {
-            return receiver.normalize();
         }
     }
 

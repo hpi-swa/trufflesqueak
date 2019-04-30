@@ -184,11 +184,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return storage.getClass() == short[].class;
     }
 
-    public LargeIntegerObject normalize() {
-        // FIXME: getSqueakClass()?
-        return new LargeIntegerObject(image, getSqueakClass(), getByteStorage());
-    }
-
     public void setStorage(final Object storage) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.storage = storage;
