@@ -142,7 +142,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public CompiledMethodObject shallowCopy() {
         return new CompiledMethodObject(this);
     }
 

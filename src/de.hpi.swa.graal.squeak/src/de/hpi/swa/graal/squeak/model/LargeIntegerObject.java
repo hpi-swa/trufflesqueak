@@ -203,7 +203,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return super.hashCode();
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public LargeIntegerObject shallowCopy() {
         return new LargeIntegerObject(this);
     }
 

@@ -35,7 +35,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
         setPointer(index, new WeakReference<>(value, weakPointersQueue));
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public WeakPointersObject shallowCopy() {
         return new WeakPointersObject(this);
     }
 }

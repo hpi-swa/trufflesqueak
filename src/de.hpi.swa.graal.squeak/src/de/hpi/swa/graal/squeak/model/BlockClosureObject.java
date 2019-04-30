@@ -221,7 +221,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public BlockClosureObject shallowCopy() {
         return new BlockClosureObject(this);
     }
 

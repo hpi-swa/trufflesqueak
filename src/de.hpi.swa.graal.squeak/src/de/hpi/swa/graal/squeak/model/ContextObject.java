@@ -419,7 +419,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return getInstructionPointerForBytecodeLoop() < 0 && getSender() == NilObject.SINGLETON;
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public ContextObject shallowCopy() {
         return new ContextObject(this);
     }
 

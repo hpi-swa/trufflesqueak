@@ -72,7 +72,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         return offset;
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public CompiledBlockObject shallowCopy() {
         return new CompiledBlockObject(this);
     }
 

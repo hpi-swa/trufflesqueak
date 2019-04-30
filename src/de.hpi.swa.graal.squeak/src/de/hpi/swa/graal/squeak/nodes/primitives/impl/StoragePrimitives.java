@@ -215,7 +215,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"classFormatStable"})
-        protected Object newDirect(final ClassObject receiver,
+        protected AbstractSqueakObjectWithClassAndHash newDirect(final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached final BranchProfile outOfMemProfile) {
@@ -228,7 +228,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newDirect")
-        protected final Object newIndirect(final ClassObject receiver,
+        protected final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
                         @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver);
@@ -252,7 +252,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(receiver, size)"}, assumptions = {"classFormatStable"})
-        protected final Object newWithArgDirect(final ClassObject receiver, final long size,
+        protected final AbstractSqueakObjectWithClassAndHash newWithArgDirect(final ClassObject receiver, final long size,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached final BranchProfile outOfMemProfile) {
@@ -265,7 +265,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
-        protected final Object newWithArg(final ClassObject receiver, final long size,
+        protected final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
                         @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver, (int) size);

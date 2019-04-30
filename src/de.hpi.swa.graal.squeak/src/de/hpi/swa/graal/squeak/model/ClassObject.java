@@ -341,7 +341,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return (int) (format >> 16 & 0x1f);
     }
 
-    public AbstractSqueakObject shallowCopy(final ArrayObject copiedInstanceVariablesOrNull) {
+    public ClassObject shallowCopy(final ArrayObject copiedInstanceVariablesOrNull) {
         return new ClassObject(this, copiedInstanceVariablesOrNull);
     }
 

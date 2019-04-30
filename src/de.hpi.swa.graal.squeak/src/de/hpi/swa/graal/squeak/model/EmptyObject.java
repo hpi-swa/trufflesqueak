@@ -30,7 +30,7 @@ public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
         becomeOtherClass(other);
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public EmptyObject shallowCopy() {
         return new EmptyObject(this);
     }
 }

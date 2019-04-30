@@ -111,7 +111,7 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
         return "" + doubleValue;
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public FloatObject shallowCopy() {
         return new FloatObject(this);
     }
 

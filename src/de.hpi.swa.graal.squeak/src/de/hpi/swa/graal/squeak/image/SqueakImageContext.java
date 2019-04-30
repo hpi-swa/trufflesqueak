@@ -543,7 +543,7 @@ public final class SqueakImageContext {
         allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
     }
 
-    public Object reportNewAllocationResult(final Object value) {
+    public <T extends Object> T reportNewAllocationResult(final T value) {
         allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
         return value;
     }

@@ -38,94 +38,89 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage 
     protected abstract Object executeAllocation(Object obj);
 
     @Specialization
-    protected static final Object doNil(@SuppressWarnings("unused") final NilObject receiver) {
+    protected static final NilObject doNil(@SuppressWarnings("unused") final NilObject receiver) {
         return NilObject.shallowCopy();
     }
 
     @Specialization
-    protected static final double doDouble(final double value) {
-        return value;
-    }
-
-    @Specialization
-    protected static final Object doClosure(final BlockClosureObject receiver) {
-        return receiver.shallowCopy();
-    }
-
-    @Specialization(guards = "!receiver.hasInstanceVariables()")
-    protected static final Object doClassNoInstanceVariables(final ClassObject receiver) {
-        return receiver.shallowCopy(null);
-    }
-
-    @Specialization(guards = "receiver.hasInstanceVariables()")
-    protected static final Object doClass(final ClassObject receiver,
-                    @Cached final ArrayObjectShallowCopyNode arrayCopyNode) {
-        return receiver.shallowCopy(arrayCopyNode.execute(receiver.getInstanceVariablesOrNull()));
-    }
-
-    @Specialization
-    protected static final Object doBlock(final CompiledBlockObject receiver) {
+    protected static final EmptyObject doEmpty(final EmptyObject receiver) {
         return receiver.shallowCopy();
     }
 
     @Specialization
-    protected static final Object doMethod(final CompiledMethodObject receiver) {
+    protected static final PointersObject doPointers(final PointersObject receiver) {
         return receiver.shallowCopy();
     }
 
     @Specialization
-    protected static final Object doContext(final ContextObject receiver) {
+    protected static final WeakPointersObject doWeakPointers(final WeakPointersObject receiver) {
         return receiver.shallowCopy();
     }
 
     @Specialization
-    protected static final Object doEmpty(final EmptyObject receiver) {
-        return receiver.shallowCopy();
-    }
-
-    @Specialization(guards = "receiver.isByteType()")
-    protected static final Object doNativeBytes(final NativeObject receiver) {
-        return NativeObject.newNativeBytes(receiver.image, receiver.getSqueakClass(), receiver.getByteStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isShortType()")
-    protected static final Object doNativeShorts(final NativeObject receiver) {
-        return NativeObject.newNativeShorts(receiver.image, receiver.getSqueakClass(), receiver.getShortStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isIntType()")
-    protected static final Object doNativeInts(final NativeObject receiver) {
-        return NativeObject.newNativeInts(receiver.image, receiver.getSqueakClass(), receiver.getIntStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isLongType()")
-    protected static final Object doNativeLongs(final NativeObject receiver) {
-        return NativeObject.newNativeLongs(receiver.image, receiver.getSqueakClass(), receiver.getLongStorage().clone());
-    }
-
-    @Specialization
-    protected static final Object doLargeInteger(final LargeIntegerObject receiver) {
-        return receiver.shallowCopy();
-    }
-
-    @Specialization
-    protected static final Object doFloat(final FloatObject receiver) {
-        return receiver.shallowCopy();
-    }
-
-    @Specialization
-    protected static final Object doArray(final ArrayObject receiver,
+    protected static final ArrayObject doArray(final ArrayObject receiver,
                     @Cached final ArrayObjectShallowCopyNode copyNode) {
         return copyNode.execute(receiver);
     }
 
     @Specialization
-    protected static final Object doPointers(final PointersObject receiver) {
+    protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject receiver) {
         return receiver.shallowCopy();
     }
 
     @Specialization
-    protected static final Object doWeakPointers(final WeakPointersObject receiver) {
+    protected static final FloatObject doFloat(final FloatObject receiver) {
         return receiver.shallowCopy();
+    }
+
+    @Specialization
+    protected static final BlockClosureObject doClosure(final BlockClosureObject receiver) {
+        return receiver.shallowCopy();
+    }
+
+    @Specialization
+    protected static final CompiledMethodObject doMethod(final CompiledMethodObject receiver) {
+        return receiver.shallowCopy();
+    }
+
+    @Specialization
+    protected static final ContextObject doContext(final ContextObject receiver) {
+        return receiver.shallowCopy();
+    }
+
+    @Specialization
+    protected static final CompiledBlockObject doBlock(final CompiledBlockObject receiver) {
+        return receiver.shallowCopy();
+    }
+
+    @Specialization(guards = "receiver.isByteType()")
+    protected static final NativeObject doNativeBytes(final NativeObject receiver) {
+        return NativeObject.newNativeBytes(receiver.image, receiver.getSqueakClass(), receiver.getByteStorage().clone());
+    }
+
+    @Specialization(guards = "receiver.isShortType()")
+    protected static final NativeObject doNativeShorts(final NativeObject receiver) {
+        return NativeObject.newNativeShorts(receiver.image, receiver.getSqueakClass(), receiver.getShortStorage().clone());
+    }
+
+    @Specialization(guards = "receiver.isIntType()")
+    protected static final NativeObject doNativeInts(final NativeObject receiver) {
+        return NativeObject.newNativeInts(receiver.image, receiver.getSqueakClass(), receiver.getIntStorage().clone());
+    }
+
+    @Specialization(guards = "receiver.isLongType()")
+    protected static final NativeObject doNativeLongs(final NativeObject receiver) {
+        return NativeObject.newNativeLongs(receiver.image, receiver.getSqueakClass(), receiver.getLongStorage().clone());
+    }
+
+    @Specialization(guards = "!receiver.hasInstanceVariables()")
+    protected static final ClassObject doClassNoInstanceVariables(final ClassObject receiver) {
+        return receiver.shallowCopy(null);
+    }
+
+    @Specialization(guards = "receiver.hasInstanceVariables()")
+    protected static final ClassObject doClass(final ClassObject receiver,
+                    @Cached final ArrayObjectShallowCopyNode arrayCopyNode) {
+        return receiver.shallowCopy(arrayCopyNode.execute(receiver.getInstanceVariablesOrNull()));
     }
 }
