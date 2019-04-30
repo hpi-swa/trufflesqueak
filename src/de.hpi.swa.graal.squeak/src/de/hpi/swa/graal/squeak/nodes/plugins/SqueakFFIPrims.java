@@ -10,16 +10,37 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.PrimCalloutToFFINode;
 
 public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
+
+    /** "primitiveCallout" implemented as {@link PrimCalloutToFFINode}. */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveCalloutWithArgs")
+    protected abstract static class PrimCalloutWithArgsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimCalloutWithArgsNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected static final Object doCalloutWithArgs(final AbstractSqueakObject receiver, final ArrayObject argArray) {
+            throw new PrimitiveFailed(); // TODO: implement primitive
+        }
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFFIIntegerAt")

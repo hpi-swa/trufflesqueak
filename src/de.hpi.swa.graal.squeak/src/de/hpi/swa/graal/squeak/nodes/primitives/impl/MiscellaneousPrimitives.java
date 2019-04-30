@@ -134,6 +134,27 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFINode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        protected PrimCalloutToFFINode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final Object doArg0(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return receiver;
+        }
+
+        @Specialization(guards = {"!isNotProvided(arg1)"})
+        protected final Object doArg1(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final Object arg1) {
+            // Use debugger to inspect:
+            method.getLiterals();
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 121)
     protected abstract static class PrimImageNameNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
