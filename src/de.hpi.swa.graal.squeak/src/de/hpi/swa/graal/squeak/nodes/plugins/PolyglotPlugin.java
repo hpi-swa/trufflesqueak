@@ -20,7 +20,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
@@ -59,8 +58,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     private static final String EVAL_SOURCE_NAME = "<eval>";
 
     /**
-     * TODO: remove all occurrences of TruffleObject once
-     * https://github.com/oracle/graal/issues/1210 is fixed.
+     * TODO: use @CachedLibrary("receiver") instead of @CachedLibrary(limit = "2") in this plugin
+     * once https://github.com/oracle/graal/issues/1210 is fixed.
      */
 
     @Override
@@ -191,11 +190,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"functions.isPointer(receiver)"}, limit = "2")
+        @Specialization(guards = {"lib.isPointer(receiver)"}, limit = "2")
         protected static final long doAsPointer(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return functions.asPointer(receiver);
+                return lib.asPointer(receiver);
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -209,13 +208,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"functions.isExecutable(receiver)"}, limit = "2")
+        @Specialization(guards = {"lib.isExecutable(receiver)"}, limit = "2")
         protected static final Object doExecute(final Object receiver, final ArrayObject argumentArray,
                         @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(functions.execute(receiver, getObjectArrayNode.execute(argumentArray)));
+                return wrapNode.executeWrap(lib.execute(receiver, getObjectArrayNode.execute(argumentArray)));
             } catch (UnsupportedTypeException | ArityException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
@@ -247,11 +246,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"functions.hasMembers(receiver)"}, limit = "2")
+        @Specialization(guards = {"lib.hasMembers(receiver)"}, limit = "2")
         protected static final Object doGetMembers(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return functions.getMembers(receiver, true);
+                return lib.getMembers(receiver, true);
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -268,8 +267,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final boolean doHasArrayElements(final Object receiver,
-                        @CachedLibrary(limit = "2") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.hasArrayElements(receiver));
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.hasArrayElements(receiver));
         }
     }
 
@@ -283,8 +282,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final boolean doHasArrayElements(final Object receiver,
-                        @CachedLibrary(limit = "2") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.hasMembers(receiver));
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.hasMembers(receiver));
         }
     }
 
@@ -296,11 +295,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "functions.hasArrayElements(receiver)", limit = "2")
+        @Specialization(guards = "lib.hasArrayElements(receiver)", limit = "2")
         protected static final long doGetArraySize(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return functions.getArraySize(receiver);
+                return lib.getArraySize(receiver);
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -403,13 +402,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asStringUnsafe())"}, limit = "2")
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(receiver, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doRead(final Object receiver, final NativeObject member, final ArrayObject argumentArray,
                         @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(functions.invokeMember(receiver, member.asStringUnsafe(), getObjectArrayNode.execute(argumentArray)));
+                return wrapNode.executeWrap(lib.invokeMember(receiver, member.asStringUnsafe(), getObjectArrayNode.execute(argumentArray)));
             } catch (UnsupportedTypeException | ArityException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
@@ -421,16 +420,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsBoolean")
-    protected abstract static class PrimIsBooleanNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIsBooleanNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimIsBooleanNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(limit = "2")
-        protected final boolean doIsBoolean(final TruffleObject receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.isBoolean(receiver));
+        @Specialization
+        protected final boolean doIsBoolean(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.isBoolean(receiver));
         }
     }
 
@@ -442,11 +441,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "functions.isBoolean(receiver)", limit = "2")
+        @Specialization(guards = "lib.isBoolean(receiver)", limit = "2")
         protected final boolean doAsBoolean(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return method.image.asBoolean(functions.asBoolean(receiver));
+                return method.image.asBoolean(lib.asBoolean(receiver));
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -455,16 +454,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsString")
-    protected abstract static class PrimIsStringNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIsStringNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimIsStringNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(limit = "2")
-        protected final boolean doIsString(final TruffleObject receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.isString(receiver));
+        @Specialization
+        protected final boolean doIsString(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.isString(receiver));
         }
     }
 
@@ -476,11 +475,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "functions.isString(receiver)", limit = "2")
+        @Specialization(guards = "lib.isString(receiver)", limit = "2")
         protected final NativeObject doAsString(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return method.image.asByteString(functions.asString(receiver));
+                return method.image.asByteString(lib.asString(receiver));
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -489,16 +488,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFitsInLong")
-    protected abstract static class PrimFitsInLongNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimFitsInLongNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimFitsInLongNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(limit = "2")
-        protected final boolean doFitsInLong(final TruffleObject receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.fitsInLong(receiver));
+        @Specialization
+        protected final boolean doFitsInLong(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.fitsInLong(receiver));
         }
     }
 
@@ -510,11 +509,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"functions.fitsInLong(receiver)"}, limit = "2")
+        @Specialization(guards = {"lib.fitsInLong(receiver)"}, limit = "2")
         protected static final long doAsLong(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return functions.asLong(receiver);
+                return lib.asLong(receiver);
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -523,16 +522,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFitsInDouble")
-    protected abstract static class PrimFitsInDoubleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimFitsInDoubleNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimFitsInDoubleNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(limit = "2")
-        protected final boolean doFitsInDouble(final TruffleObject receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.fitsInDouble(receiver));
+        @Specialization
+        protected final boolean doFitsInDouble(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.fitsInDouble(receiver));
         }
     }
 
@@ -544,11 +543,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"functions.fitsInDouble(receiver)"}, limit = "2")
-        protected static final double doAsDouble(final TruffleObject receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+        @Specialization(guards = {"lib.fitsInDouble(receiver)"}, limit = "2")
+        protected static final double doAsDouble(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return functions.asDouble(receiver);
+                return lib.asDouble(receiver);
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -557,75 +556,75 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIdentityHash")
-    protected abstract static class PrimPolyglotIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimPolyglotIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimPolyglotIdentityHashNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doIdentityHash(final TruffleObject receiver) {
+        protected static final long doIdentityHash(final Object receiver) {
             return receiver.hashCode() & AbstractSqueakObjectWithClassAndHash.IDENTITY_HASH_MASK;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsExecutable")
-    protected abstract static class PrimIsExecutableNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIsExecutableNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimIsExecutableNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(limit = "2")
-        protected final boolean doIsExecutable(final TruffleObject receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.isExecutable(receiver));
+        @Specialization
+        protected final boolean doIsExecutable(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.isExecutable(receiver));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsInstantiable")
-    protected abstract static class PrimIsInstantiableNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIsInstantiableNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimIsInstantiableNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(limit = "2")
-        protected final boolean doIsInstantiable(final TruffleObject receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.isInstantiable(receiver));
+        @Specialization
+        protected final boolean doIsInstantiable(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.isInstantiable(receiver));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsNull")
-    protected abstract static class PrimIsNullNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIsNullNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimIsNullNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(limit = "2")
-        protected final boolean doIsNull(final TruffleObject receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.isNull(receiver));
+        @Specialization
+        protected final boolean doIsNull(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.isNull(receiver));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsPointer")
-    protected abstract static class PrimIsPointerNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIsPointerNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimIsPointerNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(limit = "2")
-        protected final boolean doIsPointer(final TruffleObject receiver,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
-            return method.image.asBoolean(functions.isPointer(receiver));
+        @Specialization
+        protected final boolean doIsPointer(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return method.image.asBoolean(lib.isPointer(receiver));
         }
     }
 
@@ -636,12 +635,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"isArrayElementReadable(functions, receiver, index)"}, limit = "2")
+        @Specialization(guards = {"isArrayElementReadable(lib, receiver, index)"}, limit = "2")
         protected static final Object doReadArrayElement(final Object receiver, final long index,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(functions.readArrayElement(receiver, index - 1));
+                return wrapNode.executeWrap(lib.readArrayElement(receiver, index - 1));
             } catch (final InvalidArrayIndexException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
@@ -650,8 +649,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected static final boolean isArrayElementReadable(final InteropLibrary functions, final Object receiver, final long index) {
-            return functions.isArrayElementReadable(receiver, index - 1);
+        protected static final boolean isArrayElementReadable(final InteropLibrary lib, final Object receiver, final long index) {
+            return lib.isArrayElementReadable(receiver, index - 1);
         }
     }
 
@@ -662,23 +661,23 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asStringUnsafe())",
-                        "!functions.hasMemberReadSideEffects(receiver, member.asStringUnsafe())"}, limit = "2")
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(receiver, member.asStringUnsafe())",
+                        "!lib.hasMemberReadSideEffects(receiver, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doReadMember(final Object receiver, final NativeObject member,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return wrapNode.executeWrap(functions.readMember(receiver, member.asStringUnsafe()));
+                return wrapNode.executeWrap(lib.readMember(receiver, member.asStringUnsafe()));
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"member.isByteType()", "functions.isMemberReadable(receiver, member.asStringUnsafe())",
-                        "functions.hasMemberReadSideEffects(receiver, member.asStringUnsafe())"}, limit = "2")
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(receiver, member.asStringUnsafe())",
+                        "lib.hasMemberReadSideEffects(receiver, member.asStringUnsafe())"}, limit = "2")
         protected final NativeObject doReadMemberWithSideEffects(final Object receiver, final NativeObject member,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             return method.image.asByteString("[side-effect]");
         }
     }
@@ -704,11 +703,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"functions.isArrayElementWritable(receiver, index)"}, limit = "2")
+        @Specialization(guards = {"lib.isArrayElementWritable(receiver, index)"}, limit = "2")
         protected static final Object doWrite(final Object receiver, final long index, final Object value,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                functions.writeArrayElement(receiver, index, value);
+                lib.writeArrayElement(receiver, index, value);
                 return value;
             } catch (final UnsupportedTypeException e) {
                 PrimGetLastErrorNode.setLastError(e);
@@ -726,11 +725,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"member.isByteType()", "functions.isMemberWritable(receiver, member.asStringUnsafe())"}, limit = "2")
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberWritable(receiver, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doWrite(final Object receiver, final NativeObject member, final Object value,
-                        @CachedLibrary("receiver") final InteropLibrary functions) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                functions.writeMember(receiver, member.asStringUnsafe(), value);
+                lib.writeMember(receiver, member.asStringUnsafe(), value);
                 return value;
             } catch (final UnsupportedTypeException e) {
                 PrimGetLastErrorNode.setLastError(e);
