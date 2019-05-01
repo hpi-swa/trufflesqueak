@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -732,6 +733,16 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         public static final Object doLargeInteger(final LargeIntegerObject value) {
             return value.reduceIfPossible();
+        }
+
+        /**
+         * Left to support LargeIntegerObjects adapted from NativeObjects (see
+         * SecureHashAlgorithmTest>>testEmptyInput).
+         */
+        @TruffleBoundary
+        @Specialization(guards = {"receiver.isByteType()", "receiver.getSqueakClass().isLargeIntegerClass()"})
+        protected static final Object doNativeObject(final NativeObject receiver) {
+            return new LargeIntegerObject(receiver.image, receiver.getSqueakClass(), receiver.getByteStorage());
         }
     }
 
