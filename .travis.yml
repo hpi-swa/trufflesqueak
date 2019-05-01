@@ -85,20 +85,10 @@ jobs:
         - *download-eclipse
         - *download-ecj
       <<: *configure-python-for-pylint
-    - env: JDK="jdk8" GATE="build,test" ARCH="32bit"
-      <<: *jdk8-test-setup
     - env: JDK="jdk8" GATE="build,test" ARCH="64bit"
       <<: *jdk8-test-setup
-    - env: JDK="jdk11" GATE="style,fullbuild"
-      jdk: oraclejdk11
-      install:
-        - *install-pylint
-        - *download-eclipse
-      <<: *configure-python-for-pylint
-    - env: JDK="jdk11" GATE="build,test" ARCH="32bit"
-      <<: *jdk11-test-setup
-    - env: JDK="jdk11" GATE="build,test" ARCH="64bit"
-      <<: *jdk11-test-setup
+    - env: JDK="jdk8" GATE="build,test" ARCH="32bit"
+      <<: *jdk8-test-setup
     - env: SUBSTRATE_VM=true
       script:
         - mx squeak-svm
@@ -109,4 +99,14 @@ jobs:
           packages:
             - libsdl2-dev
       install: *use-jvmci
+    # - env: JDK="jdk11" GATE="style,fullbuild"
+    #   jdk: oraclejdk11
+    #   install:
+    #     - *install-pylint
+    #     - *download-eclipse
+    #   <<: *configure-python-for-pylint
+    - env: JDK="jdk11" GATE="build,test" ARCH="64bit"
+      <<: *jdk11-test-setup
+    - env: JDK="jdk11" GATE="build,test" ARCH="32bit"
+      <<: *jdk11-test-setup
   fast_finish: true
