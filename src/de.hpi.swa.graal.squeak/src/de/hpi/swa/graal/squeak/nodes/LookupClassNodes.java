@@ -134,7 +134,7 @@ public final class LookupClassNodes {
             return value.getSqueakClass();
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(value)"})
+        @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"})
         protected static final ClassObject doTruffleObject(@SuppressWarnings("unused") final Object value,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             assert image.supportsTruffleObject();
