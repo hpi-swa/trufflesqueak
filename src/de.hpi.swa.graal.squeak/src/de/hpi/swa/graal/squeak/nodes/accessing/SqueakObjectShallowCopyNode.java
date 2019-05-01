@@ -38,8 +38,8 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage 
     protected abstract Object executeAllocation(Object obj);
 
     @Specialization
-    protected static final NilObject doNil(@SuppressWarnings("unused") final NilObject receiver) {
-        return NilObject.shallowCopy();
+    protected static final NilObject doNil(final NilObject receiver) {
+        return receiver;
     }
 
     @Specialization

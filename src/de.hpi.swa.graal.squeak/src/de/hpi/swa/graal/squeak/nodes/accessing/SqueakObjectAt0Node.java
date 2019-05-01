@@ -44,12 +44,6 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doContext(final ContextObject obj, final long index,
-                    @Cached final ContextObjectReadNode readNode) {
-        return readNode.execute(obj, index);
-    }
-
-    @Specialization
     protected static final Object doClass(final ClassObject obj, final long index,
                     @Cached final ClassObjectReadNode readNode) {
         return readNode.execute(obj, index);
@@ -65,16 +59,6 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     protected static final Object doNative(final NativeObject obj, final long index,
                     @Cached final NativeObjectReadNode readNode) {
         return readNode.execute(obj, index);
-    }
-
-    @Specialization(guards = "index == 1")
-    protected static final Object doFloatHigh(final FloatObject obj, @SuppressWarnings("unused") final long index) {
-        return obj.getHigh();
-    }
-
-    @Specialization(guards = "index == 2")
-    protected static final Object doFloatLow(final FloatObject obj, @SuppressWarnings("unused") final long index) {
-        return obj.getLow();
     }
 
     @Specialization
@@ -96,5 +80,21 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     protected static final Object doClosure(final BlockClosureObject obj, final long index,
                     @Cached final BlockClosureObjectReadNode readNode) {
         return readNode.execute(obj, index);
+    }
+
+    @Specialization
+    protected static final Object doContext(final ContextObject obj, final long index,
+                    @Cached final ContextObjectReadNode readNode) {
+        return readNode.execute(obj, index);
+    }
+
+    @Specialization(guards = "index == 0")
+    protected static final long doFloatHigh(final FloatObject obj, @SuppressWarnings("unused") final long index) {
+        return obj.getHigh();
+    }
+
+    @Specialization(guards = "index == 1")
+    protected static final long doFloatLow(final FloatObject obj, @SuppressWarnings("unused") final long index) {
+        return obj.getLow();
     }
 }

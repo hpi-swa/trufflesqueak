@@ -11,7 +11,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
-import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
@@ -34,6 +33,12 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     public abstract void execute(Object obj, long index, Object value);
 
     @Specialization
+    protected static final void doNative(final NativeObject obj, final long index, final Object value,
+                    @Cached final NativeObjectWriteNode writeNode) {
+        writeNode.execute(obj, index, value);
+    }
+
+    @Specialization
     protected static final void doArray(final ArrayObject obj, final long index, final Object value,
                     @Cached final ArrayObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
@@ -42,12 +47,6 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     @Specialization
     protected static final void doPointers(final PointersObject obj, final long index, final Object value) {
         obj.atput0(index, value);
-    }
-
-    @Specialization
-    protected static final void doContext(final ContextObject obj, final long index, final Object value,
-                    @Cached final ContextObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
     }
 
     @Specialization
@@ -63,19 +62,20 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final void doNative(final NativeObject obj, final long index, final Object value,
-                    @Cached final NativeObjectWriteNode writeNode) {
+    protected static final void doCode(final CompiledCodeObject obj, final long index, final Object value) {
+        obj.atput0(index, value);
+    }
+
+    @Specialization
+    protected static final void doClosure(final BlockClosureObject obj, final long index, final Object value,
+                    @Cached final BlockClosureObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
     @Specialization
-    protected static final void doLargeInteger(final LargeIntegerObject obj, final long index, final long value) {
-        obj.setNativeAt0(index, value);
-    }
-
-    @Specialization
-    protected static final void doLargeInteger(final LargeIntegerObject obj, final long index, final LargeIntegerObject value) {
-        obj.setNativeAt0(index, value.longValueExact());
+    protected static final void doContext(final ContextObject obj, final long index, final Object value,
+                    @Cached final ContextObjectWriteNode writeNode) {
+        writeNode.execute(obj, index, value);
     }
 
     @Specialization(guards = {"index == 0", "value >= 0", "value <= INTEGER_MAX"})
@@ -86,26 +86,5 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     @Specialization(guards = {"index == 1", "value >= 0", "value <= INTEGER_MAX"})
     protected static final void doFloatLow(final FloatObject obj, @SuppressWarnings("unused") final long index, final long value) {
         obj.setLow(value);
-    }
-
-    @Specialization(guards = {"index == 0", "!value.inRange(0, INTEGER_MAX)"})
-    protected static final void doFloatHigh(final FloatObject obj, @SuppressWarnings("unused") final long index, final LargeIntegerObject value) {
-        obj.setHigh(value.longValueExact());
-    }
-
-    @Specialization(guards = {"index == 1", "!value.inRange(0, INTEGER_MAX)"})
-    protected static final void doFloatLow(final FloatObject obj, @SuppressWarnings("unused") final long index, final LargeIntegerObject value) {
-        obj.setLow(value.longValueExact());
-    }
-
-    @Specialization
-    protected static final void doCode(final CompiledCodeObject obj, final long index, final Object value) {
-        obj.atput0(index, value);
-    }
-
-    @Specialization
-    protected static final void doClosure(final BlockClosureObject obj, final long index, final Object value,
-                    @Cached final BlockClosureObjectWriteNode writeNode) {
-        writeNode.execute(obj, index, value);
     }
 }
