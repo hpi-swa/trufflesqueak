@@ -159,7 +159,6 @@ public final class SqueakImageContext {
 
     @CompilationFinal private ClassObject compilerClass = null;
     @CompilationFinal private ClassObject parserClass = null;
-    @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
 
     public final PrimitiveNodeFactory primitiveNodeFactory = new PrimitiveNodeFactory();
@@ -237,7 +236,6 @@ public final class SqueakImageContext {
         env = newEnv;
         output = new PrintWriter(env.out(), true);
         error = new PrintWriter(env.err(), true);
-        simulatePrimitiveArgsSelector = null;
         return true;
     }
 
@@ -327,15 +325,6 @@ public final class SqueakImageContext {
     public void setParserClass(final ClassObject parserClass) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.parserClass = parserClass;
-    }
-
-    public NativeObject getSimulatePrimitiveArgsSelector() {
-        return simulatePrimitiveArgsSelector;
-    }
-
-    public void setSimulatePrimitiveArgsSelector(final NativeObject simulatePrimitiveArgsSelector) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.simulatePrimitiveArgsSelector = simulatePrimitiveArgsSelector;
     }
 
     public void setSmallFloat(final ClassObject classObject) {

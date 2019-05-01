@@ -18,7 +18,6 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.WeakPointersObjectNodes.WeakPointersObjectWriteNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.SimulationPrimitiveNode;
 
 public abstract class FillInNode extends Node {
     private final SqueakImageContext image;
@@ -88,8 +87,6 @@ public abstract class FillInNode extends Node {
             image.setDebugErrorSelector(obj);
         } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, stringBytes)) {
             image.setDebugSyntaxErrorSelector(obj);
-        } else if (image.getSimulatePrimitiveArgsSelector() == null && Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
-            image.setSimulatePrimitiveArgsSelector(obj);
         }
     }
 
