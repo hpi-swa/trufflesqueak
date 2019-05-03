@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-readonly VERSION="1.0.0-rc15"
+readonly VERSION="1.0.0-rc16"
 
 readonly MAIN_CLASS="de.hpi.swa.graal.squeak.launcher.GraalSqueakLauncher"
 readonly SCRIPT_HOME="$(cd "$(dirname "$0")" && pwd -P)"
