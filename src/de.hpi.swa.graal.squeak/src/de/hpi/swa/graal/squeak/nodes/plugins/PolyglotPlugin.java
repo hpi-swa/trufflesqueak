@@ -396,6 +396,19 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsPolyglotAccessAllowed")
+    protected abstract static class PrimIsPolyglotAccessAllowedNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimIsPolyglotAccessAllowedNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final boolean doIsPolyglotAccessAllowed(@SuppressWarnings("unused") final Object receiver) {
+            return method.image.asBoolean(method.image.env.isPolyglotAccessAllowed());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveListAvailableLanguageIDs")
     protected abstract static class PrimListAvailableLanguageIDsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimListAvailableLanguageIDsNode(final CompiledMethodObject method) {
@@ -619,6 +632,28 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final boolean doIsInstantiable(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             return method.image.asBoolean(lib.isInstantiable(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveInstantiate")
+    protected abstract static class PrimInstantiateNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+
+        protected PrimInstantiateNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final Object doIsInstantiable(final Object receiver, final ArrayObject argumentArray,
+                        @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode,
+                        @Cached final WrapToSqueakNode wrapNode,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return wrapNode.executeWrap(lib.instantiate(receiver, getObjectArrayNode.execute(argumentArray)));
+            } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+                PrimGetLastErrorNode.setLastError(e);
+                throw new PrimitiveFailed();
+            }
         }
     }
 
