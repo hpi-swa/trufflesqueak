@@ -419,8 +419,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"member.isByteType()", "lib.isMemberReadable(receiver, member.asStringUnsafe())"}, limit = "2")
-        protected static final Object doRead(final Object receiver, final NativeObject member, final ArrayObject argumentArray,
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberInvocable(receiver, member.asStringUnsafe())"}, limit = "2")
+        protected static final Object doInvoke(final Object receiver, final NativeObject member, final ArrayObject argumentArray,
                         @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("receiver") final InteropLibrary lib) {
