@@ -12,6 +12,7 @@
 		"import:" : "GraalSqueak 11/11/2018 21:34",
 		"importStatementFor:named:" : "fn 3/25/2019 14:13",
 		"initialize" : "fn 12/3/2018 10:47",
+		"isPolyglotAccessAllowed" : "fn 5/2/2019 18:36",
 		"languageDefaultMimeTypeOf:" : "fn 11/25/2018 16:20",
 		"languageIdJS" : "fn 4/13/2019 13:50",
 		"languageIdPython" : "fn 4/13/2019 13:49",
@@ -27,11 +28,12 @@
 		"primitiveGetLanguageInfo:" : "fn 12/3/2018 11:44",
 		"primitiveGetPolyglotBindings" : "fn 12/3/2018 10:34",
 		"primitiveImport:" : "GraalSqueak 11/11/2018 21:33",
+		"primitiveIsPolyglotAccessAllowed" : "fn 5/3/2019 14:17",
 		"primitiveLastError" : "fn 4/13/2019 14:08",
 		"primitiveListAvailableLanguageIDs" : "fn 11/25/2018 16:27",
 		"signalPolyglotError" : "fn 4/13/2019 14:08",
 		"startUp:" : "fn 12/3/2018 10:47",
-		"supportsMultipleLanguages" : "fn 11/25/2018 16:18",
+		"supportsMultipleLanguages" : "fn 5/3/2019 14:20",
 		"supportsRuby" : "fn 4/13/2019 14:38" },
 	"instance" : {
 		 } }

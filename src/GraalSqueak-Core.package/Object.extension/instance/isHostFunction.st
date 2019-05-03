@@ -1,0 +1,3 @@
+*GraalSqueak-Core
+isHostFunction
+	^ false

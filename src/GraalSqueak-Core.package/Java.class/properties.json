@@ -1,0 +1,14 @@
+{
+	"category" : "GraalSqueak-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "Java",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

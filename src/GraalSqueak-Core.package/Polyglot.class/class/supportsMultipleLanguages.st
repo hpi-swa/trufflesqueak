@@ -1,3 +1,3 @@
 helpers
 supportsMultipleLanguages
-	^ self primitiveListAvailableLanguageIDs size > 1
+	^ self isPolyglotAccessAllowed

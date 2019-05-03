@@ -1,0 +1,3 @@
+interop
+isHostSymbol
+	^ self primitiveIsHostSymbol
