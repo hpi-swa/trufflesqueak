@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
@@ -104,8 +104,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                     }
                 }
             } catch (final RuntimeException e) {
+                if (e instanceof TruffleException) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -132,10 +136,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
                 return env.parse(newBuilder.name(pathString).build()).call();
-            } catch (IOException | RuntimeException e) {
-                CompilerDirectives.transferToInterpreter();
+            } catch (final IOException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
+            } catch (final RuntimeException e) {
+                if (e instanceof TruffleException) {
+                    PrimGetLastErrorNode.setLastError(e);
+                    throw new PrimitiveFailed();
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -218,6 +228,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (UnsupportedTypeException | ArityException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
+            } catch (final RuntimeException e) {
+                if (e instanceof TruffleException) {
+                    PrimGetLastErrorNode.setLastError(e);
+                    throw new PrimitiveFailed();
+                } else {
+                    throw e;
+                }
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -412,6 +429,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (UnsupportedTypeException | ArityException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
+            } catch (final RuntimeException e) {
+                if (e instanceof TruffleException) {
+                    PrimGetLastErrorNode.setLastError(e);
+                    throw new PrimitiveFailed();
+                } else {
+                    throw e;
+                }
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
