@@ -105,8 +105,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 }
             } catch (final RuntimeException e) {
                 if (e instanceof TruffleException) {
-                PrimGetLastErrorNode.setLastError(e);
-                throw new PrimitiveFailed();
+                    PrimGetLastErrorNode.setLastError(e);
+                    throw new PrimitiveFailed();
                 } else {
                     throw e;
                 }
@@ -796,6 +796,93 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
+        }
+    }
+
+    /*
+     * Java interop.
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAddToHostClassPath")
+    protected abstract static class PrimAddToHostClassPathNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimAddToHostClassPathNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"value.isByteType()"})
+        protected final boolean doAddToHostClassPath(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
+            final String path = value.asStringUnsafe();
+            try {
+                method.image.env.addToHostClassPath(method.image.env.getTruffleFile(path));
+            } catch (final SecurityException e) {
+                PrimGetLastErrorNode.setLastError(e);
+                throw new PrimitiveFailed();
+            }
+            return method.image.sqTrue;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveLookupHostSymbol")
+    protected abstract static class PrimLookupHostSymbolNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimLookupHostSymbolNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"method.image.env.isHostLookupAllowed()", "value.isByteType()"})
+        protected final Object doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
+            final String symbolName = value.asStringUnsafe();
+            Object hostValue;
+            try {
+                hostValue = method.image.env.lookupHostSymbol(symbolName);
+            } catch (final RuntimeException e) {
+                hostValue = null;
+            }
+            if (hostValue == null) {
+                throw new PrimitiveFailed();
+            } else {
+                return hostValue;
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHostFunction")
+    protected abstract static class PrimIsHostFunctionNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimIsHostFunctionNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final boolean doIsHostFunction(@SuppressWarnings("unused") final Object receiver) {
+            return method.image.asBoolean(method.image.env.isHostFunction(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHostObject")
+    protected abstract static class PrimIsHostObjectNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimIsHostObjectNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final boolean doIsHostObject(@SuppressWarnings("unused") final Object receiver) {
+            return method.image.asBoolean(method.image.env.isHostObject(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHostSymbol")
+    protected abstract static class PrimIsHostSymbolNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimIsHostSymbolNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver) {
+            return method.image.asBoolean(method.image.env.isHostSymbol(receiver));
         }
     }
 
