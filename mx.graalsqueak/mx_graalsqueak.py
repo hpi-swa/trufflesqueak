@@ -303,7 +303,7 @@ def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
     unittest_args = BASE_VM_ARGS
 
-    supports_coverage = os.environ.get('JDK') == 'jdk8'  # see `.travis.yml`
+    supports_coverage = os.environ.get('JDK') == 'openjdk8'  # see `.travis.yml`
     jacoco_args = mx_gate.get_jacoco_agent_args()
     if supports_coverage and jacoco_args:
         unittest_args.extend(jacoco_args)
