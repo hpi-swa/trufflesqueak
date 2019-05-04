@@ -606,8 +606,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.forIndex(method, (int) primitiveIndex);
             if (primitiveNode == null) {
                 throw new PrimitiveFailed();
+            } else {
+                return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
             }
-            return replace(primitiveNode).executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
         }
     }
 
