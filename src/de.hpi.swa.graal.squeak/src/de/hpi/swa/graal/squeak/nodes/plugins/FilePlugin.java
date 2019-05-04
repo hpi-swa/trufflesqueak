@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileSystems;
@@ -574,16 +574,14 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"fileDescriptor == OUT", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
-        @TruffleBoundary(transferToInterpreterOnException = false)
         protected long doWriteByteToStdout(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
-            return fileWriteToPrintWriter(method.image.getOutput(), content, startIndex, count);
+            return fileWriteToOutputStream(method.image.env.out(), content.getByteStorage(), startIndex, count);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"fileDescriptor == ERROR", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
-        @TruffleBoundary(transferToInterpreterOnException = false)
         protected long doWriteByteToStderr(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
-            return fileWriteToPrintWriter(method.image.getError(), content, startIndex, count);
+            return fileWriteToOutputStream(method.image.env.err(), content.getByteStorage(), startIndex, count);
         }
 
         @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)", "content.isIntType()", "inBounds(startIndex, count, content.getIntLength())"})
@@ -632,12 +630,16 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return written / elementSize;
         }
 
-        private static long fileWriteToPrintWriter(final PrintWriter printWriter, final NativeObject content, final long startIndex, final long count) {
-            final String string = asString(content);
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        private static long fileWriteToOutputStream(final OutputStream outputStream, final byte[] content, final long startIndex, final long count) {
             final int byteStart = (int) (startIndex - 1);
-            final int byteEnd = Math.min(byteStart + (int) count, string.length());
-            printWriter.write(string, byteStart, Math.max(byteEnd - byteStart, 0));
-            printWriter.flush();
+            final int byteEnd = Math.min(byteStart + (int) count, content.length);
+            try {
+                outputStream.write(content, byteStart, Math.max(byteEnd - byteStart, 0));
+                outputStream.flush();
+            } catch (final IOException e) {
+                throw new PrimitiveFailed();
+            }
             return byteEnd - byteStart;
         }
     }
