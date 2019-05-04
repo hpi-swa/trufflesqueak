@@ -13,8 +13,9 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ADDITIONAL_METHOD_STATE;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_BINDING;
@@ -53,8 +54,8 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         if (index < getBytecodeOffset()) {
-            assert index % SqueakImageFlags.WORD_SIZE == 0;
-            return literals[index / SqueakImageFlags.WORD_SIZE];
+            assert index % SqueakImageConstants.WORD_SIZE == 0;
+            return literals[index / SqueakImageConstants.WORD_SIZE];
         } else {
             final int realIndex = index - getBytecodeOffset();
             assert realIndex >= 0;
@@ -190,6 +191,11 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     }
 
     @Override
+    public int getNumSlots() {
+        return 1 /* header */ + getNumLiterals() + (int) Math.ceil((double) bytes.length / 8);
+    }
+
+    @Override
     public int size() {
         return getBytecodeOffset() + bytes.length;
     }
@@ -197,6 +203,30 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     public void traceObjects(final ObjectTracer tracer) {
         for (final Object literal : getLiterals()) {
             tracer.addIfUnmarked(literal);
+        }
+    }
+
+    @Override
+    public void trace(final SqueakImageWriter writerNode) {
+        super.trace(writerNode);
+        for (final Object literal : getLiterals()) {
+            writerNode.traceIfNecessary(literal);
+        }
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
+        assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
+        if (writeHeader(writerNode, formatOffset)) {
+            for (final Object literal : getLiterals()) {
+                writerNode.writeObject(literal);
+            }
+            writerNode.writeBytes(getBytes());
+            final int offset = getBytes().length % SqueakImageConstants.WORD_SIZE;
+            if (offset > 0) {
+                writerNode.writePadding(SqueakImageConstants.WORD_SIZE - offset);
+            }
         }
     }
 

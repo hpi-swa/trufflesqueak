@@ -30,7 +30,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
-import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
+import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
@@ -122,15 +122,21 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 121)
-    protected abstract static class PrimImageNameNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimImageNameNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimImageNameNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final NativeObject doName(@SuppressWarnings("unused") final Object receiver) {
+        protected final NativeObject doGetName(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final NotProvided value) {
             return method.image.asByteString(method.image.getImagePath());
+        }
+
+        @Specialization(guards = "newName.isByteType()")
+        protected final NativeObject doSetName(@SuppressWarnings("unused") final Object receiver, final NativeObject newName) {
+            method.image.setImagePath(newName.asStringUnsafe());
+            return doGetName(receiver, null);
         }
     }
 
@@ -882,7 +888,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 38: return 0L; // milliseconds taken by current IGC (read-only)
                 case 39: return MiscUtils.getObjectPendingFinalizationCount(); // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
                 case 40: return 8L; // BytesPerOop for this image
-                case 41: return (long) SqueakImageFlags.IMAGE_FORMAT; // imageFormatVersion for the VM
+                case 41: return (long) SqueakImageConstants.IMAGE_FORMAT; // imageFormatVersion for the VM
                 case 42: return 50L; // number of stack pages in use (see SmalltalkImage>>isRunningCog)
                 case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
                 case 44: return 0L; // size of eden, in bytes

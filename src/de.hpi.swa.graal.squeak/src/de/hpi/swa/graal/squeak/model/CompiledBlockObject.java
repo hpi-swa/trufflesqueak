@@ -7,7 +7,8 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
+import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 
 public final class CompiledBlockObject extends CompiledCodeObject {
     private final int offset;
@@ -46,8 +47,8 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         if (index < getBytecodeOffset() - getOffset()) {
-            assert index % SqueakImageFlags.WORD_SIZE == 0;
-            return literals[index / SqueakImageFlags.WORD_SIZE];
+            assert index % SqueakImageConstants.WORD_SIZE == 0;
+            return literals[index / SqueakImageConstants.WORD_SIZE];
         } else {
             return getMethod().at0(longIndex);
         }
@@ -78,5 +79,14 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     @Override
     public int size() {
         return getMethod().size();
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        /*
+         * This should not be reached, unless GraalSqueak supports FullBlockClosures. Print an error
+         * instead of crashing for now.
+         */
+        image.printToStdErr("Unexpected CompiledBlockObject: " + this);
     }
 }

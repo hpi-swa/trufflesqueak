@@ -9,11 +9,9 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class SqueakImageFlags {
-    public static final int IMAGE_FORMAT = 68021;
-    public static final int WORD_SIZE = ArrayConversionUtils.LONG_BYTE_SIZE;
+    @CompilationFinal private long oldBaseAddress = -1;
     @CompilationFinal private int fullScreenFlag = 0;
     @CompilationFinal private int imageFloatsBigEndian;
     @CompilationFinal private boolean flagInterpretedMethods;
@@ -22,8 +20,9 @@ public final class SqueakImageFlags {
     @CompilationFinal private DisplayPoint lastWindowSize;
     @CompilationFinal private int maxExternalSemaphoreTableSize;
 
-    public void initialize(final int headerFlags, final int lastWindowSizeWord, final int lastMaxExternalSemaphoreTableSize) {
+    public void initialize(final long oldBaseAddressValue, final int headerFlags, final int lastWindowSizeWord, final int lastMaxExternalSemaphoreTableSize) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
+        oldBaseAddress = oldBaseAddressValue;
         fullScreenFlag = headerFlags & 1;
         imageFloatsBigEndian = (headerFlags & 2) == 0 ? 1 : 0;
         flagInterpretedMethods = (headerFlags & 8) != 0;
@@ -31,6 +30,11 @@ public final class SqueakImageFlags {
         newFinalization = (headerFlags & 64) != 0;
         lastWindowSize = new DisplayPoint(lastWindowSizeWord >> 16 & 0xffff, lastWindowSizeWord & 0xffff);
         maxExternalSemaphoreTableSize = lastMaxExternalSemaphoreTableSize;
+    }
+
+    public long getOldBaseAddress() {
+        assert oldBaseAddress > 0;
+        return oldBaseAddress;
     }
 
     public int getFullScreenFlag() {

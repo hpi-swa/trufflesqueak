@@ -3,12 +3,11 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.image.reading;
+package de.hpi.swa.graal.squeak.image;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
@@ -23,12 +22,9 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageChunk {
-    private static final long SMALLFLOAT_MASK = 896L << 52 + 1;
-
     private Object object;
     private ClassObject sqClass;
     private Object[] pointers;
@@ -78,19 +74,16 @@ public final class SqueakImageChunk {
         if (object == null) {
             if (bytes == null) {
                 assert SqueakImageReader.isHiddenObject(classIndex);
-                return null; /* Ignored object (see SqueakImageReader#ignoreObjectData) */
+                /* Ignored object (see SqueakImageReader#ignoreObjectData) */
+                return NilObject.SINGLETON;
             }
             final ClassObject squeakClass = getSqClass();
             if (format == 0) { // no fields
                 object = new EmptyObject(image, hash, squeakClass);
             } else if (format == 1) { // fixed pointers
                 // classes should already be instantiated at this point, check a bit
-                assert squeakClass != image.metaClass && squeakClass.getSqueakClass() != image.metaClass;
-                if (squeakClass.instancesAreClasses()) {
-                    object = new ClassObject(image, hash, squeakClass);
-                } else {
-                    object = new PointersObject(image, hash, squeakClass);
-                }
+                assert squeakClass != image.metaClass && squeakClass.getSqueakClass() != image.metaClass && !squeakClass.instancesAreClasses();
+                object = new PointersObject(image, hash, squeakClass);
             } else if (format == 2) { // indexable fields
                 object = new ArrayObject(image, hash, squeakClass);
             } else if (format == 3) { // fixed and indexable fields
@@ -167,20 +160,12 @@ public final class SqueakImageChunk {
     }
 
     public SqueakImageChunk getClassChunk() {
-        final int majorIdx = majorClassIndexOf(classIndex);
-        final int minorIdx = minorClassIndexOf(classIndex);
+        final int majorIdx = SqueakImageConstants.majorClassIndexOf(classIndex);
+        final int minorIdx = SqueakImageConstants.minorClassIndexOf(classIndex);
         final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.getWord(majorIdx));
         final SqueakImageChunk classChunk = reader.getChunk(classTablePage.getWord(minorIdx));
         assert classChunk != null : "Unable to find class chunk.";
         return classChunk;
-    }
-
-    private static int majorClassIndexOf(final int classid) {
-        return classid >> 10;
-    }
-
-    private static int minorClassIndexOf(final int classid) {
-        return classid & (1 << 10) - 1;
     }
 
     public void setSqClass(final ClassObject baseSqueakObject) {
@@ -210,23 +195,24 @@ public final class SqueakImageChunk {
 
     private Object decodePointer(final long ptr) {
         switch ((int) (ptr & 7)) {
-            case 0:
+            case SqueakImageConstants.OBJECT_TAG:
                 final SqueakImageChunk chunk = reader.getChunk(ptr);
                 if (chunk == null) {
                     logBogusPointer(ptr);
-                    return ptr >>> 3;
+                    return ptr >>> SqueakImageConstants.NUM_TAG_BITS;
                 } else {
                     assert bytes != null : "Must not be an ignored object";
                     return chunk.asObject();
                 }
-            case 1: // SmallInteger
-                return ptr >> 3;
-            case 2: // Character
-                return CharacterObject.valueOf((int) (ptr >> 3));
-            case 4: // SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:)
-                long valueWithoutTag = ptr >>> 3;
+            case SqueakImageConstants.SMALL_INTEGER_TAG: // SmallInteger
+                return ptr >> SqueakImageConstants.NUM_TAG_BITS;
+            case SqueakImageConstants.CHARACTER_TAG: // Character
+                return CharacterObject.valueOf((int) (ptr >> SqueakImageConstants.NUM_TAG_BITS));
+            case SqueakImageConstants.SMALL_FLOAT_TAG:
+                /* SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:). */
+                long valueWithoutTag = ptr >>> SqueakImageConstants.NUM_TAG_BITS;
                 if (valueWithoutTag > 1) {
-                    valueWithoutTag += SMALLFLOAT_MASK;
+                    valueWithoutTag += SqueakImageConstants.SMALL_FLOAT_TAG_BITS_MASK;
                 }
                 return Double.longBitsToDouble(Long.rotateRight(valueWithoutTag, 1));
             default:
@@ -252,6 +238,6 @@ public final class SqueakImageChunk {
     }
 
     public int getWordSize() {
-        return bytes.length / ArrayConversionUtils.LONG_BYTE_SIZE;
+        return bytes.length / SqueakImageConstants.WORD_SIZE;
     }
 }

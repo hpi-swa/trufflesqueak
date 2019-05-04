@@ -12,6 +12,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -43,12 +44,12 @@ public abstract class SqueakObjectHashNode extends AbstractNode {
 
     @Specialization(guards = "obj == FALSE")
     protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean obj) {
-        return 2L;
+        return BooleanObject.getFalseSqueakHash();
     }
 
     @Specialization(guards = "obj != FALSE")
     protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean obj) {
-        return 3L;
+        return BooleanObject.getTrueSqueakHash();
     }
 
     @Specialization

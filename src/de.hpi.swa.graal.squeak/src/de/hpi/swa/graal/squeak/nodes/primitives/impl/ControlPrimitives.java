@@ -570,7 +570,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
          * object has been GC'ed (Source: https://git.io/fjED4).
          */
         @TruffleBoundary
-        public static void forceFullGC() {
+        private static void forceFullGC() {
             Object obj = new Object();
             final WeakReference<?> ref = new WeakReference<>(obj);
             obj = null;

@@ -19,9 +19,11 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
+import de.hpi.swa.graal.squeak.image.SqueakImageReader;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
@@ -474,6 +476,16 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         atTempPut(currentStackPointer, value);
     }
 
+    public Object pop() {
+        final int newStackPointer = getStackPointer() - 1;
+        assert 0 <= newStackPointer;
+        final Object value = atTemp(newStackPointer);
+        assert value != null : "Unexpected `null` value";
+        atTempPut(newStackPointer, NilObject.SINGLETON);
+        setStackPointer(newStackPointer);
+        return value;
+    }
+
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
@@ -487,6 +499,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         } else {
             return "CTX without method @" + Integer.toHexString(hashCode());
         }
+    }
+
+    @Override
+    public int getNumSlots() {
+        return CONTEXT.INST_SIZE + getMethod().getSqueakContextSize();
     }
 
     @Override
@@ -609,6 +626,37 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             for (int i = 0; i < getBlockOrMethod().getNumStackSlots(); i++) {
                 tracer.addIfUnmarked(atTemp(i));
             }
+        }
+    }
+
+    @Override
+    public void trace(final SqueakImageWriter writerNode) {
+        super.trace(writerNode);
+        if (hasTruffleFrame()) {
+            writerNode.traceIfNecessary(getSender()); /* May materialize sender. */
+            writerNode.traceIfNecessary(getMethod());
+            writerNode.traceIfNecessary(getClosure());
+            writerNode.traceIfNecessary(getReceiver());
+            for (int i = 0; i < getBlockOrMethod().getNumStackSlots(); i++) {
+                writerNode.traceIfNecessary(atTemp(i));
+            }
+        }
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        if (!writeHeader(writerNode)) {
+            throw SqueakException.create("ContextObject must have slots:", this);
+        }
+        writerNode.writeObject(getSender());
+        final long pc = getInstructionPointer();
+        writerNode.writeObject(pc < 0 ? NilObject.SINGLETON : pc);
+        writerNode.writeSmallInteger(getStackPointer());
+        writerNode.writeObject(getMethod());
+        writerNode.writeObject(NilObject.nullToNil(getClosure()));
+        writerNode.writeObject(getReceiver());
+        for (int i = 0; i < getBlockOrMethod().getNumStackSlots(); i++) {
+            writerNode.writeObject(atTemp(i));
         }
     }
 

@@ -10,9 +10,9 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
@@ -21,7 +21,6 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
     public static final int EMIN = Double.MIN_EXPONENT;
     public static final int EMAX = Double.MAX_EXPONENT;
     public static final int WORD_LENGTH = 2;
-
     private double doubleValue;
 
     public FloatObject(final SqueakImageContext image) {
@@ -53,7 +52,7 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
     }
 
     public static Object newFrom(final SqueakImageChunk chunk) {
-        assert chunk.getBytes().length == 2 * ArrayConversionUtils.INTEGER_BYTE_SIZE;
+        assert chunk.getBytes().length == 2 * Integer.BYTES;
         final long lowValue = Integer.toUnsignedLong(UnsafeUtils.getInt(chunk.getBytes(), 0));
         final long highValue = Integer.toUnsignedLong(UnsafeUtils.getInt(chunk.getBytes(), 1));
         final double value = Double.longBitsToDouble(highValue << 32 | lowValue);
@@ -116,6 +115,11 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
     }
 
     @Override
+    public int getNumSlots() {
+        return 1; /* FIXME: inconsistent with size (not counting in header for some reason) */
+    }
+
+    @Override
     public int instsize() {
         return 0;
     }
@@ -127,6 +131,12 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
 
     public double getValue() {
         return doubleValue;
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        writerNode.writeObjectHeader(getNumSlots(), getSqueakHash(), getSqueakClass(), 0);
+        writerNode.writeLong(Double.doubleToRawLongBits(doubleValue));
     }
 
     @Override

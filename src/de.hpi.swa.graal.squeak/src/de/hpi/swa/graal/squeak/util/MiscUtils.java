@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
@@ -32,11 +33,13 @@ public final class MiscUtils {
     public static final long TIME_ZONE_OFFSET_MICROSECONDS = (Calendar.getInstance().get(Calendar.ZONE_OFFSET) + Calendar.getInstance().get(Calendar.DST_OFFSET)) * 1000L;
     public static final long TIME_ZONE_OFFSET_SECONDS = TIME_ZONE_OFFSET_MICROSECONDS / 1000 / 1000;
 
+    public static final Random RANDOM = new Random();
+
     private MiscUtils() {
     }
 
-    public static int bitSplit(final long value, final int offset, final int length) {
-        return (int) (value >> offset & (1 << length) - 1);
+    public static int bitSplit(final long value, final int offset, final int size) {
+        return (int) (value >> offset & size - 1);
     }
 
     /** Ceil version of {@link Math#floorDiv(int, int)}. */
@@ -47,6 +50,11 @@ public final class MiscUtils {
             r++;
         }
         return r;
+    }
+
+    @TruffleBoundary
+    public static long currentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
     @TruffleBoundary

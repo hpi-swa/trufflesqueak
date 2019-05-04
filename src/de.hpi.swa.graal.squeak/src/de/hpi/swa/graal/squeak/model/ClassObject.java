@@ -13,6 +13,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -24,9 +25,10 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
+import de.hpi.swa.graal.squeak.image.SqueakImageReader;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
@@ -74,15 +76,18 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         pointers = original.pointers.clone();
     }
 
-    private ClassObject(final SqueakImageContext image, final ClassObject sqClass, final Object[] pointers) {
-        super(image, sqClass);
-        this.pointers = pointers;
-        instancesAreClasses = sqClass.isMetaClass();
+    public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
+        super(image, image.getNextClassHash(), classObject);
+        pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON);
+        instancesAreClasses = classObject.isMetaClass();
+        // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
     }
 
-    public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        this(image, classObject, ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON));
-        // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
+    public long rehashForClassTable() {
+        final long newHash = image.getNextClassHash();
+        assert newHash < IDENTITY_HASH_MASK;
+        setSqueakHash(newHash);
+        return newHash;
     }
 
     public ObjectLayout getLayout() {
@@ -242,6 +247,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         if (methodDict == null) {
+            if (needsSqueakHash()) {
+                Truffle.getRuntime();
+                final int hash = chunk.getHash();
+                /* Generate class hashes if unknown. */
+                setSqueakHash(hash != 0 ? hash : image.getNextClassHash());
+            }
             final Object[] chunkPointers = chunk.getPointers();
             superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
             methodDict = (VariablePointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
@@ -257,6 +268,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                     image.setParserClass(this);
                 }
             }
+        } else if (needsSqueakHash()) {
+            setSqueakHash(image.getNextClassHash());
         }
     }
 
@@ -507,6 +520,33 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         tracer.addIfUnmarked(getOrganization());
         for (final Object value : getOtherPointers()) {
             tracer.addIfUnmarked(value);
+        }
+    }
+
+    @Override
+    public void trace(final SqueakImageWriter writerNode) {
+        super.trace(writerNode);
+        writerNode.traceIfNecessary(getSuperclass());
+        writerNode.traceIfNecessary(getMethodDict());
+        writerNode.traceIfNecessary(getInstanceVariables());
+        writerNode.traceIfNecessary(getOrganization());
+        for (final Object value : getOtherPointers()) {
+            writerNode.traceIfNecessary(value);
+        }
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        if (!writeHeader(writerNode)) {
+            throw SqueakException.create("BlockClosureObject must have slots:", this);
+        }
+        writerNode.writeObject(getSuperclass());
+        writerNode.writeObject(getMethodDict());
+        writerNode.writeSmallInteger(format);
+        writerNode.writeObject(getInstanceVariables());
+        writerNode.writeObject(getOrganization());
+        for (final Object value : getOtherPointers()) {
+            writerNode.writeObject(value);
         }
     }
 

@@ -28,6 +28,8 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 @ExportLibrary(InteropLibrary.class)
 public abstract class AbstractSqueakObject implements TruffleObject {
 
+    public abstract int getNumSlots();
+
     public abstract int instsize();
 
     public abstract int size();

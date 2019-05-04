@@ -25,9 +25,9 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
@@ -108,6 +108,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     public final Source getSource() {
         if (source == null) {
+            // FIXME: this is called on insert (fetchNextByteCode), maybe add a flag for disabling
+            // it?
             String contents;
             String toString;
             try {
@@ -243,7 +245,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         literals = ptrs;
         decodeHeader();
         assert bytes == null;
-        bytes = Arrays.copyOfRange(chunk.getBytes(), ptrs.length * SqueakImageFlags.WORD_SIZE, chunk.getBytes().length);
+        bytes = Arrays.copyOfRange(chunk.getBytes(), ptrs.length * SqueakImageConstants.WORD_SIZE, chunk.getBytes().length);
         assert innerBlocks == null : "Should not have any inner blocks yet";
     }
 
@@ -295,7 +297,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     }
 
     public final int getBytecodeOffset() {
-        return (1 + numLiterals) * SqueakImageFlags.WORD_SIZE; // header plus numLiterals
+        return (1 + numLiterals) * SqueakImageConstants.WORD_SIZE; // header plus numLiterals
     }
 
     public final void atput0(final long longIndex, final Object obj) {
@@ -303,8 +305,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         assert index >= 0;
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (index < getBytecodeOffset()) {
-            assert index % SqueakImageFlags.WORD_SIZE == 0;
-            setLiteral(index / SqueakImageFlags.WORD_SIZE, obj);
+            assert index % SqueakImageConstants.WORD_SIZE == 0;
+            setLiteral(index / SqueakImageConstants.WORD_SIZE, obj);
         } else {
             final int realIndex = index - getBytecodeOffset();
             assert realIndex < bytes.length;
@@ -450,8 +452,12 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
      * </pre>
      */
     private static final class CompiledCodeHeaderDecoder {
+        private static final int NUM_LITERALS_SIZE = 1 << 15;
+        private static final int NUM_TEMPS_TEMPS_SIZE = 1 << 6;
+        private static final int NUM_ARGUMENTS_SIZE = 1 << 4;
+
         private static int getNumLiterals(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 0, 15);
+            return MiscUtils.bitSplit(headerWord, 0, NUM_LITERALS_SIZE);
         }
 
         private static boolean getHasPrimitive(final long headerWord) {
@@ -463,11 +469,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         }
 
         private static int getNumTemps(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 18, 6);
+            return MiscUtils.bitSplit(headerWord, 18, NUM_TEMPS_TEMPS_SIZE);
         }
 
         private static int getNumArguments(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 24, 4);
+            return MiscUtils.bitSplit(headerWord, 24, NUM_ARGUMENTS_SIZE);
         }
     }
 }

@@ -10,8 +10,9 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
@@ -105,6 +106,23 @@ public final class VariablePointersObject extends AbstractPointersObject {
         super.traceLayoutObjects(tracer);
         for (final Object object : variablePart) {
             tracer.addIfUnmarked(object);
+        }
+    }
+
+    @Override
+    public void trace(final SqueakImageWriter writerNode) {
+        super.trace(writerNode);
+        for (final Object object : variablePart) {
+            writerNode.traceIfNecessary(object);
+        }
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        if (super.writeHeaderAndLayoutObjects(writerNode)) {
+            for (final Object object : variablePart) {
+                writerNode.writeObject(object);
+            }
         }
     }
 }

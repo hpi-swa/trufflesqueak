@@ -11,8 +11,9 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.WeakVariablePointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
@@ -122,5 +123,19 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
 
     public void traceObjects(final ObjectTracer tracer) {
         super.traceLayoutObjects(tracer);
+        /* Weak pointers excluded from tracing. */
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        if (super.writeHeaderAndLayoutObjects(writerNode)) {
+            for (int i = 0; i < variablePart.length; i++) {
+                /*
+                 * Since weak pointers are excluded from tracing, ignore (replace with nil) all
+                 * objects that have not been traced somewhere else.
+                 */
+                writerNode.writeObjectIfTracedElseNil(getFromVariablePart(i));
+            }
+        }
     }
 }

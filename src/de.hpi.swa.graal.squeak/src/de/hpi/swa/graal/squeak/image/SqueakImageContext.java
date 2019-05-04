@@ -29,7 +29,6 @@ import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.interop.InteropMap;
 import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
@@ -114,12 +113,14 @@ public final class SqueakImageContext {
 
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
-    @CompilationFinal private String imagePath;
+    private String imagePath;
     @CompilationFinal private boolean isHeadless;
     public final SqueakContextOptions options;
 
     /* System */
     private boolean currentMarkingFlag;
+    private ArrayObject hiddenRoots;
+    private long globalClassCounter = -1;
     @CompilationFinal private SqueakDisplayInterface display;
     public final InterruptHandlerState interrupt;
     public final PrimitiveNodeFactory primitiveNodeFactory = new PrimitiveNodeFactory();
@@ -174,7 +175,7 @@ public final class SqueakImageContext {
         if (!loaded()) {
             // Load image.
             SqueakImageReader.load(this);
-            getOutput().println("Preparing image for headless execution...");
+            printToStdOut("Preparing image for headless execution...");
             // Remove active context.
             getActiveProcessSlow().instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
             // Modify StartUpList for headless execution.
@@ -289,6 +290,23 @@ public final class SqueakImageContext {
         return currentMarkingFlag = !currentMarkingFlag;
     }
 
+    public ArrayObject getHiddenRoots() {
+        return hiddenRoots;
+    }
+
+    public long getGlobalClassCounter() {
+        return globalClassCounter;
+    }
+
+    public void setGlobalClassCounter(final long newValue) {
+        assert globalClassCounter < 0 : "globalClassCounter should only be set once";
+        globalClassCounter = newValue;
+    }
+
+    public long getNextClassHash() {
+        return ++globalClassCounter;
+    }
+
     public NativeObject getDebugErrorSelector() {
         return debugErrorSelector;
     }
@@ -369,8 +387,10 @@ public final class SqueakImageContext {
         SlotLocation.initialize();
     }
 
-    public void initializeAfterLoadingImage() {
+    public void initializeAfterLoadingImage(final ArrayObject theHiddenRoots) {
         primitiveNodeFactory.initialize(this);
+        assert hiddenRoots == null;
+        hiddenRoots = theHiddenRoots;
     }
 
     public ClassObject initializeForeignObject() {
@@ -451,7 +471,6 @@ public final class SqueakImageContext {
     }
 
     public void setImagePath(final String path) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         imagePath = path;
     }
 

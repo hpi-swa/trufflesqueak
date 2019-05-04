@@ -78,8 +78,8 @@ public final class UnsafeUtils {
     }
 
     public static int getInt(final byte[] bytes, final long index) {
-        assert 0 <= index && index * ArrayConversionUtils.INTEGER_BYTE_SIZE < bytes.length;
-        return UNSAFE.getInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.INTEGER_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        assert 0 <= index && index * Integer.BYTES < bytes.length;
+        return UNSAFE.getInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Integer.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static int getInt(final int[] storage, final long index) {
@@ -101,8 +101,8 @@ public final class UnsafeUtils {
     }
 
     public static long getLong(final byte[] bytes, final long index) {
-        assert 0 <= index && index * ArrayConversionUtils.LONG_BYTE_SIZE < bytes.length;
-        return UNSAFE.getLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.LONG_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        assert 0 <= index && index * Long.BYTES < bytes.length;
+        return UNSAFE.getLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Long.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static long getLong(final long[] storage, final long index) {
@@ -128,12 +128,12 @@ public final class UnsafeUtils {
     }
 
     public static short getShort(final byte[] bytes, final long index) {
-        assert 0 <= index && index * ArrayConversionUtils.SHORT_BYTE_SIZE < bytes.length;
-        return UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.SHORT_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        assert 0 <= index && index * Short.BYTES < bytes.length;
+        return UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Short.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static short getShort(final int[] ints, final long index) {
-        assert 0 <= index && index / ArrayConversionUtils.SHORT_BYTE_SIZE < ints.length;
+        assert 0 <= index && index / Short.BYTES < ints.length;
         return UNSAFE.getShort(ints, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE);
     }
 
@@ -214,8 +214,8 @@ public final class UnsafeUtils {
     }
 
     public static void putInt(final byte[] bytes, final long index, final int value) {
-        assert 0 <= index && index * ArrayConversionUtils.SHORT_BYTE_SIZE < bytes.length;
-        UNSAFE.putInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.INTEGER_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
+        assert 0 <= index && index * Short.BYTES < bytes.length;
+        UNSAFE.putInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Integer.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putInt(final int[] storage, final long index, final int value) {
@@ -237,8 +237,8 @@ public final class UnsafeUtils {
     }
 
     public static void putLong(final byte[] bytes, final long index, final long value) {
-        assert 0 <= index && index * ArrayConversionUtils.INTEGER_BYTE_SIZE < bytes.length;
-        UNSAFE.putLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.LONG_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
+        assert 0 <= index && index * Integer.BYTES < bytes.length;
+        UNSAFE.putLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Long.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putLong(final long[] storage, final long index, final long value) {
@@ -269,12 +269,12 @@ public final class UnsafeUtils {
     }
 
     public static void putShort(final byte[] bytes, final long index, final short value) {
-        assert 0 <= index && index * ArrayConversionUtils.SHORT_BYTE_SIZE < bytes.length;
-        UNSAFE.putShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.SHORT_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
+        assert 0 <= index && index * Short.BYTES < bytes.length;
+        UNSAFE.putShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Short.BYTES * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putShort(final int[] ints, final long index, final short value) {
-        assert 0 <= index && index / ArrayConversionUtils.SHORT_BYTE_SIZE < ints.length;
+        assert 0 <= index && index / Short.BYTES < ints.length;
         UNSAFE.putShort(ints, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE, value);
     }
 

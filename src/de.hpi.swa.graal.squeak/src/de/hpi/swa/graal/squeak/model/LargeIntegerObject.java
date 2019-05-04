@@ -17,8 +17,10 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
@@ -164,6 +166,11 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Override
+    public int getNumSlots() {
+        return (int) Math.ceil((double) exposedSize / 8);
+    }
+
+    @Override
     public int instsize() {
         return 0;
     }
@@ -203,6 +210,20 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public int hashCode() {
         return super.hashCode();
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
+        assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
+        if (writeHeader(writerNode, formatOffset)) {
+            final byte[] bytes = getBytes();
+            writerNode.writeBytes(bytes);
+            final int offset = bytes.length % SqueakImageConstants.WORD_SIZE;
+            if (offset > 0) {
+                writerNode.writePadding(SqueakImageConstants.WORD_SIZE - offset);
+            }
+        }
     }
 
     public LargeIntegerObject shallowCopy() {
