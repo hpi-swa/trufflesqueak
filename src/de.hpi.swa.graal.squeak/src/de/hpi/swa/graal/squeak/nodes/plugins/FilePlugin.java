@@ -304,7 +304,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doAtEnd(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
                 final SeekableByteChannel file = getFileOrPrimFail(fileDescriptor);
-                return method.image.asBoolean(file.position() >= file.size() - 1);
+                return method.image.asBoolean(file.position() >= file.size());
             } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }
