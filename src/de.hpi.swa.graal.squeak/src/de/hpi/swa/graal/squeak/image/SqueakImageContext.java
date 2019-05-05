@@ -24,7 +24,7 @@ import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.interop.InteropMap;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
@@ -187,7 +187,7 @@ public final class SqueakImageContext {
     public void ensureLoaded() {
         if (!loaded()) {
             // Load image.
-            Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(this)).call();
+            SqueakImageReader.load(this);
             // Remove active context.
             getActiveProcess().atputNil0(PROCESS.SUSPENDED_CONTEXT);
             // Modify StartUpList for headless execution.
@@ -208,7 +208,7 @@ public final class SqueakImageContext {
     }
 
     /**
-     * Returns `true` if image has been loaded. {@link SqueakImageReaderNode} calls
+     * Returns `true` if image has been loaded. {@link SqueakImageReader} calls
      * {@link #getSqueakImage()} and initializes `squeakImage`.
      */
     public boolean loaded() {

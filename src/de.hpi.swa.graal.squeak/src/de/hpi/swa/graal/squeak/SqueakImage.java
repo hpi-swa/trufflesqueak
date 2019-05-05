@@ -1,12 +1,16 @@
 package de.hpi.swa.graal.squeak;
 
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.interop.InteropArray;
 
 @ExportLibrary(InteropLibrary.class)
@@ -15,6 +19,25 @@ public final class SqueakImage implements TruffleObject {
 
     public SqueakImage(final SqueakImageContext image) {
         this.image = image;
+    }
+
+    private static class SqueakImageNode extends RootNode {
+        private final SqueakImage squeakImage;
+
+        protected SqueakImageNode(final SqueakImage squeakImage) {
+            super(squeakImage.image.getLanguage());
+            this.squeakImage = squeakImage;
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame) {
+            SqueakImageReader.load(squeakImage.image);
+            return squeakImage;
+        }
+    }
+
+    public RootCallTarget asCallTarget() {
+        return Truffle.getRuntime().createCallTarget(new SqueakImageNode(this));
     }
 
     public String getName() {
@@ -38,23 +61,19 @@ public final class SqueakImage implements TruffleObject {
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean hasMembers() {
-        return false; // TODO: rework members interop integration and re-enable.
+        return true; // TODO: rework members interop integration and re-enable.
     }
 
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean isMemberReadable(@SuppressWarnings("unused") final String member) {
-        return false; // TODO: rework members interop integration and re-enable.
+        return "Compiler".equals(member); // TODO: rework members interop integration and re-enable.
     }
 
     @ExportMessage
     public Object getMembers(final boolean includeInternal) {
         final Object[] members;
-        if (includeInternal) {
-            members = new Object[]{image.getGlobals(), image.getCompilerClass()};
-        } else {
-            members = new Object[]{image.getGlobals()};
-        }
+        members = new String[]{"Compiler"};
         return new InteropArray(members);
     }
 

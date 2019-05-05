@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 
 public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
@@ -14,6 +15,11 @@ public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
     private EmptyObject(final EmptyObject original) {
         super(original.image, original.getSqueakClass());
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        // Nothing to do.
     }
 
     @Override

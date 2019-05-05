@@ -68,6 +68,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         numArgs = original.numArgs;
     }
 
+    @Override
     public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] pointers = chunk.getPointers();

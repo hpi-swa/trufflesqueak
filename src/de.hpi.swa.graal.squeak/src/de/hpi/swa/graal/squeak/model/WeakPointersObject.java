@@ -6,6 +6,8 @@ import java.lang.ref.WeakReference;
 import com.oracle.truffle.api.CompilerAsserts;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.nodes.accessing.WeakPointersObjectNodes.WeakPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class WeakPointersObject extends AbstractPointersObject {
@@ -23,6 +25,17 @@ public final class WeakPointersObject extends AbstractPointersObject {
     private WeakPointersObject(final WeakPointersObject original) {
         super(original.image, original.getSqueakClass());
         setPointersUnsafe(original.getPointers().clone());
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        final Object[] pointers = chunk.getPointers();
+        final int length = pointers.length;
+        setPointers(new Object[length]);
+        final WeakPointersObjectWriteNode writeNode = WeakPointersObjectWriteNode.getUncached();
+        for (int i = 0; i < length; i++) {
+            writeNode.execute(this, i, pointers[i]);
+        }
     }
 
     @Override

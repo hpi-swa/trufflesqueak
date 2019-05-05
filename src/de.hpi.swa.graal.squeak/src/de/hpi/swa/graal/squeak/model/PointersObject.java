@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
@@ -28,6 +29,11 @@ public final class PointersObject extends AbstractPointersObject {
     private PointersObject(final PointersObject original) {
         super(original.image, original.getSqueakClass());
         setPointersUnsafe(original.getPointers().clone());
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        setPointers(chunk.getPointers());
     }
 
     public Object at0(final long i) {

@@ -6,6 +6,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 
 @ExportLibrary(InteropLibrary.class)
 public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
@@ -28,6 +29,11 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
     private FloatObject(final SqueakImageContext image, final double doubleValue) {
         this(image);
         this.doubleValue = doubleValue;
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        // Nothing to do.
     }
 
     public static FloatObject valueOf(final SqueakImageContext image, final double value) {

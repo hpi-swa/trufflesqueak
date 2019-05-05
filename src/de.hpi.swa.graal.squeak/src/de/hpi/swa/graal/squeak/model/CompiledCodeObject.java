@@ -185,6 +185,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
         return getNumArgsAndCopied() + getSqueakContextSize();
     }
 
+    @Override
     public final void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final long[] words = chunk.getWords();

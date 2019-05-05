@@ -12,6 +12,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
@@ -52,6 +53,11 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         super(original.image, original.getSqueakClass());
         exposedSize = original.exposedSize;
         integer = original.integer;
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        // Nothing to do.
     }
 
     public static LargeIntegerObject createLongMinOverflowResult(final SqueakImageContext image) {

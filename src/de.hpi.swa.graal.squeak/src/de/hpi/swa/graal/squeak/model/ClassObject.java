@@ -21,6 +21,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METACLASS;
@@ -52,6 +53,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public ClassObject(final SqueakImageContext image, final int hash) {
         super(image, hash);
+    }
+
+    public ClassObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
+        super(image, hash, squeakClass);
     }
 
     private ClassObject(final ClassObject original, final ArrayObject copiedInstanceVariablesOrNull) {
@@ -164,7 +169,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public void setInstancesAreClasses(final String className) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // TODO: think about better check for the below.
-        instancesAreClasses = isMetaClass() || isAMetaClass() || "Behavior".equals(className) || "ClassDescription".equals(className) || "Class".equals(className) ||
+        instancesAreClasses = isMetaClass() || getSqueakClass() != null && isAMetaClass() || "Behavior".equals(className) || "ClassDescription".equals(className) || "Class".equals(className) ||
                         "TraitBehavior".equals(className) || "TraitDescription".equals(className) || "ClassTrait".equals(className) || "Trait".equals(className);
     }
 
@@ -198,7 +203,16 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.aboutToReturnSelector.getSqueakClass();
     }
 
+    /**
+     * {@link ClassObject}s are filled in at an earlier stage in
+     * {@link SqueakImageReader#fillInClassObjects}.
+     */
+    @Override
     public void fillin(final SqueakImageChunk chunk) {
+        // Do nothing.
+    }
+
+    public void fillinClass(final SqueakImageChunk chunk) {
         final Object[] chunkPointers = chunk.getPointers();
         superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
         methodDict = (PointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
@@ -206,6 +220,17 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
         organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
         pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
+        if (size() > 7) {
+            final String className = getClassName();
+            setInstancesAreClasses(className);
+            if (image.getCompilerClass() == null && "Compiler".equals(className)) {
+                image.setCompilerClass(this);
+            } else if (image.getParserClass() == null && "Parser".equals(className)) {
+                image.setParserClass(this);
+            } else if (!image.flags.is64bit() && image.smallFloatClass == null && "SmallFloat64".equals(className)) {
+                image.setSmallFloat(this);
+            }
+        }
     }
 
     public void setFormat(final long format) {

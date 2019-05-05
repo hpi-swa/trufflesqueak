@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -85,6 +87,27 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final short[] shorts) {
         return new NativeObject(img, klass, shorts);
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        if (isByteType()) {
+            final byte[] bytes = chunk.getBytes();
+            setStorage(bytes);
+            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, bytes)) {
+                image.setDebugErrorSelector(this);
+            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, bytes)) {
+                image.setDebugSyntaxErrorSelector(this);
+            }
+        } else if (isShortType()) {
+            setStorage(chunk.getShorts());
+        } else if (isIntType()) {
+            setStorage(chunk.getInts());
+        } else if (isLongType()) {
+            setStorage(chunk.getLongs());
+        } else {
+            throw SqueakException.create("Unsupported type");
+        }
     }
 
     @Override

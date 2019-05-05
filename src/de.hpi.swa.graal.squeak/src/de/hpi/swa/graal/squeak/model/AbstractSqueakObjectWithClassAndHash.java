@@ -14,6 +14,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.interop.InteropArray;
 import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
@@ -60,6 +61,8 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakHash = hash;
         squeakClass = klass;
     }
+
+    public abstract void fillin(SqueakImageChunk chunk);
 
     public final void becomeOtherClass(final AbstractSqueakObjectWithClassAndHash other) {
         final ClassObject otherSqClass = other.squeakClass;

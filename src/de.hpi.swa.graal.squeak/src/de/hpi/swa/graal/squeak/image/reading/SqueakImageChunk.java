@@ -2,10 +2,7 @@ package de.hpi.swa.graal.squeak.image.reading;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -28,20 +25,20 @@ public final class SqueakImageChunk {
     private static final long SMALLFLOAT_MASK = 896L << 52 + 1;
 
     protected Object object;
-    @CompilationFinal private ClassObject sqClass;
+    private ClassObject sqClass;
     private Object[] pointers;
 
     protected final int classid;
     protected final int pos;
 
     public final SqueakImageContext image;
-    private final SqueakImageReaderNode reader;
+    private final SqueakImageReader reader;
     private final int format;
     private final int hash;
-    @CompilationFinal(dimensions = 1) private final byte[] data;
+    private final byte[] data;
     private long[] words;
 
-    public SqueakImageChunk(final SqueakImageReaderNode reader,
+    public SqueakImageChunk(final SqueakImageReader reader,
                     final SqueakImageContext image,
                     final byte[] data,
                     final int format,
@@ -67,7 +64,7 @@ public final class SqueakImageChunk {
         if (object == null) {
             assert format == 1;
             object = new ClassObject(image, hash);
-        } else if (object == SqueakImageReaderNode.NIL_OBJECT_PLACEHOLDER) {
+        } else if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
             return null;
         }
         return (ClassObject) object;
@@ -75,32 +72,37 @@ public final class SqueakImageChunk {
 
     public Object asObject() {
         if (object == null) {
+            final ClassObject squeakClass = getSqClass();
             if (format == 0) { // no fields
-                object = new EmptyObject(image, hash, getSqClass());
+                object = new EmptyObject(image, hash, squeakClass);
             } else if (format == 1) { // fixed pointers
                 // classes should already be instantiated at this point, check a bit
-                assert getSqClass() != image.metaClass && (getSqClass() == null || getSqClass().getSqueakClass() != image.metaClass);
-                object = new PointersObject(image, hash, getSqClass());
+                assert squeakClass != image.metaClass && (squeakClass == null || squeakClass.getSqueakClass() != image.metaClass);
+                if (squeakClass.instancesAreClasses()) {
+                    object = new ClassObject(image, hash, squeakClass);
+                } else {
+                    object = new PointersObject(image, hash, squeakClass);
+                }
             } else if (format == 2) { // indexable fields
-                object = new ArrayObject(image, hash, getSqClass());
+                object = new ArrayObject(image, hash, squeakClass);
             } else if (format == 3) { // fixed and indexable fields
-                if (getSqClass() == image.methodContextClass) {
+                if (squeakClass == image.methodContextClass) {
                     object = ContextObject.createWithHash(image, hash);
-                } else if (getSqClass() == image.blockClosureClass) {
+                } else if (squeakClass == image.blockClosureClass) {
                     object = new BlockClosureObject(image, hash);
                 } else {
-                    object = new PointersObject(image, hash, getSqClass());
+                    object = new PointersObject(image, hash, squeakClass);
                 }
             } else if (format == 4) { // indexable weak fields
-                object = new WeakPointersObject(image, hash, getSqClass());
+                object = new WeakPointersObject(image, hash, squeakClass);
             } else if (format == 5) { // fixed weak fields
-                object = new PointersObject(image, hash, getSqClass());
+                object = new PointersObject(image, hash, squeakClass);
             } else if (format <= 8) {
                 assert false : "Should never happen (unused format)";
             } else if (format == 9) { // 64-bit integers
                 object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
-                if (getSqClass() == image.floatClass) {
+                if (squeakClass == image.floatClass) {
                     object = FloatObject.newFromChunkWords(image, getInts());
                 } else {
                     object = NativeObject.newNativeInts(this);
@@ -108,8 +110,8 @@ public final class SqueakImageChunk {
             } else if (format <= 15) { // 16-bit integers
                 object = NativeObject.newNativeShorts(this);
             } else if (format <= 23) { // bytes
-                if (getSqClass() == image.largePositiveIntegerClass || getSqClass() == image.largeNegativeIntegerClass) {
-                    object = new LargeIntegerObject(image, hash, getSqClass(), getBytes()).reduceIfPossible();
+                if (squeakClass == image.largePositiveIntegerClass || squeakClass == image.largeNegativeIntegerClass) {
+                    object = new LargeIntegerObject(image, hash, squeakClass, getBytes()).reduceIfPossible();
                 } else {
                     object = NativeObject.newNativeBytes(this);
                 }
@@ -117,7 +119,7 @@ public final class SqueakImageChunk {
                 object = new CompiledMethodObject(image, hash);
             }
         }
-        if (object == SqueakImageReaderNode.NIL_OBJECT_PLACEHOLDER) {
+        if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
             return NilObject.SINGLETON;
         } else {
             return object;
@@ -134,7 +136,6 @@ public final class SqueakImageChunk {
 
     public ClassObject getSqClass() {
         if (sqClass == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             sqClass = getClassChunk().asClassObject();
         }
         return sqClass;
@@ -161,7 +162,6 @@ public final class SqueakImageChunk {
         sqClass = baseSqueakObject;
     }
 
-    @ExplodeLoop
     public Object[] getPointers() {
         if (pointers == null) {
             final long[] theWords = getWords();

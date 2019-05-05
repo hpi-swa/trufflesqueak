@@ -6,6 +6,7 @@ import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -56,6 +57,24 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public static boolean isLongNilTag(final long value) {
         return value == LONG_NIL_TAG;
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        final Object[] pointers = chunk.getPointers();
+        if (!ENABLE_STORAGE_STRATEGIES) {
+            storage = pointers;
+            return;
+        }
+        final int valuesLength = pointers.length;
+        storage = valuesLength;
+        final ArrayObjectWriteNode writeNode = ArrayObjectWriteNode.getUncached();
+        if (valuesLength > 0) {
+            storage = valuesLength;
+            for (int i = 0; i < pointers.length; i++) {
+                writeNode.execute(this, i, pointers[i]);
+            }
+        }
     }
 
     public Object at0Boolean(final long index) {
@@ -284,21 +303,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setStorage(final Object newStorage) {
         storage = newStorage;
-    }
-
-    public void setStorageAndSpecialize(final Object[] values, final ArrayObjectWriteNode writeNode) {
-        if (!ENABLE_STORAGE_STRATEGIES) {
-            storage = values;
-            return;
-        }
-        final int valuesLength = values.length;
-        storage = valuesLength;
-        if (valuesLength > 0) {
-            storage = valuesLength;
-            for (int i = 0; i < values.length; i++) {
-                writeNode.execute(this, i, values[i]);
-            }
-        }
     }
 
     public void transitionFromBooleansToObjects() {

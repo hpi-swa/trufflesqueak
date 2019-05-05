@@ -307,6 +307,10 @@ public final class ArrayObjectNodes {
             return ArrayObjectWriteNodeGen.create();
         }
 
+        public static ArrayObjectWriteNode getUncached() {
+            return ArrayObjectWriteNodeGen.getUncached();
+        }
+
         public abstract void execute(ArrayObject obj, long index, Object value);
 
         @SuppressWarnings("unused")
