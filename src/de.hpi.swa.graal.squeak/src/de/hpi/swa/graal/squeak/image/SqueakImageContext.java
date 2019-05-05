@@ -167,11 +167,10 @@ public final class SqueakImageContext {
     public final EconomicMap<Long, SqSSL> squeakSSLHandles = EconomicMap.create();
     public String[] dropPluginFileList = new String[0];
 
-    public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes(); // for testing
-    @CompilationFinal private NativeObject debugErrorSelector = null; // for testing
-    public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes(); // for
-                                                                                                  // testing
-    @CompilationFinal private NativeObject debugSyntaxErrorSelector = null; // for testing
+    @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes();
+    @CompilationFinal private NativeObject debugErrorSelector = null;
+    @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes();
+    @CompilationFinal private NativeObject debugSyntaxErrorSelector = null;
 
     private Source lastParseRequestSource;
     @CompilationFinal private SqueakImage squeakImage;
