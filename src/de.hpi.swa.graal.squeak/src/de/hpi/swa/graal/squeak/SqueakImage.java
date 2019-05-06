@@ -11,7 +11,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
-import de.hpi.swa.graal.squeak.interop.InteropArray;
+import de.hpi.swa.graal.squeak.model.NilObject;
 
 @ExportLibrary(InteropLibrary.class)
 public final class SqueakImage implements TruffleObject {
@@ -61,29 +61,22 @@ public final class SqueakImage implements TruffleObject {
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean hasMembers() {
-        return true; // TODO: rework members interop integration and re-enable.
+        return true;
     }
 
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean isMemberReadable(@SuppressWarnings("unused") final String member) {
-        return "Compiler".equals(member); // TODO: rework members interop integration and re-enable.
+        return image.lookup(member) != NilObject.SINGLETON;
     }
 
     @ExportMessage
-    public Object getMembers(final boolean includeInternal) {
-        final Object[] members;
-        members = new String[]{"Compiler"};
-        return new InteropArray(members);
+    public Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
+        return image.evaluate("Smalltalk globals keys collect: [:ea | ea asString]");
     }
 
     @ExportMessage
-    public Object readMember(final String key) {
-        if ("Compiler".equals(key)) {
-            return image.getCompilerClass();
-        } else {
-            // TODO:
-            return image.getGlobals();
-        }
+    public Object readMember(final String member) {
+        return image.lookup(member);
     }
 }

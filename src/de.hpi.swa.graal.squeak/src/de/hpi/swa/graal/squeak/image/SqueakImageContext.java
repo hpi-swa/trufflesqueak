@@ -224,10 +224,15 @@ public final class SqueakImageContext {
         return squeakImage;
     }
 
-    private Object evaluate(final String sourceCode) {
+    public Object evaluate(final String sourceCode) {
         CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
         final Source source = Source.newBuilder(SqueakLanguageConfig.NAME, sourceCode, "<image#evaluate>").build();
         return Truffle.getRuntime().createCallTarget(getDoItContextNode(source)).call();
+    }
+
+    public Object lookup(final String member) {
+        final Object symbol = getCompilerClass().send("evaluate:", asByteString("'" + member + "' asSymbol"));
+        return smalltalk.send("at:ifAbsent:", symbol, NilObject.SINGLETON);
     }
 
     public boolean patch(final SqueakLanguage.Env newEnv) {
