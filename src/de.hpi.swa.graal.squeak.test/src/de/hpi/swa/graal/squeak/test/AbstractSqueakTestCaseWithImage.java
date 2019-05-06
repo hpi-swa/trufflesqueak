@@ -56,11 +56,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void patchImageForTesting() {
-        image.getActiveProcess().atputNil0(PROCESS.SUSPENDED_CONTEXT);
-        image.getOutput().println("Modifying StartUpList for testing...");
-        evaluate("{Delay. EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
-        image.getOutput().println("Processing StartUpList...");
-        evaluate("Smalltalk processStartUpList: true");
         final ArrayObject lists = (ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
         final Object firstLink = priority10List.at0(LINKED_LIST.FIRST_LINK);
@@ -68,11 +63,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
         idleProcess = (PointersObject) firstLink;
         assert idleProcess.at0(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
-        image.getOutput().println("Setting author information...");
-        evaluate("Utilities authorName: 'GraalSqueak'");
-        evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
-        image.getOutput().println("Initializing fresh MorphicUIManager...");
-        evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
         image.getOutput().println("Increasing default timeout...");
         patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ " + SQUEAK_TIMEOUT_SECONDS);
         if (!runsOnMXGate()) {
@@ -156,7 +146,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
                 linkedList.atput0(LINKED_LIST.LAST_LINK, expectedValue);
             }
         }
-
     }
 
     protected static void patchMethod(final String className, final String selector, final String body) {
@@ -197,7 +186,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static String testCommand(final TestRequest request) {
-        return String.format("[ [(%s selector: #%s) runCase. '%s'] on: TestFailure do: [:e | e asString ] ] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack ]",
+        return String.format("[[(%s selector: #%s) runCase. '%s'] on: TestFailure do: [:e | e asString ]] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack]",
                         request.testCase, request.testSelector, PASSED_VALUE);
     }
 
