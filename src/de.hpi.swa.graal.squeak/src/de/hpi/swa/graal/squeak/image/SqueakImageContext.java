@@ -194,7 +194,8 @@ public final class SqueakImageContext {
             // TODO: Also start ProcessorScheduler and WeakArray (see SqueakSUnitTest).
             evaluate("{EventSensor. ProcessorScheduler. Project. WeakArray} do: [:ea | Smalltalk removeFromStartUpList: ea]");
             try {
-                evaluate("[Smalltalk processStartUpList: true] value");
+                /** See SmalltalkImage>>#snapshot:andQuit:withExitCode:embedded:. */
+                evaluate("[Smalltalk clearExternalObjects. Smalltalk processStartUpList: true. Smalltalk setPlatformPreferences] value");
             } catch (final Exception e) {
                 printToStdErr("startUpList failed:");
                 e.printStackTrace();

@@ -77,7 +77,7 @@ public final class SqueakImageChunk {
                 object = new EmptyObject(image, hash, squeakClass);
             } else if (format == 1) { // fixed pointers
                 // classes should already be instantiated at this point, check a bit
-                assert squeakClass != image.metaClass && (squeakClass == null || squeakClass.getSqueakClass() != image.metaClass);
+                assert squeakClass != image.metaClass && squeakClass.getSqueakClass() != image.metaClass;
                 if (squeakClass.instancesAreClasses()) {
                     object = new ClassObject(image, hash, squeakClass);
                 } else {
