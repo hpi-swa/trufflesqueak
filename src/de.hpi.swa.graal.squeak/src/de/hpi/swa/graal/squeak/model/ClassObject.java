@@ -188,9 +188,14 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.semaphoreClass;
     }
 
-    public boolean isStringOrSymbolClass() {
-        /** ByteString or ByteSymbol. */
-        return this == image.stringClass || this == image.aboutToReturnSelector.getSqueakClass();
+    /** ByteString. */
+    public boolean isStringClass() {
+        return this == image.stringClass;
+    }
+
+    /** ByteSymbol. */
+    public boolean isSymbolClass() {
+        return this == image.aboutToReturnSelector.getSqueakClass();
     }
 
     public void fillin(final SqueakImageChunk chunk) {

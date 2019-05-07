@@ -198,7 +198,14 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         if (isByteType()) {
-            return isString() ? asStringUnsafe() : "byte[" + getByteLength() + "]";
+            final ClassObject squeakClass = getSqueakClass();
+            if (squeakClass.isStringClass()) {
+                return asStringUnsafe();
+            } else if (squeakClass.isSymbolClass()) {
+                return "#" + asStringUnsafe();
+            } else {
+                return "byte[" + getByteLength() + "]";
+            }
         } else if (isShortType()) {
             return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
@@ -228,7 +235,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     @ExportMessage
     public boolean isString() {
-        return getSqueakClass().isStringOrSymbolClass();
+        final ClassObject squeakClass = getSqueakClass();
+        return squeakClass.isStringClass() || squeakClass.isSymbolClass();
     }
 
     @ExportMessage
