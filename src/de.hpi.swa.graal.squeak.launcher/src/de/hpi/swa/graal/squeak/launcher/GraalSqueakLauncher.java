@@ -89,6 +89,14 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute();
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
+        } catch (final IllegalArgumentException e) {
+            if (e.getMessage().contains("Could not find option")) {
+                final String thisPackageName = getClass().getPackage().getName();
+                final String parentPackageName = thisPackageName.substring(0, thisPackageName.lastIndexOf("."));
+                throw abort(String.format("Failed to load GraalSqueak. Please ensure '%s' is on the Java class path.", parentPackageName));
+            } else {
+                throw e;
+            }
         } catch (final PolyglotException e) {
             if (e.isExit()) {
                 return e.getExitStatus();
