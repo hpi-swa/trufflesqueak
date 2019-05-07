@@ -198,13 +198,13 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         if (isByteType()) {
-            return asStringUnsafe();
+            return isString() ? asStringUnsafe() : "byte[" + getByteLength() + "]";
         } else if (isShortType()) {
-            return "ShortArray(size=" + getShortLength() + ")";
+            return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
-            return "IntArray(size=" + getIntLength() + ")";
+            return "int[" + getIntLength() + "]";
         } else if (isLongType()) {
-            return "LongArray(size=" + getLongLength() + ")";
+            return "long[" + getLongLength() + "]";
         } else {
             throw SqueakException.create("Unexpected native object type");
         }
