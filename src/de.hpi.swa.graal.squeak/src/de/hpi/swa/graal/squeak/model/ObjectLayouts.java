@@ -170,12 +170,12 @@ public final class ObjectLayouts {
     }
 
     public static final class EXTERNAL_LIBRARY_FUNCTION {
-        public static final int MESSAGE_TEXT = 0;
-        public static final int TAG = 1;
-        public static final int SIGNAL_CONTEXT = 2;
+        public static final int HANDLE = 0;
+        public static final int FLAGS = 1;
+        public static final int ARG_TYPES = 2;
         public static final int NAME = 3;
-        public static final int OUTER_CONTEXT = 4;
-        public static final int BLA = 5;
+        public static final int MODULE = 4;
+        public static final int ERROR_CODE_NAME = 5;
     }
 
     public static final class FORM {
