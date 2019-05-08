@@ -37,6 +37,7 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
@@ -135,22 +136,37 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 120)
-    public abstract static class PrimCalloutToFFINode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimCalloutToFFINode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimCalloutToFFINode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final Object doArg0(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected static final Object doArg0(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
+                        @SuppressWarnings("unused") final NotProvided notProvided2) {
             return receiver;
         }
 
         @Specialization(guards = {"!isNotProvided(arg1)"})
-        protected final Object doArg1(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final Object arg1) {
+        protected final Object doArg1(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final Object arg1, @SuppressWarnings("unused") final NotProvided notProvided) {
             // Use debugger to inspect:
             method.getLiterals();
             return receiver;
+        }
+
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)"})
+        protected final Object doArg2(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final Object arg1, @SuppressWarnings("unused") final Object arg2) {
+            // Use debugger to inspect:
+            final PointersObject externalLibraryFunction = (PointersObject) method.getLiterals()[1];
+            final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe(); // Vorher:
+                                                                                                                                             // 3
+            method.image.printSqStackTrace();
+            if ("ffiTestDoubles".equals(name)) {
+                return (char) arg1 + (double) arg2;
+            } else {
+                throw new PrimitiveFailed();
+            }
         }
     }
 
