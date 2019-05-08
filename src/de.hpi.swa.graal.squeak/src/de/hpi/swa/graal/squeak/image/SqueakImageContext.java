@@ -220,7 +220,6 @@ public final class SqueakImageContext {
         if (squeakImage == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             squeakImage = new SqueakImage(this);
-            primitiveNodeFactory.initialize(this);
         }
         return squeakImage;
     }
@@ -335,6 +334,10 @@ public final class SqueakImageContext {
     public void setSmallFloat(final ClassObject classObject) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         smallFloatClass = classObject;
+    }
+
+    public void initializePrimitives() {
+        primitiveNodeFactory.initialize(this);
     }
 
     public ClassObject initializeTruffleObject() {

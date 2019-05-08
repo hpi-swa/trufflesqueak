@@ -49,6 +49,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         image.compiledMethodClass.fillin(fakeChunk);
         image.nilClass.setFormat(0);
         image.arrayClass.setFormat(0);
+        image.initializePrimitives();
     }
 
     @AfterClass

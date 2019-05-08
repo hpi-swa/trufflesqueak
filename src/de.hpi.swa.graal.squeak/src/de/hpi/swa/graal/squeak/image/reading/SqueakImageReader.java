@@ -82,6 +82,7 @@ public final class SqueakImageReader {
         readBody();
         initObjects();
         clearChunktable();
+        image.initializePrimitives();
         image.printToStdOut("Image loaded in", currentTimeMillis() - start + "ms.");
         return image.getSqueakImage();
     }
