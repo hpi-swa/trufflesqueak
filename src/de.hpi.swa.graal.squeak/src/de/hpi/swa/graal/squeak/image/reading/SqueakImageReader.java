@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.image.reading;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -384,8 +385,11 @@ public final class SqueakImageReader {
         fillInSmallFloatClass();
     }
 
+    /**
+     * Fill in classes and ensure instances of Behavior and its subclasses use {@link ClassObject}.
+     */
     private void fillInClassObjects() {
-        // find all metaclasses and instantiate their singleton instances as class objects
+        /** Find all metaclasses and instantiate their singleton instances as class objects. */
         for (final long classtablePtr : hiddenRootsChunk.getWords()) {
             if (getChunk(classtablePtr) != null) {
                 for (final long potentialClassPtr : getChunk(classtablePtr).getWords()) {
@@ -397,18 +401,55 @@ public final class SqueakImageReader {
                         final long[] data = metaClass.getWords();
                         final SqueakImageChunk classInstance = getChunk(data[data.length - 1]);
                         assert data.length == 6;
-                        metaClass.asClassObject();
-                        classInstance.asClassObject();
+                        final ClassObject metaClassObject = metaClass.asClassObject(image.metaClass);
+                        classInstance.asClassObject(metaClassObject);
                     }
                 }
             }
         }
-        for (final SqueakImageChunk chunk : chunktable.values()) {
-            final Object chunkObject = chunk.asObject();
-            if (chunkObject.getClass() == ClassObject.class) {
-                ((ClassObject) chunkObject).fillinClass(chunk);
+
+        /** Fill in metaClass. */
+        final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
+        final SqueakImageChunk sqArray = specialObjectsChunk.getClassChunk();
+        final SqueakImageChunk sqArrayClass = sqArray.getClassChunk();
+        final SqueakImageChunk sqMetaclass = sqArrayClass.getClassChunk();
+        image.metaClass.fillin(sqMetaclass);
+
+        /**
+         * Walk over all classes again and ensure instances of all subclasses of ClassDescriptions
+         * are {@link ClassObject}s.
+         */
+        final HashSet<ClassObject> inst = new HashSet<>();
+        final ClassObject classDescriptionClass = image.metaClass.getSuperclassOrNull();
+        classDescriptionClass.setInstancesAreClasses();
+        inst.add(classDescriptionClass);
+        for (final long classtablePtr : hiddenRootsChunk.getWords()) {
+            if (getChunk(classtablePtr) != null) {
+                for (final long potentialClassPtr : getChunk(classtablePtr).getWords()) {
+                    if (potentialClassPtr == 0) {
+                        continue;
+                    }
+                    final SqueakImageChunk metaClass = getChunk(potentialClassPtr);
+                    if (metaClass != null && metaClass.getSqClass() == image.metaClass) {
+                        final long[] data = metaClass.getWords();
+                        final SqueakImageChunk classInstance = getChunk(data[data.length - 1]);
+                        assert data.length == 6;
+                        final ClassObject metaClassObject = metaClass.asClassObject(image.metaClass);
+                        final ClassObject classObject = classInstance.asClassObject(metaClassObject);
+                        classObject.fillin(classInstance);
+                        if (inst.contains(classObject.getSuperclassOrNull())) {
+                            inst.add(classObject);
+                            classObject.setInstancesAreClasses();
+                        }
+                    }
+                }
             }
         }
+        assert image.metaClass.instancesAreClasses();
+
+        /** Finally, ensure instances of Behavior are {@link ClassObject}s. */
+        final ClassObject behaviorClass = classDescriptionClass.getSuperclassOrNull();
+        behaviorClass.setInstancesAreClasses();
     }
 
     private void fillInObjects() {

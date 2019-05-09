@@ -60,10 +60,10 @@ public final class SqueakImageChunk {
         return chunk;
     }
 
-    public ClassObject asClassObject() {
+    public ClassObject asClassObject(final ClassObject metaClassObject) {
         if (object == null) {
             assert format == 1;
-            object = new ClassObject(image, hash);
+            object = new ClassObject(image, hash, metaClassObject);
         } else if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
             return null;
         }
@@ -136,7 +136,7 @@ public final class SqueakImageChunk {
 
     public ClassObject getSqClass() {
         if (sqClass == null) {
-            sqClass = getClassChunk().asClassObject();
+            sqClass = getClassChunk().asClassObject(null);
         }
         return sqClass;
     }

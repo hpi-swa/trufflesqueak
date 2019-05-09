@@ -88,8 +88,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (isAMetaClass()) {
             final ClassObject classInstance = getThisClass();
             return "Metaclass (" + classInstance.getClassName() + ")";
-        } else {
+        } else if (size() == 11) {
             return getClassName();
+        } else {
+            return "Unknown behavior";
         }
     }
 
@@ -166,11 +168,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return getInstanceSpecification() == 0;
     }
 
-    public void setInstancesAreClasses(final String className) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        // TODO: think about better check for the below.
-        instancesAreClasses = isMetaClass() || getSqueakClass() != null && isAMetaClass() || "Behavior".equals(className) || "ClassDescription".equals(className) || "Class".equals(className) ||
-                        "TraitBehavior".equals(className) || "TraitDescription".equals(className) || "ClassTrait".equals(className) || "Trait".equals(className);
+    public void setInstancesAreClasses() {
+        if (!instancesAreClasses) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            instancesAreClasses = true;
+        }
     }
 
     public boolean instancesAreClasses() {
@@ -209,26 +211,23 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
      */
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        // Do nothing.
-    }
-
-    public void fillinClass(final SqueakImageChunk chunk) {
-        final Object[] chunkPointers = chunk.getPointers();
-        superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
-        methodDict = (PointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
-        format = (long) chunkPointers[CLASS_DESCRIPTION.FORMAT];
-        instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
-        organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
-        pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
-        if (size() > 7) {
-            final String className = getClassName();
-            setInstancesAreClasses(className);
-            if (image.getCompilerClass() == null && "Compiler".equals(className)) {
-                image.setCompilerClass(this);
-            } else if (image.getParserClass() == null && "Parser".equals(className)) {
-                image.setParserClass(this);
-            } else if (!image.flags.is64bit() && image.smallFloatClass == null && "SmallFloat64".equals(className)) {
-                image.setSmallFloat(this);
+        if (methodDict == null) {
+            final Object[] chunkPointers = chunk.getPointers();
+            superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
+            methodDict = (PointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
+            format = (long) chunkPointers[CLASS_DESCRIPTION.FORMAT];
+            instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
+            organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
+            pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
+            if (size() > 7) {
+                final String className = getClassName();
+                if (image.getCompilerClass() == null && "Compiler".equals(className)) {
+                    image.setCompilerClass(this);
+                } else if (image.getParserClass() == null && "Parser".equals(className)) {
+                    image.setParserClass(this);
+                } else if (!image.flags.is64bit() && image.smallFloatClass == null && "SmallFloat64".equals(className)) {
+                    image.setSmallFloat(this);
+                }
             }
         }
     }
