@@ -343,7 +343,7 @@ def _get_svm_binary_from_graalvm():
 
 _svmsuite = mx.suite('substratevm', fatalIfMissing=False)
 if _svmsuite:
-    _svmsuite.extensions.flag_suitename_map['squeak'] = (
+    _svmsuite.extensions.flag_suitename_map[LANGUAGE_NAME] = (
         'graalsqueak',
         ['GRAALSQUEAK', 'GRAALSQUEAK_LAUNCHER', 'GRAALSQUEAK_SHARED'], [])
 
@@ -351,7 +351,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,
     name='GraalSqueak',
     short_name='sq',
-    dir_name='squeak',
+    dir_name=LANGUAGE_NAME,
     license_files=[],
     third_party_license_files=[],
     truffle_jars=[
@@ -370,7 +370,6 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
             ],
             main_class='%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME,
             build_args=[
-                '--language:squeak',
                 # '--pgo-instrument',  # (uncomment to enable profiling)
                 # '--pgo',  # (uncomment to recompile with profiling info)
             ],
