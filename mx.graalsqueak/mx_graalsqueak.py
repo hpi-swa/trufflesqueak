@@ -373,7 +373,8 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
                 '--language:squeak',
                 # '--pgo-instrument',  # (uncomment to enable profiling)
                 # '--pgo',  # (uncomment to recompile with profiling info)
-            ]
+            ],
+            language=LANGUAGE_NAME
         )
     ],
 ))

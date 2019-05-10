@@ -3,11 +3,11 @@ suite = {
     # ==========================================================================
     #  METADATA
     # ==========================================================================
-    "mxversion": "5.215.7",
+    "mxversion": "5.216.1",
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
-    "version": "1.0.0-rc16",
+    "version": "19.0.0",
     "release": False,
     "groupId": "de.hpi.swa.graal.squeak",
     "url": "https://github.com/hpi-swa-lab/graalsqueak/",
@@ -40,7 +40,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "648f1969f3d2da2d0b18fceac7f1b3e7652a8624",
+            "version": "0721d343872c6e7e036402547d9a76ed43f69637",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"

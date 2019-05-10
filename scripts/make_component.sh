@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-readonly GRAALVM_VERSION="1.0.0-rc16"
+readonly GRAALVM_VERSION="19.0.0"
 
 readonly BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 readonly COMPONENT_DIR="component_temp_dir"
