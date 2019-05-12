@@ -193,6 +193,21 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.stringClass || this == image.aboutToReturnSelector.getSqueakClass();
     }
 
+    private boolean includesBehavior(final ClassObject squeakClass) {
+        ClassObject current = this;
+        while (current != null) {
+            if (current == squeakClass) {
+                return true;
+            }
+            current = current.getSuperclassOrNull();
+        }
+        return false;
+    }
+
+    public boolean includesExternalFunctionBehavior() {
+        return includesBehavior(image.externalFunctionClass);
+    }
+
     public void fillin(final SqueakImageChunk chunk) {
         final Object[] chunkPointers = chunk.getPointers();
         superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];

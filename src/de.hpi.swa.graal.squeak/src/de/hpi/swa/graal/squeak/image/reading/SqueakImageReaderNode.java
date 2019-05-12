@@ -393,6 +393,11 @@ public final class SqueakImageReaderNode extends RootNode {
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_BLOCK_CLOSURE, image.blockClosureClass);
         setPrebuiltObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY, image.externalObjectsArray);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_LARGE_NEGATIVE_INTEGER, image.largeNegativeIntegerClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_EXTERNAL_ADDRESS, image.externalAddressClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_EXTERNAL_STRUCTURE, image.externalStructureClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_EXTERNAL_DATA, image.externalDataClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION, image.externalFunctionClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_EXTERNAL_LIBRARY, image.externalLibraryClass);
         setPrebuiltObject(SPECIAL_OBJECT.SELECTOR_ABOUT_TO_RETURN, image.aboutToReturnSelector);
         setPrebuiltObject(SPECIAL_OBJECT.SELECTOR_RUN_WITHIN, image.runWithInSelector);
         setPrebuiltObject(SPECIAL_OBJECT.PRIM_ERR_TABLE_INDEX, image.primitiveErrorTable);

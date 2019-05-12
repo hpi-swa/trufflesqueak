@@ -18,9 +18,15 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
@@ -46,9 +52,11 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_ERROR;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.DuodecimaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
@@ -136,34 +144,125 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 120)
-    public abstract static class PrimCalloutToFFINode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    public abstract static class PrimCalloutToFFINode extends AbstractPrimitiveNode implements DuodecimaryPrimitive {
 
         protected PrimCalloutToFFINode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
-        protected static final Object doArg0(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @SuppressWarnings("unused") final NotProvided notProvided2) {
-            return receiver;
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0"})
+        protected final Object doArg0(final AbstractSqueakObject receiver, final NotProvided n1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
+                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver);
         }
 
-        @Specialization(guards = {"!isNotProvided(arg1)"})
-        protected final Object doArg1(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final Object arg1, @SuppressWarnings("unused") final NotProvided notProvided) {
-            // Use debugger to inspect:
-            method.getLiterals();
-            return receiver;
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)"})
+        protected final Object doArg1(final AbstractSqueakObject receiver, final Object arg1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
+                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver, arg1);
         }
 
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)"})
-        protected final Object doArg2(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final Object arg1, @SuppressWarnings("unused") final Object arg2) {
-            // Use debugger to inspect:
-            final PointersObject externalLibraryFunction = (PointersObject) method.getLiterals()[1];
-            final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe(); // Vorher:
-                                                                                                                                             // 3
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)"})
+        protected final Object doArg2(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final NotProvided n3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver, arg1, arg2);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
+        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver, arg1, arg2, arg3);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
+        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final NotProvided n5, final NotProvided n6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver, arg1, arg2, arg3, arg4);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
+        protected final Object doArg5(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final NotProvided n6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+                        "!isNotProvided(arg6)"})
+        protected final Object doArg6(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+                        "!isNotProvided(arg6)", "!isNotProvided(arg7)"})
+        protected final Object doArg7(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+                        "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)"})
+        protected final Object doArg8(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+                        "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)"})
+        protected final Object doArg9(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final Object arg9, final NotProvided n10, final NotProvided n11) {
+            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+                        "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)"})
+        protected final Object doArg10(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final NotProvided n11) {
+            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+                        "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)", "!isNotProvided(arg11)"})
+        protected final Object doArg11(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11) {
+            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+        }
+
+        protected final Object doCallout(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final Object... arguments) {
+            final Object literal1 = method.getLiterals()[1];
+            if (!(literal1 instanceof PointersObject)) {
+                throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
+            }
+            final PointersObject externalLibraryFunction = (PointersObject) literal1;
+            if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
+                throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
+            }
+            final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
             method.image.printSqStackTrace();
             if ("ffiTestDoubles".equals(name)) {
-                return (char) arg1 + (double) arg2;
+                final String libName = method.image.os.isMacOS() ? "ffi-test.dylib" : "ffi-test.so";
+                final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + libName;
+                final String nfiCode = String.format("load \"%s\" {ffiTestDoubles(double,double):double;}", libPath);
+                final Object ffiTest = method.image.env.parse(Source.newBuilder("nfi", nfiCode, "native").build()).call();
+                final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
+                try {
+                    return interopLib.invokeMember(ffiTest, "ffiTestDoubles", arguments);
+                } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
+                    e.printStackTrace();
+                    throw new PrimitiveFailed(); // TODO: return correct error code.
+                }
             } else {
                 throw new PrimitiveFailed();
             }

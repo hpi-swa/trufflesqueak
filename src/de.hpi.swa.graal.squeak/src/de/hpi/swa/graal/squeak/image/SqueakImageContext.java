@@ -86,6 +86,11 @@ public final class SqueakImageContext {
     public final ClassObject blockClosureClass = new ClassObject(this);
     public final ArrayObject externalObjectsArray = new ArrayObject(this);
     public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
+    public final ClassObject externalAddressClass = new ClassObject(this);
+    public final ClassObject externalStructureClass = new ClassObject(this);
+    public final ClassObject externalDataClass = new ClassObject(this);
+    public final ClassObject externalFunctionClass = new ClassObject(this);
+    public final ClassObject externalLibraryClass = new ClassObject(this);
     public final NativeObject aboutToReturnSelector = new NativeObject(this);
     public final NativeObject runWithInSelector = new NativeObject(this);
     public final ArrayObject primitiveErrorTable = new ArrayObject(this);
