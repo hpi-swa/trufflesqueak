@@ -104,12 +104,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                     }
                 }
             } catch (final RuntimeException e) {
-                if (e instanceof TruffleException) {
-                    PrimGetLastErrorNode.setLastError(e);
-                    throw new PrimitiveFailed();
-                } else {
-                    throw e;
-                }
+                PrimGetLastErrorNode.setLastError(e);
+                throw new PrimitiveFailed();
             }
         }
     }
@@ -799,9 +795,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    /*
-     * Java interop.
-     */
+/*
+ * Java interop.
+ */
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddToHostClassPath")
@@ -884,6 +880,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asBoolean(method.image.env.isHostSymbol(receiver));
         }
+
     }
 
     /*
