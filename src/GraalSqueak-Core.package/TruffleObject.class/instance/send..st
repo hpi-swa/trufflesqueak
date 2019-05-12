@@ -8,6 +8,6 @@ send: aMessage
 			arguments size == 0 ifTrue: [ | result |
 				result := self primitiveReadMember: identifier.
 				^ result isExecutable
-					ifTrue: [ self primitiveExecute: identifier arguments: arguments ]
+					ifTrue: [ result primitiveExecuteWithArguments: arguments ]
 					ifFalse: [ result ] ].
 			error signal ]

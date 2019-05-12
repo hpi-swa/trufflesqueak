@@ -1,4 +1,4 @@
 primitives
-primitiveExecute: identifier arguments: arguments
+primitiveExecuteWithArguments: arguments
 	<primitive: 'primitiveExecute' module: 'PolyglotPlugin'>
 	Polyglot signalPolyglotError

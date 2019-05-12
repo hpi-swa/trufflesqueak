@@ -7,7 +7,8 @@
 	"commentStamp" : "",
 	"instvars" : [
 		"formatter",
-		"lexers" ],
+		"lexers",
+		"rubyUnbox" ],
 	"name" : "PolyglotTextStyler",
 	"pools" : [
 		 ],
