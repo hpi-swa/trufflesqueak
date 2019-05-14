@@ -9,7 +9,6 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
@@ -136,12 +135,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             } catch (final RuntimeException e) {
-                if (e instanceof TruffleException) {
-                    PrimGetLastErrorNode.setLastError(e);
-                    throw new PrimitiveFailed();
-                } else {
-                    throw e;
-                }
+                PrimGetLastErrorNode.setLastError(e);
+                throw new PrimitiveFailed();
             }
         }
     }
@@ -225,14 +220,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             } catch (final RuntimeException e) {
-                if (e instanceof TruffleException) {
-                    PrimGetLastErrorNode.setLastError(e);
-                    throw new PrimitiveFailed();
-                } else {
-                    throw e;
-                }
+                PrimGetLastErrorNode.setLastError(e);
+                throw new PrimitiveFailed();
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
+            } catch (final Throwable e) {
+                e.printStackTrace();
+                throw e;
             }
         }
     }
@@ -439,14 +433,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             } catch (final RuntimeException e) {
-                if (e instanceof TruffleException) {
-                    PrimGetLastErrorNode.setLastError(e);
-                    throw new PrimitiveFailed();
-                } else {
-                    throw e;
-                }
+                PrimGetLastErrorNode.setLastError(e);
+                throw new PrimitiveFailed();
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
+            } catch (final Throwable e) {
+                e.printStackTrace();
+                throw e;
             }
         }
     }
