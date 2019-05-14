@@ -224,9 +224,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
-            } catch (final Throwable e) {
-                e.printStackTrace();
-                throw e;
             }
         }
     }
@@ -437,9 +434,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
-            } catch (final Throwable e) {
-                e.printStackTrace();
-                throw e;
             }
         }
     }
@@ -788,9 +782,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-/*
- * Java interop.
- */
+    /*
+     * Java interop.
+     */
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddToHostClassPath")
