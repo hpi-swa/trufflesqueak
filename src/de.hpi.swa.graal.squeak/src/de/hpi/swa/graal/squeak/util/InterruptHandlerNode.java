@@ -84,7 +84,7 @@ public abstract class InterruptHandlerNode extends Node {
     }
 
     private void signalSemaporeIfNotNil(final VirtualFrame frame, final int semaphoreIndex) {
-        signalSemaporeIfNotNil(frame, image.specialObjectsArray.at0Object(semaphoreIndex));
+        signalSemaporeIfNotNil(frame, image.getSpecialObject(semaphoreIndex));
     }
 
     private void signalSemaporeIfNotNil(final VirtualFrame frame, final Object semaphore) {

@@ -278,7 +278,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"method.image.hasDisplay()", "receiver.size() >= 4"})
         protected final boolean doDisplay(final PointersObject receiver) {
-            method.image.specialObjectsArray.atput0Object(SPECIAL_OBJECT.THE_DISPLAY, receiver);
+            method.image.setSpecialObject(SPECIAL_OBJECT.THE_DISPLAY, receiver);
             method.image.getDisplay().open(receiver);
             return method.image.sqTrue;
         }
@@ -525,8 +525,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final ArrayObject doArrayOfObjectsWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
                         @Shared("weakPointersReadNode") @Cached final WeakPointersObjectReadNode readNode) {
             final long repOff = replStart - start;
+            final Object[] rcvrValues = rcvr.getObjectStorage();
             for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.atput0Object(i, readNode.executeRead(repl, repOff + i));
+                rcvrValues[i] = readNode.executeRead(repl, repOff + i);
             }
             return rcvr;
         }

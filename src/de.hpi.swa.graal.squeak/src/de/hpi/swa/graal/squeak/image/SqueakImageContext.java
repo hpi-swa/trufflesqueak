@@ -48,6 +48,8 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SMALLTALK_IMAGE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
 import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
@@ -362,9 +364,17 @@ public final class SqueakImageContext {
         return (PointersObject) getScheduler().at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
-    public void setSemaphore(final long index, final AbstractSqueakObject semaphore) {
+    public Object getSpecialObject(final int index) {
+        return ArrayObjectReadNode.getUncached().execute(specialObjectsArray, index);
+    }
+
+    public void setSpecialObject(final int index, final Object value) {
+        ArrayObjectWriteNode.getUncached().execute(specialObjectsArray, index, value);
+    }
+
+    public void setSemaphore(final int index, final AbstractSqueakObject semaphore) {
         assert semaphore == NilObject.SINGLETON || ((AbstractSqueakObjectWithClassAndHash) semaphore).getSqueakClass().isSemaphoreClass();
-        specialObjectsArray.atput0Object(index, semaphore);
+        setSpecialObject(index, semaphore);
     }
 
     public boolean hasDisplay() {

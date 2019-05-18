@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
@@ -54,13 +55,17 @@ public final class InterruptHandlerState {
         if (image.options.disableInterruptHandler) {
             return;
         }
-        final Object interruptSema = image.specialObjectsArray.at0Object(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
+        final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
         if (interruptSema instanceof PointersObject) {
             setInterruptSemaphore((PointersObject) interruptSema);
+        } else {
+            assert interruptSema == NilObject.SINGLETON;
         }
-        final Object timerSema = image.specialObjectsArray.at0Object(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
+        final Object timerSema = image.getSpecialObject(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
         if (timerSema instanceof PointersObject) {
             setTimerSemaphore((PointersObject) timerSema);
+        } else {
+            assert timerSema == NilObject.SINGLETON;
         }
         executor.scheduleWithFixedDelay(() -> shouldTrigger = true,
                         INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);

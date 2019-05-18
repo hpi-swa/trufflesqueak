@@ -77,110 +77,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         }
     }
 
-    public Object at0Boolean(final long index) {
-        final byte value = getBooleanStorage()[(int) index];
-        if (value == BOOLEAN_FALSE_TAG) {
-            return image.sqFalse;
-        } else if (value == BOOLEAN_TRUE_TAG) {
-            return image.sqTrue;
-        } else {
-            assert value == BOOLEAN_NIL_TAG;
-            return NilObject.SINGLETON;
-        }
-    }
-
-    public Object at0Char(final long index) {
-        final char value = getCharStorage()[(int) index];
-        return value == CHAR_NIL_TAG ? NilObject.SINGLETON : value;
-    }
-
-    public Object at0Double(final long index) {
-        final double value = getDoubleStorage()[(int) index];
-        return Double.doubleToRawLongBits(value) == DOUBLE_NIL_TAG_LONG ? NilObject.SINGLETON : value;
-    }
-
-    public Object at0Long(final long index) {
-        final long value = getLongStorage()[(int) index];
-        return value == LONG_NIL_TAG ? NilObject.SINGLETON : value;
-    }
-
-    public AbstractSqueakObject at0NativeObject(final long index) {
-        return NilObject.nullToNil(getNativeObjectStorage()[(int) index]);
-    }
-
-    public Object at0Object(final int index) {
-        final Object value = getObjectStorage()[index];
-        assert value != null;
-        return value;
-    }
-
-    public Object at0Object(final long index) {
-        return at0Object((int) index);
-    }
-
-    public void atput0Boolean(final long index, final boolean value) {
-        getBooleanStorage()[(int) index] = value ? BOOLEAN_TRUE_TAG : BOOLEAN_FALSE_TAG;
-    }
-
-    public void atput0Char(final long index, final char value) {
-        if (value == CHAR_NIL_TAG) {
-            transitionFromCharsToObjects();
-            atput0Object(index, value);
-        } else {
-            getCharStorage()[(int) index] = value;
-        }
-    }
-
-    public void atput0Double(final long index, final double value) {
-        if (value == DOUBLE_NIL_TAG) {
-            transitionFromDoublesToObjects();
-            atput0Object(index, value);
-        } else {
-            getDoubleStorage()[(int) index] = value;
-        }
-    }
-
-    public void atput0Long(final long index, final long value) {
-        if (value == LONG_NIL_TAG) {
-            transitionFromLongsToObjects();
-            atput0Object(index, value);
-        } else {
-            getLongStorage()[(int) index] = value;
-        }
-    }
-
-    public void atput0NativeObject(final long index, final NativeObject value) {
-        getNativeObjectStorage()[(int) index] = value;
-    }
-
-    public void atput0Object(final int index, final Object value) {
-        getObjectStorage()[index] = value;
-    }
-
-    public void atput0Object(final long index, final Object value) {
-        atput0Object((int) index, value);
-    }
-
-    public void atputNil0Boolean(final long index) {
-        getBooleanStorage()[(int) index] = BOOLEAN_NIL_TAG;
-    }
-
-    public void atputNil0Char(final long index) {
-        getCharStorage()[(int) index] = CHAR_NIL_TAG;
-    }
-
-    public void atputNil0Double(final long index) {
-        getDoubleStorage()[(int) index] = DOUBLE_NIL_TAG;
-    }
-
-    public void atputNil0Long(final long index) {
-        getLongStorage()[(int) index] = LONG_NIL_TAG;
-    }
-
-    public void atputNil0NativeObject(final long index) {
-        getNativeObjectStorage()[(int) index] = null;
-    }
-
     public void become(final ArrayObject other) {
         becomeOtherClass(other);
         final Object otherStorage = other.storage;
@@ -291,10 +187,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean isObjectType() {
         return storage.getClass() == Object[].class;
-    }
-
-    public boolean isTraceableObjectType() {
-        return isObjectType();
     }
 
     public boolean hasSameStorageType(final ArrayObject other) {

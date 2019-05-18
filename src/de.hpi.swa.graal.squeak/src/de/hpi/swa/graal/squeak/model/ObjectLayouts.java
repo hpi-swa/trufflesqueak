@@ -5,8 +5,6 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
 
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
-
 public final class ObjectLayouts {
 
     public static final class ADDITIONAL_METHOD_STATE {
@@ -117,8 +115,7 @@ public final class ObjectLayouts {
         public static Map<Object, Object> toJavaMap(final PointersObject dictionary) {
             final ArrayObject classBindings = (ArrayObject) dictionary.at0(HASHED_COLLECTION.ARRAY);
             final Map<Object, Object> keyValues = new HashMap<>();
-            // TODO: Avoid node allocation in next line.
-            for (final Object classBinding : ArrayObjectToObjectArrayNode.getUncached().execute(classBindings)) {
+            for (final Object classBinding : classBindings.getObjectStorage()) {
                 if (classBinding != NilObject.SINGLETON) {
                     final PointersObject classBindingPointer = (PointersObject) classBinding;
                     keyValues.put(classBindingPointer.at0(CLASS_BINDING.KEY), classBindingPointer.at0(CLASS_BINDING.VALUE));

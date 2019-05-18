@@ -12,7 +12,6 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayTransformNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectWriteNodeGen;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -39,32 +38,44 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isBooleanType()")
         protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index) {
-            return obj.at0Boolean(index);
+            final byte value = obj.getBooleanStorage()[(int) index];
+            if (value == ArrayObject.BOOLEAN_FALSE_TAG) {
+                return false;
+            } else if (value == ArrayObject.BOOLEAN_TRUE_TAG) {
+                return true;
+            } else {
+                assert value == ArrayObject.BOOLEAN_NIL_TAG;
+                return NilObject.SINGLETON;
+            }
         }
 
         @Specialization(guards = "obj.isCharType()")
         protected static final Object doArrayOfChars(final ArrayObject obj, final long index) {
-            return obj.at0Char(index);
+            final char value = obj.getCharStorage()[(int) index];
+            return value == ArrayObject.CHAR_NIL_TAG ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final Object doArrayOfLongs(final ArrayObject obj, final long index) {
-            return obj.at0Long(index);
+            final long value = obj.getLongStorage()[(int) index];
+            return value == ArrayObject.LONG_NIL_TAG ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final Object doArrayOfDoubles(final ArrayObject obj, final long index) {
-            return obj.at0Double(index);
+            final double value = obj.getDoubleStorage()[(int) index];
+            return Double.doubleToRawLongBits(value) == ArrayObject.DOUBLE_NIL_TAG_LONG ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isNativeObjectType()")
         protected static final AbstractSqueakObject doArrayOfNativeObjects(final ArrayObject obj, final long index) {
-            return obj.at0NativeObject(index);
+            return NilObject.nullToNil(obj.getNativeObjectStorage()[(int) index]);
         }
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object doArrayOfObjects(final ArrayObject obj, final long index) {
-            return obj.at0Object(index);
+            assert obj.getObjectStorage()[(int) index] != null;
+            return obj.getObjectStorage()[(int) index];
         }
     }
 
@@ -116,6 +127,10 @@ public final class ArrayObjectNodes {
             return ArrayObjectSizeNodeGen.create();
         }
 
+        public static ArrayObjectSizeNode getUncached() {
+            return ArrayObjectSizeNodeGen.getUncached();
+        }
+
         public abstract int execute(ArrayObject obj);
 
         @Specialization(guards = "obj.isEmptyType()")
@@ -161,101 +176,16 @@ public final class ArrayObjectNodes {
             return ArrayObjectToObjectArrayNodeGen.create();
         }
 
-        public static ArrayObjectToObjectArrayNode getUncached() {
-            return ArrayObjectToObjectArrayNodeGen.getUncached();
-        }
-
-        public abstract Object[] execute(ArrayObject obj);
-
-        @Specialization(guards = "obj.isEmptyType()")
-        protected static final Object[] doEmptyArray(final ArrayObject obj) {
-            return ArrayUtils.withAll(obj.getEmptyStorage(), NilObject.SINGLETON);
-        }
-
-        @Specialization(guards = "obj.isBooleanType()")
-        protected static final Object[] doArrayOfBooleans(final ArrayObject obj) {
-            final byte[] booleans = obj.getBooleanStorage();
-            final int length = booleans.length;
-            final Object[] objects = new Object[length];
-            for (int i = 0; i < length; i++) {
-                final byte value = booleans[i];
-                if (value == ArrayObject.BOOLEAN_FALSE_TAG) {
-                    objects[i] = obj.image.sqFalse;
-                } else if (value == ArrayObject.BOOLEAN_TRUE_TAG) {
-                    objects[i] = obj.image.sqTrue;
-                } else {
-                    assert value == ArrayObject.BOOLEAN_NIL_TAG;
-                    objects[i] = NilObject.SINGLETON;
-                }
-            }
-            return objects;
-        }
-
-        @Specialization(guards = "obj.isCharType()")
-        protected static final Object[] doArrayOfChars(final ArrayObject obj) {
-            final char[] chars = obj.getCharStorage();
-            final int length = chars.length;
-            final Object[] objects = new Object[length];
-            for (int i = 0; i < length; i++) {
-                final long value = chars[i];
-                objects[i] = value == ArrayObject.CHAR_NIL_TAG ? NilObject.SINGLETON : value;
-            }
-            return objects;
-        }
-
-        @Specialization(guards = "obj.isLongType()")
-        protected static final Object[] doArrayOfLongs(final ArrayObject obj) {
-            final long[] longs = obj.getLongStorage();
-            final int length = longs.length;
-            final Object[] objects = new Object[length];
-            for (int i = 0; i < length; i++) {
-                final long value = longs[i];
-                objects[i] = value == ArrayObject.LONG_NIL_TAG ? NilObject.SINGLETON : value;
-            }
-            return objects;
-        }
-
-        @Specialization(guards = "obj.isDoubleType()")
-        protected static final Object[] doArrayOfDoubles(final ArrayObject obj) {
-            final double[] doubles = obj.getDoubleStorage();
-            final int length = doubles.length;
-            final Object[] objects = new Object[length];
-            for (int i = 0; i < length; i++) {
-                final double value = doubles[i];
-                objects[i] = value == ArrayObject.DOUBLE_NIL_TAG ? NilObject.SINGLETON : value;
-            }
-            return objects;
-        }
-
-        @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final Object[] doArrayOfNatives(final ArrayObject obj) {
-            final NativeObject[] nativeObjects = obj.getNativeObjectStorage();
-            final int length = nativeObjects.length;
-            final Object[] objects = new Object[length];
-            for (int i = 0; i < length; i++) {
-                objects[i] = NilObject.nullToNil(nativeObjects[i]);
-            }
-            return objects;
-        }
-
-        @Specialization(guards = "obj.isObjectType()")
-        protected static final Object[] doArrayOfObjects(final ArrayObject obj) {
-            return obj.getObjectStorage();
-        }
-    }
-
-    @GenerateUncached
-    public abstract static class ArrayObjectToObjectArrayTransformNode extends AbstractNode {
-
-        public static ArrayObjectToObjectArrayTransformNode create() {
-            return ArrayObjectToObjectArrayTransformNodeGen.create();
-        }
-
         public final Object[] executeWithFirst(final ArrayObject obj, final Object first) {
             return ArrayUtils.copyWithFirst(execute(obj), first);
         }
 
         public abstract Object[] execute(ArrayObject obj);
+
+        @Specialization(guards = "obj.isObjectType()")
+        protected static final Object[] doArrayOfObjects(final ArrayObject obj) {
+            return obj.getObjectStorage();
+        }
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final Object[] doEmptyArray(final ArrayObject obj) {
@@ -291,11 +221,6 @@ public final class ArrayObjectNodes {
         protected static final Object[] doArrayOfNatives(final ArrayObject obj) {
             obj.transitionFromNativesToObjects();
             return doArrayOfObjects(obj);
-        }
-
-        @Specialization(guards = "obj.isObjectType()")
-        protected static final Object[] doArrayOfObjects(final ArrayObject obj) {
-            return obj.getObjectStorage();
         }
     }
 
@@ -363,12 +288,12 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isBooleanType()")
         protected static final void doArrayOfBooleans(final ArrayObject obj, final long index, final boolean value) {
-            obj.atput0Boolean(index, value);
+            obj.getBooleanStorage()[(int) index] = value ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG;
         }
 
         @Specialization(guards = "obj.isBooleanType()")
         protected static final void doArrayOfBooleans(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.atputNil0Boolean(index);
+            obj.getBooleanStorage()[(int) index] = ArrayObject.BOOLEAN_NIL_TAG;
         }
 
         @Specialization(guards = {"obj.isBooleanType()", "!isBoolean(value)", "!isNil(value)"})
@@ -379,12 +304,12 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isCharType()")
         protected static final void doArrayOfChars(final ArrayObject obj, final long index, final char value) {
-            obj.atput0Char(index, value);
+            obj.getCharStorage()[(int) index] = value;
         }
 
         @Specialization(guards = "obj.isCharType()")
         protected static final void doArrayOfChars(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.atputNil0Char(index);
+            obj.getCharStorage()[(int) index] = ArrayObject.CHAR_NIL_TAG;
         }
 
         @Specialization(guards = {"obj.isCharType()", "!isCharacter(value)", "!isNil(value)"})
@@ -395,19 +320,19 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isLongType()", "!isLongNilTag(value)"})
         protected static final void doArrayOfLongs(final ArrayObject obj, final long index, final long value) {
-            obj.atput0Long(index, value);
+            obj.getLongStorage()[(int) index] = value;
         }
 
         @Specialization(guards = {"obj.isLongType()", "isLongNilTag(value)"})
         protected static final void doArrayOfLongsNilTagClash(final ArrayObject obj, final long index, final long value) {
             // `value` happens to be long nil tag, need to despecialize to be able store it.
             obj.transitionFromLongsToObjects();
-            obj.atput0Object(index, value);
+            doArrayOfObjects(obj, index, value);
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final void doArrayOfLongs(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.atputNil0Long(index);
+            obj.getLongStorage()[(int) index] = ArrayObject.LONG_NIL_TAG;
         }
 
         @Specialization(guards = {"obj.isLongType()", "!isLong(value)", "!isNil(value)"})
@@ -418,19 +343,19 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isDoubleType()", "!isDoubleNilTag(value)"})
         protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, final double value) {
-            obj.atput0Double(index, value);
+            obj.getDoubleStorage()[(int) index] = value;
         }
 
         @Specialization(guards = {"obj.isDoubleType()", "isDoubleNilTag(value)"})
         protected static final void doArrayOfDoublesNilTagClash(final ArrayObject obj, final long index, final double value) {
             // `value` happens to be double nil tag, need to despecialize to be able store it.
             obj.transitionFromDoublesToObjects();
-            obj.atput0Object(index, value);
+            doArrayOfObjects(obj, index, value);
         }
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.atputNil0Double(index);
+            obj.getDoubleStorage()[(int) index] = ArrayObject.DOUBLE_NIL_TAG;
         }
 
         @Specialization(guards = {"obj.isDoubleType()", "!isDouble(value)", "!isNil(value)"})
@@ -441,23 +366,23 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isNativeObjectType()")
         protected static final void doArrayOfNativeObjects(final ArrayObject obj, final long index, final NativeObject value) {
-            obj.atput0NativeObject(index, value);
+            obj.getNativeObjectStorage()[(int) index] = value;
         }
 
         @Specialization(guards = "obj.isNativeObjectType()")
         protected static final void doArrayOfNativeObjects(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.atputNil0NativeObject(index);
+            obj.getNativeObjectStorage()[(int) index] = null;
         }
 
         @Specialization(guards = {"obj.isNativeObjectType()", "!isNativeObject(value)", "!isNil(value)"})
         protected static final void doArrayOfNativeObjects(final ArrayObject obj, final long index, final Object value) {
             obj.transitionFromNativesToObjects();
-            obj.atput0Object(index, value);
+            doArrayOfObjects(obj, index, value);
         }
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final void doArrayOfObjects(final ArrayObject obj, final long index, final Object value) {
-            obj.atput0Object(index, value);
+            obj.getObjectStorage()[(int) index] = value;
         }
     }
 }

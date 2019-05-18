@@ -81,7 +81,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        // TODO: specialize for arrays -> object/native/abstractsqueak only
         protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             final Object[] fromPointers = getObjectArrayNode.execute(fromArray);
             final Object[] toPointers = getObjectArrayNode.execute(toArray);
