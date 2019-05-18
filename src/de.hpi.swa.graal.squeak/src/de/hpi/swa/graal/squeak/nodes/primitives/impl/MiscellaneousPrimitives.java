@@ -800,7 +800,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"})
-        protected static final Object getVMParameters(final Object receiver, final long index, final NotProvided value) {
+        protected final Object getVMParameters(final Object receiver, final long index, final NotProvided value) {
             return vmParameterAt((int) index);
         }
 
@@ -810,7 +810,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return NilObject.SINGLETON; // ignore writes
         }
 
-        private static Object vmParameterAt(final int index) {
+        private Object vmParameterAt(final int index) {
             //@formatter:off
             switch (index) {
                 case 1: return 1L; // end (v3)/size(Spur) of old-space (0-based, read-only)
@@ -854,7 +854,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 46: return NilObject.SINGLETON; // machine code zone size, in bytes (Cog only; otherwise nil)
                 case 47: return NilObject.SINGLETON; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
                 case 48: return 0L; // various header flags.  See getCogVMFlags.
-                case 49: return 256L; // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
+                case 49: return (long) method.image.flags.getMaxExternalSemaphoreTableSize(); // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
                 case 50: case 51: return NilObject.SINGLETON; // nil; reserved for VM parameters that persist in the image (such as eden above)
                 case 52: return 65536L; // root table capacity
                 case 53: return 2L; // number of segments (Spur only; otherwise nil)

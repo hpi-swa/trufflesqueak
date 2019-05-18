@@ -91,7 +91,7 @@ public final class SqueakImageContext {
     public final NativeObject runWithInSelector = new NativeObject(this);
     public final ArrayObject primitiveErrorTable = new ArrayObject(this);
     public final ArrayObject specialSelectors = new ArrayObject(this);
-    @CompilationFinal public ClassObject smallFloatClass;
+    @CompilationFinal public ClassObject smallFloatClass = null;
     @CompilationFinal public ClassObject truffleObjectClass = null;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);

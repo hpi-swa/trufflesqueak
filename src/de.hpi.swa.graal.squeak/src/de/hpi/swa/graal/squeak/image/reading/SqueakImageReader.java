@@ -44,7 +44,9 @@ public final class SqueakImageReader {
     private long headerSize;
     private long oldBaseAddress;
     private long specialObjectsPointer;
-    @SuppressWarnings("unused") private short maxExternalSemaphoreTableSize; // TODO: use value
+    private int lastWindowSizeWord;
+    private int headerFlags;
+    private short maxExternalSemaphoreTableSize;
     private long firstSegmentSize;
     private int position = 0;
     private long segmentEnd;
@@ -180,9 +182,8 @@ public final class SqueakImageReader {
         oldBaseAddress = nextWord();
         specialObjectsPointer = nextWord();
         nextWord(); // 1 word last used hash
-        final int lastWindowSizeWord = (int) nextWord();
-        final int headerFlags = (int) nextWord();
-        image.flags.initialize(headerFlags, lastWindowSizeWord, is64bit);
+        lastWindowSizeWord = (int) nextWord();
+        headerFlags = (int) nextWord();
         nextInt(); // extraVMMemory
     }
 
@@ -202,6 +203,7 @@ public final class SqueakImageReader {
         readVersion();
         readBaseHeader();
         readSpurHeader();
+        image.flags.initialize(is64bit, headerFlags, lastWindowSizeWord, maxExternalSemaphoreTableSize);
         skipToBody();
     }
 

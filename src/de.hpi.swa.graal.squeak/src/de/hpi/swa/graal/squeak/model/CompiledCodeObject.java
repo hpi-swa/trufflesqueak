@@ -209,13 +209,19 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
         final int header = getHeader();
         final int[] splitHeader = MiscUtils.bitSplitter(header, HEADER_SPLIT_PATTERN);
         numLiterals = splitHeader[0];
-        // TODO: isOptimized = splitHeader[1] == 1;
         hasPrimitive = splitHeader[2] == 1;
         needsLargeFrame = splitHeader[3] == 1;
         numTemps = splitHeader[4];
         numArgs = splitHeader[5];
-        // TODO: accessModifier = splitHeader[6];
-        // TODO: altInstructionSet = splitHeader[7] == 1;
+        /** Jit without counters - reserved for methods that have been optimized by Sista. */
+        // isOptimized = splitHeader[1] == 1;
+        /**
+         * reserved for an access modifier (00-unused, 01-private, 10-protected, 11-public),
+         * although accessors for bit 29 exist (see #flag).
+         */
+        // accessModifier = splitHeader[6];
+        /** selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag). */
+        // altInstructionSet = splitHeader[7] == 1;
         ensureCorrectNumberOfStackSlots();
     }
 

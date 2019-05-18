@@ -202,7 +202,10 @@ public final class PushBytecodes {
 
         @Specialization(guards = {"popNReversedNode == null"})
         protected final void doPushNewArray(final VirtualFrame frame) {
-            // TODO: createEmptyStrategy?
+            /**
+             * Pushing an ArrayObject with object strategy. Contents likely to be mixed values and
+             * therefore unlikely to benefit from storage strategy.
+             */
             pushNode.executeWrite(frame, ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize));
         }
 
