@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -47,8 +48,8 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doHas(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.sqFalse;
+        protected static final boolean doHas(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return BooleanObject.FALSE;
         }
     }
 

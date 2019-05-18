@@ -29,6 +29,7 @@ import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -200,107 +201,107 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final boolean doClass(final ClassObject receiver, final Object thang) {
-            return receiver.pointsTo(thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doClass(final ClassObject receiver, final Object thang) {
+            return BooleanObject.wrap(receiver.pointsTo(thang));
         }
 
         @Specialization
-        protected final boolean doClass(final CompiledCodeObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getLiterals(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doClass(final CompiledCodeObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getLiterals(), thang));
         }
 
         @Specialization
-        protected final boolean doContext(final ContextObject receiver, final Object thang) {
-            return receiver.pointsTo(thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doContext(final ContextObject receiver, final Object thang) {
+            return BooleanObject.wrap(receiver.pointsTo(thang));
         }
 
         @Specialization(guards = {"receiver.isEmptyType()", "receiver.getEmptyStorage() > 0"})
-        protected final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
-            return thang == NilObject.SINGLETON ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
+            return BooleanObject.wrap(thang == NilObject.SINGLETON);
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
-        protected final boolean doArrayOfBooleans(final ArrayObject receiver, final boolean thang) {
-            return ArrayUtils.contains(receiver.getBooleanStorage(), thang ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfBooleans(final ArrayObject receiver, final boolean thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getBooleanStorage(), thang ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG));
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
-        protected final boolean doArrayOfBooleans(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getBooleanStorage(), ArrayObject.BOOLEAN_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfBooleans(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getBooleanStorage(), ArrayObject.BOOLEAN_NIL_TAG));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isBooleanType()", "!isBoolean(thang)", "!isNil(thang)"})
-        protected final boolean doArrayOfBooleans(final ArrayObject receiver, final Object thang) {
-            return method.image.sqFalse;
+        protected static final boolean doArrayOfBooleans(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.FALSE;
         }
 
         @Specialization(guards = "receiver.isCharType()")
-        protected final boolean doArrayOfChars(final ArrayObject receiver, final char thang) {
-            return ArrayUtils.contains(receiver.getCharStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfChars(final ArrayObject receiver, final char thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getCharStorage(), thang));
         }
 
         @Specialization(guards = "receiver.isCharType()")
-        protected final boolean doArrayOfChars(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getCharStorage(), ArrayObject.CHAR_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfChars(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getCharStorage(), ArrayObject.CHAR_NIL_TAG));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isCharType()", "!isCharacter(thang)", "!isNil(thang)"})
-        protected final boolean doArrayOfChars(final ArrayObject receiver, final Object thang) {
-            return method.image.sqFalse;
+        protected static final boolean doArrayOfChars(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.FALSE;
         }
 
         @Specialization(guards = "receiver.isLongType()")
-        protected final boolean doArrayOfLongs(final ArrayObject receiver, final long thang) {
-            return ArrayUtils.contains(receiver.getLongStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfLongs(final ArrayObject receiver, final long thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getLongStorage(), thang));
         }
 
         @Specialization(guards = "receiver.isLongType()")
-        protected final boolean doArrayOfLongs(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getLongStorage(), ArrayObject.LONG_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfLongs(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getLongStorage(), ArrayObject.LONG_NIL_TAG));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isLongType()", "!isLong(thang)", "!isNil(thang)"})
-        protected final boolean doArrayOfLongss(final ArrayObject receiver, final Object thang) {
-            return method.image.sqFalse;
+        protected static final boolean doArrayOfLongss(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.FALSE;
         }
 
         @Specialization(guards = "receiver.isDoubleType()")
-        protected final boolean doArrayOfDoubles(final ArrayObject receiver, final double thang) {
-            return ArrayUtils.contains(receiver.getDoubleStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfDoubles(final ArrayObject receiver, final double thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getDoubleStorage(), thang));
         }
 
         @Specialization(guards = "receiver.isDoubleType()")
-        protected final boolean doArrayOfDoubles(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getDoubleStorage(), ArrayObject.DOUBLE_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfDoubles(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getDoubleStorage(), ArrayObject.DOUBLE_NIL_TAG));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isDoubleType()", "!isDouble(thang)", "!isNil(thang)"})
-        protected final boolean doArrayOfDoubles(final ArrayObject receiver, final Object thang) {
-            return method.image.sqFalse;
+        protected static final boolean doArrayOfDoubles(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.FALSE;
         }
 
         @Specialization(guards = "receiver.isNativeObjectType()")
-        protected final boolean doArrayOfNatives(final ArrayObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getNativeObjectStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfNatives(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getNativeObjectStorage(), thang));
         }
 
         @Specialization(guards = "receiver.isObjectType()")
-        protected final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getObjectStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getObjectStorage(), thang));
         }
 
         @Specialization
-        protected final boolean doPointers(final PointersObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getPointers(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doPointers(final PointersObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getPointers(), thang));
         }
 
         @Specialization
-        protected final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getPointers(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getPointers(), thang));
         }
     }
 
@@ -678,7 +679,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         protected final boolean isPinned(final AbstractSqueakObjectWithClassAndHash receiver) {
             PrimPinNode.printWarningIfNotTesting(method);
-            return receiver.isPinned() ? method.image.sqTrue : method.image.sqFalse;
+            return BooleanObject.wrap(receiver.isPinned());
         }
     }
 
@@ -695,7 +696,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             printWarningIfNotTesting(method);
             final boolean wasPinned = receiver.isPinned();
             receiver.setPinned();
-            return wasPinned ? method.image.sqTrue : method.image.sqFalse;
+            return BooleanObject.wrap(wasPinned);
         }
 
         @Specialization(guards = "!enable")
@@ -703,7 +704,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             printWarningIfNotTesting(method);
             final boolean wasPinned = receiver.isPinned();
             receiver.unsetPinned();
-            return wasPinned ? method.image.sqTrue : method.image.sqFalse;
+            return BooleanObject.wrap(wasPinned);
         }
 
         protected static final void printWarningIfNotTesting(final CompiledCodeObject code) {

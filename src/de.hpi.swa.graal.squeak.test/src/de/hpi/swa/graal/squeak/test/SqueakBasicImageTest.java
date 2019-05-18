@@ -8,6 +8,8 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import de.hpi.swa.graal.squeak.model.BooleanObject;
+
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
 
@@ -47,8 +49,8 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
         final Object result = compilerEvaluate("[[self error: 'foobar'] on: Error do: [:err| ^ err messageText]]value");
         assertEquals("foobar", result.toString());
         assertEquals("foobar", compilerEvaluate("[[self error: 'foobar'] value] on: Error do: [:err| ^ err messageText]").toString());
-        assertEquals(image.sqTrue, compilerEvaluate("[[self error: 'foobar'] on: ZeroDivide do: [:e|]] on: Error do: [:err| ^ true]"));
-        assertEquals(image.sqTrue, compilerEvaluate("[self error: 'foobar'. false] on: Error do: [:err| ^ err return: true]"));
+        assertEquals(BooleanObject.TRUE, compilerEvaluate("[[self error: 'foobar'] on: ZeroDivide do: [:e|]] on: Error do: [:err| ^ true]"));
+        assertEquals(BooleanObject.TRUE, compilerEvaluate("[self error: 'foobar'. false] on: Error do: [:err| ^ err return: true]"));
     }
 
     @Test
@@ -59,19 +61,19 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
 
     @Test
     public void test07SUnitTest() {
-        assertEquals(image.sqTrue, evaluate("(TestCase new should: [1/0] raise: ZeroDivide) isKindOf: TestCase"));
+        assertEquals(BooleanObject.TRUE, evaluate("(TestCase new should: [1/0] raise: ZeroDivide) isKindOf: TestCase"));
     }
 
     @Test
     public void test08MethodContextRestart() {
         // MethodContextTest>>testRestart uses #should:notTakeMoreThan: (requires process switching)
-        assertEquals(image.sqTrue, evaluate("[MethodContextTest new privRestartTest. true] value"));
+        assertEquals(BooleanObject.TRUE, evaluate("[MethodContextTest new privRestartTest. true] value"));
     }
 
     @Test
     public void test09CompressAndDecompressBitmaps() {
         // Iterate over all ToolIcons, copy their bitmaps, and then compress and decompress them.
-        assertEquals(image.sqTrue, evaluate("ToolIcons icons values allSatisfy: [:icon | | sourceBitmap sourceArray destBitmap |\n" +
+        assertEquals(BooleanObject.TRUE, evaluate("ToolIcons icons values allSatisfy: [:icon | | sourceBitmap sourceArray destBitmap |\n" +
                         "  icon unhibernate.\n" + // Ensure icon is decompressed and has a bitmap.
                         "  sourceBitmap := icon bits copy.\n" +
                         "  sourceArray := sourceBitmap compressToByteArray.\n" +

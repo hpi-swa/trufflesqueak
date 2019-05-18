@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -192,8 +193,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected final Object doForward(final Object receiver, final long signalNumber, final long semaphoreIndex) {
-            return method.image.sqTrue; // TODO: implement
+        protected static final Object doForward(final Object receiver, final long signalNumber, final long semaphoreIndex) {
+            return BooleanObject.TRUE; // TODO: implement
         }
     }
 }

@@ -204,9 +204,9 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         for (int i = 0; i < booleans.length; i++) {
             final byte value = booleans[i];
             if (value == BOOLEAN_FALSE_TAG) {
-                objects[i] = image.sqFalse;
+                objects[i] = BooleanObject.FALSE;
             } else if (value == BOOLEAN_TRUE_TAG) {
-                objects[i] = image.sqTrue;
+                objects[i] = BooleanObject.TRUE;
             } else {
                 assert value == BOOLEAN_NIL_TAG;
                 objects[i] = NilObject.SINGLETON;

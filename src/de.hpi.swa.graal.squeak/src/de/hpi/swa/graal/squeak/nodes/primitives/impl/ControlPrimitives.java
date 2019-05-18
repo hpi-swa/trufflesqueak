@@ -26,6 +26,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -389,53 +390,53 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doBoolean(final boolean a, final boolean b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doBoolean(final boolean a, final boolean b, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected final boolean doChar(final char a, final char b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doChar(final char a, final char b, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected final boolean doLong(final long a, final long b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLong(final long a, final long b, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected final boolean doDouble(final double a, final double b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doDouble(final double a, final double b, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return BooleanObject.wrap(Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b));
         }
 
         @Specialization
-        public final boolean doObject(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doObject(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected final boolean doBoolean(@SuppressWarnings("unused") final ContextObject context, final boolean a, final boolean b) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doBoolean(@SuppressWarnings("unused") final ContextObject context, final boolean a, final boolean b) {
+            return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final char a, final char b) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final char a, final char b) {
+            return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected final boolean doLong(@SuppressWarnings("unused") final ContextObject context, final long a, final long b) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLong(@SuppressWarnings("unused") final ContextObject context, final long a, final long b) {
+            return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected final boolean doDouble(@SuppressWarnings("unused") final ContextObject context, final double a, final double b) {
-            return Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doDouble(@SuppressWarnings("unused") final ContextObject context, final double a, final double b) {
+            return BooleanObject.wrap(Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b));
         }
 
         @Specialization(guards = "!isNotProvided(b)")
-        public final boolean doObject(@SuppressWarnings("unused") final ContextObject context, final Object a, final Object b) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        public static final boolean doObject(@SuppressWarnings("unused") final ContextObject context, final Object a, final Object b) {
+            return BooleanObject.wrap(a == b);
         }
     }
 
@@ -720,28 +721,28 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doBoolean(final boolean a, final boolean b) {
-            return a != b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doBoolean(final boolean a, final boolean b) {
+            return BooleanObject.wrap(a != b);
         }
 
         @Specialization
-        protected final boolean doChar(final char a, final char b) {
-            return a != b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doChar(final char a, final char b) {
+            return BooleanObject.wrap(a != b);
         }
 
         @Specialization
-        protected final boolean doLong(final long a, final long b) {
-            return a != b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLong(final long a, final long b) {
+            return BooleanObject.wrap(a != b);
         }
 
         @Specialization
-        protected final boolean doDouble(final double a, final double b) {
-            return Double.doubleToRawLongBits(a) != Double.doubleToRawLongBits(b) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doDouble(final double a, final double b) {
+            return BooleanObject.wrap(Double.doubleToRawLongBits(a) != Double.doubleToRawLongBits(b));
         }
 
         @Fallback
-        public final boolean doObject(final Object a, final Object b) {
-            return a != b ? method.image.sqTrue : method.image.sqFalse;
+        public static final boolean doObject(final Object a, final Object b) {
+            return BooleanObject.wrap(a != b);
         }
     }
 
@@ -780,13 +781,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "ownerIsNil(mutex)")
         protected final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided) {
             mutex.atput0(MUTEX.OWNER, method.image.getActiveProcess());
-            return method.image.sqFalse;
+            return BooleanObject.FALSE;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "activeProcessMutexOwner(mutex)")
-        protected final boolean doEnterActiveProcessOwner(final PointersObject mutex, final NotProvided notProvided) {
-            return method.image.sqTrue;
+        protected static final boolean doEnterActiveProcessOwner(final PointersObject mutex, final NotProvided notProvided) {
+            return BooleanObject.TRUE;
         }
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!activeProcessMutexOwner(mutex)"})
@@ -794,30 +795,30 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode,
                         @Shared("linkProcessToListNode") @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
-            pushNode.executeWrite(frame, method.image.sqFalse);
+            pushNode.executeWrite(frame, BooleanObject.FALSE);
             linkProcessToListNode.executeLink(method.image.getActiveProcess(), mutex);
             wakeHighestPriorityNode.executeWake(frame);
             throw new PrimitiveWithoutResultException();
         }
 
         @Specialization(guards = "ownerIsNil(mutex)")
-        protected final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess) {
+        protected static final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess) {
             mutex.atput0(MUTEX.OWNER, effectiveProcess);
-            return method.image.sqFalse;
+            return BooleanObject.FALSE;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isMutexOwner(mutex, effectiveProcess)")
-        protected final boolean doEnterActiveProcessOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
-            return method.image.sqTrue;
+        protected static final boolean doEnterActiveProcessOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
+            return BooleanObject.TRUE;
         }
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!isMutexOwner(mutex, effectiveProcess)"})
-        protected final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess,
+        protected static final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess,
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode,
                         @Shared("linkProcessToListNode") @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
-            pushNode.executeWrite(frame, method.image.sqFalse);
+            pushNode.executeWrite(frame, BooleanObject.FALSE);
             linkProcessToListNode.executeLink(effectiveProcess, mutex);
             wakeHighestPriorityNode.executeWake(frame);
             throw new PrimitiveWithoutResultException();
@@ -848,12 +849,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"ownerIsNil(rcvrMutex)"})
         protected final boolean doNilOwner(final PointersObject rcvrMutex) {
             rcvrMutex.atput0(MUTEX.OWNER, method.image.getActiveProcess());
-            return method.image.sqFalse;
+            return BooleanObject.FALSE;
         }
 
         @Specialization(guards = {"ownerIsActiveProcess(rcvrMutex)"})
-        protected final boolean doOwnerIsActiveProcess(@SuppressWarnings("unused") final PointersObject rcvrMutex) {
-            return method.image.sqTrue;
+        protected static final boolean doOwnerIsActiveProcess(@SuppressWarnings("unused") final PointersObject rcvrMutex) {
+            return BooleanObject.TRUE;
         }
 
         @Specialization(guards = {"!ownerIsNil(rcvrMutex)", "!ownerIsActiveProcess(rcvrMutex)"})
@@ -1005,8 +1006,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean returnValue(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.sqTrue;
+        protected static final boolean returnValue(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.TRUE;
         }
     }
 
@@ -1018,8 +1019,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean returnValue(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.sqFalse;
+        protected static final boolean returnValue(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.FALSE;
         }
     }
 

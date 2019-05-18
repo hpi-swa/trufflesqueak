@@ -33,6 +33,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -62,8 +63,6 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class SqueakImageContext {
-    public final boolean sqFalse = false;
-    public final boolean sqTrue = true;
     // Special objects
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
@@ -268,7 +267,7 @@ public final class SqueakImageContext {
 
         final AbstractSqueakObjectWithClassAndHash parser = (AbstractSqueakObjectWithClassAndHash) parserClass.send("new");
         final AbstractSqueakObjectWithClassAndHash methodNode = (AbstractSqueakObjectWithClassAndHash) parser.send(
-                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, sqTrue, NilObject.SINGLETON, new BlockClosureObject(this));
+                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, new BlockClosureObject(this));
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
@@ -464,10 +463,6 @@ public final class SqueakImageContext {
 
     public ArrayObject asArrayOfObjects(final Object... elements) {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
-    }
-
-    public boolean asBoolean(final boolean value) {
-        return value ? sqTrue : sqFalse;
     }
 
     public NativeObject asByteArray(final byte[] bytes) {

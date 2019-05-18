@@ -35,6 +35,7 @@ import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -270,9 +271,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doHasArrayElements(final Object receiver,
+        protected static final boolean doHasArrayElements(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.hasArrayElements(receiver));
+            return BooleanObject.wrap(lib.hasArrayElements(receiver));
         }
     }
 
@@ -285,9 +286,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doHasArrayElements(final Object receiver,
+        protected static final boolean doHasArrayElements(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.hasMembers(receiver));
+            return BooleanObject.wrap(lib.hasMembers(receiver));
         }
     }
 
@@ -391,7 +392,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final boolean doIsPolyglotAccessAllowed(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asBoolean(method.image.env.isPolyglotAccessAllowed());
+            return BooleanObject.wrap(method.image.env.isPolyglotAccessAllowed());
         }
     }
 
@@ -447,9 +448,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doIsBoolean(final Object receiver,
+        protected static final boolean doIsBoolean(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.isBoolean(receiver));
+            return BooleanObject.wrap(lib.isBoolean(receiver));
         }
     }
 
@@ -462,10 +463,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "lib.isBoolean(receiver)", limit = "2")
-        protected final boolean doAsBoolean(final Object receiver,
+        protected static final boolean doAsBoolean(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
-                return method.image.asBoolean(lib.asBoolean(receiver));
+                return BooleanObject.wrap(lib.asBoolean(receiver));
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -481,9 +482,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doIsString(final Object receiver,
+        protected static final boolean doIsString(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.isString(receiver));
+            return BooleanObject.wrap(lib.isString(receiver));
         }
     }
 
@@ -515,9 +516,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doFitsInLong(final Object receiver,
+        protected static final boolean doFitsInLong(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.fitsInLong(receiver));
+            return BooleanObject.wrap(lib.fitsInLong(receiver));
         }
     }
 
@@ -549,9 +550,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doFitsInDouble(final Object receiver,
+        protected static final boolean doFitsInDouble(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.fitsInDouble(receiver));
+            return BooleanObject.wrap(lib.fitsInDouble(receiver));
         }
     }
 
@@ -597,9 +598,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doIsExecutable(final Object receiver,
+        protected static final boolean doIsExecutable(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.isExecutable(receiver));
+            return BooleanObject.wrap(lib.isExecutable(receiver));
         }
     }
 
@@ -612,9 +613,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doIsInstantiable(final Object receiver,
+        protected static final boolean doIsInstantiable(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.isInstantiable(receiver));
+            return BooleanObject.wrap(lib.isInstantiable(receiver));
         }
     }
 
@@ -649,9 +650,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doIsNull(final Object receiver,
+        protected static final boolean doIsNull(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.isNull(receiver));
+            return BooleanObject.wrap(lib.isNull(receiver));
         }
     }
 
@@ -664,9 +665,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doIsPointer(final Object receiver,
+        protected static final boolean doIsPointer(final Object receiver,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return method.image.asBoolean(lib.isPointer(receiver));
+            return BooleanObject.wrap(lib.isPointer(receiver));
         }
     }
 
@@ -802,7 +803,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
             }
-            return method.image.sqTrue;
+            return BooleanObject.TRUE;
         }
     }
 
@@ -839,7 +840,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final boolean doIsHostFunction(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asBoolean(method.image.env.isHostFunction(receiver));
+            return BooleanObject.wrap(method.image.env.isHostFunction(receiver));
         }
     }
 
@@ -852,7 +853,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final boolean doIsHostObject(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asBoolean(method.image.env.isHostObject(receiver));
+            return BooleanObject.wrap(method.image.env.isHostObject(receiver));
         }
     }
 
@@ -865,7 +866,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asBoolean(method.image.env.isHostSymbol(receiver));
+            return BooleanObject.wrap(method.image.env.isHostSymbol(receiver));
         }
 
     }

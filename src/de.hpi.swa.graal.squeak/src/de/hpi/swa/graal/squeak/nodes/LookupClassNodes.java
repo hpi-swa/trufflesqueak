@@ -44,13 +44,13 @@ public final class LookupClassNodes {
             return image.nilClass;
         }
 
-        @Specialization(guards = "value == image.sqTrue")
+        @Specialization(guards = "value == TRUE")
         protected static final ClassObject doTrue(@SuppressWarnings("unused") final boolean value,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.trueClass;
         }
 
-        @Specialization(guards = "value != image.sqTrue")
+        @Specialization(guards = "value != TRUE")
         protected static final ClassObject doFalse(@SuppressWarnings("unused") final boolean value,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.falseClass;

@@ -10,6 +10,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -112,11 +113,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "receiver.isIntType()")
         protected final Object doIdentity(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
-            if (ints[0] == FLOAT_ONE && ints[1] == 0 && ints[2] == 0 && ints[3] == 0 && ints[4] == FLOAT_ONE && ints[5] == 0) {
-                return method.image.sqTrue;
-            } else {
-                return method.image.sqFalse;
-            }
+            return BooleanObject.wrap(ints[0] == FLOAT_ONE && ints[1] == 0 && ints[2] == 0 && ints[3] == 0 && ints[4] == FLOAT_ONE && ints[5] == 0);
         }
     }
 
@@ -130,11 +127,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "receiver.isIntType()")
         protected final Object doPure(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
-            if (ints[0] == FLOAT_ONE && ints[1] == 0 && ints[3] == 0 && ints[4] == FLOAT_ONE) {
-                return method.image.sqTrue;
-            } else {
-                return method.image.sqFalse;
-            }
+            return BooleanObject.wrap(ints[0] == FLOAT_ONE && ints[1] == 0 && ints[3] == 0 && ints[4] == FLOAT_ONE);
         }
     }
 

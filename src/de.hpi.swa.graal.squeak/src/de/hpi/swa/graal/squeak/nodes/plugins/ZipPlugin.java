@@ -11,6 +11,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -635,7 +636,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
         storeIntegerofObjectwithValue(writeStreamInstSize + 3, rcvr, zipBlockPos);
         storeIntegerofObjectwithValue(writeStreamInstSize + 9, rcvr, zipLiteralCount);
         storeIntegerofObjectwithValue(writeStreamInstSize + 10, rcvr, zipMatchCount);
-        return rcvr.image.asBoolean(result);
+        return BooleanObject.wrap(result);
     }
 
     /* Primitive. Update the hash tables after data has been moved by delta. */

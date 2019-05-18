@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -58,7 +59,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             final VirtualFrame frame = createTestFrame(method);
             try {
                 final Object result = createContext(method, rcvr).execute(frame);
-                assertSame(image.sqTrue, result);
+                assertSame(BooleanObject.TRUE, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 fail("broken test");
             }
@@ -96,7 +97,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             final VirtualFrame frame = createTestFrame(method);
             try {
                 final Object result = createContext(method, rcvr).execute(frame);
-                assertSame(image.sqFalse, result);
+                assertSame(BooleanObject.FALSE, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 fail("broken test");
             }
@@ -109,9 +110,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final PointersObject rcvr = new PointersObject(image, image.arrayClass, new Object[numberOfBytecodes]);
         for (int i = 0; i < numberOfBytecodes; i++) {
             final int pushBC = i % 2 == 0 ? 113 : 114;
-            final boolean pushValue = i % 2 == 0 ? image.sqTrue : image.sqFalse;
+            final boolean pushValue = BooleanObject.wrap(i % 2 == 0);
             // push value; popIntoReceiver; push true; return top
-            assertSame(image.sqTrue, runMethod(rcvr, pushBC, 96 + i, 113, 124));
+            assertSame(BooleanObject.TRUE, runMethod(rcvr, pushBC, 96 + i, 113, 124));
             assertSame(pushValue, rcvr.getPointers()[i]);
         }
     }
@@ -185,7 +186,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             final VirtualFrame frame = createTestFrame(method);
             final ExecuteTopLevelContextNode executeContextNode = createContext(method, rcvr);
             try {
-                assertSame(image.sqTrue, executeContextNode.execute(frame));
+                assertSame(BooleanObject.TRUE, executeContextNode.execute(frame));
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 fail("broken test");
             }
@@ -221,7 +222,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             final VirtualFrame frame = createTestFrame(method);
             try {
                 final Object result = createContext(method, rcvr).execute(frame);
-                assertSame(image.sqFalse, result);
+                assertSame(BooleanObject.FALSE, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 fail("broken test");
             }
@@ -234,7 +235,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final PointersObject rcvr = new PointersObject(image, image.arrayClass, new Object[numberOfBytecodes]);
         for (int i = 0; i < numberOfBytecodes; i++) {
             final int pushBC = i % 2 == 0 ? 113 : 114;
-            final boolean pushValue = i % 2 == 0 ? image.sqTrue : image.sqFalse;
+            final boolean pushValue = BooleanObject.wrap(i % 2 == 0);
             // push value; storeTopIntoReceiver; return top
             assertSame(pushValue, runMethod(rcvr, pushBC, 129, i, 124));
             assertSame(pushValue, rcvr.getPointers()[i]);
@@ -275,9 +276,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             final VirtualFrame frame = createTestFrame(method);
             try {
                 final Object result = createContext(method, rcvr).execute(frame);
-                assertSame(image.sqTrue, result);
+                assertSame(BooleanObject.TRUE, result);
                 final PointersObject literal = (PointersObject) method.getLiteral(i);
-                assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
+                assertSame(BooleanObject.TRUE, literal.getPointers()[ASSOCIATION.VALUE]);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 fail("broken test");
             }
@@ -290,9 +291,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final PointersObject rcvr = new PointersObject(image, image.arrayClass, new Object[numberOfBytecodes]);
         for (int i = 0; i < numberOfBytecodes; i++) {
             final int pushBC = i % 2 == 0 ? 113 : 114;
-            final boolean pushValue = i % 2 == 0 ? image.sqTrue : image.sqFalse;
+            final boolean pushValue = BooleanObject.wrap(i % 2 == 0);
             // push value; popIntoReceiver; push true; return top
-            assertSame(image.sqTrue, runMethod(rcvr, pushBC, 130, i, 113, 124));
+            assertSame(BooleanObject.TRUE, runMethod(rcvr, pushBC, 130, i, 113, 124));
             assertSame(pushValue, rcvr.getPointers()[i]);
         }
     }
@@ -331,7 +332,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final Object result = createContext(method, rcvr).execute(frame);
                 assertSame(rcvr, result);
                 final PointersObject literal = (PointersObject) method.getLiteral(i);
-                assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
+                assertSame(BooleanObject.TRUE, literal.getPointers()[ASSOCIATION.VALUE]);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 fail("broken test");
             }
@@ -380,7 +381,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             final VirtualFrame frame = createTestFrame(method);
             try {
                 final Object result = createContext(method, rcvr).execute(frame);
-                assertSame(image.sqFalse, result);
+                assertSame(BooleanObject.FALSE, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 fail("broken test");
             }
@@ -393,7 +394,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final PointersObject rcvr = new PointersObject(image, image.arrayClass, new Object[numberOfVariables]);
         for (int i = 0; i < numberOfVariables; i++) {
             final int pushBC = i % 2 == 0 ? 113 : 114;
-            final boolean pushValue = i % 2 == 0 ? image.sqTrue : image.sqFalse;
+            final boolean pushValue = BooleanObject.wrap(i % 2 == 0);
             // push value; storeTopIntoReceiver; return top
             assertSame(pushValue, runMethod(rcvr, pushBC, 132, 160, i, 124));
             assertSame(pushValue, rcvr.getPointers()[i]);
@@ -406,9 +407,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final PointersObject rcvr = new PointersObject(image, image.arrayClass, new Object[numberOfBytecodes]);
         for (int i = 0; i < numberOfBytecodes; i++) {
             final int pushBC = i % 2 == 0 ? 113 : 114;
-            final boolean pushValue = i % 2 == 0 ? image.sqTrue : image.sqFalse;
+            final boolean pushValue = BooleanObject.wrap(i % 2 == 0);
             // push value; popIntoReceiver; push true; return top
-            assertSame(image.sqTrue, runMethod(rcvr, pushBC, 132, 192, i, 113, 124));
+            assertSame(BooleanObject.TRUE, runMethod(rcvr, pushBC, 132, 192, i, 113, 124));
             assertSame(pushValue, rcvr.getPointers()[i]);
         }
     }
@@ -430,9 +431,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             final VirtualFrame frame = createTestFrame(method);
             try {
                 final Object result = createContext(method, rcvr).execute(frame);
-                assertSame(image.sqTrue, result);
+                assertSame(BooleanObject.TRUE, result);
                 final PointersObject literal = (PointersObject) method.getLiteral(i);
-                assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
+                assertSame(BooleanObject.TRUE, literal.getPointers()[ASSOCIATION.VALUE]);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 fail("broken test");
             }
@@ -445,13 +446,13 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testPop() {
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // push true, push false, pop, return top
-        assertSame(runMethod(rcvr, 113, 114, 135, 124), image.sqTrue);
+        assertSame(runMethod(rcvr, 113, 114, 135, 124), BooleanObject.TRUE);
     }
 
     @Test
     public void testDup() {
         // push true, dup, dup, pop, pop, returnTop
-        assertSame(image.sqTrue, runMethod(1L, 113, 136, 136, 135, 135, 124));
+        assertSame(BooleanObject.TRUE, runMethod(1L, 113, 136, 136, 135, 135, 124));
     }
 
     // TODO: testPushActiveContext()
@@ -483,7 +484,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         resultList = (ArrayObject) result;
         assertEquals(arraySize, sizeNode.execute(resultList));
         for (int i = 0; i < arraySize; i++) {
-            assertEquals(i % 2 == 0 ? image.sqTrue : image.sqFalse, at0Node.execute(resultList, i));
+            assertEquals(BooleanObject.wrap(i % 2 == 0), at0Node.execute(resultList, i));
         }
     }
 
@@ -512,7 +513,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final VirtualFrame frame = createTestFrame(method);
         try {
             final Object result = createContext(method, rcvr).execute(frame);
-            assertSame(image.sqTrue, result);
+            assertSame(BooleanObject.TRUE, result);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             fail("broken test");
         }
@@ -537,8 +538,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             assertTrue(result instanceof ArrayObject);
             final ArrayObject resultList = (ArrayObject) result;
             assertEquals(2, sizeNode.execute(resultList));
-            assertEquals(image.sqFalse, at0Node.execute(resultList, 0));
-            assertEquals(image.sqFalse, at0Node.execute(resultList, 1));
+            assertEquals(BooleanObject.FALSE, at0Node.execute(resultList, 0));
+            assertEquals(BooleanObject.FALSE, at0Node.execute(resultList, 1));
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             fail("broken test");
         }
@@ -563,8 +564,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             assertTrue(result instanceof ArrayObject);
             final ArrayObject resultList = (ArrayObject) result;
             assertEquals(2, sizeNode.execute(resultList));
-            assertEquals(image.sqFalse, at0Node.execute(resultList, 0));
-            assertEquals(image.sqTrue, at0Node.execute(resultList, 1));
+            assertEquals(BooleanObject.FALSE, at0Node.execute(resultList, 0));
+            assertEquals(BooleanObject.TRUE, at0Node.execute(resultList, 1));
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             fail("broken test");
         }
@@ -661,7 +662,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     private static PointersObject getTestObject() {
         return new PointersObject(image, image.arrayClass,
-                        new Object[]{NilObject.SINGLETON, image.sqFalse, image.sqTrue, image.characterClass, image.metaClass,
+                        new Object[]{NilObject.SINGLETON, BooleanObject.FALSE, BooleanObject.TRUE, image.characterClass, image.metaClass,
                                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                                         image.specialObjectsArray});
     }

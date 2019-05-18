@@ -23,6 +23,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
@@ -180,7 +181,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             if (path.exists()) {
                 final NativeObject pathNameNative = method.image.asByteString(path.getName());
                 final long pathLastModified = path.lastModified();
-                final boolean pathIsDirectory = method.image.asBoolean(path.isDirectory());
+                final boolean pathIsDirectory = BooleanObject.wrap(path.isDirectory());
                 final long pathLength = path.length();
                 return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             }
@@ -212,7 +213,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 // Squeak strips the trailing backslash from C:\ on Windows.
                 final NativeObject pathNameNative = method.image.asByteString(file.getPath().replace("\\", ""));
                 final long pathLastModified = file.lastModified();
-                final boolean pathIsDirectory = method.image.asBoolean(file.isDirectory());
+                final boolean pathIsDirectory = BooleanObject.wrap(file.isDirectory());
                 final long pathLength = file.length();
                 return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             } else {
@@ -237,7 +238,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 final File file = files[index];
                 final NativeObject pathNameNative = method.image.asByteString(file.getName());
                 final long pathLastModified = file.lastModified();
-                final boolean pathIsDirectory = method.image.asBoolean(file.isDirectory());
+                final boolean pathIsDirectory = BooleanObject.wrap(file.isDirectory());
                 final long pathLength = file.length();
                 return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
             } else {
@@ -304,7 +305,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doAtEnd(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
                 final SeekableByteChannel file = getFileOrPrimFail(fileDescriptor);
-                return method.image.asBoolean(file.position() >= file.size());
+                return BooleanObject.wrap(file.position() >= file.size());
             } catch (final IOException e) {
                 throw new PrimitiveFailed();
             }

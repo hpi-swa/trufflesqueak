@@ -7,6 +7,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -5024,10 +5025,10 @@ public final class B2D {
     /* Turn on/off profiling. Return the old value of the flag. */
 
     /* BalloonEngineBase>>#primitiveDoProfileStats */
-    public static boolean primitiveDoProfileStats(final PointersObject receiver, final boolean newValue) {
+    public static boolean primitiveDoProfileStats(@SuppressWarnings("unused") final PointersObject receiver, final boolean newValue) {
         final boolean oldValue = doProfileStats;
         doProfileStats = newValue;
-        return receiver.image.asBoolean(oldValue);
+        return BooleanObject.wrap(oldValue);
     }
 
     /* BalloonEngineBase>>#primitiveFinishedProcessing */
@@ -5045,7 +5046,7 @@ public final class B2D {
             incrementStatby(GW_COUNT_FINISH_TEST, 1);
             incrementStatby(GW_TIME_FINISH_TEST, ioMicroMSecs() - geProfileTime);
         }
-        return receiver.image.asBoolean(finished);
+        return BooleanObject.wrap(finished);
     }
 
     /* BalloonEngineBase>>#primitiveGetAALevel */
@@ -5280,7 +5281,7 @@ public final class B2D {
         }
         needFlush = needsFlush();
         storeEngineStateInto(engine);
-        return receiver.image.asBoolean(needFlush);
+        return BooleanObject.wrap(needFlush);
     }
 
     /* BalloonEngineBase>>#primitiveNeedsFlushPut */
@@ -5329,7 +5330,7 @@ public final class B2D {
             incrementStatby(GW_COUNT_NEXT_AET_ENTRY, 1);
             incrementStatby(GW_TIME_NEXT_AET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
-        return receiver.image.asBoolean(!hasEdge);
+        return BooleanObject.wrap(!hasEdge);
     }
 
     /* Note: No need to load bitBlt but must load spanBuffer */
@@ -5380,7 +5381,7 @@ public final class B2D {
             incrementStatby(GW_COUNT_NEXT_FILL_ENTRY, 1);
             incrementStatby(GW_TIME_NEXT_FILL_ENTRY, ioMicroMSecs() - geProfileTime);
         }
-        return receiver.image.asBoolean(!hasFill);
+        return BooleanObject.wrap(!hasFill);
     }
 
     /* Note: No need to load either bitBlt or spanBuffer */
@@ -5420,7 +5421,7 @@ public final class B2D {
             incrementStatby(GW_COUNT_NEXT_GET_ENTRY, 1);
             incrementStatby(GW_TIME_NEXT_GET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
-        return receiver.image.asBoolean(!hasEdge);
+        return BooleanObject.wrap(!hasEdge);
     }
 
     /* BalloonEngineBase>>#primitiveRegisterExternalEdge */

@@ -17,6 +17,7 @@ import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
@@ -86,13 +87,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @ExplodeLoop
         @Specialization
-        protected final boolean doTest(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long depth) {
+        protected static final boolean doTest(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long depth) {
             for (int i = 0; i < SUPPORTED_DEPTHS.length; i++) {
                 if (SUPPORTED_DEPTHS[i] == depth) {
-                    return method.image.sqTrue;
+                    return BooleanObject.TRUE;
                 }
             }
-            return method.image.sqFalse;
+            return BooleanObject.FALSE;
         }
     }
 
@@ -280,12 +281,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final boolean doDisplay(final PointersObject receiver) {
             method.image.setSpecialObject(SPECIAL_OBJECT.THE_DISPLAY, receiver);
             method.image.getDisplay().open(receiver);
-            return method.image.sqTrue;
+            return BooleanObject.TRUE;
         }
 
         @Specialization(guards = {"!method.image.hasDisplay()"})
-        protected final boolean doDisplayHeadless(@SuppressWarnings("unused") final PointersObject receiver) {
-            return method.image.sqFalse;
+        protected static final boolean doDisplayHeadless(@SuppressWarnings("unused") final PointersObject receiver) {
+            return BooleanObject.FALSE;
         }
     }
 

@@ -11,6 +11,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -43,7 +44,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final long stop = Math.min(stopArg, Long.highestOneBit(receiver));
             if (start > stop) {
                 startLargerThanStopProfile.enter();
-                return method.image.sqFalse;
+                return BooleanObject.FALSE;
             }
             final long firstDigitIndex = Math.floorDiv(start - 1, 32);
             final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
@@ -53,23 +54,23 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 firstAndLastDigitIndexIdenticalProfile.enter();
                 final byte digit = digitOf(receiver, firstDigitIndex);
                 if ((digit & firstMask & lastMask) != 0) {
-                    return method.image.sqTrue;
+                    return BooleanObject.TRUE;
                 } else {
-                    return method.image.sqFalse;
+                    return BooleanObject.FALSE;
                 }
             }
             if ((digitOf(receiver, firstDigitIndex) & firstMask) != 0) {
-                return method.image.sqTrue;
+                return BooleanObject.TRUE;
             }
             for (long i = firstDigitIndex + 1; i < lastDigitIndex - 1; i++) {
                 if (digitOf(receiver, i) != 0) {
-                    return method.image.sqTrue;
+                    return BooleanObject.TRUE;
                 }
             }
             if ((digitOf(receiver, lastDigitIndex) & lastMask) != 0) {
-                return method.image.sqTrue;
+                return BooleanObject.TRUE;
             } else {
-                return method.image.sqFalse;
+                return BooleanObject.FALSE;
             }
         }
 
@@ -83,7 +84,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final long stop = Math.min(stopArg, receiver.bitLength());
             if (start > stop) {
                 startLargerThanStopProfile.enter();
-                return method.image.sqFalse;
+                return BooleanObject.FALSE;
             }
             final long firstDigitIndex = Math.floorDiv(start - 1, 32);
             final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
@@ -93,23 +94,23 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 firstAndLastDigitIndexIdenticalProfile.enter();
                 final long digit = receiver.getNativeAt0(firstDigitIndex);
                 if ((digit & firstMask & lastMask) != 0) {
-                    return method.image.sqTrue;
+                    return BooleanObject.TRUE;
                 } else {
-                    return method.image.sqFalse;
+                    return BooleanObject.FALSE;
                 }
             }
             if ((receiver.getNativeAt0(firstDigitIndex) & firstMask) != 0) {
-                return method.image.sqTrue;
+                return BooleanObject.TRUE;
             }
             for (long i = firstDigitIndex + 1; i < lastDigitIndex - 1; i++) {
                 if (receiver.getNativeAt0(i) != 0) {
-                    return method.image.sqTrue;
+                    return BooleanObject.TRUE;
                 }
             }
             if ((receiver.getNativeAt0(lastDigitIndex) & lastMask) != 0) {
-                return method.image.sqTrue;
+                return BooleanObject.TRUE;
             } else {
-                return method.image.sqFalse;
+                return BooleanObject.FALSE;
             }
         }
 

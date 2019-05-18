@@ -15,6 +15,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -439,7 +440,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return getSocketOrPrimFail(method, socketID).isDataAvailable();
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Checking for available data failed", e);
-                return method.image.sqFalse;
+                return BooleanObject.FALSE;
             }
         }
     }
@@ -564,7 +565,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final Object doSendDone(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long socketID) {
             try {
-                return method.image.asBoolean(getSocketOrPrimFail(method, socketID).isSendDone());
+                return BooleanObject.wrap(getSocketOrPrimFail(method, socketID).isSendDone());
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Checking completed send failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();

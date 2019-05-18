@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -173,9 +174,8 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.isIntType()", "other.isIntType()"})
-        protected final boolean doEqual(final NativeObject receiver, final NativeObject other) {
-            return Arrays.equals(receiver.getIntStorage(), other.getIntStorage()) ? method.image.sqTrue
-                            : method.image.sqFalse;
+        protected static final boolean doEqual(final NativeObject receiver, final NativeObject other) {
+            return BooleanObject.wrap(Arrays.equals(receiver.getIntStorage(), other.getIntStorage()));
         }
 
         /*
@@ -183,8 +183,8 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @SuppressWarnings("unused")
         @Specialization
-        protected final boolean doNilCase(final NativeObject receiver, final NilObject other) {
-            return method.image.sqFalse;
+        protected static final boolean doNilCase(final NativeObject receiver, final NilObject other) {
+            return BooleanObject.FALSE;
         }
     }
 

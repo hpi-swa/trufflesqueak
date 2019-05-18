@@ -376,12 +376,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             return NilObject.getSqueakHash();
         }
 
-        @Specialization(guards = "obj == method.image.sqFalse")
+        @Specialization(guards = "obj == FALSE")
         protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean obj) {
             return 2L;
         }
 
-        @Specialization(guards = "obj != method.image.sqFalse")
+        @Specialization(guards = "obj != FALSE")
         protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean obj) {
             return 3L;
         }

@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
@@ -40,7 +41,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
                     @SuppressWarnings("unused") @Cached("createTemporaryWriteNode(1)") final FrameSlotReadNode completeTempReadNode,
                     @Cached("create(code, 1)") final TemporaryWriteNode completeTempWriteNode,
                     @Cached final BlockActivationNode dispatchNode) {
-        completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
+        completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
         final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
         try {
             dispatchNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY));

@@ -12,6 +12,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -334,8 +335,8 @@ public final class SqueakImageReader {
         specialObjectChunk(SPECIAL_OBJECT.TRUE_OBJECT).getClassChunk().object = image.trueClass;
 
         setPrebuiltObject(SPECIAL_OBJECT.NIL_OBJECT, NIL_OBJECT_PLACEHOLDER);
-        setPrebuiltObject(SPECIAL_OBJECT.FALSE_OBJECT, image.sqFalse);
-        setPrebuiltObject(SPECIAL_OBJECT.TRUE_OBJECT, image.sqTrue);
+        setPrebuiltObject(SPECIAL_OBJECT.FALSE_OBJECT, BooleanObject.FALSE);
+        setPrebuiltObject(SPECIAL_OBJECT.TRUE_OBJECT, BooleanObject.TRUE);
         setPrebuiltObject(SPECIAL_OBJECT.SCHEDULER_ASSOCIATION, image.schedulerAssociation);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_BITMAP, image.bitmapClass);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_SMALLINTEGER, image.smallIntegerClass);
