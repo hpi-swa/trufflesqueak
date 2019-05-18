@@ -7,7 +7,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -2537,23 +2536,37 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#primitiveDisplayString */
-    public static Object primitiveDisplayString(final PointersObject bbObj, final NativeObject sourceString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
-                    final ArrayObject xTable, final int kernDelta) {
+    public static Object primitiveDisplayString(final PointersObject bbObj, final NativeObject sourceString, final long startIndex, final long stopIndex, final long[] glyphMap,
+                    final long[] xTable, final int kernDelta) {
         int ascii;
         int glyphIndex;
         final int left;
         final long maxGlyph;
         final boolean quickBlt;
 
-        if (!(slotSizeOf(glyphMap) == 256 && isBytes(sourceString) && startIndex > 0 && stopIndex >= 0 &&
-                        stopIndex <= sourceString.getByteLength() && loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
+        /**
+         * Most checks moved to guard of specialization in {@link PrimDisplayStringNode}.
+         *
+         * <pre>
+         * if (!(slotSizeOf(glyphMap) == 256 && isBytes(sourceString) && startIndex > 0 && stopIndex >= 0 &&
+         *              stopIndex <= sourceString.getByteLength() && loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
+         * </pre>
+         */
+        if (!(loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        if (stopIndex == 0) {
-            return bbObj;
-        }
+        /**
+         * Check moved to guard of specialization in {@link PrimDisplayStringNode}.
+         *
+         * <pre>
+         * if (stopIndex == 0) {
+         *     return bbObj;
+         * }
+         * </pre>
+         */
+
         /* See if we can go directly into copyLoopPixMap (usually we can) */
-        maxGlyph = slotSizeOf(xTable) - 2;
+        maxGlyph = xTable.length - 2;
         /* no point using slower version */
         quickBlt = (destBits != null || destBytes != null) && sourceBits != null &&
                         !noSource && sourceForm != destForm && (cmFlags != 0 || sourceMSB != destMSB || sourceDepth != destDepth);
@@ -2566,17 +2579,15 @@ public final class BitBlt {
             }
         }
         left = destX;
-        final long[] glyphs = glyphMap.getLongStorage();
-        final long[] xTableLongs = xTable.getLongStorage();
         final byte[] sourceStringBytes = sourceString.getByteStorage();
         for (int charIndex = (int) startIndex; charIndex <= stopIndex; charIndex++) {
             ascii = Byte.toUnsignedInt(sourceStringBytes[charIndex - 1]);
-            glyphIndex = (int) glyphs[ascii];
+            glyphIndex = (int) glyphMap[ascii];
             if (glyphIndex < 0 || glyphIndex > maxGlyph) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
-            sourceX = (int) xTableLongs[glyphIndex];
-            width = (int) (xTableLongs[glyphIndex + 1] - sourceX);
+            sourceX = (int) xTable[glyphIndex];
+            width = (int) (xTable[glyphIndex + 1] - sourceX);
             assert !failed();
             clipRange();
             if (bbW > 0 && bbH > 0) {
@@ -4084,10 +4095,6 @@ public final class BitBlt {
 
     private static int slotSizeOf(final PointersObject object) {
         return object.size();
-    }
-
-    private static int slotSizeOf(final ArrayObject object) {
-        return object.getLongLength();
     }
 
     private static boolean isPointers(final Object object) {
