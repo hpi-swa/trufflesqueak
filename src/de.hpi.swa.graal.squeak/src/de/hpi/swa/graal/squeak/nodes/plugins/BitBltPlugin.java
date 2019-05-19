@@ -84,7 +84,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final long[] glyphMapValues = toLongArray(toObjectArrayNode.execute(glyphMap));
             glyphMap.setStorage(glyphMapValues); // re-specialize.
             final long[] xTableValues = toLongArray(toObjectArrayNode.execute(xTable));
-            glyphMap.setStorage(xTableValues); // re-specialize.
+            xTable.setStorage(xTableValues); // re-specialize.
             return BitBlt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMapValues, xTableValues, (int) kernDelta);
         }
 
