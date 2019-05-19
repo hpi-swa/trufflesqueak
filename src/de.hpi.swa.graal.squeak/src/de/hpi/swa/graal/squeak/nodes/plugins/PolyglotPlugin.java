@@ -40,7 +40,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPluginFactory.PrimExecuteNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPluginFactory.PrimReadMemberNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -212,7 +212,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"lib.isExecutable(receiver)"}, limit = "2")
         protected static final Object doExecute(final Object receiver, final ArrayObject argumentArray,
-                        @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode,
+                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
@@ -422,7 +422,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"member.isByteType()", "lib.isMemberInvocable(receiver, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doInvoke(final Object receiver, final NativeObject member, final ArrayObject argumentArray,
-                        @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode,
+                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
@@ -629,7 +629,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doIsInstantiable(final Object receiver, final ArrayObject argumentArray,
-                        @Cached final ArrayObjectToObjectArrayNode getObjectArrayNode,
+                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {

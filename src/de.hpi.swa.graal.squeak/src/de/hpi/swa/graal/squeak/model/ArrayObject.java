@@ -19,6 +19,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public static final long LONG_NIL_TAG = Long.MIN_VALUE + 42; // Rather unlikely long.
     public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L); // NaN+1.
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
+    public static final NativeObject NATIVE_OBJECT_NIL_TAG = null;
     public static final boolean ENABLE_STORAGE_STRATEGIES = true;
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ArrayObject.class);
 
@@ -51,12 +52,20 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return new ArrayObject(image, classObject, storage);
     }
 
+    public static boolean isCharNilTag(final char value) {
+        return value == CHAR_NIL_TAG;
+    }
+
     public static boolean isDoubleNilTag(final double value) {
         return Double.doubleToRawLongBits(value) == DOUBLE_NIL_TAG_LONG;
     }
 
     public static boolean isLongNilTag(final long value) {
         return value == LONG_NIL_TAG;
+    }
+
+    public static boolean isNativeObjectNilTag(final NativeObject value) {
+        return value == NATIVE_OBJECT_NIL_TAG;
     }
 
     @Override
@@ -200,20 +209,39 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         storage = newStorage;
     }
 
+    public static Object toObjectFromBoolean(final byte value) {
+        if (value == BOOLEAN_FALSE_TAG) {
+            return BooleanObject.FALSE;
+        } else if (value == BOOLEAN_TRUE_TAG) {
+            return BooleanObject.TRUE;
+        } else {
+            assert value == BOOLEAN_NIL_TAG;
+            return NilObject.SINGLETON;
+        }
+    }
+
+    public static Object toObjectFromChar(final char value) {
+        return isCharNilTag(value) ? NilObject.SINGLETON : value;
+    }
+
+    public static Object toObjectFromLong(final long value) {
+        return isLongNilTag(value) ? NilObject.SINGLETON : value;
+    }
+
+    public static Object toObjectFromDouble(final double value) {
+        return isDoubleNilTag(value) ? NilObject.SINGLETON : value;
+    }
+
+    public static Object toObjectFromNativeObject(final NativeObject value) {
+        return isNativeObjectNilTag(value) ? NilObject.SINGLETON : value;
+    }
+
     public void transitionFromBooleansToObjects() {
         LOG.finer("transition from Booleans to Objects");
         final byte[] booleans = getBooleanStorage();
         final Object[] objects = new Object[booleans.length];
         for (int i = 0; i < booleans.length; i++) {
-            final byte value = booleans[i];
-            if (value == BOOLEAN_FALSE_TAG) {
-                objects[i] = BooleanObject.FALSE;
-            } else if (value == BOOLEAN_TRUE_TAG) {
-                objects[i] = BooleanObject.TRUE;
-            } else {
-                assert value == BOOLEAN_NIL_TAG;
-                objects[i] = NilObject.SINGLETON;
-            }
+            objects[i] = toObjectFromBoolean(booleans[i]);
         }
         storage = objects;
     }
@@ -223,7 +251,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final char[] chars = getCharStorage();
         final Object[] objects = new Object[chars.length];
         for (int i = 0; i < chars.length; i++) {
-            objects[i] = chars[i] == CHAR_NIL_TAG ? NilObject.SINGLETON : chars[i];
+            objects[i] = toObjectFromChar(chars[i]);
         }
         storage = objects;
     }
@@ -233,7 +261,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final double[] doubles = getDoubleStorage();
         final Object[] objects = new Object[doubles.length];
         for (int i = 0; i < doubles.length; i++) {
-            objects[i] = doubles[i] == DOUBLE_NIL_TAG ? NilObject.SINGLETON : doubles[i];
+            objects[i] = toObjectFromDouble(doubles[i]);
         }
         storage = objects;
     }
@@ -274,7 +302,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final long[] longs = getLongStorage();
         final Object[] objects = new Object[longs.length];
         for (int i = 0; i < longs.length; i++) {
-            objects[i] = longs[i] == LONG_NIL_TAG ? NilObject.SINGLETON : longs[i];
+            objects[i] = toObjectFromLong(longs[i]);
         }
         storage = objects;
     }
@@ -284,7 +312,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final NativeObject[] natives = getNativeObjectStorage();
         final Object[] objects = new Object[natives.length];
         for (int i = 0; i < natives.length; i++) {
-            objects[i] = NilObject.nullToNil(natives[i]);
+            objects[i] = toObjectFromNativeObject(natives[i]);
         }
         storage = objects;
     }
