@@ -37,7 +37,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectTraceableToObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
@@ -75,7 +75,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
-        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
+        @Child private ArrayObjectTraceableToObjectArrayNode getObjectArrayNode = ArrayObjectTraceableToObjectArrayNode.create();
 
         protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method) {
             super(method);
@@ -293,28 +293,35 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
+        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "fromArray.isTraceable()", "toArray.isTraceable()"}, limit = "1")
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             return performPointersBecomeOneWay(fromArray, toArray, true);
         }
 
         @SuppressWarnings("unused")
+        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "!fromArray.isTraceable() || !toArray.isTraceable()"}, limit = "1")
+        protected static final ArrayObject doInapproriateOperation(final ArrayObject fromArray, final ArrayObject toArray,
+                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
+            throw new PrimitiveFailed(ERROR_TABLE.INAPPROPRIATE_OPERATION);
+        }
+
+        @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
-        protected static final ArrayObject doFail(final ArrayObject fromArray, final ArrayObject toArray,
+        protected static final ArrayObject doBadArgument(final ArrayObject fromArray, final ArrayObject toArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
-        protected static final ArrayObject doFail(final Object receiver, final ArrayObject argument) {
+        protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
-        protected static final ArrayObject doFail(final ArrayObject receiver, final Object argument) {
+        protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
@@ -714,28 +721,35 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
+        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "fromArray.isTraceable()", "toArray.isTraceable()"}, limit = "1")
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             return performPointersBecomeOneWay(fromArray, toArray, copyHash);
         }
 
         @SuppressWarnings("unused")
+        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "!fromArray.isTraceable() || !toArray.isTraceable()"}, limit = "1")
+        protected static final ArrayObject doInapproriateOperation(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
+            throw new PrimitiveFailed(ERROR_TABLE.INAPPROPRIATE_OPERATION);
+        }
+
+        @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
-        protected static final ArrayObject doFail(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+        protected static final ArrayObject doBadArgument(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
-        protected static final ArrayObject doFail(final Object receiver, final ArrayObject argument, final boolean copyHash) {
+        protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
-        protected static final ArrayObject doFail(final ArrayObject receiver, final Object argument, final boolean copyHash) {
+        protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }

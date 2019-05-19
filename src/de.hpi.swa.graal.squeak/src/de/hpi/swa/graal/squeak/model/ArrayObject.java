@@ -68,9 +68,8 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         }
         final int valuesLength = pointers.length;
         storage = valuesLength;
-        final ArrayObjectWriteNode writeNode = ArrayObjectWriteNode.getUncached();
         if (valuesLength > 0) {
-            storage = valuesLength;
+            final ArrayObjectWriteNode writeNode = ArrayObjectWriteNode.getUncached();
             for (int i = 0; i < pointers.length; i++) {
                 writeNode.execute(this, i, pointers[i]);
             }
@@ -187,6 +186,10 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean isObjectType() {
         return storage.getClass() == Object[].class;
+    }
+
+    public boolean isTraceable() {
+        return isObjectType() || isNativeObjectType();
     }
 
     public boolean hasSameStorageType(final ArrayObject other) {

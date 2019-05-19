@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectTraceableToObjectArrayNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectWriteNodeGen;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -223,6 +224,26 @@ public final class ArrayObjectNodes {
         protected static final Object[] doArrayOfNatives(final ArrayObject obj) {
             obj.transitionFromNativesToObjects();
             return doArrayOfObjects(obj);
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class ArrayObjectTraceableToObjectArrayNode extends AbstractNode {
+
+        public static ArrayObjectTraceableToObjectArrayNode create() {
+            return ArrayObjectTraceableToObjectArrayNodeGen.create();
+        }
+
+        public abstract Object[] execute(ArrayObject obj);
+
+        @Specialization(guards = "obj.isObjectType()")
+        protected static final Object[] doArrayOfObjects(final ArrayObject obj) {
+            return obj.getObjectStorage();
+        }
+
+        @Specialization(guards = "obj.isNativeObjectType()")
+        protected static final Object[] doArrayOfNatives(final ArrayObject obj) {
+            return obj.getNativeObjectStorage();
         }
     }
 
