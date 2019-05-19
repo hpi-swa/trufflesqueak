@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -31,8 +32,9 @@ public final class ArrayObjectNodes {
         public abstract Object execute(ArrayObject obj, long index);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index >= 0", "index < obj.getEmptyStorage()"})
+        @Specialization(guards = {"obj.isEmptyType()"})
         protected static final NilObject doEmptyArray(final ArrayObject obj, final long index) {
+            assert 0 <= index && index < obj.getEmptyLength();
             return NilObject.SINGLETON;
         }
 
@@ -40,9 +42,9 @@ public final class ArrayObjectNodes {
         protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index) {
             final byte value = obj.getBooleanStorage()[(int) index];
             if (value == ArrayObject.BOOLEAN_FALSE_TAG) {
-                return false;
+                return BooleanObject.FALSE;
             } else if (value == ArrayObject.BOOLEAN_TRUE_TAG) {
-                return true;
+                return BooleanObject.TRUE;
             } else {
                 assert value == ArrayObject.BOOLEAN_NIL_TAG;
                 return NilObject.SINGLETON;
@@ -239,48 +241,49 @@ public final class ArrayObjectNodes {
         public abstract void execute(ArrayObject obj, long index, Object value);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+        @Specialization(guards = {"obj.isEmptyType()"})
         protected static final void doEmptyArray(final ArrayObject obj, final long index, final NilObject value) {
-            // Nothing to do
+            assert index < obj.getEmptyLength();
+            // Nothing to do.
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+        @Specialization(guards = {"obj.isEmptyType()"})
         protected static final void doEmptyArray(final ArrayObject obj, final long index, final NativeObject value) {
             obj.transitionFromEmptyToNatives();
             doArrayOfNativeObjects(obj, index, value);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+        @Specialization(guards = {"obj.isEmptyType()"})
         protected static final void doEmptyArrayToBoolean(final ArrayObject obj, final long index, final boolean value) {
             obj.transitionFromEmptyToBooleans();
             doArrayOfBooleans(obj, index, value);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+        @Specialization(guards = {"obj.isEmptyType()"})
         protected static final void doEmptyArrayToChar(final ArrayObject obj, final long index, final char value) {
             obj.transitionFromEmptyToChars();
             doArrayOfChars(obj, index, value);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+        @Specialization(guards = {"obj.isEmptyType()"})
         protected static final void doEmptyArrayToLong(final ArrayObject obj, final long index, final long value) {
             obj.transitionFromEmptyToLongs();
             doArrayOfLongs(obj, index, value);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+        @Specialization(guards = {"obj.isEmptyType()"})
         protected static final void doEmptyArrayToDouble(final ArrayObject obj, final long index, final double value) {
             obj.transitionFromEmptyToDoubles();
             doArrayOfDoubles(obj, index, value);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()", "!isBoolean(value)", "!isCharacter(value)", "!isLong(value)", "!isDouble(value)", "!isNativeObject(value)"})
+        @Specialization(guards = {"obj.isEmptyType()", "!isBoolean(value)", "!isCharacter(value)", "!isLong(value)", "!isDouble(value)", "!isNativeObject(value)"})
         protected static final void doEmptyArrayToObject(final ArrayObject obj, final long index, final Object value) {
             obj.transitionFromEmptyToObjects();
             doArrayOfObjects(obj, index, value);
