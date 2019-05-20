@@ -82,21 +82,25 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public String nameAsClass() {
+    public String getClassName() {
         CompilerAsserts.neverPartOfCompilation();
         assert isClass();
         if (isAMetaClass()) {
-            final ClassObject classInstance = getThisClass();
-            return "Metaclass (" + classInstance.getClassName() + ")";
+            final Object classInstance = pointers[METACLASS.THIS_CLASS];
+            if (classInstance != NilObject.SINGLETON) {
+                return "Metaclass (" + ((ClassObject) classInstance).getClassNameUnsafe() + ")";
+            } else {
+                return "Metaclass (unknown)";
+            }
         } else if (size() == 11) {
-            return getClassName();
+            return getClassNameUnsafe();
         } else {
             return "Unknown behavior";
         }
     }
 
-    private ClassObject getThisClass() {
-        return (ClassObject) pointers[METACLASS.THIS_CLASS];
+    public String getClassNameUnsafe() {
+        return ((NativeObject) pointers[CLASS.NAME]).asStringUnsafe();
     }
 
     private boolean isAMetaClass() {
@@ -220,7 +224,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
             pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
             if (size() > 7) {
-                final String className = getClassName();
+                final String className = getClassNameUnsafe();
                 if (image.getCompilerClass() == null && "Compiler".equals(className)) {
                     image.setCompilerClass(this);
                 } else if (image.getParserClass() == null && "Parser".equals(className)) {
@@ -281,10 +285,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public PointersObject getMethodDict() {
         return methodDict;
-    }
-
-    public String getClassName() {
-        return ((NativeObject) pointers[CLASS.NAME]).asStringUnsafe();
     }
 
     public boolean hasInstanceVariables() {

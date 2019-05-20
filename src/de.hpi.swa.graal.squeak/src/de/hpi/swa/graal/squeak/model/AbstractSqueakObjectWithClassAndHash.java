@@ -76,9 +76,9 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     public final String getSqueakClassName() {
         if (isClass()) {
-            return nameAsClass() + " class";
+            return getClassName() + " class";
         } else {
-            return getSqueakClass().nameAsClass();
+            return getSqueakClass().getClassName();
         }
     }
 
@@ -112,7 +112,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return (squeakHash >> PINNED_BIT_SHIFT & 1) == 1;
     }
 
-    public String nameAsClass() {
+    public String getClassName() {
         return "???NotAClass";
     }
 

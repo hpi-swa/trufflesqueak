@@ -51,7 +51,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         String selector = "unknownSelector";
         final ClassObject methodClass = outerMethod.getMethodClass();
         if (methodClass != null) {
-            className = methodClass.nameAsClass();
+            className = methodClass.getClassName();
         }
         final NativeObject selectorObj = outerMethod.getCompiledInSelector();
         if (selectorObj != null) {
