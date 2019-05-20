@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -84,7 +85,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     private static int[] jpegBits;
     private static int jpegBitsSize;
-    private static final int[] jpegNaturalOrder = {
+    @CompilationFinal(dimensions = 1) private static final int[] jpegNaturalOrder = {
                     0, 1, 8, 16, 9, 2, 3, 10,
                     17, 24, 32, 25, 18, 11, 4, 5,
                     12, 19, 26, 33, 40, 48, 41, 34,

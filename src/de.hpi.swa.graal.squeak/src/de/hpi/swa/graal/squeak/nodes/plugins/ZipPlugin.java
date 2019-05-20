@@ -46,11 +46,11 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
 
     @CompilationFinal private static int readStreamInstSize;
     @CompilationFinal private static int writeStreamInstSize;
-    private static final int[] zipBaseDistance = {
+    @CompilationFinal(dimensions = 1) private static final int[] zipBaseDistance = {
                     /* 0 */ 0, 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768,
                     /* 20 */ 1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384, 24576
     };
-    private static final int[] zipBaseLength = {
+    @CompilationFinal(dimensions = 1) private static final int[] zipBaseLength = {
                     /* 0 */ 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48, 56,
                     /* 20 */ 64, 80, 96, 112, 128, 160, 192, 224, 0
     };
@@ -60,7 +60,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
     // private static int zipBlockStart;
     private static byte[] zipCollection;
     private static int zipCollectionSize;
-    private static final long[] zipCrcTable = {
+    @CompilationFinal(dimensions = 1) private static final long[] zipCrcTable = {
                     /* 0 */ 0, 1996959894, 3993919788L, 2567524794L, 124634137, 1886057615, 3915621685L,
                     /* 7 */ 2657392035L, 249268274, 2044508324, 3772115230L, 2547177864L, 162941995, 2125561021,
                     /* 14 */ 3887607047L, 2428444049L, 498536548, 1789927666, 4089016648L, 2227061214L,
@@ -101,7 +101,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
                     /* 247 */ 601450431, 3009837614L, 3294710456L, 1567103746, 711928724, 3020668471L, 3272380065L,
                     /* 254 */ 1510334235, 755167117
     };
-    private static final int[] zipDistanceCodes = {
+    @CompilationFinal(dimensions = 1) private static final int[] zipDistanceCodes = {
                     /* 0 */ 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8,
                     /* 20 */ 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10,
                     /* 40 */ 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
@@ -133,11 +133,11 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
     private static int[] zipDistances;
     private static int[] zipDistTable;
     private static int zipDistTableSize;
-    private static final int[] zipExtraDistanceBits = {
+    @CompilationFinal(dimensions = 1) private static final int[] zipExtraDistanceBits = {
                     /* 0 */ 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8,
                     /* 20 */ 9, 9, 10, 10, 11, 11, 12, 12, 13, 13
     };
-    private static final int[] zipExtraLengthBits = {
+    @CompilationFinal(dimensions = 1) private static final int[] zipExtraLengthBits = {
                     /* 0 */ 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
                     /* 20 */ 4, 4, 4, 4, 5, 5, 5, 5, 0
     };
@@ -151,7 +151,7 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
     private static int[] zipLitTable;
     private static int zipLitTableSize;
     private static int zipMatchCount;
-    private static final int[] zipMatchLengthCodes = {
+    @CompilationFinal(dimensions = 1) private static final int[] zipMatchLengthCodes = {
                     /* 0 */ 257, 258, 259, 260, 261, 262, 263, 264, 265, 265, 266, 266, 267, 267, 268, 268,
                     /* 16 */ 269, 269, 269, 269,
                     /* 20 */ 270, 270, 270, 270, 271, 271, 271, 271, 272, 272, 272, 272, 273, 273, 273, 273,

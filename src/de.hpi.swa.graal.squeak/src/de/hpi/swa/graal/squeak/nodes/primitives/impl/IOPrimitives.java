@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -78,8 +79,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 91)
     protected abstract static class PrimTestDisplayDepthNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        private static final int[] SUPPORTED_DEPTHS = new int[]{32}; // TODO: support all depths?
-                                                                     // {1, 2, 4, 8, 16, 32}
+        // TODO: support all depths? {1, 2, 4, 8, 16, 32}
+        @CompilationFinal(dimensions = 1) private static final int[] SUPPORTED_DEPTHS = new int[]{32};
 
         protected PrimTestDisplayDepthNode(final CompiledMethodObject method) {
             super(method);

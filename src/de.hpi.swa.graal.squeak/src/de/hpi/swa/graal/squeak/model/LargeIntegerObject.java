@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -20,7 +21,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     private static final BigInteger ONE_HUNDRED_TWENTY_EIGHT = BigInteger.valueOf(128);
     private static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
-    private static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = bigIntegerToBytes(LONG_MIN_OVERFLOW_RESULT);
+    @CompilationFinal(dimensions = 1) private static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = bigIntegerToBytes(LONG_MIN_OVERFLOW_RESULT);
 
     private BigInteger integer;
     private final int exposedSize;
