@@ -405,6 +405,7 @@ public final class SqueakImageReader {
                         final SqueakImageChunk classInstance = getChunk(data[data.length - 1]);
                         assert data.length == 6;
                         final ClassObject metaClassObject = metaClass.asClassObject(image.metaClass);
+                        metaClassObject.setInstancesAreClasses();
                         classInstance.asClassObject(metaClassObject);
                     }
                 }
