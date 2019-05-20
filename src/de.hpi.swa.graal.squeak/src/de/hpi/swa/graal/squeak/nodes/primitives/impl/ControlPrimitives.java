@@ -20,7 +20,6 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -49,6 +48,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeN
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectChangeClassOfToNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -226,11 +226,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.getSqueakClass().isSemaphoreClass()")
-        protected final AbstractSqueakObject doSignal(final VirtualFrame frame, final PointersObject receiver,
+        protected final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             signalSemaphoreNode.executeSignal(frame, receiver);
-            throw new PrimitiveWithoutResultException();
+            return AbstractSendNode.NO_RESULT;
         }
     }
 
@@ -243,23 +243,23 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.getSqueakClass().isSemaphoreClass()", "hasExcessSignals(receiver)"})
-        protected static final AbstractSqueakObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
+        protected static final Object doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             final long excessSignals = (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
             receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
-            throw new PrimitiveWithoutResultException();
+            return AbstractSendNode.NO_RESULT;
         }
 
         @Specialization(guards = {"receiver.getSqueakClass().isSemaphoreClass()", "!hasExcessSignals(receiver)"})
-        protected final AbstractSqueakObject doWait(final VirtualFrame frame, final PointersObject receiver,
+        protected final Object doWait(final VirtualFrame frame, final PointersObject receiver,
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             linkProcessToListNode.executeLink(method.image.getActiveProcess(), receiver);
             wakeHighestPriorityNode.executeWake(frame);
-            throw new PrimitiveWithoutResultException();
+            return AbstractSendNode.NO_RESULT;
         }
 
         protected static final boolean hasExcessSignals(final PointersObject semaphore) {
@@ -278,12 +278,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final AbstractSqueakObject doResume(final VirtualFrame frame, final PointersObject receiver,
+        protected final Object doResume(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final StackPushForPrimitivesNode pushNode) {
             // keep receiver on stack before resuming other process
             pushNode.executeWrite(frame, receiver);
             resumeProcessNode.executeResume(frame, receiver);
-            throw new PrimitiveWithoutResultException();
+            return AbstractSendNode.NO_RESULT;
         }
     }
 
@@ -296,12 +296,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isActiveProcess()")
-        protected static final AbstractSqueakObject doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+        protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, NilObject.SINGLETON);
             wakeHighestPriorityNode.executeWake(frame);
-            throw new PrimitiveWithoutResultException(); // result already pushed above
+            return AbstractSendNode.NO_RESULT; // result already pushed above
         }
 
         @Specialization(guards = {"!receiver.isActiveProcess()", "!hasNilList(receiver)"})
@@ -707,9 +707,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, scheduler); // keep receiver on stack
             yieldProcessNode.executeYield(frame, scheduler);
-            throw new PrimitiveWithoutResultException();
+            return AbstractSendNode.NO_RESULT;
         }
-
     }
 
     /** Complements {@link PrimIdenticalNode}. */
@@ -767,7 +766,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             final PointersObject owningProcess = mutex.removeFirstLinkOfList();
             mutex.atput0(MUTEX.OWNER, owningProcess);
             resumeProcessNode.executeResume(frame, owningProcess);
-            throw new PrimitiveWithoutResultException();
+            return AbstractSendNode.NO_RESULT;
         }
     }
 
@@ -791,14 +790,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!activeProcessMutexOwner(mutex)"})
-        protected final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided,
+        protected final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode,
                         @Shared("linkProcessToListNode") @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, BooleanObject.FALSE);
             linkProcessToListNode.executeLink(method.image.getActiveProcess(), mutex);
             wakeHighestPriorityNode.executeWake(frame);
-            throw new PrimitiveWithoutResultException();
+            return AbstractSendNode.NO_RESULT;
         }
 
         @Specialization(guards = "ownerIsNil(mutex)")
@@ -814,14 +813,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!ownerIsNil(mutex)", "!isMutexOwner(mutex, effectiveProcess)"})
-        protected static final boolean doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess,
+        protected static final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess,
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode,
                         @Shared("linkProcessToListNode") @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, BooleanObject.FALSE);
             linkProcessToListNode.executeLink(effectiveProcess, mutex);
             wakeHighestPriorityNode.executeWake(frame);
-            throw new PrimitiveWithoutResultException();
+            return AbstractSendNode.NO_RESULT;
         }
 
         protected static final boolean ownerIsNil(final PointersObject mutex) {
@@ -934,7 +933,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!method.image.interruptHandlerDisabled()"})
-        protected static final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds,
+        protected static final Object doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds,
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final InterruptHandlerNode interruptNode) {
             // Keep receiver on stack, interrupt handler could trigger.
@@ -944,7 +943,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * idleProcess is running.
              */
             interruptNode.executeTrigger(frame);
-            throw new PrimitiveWithoutResultException();
+            return AbstractSendNode.NO_RESULT;
         }
 
         @Specialization(guards = {"method.image.interruptHandlerDisabled()"})

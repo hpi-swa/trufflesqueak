@@ -5,7 +5,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -21,8 +20,9 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNReversedNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public final class SendBytecodes {
-
     public abstract static class AbstractSendNode extends AbstractBytecodeNode {
+        public static final Object NO_RESULT = new Object();
+
         protected final NativeObject selector;
         private final int argumentCount;
 
@@ -64,9 +64,9 @@ public final class SendBytecodes {
                 final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
                 result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
                 assert result != null : "Result of a message send should not be null";
-                getPushNode().executeWrite(frame, result);
-            } catch (final PrimitiveWithoutResultException e) {
-                return; // ignoring result
+                if (result != NO_RESULT) {
+                    getPushNode().executeWrite(frame, result);
+                }
             } catch (final NonLocalReturn nlr) {
                 nlrProfile.enter();
                 if (nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame)) {
