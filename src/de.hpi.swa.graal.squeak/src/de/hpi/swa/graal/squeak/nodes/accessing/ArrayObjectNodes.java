@@ -1,8 +1,10 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -309,21 +311,39 @@ public final class ArrayObjectNodes {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isEmptyType()"})
-        protected static final void doEmptyArrayToChar(final ArrayObject obj, final long index, final char value) {
+        protected static final void doEmptyArrayToChar(final ArrayObject obj, final long index, final char value,
+                        @Cached final BranchProfile nilTagProfile) {
+            if (ArrayObject.isCharNilTag(value)) {
+                nilTagProfile.enter();
+                doEmptyArrayToObject(obj, index, value);
+                return;
+            }
             obj.transitionFromEmptyToChars();
             doArrayOfChars(obj, index, value);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isEmptyType()"})
-        protected static final void doEmptyArrayToLong(final ArrayObject obj, final long index, final long value) {
+        protected static final void doEmptyArrayToLong(final ArrayObject obj, final long index, final long value,
+                        @Cached final BranchProfile nilTagProfile) {
+            if (ArrayObject.isLongNilTag(value)) {
+                nilTagProfile.enter();
+                doEmptyArrayToObject(obj, index, value);
+                return;
+            }
             obj.transitionFromEmptyToLongs();
             doArrayOfLongs(obj, index, value);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isEmptyType()"})
-        protected static final void doEmptyArrayToDouble(final ArrayObject obj, final long index, final double value) {
+        protected static final void doEmptyArrayToDouble(final ArrayObject obj, final long index, final double value,
+                        @Cached final BranchProfile nilTagProfile) {
+            if (ArrayObject.isDoubleNilTag(value)) {
+                nilTagProfile.enter();
+                doEmptyArrayToObject(obj, index, value);
+                return;
+            }
             obj.transitionFromEmptyToDoubles();
             doArrayOfDoubles(obj, index, value);
         }
