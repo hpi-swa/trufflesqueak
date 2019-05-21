@@ -5,14 +5,14 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-@NodeInfo(cost = NodeCost.NONE)
 @ImportStatic(CONTEXT.class)
 public abstract class FrameStackReadAndClearNode extends AbstractNodeWithCode {
 
@@ -24,7 +24,27 @@ public abstract class FrameStackReadAndClearNode extends AbstractNodeWithCode {
         return FrameStackReadAndClearNodeGen.create(code);
     }
 
-    public abstract Object execute(Frame frame, int stackIndex);
+    public final Object executePop(final VirtualFrame frame) {
+        final int newSP = FrameAccess.getStackPointer(frame, code) - 1;
+        assert newSP >= 0 : "Bad stack pointer";
+        FrameAccess.setStackPointer(frame, code, newSP);
+        return execute(frame, newSP);
+    }
+
+    @ExplodeLoop
+    public final Object[] executePopN(final VirtualFrame frame, final int numPop) {
+        final int currentSP = FrameAccess.getStackPointer(frame, code);
+        assert currentSP - numPop >= 0;
+        final Object[] result = new Object[numPop];
+        for (int i = 1; i <= numPop; i++) {
+            result[numPop - i] = execute(frame, currentSP - i);
+            assert result[numPop - i] != null;
+        }
+        FrameAccess.setStackPointer(frame, code, currentSP - numPop);
+        return result;
+    }
+
+    protected abstract Object execute(Frame frame, int stackIndex);
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"index == cachedIndex"}, limit = "MAX_STACK_SIZE")

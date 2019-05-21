@@ -16,8 +16,8 @@ import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.AbstractLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupSuperClassNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNReversedNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractBytecodeNode {
@@ -29,8 +29,8 @@ public final class SendBytecodes {
         @Child private AbstractLookupClassNode lookupClassNode;
         @Child private LookupMethodNode lookupMethodNode = LookupMethodNode.create();
         @Child private DispatchSendNode dispatchSendNode;
-        @Child private StackPopNReversedNode popNReversedNode;
-        @Child private StackPushNode pushNode;
+        @Child private FrameStackReadAndClearNode popNNode;
+        @Child private FrameStackWriteNode pushNode;
 
         private final BranchProfile nlrProfile = BranchProfile.create();
         private final BranchProfile nvrProfile = BranchProfile.create();
@@ -45,7 +45,7 @@ public final class SendBytecodes {
             argumentCount = argcount;
             this.lookupClassNode = lookupClassNode;
             dispatchSendNode = DispatchSendNode.create(code.image);
-            popNReversedNode = StackPopNReversedNode.create(code, 1 + argumentCount);
+            popNNode = FrameStackReadAndClearNode.create(code);
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
@@ -59,25 +59,25 @@ public final class SendBytecodes {
                 /**
                  * Inline copy of {@link AbstractSendNode#executeSend} for better send performance.
                  */
-                final Object[] rcvrAndArgs = popNReversedNode.executePopN(frame);
+                final Object[] rcvrAndArgs = popNNode.executePopN(frame, 1 + argumentCount);
                 final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
                 final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
                 result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
                 assert result != null : "Result of a message send should not be null";
                 if (result != NO_RESULT) {
-                    getPushNode().executeWrite(frame, result);
+                    getPushNode().executePush(frame, result);
                 }
             } catch (final NonLocalReturn nlr) {
                 nlrProfile.enter();
                 if (nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame)) {
-                    getPushNode().executeWrite(frame, nlr.getReturnValue());
+                    getPushNode().executePush(frame, nlr.getReturnValue());
                 } else {
                     throw nlr;
                 }
             } catch (final NonVirtualReturn nvr) {
                 nvrProfile.enter();
                 if (nvr.getTargetContext() == getContext(frame)) {
-                    getPushNode().executeWrite(frame, nvr.getReturnValue());
+                    getPushNode().executePush(frame, nvr.getReturnValue());
                 } else {
                     throw nvr;
                 }
@@ -85,7 +85,7 @@ public final class SendBytecodes {
         }
 
         public final Object executeSend(final VirtualFrame frame) {
-            final Object[] rcvrAndArgs = popNReversedNode.executePopN(frame);
+            final Object[] rcvrAndArgs = popNNode.executePopN(frame, 1 + argumentCount);
             final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
@@ -96,10 +96,10 @@ public final class SendBytecodes {
             return context != null ? context : getMarker(frame);
         }
 
-        private StackPushNode getPushNode() {
+        private FrameStackWriteNode getPushNode() {
             if (pushNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                pushNode = insert(StackPushNode.create(code));
+                pushNode = insert(FrameStackWriteNode.create(code));
             }
             return pushNode;
         }

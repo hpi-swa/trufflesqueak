@@ -27,9 +27,9 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLo
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoAssociationNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoReceiverVariableNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoTempNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
@@ -119,18 +119,18 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class DupNode extends AbstractBytecodeNode {
-        @Child private StackPushNode pushNode;
-        @Child private StackTopNode topNode;
+        @Child private FrameStackWriteNode pushNode;
+        @Child private FrameStackReadNode topNode;
 
         public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            pushNode = StackPushNode.create(code);
-            topNode = StackTopNode.create(code);
+            pushNode = FrameStackWriteNode.create(code);
+            topNode = FrameStackReadNode.create(code);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, topNode.executeRead(frame));
+            pushNode.executePush(frame, topNode.executeTop(frame));
         }
 
         @Override
@@ -200,16 +200,16 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class PopNode extends AbstractBytecodeNode {
-        @Child private StackPopNode popNode;
+        @Child private FrameStackReadAndClearNode popNode;
 
         public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            popNode = StackPopNode.create(code);
+            popNode = FrameStackReadAndClearNode.create(code);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            popNode.executeRead(frame);
+            popNode.executePop(frame);
         }
 
         @Override

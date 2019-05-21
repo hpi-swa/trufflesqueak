@@ -14,7 +14,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnCons
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ReturnBytecodes {
@@ -112,11 +112,11 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnTopFromBlockNode extends AbstractReturnNode {
-        @Child private StackPopNode popNode;
+        @Child private FrameStackReadAndClearNode popNode;
 
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            popNode = StackPopNode.create(code);
+            popNode = FrameStackReadAndClearNode.create(code);
         }
 
         public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
@@ -148,7 +148,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected final Object getReturnValue(final VirtualFrame frame) {
-            return popNode.executeRead(frame);
+            return popNode.executePop(frame);
         }
 
         @Override
@@ -159,11 +159,11 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnTopFromMethodNode extends AbstractReturnNodeWithSpecializations {
-        @Child private StackPopNode popNode;
+        @Child private FrameStackReadAndClearNode popNode;
 
         protected ReturnTopFromMethodNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            popNode = StackPopNode.create(code);
+            popNode = FrameStackReadAndClearNode.create(code);
         }
 
         public static ReturnTopFromMethodNode create(final CompiledCodeObject code, final int index) {
@@ -172,7 +172,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected final Object getReturnValue(final VirtualFrame frame) {
-            return popNode.executeRead(frame);
+            return popNode.executePop(frame);
         }
 
         @Override

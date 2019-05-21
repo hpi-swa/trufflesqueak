@@ -22,14 +22,14 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushNewArray
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushReceiverNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushReceiverVariableNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNReversedNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class PushBytecodes {
 
     private abstract static class AbstractPushNode extends AbstractBytecodeNode {
-        @Child protected StackPushNode pushNode;
+        @Child protected FrameStackWriteNode pushNode;
 
         protected AbstractPushNode(final CompiledCodeObject code, final int index) {
             this(code, index, 1);
@@ -37,7 +37,7 @@ public final class PushBytecodes {
 
         protected AbstractPushNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            pushNode = StackPushNode.create(code);
+            pushNode = FrameStackWriteNode.create(code);
         }
     }
 
@@ -52,7 +52,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, getContextNode.executeGet(frame));
+            pushNode.executePush(frame, getContextNode.executeGet(frame));
         }
 
         @Override
@@ -67,7 +67,7 @@ public final class PushBytecodes {
         private final int numArgs;
         private final int numCopied;
 
-        @Child private StackPopNReversedNode popNReversedNode;
+        @Child private FrameStackReadAndClearNode popNNode;
         @Child private GetOrCreateContextNode getOrCreateContextNode;
 
         @CompilationFinal private CompiledBlockObject block;
@@ -78,7 +78,7 @@ public final class PushBytecodes {
             numArgs = i & 0xF;
             numCopied = i >> 4 & 0xF;
             blockSize = j << 8 | k;
-            popNReversedNode = StackPopNReversedNode.create(code, numCopied);
+            popNNode = FrameStackReadAndClearNode.create(code);
             getOrCreateContextNode = GetOrCreateContextNode.create(code);
         }
 
@@ -101,12 +101,12 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, createClosure(frame));
+            pushNode.executePush(frame, createClosure(frame));
         }
 
         private BlockClosureObject createClosure(final VirtualFrame frame) {
             final Object receiver = FrameAccess.getReceiver(frame);
-            final Object[] copiedValues = popNReversedNode.executePopN(frame);
+            final Object[] copiedValues = popNNode.executePopN(frame, numCopied);
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
             return new BlockClosureObject(getBlock(frame), blockCallTarget, receiver, copiedValues, outerContext);
         }
@@ -130,7 +130,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, constant);
+            pushNode.executePush(frame, constant);
         }
 
         @Override
@@ -150,7 +150,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, code.getLiteral(literalIndex));
+            pushNode.executePush(frame, code.getLiteral(literalIndex));
         }
 
         @Override
@@ -171,7 +171,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, at0Node.execute(code.getLiteral(literalIndex), 1));
+            pushNode.executePush(frame, at0Node.execute(code.getLiteral(literalIndex), 1));
         }
 
         @Override
@@ -182,31 +182,31 @@ public final class PushBytecodes {
     }
 
     public abstract static class PushNewArrayNode extends AbstractPushNode {
-        @Child protected StackPopNReversedNode popNReversedNode;
+        @Child protected FrameStackReadAndClearNode popNNode;
         private final int arraySize;
 
         protected PushNewArrayNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
             super(code, index, numBytecodes);
             arraySize = param & 127;
-            popNReversedNode = param > 127 ? StackPopNReversedNode.create(code, arraySize) : null;
+            popNNode = param > 127 ? FrameStackReadAndClearNode.create(code) : null;
         }
 
         public static PushNewArrayNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
             return PushNewArrayNodeGen.create(code, index, numBytecodes, param);
         }
 
-        @Specialization(guards = {"popNReversedNode != null"})
+        @Specialization(guards = {"popNNode != null"})
         protected final void doPushArray(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, code.image.asArrayOfObjects(popNReversedNode.executePopN(frame)));
+            pushNode.executePush(frame, code.image.asArrayOfObjects(popNNode.executePopN(frame, arraySize)));
         }
 
-        @Specialization(guards = {"popNReversedNode == null"})
+        @Specialization(guards = {"popNNode == null"})
         protected final void doPushNewArray(final VirtualFrame frame) {
             /**
              * Pushing an ArrayObject with object strategy. Contents likely to be mixed values and
              * therefore unlikely to benefit from storage strategy.
              */
-            pushNode.executeWrite(frame, ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize));
+            pushNode.executePush(frame, ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize));
         }
 
         @Override
@@ -229,7 +229,7 @@ public final class PushBytecodes {
 
         @Specialization
         protected final void doReceiverVirtualized(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, FrameAccess.getReceiver(frame));
+            pushNode.executePush(frame, FrameAccess.getReceiver(frame));
         }
 
         @Override
@@ -256,7 +256,7 @@ public final class PushBytecodes {
 
         @Specialization
         protected final void doReceiverVirtualized(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, at0Node.execute(FrameAccess.getReceiver(frame), variableIndex));
+            pushNode.executePush(frame, at0Node.execute(FrameAccess.getReceiver(frame), variableIndex));
         }
 
         @Override
@@ -282,7 +282,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, at0Node.execute(readTempNode.executeRead(frame), indexInArray));
+            pushNode.executePush(frame, at0Node.execute(readTempNode.executeRead(frame), indexInArray));
         }
 
         @Override
@@ -294,20 +294,20 @@ public final class PushBytecodes {
 
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushTemporaryLocationNode extends AbstractBytecodeNode {
-        @Child private StackPushNode pushNode;
+        @Child private FrameStackWriteNode pushNode;
         @Child private FrameSlotReadNode tempNode;
         private final int tempIndex;
 
         public PushTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            pushNode = StackPushNode.create(code);
+            pushNode = FrameStackWriteNode.create(code);
             tempNode = FrameSlotReadNode.create(code.getStackSlot(tempIndex));
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, tempNode.executeRead(frame));
+            pushNode.executePush(frame, tempNode.executeRead(frame));
         }
 
         @Override

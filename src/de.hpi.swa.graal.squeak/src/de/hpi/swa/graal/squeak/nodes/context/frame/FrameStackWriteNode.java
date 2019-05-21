@@ -4,15 +4,13 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 
-@NodeInfo(cost = NodeCost.NONE)
 @ImportStatic(CONTEXT.class)
 public abstract class FrameStackWriteNode extends AbstractNodeWithCode {
 
@@ -22,6 +20,13 @@ public abstract class FrameStackWriteNode extends AbstractNodeWithCode {
 
     public static FrameStackWriteNode create(final CompiledCodeObject code) {
         return FrameStackWriteNodeGen.create(code);
+    }
+
+    public final void executePush(final VirtualFrame frame, final Object value) {
+        assert value != null;
+        final int currentStackPointer = FrameUtil.getIntSafe(frame, code.getStackPointerSlot());
+        frame.setInt(code.getStackPointerSlot(), currentStackPointer + 1);
+        execute(frame, currentStackPointer, value);
     }
 
     public abstract void execute(Frame frame, int stackIndex, Object value);

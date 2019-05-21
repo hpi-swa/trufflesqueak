@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
@@ -33,16 +33,16 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() < sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
     protected final void doHandleWithLookup(final VirtualFrame frame, final PrimitiveFailed e,
                     @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
-                    @Cached("create(code)") final StackPushNode pushNode,
+                    @Cached("create(code)") final FrameStackWriteNode pushNode,
                     @Cached final ArrayObjectReadNode readNode) {
-        pushNode.executeWrite(frame, readNode.execute(code.image.primitiveErrorTable, e.getReasonCode()));
+        pushNode.executePush(frame, readNode.execute(code.image.primitiveErrorTable, e.getReasonCode()));
     }
 
     @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() >= sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
     protected static final void doHandleRawValue(final VirtualFrame frame, final PrimitiveFailed e,
                     @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
-                    @Cached("create(code)") final StackPushNode pushNode) {
-        pushNode.executeWrite(frame, e.getReasonCode());
+                    @Cached("create(code)") final FrameStackWriteNode pushNode) {
+        pushNode.executePush(frame, e.getReasonCode());
     }
 
     @SuppressWarnings("unused")
