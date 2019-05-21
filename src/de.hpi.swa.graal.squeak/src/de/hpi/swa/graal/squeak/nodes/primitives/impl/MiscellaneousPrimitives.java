@@ -249,12 +249,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
-            final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
-            method.image.printSqStackTrace();
-            if ("ffiTestDoubles".equals(name)) {
+            final String functionName = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
+
+            // TODO: Hardcoded
+            if ("ffiTestDoubles".equals(functionName)) {
                 final String libName = method.image.os.isMacOS() ? "ffi-test.dylib" : "ffi-test.so";
                 final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + libName;
-                final String nfiCode = String.format("load \"%s\" {ffiTestDoubles(double,double):double;}", libPath);
+
+                final List<Object> argTypes = Arrays.asList(externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES));
+
+                final String nfiCode = String.format("load \"%s\" {" + functionName + "(double,double):double;}", libPath);
                 final Object ffiTest = method.image.env.parse(Source.newBuilder("nfi", nfiCode, "native").build()).call();
                 final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
                 try {
