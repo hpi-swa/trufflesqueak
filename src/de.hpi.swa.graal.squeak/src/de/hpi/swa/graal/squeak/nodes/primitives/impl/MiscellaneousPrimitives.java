@@ -250,15 +250,23 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
+            final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
+            argTypes.getObjectStorage();
+            for (final Object argType : argTypes.getObjectStorage()) {
+                if (argType instanceof PointersObject) {
+                    final PointersObject argTypePointer = (PointersObject) argType;
+
+                }
+            }
             method.image.printSqStackTrace();
             if ("ffiTestDoubles".equals(name)) {
                 final String libName = method.image.os.isMacOS() ? "ffi-test.dylib" : "ffi-test.so";
                 final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + libName;
-                final String nfiCode = String.format("load \"%s\" {ffiTestDoubles(double,double):double;}", libPath);
+                final String nfiCode = String.format("load \"%s\" {%s(double,double):double;}", libPath, name);
                 final Object ffiTest = method.image.env.parse(Source.newBuilder("nfi", nfiCode, "native").build()).call();
                 final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
                 try {
-                    return interopLib.invokeMember(ffiTest, "ffiTestDoubles", arguments);
+                    return interopLib.invokeMember(ffiTest, name, arguments);
                 } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
                     e.printStackTrace();
                     throw new PrimitiveFailed(); // TODO: return correct error code.

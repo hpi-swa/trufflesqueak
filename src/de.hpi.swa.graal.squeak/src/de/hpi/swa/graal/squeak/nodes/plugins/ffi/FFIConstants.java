@@ -46,4 +46,44 @@ public class FFIConstants {
         /** "Stack frame required more than 16k bytes to pass arguments.". */
         public static final int CALL_FRAME_TOO_BIG = 19;
     }
+
+    public static final class FFI_TYPE {
+
+        // type void
+        public static final int VOID = 0;
+        // type bool
+        public static final int BOOL = 1;
+        // basic integer types.
+        // note: (integerType anyMask: 1) = integerType isSigned
+        public static final int UNSIGNED_BYTE = 2;
+        public static final int SIGNED_BYTE = 3;
+
+        public static final int UNSIGNED_SHORT = 4;
+        public static final int SIGNED_SHORT = 5;
+        public static final int UNSIGNED_INT = 6;
+        public static final int SIGNED_INT = 7;
+
+        // 64bit types
+        public static final int UNSIGNED_LONG_LONG = 8;
+        public static final int SIGNED_LONG_LONG = 9;
+
+        // special integer types
+        public static final int UNSIGNED_CHAR = 10;
+        public static final int SIGNED_CHAR = 11;
+
+        // float types
+        public static final int SINGLE_FLOAT = 12;
+        public static final int DOUBLE_FLOAT = 13;
+
+        // type flags
+        /*
+         * TODO: make this right
+         * public static final int FLAG_ATOMIC = 16r40000; // type is atomic
+         * public static final int FLAG_POINTER = 16r20000; // type is pointer to base type public
+         * static final int FLAG_STRUCTURE = 16r10000; // baseType is structure of 64k length public
+         * static final int STRUCT_SIZE_MASK = 16rFFFF; // mask for max size of structure public
+         * static final int ATOMIC_TYPE_MASK = 16r0F000000; // mask for atomic type spec public
+         * static final int ATOMIC_TYPE_SHIFT = 24; // shift for atomic type
+         */
+    }
 }
