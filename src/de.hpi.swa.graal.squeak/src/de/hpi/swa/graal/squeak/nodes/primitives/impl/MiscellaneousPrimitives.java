@@ -251,11 +251,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             }
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
-            argTypes.getObjectStorage();
+
             for (final Object argType : argTypes.getObjectStorage()) {
                 if (argType instanceof PointersObject) {
-                    final PointersObject argTypePointer = (PointersObject) argType;
-
+                    final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
+                    final int bla[] = compiledSpec.getIntStorage();
+                    final int headerWord = bla[0];
+                    headerWord & 1;
+                    // final PointersObject argTypePointer = (PointersObject) argType;
+                    // argTypePointer.at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
+                    // argType.at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                 }
             }
             method.image.printSqStackTrace();
