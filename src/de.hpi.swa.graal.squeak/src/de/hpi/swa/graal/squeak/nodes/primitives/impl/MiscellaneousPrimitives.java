@@ -249,18 +249,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
-<<<<<<< HEAD
-            final String functionName = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
 
-            // TODO: Hardcoded
-            if ("ffiTestDoubles".equals(functionName)) {
-                final String libName = method.image.os.isMacOS() ? "ffi-test.dylib" : "ffi-test.so";
-                final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + libName;
-
-                final List<Object> argTypes = Arrays.asList(externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES));
-
-                final String nfiCode = String.format("load \"%s\" {" + functionName + "(double,double):double;}", libPath);
-=======
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
 
@@ -269,7 +258,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                     final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                     final int bla[] = compiledSpec.getIntStorage();
                     final int headerWord = bla[0];
-                    headerWord & 1;
                     // final PointersObject argTypePointer = (PointersObject) argType;
                     // argTypePointer.at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                     // argType.at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
@@ -280,7 +268,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 final String libName = method.image.os.isMacOS() ? "ffi-test.dylib" : "ffi-test.so";
                 final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + libName;
                 final String nfiCode = String.format("load \"%s\" {%s(double,double):double;}", libPath, name);
->>>>>>> 798c99ae58f9a59d3e1ec815219611de12489fed
                 final Object ffiTest = method.image.env.parse(Source.newBuilder("nfi", nfiCode, "native").build()).call();
                 final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
                 try {
