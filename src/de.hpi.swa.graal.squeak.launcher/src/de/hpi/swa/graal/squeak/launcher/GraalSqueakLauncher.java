@@ -14,6 +14,7 @@ import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleOptions;
@@ -79,6 +80,8 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         }
         contextBuilder.arguments(getLanguageId(), remainingArguments);
         contextBuilder.allowAllAccess(true);
+        contextBuilder.out(new SqueakTranscriptForwarder(System.out));
+        contextBuilder.err(new SqueakTranscriptForwarder(System.err));
         try (Context context = contextBuilder.build()) {
             println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
             if (sourceCode != null) {
@@ -87,7 +90,9 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 println("[graalsqueak] Result: %s", result);
                 return 0;
             } else {
-                context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute();
+                final Value image = context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build());
+                setUpTranscriptForwarder(context);
+                image.execute();
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
         } catch (final IllegalArgumentException e) {
@@ -110,6 +115,12 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         } catch (final IOException e) {
             throw abort(String.format("Error loading file '%s' (%s)", imagePath, e.getMessage()));
         }
+    }
+
+    private void setUpTranscriptForwarder(final Context context) throws IOException {
+        final String transcriptBlockCode = "[ :s | Transcript nextPutAll: s; flush ]";
+        final Value transcriptBlock = context.eval(Source.newBuilder(getLanguageId(), transcriptBlockCode, "<transcript forwarder>").build());
+        SqueakTranscriptForwarder.setTranscriptBlock(transcriptBlock);
     }
 
     @Override
