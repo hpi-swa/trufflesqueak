@@ -84,5 +84,6 @@ public class FFIConstants {
         public static final int ATOMIC_TYPE_MASK = 0x0F000000; // mask for atomic type spec public
         public static final int ATOMIC_TYPE_SHIFT = 24; // shift for atomic type
 
+        public static final String[] ATOMIC_TYPE_NAMES = {"void", "bool", "byte", "sbyte", "ushort", "short", "ulong", "long", "ulonglong", "longlong", "char", "schar", "float", "double"};
     }
 }
