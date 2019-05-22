@@ -76,14 +76,12 @@ public class FFIConstants {
         public static final int DOUBLE_FLOAT = 13;
 
         // type flags
-        /*
-         * TODO: make this right
-         * public static final int FLAG_ATOMIC = 16r40000; // type is atomic
-         * public static final int FLAG_POINTER = 16r20000; // type is pointer to base type public
-         * static final int FLAG_STRUCTURE = 16r10000; // baseType is structure of 64k length public
-         * static final int STRUCT_SIZE_MASK = 16rFFFF; // mask for max size of structure public
-         * static final int ATOMIC_TYPE_MASK = 16r0F000000; // mask for atomic type spec public
-         * static final int ATOMIC_TYPE_SHIFT = 24; // shift for atomic type
-         */
+        public static final int FLAG_ATOMIC = 0x40000; // type is atomic
+        public static final int FLAG_POINTER = 0x20000; // type is pointer to base type public
+        static final int FLAG_STRUCTURE = 0x10000; // baseType is structure of 64k length public
+        static final int STRUCT_SIZE_MASK = 0xFFFF; // mask for max size of structure public
+        static final int ATOMIC_TYPE_MASK = 0x0F000000; // mask for atomic type spec public
+        static final int ATOMIC_TYPE_SHIFT = 24; // shift for atomic type
+
     }
 }
