@@ -91,7 +91,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 return 0;
             } else {
                 final Value image = context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build());
-                setUpTranscriptForwarder(context);
+                SqueakTranscriptForwarder.setUp(context);
                 image.execute();
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
@@ -115,12 +115,6 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         } catch (final IOException e) {
             throw abort(String.format("Error loading file '%s' (%s)", imagePath, e.getMessage()));
         }
-    }
-
-    private void setUpTranscriptForwarder(final Context context) throws IOException {
-        final String transcriptBlockCode = "[ :s | Transcript nextPutAll: s; flush ]";
-        final Value transcriptBlock = context.eval(Source.newBuilder(getLanguageId(), transcriptBlockCode, "<transcript forwarder>").build());
-        SqueakTranscriptForwarder.setTranscriptBlock(transcriptBlock);
     }
 
     @Override
