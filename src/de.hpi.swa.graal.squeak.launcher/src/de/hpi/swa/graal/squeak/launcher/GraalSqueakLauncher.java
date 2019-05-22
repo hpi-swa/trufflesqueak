@@ -78,12 +78,13 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             contextBuilder.option(SqueakLanguageConfig.ID + ".Headless", "true");
         }
         contextBuilder.arguments(getLanguageId(), remainingArguments);
-        try (Context context = contextBuilder.allowAllAccess(true).build()) {
-            println("[graalsqueak] Running " + SqueakLanguageConfig.NAME + " on " + getRuntimeName() + "...");
+        contextBuilder.allowAllAccess(true);
+        try (Context context = contextBuilder.build()) {
+            println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
             if (sourceCode != null) {
                 final Object result = context.eval(
                                 Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).cached(false).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
-                println("[graalsqueak] Result: " + result);
+                println("[graalsqueak] Result: %s", result);
                 return 0;
             } else {
                 context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute();
@@ -134,13 +135,15 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         options.addAll(Arrays.asList("-c", "--code"));
     }
 
-    private static void println(final String string) {
+    private static void println(final String string, final Object... arguments) {
         // Checkstyle: stop
-        System.out.println(string);
+        System.out.println(String.format(string, arguments));
         // Checkstyle: resume
     }
 
     private static String getRuntimeName() {
-        return Truffle.getRuntime().getName() + " (Java " + System.getProperty("java.version") + ")";
+        final String vmName = System.getProperty("java.vm.name", "unknown");
+        final String mode = Truffle.getRuntime().getName().equals("Interpreted") ? "interpreted" : "Graal-compiled";
+        return String.format("%s (%s)", vmName, mode);
     }
 }
