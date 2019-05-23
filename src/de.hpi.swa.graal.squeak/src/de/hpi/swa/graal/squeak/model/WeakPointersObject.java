@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -11,8 +10,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.WeakPointersObjectNodes.WeakPoint
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class WeakPointersObject extends AbstractPointersObject {
-    public static final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
-
     public WeakPointersObject(final SqueakImageContext image, final long hash, final ClassObject sqClass) {
         super(image, hash, sqClass);
     }
@@ -45,7 +42,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
     }
 
     public void setWeakPointer(final int index, final Object value) {
-        setPointer(index, new WeakReference<>(value, weakPointersQueue));
+        setPointer(index, new WeakReference<>(value, image.weakPointersQueue));
     }
 
     public WeakPointersObject shallowCopy() {

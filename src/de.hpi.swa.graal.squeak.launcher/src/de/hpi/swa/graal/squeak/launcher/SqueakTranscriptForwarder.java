@@ -16,15 +16,15 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 public final class SqueakTranscriptForwarder extends OutputStream {
     private static final String TRANSCRIPT_BLOCK_CODE = "[ :s | Transcript nextPutAll: s; flush ]";
     private static final String TRANSCRIPT_BLOCK_CODE_NAME = "<transcript forwarder>";
-    @CompilationFinal private static Value transcriptBlock;
 
     private final OutputStream delegate;
+    @CompilationFinal private Value transcriptBlock;
 
     public SqueakTranscriptForwarder(final OutputStream defaultTarget) {
         delegate = defaultTarget;
     }
 
-    public static void setUp(final Context context) throws IOException {
+    public void setUp(final Context context) throws IOException {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         transcriptBlock = context.eval(Source.newBuilder(SqueakLanguageConfig.ID, TRANSCRIPT_BLOCK_CODE, TRANSCRIPT_BLOCK_CODE_NAME).build());
     }

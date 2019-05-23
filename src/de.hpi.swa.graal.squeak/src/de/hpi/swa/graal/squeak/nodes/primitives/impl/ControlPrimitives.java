@@ -37,7 +37,6 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.InheritsFromNode;
@@ -647,8 +646,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private static boolean hasPendingFinalizations() {
-            final ReferenceQueue<Object> queue = WeakPointersObject.weakPointersQueue;
+        private boolean hasPendingFinalizations() {
+            final ReferenceQueue<Object> queue = method.image.weakPointersQueue;
             Reference<? extends Object> element = queue.poll();
             int count = 0;
             while (element != null) {

@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.image;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.lang.ref.ReferenceQueue;
 import java.math.BigInteger;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
@@ -166,6 +167,7 @@ public final class SqueakImageContext {
     public final EconomicMap<Long, SeekableByteChannel> filePluginHandles = EconomicMap.create();
     public final EconomicMap<Long, SqueakSocket> socketPluginHandles = EconomicMap.create();
     public final EconomicMap<Long, SqSSL> squeakSSLHandles = EconomicMap.create();
+    public final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
     public String[] dropPluginFileList = new String[0];
 
     @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes();

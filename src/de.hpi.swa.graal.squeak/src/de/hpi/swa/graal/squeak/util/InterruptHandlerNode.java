@@ -73,7 +73,6 @@ public abstract class InterruptHandlerNode extends Node {
 
     private void checkSemaphoresToSignal(final VirtualFrame frame) {
         if (istate.hasSemaphoresToSignal()) {
-            assert !image.externalObjectsArray.isEmptyType();
             final Object[] semaphores = image.externalObjectsArray.getObjectStorage();
             while (istate.hasSemaphoresToSignal()) {
                 final int semaIndex = istate.nextSemaphoreToSignal();

@@ -80,8 +80,10 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         }
         contextBuilder.arguments(getLanguageId(), remainingArguments);
         contextBuilder.allowAllAccess(true);
-        contextBuilder.out(new SqueakTranscriptForwarder(System.out));
-        contextBuilder.err(new SqueakTranscriptForwarder(System.err));
+        final SqueakTranscriptForwarder out = new SqueakTranscriptForwarder(System.out);
+        contextBuilder.out(out);
+        final SqueakTranscriptForwarder err = new SqueakTranscriptForwarder(System.err);
+        contextBuilder.err(err);
         try (Context context = contextBuilder.build()) {
             println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
             if (sourceCode != null) {
@@ -91,7 +93,8 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 return 0;
             } else {
                 final Value image = context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build());
-                SqueakTranscriptForwarder.setUp(context);
+                out.setUp(context);
+                err.setUp(context);
                 image.execute();
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
