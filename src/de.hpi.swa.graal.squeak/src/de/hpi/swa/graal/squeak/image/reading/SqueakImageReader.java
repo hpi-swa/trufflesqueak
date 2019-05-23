@@ -16,6 +16,7 @@ import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -24,7 +25,6 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class SqueakImageReader {
     private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
-    public static final Object NIL_OBJECT_PLACEHOLDER = new Object();
     public static final long IMAGE_32BIT_VERSION = 6521;
     public static final long IMAGE_64BIT_VERSION = 68021;
     private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
@@ -336,7 +336,7 @@ public final class SqueakImageReader {
         specialObjectChunk(SPECIAL_OBJECT.FALSE_OBJECT).getClassChunk().object = image.falseClass;
         specialObjectChunk(SPECIAL_OBJECT.TRUE_OBJECT).getClassChunk().object = image.trueClass;
 
-        setPrebuiltObject(SPECIAL_OBJECT.NIL_OBJECT, NIL_OBJECT_PLACEHOLDER);
+        setPrebuiltObject(SPECIAL_OBJECT.NIL_OBJECT, NilObject.SINGLETON);
         setPrebuiltObject(SPECIAL_OBJECT.FALSE_OBJECT, BooleanObject.FALSE);
         setPrebuiltObject(SPECIAL_OBJECT.TRUE_OBJECT, BooleanObject.TRUE);
         setPrebuiltObject(SPECIAL_OBJECT.SCHEDULER_ASSOCIATION, image.schedulerAssociation);
@@ -346,7 +346,7 @@ public final class SqueakImageReader {
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_ARRAY, image.arrayClass);
         setPrebuiltObject(SPECIAL_OBJECT.SMALLTALK_DICTIONARY, image.smalltalk);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_FLOAT, image.floatClass);
-        if (specialObjectChunk(SPECIAL_OBJECT.CLASS_TRUFFLE_OBJECT).object != NIL_OBJECT_PLACEHOLDER) {
+        if (specialObjectChunk(SPECIAL_OBJECT.CLASS_TRUFFLE_OBJECT).object != NilObject.SINGLETON) {
             setPrebuiltObject(SPECIAL_OBJECT.CLASS_TRUFFLE_OBJECT, image.initializeTruffleObject());
         }
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_METHOD_CONTEXT, image.methodContextClass);

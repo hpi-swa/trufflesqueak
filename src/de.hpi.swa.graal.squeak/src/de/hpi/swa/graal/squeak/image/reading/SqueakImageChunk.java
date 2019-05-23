@@ -64,7 +64,7 @@ public final class SqueakImageChunk {
         if (object == null) {
             assert format == 1;
             object = new ClassObject(image, hash, metaClassObject);
-        } else if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
+        } else if (object == NilObject.SINGLETON) {
             return null;
         }
         return (ClassObject) object;
@@ -119,11 +119,7 @@ public final class SqueakImageChunk {
                 object = new CompiledMethodObject(image, hash);
             }
         }
-        if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
-            return NilObject.SINGLETON;
-        } else {
-            return object;
-        }
+        return object;
     }
 
     public int getFormat() {
