@@ -1600,7 +1600,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#initBBOpTable */
-    private static long initBBOpTable() {
+    private static void initBBOpTable() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         OP_TABLE[0 + 1] = BitBlt::clearWordwith;
         OP_TABLE[1 + 1] = BitBlt::bitAndwith;
@@ -1644,7 +1644,6 @@ public final class BitBlt {
         OP_TABLE[39 + 1] = BitBlt::pixClearwith;
         OP_TABLE[40 + 1] = BitBlt::fixAlphawith;
         OP_TABLE[41 + 1] = BitBlt::rgbComponentAlphawith;
-        return 0;
     }
 
     /* BitBltSimulation>>#initDither8Lookup */

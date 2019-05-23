@@ -78,7 +78,7 @@ public final class B2D {
     private static final int GE_EDGE_FILLS_INVALID = 0x10000;
     private static final int GEF_ALREADY_FAILED = 100;
     private static final int GEF_BAD_POINT = 121;
-    // private static final int GEF_BITBLT_LOAD_FAILED = 122;
+    private static final int GEF_BITBLT_LOAD_FAILED = 122;
     private static final int GEF_CLASS_MISMATCH = 114;
     private static final int GEF_EDGE_DATA_TOO_SMALL = 112;
     // private static final int GEF_ENGINE_IS_INTEGER = 101;
@@ -1343,6 +1343,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#copyBitsFrom:to:at: */
     private static void copyBitsFromtoat(final int x0, final int x1, final int yValue) {
+        BitBlt.resetSuccessFlag();
         BitBlt.copyBitsFromtoat(x0, x1, yValue);
     }
 
@@ -3475,8 +3476,9 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#loadBitBltFrom: */
-    private static void loadBitBltFrom(final PointersObject bbObj) {
-        BitBlt.loadBitBltFrom(bbObj);
+    private static boolean loadBitBltFrom(final PointersObject bbObj) {
+        BitBlt.resetSuccessFlag();
+        return BitBlt.loadBitBltFrom(bbObj);
     }
 
     /* Load the bitmap fill. */
@@ -3793,8 +3795,8 @@ public final class B2D {
         dirX = point2GetX() - point1GetX();
         dirY = point2GetY() - point1GetY();
         nrmX = point3GetX() - point1GetX();
-        /* Compute the scale from direction/normal into ramp size */
         nrmY = point3GetY() - point1GetY();
+        /* Compute the scale from direction/normal into ramp size */
         dsLength2 = dirX * dirX + dirY * dirY;
         if (dsLength2 > 0) {
             dsX = (long) ((double) dirX * (double) fillWidth * 65536.0 / dsLength2);
@@ -3883,26 +3885,26 @@ public final class B2D {
 
     /* BalloonEnginePlugin>>#loadLine:from:to:offset:leftFill:rightFill: */
     private static void loadLinefromtooffsetleftFillrightFill(final long line, final int point1Index, final int point2Index, final long yOffset, final long leftFill, final long rightFill) {
-        final int p3Index;
-        final int p4Index;
+        final int p1Index;
+        final int p2Index;
         final long yDir;
 
         if (pointGetY(point1Index) <= pointGetY(point2Index)) {
-            p3Index = point1Index;
-            p4Index = point2Index;
+            p1Index = point1Index;
+            p2Index = point2Index;
             yDir = 1;
         } else {
-            p3Index = point2Index;
-            p4Index = point1Index;
+            p1Index = point2Index;
+            p2Index = point1Index;
             yDir = -1;
         }
-        edgeXValueOfput(line, pointGetX(p3Index));
-        edgeYValueOfput(line, pointGetY(p3Index) - yOffset);
+        edgeXValueOfput(line, pointGetX(p1Index));
+        edgeYValueOfput(line, pointGetY(p1Index) - yOffset);
         edgeZValueOfput(line, currentZGet());
         edgeLeftFillOfput(line, leftFill);
         edgeRightFillOfput(line, rightFill);
-        lineEndXOfput(line, pointGetX(p4Index));
-        lineEndYOfput(line, pointGetY(p4Index) - yOffset);
+        lineEndXOfput(line, pointGetX(p2Index));
+        lineEndYOfput(line, pointGetY(p2Index) - yOffset);
         lineYDirectionOfput(line, yDir);
     }
 
@@ -4073,7 +4075,9 @@ public final class B2D {
         if ((failCode = loadSpanBufferFrom(fetchNativeofObject(BE_SPAN_INDEX, engine))) != 0) {
             return failCode;
         }
-        loadBitBltFrom(fetchPointerofObject(BE_BITBLT_INDEX, engine));
+        if (!loadBitBltFrom(fetchPointerofObject(BE_BITBLT_INDEX, engine))) {
+            return GEF_BITBLT_LOAD_FAILED;
+        }
         if (!loadFormsFrom(fetchArrayofObject(BE_FORMS_INDEX, engine))) {
             return GEF_FORM_LOAD_FAILED;
         }
@@ -4373,16 +4377,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#obj:at: */
     private static int objat(final long object, final long index) {
-        final long workBufferIndex = objBufferIndex + object + index;
-        /**
-         * TODO: index can be out of bounds (see #19), working around this problem by returning 0 in
-         * this case. Find out why and fix the root problem.
-         */
-        if (0 <= workBufferIndex && workBufferIndex < workBuffer.length) {
-            return workBuffer[(int) workBufferIndex];
-        } else {
-            return 0;
-        }
+        return workBuffer[(int) (objBufferIndex + object + index)];
     }
 
     /* BalloonEngineBase>>#obj:at:put: */
@@ -4908,7 +4903,7 @@ public final class B2D {
             borderWidth = 0;
         }
         loadPointfrom(GW_POINT_1, start);
-        loadPointfrom(GW_POINT_2, end);
+        loadPointfrom(GW_POINT_3, end);
         if (failed()) {
             PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
         }
@@ -5005,7 +5000,9 @@ public final class B2D {
         if (failureCode2 != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode2);
         }
-        loadBitBltFrom(fetchPointerofObject(BE_BITBLT_INDEX, engine));
+        if (!loadBitBltFrom(fetchPointerofObject(BE_BITBLT_INDEX, engine))) {
+            PrimitiveFailed.andTransferToInterpreter(GEF_BITBLT_LOAD_FAILED);
+        }
         if ((currentYGet() & aaScanMaskGet()) == aaScanMaskGet()) {
             displaySpanBufferAt(currentYGet());
             postDisplayAction();
