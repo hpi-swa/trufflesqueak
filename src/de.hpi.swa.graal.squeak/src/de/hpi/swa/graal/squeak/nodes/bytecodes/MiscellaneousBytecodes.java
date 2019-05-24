@@ -79,7 +79,7 @@ public final class MiscellaneousBytecodes {
         private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
             if (handlePrimitiveFailedNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                handlePrimitiveFailedNode = HandlePrimitiveFailedNode.create(code);
+                handlePrimitiveFailedNode = insert(HandlePrimitiveFailedNode.create(code));
             }
             return handlePrimitiveFailedNode;
         }
