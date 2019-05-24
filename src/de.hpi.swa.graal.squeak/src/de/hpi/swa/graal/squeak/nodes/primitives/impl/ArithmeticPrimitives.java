@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
@@ -13,7 +14,7 @@ import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakArithmeticTypes;
+import de.hpi.swa.graal.squeak.nodes.ArithmeticBaseTypeSystem;
 import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers.PrimDigitBitShiftMagnitudeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -92,18 +93,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final double doLongDouble(final long a, final double b) {
+        protected final Object doLongDouble(final long a, final double b) {
             return doDouble(a, b);
         }
 
         @Specialization
-        protected static final double doDoubleLong(final double a, final long b) {
+        protected final Object doDoubleLong(final double a, final long b) {
             return doDouble(a, b);
         }
 
         @Specialization
-        protected static final double doDouble(final double a, final double b) {
-            return a + b;
+        protected final Object doDouble(final double a, final double b) {
+            return FloatObject.boxIfNecessary(method.image, a + b);
         }
     }
 
@@ -175,18 +176,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final double doLongDouble(final long a, final double b) {
+        protected final Object doLongDouble(final long a, final double b) {
             return doDouble(a, b);
         }
 
         @Specialization
-        protected static final double doDoubleLong(final double a, final long b) {
+        protected final Object doDoubleLong(final double a, final long b) {
             return doDouble(a, b);
         }
 
         @Specialization
-        protected static final double doDouble(final double a, final double b) {
-            return a - b;
+        protected final Object doDouble(final double a, final double b) {
+            return FloatObject.boxIfNecessary(method.image, a - b);
         }
     }
 
@@ -229,12 +230,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+            return BooleanObject.wrap(a < b);
         }
 
         @Specialization
         protected static final boolean doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+            return BooleanObject.wrap(a < b);
         }
 
         @Specialization
@@ -282,12 +283,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+            return BooleanObject.wrap(a > b);
         }
 
         @Specialization
         protected static final boolean doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+            return BooleanObject.wrap(a > b);
         }
 
         @Specialization
@@ -335,12 +336,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+            return BooleanObject.wrap(a <= b);
         }
 
         @Specialization
         protected static final boolean doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+            return BooleanObject.wrap(a <= b);
         }
 
         @Specialization
@@ -388,12 +389,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+            return BooleanObject.wrap(a >= b);
         }
 
         @Specialization
         protected static final boolean doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+            return BooleanObject.wrap(a >= b);
         }
 
         @Specialization
@@ -624,18 +625,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final double doLongDouble(final long a, final double b) {
+        protected final Object doLongDouble(final long a, final double b) {
             return doDouble(a, b);
         }
 
         @Specialization
-        protected static final double doDoubleLong(final double a, final long b) {
+        protected final Object doDoubleLong(final double a, final long b) {
             return doDouble(a, b);
         }
 
         @Specialization
-        protected static final double doDouble(final double a, final double b) {
-            return a * b;
+        protected final Object doDouble(final double a, final double b) {
+            return FloatObject.boxIfNecessary(method.image, a * b);
         }
     }
 
@@ -678,24 +679,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
-        /**
-         * Fail if `a` is long and `b` is !b.isZero()" and "!b.fitsIntoLong()"
-         * (isIntegralWhenDividedBy is always `false`).
-         */
-
         @Specialization(guards = {"!isZero(b)"})
-        protected static final double doLongDouble(final long a, final double b) {
+        protected final Object doLongDouble(final long a, final double b) {
             return doDouble(a, b);
         }
 
         @Specialization(guards = {"b != 0"})
-        protected static final double doDoubleLong(final double a, final long b) {
+        protected final Object doDoubleLong(final double a, final long b) {
             return doDouble(a, b);
         }
 
         @Specialization(guards = {"!isZero(b)"})
-        protected static final double doDouble(final double a, final double b) {
-            return a / b;
+        protected final Object doDouble(final double a, final double b) {
+            return FloatObject.boxIfNecessary(method.image, a / b);
         }
     }
 
@@ -1027,24 +1023,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "receiver == 0")
-        protected static final long doLongZero(@SuppressWarnings("unused") final long receiver) {
-            return 0L;
-        }
-
         @Specialization(guards = "isZero(receiver)")
         protected static final long doDoubleZero(@SuppressWarnings("unused") final double receiver) {
             return 0L;
-        }
-
-        @Specialization(guards = "isZero(receiver.getValue())")
-        protected static final long doFloatZero(@SuppressWarnings("unused") final FloatObject receiver) {
-            return 0L;
-        }
-
-        @Specialization(guards = "receiver != 0")
-        protected static final long doLong(final long receiver) {
-            return doDouble(receiver);
         }
 
         @Specialization(guards = "!isZero(receiver)")
@@ -1059,11 +1040,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return bits - BIAS; // apply bias
             }
         }
-
-        @Specialization(guards = "!isZero(receiver.getValue())")
-        protected static final long doFloat(final FloatObject receiver) {
-            return doDouble(receiver.getValue());
-        }
     }
 
     @GenerateNodeFactory
@@ -1073,13 +1049,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"!isZero(matissa)", "!isInfinite(matissa)", "exponent != 0"})
-        protected static final double doDoubleLong(final double matissa, final long exponent) {
+        @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "exponent != 0"})
+        protected final Object doDoubleLong(final double matissa, final long exponent) {
             return doDouble(matissa, exponent);
         }
 
-        @Specialization(guards = {"!isZero(matissa)", "!isInfinite(matissa)", "!isZero(exponent)"})
-        protected static final double doDouble(final double matissa, final double exponent) {
+        @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "exponent == 0"})
+        protected static final double doDoubleExponentLongZero(final double matissa, @SuppressWarnings("unused") final long exponent) {
+            return matissa;
+        }
+
+        @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "!isZero(exponent)"})
+        protected final Object doDouble(final double matissa, final double exponent) {
             final double steps = Math.min(3, Math.ceil(Math.abs(exponent) / 1023));
             double result = matissa;
             for (int i = 0; i < steps; i++) {
@@ -1087,7 +1068,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
                 result *= pow;
             }
-            return result;
+            return FloatObject.boxIfNecessary(method.image, result);
+        }
+
+        @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "isZero(exponent)"})
+        protected static final double doDoubleExponentZero(final double matissa, @SuppressWarnings("unused") final double exponent) {
+            return matissa;
         }
 
         @SuppressWarnings("unused")
@@ -1096,19 +1082,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return 0D;
         }
 
-        @Specialization(guards = {"exponent == 0"})
-        protected static final double doDoubleExponentZero(final double matissa, @SuppressWarnings("unused") final long exponent) {
-            return matissa;
-        }
-
-        @Specialization(guards = {"isZero(exponent)"})
-        protected static final double doDoubleExponentZero(final double matissa, @SuppressWarnings("unused") final double exponent) {
-            return matissa;
-        }
-
         @SuppressWarnings("unused")
-        @Specialization(guards = {"isInfinite(matissa)"})
-        protected static final double doDoubleNaN(final double matissa, final Object exponent) {
+        @Specialization(guards = {"!matissa.isFinite()"})
+        protected static final FloatObject doDoubleNotFinite(final FloatObject matissa, final Object exponent) {
             return matissa;
         }
     }
@@ -1120,19 +1096,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
-        protected static final double doLong(final long receiver) {
-            return Math.sqrt(receiver);
-        }
-
-        @Specialization
-        protected static final double doLargeInteger(final LargeIntegerObject receiver) {
-            return doDouble(receiver.doubleValue());
-        }
-
-        @Specialization
+        @Specialization(guards = {"isFinite(receiver)", "isZeroOrGreater(receiver)"})
         protected static final double doDouble(final double receiver) {
             return Math.sqrt(receiver);
+        }
+
+        @Specialization(guards = "!receiver.isFinite()")
+        protected static final FloatObject doNotFinite(final FloatObject receiver) {
+            return receiver;
         }
     }
 
@@ -1143,9 +1114,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "isFinite(receiver)")
         protected static final double doDouble(final double receiver) {
             return Math.sin(receiver);
+        }
+
+        @Specialization(guards = "!receiver.isFinite()")
+        protected final FloatObject doInfinite(@SuppressWarnings("unused") final FloatObject receiver) {
+            return FloatObject.valueOf(method.image, Double.NaN);
         }
     }
 
@@ -1156,12 +1132,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "!isNaN(receiver)")
         protected static final double doDouble(final double receiver) {
             return Math.atan(receiver);
         }
+
+        @Specialization(guards = "receiver.isNaN()")
+        protected static final FloatObject doInfinite(final FloatObject receiver) {
+            return receiver;
+        }
     }
 
+    @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {58, 558})
     protected abstract static class PrimLogNNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
@@ -1169,9 +1151,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "isFinite(receiver)")
         protected static final double doDouble(final double receiver) {
             return Math.log(receiver);
+        }
+
+        @Specialization(guards = "!receiver.isFinite()")
+        protected static final FloatObject doInfinite(final FloatObject receiver) {
+            return receiver;
         }
     }
 
@@ -1182,9 +1169,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
-        protected static final double doDouble(final double receiver) {
-            return Math.exp(receiver);
+        @Specialization(guards = "isFinite(receiver)")
+        protected final Object doDouble(final double receiver) {
+            return FloatObject.boxIfNecessary(method.image, Math.exp(receiver));
+        }
+
+        @Specialization(guards = "!receiver.isFinite()")
+        protected static final FloatObject doInfinite(final FloatObject receiver) {
+            return receiver;
         }
     }
 
@@ -1209,7 +1201,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @TypeSystemReference(SqueakArithmeticTypes.class)
+    @ImportStatic(Double.class)
+    @TypeSystemReference(ArithmeticBaseTypeSystem.class)
     public abstract static class AbstractArithmeticPrimitiveNode extends AbstractPrimitiveNode {
         public AbstractArithmeticPrimitiveNode(final CompiledMethodObject method) {
             super(method);

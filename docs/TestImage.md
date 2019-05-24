@@ -4,7 +4,7 @@
 ```smalltalk
 | manifest load |
 manifest := #(
-    ('http://source.squeak.org/FFI'          1 ('FFI-Pools' 'FFI-Kernel'))
+    ('http://source.squeak.org/FFI'          1 ('FFI-Pools' 'FFI-Kernel' 'FFI-Tests'))
     ('http://source.squeak.org/VMMaker'      6 ('Balloon-Engine-Pools' 'VMMaker.oscog'))
     ('http://www.squeaksource.com/OSProcess' 4 ('OSProcess'))
 ).

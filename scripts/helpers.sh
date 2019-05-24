@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-readonly GIT_TAG="0.3.0"
-readonly IMAGE32_NAME="GraalSqueak-18163-32bit.zip"
-readonly IMAGE64_NAME="GraalSqueak-18163-64bit.zip"
+readonly GIT_TAG="0.8.0"
+readonly IMAGE32_NAME="GraalSqueakTestImage-18594-32bit.zip"
+readonly IMAGE64_NAME="GraalSqueakTestImage-18594-64bit.zip"
 readonly GITHUB_SLUG="hpi-swa-lab/graalsqueak"
 readonly MX_GIT="https://github.com/graalvm/mx.git"
 
