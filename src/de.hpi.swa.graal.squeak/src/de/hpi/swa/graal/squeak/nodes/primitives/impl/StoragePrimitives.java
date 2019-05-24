@@ -17,6 +17,8 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -50,6 +52,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -621,9 +624,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 173)
-    protected abstract static class PrimSlotAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSlotAtNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
@@ -632,14 +636,20 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doSlotAt(final AbstractSqueakObject receiver, final long index) {
+        protected final Object doSlotAt(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return at0Node.execute(receiver, index - 1);
+        }
+
+        @Specialization(guards = "inBounds1(index, sizeNode.execute(target))")
+        protected final Object doSlotAt(@SuppressWarnings("unused") final ContextObject receiver, final AbstractSqueakObject target, final long index) {
+            return at0Node.execute(target, index - 1);
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 174)
-    protected abstract static class PrimSlotAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimSlotAtPutNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
@@ -648,8 +658,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doSlotAtPut(final AbstractSqueakObject receiver, final long index, final Object value) {
+        protected final Object doSlotAtPut(final AbstractSqueakObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
             atPut0Node.execute(receiver, index - 1, value);
+            return value;
+        }
+
+        @Specialization(guards = "inBounds1(index, sizeNode.execute(target))")
+        protected final Object doSlotAtPut(@SuppressWarnings("unused") final ContextObject receiver, final AbstractSqueakObject target, final long index, final Object value) {
+            atPut0Node.execute(target, index - 1, value);
             return value;
         }
     }
