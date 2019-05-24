@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -54,6 +55,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants;
 import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_ERROR;
+import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_TYPES;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -250,20 +252,21 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
-
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
+
+            final List<String> argumentList = new ArrayList<>();
 
             for (final Object argType : argTypes.getObjectStorage()) {
                 if (argType instanceof PointersObject) {
                     final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
-                    final int[] storageIntArray = compiledSpec.getIntStorage();
-                    final int headerWord = storageIntArray[0];
-
-                    final int shiftResult = (headerWord & FFIConstants.FFI_TYPE.ATOMIC_TYPE_MASK) >> FFIConstants.FFI_TYPE.ATOMIC_TYPE_SHIFT;
+                    final int headerWord = compiledSpec.getIntStorage()[0];
+                    final int atomicType = (headerWord & FFIConstants.FFI_TYPE.ATOMIC_TYPE_MASK) >> FFIConstants.FFI_TYPE.ATOMIC_TYPE_SHIFT;
+                    final String atomicName = FFI_TYPES.fromInteger(atomicType);
+                    argumentList.add(atomicName);
                 }
             }
-            method.image.printSqStackTrace();
+
             if ("ffiTestDoubles".equals(name)) {
                 final String libName = method.image.os.isMacOS() ? "ffi-test.dylib" : "ffi-test.so";
                 final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + libName;
