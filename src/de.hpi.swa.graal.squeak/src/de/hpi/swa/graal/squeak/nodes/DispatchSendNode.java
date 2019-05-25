@@ -69,7 +69,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
                     @Cached final LookupClassNode lookupClassNode,
                     @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
-        final ClassObject targetClass = lookupClassNode.executeLookup(targetObject);
+        final ClassObject targetClass = lookupClassNode.executeLookup(image, targetObject);
         final Object newLookupResult = getLookupNode().executeLookup(targetClass, image.runWithInSelector);
         if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
             final Object doesNotUnderstandMethod = getLookupNode().executeLookup(targetClass, image.doesNotUnderstand);

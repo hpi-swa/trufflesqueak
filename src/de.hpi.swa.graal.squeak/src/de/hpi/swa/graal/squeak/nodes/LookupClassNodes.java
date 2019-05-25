@@ -1,10 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -25,7 +23,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetCompiledMeth
 public final class LookupClassNodes {
 
     public abstract static class AbstractLookupClassNode extends AbstractNode {
-        public abstract ClassObject executeLookup(Object receiver);
+        public abstract ClassObject executeLookup(SqueakImageContext image, Object receiver);
     }
 
     @GenerateUncached
@@ -39,104 +37,92 @@ public final class LookupClassNodes {
         }
 
         @Specialization
-        protected static final ClassObject doNil(@SuppressWarnings("unused") final NilObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doNil(final SqueakImageContext image, @SuppressWarnings("unused") final NilObject value) {
             return image.nilClass;
         }
 
         @Specialization(guards = "value == TRUE")
-        protected static final ClassObject doTrue(@SuppressWarnings("unused") final boolean value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doTrue(final SqueakImageContext image, @SuppressWarnings("unused") final boolean value) {
             return image.trueClass;
         }
 
         @Specialization(guards = "value != TRUE")
-        protected static final ClassObject doFalse(@SuppressWarnings("unused") final boolean value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doFalse(final SqueakImageContext image, @SuppressWarnings("unused") final boolean value) {
             return image.falseClass;
         }
 
         @Specialization
-        protected static final ClassObject doSmallInteger(@SuppressWarnings("unused") final long value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doSmallInteger(final SqueakImageContext image, @SuppressWarnings("unused") final long value) {
             return image.smallIntegerClass;
         }
 
         @Specialization
-        protected static final ClassObject doChar(@SuppressWarnings("unused") final char value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doChar(final SqueakImageContext image, @SuppressWarnings("unused") final char value) {
             return image.characterClass;
         }
 
         @Specialization
-        protected static final ClassObject doDouble(@SuppressWarnings("unused") final double value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doDouble(final SqueakImageContext image, @SuppressWarnings("unused") final double value) {
             return image.smallFloatClass;
         }
 
         @Specialization
-        protected static final ClassObject doAbstractPointers(final AbstractPointersObject value) {
+        protected static final ClassObject doAbstractPointers(@SuppressWarnings("unused") final SqueakImageContext image, final AbstractPointersObject value) {
             return value.getSqueakClass();
         }
 
         @Specialization
-        protected static final ClassObject doArray(final ArrayObject value) {
+        protected static final ClassObject doArray(@SuppressWarnings("unused") final SqueakImageContext image, final ArrayObject value) {
             return value.getSqueakClass();
         }
 
         @Specialization
-        protected static final ClassObject doClosure(@SuppressWarnings("unused") final BlockClosureObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doClosure(final SqueakImageContext image, @SuppressWarnings("unused") final BlockClosureObject value) {
             return image.blockClosureClass;
         }
 
         @Specialization
-        protected static final ClassObject doCharacter(@SuppressWarnings("unused") final CharacterObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doCharacter(final SqueakImageContext image, @SuppressWarnings("unused") final CharacterObject value) {
             return image.characterClass;
         }
 
         @Specialization
-        protected static final ClassObject doClass(@SuppressWarnings("unused") final ClassObject value) {
+        protected static final ClassObject doClass(@SuppressWarnings("unused") final SqueakImageContext image, final ClassObject value) {
             return value.getSqueakClass();
         }
 
         @Specialization
-        protected static final ClassObject doMethod(@SuppressWarnings("unused") final CompiledMethodObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doMethod(final SqueakImageContext image, @SuppressWarnings("unused") final CompiledMethodObject value) {
             return image.compiledMethodClass;
         }
 
         @Specialization
-        protected static final ClassObject doContext(@SuppressWarnings("unused") final ContextObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doContext(final SqueakImageContext image, @SuppressWarnings("unused") final ContextObject value) {
             return image.methodContextClass;
         }
 
         @Specialization
-        protected static final ClassObject doEmpty(final EmptyObject value) {
+        protected static final ClassObject doEmpty(@SuppressWarnings("unused") final SqueakImageContext image, final EmptyObject value) {
             return value.getSqueakClass();
         }
 
         @Specialization
-        protected static final ClassObject doFloat(@SuppressWarnings("unused") final FloatObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doFloat(final SqueakImageContext image, @SuppressWarnings("unused") final FloatObject value) {
             return image.floatClass;
         }
 
         @Specialization
-        protected static final ClassObject doLargeInteger(final LargeIntegerObject value) {
+        protected static final ClassObject doLargeInteger(@SuppressWarnings("unused") final SqueakImageContext image, final LargeIntegerObject value) {
             return value.getSqueakClass();
         }
 
         @Specialization
-        protected static final ClassObject doNative(final NativeObject value) {
+        protected static final ClassObject doNative(@SuppressWarnings("unused") final SqueakImageContext image, final NativeObject value) {
             return value.getSqueakClass();
         }
 
         @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"})
-        protected static final ClassObject doTruffleObject(@SuppressWarnings("unused") final Object value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        protected static final ClassObject doTruffleObject(final SqueakImageContext image, @SuppressWarnings("unused") final Object value) {
             assert image.supportsTruffleObject();
             return image.truffleObjectClass;
         }
@@ -155,7 +141,7 @@ public final class LookupClassNodes {
         }
 
         @Override
-        public ClassObject executeLookup(final Object receiver) {
+        public ClassObject executeLookup(final SqueakImageContext image, final Object receiver) {
             final ClassObject methodClass = getMethodNode.execute(code).getMethodClass();
             final ClassObject superclass = methodClass.getSuperclassOrNull();
             return superclass == null ? methodClass : superclass;

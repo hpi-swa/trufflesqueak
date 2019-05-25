@@ -60,7 +60,7 @@ public final class SendBytecodes {
                  * Inline copy of {@link AbstractSendNode#executeSend} for better send performance.
                  */
                 final Object[] rcvrAndArgs = popNNode.executePopN(frame, 1 + argumentCount);
-                final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
+                final ClassObject rcvrClass = lookupClassNode.executeLookup(code.image, rcvrAndArgs[0]);
                 final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
                 result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
                 assert result != null : "Result of a message send should not be null";
@@ -86,7 +86,7 @@ public final class SendBytecodes {
 
         public final Object executeSend(final VirtualFrame frame) {
             final Object[] rcvrAndArgs = popNNode.executePopN(frame, 1 + argumentCount);
-            final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(code.image, rcvrAndArgs[0]);
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
         }

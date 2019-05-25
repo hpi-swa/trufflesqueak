@@ -137,7 +137,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 lookupClassNode = insert(LookupClassNode.create());
             }
-            return lookupClassNode.executeLookup(object);
+            return lookupClassNode.executeLookup(method.image, object);
         }
 
         private DispatchSendNode getDispatchSendNode() {
@@ -446,20 +446,20 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 111)
     protected abstract static class PrimClassNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        private @Child LookupClassNode node = LookupClassNode.create();
-
         protected PrimClassNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final ClassObject doClass(final Object receiver, @SuppressWarnings("unused") final NotProvided object) {
-            return node.executeLookup(receiver);
+        protected final ClassObject doClass(final Object receiver, @SuppressWarnings("unused") final NotProvided object,
+                        @Shared("lookupNode") @Cached final LookupClassNode lookupNode) {
+            return lookupNode.executeLookup(method.image, receiver);
         }
 
         @Specialization(guards = "!isNotProvided(object)")
-        protected final ClassObject doClass(@SuppressWarnings("unused") final Object receiver, final Object object) {
-            return node.executeLookup(object);
+        protected final ClassObject doClass(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @Shared("lookupNode") @Cached final LookupClassNode lookupNode) {
+            return lookupNode.executeLookup(method.image, object);
         }
     }
 

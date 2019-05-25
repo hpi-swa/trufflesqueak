@@ -77,7 +77,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         if (value instanceof FrameMarker) {
             return image.nilClass;
         }
-        return LookupClassNode.getUncached().executeLookup(WrapToSqueakNode.getUncached().executeWrap(value));
+        return LookupClassNode.getUncached().executeLookup(image, WrapToSqueakNode.getUncached().executeWrap(value));
     }
 
     @Override
