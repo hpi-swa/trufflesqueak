@@ -1,8 +1,10 @@
 {
 	"class" : {
-		"initialize" : "fn 11/22/2018 00:50",
+		"ensureInitialized" : "fn 5/25/2019 18:49",
+		"initialize" : "fn 5/25/2019 18:42",
 		"new" : "fn 4/13/2019 13:39",
-		"new:" : "fn 4/13/2019 13:40" },
+		"new:" : "fn 4/13/2019 13:40",
+		"specialObjectsArrayIndex" : "fn 5/25/2019 18:42" },
 	"instance" : {
 		"<" : "fn 4/12/2019 10:43",
 		"<=" : "fn 4/12/2019 10:43",
