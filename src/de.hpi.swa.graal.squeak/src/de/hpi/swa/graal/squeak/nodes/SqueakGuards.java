@@ -134,7 +134,7 @@ public final class SqueakGuards {
     }
 
     public static boolean isPowerOfTwo(final long value) {
-        return value != 1 && (value & value - 1) == 0;
+        return value > 1 && (value & value - 1) == 0;
     }
 
     public static boolean isUsedJavaPrimitive(final Object value) {
