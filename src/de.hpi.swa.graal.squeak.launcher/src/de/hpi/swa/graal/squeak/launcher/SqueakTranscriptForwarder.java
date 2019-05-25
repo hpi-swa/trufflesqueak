@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.launcher;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
 
 import org.graalvm.polyglot.Context;
@@ -13,15 +14,14 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
-public final class SqueakTranscriptForwarder extends OutputStream {
+public final class SqueakTranscriptForwarder extends PrintStream {
     private static final String TRANSCRIPT_BLOCK_CODE = "[ :s | Transcript nextPutAll: s; flush ]";
     private static final String TRANSCRIPT_BLOCK_CODE_NAME = "<transcript forwarder>";
 
-    private final OutputStream delegate;
     @CompilationFinal private Value transcriptBlock;
 
-    public SqueakTranscriptForwarder(final OutputStream defaultTarget) {
-        delegate = defaultTarget;
+    public SqueakTranscriptForwarder(final OutputStream out, final boolean autoFlush) {
+        super(out, autoFlush);
     }
 
     public void setUp(final Context context) throws IOException {
@@ -36,23 +36,18 @@ public final class SqueakTranscriptForwarder extends OutputStream {
                 transcriptBlock.execute(new String(b));
             }
         } finally {
-            delegate.write(b);
+            super.write(b);
         }
     }
 
     @Override
-    public void write(final byte[] b, final int off, final int len) throws IOException {
+    public void write(final byte[] b, final int off, final int len) {
         try {
             if (transcriptBlock != null) {
                 transcriptBlock.execute(new String(Arrays.copyOfRange(b, off, off + len)));
             }
         } finally {
-            delegate.write(b);
+            super.write(b, off, len);
         }
-    }
-
-    @Override
-    public void write(final int b) throws IOException {
-        delegate.write(b); // Must be implemented, but ignored for now.
     }
 }

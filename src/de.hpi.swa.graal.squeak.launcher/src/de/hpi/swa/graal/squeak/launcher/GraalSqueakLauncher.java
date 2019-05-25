@@ -80,9 +80,9 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         }
         contextBuilder.arguments(getLanguageId(), remainingArguments);
         contextBuilder.allowAllAccess(true);
-        final SqueakTranscriptForwarder out = new SqueakTranscriptForwarder(System.out);
+        final SqueakTranscriptForwarder out = new SqueakTranscriptForwarder(System.out, true);
         contextBuilder.out(out);
-        final SqueakTranscriptForwarder err = new SqueakTranscriptForwarder(System.err);
+        final SqueakTranscriptForwarder err = new SqueakTranscriptForwarder(System.err, true);
         contextBuilder.err(err);
         try (Context context = contextBuilder.build()) {
             println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
