@@ -77,7 +77,7 @@ public final class SqueakImageReader {
         new SqueakImageReader(image).run();
     }
 
-    public Object run() {
+    private Object run() {
         if (stream == null && image.isTesting()) {
             return null;
         }
