@@ -99,6 +99,10 @@ public final class PushBytecodes {
             return blockSize;
         }
 
+        public int getClosureSuccessorIndex() {
+            return getSuccessorIndex() + getBockSize();
+        }
+
         @Override
         public void executeVoid(final VirtualFrame frame) {
             pushNode.executePush(frame, createClosure(frame));

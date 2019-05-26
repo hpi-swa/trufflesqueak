@@ -33,7 +33,11 @@ public final class ReturnBytecodes {
             throw SqueakException.create("executeReturn() should be called instead");
         }
 
-        public abstract Object executeReturn(VirtualFrame frame, FrameStackReadAndClearNode readAndClearNode);
+        public final Object executeReturn(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
+            return executeReturnSpecialized(frame, FrameAccess.getClosure(frame), readAndClearNode);
+        }
+
+        protected abstract Object executeReturnSpecialized(VirtualFrame frame, Object closure, FrameStackReadAndClearNode readAndClearNode);
 
         @SuppressWarnings("unused")
         protected Object getReturnValue(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
@@ -41,18 +45,11 @@ public final class ReturnBytecodes {
         }
     }
 
-    protected abstract static class AbstractReturnNodeWithSpecializations extends AbstractReturnNode {
+    protected abstract static class AbstractReturnWithSpecializationsNode extends AbstractReturnNode {
 
-        protected AbstractReturnNodeWithSpecializations(final CompiledCodeObject code, final int index) {
+        protected AbstractReturnWithSpecializationsNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
-
-        @Override
-        public final Object executeReturn(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
-            return executeReturnSpecialized(frame, FrameAccess.getClosure(frame), readAndClearNode);
-        }
-
-        protected abstract Object executeReturnSpecialized(VirtualFrame frame, Object closure, FrameStackReadAndClearNode readAndClearNode);
 
         @Specialization(guards = {"closure == null", "!hasModifiedSender(frame)"})
         protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closure, final FrameStackReadAndClearNode readAndClearNode) {
@@ -72,7 +69,7 @@ public final class ReturnBytecodes {
         }
     }
 
-    public abstract static class ReturnConstantNode extends AbstractReturnNodeWithSpecializations {
+    public abstract static class ReturnConstantNode extends AbstractReturnWithSpecializationsNode {
         public final Object constant;
 
         protected ReturnConstantNode(final CompiledCodeObject code, final int index, final Object obj) {
@@ -96,7 +93,7 @@ public final class ReturnBytecodes {
         }
     }
 
-    public abstract static class ReturnReceiverNode extends AbstractReturnNodeWithSpecializations {
+    public abstract static class ReturnReceiverNode extends AbstractReturnWithSpecializationsNode {
 
         protected ReturnReceiverNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -127,13 +124,6 @@ public final class ReturnBytecodes {
             return ReturnTopFromBlockNodeGen.create(code, index);
         }
 
-        @Override
-        public final Object executeReturn(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
-            return executeReturnSpecialized(frame, FrameAccess.getClosure(frame), readAndClearNode);
-        }
-
-        protected abstract Object executeReturnSpecialized(VirtualFrame frame, Object closure, FrameStackReadAndClearNode readAndClearNode);
-
         @Specialization(guards = {"!hasModifiedSender(frame)"})
         protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closureOrNull, final FrameStackReadAndClearNode readAndClearNode) {
             return getReturnValue(frame, readAndClearNode);
@@ -162,7 +152,7 @@ public final class ReturnBytecodes {
         }
     }
 
-    public abstract static class ReturnTopFromMethodNode extends AbstractReturnNodeWithSpecializations {
+    public abstract static class ReturnTopFromMethodNode extends AbstractReturnWithSpecializationsNode {
         protected ReturnTopFromMethodNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }

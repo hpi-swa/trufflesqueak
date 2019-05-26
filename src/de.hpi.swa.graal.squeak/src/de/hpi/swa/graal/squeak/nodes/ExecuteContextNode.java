@@ -19,10 +19,8 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.GetSuccessorNodeGen;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.TriggerInterruptHandlerNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
@@ -52,7 +50,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
-    @Child private GetSuccessorNode getSuccessorNode;
 
     @Child private FrameStackReadAndClearNode readAndClearNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
@@ -153,97 +150,85 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         int pc = 0;
         int backJumpCounter = 0;
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
-        try {
-            while (pc >= 0) {
-                CompilerAsserts.partialEvaluationConstant(pc);
-                if (node instanceof ConditionalJumpNode) {
-                    final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                    if (jumpNode.executeCondition(frame)) {
-                        final int successor = jumpNode.getJumpSuccessor();
-                        if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                            backJumpCounter++;
-                        }
-                        pc = successor;
-                        node = fetchNextBytecodeNode(pc);
-                        continue;
-                    } else {
-                        final int successor = jumpNode.getSuccessorIndex();
-                        if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                            backJumpCounter++;
-                        }
-                        pc = successor;
-                        node = fetchNextBytecodeNode(pc);
-                        continue;
-                    }
-                } else if (node instanceof UnconditionalJumpNode) {
-                    final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
+        Object returnValue = null;
+        bytecode_loop: while (true) {
+            CompilerAsserts.partialEvaluationConstant(pc);
+            final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
+            if (node instanceof ConditionalJumpNode) {
+                final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+                if (jumpNode.executeCondition(frame)) {
+                    final int successor = jumpNode.getJumpSuccessorIndex();
                     if (CompilerDirectives.inInterpreter() && successor <= pc) {
                         backJumpCounter++;
                     }
                     pc = successor;
-                    node = fetchNextBytecodeNode(pc);
-                    continue;
-                } else if (node instanceof CallPrimitiveNode) {
-                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    final AbstractPrimitiveNode primitiveNode = ((CallPrimitiveNode) node).primitiveNode;
-                    if (primitiveNode != null) {
-                        try {
-                            return primitiveNode.executePrimitive(frame);
-                        } catch (final PrimitiveFailed e) {
-                            /** getHandlePrimitiveFailedNode() acts as branch profile. */
-                            getHandlePrimitiveFailedNode().executeHandle(frame, e);
-                            LOG.log(Level.FINE, () -> (primitiveNode instanceof PrimitiveFailedNode ? FrameAccess.getMethod(frame) : primitiveNode) +
-                                            " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
-                            /** continue with fallback code. */
-                        }
+                    continue bytecode_loop;
+                } else {
+                    final int successor = jumpNode.getSuccessorIndex();
+                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
+                        backJumpCounter++;
                     }
                     pc = successor;
-                    node = fetchNextBytecodeNode(pc);
-                    continue;
-                } else if (node instanceof ReturnConstantNode) {
-                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    final Object value = ((ReturnConstantNode) node).executeReturn(frame, readAndClearNode);
-                    assert !hasModifiedSender(frame);
-                    FrameAccess.terminate(frame, code);
-                    return value;
-                } else if (node instanceof ReturnReceiverNode) {
-                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    final Object value = ((ReturnReceiverNode) node).executeReturn(frame, readAndClearNode);
-                    assert !hasModifiedSender(frame);
-                    FrameAccess.terminate(frame, code);
-                    return value;
-                } else if (node instanceof ReturnTopFromBlockNode) {
-                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    final Object value = ((ReturnTopFromBlockNode) node).executeReturn(frame, readAndClearNode);
-                    assert !hasModifiedSender(frame);
-                    FrameAccess.terminate(frame, code);
-                    return value;
-                } else if (node instanceof ReturnTopFromMethodNode) {
-                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    final Object value = ((ReturnTopFromMethodNode) node).executeReturn(frame, readAndClearNode);
-                    assert !hasModifiedSender(frame);
-                    FrameAccess.terminate(frame, code);
-                    return value;
-                } else {
-                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                    node.executeVoid(frame);
-                    pc = successor;
-                    node = fetchNextBytecodeNode(pc);
-                    continue;
+                    continue bytecode_loop;
                 }
+            } else if (node instanceof UnconditionalJumpNode) {
+                final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                if (CompilerDirectives.inInterpreter() && successor <= pc) {
+                    backJumpCounter++;
+                }
+                pc = successor;
+                continue bytecode_loop;
+            } else if (node instanceof CallPrimitiveNode) {
+                final int successor = node.getSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, successor);
+                final AbstractPrimitiveNode primitiveNode = ((CallPrimitiveNode) node).primitiveNode;
+                if (primitiveNode != null) {
+                    try {
+                        returnValue = primitiveNode.executePrimitive(frame);
+                        break bytecode_loop;
+                    } catch (final PrimitiveFailed e) {
+                        /** getHandlePrimitiveFailedNode() acts as branch profile. */
+                        getHandlePrimitiveFailedNode().executeHandle(frame, e);
+                        LOG.log(Level.FINE, () -> (primitiveNode instanceof PrimitiveFailedNode ? FrameAccess.getMethod(frame) : primitiveNode) +
+                                        " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
+                        /** continue with fallback code. */
+                    }
+                }
+                pc = successor;
+                continue bytecode_loop;
+            } else if (node instanceof AbstractReturnNode) {
+                if (node instanceof ReturnConstantNode) {
+                    returnValue = ((ReturnConstantNode) node).executeReturn(frame, readAndClearNode);
+                    break bytecode_loop;
+                } else if (node instanceof ReturnReceiverNode) {
+                    returnValue = ((ReturnReceiverNode) node).executeReturn(frame, readAndClearNode);
+                    break bytecode_loop;
+                } else if (node instanceof ReturnTopFromBlockNode) {
+                    returnValue = ((ReturnTopFromBlockNode) node).executeReturn(frame, readAndClearNode);
+                    break bytecode_loop;
+                } else if (node instanceof ReturnTopFromMethodNode) {
+                    returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, readAndClearNode);
+                    break bytecode_loop;
+                }
+            } else if (node instanceof PushClosureNode) {
+                final int successor = ((PushClosureNode) node).getClosureSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, successor);
+                node.executeVoid(frame);
+                pc = successor;
+                continue bytecode_loop;
+            } else {
+                final int successor = node.getSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, successor);
+                node.executeVoid(frame);
+                pc = successor;
+                continue bytecode_loop;
             }
-            throw SqueakException.create("Method did not return");
-        } finally {
-            assert backJumpCounter >= 0;
-            LoopNode.reportLoopCount(this, backJumpCounter);
         }
+        assert returnValue != null && !hasModifiedSender(frame);
+        FrameAccess.terminate(frame, code);
+        assert backJumpCounter >= 0;
+        LoopNode.reportLoopCount(this, backJumpCounter);
+        return returnValue;
     }
 
     private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
@@ -259,17 +244,29 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
      */
     private Object resumeBytecode(final VirtualFrame frame, final long initialPC) {
         int pc = (int) initialPC;
-        AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
-        while (pc >= 0) {
-            final int successor = getGetSuccessorNode().executeGeneric(frame, node);
-            FrameAccess.setInstructionPointer(frame, code, successor);
-            if (node instanceof AbstractReturnNode) {
-                return ((AbstractReturnNode) node).executeReturn(frame, readAndClearNode);
+        Object returnValue = null;
+        bytecode_loop_slow: while (true) {
+            final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
+            if (node instanceof ConditionalJumpNode) {
+                final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+                if (jumpNode.executeCondition(frame)) {
+                    pc = jumpNode.getJumpSuccessorIndex();
+                    continue bytecode_loop_slow;
+                } else {
+                    pc = jumpNode.getSuccessorIndex();
+                    continue bytecode_loop_slow;
+                }
+            } else if (node instanceof UnconditionalJumpNode) {
+                pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                continue bytecode_loop_slow;
             } else if (node instanceof CallPrimitiveNode) {
+                final int successor = node.getSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, successor);
                 final AbstractPrimitiveNode primitiveNode = ((CallPrimitiveNode) node).primitiveNode;
                 if (primitiveNode != null) {
                     try {
-                        return primitiveNode.executePrimitive(frame);
+                        returnValue = primitiveNode.executePrimitive(frame);
+                        break bytecode_loop_slow;
                     } catch (final PrimitiveFailed e) {
                         /** getHandlePrimitiveFailedNode() acts as branch profile. */
                         getHandlePrimitiveFailedNode().executeHandle(frame, e);
@@ -279,14 +276,38 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     }
                 }
                 pc = successor;
-                node = fetchNextBytecodeNode(pc);
-            } else {
+                continue bytecode_loop_slow;
+            } else if (node instanceof AbstractReturnNode) {
+                if (node instanceof ReturnConstantNode) {
+                    returnValue = ((ReturnConstantNode) node).executeReturn(frame, readAndClearNode);
+                    break bytecode_loop_slow;
+                } else if (node instanceof ReturnReceiverNode) {
+                    returnValue = ((ReturnReceiverNode) node).executeReturn(frame, readAndClearNode);
+                    break bytecode_loop_slow;
+                } else if (node instanceof ReturnTopFromBlockNode) {
+                    returnValue = ((ReturnTopFromBlockNode) node).executeReturn(frame, readAndClearNode);
+                    break bytecode_loop_slow;
+                } else if (node instanceof ReturnTopFromMethodNode) {
+                    returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, readAndClearNode);
+                    break bytecode_loop_slow;
+                }
+            } else if (node instanceof PushClosureNode) {
+                final int successor = ((PushClosureNode) node).getClosureSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, successor);
                 node.executeVoid(frame);
                 pc = successor;
-                node = fetchNextBytecodeNode(pc);
+                continue bytecode_loop_slow;
+            } else {
+                final int successor = node.getSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, successor);
+                node.executeVoid(frame);
+                pc = successor;
+                continue bytecode_loop_slow;
             }
         }
-        throw SqueakException.create("Method did not return");
+        assert returnValue != null && !hasModifiedSender(frame);
+        FrameAccess.terminate(frame, code);
+        return returnValue;
     }
 
     /*
@@ -332,53 +353,11 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         }
     }
 
-    protected abstract static class GetSuccessorNode extends AbstractNode {
-        private static GetSuccessorNode create() {
-            return GetSuccessorNodeGen.create();
-        }
-
-        protected abstract int executeGeneric(VirtualFrame frame, AbstractBytecodeNode node);
-
-        @Specialization
-        protected static final int doClosureNode(final PushClosureNode node) {
-            return node.getSuccessorIndex() + node.getBockSize();
-        }
-
-        @Specialization
-        protected static final int doConditionalJump(final VirtualFrame frame, final ConditionalJumpNode node,
-                        @Cached("createCountingProfile()") final ConditionProfile jumpProfile) {
-            // `executeCondition` should only be called once because it pops value off the stack.
-            if (jumpProfile.profile(node.executeCondition(frame))) {
-                return node.getJumpSuccessor();
-            } else {
-                return node.getSuccessorIndex();
-            }
-        }
-
-        @Specialization
-        protected static final int doUnconditionalJump(final UnconditionalJumpNode node) {
-            return node.getJumpSuccessor();
-        }
-
-        @Fallback
-        protected static final int doNormal(final AbstractBytecodeNode node) {
-            return node.getSuccessorIndex();
-        }
-    }
-
     private HandleNonLocalReturnNode getHandleNonLocalReturnNode() {
         if (handleNonLocalReturnNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             handleNonLocalReturnNode = insert(HandleNonLocalReturnNode.create(code));
         }
         return handleNonLocalReturnNode;
-    }
-
-    private GetSuccessorNode getGetSuccessorNode() {
-        if (getSuccessorNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            getSuccessorNode = insert(GetSuccessorNode.create());
-        }
-        return getSuccessorNode;
     }
 }

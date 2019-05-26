@@ -55,7 +55,7 @@ public final class JumpBytecodes {
             return conditionProfile.profile(handleConditionResultNode.execute(frame, isIfTrue, result));
         }
 
-        public int getJumpSuccessor() {
+        public int getJumpSuccessorIndex() {
             return getSuccessorIndex() + offset;
         }
 
