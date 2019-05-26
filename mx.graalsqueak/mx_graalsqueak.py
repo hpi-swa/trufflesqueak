@@ -280,7 +280,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append(
             '--log.squeaksmalltalk.%s.level=%s' % (split[0], split[1]))
     if parsed_args.memtracer:
-        squeak_arguments.append('--memtracer')
+        squeak_arguments.extend(['--experimental-options', '--memtracer'])
 
     squeak_arguments.append('--polyglot')  # enable polyglot mode by default
 
