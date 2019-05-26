@@ -179,8 +179,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 pc = successor;
                 continue bytecode_loop;
             } else if (node instanceof CallPrimitiveNode) {
-                final int successor = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, successor);
                 final AbstractPrimitiveNode primitiveNode = ((CallPrimitiveNode) node).primitiveNode;
                 if (primitiveNode != null) {
                     try {
@@ -194,7 +192,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                         /** continue with fallback code. */
                     }
                 }
-                pc = successor;
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop;
             } else if (node instanceof AbstractReturnNode) {
                 if (node instanceof ReturnConstantNode) {
@@ -211,10 +209,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     break bytecode_loop;
                 }
             } else if (node instanceof PushClosureNode) {
-                final int successor = ((PushClosureNode) node).getClosureSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, successor);
                 node.executeVoid(frame);
-                pc = successor;
+                pc = ((PushClosureNode) node).getClosureSuccessorIndex();
                 continue bytecode_loop;
             } else {
                 final int successor = node.getSuccessorIndex();
@@ -260,8 +256,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
                 continue bytecode_loop_slow;
             } else if (node instanceof CallPrimitiveNode) {
-                final int successor = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, successor);
                 final AbstractPrimitiveNode primitiveNode = ((CallPrimitiveNode) node).primitiveNode;
                 if (primitiveNode != null) {
                     try {
@@ -275,7 +269,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                         /** continue with fallback code. */
                     }
                 }
-                pc = successor;
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop_slow;
             } else if (node instanceof AbstractReturnNode) {
                 if (node instanceof ReturnConstantNode) {
@@ -292,10 +286,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     break bytecode_loop_slow;
                 }
             } else if (node instanceof PushClosureNode) {
-                final int successor = ((PushClosureNode) node).getClosureSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, successor);
                 node.executeVoid(frame);
-                pc = successor;
+                pc = ((PushClosureNode) node).getClosureSuccessorIndex();
                 continue bytecode_loop_slow;
             } else {
                 final int successor = node.getSuccessorIndex();
