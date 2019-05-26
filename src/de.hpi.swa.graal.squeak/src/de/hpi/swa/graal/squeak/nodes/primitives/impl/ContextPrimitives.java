@@ -307,7 +307,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver.hasTruffleFrame()")
         protected static final long doSize(final ContextObject receiver) {
-            return FrameAccess.getStackPointer(receiver.getTruffleFrame());
+            return receiver.getStackPointer();
         }
 
         @Specialization(guards = "!receiver.hasTruffleFrame()")

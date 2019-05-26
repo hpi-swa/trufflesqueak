@@ -28,13 +28,14 @@ public final class FrameMarker {
         if (targetFrame == null) {
             throw SqueakException.create("Could not find frame for:", this);
         }
-        final ContextObject context = FrameAccess.getContext(targetFrame);
+        final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(targetFrame);
+        final ContextObject context = FrameAccess.getContext(targetFrame, blockOrMethod);
         if (context != null) {
             assert context.getFrameMarker() == this;
             return context;
         } else {
-            assert this == FrameAccess.getMarker(targetFrame) : "Frame does not match";
-            return ContextObject.create(targetFrame);
+            assert this == FrameAccess.getMarker(targetFrame, blockOrMethod) : "Frame does not match";
+            return ContextObject.create(targetFrame, blockOrMethod);
         }
     }
 }

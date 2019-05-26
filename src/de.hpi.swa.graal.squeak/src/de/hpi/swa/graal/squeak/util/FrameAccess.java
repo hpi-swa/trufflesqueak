@@ -171,10 +171,6 @@ public final class FrameAccess {
         frame.setObject(thisContextSlot, context);
     }
 
-    public static int getInstructionPointer(final Frame frame) {
-        return getInstructionPointer(frame, getBlockOrMethod(frame));
-    }
-
     public static int getInstructionPointer(final Frame frame, final CompiledCodeObject code) {
         return FrameUtil.getIntSafe(frame, code.getInstructionPointerSlot());
     }
@@ -183,20 +179,12 @@ public final class FrameAccess {
         frame.setInt(code.getInstructionPointerSlot(), value);
     }
 
-    public static int getStackPointer(final Frame frame) {
-        return getStackPointer(frame, getBlockOrMethod(frame));
-    }
-
     public static int getStackPointer(final Frame frame, final CompiledCodeObject code) {
         return FrameUtil.getIntSafe(frame, code.getStackPointerSlot());
     }
 
     public static void setStackPointer(final Frame frame, final CompiledCodeObject code, final int value) {
         frame.setInt(code.getStackPointerSlot(), value);
-    }
-
-    public static int getStackSize(final Frame frame) {
-        return getBlockOrMethod(frame).getSqueakContextSize();
     }
 
     /** Write to a frame slot (slow operation), prefer {@link FrameStackWriteNode}. */
@@ -224,7 +212,7 @@ public final class FrameAccess {
 
     public static boolean isGraalSqueakFrame(final Frame frame) {
         final Object[] arguments = frame.getArguments();
-        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()] instanceof CompiledMethodObject;
+        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()].getClass() == CompiledMethodObject.class;
     }
 
     public static Object[] newWith(final CompiledMethodObject method, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {

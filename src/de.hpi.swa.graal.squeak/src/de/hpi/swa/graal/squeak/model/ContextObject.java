@@ -80,10 +80,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static ContextObject create(final FrameInstance frameInstance) {
-        return ContextObject.create(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
-    }
-
-    public static ContextObject create(final Frame frame) {
+        final Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
         return create(frame, FrameAccess.getBlockOrMethod(frame));
     }
 
@@ -343,7 +340,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getInstructionPointerForBytecodeLoop() {
-        return FrameAccess.getInstructionPointer(truffleFrame);
+        return FrameAccess.getInstructionPointer(truffleFrame, getBlockOrMethod());
     }
 
     public void setInstructionPointer(final int value) {
@@ -358,7 +355,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getStackPointer() {
-        return FrameAccess.getStackPointer(truffleFrame);
+        return FrameAccess.getStackPointer(truffleFrame, getBlockOrMethod());
     }
 
     public void setStackPointer(final int value) {
@@ -481,7 +478,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getStackSize() {
-        return FrameAccess.getStackSize(truffleFrame);
+        return getBlockOrMethod().getSqueakContextSize();
     }
 
     public void become(final ContextObject other) {

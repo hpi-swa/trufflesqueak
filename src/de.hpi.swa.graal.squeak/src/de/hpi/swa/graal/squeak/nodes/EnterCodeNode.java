@@ -94,7 +94,7 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
     @Fallback
     protected final Object enter(final VirtualFrame frame) {
         initializeSlots(code, frame);
-        final ContextObject newContext = ContextObject.create(frame);
+        final ContextObject newContext = ContextObject.create(frame, code);
         assert newContext == FrameAccess.getContext(frame, code);
         initializeArgumentsAndTemps(frame);
         return executeContextNode.executeContext(frame, newContext);
