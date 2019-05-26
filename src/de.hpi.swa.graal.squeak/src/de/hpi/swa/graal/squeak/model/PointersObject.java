@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import com.oracle.truffle.api.CompilerAsserts;
-
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
@@ -21,7 +19,6 @@ public final class PointersObject extends AbstractPointersObject {
 
     public PointersObject(final SqueakImageContext image, final ClassObject sqClass, final Object[] pointers) {
         super(image, sqClass);
-        CompilerAsserts.compilationConstant(pointers.length);
         setPointersUnsafe(pointers);
     }
 
