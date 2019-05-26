@@ -40,7 +40,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     @Specialization
     protected static final Object doPointers(final PointersObject obj, final long index) {
-        return obj.at0(index);
+        return obj.at0((int) index);
     }
 
     @Specialization

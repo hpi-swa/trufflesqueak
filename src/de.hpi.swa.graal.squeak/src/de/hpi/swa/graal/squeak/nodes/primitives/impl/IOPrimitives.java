@@ -499,7 +499,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected static final ArrayObject doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
                         @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
-            final long repOff = replStart - start;
+            final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 writeNode.execute(rcvr, i, repl.at0(repOff + i));
             }
@@ -559,7 +559,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
         protected static final WeakPointersObject doWeakPointersPointers(final WeakPointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
                         @Shared("weakPointersWriteNode") @Cached final WeakPointersObjectWriteNode writeNode) {
-            final long repOff = replStart - start;
+            final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 writeNode.execute(rcvr, i, repl.at0(repOff + i));
             }

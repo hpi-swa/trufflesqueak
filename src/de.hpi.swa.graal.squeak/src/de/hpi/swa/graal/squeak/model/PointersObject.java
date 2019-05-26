@@ -39,8 +39,8 @@ public final class PointersObject extends AbstractPointersObject {
         setPointers(chunk.getPointers());
     }
 
-    public Object at0(final long i) {
-        return getPointer((int) i);
+    public Object at0(final int i) {
+        return getPointer(i);
     }
 
     public void atput0(final long i, final Object obj) {
