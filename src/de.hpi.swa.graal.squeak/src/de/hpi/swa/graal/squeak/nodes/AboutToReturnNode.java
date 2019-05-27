@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
-import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
+import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -38,7 +38,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                     @Cached("createTemporaryWriteNode(0)") final FrameSlotReadNode blockArgumentNode,
                     @SuppressWarnings("unused") @Cached("createTemporaryWriteNode(1)") final FrameSlotReadNode completeTempReadNode,
-                    @Cached("create(code, 1)") final TemporaryWriteNode completeTempWriteNode,
+                    @Cached("create(code, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
                     @Cached final BlockActivationNode dispatchNode) {
         completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
         final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);

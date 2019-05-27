@@ -8,7 +8,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
-import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
+import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
@@ -83,12 +83,12 @@ public final class StoreBytecodes {
     private abstract static class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
         protected final int tempIndex;
 
-        @Child protected TemporaryWriteNode storeNode;
+        @Child protected TemporaryWriteMarkContextsNode storeNode;
 
         private AbstractStoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            storeNode = TemporaryWriteNode.create(code, tempIndex);
+            storeNode = TemporaryWriteMarkContextsNode.create(code, tempIndex);
         }
 
         protected abstract String getTypeName();
