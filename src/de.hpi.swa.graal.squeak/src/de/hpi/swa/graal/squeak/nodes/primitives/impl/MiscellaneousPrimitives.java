@@ -267,10 +267,20 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 }
             }
 
+            String nfiCodeParams = "";
+            if (!argumentList.isEmpty()) {
+                final String returnType = argumentList.get(0);
+                argumentList.remove(0);
+                if (!argumentList.isEmpty()) {
+                    nfiCodeParams = "(" + String.join(",", argumentList) + "):";
+                }
+                nfiCodeParams += returnType + ";";
+            }
+
             if ("ffiTestDoubles".equals(name)) {
                 final String libName = method.image.os.isMacOS() ? "ffi-test.dylib" : "ffi-test.so";
                 final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + libName;
-                final String nfiCode = String.format("load \"%s\" {%s(double,double):double;}", libPath, name);
+                final String nfiCode = String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
                 final Object ffiTest = method.image.env.parse(Source.newBuilder("nfi", nfiCode, "native").build()).call();
                 final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
                 try {
