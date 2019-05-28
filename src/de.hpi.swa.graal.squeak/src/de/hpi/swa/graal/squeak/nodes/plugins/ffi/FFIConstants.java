@@ -113,7 +113,7 @@ public class FFIConstants {
         UNSIGNED_LONG_LONG(8, "ulonglong"),
         SIGNED_LONG_LONG(9, "longlong"),
         // special integer types
-        UNSIGNED_CHAR(10, "char"),
+        UNSIGNED_CHAR(10, "string"),
         SIGNED_CHAR(11, "schar"),
         // float types
         SINGLE_FLOAT(12, "float"),

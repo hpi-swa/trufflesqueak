@@ -243,7 +243,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
         }
 
-        protected final Object doCallout(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final Object... arguments) {
+        protected final Object doCallout(final AbstractSqueakObject receiver, final Object... arguments) {
             final Object literal1 = method.getLiterals()[1];
             if (!(literal1 instanceof PointersObject)) {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
@@ -253,43 +253,43 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
+            final String module = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE)).asStringUnsafe();
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
-
             final List<String> argumentList = new ArrayList<>();
-
-            for (final Object argType : argTypes.getObjectStorage()) {
-                if (argType instanceof PointersObject) {
-                    final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
-                    final int headerWord = compiledSpec.getIntStorage()[0];
-                    final int atomicType = (headerWord & FFIConstants.FFI_TYPE.ATOMIC_TYPE_MASK) >> FFIConstants.FFI_TYPE.ATOMIC_TYPE_SHIFT;
-                    final String atomicName = FFI_TYPES.fromInteger(atomicType);
-                    argumentList.add(atomicName);
-                }
-            }
-
             String nfiCodeParams = "";
-            if (!argumentList.isEmpty()) {
-                final String returnType = argumentList.get(0);
-                argumentList.remove(0);
-                if (!argumentList.isEmpty()) {
-                    nfiCodeParams = "(" + String.join(",", argumentList) + "):";
+            if (argTypes != null) {
+                for (final Object argType : argTypes.getObjectStorage()) {
+                    if (argType instanceof PointersObject) {
+                        final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
+                        final int headerWord = compiledSpec.getIntStorage()[0];
+                        final int atomicType = (headerWord & FFIConstants.FFI_TYPE.ATOMIC_TYPE_MASK) >> FFIConstants.FFI_TYPE.ATOMIC_TYPE_SHIFT;
+                        final String atomicName = FFI_TYPES.fromInteger(atomicType);
+                        argumentList.add(atomicName);
+                    }
                 }
-                nfiCodeParams += returnType + ";";
+                if (!argumentList.isEmpty()) {
+                    final String returnType = argumentList.get(0);
+                    argumentList.remove(0);
+                    if (!argumentList.isEmpty()) {
+                        nfiCodeParams = "(" + String.join(",", argumentList) + "):";
+                    }
+                    nfiCodeParams += returnType + ";";
+                }
             }
 
-            if ("ffiTestDoubles".equals(name)) {
-                final String libName = method.image.os.isMacOS() ? "ffi-test.dylib" : "ffi-test.so";
-                final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + libName;
-                final String nfiCode = String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
-                final Object ffiTest = method.image.env.parse(Source.newBuilder("nfi", nfiCode, "native").build()).call();
-                final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
-                try {
-                    return interopLib.invokeMember(ffiTest, name, arguments);
-                } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
-                    e.printStackTrace();
-                    throw new PrimitiveFailed(); // TODO: return correct error code.
-                }
-            } else {
+            final String ffiExtension = method.image.os.getFFIExtension();
+            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
+            final String nfiCode = String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
+            final Object ffiTest = method.image.env.parse(Source.newBuilder("nfi", nfiCode, "native").build()).call();
+            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
+            try {
+                return interopLib.invokeMember(ffiTest, name, arguments);
+            } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
+                // e.printStackTrace();
+                // TODO: return correct error code.
+                throw new PrimitiveFailed();
+            } catch (final Exception e) {
+                // TODO: handle exception
                 throw new PrimitiveFailed();
             }
         }
