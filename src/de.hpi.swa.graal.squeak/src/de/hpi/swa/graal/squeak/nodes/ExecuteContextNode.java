@@ -230,7 +230,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
         if (handlePrimitiveFailedNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            handlePrimitiveFailedNode = HandlePrimitiveFailedNode.create(code);
+            handlePrimitiveFailedNode = insert(HandlePrimitiveFailedNode.create(code));
         }
         return handlePrimitiveFailedNode;
     }
