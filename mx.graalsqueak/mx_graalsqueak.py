@@ -32,6 +32,11 @@ def _graal_vm_args(args):
             '-Dgraal.TraceTruffleCompilation=true',
         ]
 
+    if args.truffle_compilation_details:
+        graal_args += [
+            '-Dgraal.TraceTruffleCompilationDetails=true',
+            '-Dgraal.TraceTruffleExpansionSource=true']
+
     if args.truffle_compilation_stats:
         graal_args += [
             '-Dgraal.TruffleCompilationStatistics=true',
@@ -40,9 +45,7 @@ def _graal_vm_args(args):
     if args.perf_warnings:
         graal_args += [
             '-Dgraal.TruffleCompilationExceptionsAreFatal=true',
-            '-Dgraal.TraceTrufflePerformanceWarnings=true',
-            '-Dgraal.TraceTruffleCompilationDetails=true',
-            '-Dgraal.TraceTruffleExpansionSource=true']
+            '-Dgraal.TraceTrufflePerformanceWarnings=true']
 
     if args.trace_invalidation:
         graal_args += [
@@ -195,6 +198,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         '-ts', '--trace-splitting',
         help='print splitting summary on shutdown',
         dest='trace_splitting', action='store_true', default=False)
+    parser.add_argument(
+        '-tcd', '--truffle-compilation-details',
+        help='print Truffle compilation details',
+        dest='truffle_compilation_details', action='store_true', default=False)
     parser.add_argument(
         '-tcs', '--truffle-compilation-statistics',
         help='print Truffle compilation statistics at the end of a run',
