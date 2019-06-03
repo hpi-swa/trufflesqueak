@@ -19,6 +19,14 @@ BASE_VM_ARGS = [
     '-XX:NewSize=1G',           # Initial new generation size
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ]
+BASE_VM_ARGS_TESTING = [
+    # RUNTIME
+    '-XX:ThreadStackSize=64M',
+
+    # GARBAGE COLLECTOR (optimized for Travis CI)
+    '-Xms4G',                   # Initial heap size
+    '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
+]
 SVM_BINARY = 'graalsqueak-svm'
 SVM_TARGET = os.path.join('bin', SVM_BINARY)
 
@@ -310,7 +318,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
-    unittest_args = BASE_VM_ARGS
+    unittest_args = BASE_VM_ARGS_TESTING
 
     supports_coverage = os.environ.get('JDK') == 'openjdk8'  # see `.travis.yml`
     jacoco_args = mx_gate.get_jacoco_agent_args()
