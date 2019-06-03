@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -629,7 +630,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 130)
-    protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, PrimFullGCNode.class);
 
         protected PrimFullGCNode(final CompiledMethodObject method) {
@@ -637,12 +638,26 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final long doGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            MiscUtils.systemGC();
+        protected final long doGC(@SuppressWarnings("unused") final Object receiver) {
+            forceFullGC();
             if (hasPendingFinalizations()) {
                 method.image.interrupt.setPendingFinalizations(true);
             }
             return MiscUtils.runtimeFreeMemory();
+        }
+
+        /**
+         * {@link System#gc()} does not force a garbage collect, but it can be called until a new
+         * object has been GC'ed (Source: https://git.io/fjED4).
+         */
+        @TruffleBoundary
+        public static void forceFullGC() {
+            Object obj = new Object();
+            final WeakReference<?> ref = new WeakReference<>(obj);
+            obj = null;
+            while (ref.get() != null) {
+                System.gc();
+            }
         }
 
         @TruffleBoundary
@@ -661,15 +676,16 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 131)
-    protected abstract static class PrimIncrementalGCNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIncrementalGCNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimIncrementalGCNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doIncrementalGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            // It is not possible to suggest incremental GCs, so do not do anything here
+        protected static final long doIncrementalGC(@SuppressWarnings("unused") final Object receiver) {
+            /* Cannot force incremental GC in Java, suggesting a normal GC instead. */
+            MiscUtils.systemGC();
             return MiscUtils.runtimeFreeMemory();
         }
     }
