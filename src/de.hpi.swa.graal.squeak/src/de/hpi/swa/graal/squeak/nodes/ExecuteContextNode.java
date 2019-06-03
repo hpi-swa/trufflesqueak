@@ -143,7 +143,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     /*
-     * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://goo.gl/4LMzfX).
+     * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://git.io/fjEDw).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     private Object startBytecode(final VirtualFrame frame) {
