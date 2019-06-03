@@ -11,11 +11,13 @@ import mx_unittest
 LANGUAGE_NAME = 'squeaksmalltalk'
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
 BASE_VM_ARGS = [
-    '-Xss64M',  # Increase thread stack size
+    # RUNTIME
+    '-XX:ThreadStackSize=64M',
 
-    # Tweak GC for faster image loading
-    '-Xms2G',  # Initial heap size
-    '-XX:MetaspaceSize=48M',  # Initial size of Metaspaces
+    # GARBAGE COLLECTOR (optimized for GraalSqueak image)
+    '-XX:OldSize=256M',         # Initial tenured generation size
+    '-XX:NewSize=1G',           # Initial new generation size
+    '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ]
 SVM_BINARY = 'graalsqueak-svm'
 SVM_TARGET = os.path.join('bin', SVM_BINARY)
