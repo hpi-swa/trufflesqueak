@@ -12,7 +12,7 @@ LANGUAGE_NAME = 'squeaksmalltalk'
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
 BASE_VM_ARGS = [
     # RUNTIME
-    '-XX:ThreadStackSize=64M',
+    '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
 
     # GARBAGE COLLECTOR (optimized for GraalSqueak image)
     '-XX:OldSize=256M',         # Initial tenured generation size
@@ -21,7 +21,7 @@ BASE_VM_ARGS = [
 ]
 BASE_VM_ARGS_TESTING = [
     # RUNTIME
-    '-XX:ThreadStackSize=64M',
+    '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
 
     # GARBAGE COLLECTOR (optimized for Travis CI)
     '-Xms4G',                   # Initial heap size
@@ -324,8 +324,8 @@ def _graalsqueak_gate_runner(args, tasks):
     jacoco_args = mx_gate.get_jacoco_agent_args()
     if supports_coverage and jacoco_args:
         unittest_args.extend(jacoco_args)
-    unittest_args += [
-        '--suite', 'graalsqueak', '--very-verbose', '--enable-timing']
+    unittest_args.extend([
+        '--suite', 'graalsqueak', '--very-verbose', '--enable-timing'])
     with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
