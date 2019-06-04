@@ -53,7 +53,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
-import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants;
 import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_ERROR;
 import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_TYPES;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -262,7 +261,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                     if (argType instanceof PointersObject) {
                         final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                         final int headerWord = compiledSpec.getIntStorage()[0];
-                        final int atomicType = (headerWord & FFIConstants.FFI_TYPE.ATOMIC_TYPE_MASK) >> FFIConstants.FFI_TYPE.ATOMIC_TYPE_SHIFT;
+                        final int atomicType = (headerWord & FFI_TYPES.ATOMIC_TYPE_MASK.getValue()) >> FFI_TYPES.ATOMIC_TYPE_SHIFT.getValue();
                         final String atomicName = FFI_TYPES.fromInteger(atomicType);
                         argumentList.add(atomicName);
                     }

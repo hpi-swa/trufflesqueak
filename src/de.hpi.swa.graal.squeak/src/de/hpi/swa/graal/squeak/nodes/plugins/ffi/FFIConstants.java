@@ -1,9 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins.ffi;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-
 public class FFIConstants {
     /** See FFIConstants>>initializeErrorConstants. */
     public static final class FFI_ERROR {
@@ -51,99 +47,62 @@ public class FFIConstants {
         public static final int CALL_FRAME_TOO_BIG = 19;
     }
 
-    public static final class FFI_TYPE {
-
-        // type void
-        public static final int VOID = 0;
-        // type bool
-        public static final int BOOL = 1;
-        // basic integer types.
-        // note: (integerType anyMask: 1) = integerType isSigned
-        public static final int UNSIGNED_BYTE = 2;
-        public static final int SIGNED_BYTE = 3;
-
-        public static final int UNSIGNED_SHORT = 4;
-        public static final int SIGNED_SHORT = 5;
-        public static final int UNSIGNED_INT = 6;
-        public static final int SIGNED_INT = 7;
-        // 64bit types
-        public static final int UNSIGNED_LONG_LONG = 8;
-        public static final int SIGNED_LONG_LONG = 9;
-
-        // special integer types
-        public static final int UNSIGNED_CHAR = 10;
-        public static final int SIGNED_CHAR = 11;
-
-        // float types
-        public static final int SINGLE_FLOAT = 12;
-        public static final int DOUBLE_FLOAT = 13;
-
-        // type flags
-        public static final int FLAG_ATOMIC = 0x40000; // type is atomic
-        public static final int FLAG_POINTER = 0x20000; // type is pointer to base type public
-        public static final int FLAG_STRUCTURE = 0x10000; // baseType is structure of 64k length
-        // public
-        public static final int STRUCT_SIZE_MASK = 0xFFFF; // mask for max size of structure public
-        public static final int ATOMIC_TYPE_MASK = 0x0F000000; // mask for atomic type spec public
-        public static final int ATOMIC_TYPE_SHIFT = 24; // shift for atomic type
-
-        public FFI_TYPE getTypeObject() {
-            for (final Field type : FFI_TYPE.class.getFields()) {
-                final Map<Integer, String> ffiTypeMap = new HashMap<>();
-
-            }
-            return null;
-        }
-
-    }
-
     public enum FFI_TYPES {
 
         // void type, boolean type
-        VOID(0, "void"),
-        BOOL(1, "bool"),
+        VOID("void", 0), // VOID
+        BOOL("bool", 1), // OBJECT BOOL UINT8
         // basic integer types
-        UNSIGNED_BYTE(2, "byte"),
-        SIGNED_BYTE(3, "sbyte"),
-        UNSIGNED_SHORT(4, "ushort"),
-        SIGNED_SHORT(5, "short"),
-        UNSIGNED_INT(6, "ulong"),
-        SIGNED_INT(7, "long"),
+        UNSIGNED_BYTE("byte", 2), // UINT8
+        SIGNED_BYTE("sbyte", 3), // SINT8
+        UNSIGNED_SHORT("ushort", 4), // UINT16
+        SIGNED_SHORT("short", 5), // SINT16
+        UNSIGNED_INT("ulong", 6), // UINT32
+        SIGNED_INT("long", 7), // SINT32
         // 64bit types
-        UNSIGNED_LONG_LONG(8, "ulonglong"),
-        SIGNED_LONG_LONG(9, "longlong"),
+        UNSIGNED_LONG_LONG("ulonglong", 8), // UINT64
+        SIGNED_LONG_LONG("longlong", 9), // SINT64
         // special integer types
-        UNSIGNED_CHAR(10, "string"),
-        SIGNED_CHAR(11, "schar"),
+        UNSIGNED_CHAR("string", 10), // STRING
+        SIGNED_CHAR("schar", 11), // POINTER
         // float types
-        SINGLE_FLOAT(12, "float"),
-        DOUBLE_FLOAT(13, "double");
+        SINGLE_FLOAT("float", 12), // FLOAT
+        DOUBLE_FLOAT("double", 13), // DOUBLE
 
-        private int key;
-        private String value;
+        // type flags
+        FLAG_ATOMIC(0x40000), // type is atomic
+        FLAG_POINTER(0x2000), // type is pointer to base type public
+        FLAG_STRUCTURE(0x10000), // baseType is structure of 64k length
+        // public
+        STRUCT_SIZE_MASK(0xFFFF), // mask for max size of structure public
+        ATOMIC_TYPE_MASK(0x0F000000), // mask for atomic type spec public
+        ATOMIC_TYPE_SHIFT(24); // shift for atomic type
 
-        FFI_TYPES(final int key) {
-            this.key = key;
+        private String key;
+        private int value;
+
+        FFI_TYPES(final int value) {
+            this.value = value;
         }
 
-        FFI_TYPES(final int key, final String value) {
+        FFI_TYPES(final String key, final int value) {
             this.key = key;
             this.value = value;
         }
 
-        public static FFI_TYPES fromString(final String typeValue) {
+        public static FFI_TYPES fromString(final String typeKey) {
             for (final FFI_TYPES type : FFI_TYPES.values()) {
-                if (type.value.equals(typeValue)) {
+                if (type.key.equals(typeKey)) {
                     return type;
                 }
             }
             return null;
         }
 
-        public static String fromInteger(final int keyValue) {
+        public static String fromInteger(final int typeValue) {
             for (final FFI_TYPES type : FFI_TYPES.values()) {
-                if (type.key == keyValue) {
-                    return type.value;
+                if (type.value == typeValue) {
+                    return type.key;
                 }
             }
             return null;
@@ -151,6 +110,10 @@ public class FFIConstants {
 
         @Override
         public String toString() {
+            return key;
+        }
+
+        public int getValue() {
             return value;
         }
     }
