@@ -101,7 +101,7 @@ public final class SqueakIOConstants {
         public static final int ALT = 32;
         public static final int CMD = 64;
         public static final int ALL = SHIFT + CTRL + ALT + CMD;
-        public static final int INTERRUPT_KEYCODE = 2175;
+        public static final int INTERRUPT_KEYCODE = 2094; // "CMD + ."
     }
 
     public static final class KEY {
