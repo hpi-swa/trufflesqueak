@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.aot;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Deque;
 
 import org.graalvm.nativeimage.PinnedObject;
 import org.graalvm.nativeimage.UnmanagedMemory;
@@ -53,7 +52,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     private final Rect nullRect = WordFactory.nullPointer();
     private final WordPointer pixelVoidPP = UnmanagedMemory.malloc(SizeOf.unsigned(WordPointer.class));
     private final CIntPointer pitchIntP = UnmanagedMemory.malloc(SizeOf.unsigned(CIntPointer.class));
-    private final Deque<long[]> deferredEvents = new ArrayDeque<>();
+    private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
     private final Event event = UnmanagedMemory.malloc(SizeOf.unsigned(Event.class));
 
     private Window window = WordFactory.nullPointer();
