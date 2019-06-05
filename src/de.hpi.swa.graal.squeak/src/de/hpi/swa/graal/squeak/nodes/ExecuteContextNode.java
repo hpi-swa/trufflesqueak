@@ -13,7 +13,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
@@ -329,19 +328,23 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         protected abstract void executeGeneric(VirtualFrame frame, boolean hasPrimitive, int bytecodeLength);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!code.image.interrupt.disabled()", "!hasPrimitive", "bytecodeLength > BYTECODE_LENGTH_THRESHOLD"})
-        protected final void doTrigger(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength,
-                        @Cached("createCountingProfile()") final ConditionProfile triggerProfile,
+        @Specialization(guards = {"!code.image.interrupt.disabled()", "!hasPrimitive", "bytecodeLength > BYTECODE_LENGTH_THRESHOLD", "shouldTrigger(frame)"})
+        protected static final void doTrigger(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength,
                         @Cached("create(code)") final InterruptHandlerNode interruptNode) {
-            if (triggerProfile.profile(code.image.interrupt.shouldTrigger())) {
-                interruptNode.executeTrigger(frame);
-            }
+            interruptNode.executeTrigger(frame);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"code.image.interrupt.disabled() || (hasPrimitive || bytecodeLength <= BYTECODE_LENGTH_THRESHOLD)"})
-        protected final void doNothing(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
+        @Fallback
+        protected final void doNothing(final boolean hasPrimitive, final int bytecodeLength) {
             // Do not trigger.
+        }
+
+        protected final boolean shouldTrigger(@SuppressWarnings("unused") final VirtualFrame frame) {
+            if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot()) {
+                return false; // never trigger in inlined code
+            }
+            return code.image.interrupt.isActiveAndShouldTrigger();
         }
     }
 

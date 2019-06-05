@@ -948,21 +948,20 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!method.image.interruptHandlerDisabled()"})
-        protected static final Object doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds,
+        protected final Object doRelinquish(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long timeMicroseconds,
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final InterruptHandlerNode interruptNode) {
-            // Keep receiver on stack, interrupt handler could trigger.
+            /* Keep receiver on stack, interrupt handler could trigger. */
             pushNode.executeWrite(frame, receiver);
-            /*
-             * Perform forced interrupt check, otherwise control flow cannot continue when
-             * idleProcess is running.
-             */
-            interruptNode.executeTrigger(frame);
+            /* Perform interrupt check, otherwise idleProcess gets stuck. */
+            if (method.image.interrupt.shouldTrigger()) {
+                interruptNode.executeTrigger(frame);
+            }
             return AbstractSendNode.NO_RESULT;
         }
 
         @Specialization(guards = {"method.image.interruptHandlerDisabled()"})
-        protected static final AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
+        protected static final Object doNothing(final Object receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
             return receiver;
         }
     }

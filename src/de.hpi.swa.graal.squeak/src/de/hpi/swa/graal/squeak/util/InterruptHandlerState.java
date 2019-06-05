@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.util;
 
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +20,7 @@ public final class InterruptHandlerState {
 
     private final SqueakImageContext image;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
+    private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
     protected long nextWakeupTick = 0;
     protected boolean interruptPending = false;
@@ -120,14 +119,8 @@ public final class InterruptHandlerState {
         return pendingFinalizationSignals;
     }
 
-    @TruffleBoundary
-    protected boolean hasSemaphoresToSignal() {
-        return !semaphoresToSignal.isEmpty();
-    }
-
-    @TruffleBoundary
-    protected int nextSemaphoreToSignal() {
-        return semaphoresToSignal.removeFirst();
+    protected Integer nextSemaphoreToSignal() {
+        return semaphoresToSignal.pollFirst();
     }
 
     public static int getInterruptChecksEveryNms() {
@@ -139,18 +132,17 @@ public final class InterruptHandlerState {
         semaphoresToSignal.addLast(index);
     }
 
+    public boolean isActiveAndShouldTrigger() {
+        return isActive && shouldTrigger();
+    }
+
     public boolean shouldTrigger() {
-        if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot()) {
-            return false; // do not trigger in inlined code
-        }
-        if (!isActive) {
-            return false;
-        }
         if (shouldTrigger) {
             shouldTrigger = false;
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     public PointersObject getInterruptSemaphore() {
