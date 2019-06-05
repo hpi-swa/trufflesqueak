@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.AbstractCollection;
 import java.util.List;
+import java.util.Set;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -581,7 +582,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractCollection<AbstractSqueakObject> allInstances) {
+        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final Set<AbstractSqueakObject> allInstances) {
             boolean foundMyself = false;
             for (final AbstractSqueakObject instance : allInstances) {
                 if (instance == receiver) {
