@@ -56,6 +56,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void patchImageForTesting() {
+        image.interrupt.start();
         final ArrayObject lists = (ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
         final Object firstLink = priority10List.at0(LINKED_LIST.FIRST_LINK);
