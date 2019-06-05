@@ -153,7 +153,7 @@ public final class FrameAccess {
     }
 
     public static void initializeMarker(final Frame frame, final CompiledCodeObject code) {
-        setMarker(frame, code, new FrameMarker(frame));
+        setMarker(frame, code, new FrameMarker());
     }
 
     public static ContextObject getContext(final Frame frame) {
