@@ -22,14 +22,6 @@ public interface SqueakDisplayInterface {
 
     boolean isVisible();
 
-    DisplayPoint getLastMousePosition();
-
-    int getLastMouseButton();
-
-    int keyboardPeek();
-
-    int keyboardNext();
-
     void setCursor(int[] cursorWords, int[] mask, int depth);
 
     long[] getNextEvent();

@@ -26,7 +26,6 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -65,10 +64,9 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private boolean hasVisibleHardwareCursor;
     private final SqueakMouse mouse;
     private final SqueakKeyboard keyboard;
-    private final Deque<long[]> deferredEvents = new ArrayDeque<>();
+    private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
     private final ScheduledExecutorService repaintExecutor;
 
-    @CompilationFinal public boolean usesEventQueue = false;
     @CompilationFinal private int inputSemaphoreIndex = -1;
 
     public int buttons = 0;
@@ -266,6 +264,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     @Override
+    @TruffleBoundary
     public DisplayPoint getWindowSize() {
         return new DisplayPoint(frame.getContentPane().getWidth(), frame.getContentPane().getHeight());
     }
@@ -311,27 +310,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @TruffleBoundary
     public boolean isVisible() {
         return frame.isVisible();
-    }
-
-    @Override
-    public DisplayPoint getLastMousePosition() {
-        final Point position = mouse.getPosition();
-        return new DisplayPoint(position.getX(), position.getY());
-    }
-
-    @Override
-    public int getLastMouseButton() {
-        return buttons;
-    }
-
-    @Override
-    public int keyboardPeek() {
-        return keyboard.peekKey();
-    }
-
-    @Override
-    public int keyboardNext() {
-        return keyboard.nextKey();
     }
 
     @Override
@@ -401,16 +379,13 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     @Override
-    @TruffleBoundary
     public long[] getNextEvent() {
-        if (!deferredEvents.isEmpty()) {
-            return deferredEvents.removeFirst();
+        final long[] nextEvent = deferredEvents.pollFirst();
+        if (nextEvent == null) {
+            return SqueakIOConstants.newNullEvent();
+        } else {
+            return nextEvent;
         }
-        if (!usesEventQueue) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            usesEventQueue = true;
-        }
-        return SqueakIOConstants.NULL_EVENT.clone();
     }
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6) {
@@ -490,6 +465,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     @Override
+    @TruffleBoundary
     public void beep() {
         Toolkit.getDefaultToolkit().beep();
     }

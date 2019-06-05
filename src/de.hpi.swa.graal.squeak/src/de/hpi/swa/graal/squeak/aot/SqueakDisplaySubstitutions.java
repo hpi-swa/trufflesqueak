@@ -177,29 +177,6 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     }
 
     @Override
-    public DisplayPoint getLastMousePosition() {
-        return new DisplayPoint(lastMouseXPos, lastMouseYPos);
-    }
-
-    @Override
-    public int getLastMouseButton() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public int keyboardPeek() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public int keyboardNext() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
     public void setCursor(final int[] cursorWords, final int[] mask, final int depth) {
         if (window.isNull()) {
             return;
@@ -223,10 +200,12 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
 
     @Override
     public long[] getNextEvent() {
-        if (!deferredEvents.isEmpty()) {
-            return deferredEvents.removeFirst();
+        final long[] nextEvent = deferredEvents.pollFirst();
+        if (nextEvent == null) {
+            return SqueakIOConstants.newNullEvent();
+        } else {
+            return nextEvent;
         }
-        return SqueakIOConstants.NULL_EVENT.clone();
     }
 
     @Override

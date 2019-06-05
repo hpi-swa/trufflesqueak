@@ -12,9 +12,9 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -56,25 +56,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         return IOPrimitivesFactory.getFactories();
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 90)
-    protected abstract static class PrimMousePointNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        private static final DisplayPoint NULL_POINT = new DisplayPoint(0, 0);
-
-        protected PrimMousePointNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "method.image.hasDisplay()")
-        protected final PointersObject doMousePoint(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.asPoint(method.image.getDisplay().getLastMousePosition());
-        }
-
-        @Specialization(guards = "!method.image.hasDisplay()")
-        protected final PointersObject doMousePointHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.asPoint(NULL_POINT);
-        }
-    }
+    /* primitiveMousePoint (#90) no longer in use, support dropped in GraalSqueak. */
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 91)
@@ -148,14 +130,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "method.image.hasDisplay()")
-        protected final PointersObject doGetNext(final PointersObject eventSensor, final ArrayObject targetArray) {
-            targetArray.setStorage(method.image.getDisplay().getNextEvent());
+        protected final PointersObject doGetNext(final PointersObject eventSensor, final ArrayObject targetArray,
+                        @Cached("createIdentityProfile()") final ValueProfile displayProfile) {
+            targetArray.setStorage(displayProfile.profile(method.image.getDisplay()).getNextEvent());
             return eventSensor;
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
         protected static final PointersObject doGetNextHeadless(final PointersObject eventSensor, @SuppressWarnings("unused") final ArrayObject targetArray) {
-            targetArray.setStorage(SqueakIOConstants.NULL_EVENT);
+            targetArray.setStorage(SqueakIOConstants.newNullEvent());
             return eventSensor;
         }
     }
@@ -657,64 +640,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 107)
-    protected abstract static class PrimMouseButtonsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    /* primitiveMouseButtons (#107) no longer in use, support dropped in GraalSqueak. */
 
-        protected PrimMouseButtonsNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "method.image.hasDisplay()")
-        protected final long doMouseButtons(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.getDisplay().getLastMouseButton();
-        }
-
-        @Specialization(guards = "!method.image.hasDisplay()")
-        protected static final long doMouseButtonsHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return 0L;
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 108)
-    protected abstract static class PrimKeyboardNextNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-
-        protected PrimKeyboardNextNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "method.image.hasDisplay()")
-        protected final Object doNext(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            final long keyboardNext = method.image.getDisplay().keyboardNext();
-            return keyboardNext == 0 ? NilObject.SINGLETON : keyboardNext;
-        }
-
-        @Specialization(guards = "!method.image.hasDisplay()")
-        protected static final NilObject doNextHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return NilObject.SINGLETON;
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 109)
-    protected abstract static class PrimKeyboardPeekNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-
-        protected PrimKeyboardPeekNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "method.image.hasDisplay()")
-        protected final Object doPeek(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            final long keyboardPeek = method.image.getDisplay().keyboardPeek();
-            return keyboardPeek == 0 ? NilObject.SINGLETON : keyboardPeek;
-        }
-
-        @Specialization(guards = "!method.image.hasDisplay()")
-        protected static final NilObject doPeekHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return NilObject.SINGLETON;
-        }
-    }
+    /* primitiveKbd(Next|Peek) (#108|#109) no longer in use, support dropped in GraalSqueak. */
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 126)
@@ -725,8 +653,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "method.image.hasDisplay()")
-        protected final AbstractSqueakObject doDefer(final AbstractSqueakObject receiver, final boolean flag) {
-            method.image.getDisplay().setDeferUpdates(flag);
+        protected final AbstractSqueakObject doDefer(final AbstractSqueakObject receiver, final boolean flag,
+                        @Cached("createIdentityProfile()") final ValueProfile displayProfile) {
+            displayProfile.profile(method.image.getDisplay()).setDeferUpdates(flag);
             return receiver;
         }
 
