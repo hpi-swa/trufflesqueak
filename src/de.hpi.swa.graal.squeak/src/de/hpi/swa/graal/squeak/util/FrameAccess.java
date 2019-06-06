@@ -190,13 +190,14 @@ public final class FrameAccess {
     /** Write to a frame slot (slow operation), prefer {@link FrameStackWriteNode}. */
     public static void setStackSlot(final Frame frame, final FrameSlot frameSlot, final Object value) {
         final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        if (value instanceof Boolean) {
+        final Class<? extends Object> valueClass = value.getClass();
+        if (valueClass == Boolean.class) {
             frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Boolean);
             frame.setBoolean(frameSlot, (boolean) value);
-        } else if (value instanceof Long) {
+        } else if (valueClass == Long.class) {
             frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Long);
             frame.setLong(frameSlot, (long) value);
-        } else if (value instanceof Double) {
+        } else if (valueClass == Double.class) {
             frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Double);
             frame.setDouble(frameSlot, (double) value);
         } else {
