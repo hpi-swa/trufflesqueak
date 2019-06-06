@@ -21,7 +21,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     private static final BigInteger ONE_HUNDRED_TWENTY_EIGHT = BigInteger.valueOf(128);
     private static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
-    @CompilationFinal(dimensions = 1) private static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = bigIntegerToBytes(LONG_MIN_OVERFLOW_RESULT);
+    @CompilationFinal(dimensions = 1) private static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = toBytes(LONG_MIN_OVERFLOW_RESULT);
 
     private BigInteger integer;
     private final int exposedSize;
@@ -69,37 +69,35 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return LONG_MIN_OVERFLOW_RESULT_BYTES;
     }
 
-    private static byte[] bigIntegerToBytes(final BigInteger bigInteger) {
-        return ArrayUtils.swapOrderInPlace(bigIntegerToBigEndianBytes(bigInteger));
+    private static byte[] toBytes(final BigInteger bigInteger) {
+        final byte[] bigEndianBytes = toBigEndianBytes(bigInteger);
+        final byte[] bytes = bigEndianBytes[0] != 0 ? bigEndianBytes : Arrays.copyOfRange(bigEndianBytes, 1, bigEndianBytes.length);
+        return ArrayUtils.swapOrderInPlace(bytes);
     }
 
-    private byte[] bigIntegerToBigEndianBytes() {
-        return bigIntegerToBigEndianBytes(integer);
-    }
-
-    private static byte[] bigIntegerToBigEndianBytes(final BigInteger bigInteger) {
-        final byte[] bytes = bigInteger.abs().toByteArray();
-        return bytes[0] != 0 ? bytes : Arrays.copyOfRange(bytes, 1, bytes.length);
+    @TruffleBoundary
+    private static byte[] toBigEndianBytes(final BigInteger bigInteger) {
+        return bigInteger.abs().toByteArray();
     }
 
     public long getNativeAt0(final long index) {
-        // TODO: File issue with toByteArray not working on negative numbers?
-        final byte[] bytes = this.bigIntegerToBigEndianBytes();
-        if (exposedSize - (int) index > bytes.length) {
-            return 0L;
-        }
-        return Byte.toUnsignedLong(bytes[Math.max(bytes.length, exposedSize) - 1 - (int) index]);
+        assert index < exposedSize : "Illegal index: " + index;
+        final byte[] bytes = toBigEndianBytes(integer);
+        final int length = bytes.length;
+        return index < length ? Byte.toUnsignedLong(bytes[length - 1 - (int) index]) : 0L;
     }
 
     public void setNativeAt0(final long index, final long value) {
-        if (value < 0 || value > NativeObject.BYTE_MAX) { // check for overflow
-            throw new IllegalArgumentException("Illegal value for LargeIntegerObject: " + value);
-        }
+        assert index < exposedSize : "Illegal index: " + index;
+        assert 0 <= value && value <= NativeObject.BYTE_MAX : "Illegal value for LargeIntegerObject: " + value;
         final byte[] bytes;
-        final byte[] bigIntegerBytes = this.bigIntegerToBigEndianBytes();
-        if (bigIntegerBytes.length <= index) {
-            bytes = new byte[Math.min(exposedSize, (int) index + 1)];
-            System.arraycopy(bigIntegerBytes, 0, bytes, bytes.length - bigIntegerBytes.length, bigIntegerBytes.length);
+        final byte[] bigIntegerBytes = toBigEndianBytes(integer);
+        final int offset = bigIntegerBytes[0] != 0 ? 0 : 1;
+        final int bigIntegerBytesActualLength = bigIntegerBytes.length - offset;
+        if (bigIntegerBytesActualLength <= index) {
+            final int newLength = Math.min(exposedSize, (int) index + 1);
+            bytes = new byte[newLength];
+            System.arraycopy(bigIntegerBytes, offset, bytes, newLength - bigIntegerBytesActualLength, bigIntegerBytesActualLength);
         } else {
             bytes = bigIntegerBytes;
         }
@@ -108,7 +106,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public byte[] getBytes() {
-        return bigIntegerToBytes(integer);
+        return toBytes(integer);
     }
 
     public void replaceInternalValue(final LargeIntegerObject other) {
@@ -123,27 +121,29 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     public void setBytes(final LargeIntegerObject src, final int srcPos, final int destPos, final int length) {
         final byte[] bytes;
-        final byte[] srcBytes = src.bigIntegerToBigEndianBytes();
-        final byte[] bigIntegerBytes = this.bigIntegerToBigEndianBytes();
-        if (bigIntegerBytes.length < destPos + length) {
+        final byte[] srcBytes = toBigEndianBytes(src.integer);
+        final byte[] bigIntegerBytes = toBigEndianBytes(integer);
+        final int offset = bigIntegerBytes[0] != 0 ? 0 : 1;
+        final int bigIntegerBytesActualLength = bigIntegerBytes.length - offset;
+        if (bigIntegerBytesActualLength < destPos + length) {
             bytes = new byte[exposedSize];
-            System.arraycopy(bigIntegerBytes, 0, bytes, 0, bigIntegerBytes.length);
+            System.arraycopy(bigIntegerBytes, offset, bytes, 0, bigIntegerBytesActualLength);
         } else {
             bytes = bigIntegerBytes;
         }
-        for (int i = 0; i < length; i++) {
-            bytes[bytes.length - 1 - (destPos + i)] = srcBytes[srcBytes.length - 1 - (srcPos + i)];
-        }
+        System.arraycopy(srcBytes, srcBytes.length - length - srcPos, bytes, bytes.length - length - destPos, length);
         integer = new BigInteger(isPositive() ? 1 : -1, bytes);
     }
 
     public void setBytes(final byte[] srcBytes, final int srcPos, final int destPos, final int length) {
         // destination bytes are big-endian, source bytes are not
         final byte[] bytes;
-        final byte[] bigIntegerBytes = this.bigIntegerToBigEndianBytes();
-        if (bigIntegerBytes.length < destPos + length) {
+        final byte[] bigIntegerBytes = toBigEndianBytes(integer);
+        final int offset = bigIntegerBytes[0] != 0 ? 0 : 1;
+        final int bigIntegerBytesActualLength = bigIntegerBytes.length - offset;
+        if (bigIntegerBytesActualLength < destPos + length) {
             bytes = new byte[exposedSize];
-            System.arraycopy(bigIntegerBytes, 0, bytes, 0, bigIntegerBytes.length);
+            System.arraycopy(bigIntegerBytes, offset, bytes, 0, bigIntegerBytesActualLength);
         } else {
             bytes = bigIntegerBytes;
         }
