@@ -2,11 +2,13 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -93,18 +95,21 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        protected final Object doLongDouble(final long a, final double b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(a, b, isFiniteProfile);
         }
 
         @Specialization
-        protected final Object doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected final Object doDoubleLong(final double a, final long b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(a, b, isFiniteProfile);
         }
 
         @Specialization
-        protected final Object doDouble(final double a, final double b) {
-            return FloatObject.boxIfNecessary(method.image, a + b);
+        protected final Object doDouble(final double a, final double b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, a + b, isFiniteProfile);
         }
     }
 
@@ -176,18 +181,21 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        protected final Object doLongDouble(final long a, final double b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(a, b, isFiniteProfile);
         }
 
         @Specialization
-        protected final Object doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected final Object doDoubleLong(final double a, final long b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(a, b, isFiniteProfile);
         }
 
         @Specialization
-        protected final Object doDouble(final double a, final double b) {
-            return FloatObject.boxIfNecessary(method.image, a - b);
+        protected final Object doDouble(final double a, final double b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, a - b, isFiniteProfile);
         }
     }
 
@@ -625,18 +633,21 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        protected final Object doLongDouble(final long a, final double b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(a, b, isFiniteProfile);
         }
 
         @Specialization
-        protected final Object doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected final Object doDoubleLong(final double a, final long b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(a, b, isFiniteProfile);
         }
 
         @Specialization
-        protected final Object doDouble(final double a, final double b) {
-            return FloatObject.boxIfNecessary(method.image, a * b);
+        protected final Object doDouble(final double a, final double b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, a * b, isFiniteProfile);
         }
     }
 
@@ -680,18 +691,21 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isZero(b)"})
-        protected final Object doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        protected final Object doLongDouble(final long a, final double b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(a, b, isFiniteProfile);
         }
 
         @Specialization(guards = {"b != 0"})
-        protected final Object doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected final Object doDoubleLong(final double a, final long b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(a, b, isFiniteProfile);
         }
 
         @Specialization(guards = {"!isZero(b)"})
-        protected final Object doDouble(final double a, final double b) {
-            return FloatObject.boxIfNecessary(method.image, a / b);
+        protected final Object doDouble(final double a, final double b,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, a / b, isFiniteProfile);
         }
     }
 
@@ -1050,8 +1064,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "exponent != 0"})
-        protected final Object doDoubleLong(final double matissa, final long exponent) {
-            return doDouble(matissa, exponent);
+        protected final Object doDoubleLong(final double matissa, final long exponent,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(matissa, exponent, isFiniteProfile);
         }
 
         @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "exponent == 0"})
@@ -1060,7 +1075,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "!isZero(exponent)"})
-        protected final Object doDouble(final double matissa, final double exponent) {
+        protected final Object doDouble(final double matissa, final double exponent,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
             final double steps = Math.min(3, Math.ceil(Math.abs(exponent) / 1023));
             double result = matissa;
             for (int i = 0; i < steps; i++) {
@@ -1068,7 +1084,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
                 result *= pow;
             }
-            return FloatObject.boxIfNecessary(method.image, result);
+            return FloatObject.boxIfNecessary(method.image, result, isFiniteProfile);
         }
 
         @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "isZero(exponent)"})
@@ -1170,8 +1186,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isFinite(receiver)")
-        protected final Object doDouble(final double receiver) {
-            return FloatObject.boxIfNecessary(method.image, Math.exp(receiver));
+        protected final Object doDouble(final double receiver,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, Math.exp(receiver), isFiniteProfile);
         }
 
         @Specialization(guards = "!receiver.isFinite()")

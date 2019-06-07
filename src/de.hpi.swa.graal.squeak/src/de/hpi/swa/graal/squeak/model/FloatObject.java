@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
@@ -38,6 +39,10 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
 
     public static Object boxIfNecessary(final SqueakImageContext image, final double value) {
         return Double.isFinite(value) ? value : new FloatObject(image, value);
+    }
+
+    public static Object boxIfNecessary(final SqueakImageContext image, final double value, final ConditionProfile isFiniteProfile) {
+        return isFiniteProfile.profile(Double.isFinite(value)) ? value : new FloatObject(image, value);
     }
 
     public static FloatObject valueOf(final SqueakImageContext image, final double value) {
