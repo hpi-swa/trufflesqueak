@@ -262,7 +262,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                         final int headerWord = compiledSpec.getIntStorage()[0];
                         final int atomicType = (headerWord & FFI_TYPES.ATOMIC_TYPE_MASK.getValue()) >> FFI_TYPES.ATOMIC_TYPE_SHIFT.getValue();
-                        final String atomicName = FFI_TYPES.fromInteger(atomicType);
+                        final String atomicName = FFI_TYPES.getTruffleTypeFromInt(atomicType);
                         argumentList.add(atomicName);
                     }
                 }
@@ -279,7 +279,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             final String ffiExtension = method.image.os.getFFIExtension();
             final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
             final String nfiCode = String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
-            final Object ffiTest = method.image.env.parse(Source.newBuilder("nfi", nfiCode, "native").build()).call();
+
+            // method.image.env = com.oracle.truffle.api.TruffleLanguage$Env@1a1d76bd
+            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
+            final Object ffiTest = method.image.env.parse(source).call();
+            // method.image.env.addToHostClassPath(entry);
             final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
             try {
                 return interopLib.invokeMember(ffiTest, name, arguments);

@@ -49,25 +49,35 @@ public class FFIConstants {
 
     public enum FFI_TYPES {
 
-        // void type, boolean type
-        VOID("void", 0), // VOID
-        BOOL("bool", 1), // OBJECT BOOL UINT8
+        /*
+         * // void type, boolean type VOID("void", 0), // VOID BOOL("bool", 1), // OBJECT BOOL UINT8
+         * // basic integer types UNSIGNED_BYTE("byte", 2), // UINT8 SIGNED_BYTE("sbyte", 3), //
+         * SINT8 UNSIGNED_SHORT("ushort", 4), // UINT16 SIGNED_SHORT("short", 5), // SINT16
+         * UNSIGNED_INT("ulong", 6), // UINT32 SIGNED_INT("long", 7), // SINT32 // 64bit types
+         * UNSIGNED_LONG_LONG("ulonglong", 8), // UINT64 SIGNED_LONG_LONG("longlong", 9), // SINT64
+         * // special integer types UNSIGNED_CHAR("string", 10), // STRING SIGNED_CHAR("schar", 11),
+         * // POINTER // float types SINGLE_FLOAT("float", 12), // FLOAT DOUBLE_FLOAT("double", 13),
+         * // DOUBLE
+         */
+
+        VOID("void", "VOID", 0),
+        BOOL("bool", "UINT8", 1), // OBJECT BOOL UINT8
         // basic integer types
-        UNSIGNED_BYTE("byte", 2), // UINT8
-        SIGNED_BYTE("sbyte", 3), // SINT8
-        UNSIGNED_SHORT("ushort", 4), // UINT16
-        SIGNED_SHORT("short", 5), // SINT16
-        UNSIGNED_INT("ulong", 6), // UINT32
-        SIGNED_INT("long", 7), // SINT32
+        UNSIGNED_BYTE("byte", "UINT8", 2), // UINT8
+        SIGNED_BYTE("sbyte", "SINT8", 3), // SINT8
+        UNSIGNED_SHORT("ushort", "UINT16", 4), // UINT16
+        SIGNED_SHORT("short", "SINT16", 5), // SINT16
+        UNSIGNED_INT("ulong", "UINT32", 6), // UINT32
+        SIGNED_INT("long", "SINT32", 7), // SINT32
         // 64bit types
-        UNSIGNED_LONG_LONG("ulonglong", 8), // UINT64
-        SIGNED_LONG_LONG("longlong", 9), // SINT64
+        UNSIGNED_LONG_LONG("ulonglong", "UINT64", 8), // UINT64
+        SIGNED_LONG_LONG("longlong", "SINT64", 9), // SINT64
         // special integer types
-        UNSIGNED_CHAR("string", 10), // STRING
-        SIGNED_CHAR("schar", 11), // POINTER
+        UNSIGNED_CHAR("string", "STRING", 10), // STRING
+        SIGNED_CHAR("schar", "POINTER", 11), // POINTER
         // float types
-        SINGLE_FLOAT("float", 12), // FLOAT
-        DOUBLE_FLOAT("double", 13), // DOUBLE
+        SINGLE_FLOAT("float", "FLOAT", 12), // FLOAT
+        DOUBLE_FLOAT("double", "DOUBLE", 13), // DOUBLE
 
         // type flags
         FLAG_ATOMIC(0x40000), // type is atomic
@@ -78,31 +88,47 @@ public class FFIConstants {
         ATOMIC_TYPE_MASK(0x0F000000), // mask for atomic type spec public
         ATOMIC_TYPE_SHIFT(24); // shift for atomic type
 
-        private String key;
-        private int value;
+        private String squeakType;
+        private String truffleType;
+        private int integerValue;
 
-        FFI_TYPES(final int value) {
-            this.value = value;
+        FFI_TYPES(final int integerValue) {
+            this.integerValue = integerValue;
         }
 
-        FFI_TYPES(final String key, final int value) {
-            this.key = key;
-            this.value = value;
+        FFI_TYPES(final String squeakType, final int integerValue) {
+            this.squeakType = squeakType;
+            this.integerValue = integerValue;
         }
 
-        public static FFI_TYPES fromString(final String typeKey) {
+        FFI_TYPES(final String squeakType, final String truffleType, final int integerValue) {
+            this.squeakType = squeakType;
+            this.truffleType = truffleType;
+            this.integerValue = integerValue;
+        }
+
+        public static FFI_TYPES getIntegerValueFromString(final String typeKey) {
             for (final FFI_TYPES type : FFI_TYPES.values()) {
-                if (type.key.equals(typeKey)) {
+                if (type.squeakType.equals(typeKey)) {
                     return type;
                 }
             }
             return null;
         }
 
-        public static String fromInteger(final int typeValue) {
+        public static String getSqueakTypeFromInt(final int typeValue) {
             for (final FFI_TYPES type : FFI_TYPES.values()) {
-                if (type.value == typeValue) {
-                    return type.key;
+                if (type.integerValue == typeValue) {
+                    return type.squeakType;
+                }
+            }
+            return null;
+        }
+
+        public static String getTruffleTypeFromInt(final int typeValue) {
+            for (final FFI_TYPES type : FFI_TYPES.values()) {
+                if (type.integerValue == typeValue) {
+                    return type.truffleType;
                 }
             }
             return null;
@@ -110,11 +136,11 @@ public class FFIConstants {
 
         @Override
         public String toString() {
-            return key;
+            return squeakType;
         }
 
         public int getValue() {
-            return value;
+            return integerValue;
         }
     }
 }
