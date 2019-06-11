@@ -31,7 +31,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ObjectGraphNode extends AbstractNodeWithImage {
     private static final int PENDING_INITIAL_SIZE = 256;
-    private static final Object PRESENT_MARKER = new Object();
+    private static final Object SEEN_MARKER = new Object();
     private static final int ADDITIONAL_SPACE = 10_000;
 
     private static int lastSeenObjects = 500_000;
@@ -52,7 +52,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         addObjectsFromTruffleFrames(pending);
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
-            if (seen.put(currentObject, PRESENT_MARKER) == null) {
+            if (seen.put(currentObject, SEEN_MARKER) == null) {
                 tracePointers(pending, currentObject);
             }
         }
@@ -68,7 +68,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         pending.add(image.specialObjectsArray);
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
-            if (seen.put(currentObject, PRESENT_MARKER) == null) {
+            if (seen.put(currentObject, SEEN_MARKER) == null) {
                 pointersBecomeNode.execute(currentObject, fromPointers, toPointers, copyHash);
                 tracePointers(pending, currentObject);
             }
@@ -86,7 +86,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         addObjectsFromTruffleFrames(pending);
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
-            if (seen.put(currentObject, PRESENT_MARKER) == null) {
+            if (seen.put(currentObject, SEEN_MARKER) == null) {
                 if (classObj == currentObject.getSqueakClass()) {
                     result.add(currentObject);
                 }
@@ -106,7 +106,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         addObjectsFromTruffleFrames(pending);
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
-            if (seen.put(currentObject, PRESENT_MARKER) == null) {
+            if (seen.put(currentObject, SEEN_MARKER) == null) {
                 if (classObj == currentObject.getSqueakClass()) {
                     return currentObject;
                 }
