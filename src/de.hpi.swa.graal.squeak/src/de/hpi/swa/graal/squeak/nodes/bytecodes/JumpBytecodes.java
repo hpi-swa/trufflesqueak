@@ -26,14 +26,12 @@ public final class JumpBytecodes {
         private final boolean isIfTrue;
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
-        @Child private FrameStackReadAndClearNode popNode;
         @Child private HandleConditionResultNode handleConditionResultNode;
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);
             offset = (bytecode & 7) + 1;
             isIfTrue = false;
-            popNode = FrameStackReadAndClearNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
         }
 
@@ -41,7 +39,6 @@ public final class JumpBytecodes {
             super(code, index, numBytecodes);
             offset = ((bytecode & 3) << 8) + parameter;
             isIfTrue = condition;
-            popNode = FrameStackReadAndClearNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
         }
 
@@ -50,8 +47,8 @@ public final class JumpBytecodes {
             // nothing to do
         }
 
-        public boolean executeCondition(final VirtualFrame frame) {
-            final Object result = popNode.executePop(frame);
+        public boolean executeCondition(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
+            final Object result = readAndClearNode.executePop(frame);
             return conditionProfile.profile(handleConditionResultNode.execute(frame, isIfTrue, result));
         }
 

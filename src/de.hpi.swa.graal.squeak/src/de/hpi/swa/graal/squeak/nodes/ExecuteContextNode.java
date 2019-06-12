@@ -152,7 +152,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame)) {
+                if (jumpNode.executeCondition(frame, readAndClearNode)) {
                     final int successor = jumpNode.getJumpSuccessorIndex();
                     if (CompilerDirectives.inInterpreter() && successor <= pc) {
                         backJumpCounter++;
@@ -205,14 +205,14 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     break bytecode_loop;
                 }
             } else if (node instanceof PushClosureNode) {
-                node.executeVoid(frame);
-                pc = ((PushClosureNode) node).getClosureSuccessorIndex();
+                final PushClosureNode pushClosureNode = (PushClosureNode) node;
+                pushClosureNode.executePush(frame, readAndClearNode);
+                pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop;
             } else {
-                final int successor = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, successor);
+                pc = node.getSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, pc);
                 node.executeVoid(frame);
-                pc = successor;
                 continue bytecode_loop;
             }
         }
@@ -241,7 +241,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame)) {
+                if (jumpNode.executeCondition(frame, readAndClearNode)) {
                     pc = jumpNode.getJumpSuccessorIndex();
                     continue bytecode_loop_slow;
                 } else {
@@ -282,8 +282,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     break bytecode_loop_slow;
                 }
             } else if (node instanceof PushClosureNode) {
-                node.executeVoid(frame);
-                pc = ((PushClosureNode) node).getClosureSuccessorIndex();
+                final PushClosureNode pushClosureNode = (PushClosureNode) node;
+                pushClosureNode.executePush(frame, readAndClearNode);
+                pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop_slow;
             } else {
                 final int successor = node.getSuccessorIndex();

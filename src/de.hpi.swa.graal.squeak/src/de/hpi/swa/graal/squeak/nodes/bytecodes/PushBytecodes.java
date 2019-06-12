@@ -10,6 +10,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -67,7 +68,6 @@ public final class PushBytecodes {
         private final int numArgs;
         private final int numCopied;
 
-        @Child private FrameStackReadAndClearNode popNNode;
         @Child private GetOrCreateContextNode getOrCreateContextNode;
 
         @CompilationFinal private CompiledBlockObject block;
@@ -78,7 +78,6 @@ public final class PushBytecodes {
             numArgs = i & 0xF;
             numCopied = i >> 4 & 0xF;
             blockSize = j << 8 | k;
-            popNNode = FrameStackReadAndClearNode.create(code);
             getOrCreateContextNode = GetOrCreateContextNode.create(code);
         }
 
@@ -105,12 +104,16 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executePush(frame, createClosure(frame));
+            throw SqueakException.create("Should never be called directly.");
         }
 
-        private BlockClosureObject createClosure(final VirtualFrame frame) {
+        public void executePush(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
+            pushNode.executePush(frame, createClosure(frame, readAndClearNode));
+        }
+
+        private BlockClosureObject createClosure(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
             final Object receiver = FrameAccess.getReceiver(frame);
-            final Object[] copiedValues = popNNode.executePopN(frame, numCopied);
+            final Object[] copiedValues = readAndClearNode.executePopN(frame, numCopied);
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
             return new BlockClosureObject(getBlock(frame), blockCallTarget, receiver, copiedValues, outerContext);
         }
