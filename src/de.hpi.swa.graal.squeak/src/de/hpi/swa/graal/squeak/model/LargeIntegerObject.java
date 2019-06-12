@@ -231,10 +231,12 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return reduceIfPossible(integer);
     }
 
+    @TruffleBoundary
     public long longValue() {
         return integer.longValue();
     }
 
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long longValueExact() throws ArithmeticException {
         return integer.longValueExact();
     }
@@ -435,12 +437,12 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return integer.doubleValue();
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    /** {@link BigInteger#signum()} does not need a {@link TruffleBoundary}. */
     public boolean isZero() {
         return integer.signum() == 0;
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    /** {@link BigInteger#signum()} does not need a {@link TruffleBoundary}. */
     public boolean isZeroOrPositive() {
         return integer.signum() >= 0;
     }
