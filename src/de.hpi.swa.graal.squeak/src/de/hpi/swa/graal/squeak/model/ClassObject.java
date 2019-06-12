@@ -92,7 +92,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             } else {
                 return "Metaclass (unknown)";
             }
-        } else if (size() == 11) {
+        } else if (size() >= 11) {
             return getClassNameUnsafe();
         } else {
             return "Unknown behavior";
