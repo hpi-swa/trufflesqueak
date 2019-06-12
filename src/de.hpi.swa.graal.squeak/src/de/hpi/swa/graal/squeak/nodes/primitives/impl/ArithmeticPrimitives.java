@@ -849,14 +849,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver & arg;
         }
 
-        @Specialization(guards = {"arg.fitsIntoLong()"})
+        @Specialization(guards = {"arg.fitsIntoLong() || receiver >= 0"})
         protected static final long doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
-            return doLong(receiver, arg.longValue());
+            return receiver & arg.longValue();
         }
 
-        @Specialization(guards = {"!arg.fitsIntoLong()"})
-        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return asLargeInteger(receiver).and(arg);
+        @Specialization(guards = {"!arg.fitsIntoLong()", "receiver < 0"})
+        protected static final Object doLongLargeNegative(final long receiver, final LargeIntegerObject arg) {
+            return arg.and(receiver);
         }
     }
 

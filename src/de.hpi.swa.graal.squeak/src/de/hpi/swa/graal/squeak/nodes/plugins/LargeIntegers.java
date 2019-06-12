@@ -306,13 +306,23 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return receiver.and(arg);
         }
 
-        @Specialization
+        @Specialization(guards = "receiver >= 0")
         protected static final Object doLong(final long receiver, final LargeIntegerObject arg) {
+            return receiver & arg.longValue();
+        }
+
+        @Specialization(guards = "receiver < 0")
+        protected static final Object doLongNegative(final long receiver, final LargeIntegerObject arg) {
             return arg.and(receiver);
         }
 
-        @Specialization
+        @Specialization(guards = "arg >= 0")
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
+            return receiver.longValue() & arg;
+        }
+
+        @Specialization(guards = "arg < 0")
+        protected static final Object doLargeIntegerNegative(final LargeIntegerObject receiver, final long arg) {
             return receiver.and(arg);
         }
     }
