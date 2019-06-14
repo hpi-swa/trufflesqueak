@@ -444,13 +444,11 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     @Override
     public String getClipboardData() {
-        String text;
         try {
-            text = (String) getClipboard().getData(DataFlavor.stringFlavor);
-        } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
-            text = "";
+            return (String) getClipboard().getData(DataFlavor.stringFlavor);
+        } catch (UnsupportedFlavorException | IOException e) {
+            return "";
         }
-        return text;
     }
 
     @Override
