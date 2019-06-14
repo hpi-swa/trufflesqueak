@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
@@ -28,9 +29,11 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.LiteralBuilder;
 import com.oracle.truffle.api.source.Source.SourceBuilder;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.interop.ConvertToSqueakNode;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
@@ -46,6 +49,7 @@ import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPluginFactory.PrimReadMembe
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
@@ -74,33 +78,52 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEvalString")
-    protected abstract static class PrimEvalStringNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimEvalStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         protected PrimEvalStringNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @TruffleBoundary(transferToInterpreterOnException = false)
-        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
-        protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+        @Specialization(guards = {"!inInnerContext", "languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
+        protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+                        @SuppressWarnings("unused") final boolean inInnerContext,
                         @Cached final WrapToSqueakNode wrapNode) {
+            return wrapNode.executeWrap(evalString(method.image, languageIdOrMimeTypeObj, sourceObject));
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        @Specialization(guards = {"inInnerContext", "languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
+        protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
+                        @SuppressWarnings("unused") final boolean inInnerContext,
+                        @Cached final ConvertToSqueakNode convertNode) {
+            final TruffleContext innerContext = method.image.env.newContextBuilder().build();
+            final Object p = innerContext.enter();
+            try {
+                return convertNode.executeConvert(evalString(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, sourceObject));
+            } finally {
+                innerContext.leave(p);
+                innerContext.close();
+            }
+        }
+
+        private static Object evalString(final SqueakImageContext image, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String sourceText = sourceObject.asStringUnsafe();
-            final Env env = method.image.env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
-                final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
+                final String lang = mimeType ? findLanguageByMimeType(image.env, languageIdOrMimeType) : languageIdOrMimeType;
                 LiteralBuilder newBuilder = Source.newBuilder(lang, sourceText, EVAL_SOURCE_NAME);
                 if (mimeType) {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
                 final Source source = newBuilder.build();
-                final boolean wasActive = method.image.interrupt.isActive();
-                method.image.interrupt.deactivate();
+                final boolean wasActive = image.interrupt.isActive();
+                image.interrupt.deactivate();
                 try {
-                    return wrapNode.executeWrap(env.parse(source).call());
+                    return image.env.parse(source).call();
                 } finally {
                     if (wasActive) {
-                        method.image.interrupt.activate();
+                        image.interrupt.activate();
                     }
                 }
             } catch (final RuntimeException e) {
@@ -112,26 +135,46 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEvalFile")
-    protected abstract static class PrimEvalFileNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimEvalFileNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
         protected PrimEvalFileNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @TruffleBoundary(transferToInterpreterOnException = false)
-        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
-        protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
+        @Specialization(guards = {"!inInnerContext", "languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
+        protected final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
+                        @SuppressWarnings("unused") final boolean inInnerContext,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            return wrapNode.executeWrap(evalFile(method.image, languageIdOrMimeTypeObj, path));
+        }
+
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        @Specialization(guards = {"inInnerContext", "languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
+        protected final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
+                        @SuppressWarnings("unused") final boolean inInnerContext,
+                        @Cached final ConvertToSqueakNode convertNode) {
+            final TruffleContext innerContext = method.image.env.newContextBuilder().build();
+            final Object p = innerContext.enter();
+            try {
+                return convertNode.executeConvert(evalFile(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, path));
+            } finally {
+                innerContext.leave(p);
+                innerContext.close();
+            }
+        }
+
+        private static Object evalFile(final SqueakImageContext image, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String pathString = path.asStringUnsafe();
-            final Env env = method.image.env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
-                final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
-                SourceBuilder newBuilder = Source.newBuilder(lang, env.getTruffleFile(pathString));
+                final String lang = mimeType ? findLanguageByMimeType(image.env, languageIdOrMimeType) : languageIdOrMimeType;
+                SourceBuilder newBuilder = Source.newBuilder(lang, image.env.getTruffleFile(pathString));
                 if (mimeType) {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
-                return env.parse(newBuilder.name(pathString).build()).call();
+                return image.env.parse(newBuilder.name(pathString).build()).call();
             } catch (final IOException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
