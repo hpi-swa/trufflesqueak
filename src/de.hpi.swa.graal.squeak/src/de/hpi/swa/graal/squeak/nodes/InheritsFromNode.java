@@ -5,7 +5,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 
 public abstract class InheritsFromNode extends AbstractNode {
     protected static final int CACHE_SIZE = 3;
@@ -22,15 +22,15 @@ public abstract class InheritsFromNode extends AbstractNode {
                     @Cached("object") final Object cachedObject,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("cachedClass.getClassHierarchyStable()") final Assumption classHierarchyStable,
-                    @Cached final LookupClassNode lookupClassNode,
-                    @Cached("doUncached(object, cachedClass, lookupClassNode)") final boolean inInheritanceChain) {
+                    @Cached final SqueakObjectClassNode classNode,
+                    @Cached("doUncached(object, cachedClass, classNode)") final boolean inInheritanceChain) {
         return inInheritanceChain;
     }
 
     @Specialization(replaces = "doCached")
     protected static final boolean doUncached(final Object receiver, final ClassObject superClass,
-                    @Cached final LookupClassNode lookupClassNode) {
-        ClassObject classObject = lookupClassNode.executeLookup(superClass.image, receiver);
+                    @Cached final SqueakObjectClassNode classNode) {
+        ClassObject classObject = classNode.executeLookup(superClass.image, receiver);
         while (classObject != superClass) {
             classObject = classObject.getSuperclassOrNull();
             if (classObject == null) {

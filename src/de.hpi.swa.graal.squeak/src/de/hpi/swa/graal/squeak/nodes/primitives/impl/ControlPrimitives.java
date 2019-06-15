@@ -41,13 +41,13 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.InheritsFromNode;
-import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectChangeClassOfToNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -116,7 +116,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     private abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
         @Child protected LookupMethodNode lookupMethodNode = LookupMethodNode.create();
-        @Child protected LookupClassNode lookupClassNode;
+        @Child protected SqueakObjectClassNode classNode;
         @Child private DispatchSendNode dispatchSendNode;
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method) {
@@ -134,11 +134,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final ClassObject lookupClass(final Object object) {
-            if (lookupClassNode == null) {
+            if (classNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                lookupClassNode = insert(LookupClassNode.create());
+                classNode = insert(SqueakObjectClassNode.create());
             }
-            return lookupClassNode.executeLookup(method.image, object);
+            return classNode.executeLookup(method.image, object);
         }
 
         private DispatchSendNode getDispatchSendNode() {
@@ -453,14 +453,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final ClassObject doClass(final Object receiver, @SuppressWarnings("unused") final NotProvided object,
-                        @Shared("lookupNode") @Cached final LookupClassNode lookupNode) {
-            return lookupNode.executeLookup(method.image, receiver);
+                        @Shared("lookupNode") @Cached final SqueakObjectClassNode classNode) {
+            return classNode.executeLookup(method.image, receiver);
         }
 
         @Specialization(guards = "!isNotProvided(object)")
         protected final ClassObject doClass(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @Shared("lookupNode") @Cached final LookupClassNode lookupNode) {
-            return lookupNode.executeLookup(method.image, object);
+                        @Shared("lookupNode") @Cached final SqueakObjectClassNode classNode) {
+            return classNode.executeLookup(method.image, object);
         }
     }
 

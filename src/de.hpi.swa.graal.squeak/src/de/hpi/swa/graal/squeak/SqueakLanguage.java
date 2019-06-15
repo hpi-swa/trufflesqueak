@@ -21,8 +21,8 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.SqueakFileDetector;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
@@ -77,7 +77,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         if (value instanceof FrameMarker) {
             return image.nilClass;
         }
-        return LookupClassNode.getUncached().executeLookup(image, WrapToSqueakNode.getUncached().executeWrap(value));
+        return SqueakObjectClassNode.getUncached().executeLookup(image, WrapToSqueakNode.getUncached().executeWrap(value));
     }
 
     @Override

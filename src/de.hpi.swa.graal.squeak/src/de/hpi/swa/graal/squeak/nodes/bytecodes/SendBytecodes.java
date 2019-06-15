@@ -3,21 +3,24 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
-import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.AbstractLookupClassNode;
-import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
-import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupSuperClassNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractBytecodeNode {
@@ -36,7 +39,7 @@ public final class SendBytecodes {
         private final BranchProfile nvrProfile = BranchProfile.create();
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
-            this(code, index, numBytecodes, sel, argcount, LookupClassNode.create());
+            this(code, index, numBytecodes, sel, argcount, new LookupClassNode());
         }
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount, final AbstractLookupClassNode lookupClassNode) {
@@ -60,7 +63,7 @@ public final class SendBytecodes {
                  * Inline copy of {@link AbstractSendNode#executeSend} for better send performance.
                  */
                 final Object[] rcvrAndArgs = popNNode.executePopN(frame, 1 + argumentCount);
-                final ClassObject rcvrClass = lookupClassNode.executeLookup(code.image, rcvrAndArgs[0]);
+                final ClassObject rcvrClass = lookupClassNode.executeLookup(frame, code.image, rcvrAndArgs[0]);
                 final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
                 result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
                 assert result != null : "Result of a message send should not be null";
@@ -86,7 +89,7 @@ public final class SendBytecodes {
 
         public final Object executeSend(final VirtualFrame frame) {
             final Object[] rcvrAndArgs = popNNode.executePopN(frame, 1 + argumentCount);
-            final ClassObject rcvrClass = lookupClassNode.executeLookup(code.image, rcvrAndArgs[0]);
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(frame, code.image, rcvrAndArgs[0]);
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
         }
@@ -112,6 +115,29 @@ public final class SendBytecodes {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "send: " + selector.asStringUnsafe();
+        }
+    }
+
+    protected abstract static class AbstractLookupClassNode extends AbstractNode {
+        protected abstract ClassObject executeLookup(VirtualFrame frame, SqueakImageContext image, Object receiver);
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    protected static final class LookupClassNode extends AbstractLookupClassNode {
+        @Child SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
+
+        @Override
+        protected ClassObject executeLookup(final VirtualFrame frame, final SqueakImageContext image, final Object receiver) {
+            return lookupClassNode.executeLookup(image, receiver);
+        }
+    }
+
+    protected static final class LookupSuperClassNode extends AbstractLookupClassNode {
+        @Override
+        protected ClassObject executeLookup(final VirtualFrame frame, final SqueakImageContext image, final Object receiver) {
+            final ClassObject methodClass = FrameAccess.getMethod(frame).getMethodClass();
+            final ClassObject superclass = methodClass.getSuperclassOrNull();
+            return superclass == null ? methodClass : superclass;
         }
     }
 
@@ -163,7 +189,7 @@ public final class SendBytecodes {
         }
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
-            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs, LookupSuperClassNode.create(code));
+            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs, new LookupSuperClassNode());
         }
 
         @Override
