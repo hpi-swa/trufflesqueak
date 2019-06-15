@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-readonly GIT_TAG="0.8.0"
-readonly IMAGE32_NAME="GraalSqueakTestImage-18594-32bit.zip"
-readonly IMAGE64_NAME="GraalSqueakTestImage-18594-64bit.zip"
+readonly DEFAULT_GIT_TAG="0.8.2" # TODO: use 0.8.4 when merging into dev
+readonly IMAGE32_NAME="GraalSqueakTestImage-18615-32bit.zip"
+readonly IMAGE64_NAME="GraalSqueakTestImage-18615-64bit.zip"
 readonly GITHUB_SLUG="hpi-swa-lab/graalsqueak"
 readonly MX_GIT="https://github.com/graalvm/mx.git"
 
@@ -44,15 +44,17 @@ get_mx_parameters() {
 
 get_assert_id() {
   local filename=$1
-  parser=". | map(select(.tag_name == \"${GIT_TAG}\"))[0].assets | map(select(.name == \"${filename}\"))[0].id"
+  local git_tag=$2
+  parser=". | map(select(.tag_name == \"${git_tag}\"))[0].assets | map(select(.name == \"${filename}\"))[0].id"
   curl "https://${GITHUB_TOKEN}:@api.github.com/repos/${GITHUB_SLUG}/releases" \
     | jq "$parser"
 }
 
 download_assert() {
   local filename=$1
-  local target="${2:-$1}"
-  local assert_id=$(get_assert_id "${filename}")
+  local git_tag="${2:-${DEFAULT_GIT_TAG}}"
+  local target="${3:-$1}"
+  local assert_id=$(get_assert_id "${filename}" "${git_tag}")
   curl -L -H 'Accept:application/octet-stream' -o "${target}" \
     "https://${GITHUB_TOKEN}:@api.github.com/repos/${GITHUB_SLUG}/releases/assets/${assert_id}"
 }

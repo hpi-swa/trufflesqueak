@@ -45,7 +45,7 @@ aliases:
     |
       pushd ${TRAVIS_BUILD_DIR}/.. > /dev/null
       local eclipse_tar="ci-dep-eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz"
-      ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${eclipse_tar}"
+      ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${eclipse_tar}" 0.8.0
       tar -xzf ${eclipse_tar}
       export ECLIPSE_EXE=$(pwd)/eclipse/eclipse
       popd > /dev/null
@@ -53,7 +53,7 @@ aliases:
     |
       export JDT=${MX_PATH}/ecj.jar
       local ecj_tar="ci-dep-ecj-4.5.2.jar"
-      ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${ecj_tar}" "${JDT}"
+      ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${ecj_tar}" 0.8.0 "${JDT}"
   - &openjdk8-jvmci-test-setup # set up jvmci, download image, enable coverage testing
     install: *use-openjdk8-jvmci
     before_script:
