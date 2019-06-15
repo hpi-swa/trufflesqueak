@@ -43,6 +43,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectTrace
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
@@ -54,6 +55,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -372,37 +374,18 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 75)
-    protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimIdentityHashNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doNil(@SuppressWarnings("unused") final NilObject receiver) {
-            return NilObject.getSqueakHash();
-        }
-
-        @Specialization(guards = "obj == FALSE")
-        protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean obj) {
-            return 2L;
-        }
-
-        @Specialization(guards = "obj != FALSE")
-        protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean obj) {
-            return 3L;
-        }
-
-        @Specialization
-        protected static final long doLong(final long obj) {
-            return obj;
-        }
-
-        @Specialization
-        protected static final long doSqueakObject(final AbstractSqueakObjectWithClassAndHash receiver) {
-            return receiver.getSqueakHash();
+        protected static final long doHash(final Object receiver, @Cached final SqueakObjectHashNode hashNode) {
+            return hashNode.execute(receiver);
         }
     }
 
