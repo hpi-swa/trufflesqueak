@@ -604,23 +604,23 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return CharacterObject.valueOf(method.image, Math.toIntExact(receiver));
+        protected static final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target) {
+            return CharacterObject.valueOf(Math.toIntExact(receiver));
         }
 
         @Specialization(guards = "receiver.fitsIntoInt()")
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return CharacterObject.valueOf(method.image, receiver.intValueExact());
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided target) {
+            return CharacterObject.valueOf(receiver.intValueExact());
         }
 
         @Specialization
-        protected final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target) {
-            return CharacterObject.valueOf(method.image, Math.toIntExact(target));
+        protected static final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target) {
+            return CharacterObject.valueOf(Math.toIntExact(target));
         }
 
         @Specialization(guards = "target.fitsIntoInt()")
-        protected final Object doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject target) {
-            return CharacterObject.valueOf(method.image, target.intValueExact());
+        protected static final Object doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject target) {
+            return CharacterObject.valueOf(target.intValueExact());
         }
     }
 

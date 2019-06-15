@@ -1,20 +1,11 @@
 package de.hpi.swa.graal.squeak.model;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
-
-public final class CharacterObject extends AbstractSqueakObjectWithClassAndHash {
+public final class CharacterObject extends AbstractSqueakObject {
     private final int value;
 
-    private CharacterObject(final SqueakImageContext image, final int value) {
-        super(image, image.characterClass);
+    private CharacterObject(final int value) {
         assert value > Character.MAX_VALUE : "CharacterObject should only be used for non-primitive chars.";
         this.value = value;
-    }
-
-    @Override
-    public void fillin(final SqueakImageChunk chunk) {
-        // Nothing to do.
     }
 
     @Override
@@ -27,11 +18,11 @@ public final class CharacterObject extends AbstractSqueakObjectWithClassAndHash 
         return 0;
     }
 
-    public static Object valueOf(final SqueakImageContext image, final int value) {
+    public static Object valueOf(final int value) {
         if (value <= Character.MAX_VALUE) {
             return (char) value;
         } else {
-            return new CharacterObject(image, value);
+            return new CharacterObject(value);
         }
     }
 

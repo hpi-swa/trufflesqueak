@@ -194,7 +194,7 @@ public final class SqueakImageChunk {
                 case 1: // SmallInteger
                     return ptr >> 3;
                 case 2: // Character
-                    return CharacterObject.valueOf(image, (int) (ptr >> 3));
+                    return CharacterObject.valueOf((int) (ptr >> 3));
                 case 4: // SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:)
                     long valueWithoutTag = ptr >>> 3;
                     if (valueWithoutTag > 1) {
@@ -217,7 +217,7 @@ public final class SqueakImageChunk {
                 return ptr >> 1;
             } else {
                 assert (ptr & 3) == 2;
-                return CharacterObject.valueOf(image, (int) (ptr >> 2));
+                return CharacterObject.valueOf((int) (ptr >> 2));
             }
         }
     }
