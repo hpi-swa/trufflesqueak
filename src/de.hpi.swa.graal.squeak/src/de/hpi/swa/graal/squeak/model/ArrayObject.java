@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -152,7 +153,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public Object[] getObjectStorage() {
         assert isObjectType();
-        return (Object[]) storage;
+        return CompilerDirectives.castExact(storage, Object[].class);
     }
 
     public Class<? extends Object> getStorageType() {
