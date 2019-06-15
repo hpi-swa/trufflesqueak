@@ -16,7 +16,6 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.B2DPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.BMPReadWriterPlugin;
@@ -113,7 +112,7 @@ public final class PrimitiveNodeFactory {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         assert primitiveIndex >= 0 : "Unexpected negative primitiveIndex";
         if (264 <= primitiveIndex && primitiveIndex <= 520) {
-            return ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory.create(method, primitiveIndex - 264, new SqueakNode[]{ArgumentNode.create(method, 0)});
+            return ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory.create(method, primitiveIndex - 264, new ArgumentNode[]{ArgumentNode.create(0, method.getNumArgs())});
         } else if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable[primitiveIndex - 1];
             if (nodeFactory != null) {
@@ -159,9 +158,9 @@ public final class PrimitiveNodeFactory {
 
     private static AbstractPrimitiveNode createInstance(final CompiledMethodObject method, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
         final int primitiveArity = nodeFactory.getExecutionSignature().size();
-        final SqueakNode[] argumentNodes = new SqueakNode[primitiveArity];
+        final ArgumentNode[] argumentNodes = new ArgumentNode[primitiveArity];
         for (int i = 0; i < primitiveArity; i++) {
-            argumentNodes[i] = ArgumentNode.create(method, i);
+            argumentNodes[i] = ArgumentNode.create(i, method.getNumArgs());
         }
         final AbstractPrimitiveNode primitiveNode = nodeFactory.createNode(method, argumentNodes);
         assert primitiveArity == primitiveNode.getNumArguments() : "Arities do not match.";

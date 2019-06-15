@@ -13,12 +13,12 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.AbstractPrimitive;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @GenerateWrapper
-@NodeChild(value = "arguments", type = SqueakNode[].class)
+@NodeChild(value = "arguments", type = ArgumentNode[].class)
 public abstract class AbstractPrimitiveNode extends AbstractNode implements AbstractPrimitive, InstrumentableNode {
     protected final CompiledMethodObject method;
 
