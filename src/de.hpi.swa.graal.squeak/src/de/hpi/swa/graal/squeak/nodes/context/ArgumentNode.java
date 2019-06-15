@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -29,7 +28,7 @@ public abstract class ArgumentNode extends AbstractNode {
         return FrameAccess.getArgument(frame, argumentIndex);
     }
 
-    @Fallback
+    @Specialization(guards = {"!inBounds"})
     protected static final Object doArgumentsExhausted() {
         return NotProvided.SINGLETON;
     }
