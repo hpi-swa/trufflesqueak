@@ -127,6 +127,7 @@ suite = {
             "jacoco": "include",
             "javaCompliance": "8+",
             "workingSets": "GraalSqueak",
+            "testProject": True,
         },
     },
 

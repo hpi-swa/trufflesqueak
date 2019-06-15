@@ -10,6 +10,7 @@ import mx_unittest
 
 LANGUAGE_NAME = 'squeaksmalltalk'
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 BASE_VM_ARGS = [
     # RUNTIME
     '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
@@ -318,22 +319,46 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
-    unittest_args = BASE_VM_ARGS_TESTING
+    supports_coverage = os.environ.get('JDK') == 'openjdk8'  # see .travis.yml
 
-    supports_coverage = os.environ.get('JDK') == 'openjdk8'  # see `.travis.yml`
-    jacoco_args = mx_gate.get_jacoco_agent_args()
-    if supports_coverage and jacoco_args:
-        unittest_args.extend(jacoco_args)
-    unittest_args.extend([
-        '--suite', 'graalsqueak', '--very-verbose', '--enable-timing'])
-    with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
+    with mx_gate.Task('GraalSqueak JUnit and SUnit tests',
+                      tasks, tags=['test']) as t:
         if t:
+            unittest_args = BASE_VM_ARGS_TESTING[:]
+            jacoco_args = mx_gate.get_jacoco_agent_args()
+            if supports_coverage and jacoco_args:
+                unittest_args.extend(jacoco_args)
+            unittest_args.extend([
+                '--suite', 'graalsqueak', '--very-verbose', '--enable-timing'])
             mx_unittest.unittest(unittest_args)
+
+    if _compiler:
+        with mx_gate.Task('GraalSqueak TCK tests', tasks, tags=['test']) as t:
+            if t:
+                unittest_args = BASE_VM_ARGS_TESTING[:]
+                test_image = _get_path_to_test_image()
+                unittest_args.extend([
+                    '-Dgraal.TruffleCompilation=false',
+                    '-Dtck.language=squeaksmalltalk',
+                    '-Dpolyglot.squeaksmalltalk.ImagePath=%s' % test_image,
+                    'com.oracle.truffle.tck.tests'])
+                mx_unittest.unittest(unittest_args)
 
     if supports_coverage:
         with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
             if t:
                 mx.command_function('jacocoreport')(['--format', 'xml', '.'])
+
+
+def _get_path_to_test_image():
+    images_dir = os.path.join(BASE_DIR, 'images')
+    image_64bit = os.path.join(images_dir, 'test-64bit.image')
+    if os.path.isfile(image_64bit):
+        return image_64bit
+    image_32bit = os.path.join(images_dir, 'test-32bit.image')
+    if os.path.isfile(image_32bit):
+        return image_32bit
+    mx.abort('Unable to locate test image.')
 
 
 def _squeak_svm(args):
