@@ -62,8 +62,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         } else {
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
-        triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
-        readAndClearNode = FrameStackReadAndClearNode.create(code);
+        if (!code.image.interrupt.disabled() && !code.hasPrimitive() && bytecodeNodes.length > TriggerInterruptHandlerNode.BYTECODE_LENGTH_THRESHOLD) {
+            triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
+        }
     }
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
@@ -85,7 +86,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             if (stackDepth++ > STACK_DEPTH_LIMIT) {
                 throw ProcessSwitch.createWithBoundary(getGetOrCreateContextNode().executeGet(frame));
             }
-            triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
+            if (triggerInterruptHandlerNode != null) {
+                triggerInterruptHandlerNode.executeGeneric(frame);
+            }
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
@@ -108,7 +111,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     protected final Object doNonVirtualized(final VirtualFrame frame, final ContextObject context) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
         try {
-            triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
+            if (triggerInterruptHandlerNode != null) {
+                triggerInterruptHandlerNode.executeGeneric(frame);
+            }
             final long initialPC = context.getInstructionPointerForBytecodeLoop();
             assert initialPC >= 0 : "Trying to execute a terminated/illegal context";
             if (initialPC == 0) {
@@ -152,7 +157,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame, readAndClearNode)) {
+                if (jumpNode.executeCondition(frame, getFrameStackReadAndClearNode())) {
                     final int successor = jumpNode.getJumpSuccessorIndex();
                     if (CompilerDirectives.inInterpreter() && successor <= pc) {
                         backJumpCounter++;
@@ -192,21 +197,21 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 continue bytecode_loop;
             } else if (node instanceof AbstractReturnNode) {
                 if (node instanceof ReturnConstantNode) {
-                    returnValue = ((ReturnConstantNode) node).executeReturn(frame, readAndClearNode);
+                    returnValue = ((ReturnConstantNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop;
                 } else if (node instanceof ReturnReceiverNode) {
-                    returnValue = ((ReturnReceiverNode) node).executeReturn(frame, readAndClearNode);
+                    returnValue = ((ReturnReceiverNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop;
                 } else if (node instanceof ReturnTopFromBlockNode) {
-                    returnValue = ((ReturnTopFromBlockNode) node).executeReturn(frame, readAndClearNode);
+                    returnValue = ((ReturnTopFromBlockNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop;
                 } else if (node instanceof ReturnTopFromMethodNode) {
-                    returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, readAndClearNode);
+                    returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop;
                 }
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
-                pushClosureNode.executePush(frame, readAndClearNode);
+                pushClosureNode.executePush(frame, getFrameStackReadAndClearNode());
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop;
             } else {
@@ -221,6 +226,15 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         assert backJumpCounter >= 0;
         LoopNode.reportLoopCount(this, backJumpCounter);
         return returnValue;
+    }
+
+    private FrameStackReadAndClearNode getFrameStackReadAndClearNode() {
+        /* Lazily insert node because it is not needed if primitive succeeds. */
+        if (readAndClearNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            readAndClearNode = FrameStackReadAndClearNode.create(code);
+        }
+        return readAndClearNode;
     }
 
     private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
@@ -241,7 +255,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame, readAndClearNode)) {
+                if (jumpNode.executeCondition(frame, getFrameStackReadAndClearNode())) {
                     pc = jumpNode.getJumpSuccessorIndex();
                     continue bytecode_loop_slow;
                 } else {
@@ -269,21 +283,21 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 continue bytecode_loop_slow;
             } else if (node instanceof AbstractReturnNode) {
                 if (node instanceof ReturnConstantNode) {
-                    returnValue = ((ReturnConstantNode) node).executeReturn(frame, readAndClearNode);
+                    returnValue = ((ReturnConstantNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop_slow;
                 } else if (node instanceof ReturnReceiverNode) {
-                    returnValue = ((ReturnReceiverNode) node).executeReturn(frame, readAndClearNode);
+                    returnValue = ((ReturnReceiverNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop_slow;
                 } else if (node instanceof ReturnTopFromBlockNode) {
-                    returnValue = ((ReturnTopFromBlockNode) node).executeReturn(frame, readAndClearNode);
+                    returnValue = ((ReturnTopFromBlockNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop_slow;
                 } else if (node instanceof ReturnTopFromMethodNode) {
-                    returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, readAndClearNode);
+                    returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop_slow;
                 }
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
-                pushClosureNode.executePush(frame, readAndClearNode);
+                pushClosureNode.executePush(frame, getFrameStackReadAndClearNode());
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop_slow;
             } else {
@@ -323,18 +337,17 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             return TriggerInterruptHandlerNodeGen.create(code);
         }
 
-        protected abstract void executeGeneric(VirtualFrame frame, boolean hasPrimitive, int bytecodeLength);
+        protected abstract void executeGeneric(VirtualFrame frame);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!code.image.interrupt.disabled()", "!hasPrimitive", "bytecodeLength > BYTECODE_LENGTH_THRESHOLD", "shouldTrigger(frame)"})
-        protected static final void doTrigger(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength,
-                        @Cached("create(code)") final InterruptHandlerNode interruptNode) {
+        @Specialization(guards = {"shouldTrigger(frame)"})
+        protected static final void doTrigger(final VirtualFrame frame, @Cached("create(code)") final InterruptHandlerNode interruptNode) {
             interruptNode.executeTrigger(frame);
         }
 
         @SuppressWarnings("unused")
         @Fallback
-        protected final void doNothing(final boolean hasPrimitive, final int bytecodeLength) {
+        protected final void doNothing() {
             // Do not trigger.
         }
 
