@@ -31,7 +31,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -374,7 +373,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {75, 171, 175})
+    @SqueakPrimitive(indices = 75)
     protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimIdentityHashNode(final CompiledMethodObject method) {
@@ -397,31 +396,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doChar(final char obj) {
-            return obj;
-        }
-
-        @Specialization
-        protected static final long doChar(final CharacterObject obj) {
-            return obj.getValue();
-        }
-
-        @Specialization
         protected static final long doLong(final long obj) {
             return obj;
         }
 
         @Specialization
-        protected static final long doFloatObject(final FloatObject receiver) {
-            return Double.doubleToLongBits(receiver.getValue());
-        }
-
-        @Specialization
-        protected static final long doDouble(final double receiver) {
-            return Double.doubleToLongBits(receiver);
-        }
-
-        @Specialization(guards = {"!isCharacterObject(receiver)", "!isFloatObject(receiver)"})
         protected static final long doSqueakObject(final AbstractSqueakObjectWithClassAndHash receiver) {
             return receiver.getSqueakHash();
         }
@@ -624,6 +603,30 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 171)
+    protected abstract static class PrimImmediateAsIntegerNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimImmediateAsIntegerNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doChar(final char receiver) {
+            return receiver;
+        }
+
+        @Specialization
+        protected static final long doCharacterObject(final CharacterObject receiver) {
+            return receiver.getValue();
+        }
+
+        @Specialization
+        protected static final long doDouble(final double receiver) {
+            return Double.doubleToRawLongBits(receiver);
+        }
+    }
+
     @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 173)
@@ -667,6 +670,20 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doSlotAtPut(@SuppressWarnings("unused") final ContextObject receiver, final AbstractSqueakObject target, final long index, final Object value) {
             atPut0Node.execute(target, index - 1, value);
             return value;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 175)
+    protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimBehaviorHashNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doClass(final ClassObject receiver) {
+            return receiver.getSqueakHash();
         }
     }
 
