@@ -948,15 +948,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!method.image.interruptHandlerDisabled()"})
-        protected final Object doRelinquish(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long timeMicroseconds,
+        protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long timeMicroseconds,
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final InterruptHandlerNode interruptNode) {
             /* Keep receiver on stack, interrupt handler could trigger. */
             pushNode.executeWrite(frame, receiver);
-            /* Perform interrupt check, otherwise idleProcess gets stuck. */
-            if (method.image.interrupt.shouldTrigger()) {
-                interruptNode.executeTrigger(frame);
-            }
+            /*
+             * Perform interrupt check, otherwise idleProcess gets stuck. Checking whether the
+             * interrupt handler `shouldTrigger()` decreases performance for some reason, forcing
+             * interrupt check instead.
+             */
+            interruptNode.executeTrigger(frame);
             return AbstractSendNode.NO_RESULT;
         }
 
