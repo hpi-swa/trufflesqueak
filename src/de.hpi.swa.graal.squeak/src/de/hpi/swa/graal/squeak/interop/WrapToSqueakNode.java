@@ -14,6 +14,10 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 @GenerateUncached
 public abstract class WrapToSqueakNode extends AbstractNode {
 
+    public static WrapToSqueakNode create() {
+        return WrapToSqueakNodeGen.create();
+    }
+
     public static WrapToSqueakNode getUncached() {
         return WrapToSqueakNodeGen.getUncached();
     }

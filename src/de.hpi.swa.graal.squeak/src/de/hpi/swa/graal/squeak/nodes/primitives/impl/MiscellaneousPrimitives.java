@@ -32,6 +32,7 @@ import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
+import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
@@ -148,6 +149,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(indices = 120)
     public abstract static class PrimCalloutToFFINode extends AbstractPrimitiveNode implements DuodecimaryPrimitive {
 
+        @Child private WrapToSqueakNode wrapNode = WrapToSqueakNode.create();
+
         protected PrimCalloutToFFINode(final CompiledMethodObject method) {
             super(method);
         }
@@ -252,7 +255,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
-            final String module = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE)).asStringUnsafe();
+            final Object moduleObject = externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
+            final String module;
+            if (moduleObject != NilObject.SINGLETON) {
+                module = ((NativeObject) moduleObject).asStringUnsafe();
+            } else {
+                module = ((NativeObject) ((PointersObject) receiver).at0(1)).asStringUnsafe();
+            }
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
             final List<String> argumentList = new ArrayList<>();
             String nfiCodeParams = "";
@@ -286,7 +295,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             // method.image.env.addToHostClassPath(entry);
             final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
             try {
-                return interopLib.invokeMember(ffiTest, name, arguments);
+                final Object value = interopLib.invokeMember(ffiTest, name, arguments);
+                assert value != null;
+                return wrapNode.executeWrap(value);
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
                 // e.printStackTrace();
                 // TODO: return correct error code.
