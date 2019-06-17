@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.profiles.ConditionProfile;
+
 public final class CharacterObject extends AbstractSqueakObject {
     private final int value;
 
@@ -20,6 +22,14 @@ public final class CharacterObject extends AbstractSqueakObject {
 
     public static Object valueOf(final int value) {
         if (value <= Character.MAX_VALUE) {
+            return (char) value;
+        } else {
+            return new CharacterObject(value);
+        }
+    }
+
+    public static Object valueOf(final int value, final ConditionProfile isFiniteProfile) {
+        if (isFiniteProfile.profile(value <= Character.MAX_VALUE)) {
             return (char) value;
         } else {
             return new CharacterObject(value);

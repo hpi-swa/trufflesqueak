@@ -9,6 +9,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
@@ -398,15 +399,16 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 63)
     protected abstract static class PrimStringAtNode extends AbstractPrimitiveWithSizeNode implements BinaryPrimitive {
-        @Child private NativeObjectReadNode readNode = NativeObjectReadNode.create();
 
         protected PrimStringAtNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"inBounds(index, obj)"})
-        protected final Object doNativeObject(final NativeObject obj, final long index) {
-            return CharacterObject.valueOf((int) (long) readNode.execute(obj, index - 1));
+        protected static final Object doNativeObject(final NativeObject obj, final long index,
+                        @Cached final NativeObjectReadNode readNode,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return CharacterObject.valueOf((int) (long) readNode.execute(obj, index - 1), isFiniteProfile);
         }
     }
 

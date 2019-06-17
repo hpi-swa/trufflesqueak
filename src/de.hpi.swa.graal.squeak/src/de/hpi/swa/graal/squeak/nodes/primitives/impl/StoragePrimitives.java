@@ -8,6 +8,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -21,6 +22,7 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -31,7 +33,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
@@ -566,23 +567,16 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return CharacterObject.valueOf(Math.toIntExact(receiver));
+        protected static final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target,
+                        @Shared("isFiniteProfile") @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return CharacterObject.valueOf(Math.toIntExact(receiver), isFiniteProfile);
         }
 
-        @Specialization(guards = "receiver.fitsIntoInt()")
-        protected static final Object doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return CharacterObject.valueOf(receiver.intValueExact());
-        }
-
+        /* Character class>>#value: */
         @Specialization
-        protected static final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target) {
-            return CharacterObject.valueOf(Math.toIntExact(target));
-        }
-
-        @Specialization(guards = "target.fitsIntoInt()")
-        protected static final Object doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject target) {
-            return CharacterObject.valueOf(target.intValueExact());
+        protected static final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target,
+                        @Shared("isFiniteProfile") @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return CharacterObject.valueOf(Math.toIntExact(target), isFiniteProfile);
         }
     }
 
