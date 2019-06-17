@@ -101,8 +101,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             method.image.interrupt.setNextWakeupTick(msTime);
         }
 
-        protected final void signalAtMilliseconds(final NilObject semaphore, @SuppressWarnings("unused") final long msTime) {
-            method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
+        protected final void resetTimerSemaphore() {
+            method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, NilObject.SINGLETON);
             method.image.interrupt.setTimerSemaphore(null);
             method.image.interrupt.setNextWakeupTick(0);
         }
@@ -120,7 +120,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject.isImmediateClassType()")
-        protected static final Object doSmallIntegerClass(final ClassObject classObject) {
+        protected static final Object doImmeditate(final ClassObject classObject) {
             throw new PrimitiveFailed();
         }
 
@@ -136,14 +136,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 121)
-    protected abstract static class PrimImageNameNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimImageNameNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimImageNameNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final NativeObject doName(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final NativeObject doName(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asByteString(method.image.getImagePath());
         }
     }
@@ -151,14 +151,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 122)
-    protected abstract static class PrimNoopNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimNoopNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimNoopNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final AbstractSqueakObject get(final AbstractSqueakObject receiver) {
+        protected static final Object doNothing(final Object receiver) {
             return receiver;
         }
     }
@@ -172,7 +172,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObjectWithClassAndHash semaphore) {
+        protected final Object get(final Object receiver, final AbstractSqueakObjectWithClassAndHash semaphore) {
             method.image.setSemaphore(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE, semaphore);
             return receiver;
         }
@@ -187,7 +187,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected static final AbstractSqueakObject doSet(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long numBytes) {
+        protected static final Object doSet(final Object receiver, @SuppressWarnings("unused") final long numBytes) {
             // TODO: do something with numBytes
             return receiver;
         }
@@ -315,14 +315,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final PointersObject semaphore) {
+        protected final Object get(final Object receiver, final PointersObject semaphore) {
             method.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
             method.image.interrupt.setInterruptSemaphore(semaphore);
             return receiver;
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final NilObject semaphore) {
+        protected final Object get(final Object receiver, final NilObject semaphore) {
             method.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
             method.image.interrupt.setInterruptSemaphore(null);
             return receiver;
@@ -331,14 +331,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 135)
-    protected abstract static class PrimMillisecondClockNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimMillisecondClockNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimMillisecondClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
+        protected final long doClock(@SuppressWarnings("unused") final Object receiver) {
             return System.currentTimeMillis() - method.image.startUpMillis;
         }
     }
@@ -352,28 +352,29 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "semaphore.getSqueakClass().isSemaphoreClass()")
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long msTime) {
+        protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long msTime) {
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
 
+        @SuppressWarnings("unused")
         @Specialization
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final NilObject semaphore, final long msTime) {
-            signalAtMilliseconds(semaphore, msTime);
+        protected final Object doSignal(final Object receiver, final NilObject semaphore, final long msTime) {
+            resetTimerSemaphore();
             return receiver;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 137)
-    protected abstract static class PrimSecondClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSecondClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimSecondClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
+        protected final long doClock(@SuppressWarnings("unused") final Object receiver) {
             return currentMicrosecondsLocal() / 1000000;
         }
     }
@@ -417,7 +418,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 142)
-    protected abstract static class PrimVMPathNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimVMPathNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimVMPathNode(final CompiledMethodObject method) {
             super(method);
@@ -425,7 +426,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         @TruffleBoundary
-        protected final NativeObject doVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asByteString(System.getProperty("java.home") + File.separatorChar);
         }
     }
@@ -631,14 +632,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 176)
-    protected abstract static class PrimMaxIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimMaxIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimMaxIdentityHashNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doMaxHash(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doMaxHash(@SuppressWarnings("unused") final Object receiver) {
             return AbstractSqueakObjectWithClassAndHash.IDENTITY_HASH_MASK;
         }
     }
@@ -722,28 +723,28 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 240)
-    protected abstract static class PrimUTCClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimUTCClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimUTCClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doTime(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doTime(@SuppressWarnings("unused") final Object receiver) {
             return currentMicrosecondsUTC();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 241)
-    protected abstract static class PrimLocalMicrosecondsClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimLocalMicrosecondsClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimLocalMicrosecondsClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final long doTime(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final long doTime(@SuppressWarnings("unused") final Object receiver) {
             return currentMicrosecondsLocal();
         }
     }
@@ -757,15 +758,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "semaphore.getSqueakClass().isSemaphoreClass()")
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long usecsUTC) {
+        protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long usecsUTC) {
             final long msTime = (usecsUTC - AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS) / 1000;
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
 
+        @SuppressWarnings("unused")
         @Specialization
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final NilObject semaphore, @SuppressWarnings("unused") final long usecsUTC) {
-            signalAtMilliseconds(semaphore, -1);
+        protected final Object doSignal(final Object receiver, final NilObject semaphore, final long usecsUTC) {
+            resetTimerSemaphore();
             return receiver;
         }
     }
@@ -924,7 +926,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "inBounds1(index, getExternalModuleNames().length)")
-        protected final NativeObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
+        protected final NativeObject doGet(@SuppressWarnings("unused") final Object receiver, final long index) {
             return method.image.asByteString(getExternalModuleNames()[(int) index - 1]);
         }
 
@@ -939,7 +941,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "!inBounds1(index, getExternalModuleNames().length)")
         @SuppressWarnings("unused")
-        protected static final NilObject doGetOutOfBounds(final AbstractSqueakObject receiver, final long index) {
+        protected static final NilObject doGetOutOfBounds(final Object receiver, final long index) {
             return NilObject.SINGLETON;
         }
     }

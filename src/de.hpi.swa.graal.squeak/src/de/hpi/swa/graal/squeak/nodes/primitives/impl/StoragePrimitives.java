@@ -344,7 +344,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doAt(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected final Object doAt(final Object receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return at0Node.execute(receiver, index - 1);
         }
 
@@ -366,13 +366,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doAtPut(final AbstractSqueakObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected final Object doAtPut(final Object receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
             atPut0Node.execute(receiver, index - 1, value);
             return value;
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(target))") // Context>>#object:instVarAt:put:
-        protected final Object doAtPut(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject target, final long index, final Object value) {
+        protected final Object doAtPut(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value) {
             atPut0Node.execute(target, index - 1, value);
             return value;
         }
@@ -509,14 +509,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 129)
-    protected abstract static class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimSpecialObjectsArrayNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final ArrayObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver) {
             return method.image.specialObjectsArray;
         }
     }
@@ -524,14 +524,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 138)
-    protected abstract static class PrimSomeObjectNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSomeObjectNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimSomeObjectNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final ArrayObject doSome(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final ArrayObject doSome(@SuppressWarnings("unused") final Object receiver) {
             return method.image.specialObjectsArray;
         }
     }
@@ -622,12 +622,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doSlotAt(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected final Object doSlotAt(final Object receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return at0Node.execute(receiver, index - 1);
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(target))")
-        protected final Object doSlotAt(@SuppressWarnings("unused") final ContextObject receiver, final AbstractSqueakObject target, final long index) {
+        protected final Object doSlotAt(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index) {
             return at0Node.execute(target, index - 1);
         }
     }
@@ -644,13 +644,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doSlotAtPut(final AbstractSqueakObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected final Object doSlotAtPut(final Object receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
             atPut0Node.execute(receiver, index - 1, value);
             return value;
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(target))")
-        protected final Object doSlotAtPut(@SuppressWarnings("unused") final ContextObject receiver, final AbstractSqueakObject target, final long index, final Object value) {
+        protected final Object doSlotAtPut(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value) {
             atPut0Node.execute(target, index - 1, value);
             return value;
         }
@@ -673,14 +673,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 178)
-    protected abstract static class PrimAllObjectsNode extends AbstractInstancesPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimAllObjectsNode extends AbstractInstancesPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimAllObjectsNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final ArrayObject doAll(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asArrayOfObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
         }
     }

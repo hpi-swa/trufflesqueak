@@ -13,7 +13,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -22,7 +21,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
@@ -53,7 +52,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
 
         @Specialization(guards = "inBounds1(index, method.image.getImageArguments().length)")
-        protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
+        protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
             return method.image.asByteString(method.image.getImageArguments()[(int) index - 1]);
         }
 
@@ -74,7 +73,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
 
         @Specialization(guards = "inBounds1(index, getEnvironmentKeys().length)")
-        protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
+        protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
             final String key = getEnvironmentKeys()[(int) index - 1].toString();
             assert key != null : "key should not be null";
             final String value = systemGetEnv(key);
@@ -104,7 +103,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
 
         @Specialization(guards = "aSymbol.isByteType()")
-        protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final NativeObject aSymbol) {
+        protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final NativeObject aSymbol) {
             final String key = aSymbol.asStringUnsafe();
             final String value = systemGetEnv(key);
             if (value == null) {
@@ -117,14 +116,14 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetPPid")
-    protected abstract static class PrimGetPPidNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimGetPPidNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimGetPPidNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final Object doAt(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final NilObject doAt(@SuppressWarnings("unused") final Object receiver) {
             return NilObject.SINGLETON; // TODO: implement parent pid
         }
     }
@@ -132,14 +131,14 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetStdErrHandle")
-    protected abstract static class PrimGetStdErrHandleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimGetStdErrHandleNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimGetStdErrHandleNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doGet(@SuppressWarnings("unused") final Object receiver) {
             return FilePlugin.STDIO_HANDLES.ERROR;
         }
     }
@@ -147,14 +146,14 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetStdInHandle")
-    protected abstract static class PrimGetStdInHandleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimGetStdInHandleNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimGetStdInHandleNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doGet(@SuppressWarnings("unused") final Object receiver) {
             return FilePlugin.STDIO_HANDLES.IN;
         }
     }
@@ -162,28 +161,28 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetStdOutHandle")
-    protected abstract static class PrimGetStdOutHandleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimGetStdOutHandleNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimGetStdOutHandleNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doGet(@SuppressWarnings("unused") final Object receiver) {
             return FilePlugin.STDIO_HANDLES.OUT;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSigChldNumber")
-    protected abstract static class PrimSigChldNumberNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSigChldNumberNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimSigChldNumberNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doNumber(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doNumber(@SuppressWarnings("unused") final Object receiver) {
             return 20L;
         }
     }
@@ -198,7 +197,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected static final Object doForward(final Object receiver, final long signalNumber, final long semaphoreIndex) {
+        protected static final boolean doForward(final Object receiver, final long signalNumber, final long semaphoreIndex) {
             return BooleanObject.TRUE; // TODO: implement
         }
     }

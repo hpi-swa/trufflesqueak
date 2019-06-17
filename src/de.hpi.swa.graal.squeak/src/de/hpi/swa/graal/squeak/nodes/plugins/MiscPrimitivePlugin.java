@@ -39,7 +39,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"string1Value.isByteType()", "string2Value.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"})
-        protected static final long doCompare(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string1Value, final NativeObject string2Value,
+        protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1Value, final NativeObject string2Value,
                         final NativeObject orderValue) {
             final byte[] string1 = string1Value.getByteStorage();
             final byte[] string2 = string2Value.getByteStorage();
@@ -96,7 +96,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
-        protected static final long doCompress(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
+        protected static final long doCompress(@SuppressWarnings("unused") final Object receiver, final NativeObject bm, final NativeObject ba) {
             // "Store a run-coded compression of the receiver into the byteArray ba,
             // and return the last index stored into. ba is assumed to be large enough.
             // The encoding is as follows...
@@ -184,7 +184,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "aByteArray.getByteLength() > aSoundBuffer.getIntLength()"})
-        protected static final Object doConvert(final AbstractSqueakObject receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer) {
+        protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer) {
             final byte[] bytes = aByteArray.getByteStorage();
             final int[] ints = aSoundBuffer.getIntStorage();
             for (int i = 0; i < bytes.length; i++) {
@@ -208,7 +208,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
-        protected static final Object doDecompress(final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba, final long index) {
+        protected static final Object doDecompress(final Object receiver, final NativeObject bm, final NativeObject ba, final long index) {
             /**
              * <pre>
                  Decompress the body of a byteArray encoded by compressToByteArray (qv)...
@@ -289,7 +289,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"})
-        protected static final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+        protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] inclusionMapBytes = inclusionMap.getByteStorage();
             final int stringSize = stringBytes.length;
@@ -306,19 +306,19 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() != 256"})
-        protected static final long doFindNot256(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+        protected static final long doFindNot256(final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             return 0L;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"start >= 1", "!string.isByteType() || !inclusionMap.isByteType()"})
-        protected static final long doFailBadArgument(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+        protected static final long doFailBadArgument(final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"start < 1"})
-        protected static final long doFailBadIndex(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+        protected static final long doFailBadIndex(final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
         }
     }
@@ -335,13 +335,13 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"key.isByteType()", "key.getByteLength() == 0"})
-        protected static final long doFindQuick(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
+        protected static final long doFindQuick(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable) {
             return 0L;
         }
 
         @Specialization(guards = {"key.isByteType()", "key.getByteLength() > 0", "body.isByteType()", "matchTable.isByteType()", "matchTable.getByteLength() >= 256"})
-        protected static final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
+        protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable) {
             final byte[] keyBytes = key.getByteStorage();
             final int keyBytesLength = keyBytes.length;
@@ -364,7 +364,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!key.isByteType() || (!body.isByteType() || !matchTable.isByteType())")
-        protected static final long doInvalidKey(final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
+        protected static final long doInvalidKey(final Object receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
@@ -378,7 +378,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final NativeObject string, final long start) {
+        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start) {
             final byte[] bytes = string.getByteStorage();
             for (int i = (int) (start - 1); i < bytes.length; i++) {
                 if ((bytes[i] & 0xff) == value) {
@@ -418,17 +418,17 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
 
         @Specialization(guards = {"string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long initialHash) {
+        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final long initialHash) {
             return calculateHash(initialHash, string.getByteStorage());
         }
 
         @Specialization
-        protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject largeInteger, final long initialHash) {
+        protected static final long doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject largeInteger, final long initialHash) {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
         @Specialization(guards = {"isLongMinValue(value)"})
-        protected static final long doLongMinValue(@SuppressWarnings("unused") final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long value, final long initialHash) {
+        protected static final long doLongMinValue(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long value, final long initialHash) {
             return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
         }
 
@@ -451,7 +451,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"})
-        protected static final AbstractSqueakObject doNativeObject(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
+        protected static final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] tableBytes = table.getByteStorage();
             for (int i = (int) start - 1; i < stop; i++) {
@@ -461,7 +461,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isIntType()", "table.getIntLength() >= 256"})
-        protected static final AbstractSqueakObject doNativeObjectIntTable(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop,
+        protected static final Object doNativeObjectIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
                         final NativeObject table) {
             final byte[] stringBytes = string.getByteStorage();
             final int[] tableBytes = table.getIntStorage();
@@ -473,13 +473,13 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"start >= 1", "!string.isByteType()"})
-        protected static final AbstractSqueakObject doFailBadArguments(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
+        protected static final AbstractSqueakObject doFailBadArguments(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"hasBadIndex(string, start, stop)"})
-        protected static final AbstractSqueakObject doFailBadIndex(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
+        protected static final AbstractSqueakObject doFailBadIndex(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
         }
 

@@ -49,6 +49,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -72,7 +73,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @ExplodeLoop
         @Specialization
-        protected static final boolean doTest(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long depth) {
+        protected static final boolean doTest(@SuppressWarnings("unused") final Object receiver, final long depth) {
             for (int i = 0; i < SUPPORTED_DEPTHS.length; i++) {
                 if (SUPPORTED_DEPTHS[i] == depth) {
                     return BooleanObject.TRUE;
@@ -91,14 +92,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "method.image.hasDisplay()")
-        protected final AbstractSqueakObject doSet(final AbstractSqueakObject receiver, final long depth, final long width, final long height, final boolean fullscreen) {
+        protected final Object doSet(final Object receiver, final long depth, final long width, final long height, final boolean fullscreen) {
             method.image.getDisplay().adjustDisplay(depth, width, height, fullscreen);
             return receiver;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!method.image.hasDisplay()")
-        protected static final AbstractSqueakObject doSetHeadless(final AbstractSqueakObject receiver, final long depth, final long width, final long height, final boolean fullscreen) {
+        protected static final Object doSetHeadless(final Object receiver, final long depth, final long width, final long height, final boolean fullscreen) {
             return receiver;
         }
     }
@@ -112,13 +113,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "method.image.hasDisplay()")
-        protected final AbstractSqueakObject doSet(final AbstractSqueakObject receiver, final long semaIndex) {
+        protected final Object doSet(final Object receiver, final long semaIndex) {
             method.image.getDisplay().setInputSemaphoreIndex((int) semaIndex);
             return receiver;
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
-        protected static final AbstractSqueakObject doSetHeadless(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long semaIndex) {
+        protected static final Object doSetHeadless(final Object receiver, @SuppressWarnings("unused") final long semaIndex) {
             return receiver;
         }
     }
@@ -173,7 +174,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "segmentWordArray.isIntType()")
-        protected static final AbstractSqueakObject doStore(final AbstractSqueakObject receiver, final ArrayObject rootsArray, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
+        protected static final Object doStore(final Object receiver, final ArrayObject rootsArray, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
             /**
              * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
              * some tests (e.g. BitmapStreamTests) run quickly.
@@ -192,7 +193,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "segmentWordArray.isIntType()")
-        protected final ArrayObject doLoad(final AbstractSqueakObject receiver, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
+        protected final ArrayObject doLoad(final Object receiver, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
             /**
              * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
              * some tests (e.g. BitmapStreamTests) run quickly.
@@ -271,7 +272,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!method.image.hasDisplay()"})
-        protected static final boolean doDisplayHeadless(@SuppressWarnings("unused") final PointersObject receiver) {
+        protected static final boolean doDisplayHeadless(@SuppressWarnings("unused") final Object receiver) {
             return BooleanObject.FALSE;
         }
     }
@@ -351,8 +352,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimStringReplaceNode(final CompiledMethodObject method) {
             super(method);
         }
-
-        public abstract Object executeReplace(VirtualFrame frame);
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)"})
@@ -627,17 +626,17 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"hasVisibleDisplay(receiver)"})
-        protected final PointersObject doSize(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final PointersObject doSize(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asPoint(method.image.getDisplay().getWindowSize());
         }
 
         @Specialization(guards = "!hasVisibleDisplay(receiver)")
-        protected final PointersObject doSizeHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final PointersObject doSizeHeadless(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asPoint(method.image.flags.getLastWindowSize());
         }
 
         // guard helper to work around code generation issue.
-        protected final boolean hasVisibleDisplay(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final boolean hasVisibleDisplay(@SuppressWarnings("unused") final Object receiver) {
             return method.image.hasDisplay() && method.image.getDisplay().isVisible();
         }
     }
@@ -655,14 +654,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "method.image.hasDisplay()")
-        protected final AbstractSqueakObject doDefer(final AbstractSqueakObject receiver, final boolean flag,
+        protected final Object doDefer(final Object receiver, final boolean flag,
                         @Cached("createIdentityProfile()") final ValueProfile displayProfile) {
             displayProfile.profile(method.image.getDisplay()).setDeferUpdates(flag);
             return receiver;
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
-        protected static final AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean flag) {
+        protected static final Object doNothing(final Object receiver, @SuppressWarnings("unused") final boolean flag) {
             return receiver;
         }
     }
@@ -691,14 +690,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 133)
-    protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimSetInterruptKeyNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final AbstractSqueakObject set(final AbstractSqueakObject receiver) {
+        protected static final Object set(final Object receiver) {
             // TODO: interrupt key is obsolete in image, but maybe still needed in the vm?
             return receiver;
         }
@@ -706,20 +705,20 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 140)
-    protected abstract static class PrimBeepNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimBeepNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimBeepNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = "method.image.hasDisplay()")
-        protected final AbstractSqueakObject doBeep(final AbstractSqueakObject receiver) {
+        protected final Object doBeep(final Object receiver) {
             method.image.getDisplay().beep();
             return receiver;
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
-        protected final AbstractSqueakObject doNothing(final AbstractSqueakObject receiver) {
+        protected final Object doNothing(final Object receiver) {
             method.image.printToStdOut((char) 7);
             return receiver;
         }

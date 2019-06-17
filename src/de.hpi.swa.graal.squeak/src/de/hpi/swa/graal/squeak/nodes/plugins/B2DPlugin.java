@@ -241,7 +241,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doProfile(final PointersObject receiver, final boolean aBoolean) {
+        protected static final Object doProfile(final Object receiver, final boolean aBoolean) {
             return B2D.primitiveDoProfileStats(receiver, aBoolean);
         }
     }
@@ -391,7 +391,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"buffer.isIntType()", "hasMinimalSize(buffer)"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doInit(final PointersObject receiver, final NativeObject buffer) {
+        protected static final Object doInit(final Object receiver, final NativeObject buffer) {
             return B2D.primitiveInitializeBuffer(receiver, buffer);
         }
 

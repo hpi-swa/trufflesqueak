@@ -8,24 +8,23 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveUtcWithOffset")
-    protected abstract static class PrimUtcWithOffsetNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimUtcWithOffsetNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimUtcWithOffsetNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final ArrayObject doUTC(@SuppressWarnings("unused") final ClassObject receiver) {
+        protected final ArrayObject doUTC(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asArrayOfLongs(System.currentTimeMillis() * 1000L, java.time.ZonedDateTime.now().getOffset().getTotalSeconds());
         }
     }

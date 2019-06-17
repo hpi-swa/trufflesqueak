@@ -325,14 +325,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 89)
-    protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         public PrimFlushCacheNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final AbstractSqueakObject doFlush(final AbstractSqueakObject receiver) {
+        protected static final Object doFlush(final Object receiver) {
             // TODO: actually flush caches once there are some
             return receiver;
         }
@@ -369,14 +369,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
          */
 
         @Specialization(guards = "inheritsFromNode.execute(target, superClass)")
-        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject receiver, final Object target, final NativeObject selector,
+        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target, final NativeObject selector,
                         final ArrayObject arguments, final ClassObject superClass) {
             return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, target));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!inheritsFromNode.execute(target, superClass)")
-        protected static final Object doFail(final ContextObject receiver, final Object target, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass) {
+        protected static final Object doFail(final Object receiver, final Object target, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
     }
@@ -415,27 +415,27 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doBoolean(@SuppressWarnings("unused") final ContextObject context, final boolean a, final boolean b) {
+        protected static final boolean doBoolean(@SuppressWarnings("unused") final Object context, final boolean a, final boolean b) {
             return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected static final boolean doChar(@SuppressWarnings("unused") final ContextObject context, final char a, final char b) {
+        protected static final boolean doChar(@SuppressWarnings("unused") final Object context, final char a, final char b) {
             return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected static final boolean doLong(@SuppressWarnings("unused") final ContextObject context, final long a, final long b) {
+        protected static final boolean doLong(@SuppressWarnings("unused") final Object context, final long a, final long b) {
             return BooleanObject.wrap(a == b);
         }
 
         @Specialization
-        protected static final boolean doDouble(@SuppressWarnings("unused") final ContextObject context, final double a, final double b) {
+        protected static final boolean doDouble(@SuppressWarnings("unused") final Object context, final double a, final double b) {
             return BooleanObject.wrap(Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b));
         }
 
         @Specialization(guards = "!isNotProvided(b)")
-        public static final boolean doObject(@SuppressWarnings("unused") final ContextObject context, final Object a, final Object b) {
+        public static final boolean doObject(@SuppressWarnings("unused") final Object context, final Object a, final Object b) {
             return BooleanObject.wrap(a == b);
         }
     }
@@ -466,14 +466,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 112)
-    protected abstract static class PrimBytesLeftNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimBytesLeftNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimBytesLeftNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doBytesLeft(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doBytesLeft(@SuppressWarnings("unused") final Object receiver) {
             return MiscUtils.runtimeFreeMemory();
         }
     }
@@ -499,13 +499,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 114)
-    protected abstract static class PrimExitToDebuggerNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimExitToDebuggerNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimExitToDebuggerNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final Object debugger(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final Object debugger(@SuppressWarnings("unused") final Object receiver) {
             throw SqueakException.create("EXIT TO DEBUGGER");
         }
     }
@@ -615,14 +615,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 119)
-    protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         public PrimFlushCacheSelectiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final AbstractSqueakObject doFlush(final AbstractSqueakObject receiver) {
+        protected static final Object doFlush(final Object receiver) {
             // TODO: actually flush caches once there are some
             return receiver;
         }
@@ -971,13 +971,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 231)
-    protected abstract static class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimForceDisplayUpdateNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final AbstractSqueakObject doForceUpdate(final AbstractSqueakObject receiver) {
+        protected static final Object doForceUpdate(final Object receiver) {
             return receiver; // Do nothing.
         }
     }
@@ -990,13 +990,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "method.image.hasDisplay()")
-        protected final AbstractSqueakObject doFullScreen(final AbstractSqueakObject receiver, final boolean enable) {
+        protected final Object doFullScreen(final Object receiver, final boolean enable) {
             method.image.getDisplay().setFullscreen(enable);
             return receiver;
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
-        protected static final AbstractSqueakObject doFullScreenHeadless(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
+        protected static final Object doFullScreenHeadless(final Object receiver, @SuppressWarnings("unused") final boolean enable) {
             return receiver;
         }
     }

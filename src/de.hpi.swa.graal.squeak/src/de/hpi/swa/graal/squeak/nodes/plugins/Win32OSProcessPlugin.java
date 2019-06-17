@@ -10,10 +10,9 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
@@ -33,14 +32,14 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetEnvironmentStrings")
-    protected abstract static class PrimGetEnvironmentStringNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimGetEnvironmentStringNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimGetEnvironmentStringNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final Object doGet(@SuppressWarnings("unused") final Object receiver) {
             final Map<String, String> envMap = System.getenv();
             final List<String> strings = new ArrayList<>();
             for (final Map.Entry<String, String> entry : envMap.entrySet()) {

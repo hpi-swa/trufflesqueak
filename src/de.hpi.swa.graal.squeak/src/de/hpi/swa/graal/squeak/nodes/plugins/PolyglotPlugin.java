@@ -37,11 +37,9 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.ConvertToSqueakNode;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
-import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -283,7 +281,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
-        public final Object exportSymbol(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject name, final Object value) {
+        public final Object exportSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name, final Object value) {
             method.image.env.exportSymbol(name.asStringUnsafe(), value);
             return value;
         }
@@ -365,7 +363,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "languageID.isByteType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final ArrayObject doGet(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject languageID,
+        protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageID,
                         @Cached final WrapToSqueakNode wrapNode) {
             final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
             return wrapNode.executeList(languages.stream().//
@@ -399,14 +397,14 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetPolyglotBindings")
-    protected abstract static class PrimGetPolyglotBindingsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimGetPolyglotBindingsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimGetPolyglotBindingsNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final Object doGet(@SuppressWarnings("unused") final Object receiver) {
             return method.image.env.getPolyglotBindings();
         }
     }
@@ -420,7 +418,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
-        public final Object importSymbol(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject name) {
+        public final Object importSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name) {
             final Object object = method.image.env.importSymbol(name.asStringUnsafe());
             if (object == null) {
                 return NilObject.SINGLETON;
@@ -444,14 +442,14 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveListAvailableLanguageIDs")
-    protected abstract static class PrimListAvailableLanguageIDsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimListAvailableLanguageIDsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimListAvailableLanguageIDsNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final ArrayObject doList(@SuppressWarnings("unused") final ClassObject receiver,
+        protected final ArrayObject doList(@SuppressWarnings("unused") final Object receiver,
                         @Cached final WrapToSqueakNode wrapNode) {
             final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
             final Object[] result = languages.stream().filter(l -> !l.isInternal()).map(l -> l.getId()).toArray();

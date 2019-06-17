@@ -5021,7 +5021,7 @@ public final class B2D {
     /* Turn on/off profiling. Return the old value of the flag. */
 
     /* BalloonEngineBase>>#primitiveDoProfileStats */
-    public static boolean primitiveDoProfileStats(@SuppressWarnings("unused") final PointersObject receiver, final boolean newValue) {
+    public static boolean primitiveDoProfileStats(@SuppressWarnings("unused") final Object receiver, final boolean newValue) {
         final boolean oldValue = doProfileStats;
         doProfileStats = newValue;
         return BooleanObject.wrap(oldValue);
@@ -5157,7 +5157,7 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveInitializeBuffer */
-    public static NativeObject primitiveInitializeBuffer(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject wbOop) {
+    public static NativeObject primitiveInitializeBuffer(@SuppressWarnings("unused") final Object receiver, final NativeObject wbOop) {
         final int size = wbOop.getIntLength();
 
         workBufferPut(wbOop);
