@@ -11,6 +11,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
@@ -47,6 +48,11 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     @Specialization
     protected static final void doPointers(final PointersObject obj, final long index, final Object value) {
         obj.atput0(index, value);
+    }
+
+    @Specialization
+    protected static final void doLargeInteger(final LargeIntegerObject receiver, final long index, final long value) {
+        receiver.setNativeAt0(index, value);
     }
 
     @Specialization
