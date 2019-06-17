@@ -48,7 +48,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doHas(@SuppressWarnings("unused") final Object receiver) {
-            return BooleanObject.FALSE;
+            return BooleanObject.TRUE;
         }
     }
 
