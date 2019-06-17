@@ -183,10 +183,15 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         final int blockSize = j << 8 | k & 0xff;
         block = CompiledBlockObject.create(method, method, (int) numArgs, copied.length, offset, blockSize);
         callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
+        /* Ensure fields dependent on block are initialized. */
+        getStartPC();
+        getNumArgs();
     }
 
     public CompiledBlockObject getCompiledBlock() {
         if (block == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            /* `outerContext.getMethod()` should not be part of compilation. */
             initializeCompiledBlock(outerContext.getMethod());
         }
         return block;
