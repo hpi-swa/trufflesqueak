@@ -149,6 +149,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 122)
     protected abstract static class PrimNoopNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
@@ -628,6 +629,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 176)
     protected abstract static class PrimMaxIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 

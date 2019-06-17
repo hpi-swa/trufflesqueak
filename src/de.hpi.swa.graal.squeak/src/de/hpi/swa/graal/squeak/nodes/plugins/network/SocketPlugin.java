@@ -11,6 +11,8 @@ import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -50,6 +52,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveInitializeNetwork")
     protected abstract static class PrimInitializeNetworkNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimInitializeNetworkNode(final CompiledMethodObject method) {

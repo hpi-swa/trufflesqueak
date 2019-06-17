@@ -179,6 +179,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 68)
     protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimCompiledMethodObjectAtNode(final CompiledMethodObject method) {
@@ -332,6 +333,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 73)
     protected abstract static class PrimInstVarAtNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
@@ -353,6 +355,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 74)
     protected abstract static class PrimInstVarAtPutNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
@@ -375,8 +378,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 75)
     protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
@@ -504,6 +507,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 129)
     protected abstract static class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
@@ -518,6 +522,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 138)
     protected abstract static class PrimSomeObjectNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
@@ -581,6 +586,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 171)
     protected abstract static class PrimImmediateAsIntegerNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
@@ -604,8 +610,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 173)
     protected abstract static class PrimSlotAtNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
@@ -626,8 +632,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 174)
     protected abstract static class PrimSlotAtPutNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
@@ -651,6 +657,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 175)
     protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 

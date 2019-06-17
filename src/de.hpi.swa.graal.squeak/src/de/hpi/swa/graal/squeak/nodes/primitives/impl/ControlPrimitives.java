@@ -969,6 +969,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 231)
     protected abstract static class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimForceDisplayUpdateNode(final CompiledMethodObject method) {
@@ -1001,6 +1002,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 256)
     protected abstract static class PrimQuickReturnSelfNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimQuickReturnSelfNode(final CompiledMethodObject method) {
@@ -1014,6 +1016,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 257)
     protected abstract static class PrimQuickReturnTrueNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimQuickReturnTrueNode(final CompiledMethodObject method) {
@@ -1027,6 +1030,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 258)
     protected abstract static class PrimQuickReturnFalseNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimQuickReturnFalseNode(final CompiledMethodObject method) {
@@ -1040,6 +1044,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 259)
     protected abstract static class PrimQuickReturnNilNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimQuickReturnNilNode(final CompiledMethodObject method) {
@@ -1053,6 +1058,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 260)
     protected abstract static class PrimQuickReturnMinusOneNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimQuickReturnMinusOneNode(final CompiledMethodObject method) {
@@ -1066,6 +1072,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 261)
     protected abstract static class PrimQuickReturnZeroNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimQuickReturnZeroNode(final CompiledMethodObject method) {
@@ -1079,6 +1086,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 262)
     protected abstract static class PrimQuickReturnOneNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimQuickReturnOneNode(final CompiledMethodObject method) {
@@ -1092,6 +1100,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 263)
     protected abstract static class PrimQuickReturnTwoNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimQuickReturnTwoNode(final CompiledMethodObject method) {
@@ -1104,8 +1113,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     public abstract static class PrimQuickReturnReceiverVariableNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         private final long variableIndex;

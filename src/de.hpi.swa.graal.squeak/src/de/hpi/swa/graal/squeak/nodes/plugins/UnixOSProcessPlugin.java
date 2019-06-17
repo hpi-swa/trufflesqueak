@@ -8,6 +8,8 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -128,6 +130,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetStdErrHandle")
     protected abstract static class PrimGetStdErrHandleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
@@ -142,6 +145,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetStdInHandle")
     protected abstract static class PrimGetStdInHandleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
@@ -156,6 +160,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveGetStdOutHandle")
     protected abstract static class PrimGetStdOutHandleNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
