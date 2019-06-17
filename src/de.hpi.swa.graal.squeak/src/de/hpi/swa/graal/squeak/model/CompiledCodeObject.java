@@ -41,11 +41,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
-    @CompilationFinal private int numArgs;
+    @CompilationFinal protected int numArgs;
     @CompilationFinal protected int numLiterals;
-    @CompilationFinal private boolean hasPrimitive;
+    @CompilationFinal protected boolean hasPrimitive;
     @CompilationFinal protected boolean needsLargeFrame = false;
-    @CompilationFinal private int numTemps;
+    @CompilationFinal protected int numTemps;
 
     private final int numCopiedValues; // for block closures
 
@@ -225,7 +225,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
         ensureCorrectNumberOfStackSlots();
     }
 
-    private void ensureCorrectNumberOfStackSlots() {
+    protected void ensureCorrectNumberOfStackSlots() {
         final int requiredNumberOfStackSlots = getNumStackSlots();
         if (stackSlots == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -7,18 +7,24 @@ import com.oracle.truffle.api.CompilerAsserts;
 public final class CompiledBlockObject extends CompiledCodeObject {
     private final int offset;
 
-    private CompiledBlockObject(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset, final int blockSize) {
+    private CompiledBlockObject(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArguments, final int numCopied, final int bytecodeOffset, final int blockSize) {
         super(code.image, 0, numCopied);
         final int additionalOffset = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getOffset() : 0;
         offset = additionalOffset + bytecodeOffset;
         final Object[] outerLiterals = outerMethod.getLiterals();
         final int outerLiteralsLength = outerLiterals.length;
         literals = new Object[outerLiteralsLength + 1];
-        literals[0] = makeHeader(numArgs, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
+        literals[0] = makeHeader(numArguments, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
         System.arraycopy(outerLiterals, 1, literals, 1, outerLiteralsLength - 1);
         literals[outerLiteralsLength] = outerMethod; // Last literal is back pointer to method.
         bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, bytecodeOffset + blockSize);
-        decodeHeader();
+        /* Instead of calling decodeHeader(), set fields directly. */
+        numLiterals = code.numLiterals;
+        hasPrimitive = false;
+        needsLargeFrame = outerMethod.needsLargeFrame;
+        numTemps = numCopied;
+        numArgs = numArguments;
+        ensureCorrectNumberOfStackSlots();
     }
 
     private CompiledBlockObject(final CompiledBlockObject original) {
