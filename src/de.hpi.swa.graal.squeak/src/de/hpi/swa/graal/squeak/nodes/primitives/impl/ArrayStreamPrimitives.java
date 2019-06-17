@@ -117,7 +117,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        /* Use @Shared as soon as https://github.com/oracle/graal/issues/1207 is fixed. */
+        /* TODO: Use @Shared as soon as https://github.com/oracle/graal/issues/1207 is fixed. */
         protected final NativeAcceptsValueNode getNativeAcceptsNode() {
             if (nativeAcceptsNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
