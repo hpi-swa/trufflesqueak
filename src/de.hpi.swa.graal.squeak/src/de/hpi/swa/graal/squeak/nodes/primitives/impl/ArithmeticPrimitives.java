@@ -115,8 +115,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {2, 22, 42, 542})
-    public abstract static class PrimSubstractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        public PrimSubstractNode(final CompiledMethodObject method) {
+    public abstract static class PrimSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        public PrimSubtractNode(final CompiledMethodObject method) {
             super(method);
         }
 
