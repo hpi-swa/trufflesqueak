@@ -73,7 +73,7 @@ public class FFIConstants {
         UNSIGNED_LONG_LONG("ulonglong", "UINT64", 8), // UINT64
         SIGNED_LONG_LONG("longlong", "SINT64", 9), // SINT64
         // special integer types
-        UNSIGNED_CHAR("string", "STRING", 10), // STRING
+        UNSIGNED_CHAR("string", "UINT8", 10), // STRING //UINT8
         SIGNED_CHAR("schar", "POINTER", 11), // POINTER
         // float types
         SINGLE_FLOAT("float", "FLOAT", 12), // FLOAT
