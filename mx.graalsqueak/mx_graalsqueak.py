@@ -139,8 +139,6 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         dest='cpusampler', action='store_true', default=False)
     parser.add_argument('--cputracer', help='enable CPU tracing',
                         dest='cputracer', action='store_true', default=False)
-    parser.add_argument('-D', '--debug', help='enable Java debugger',
-                        dest='debug', action='store_true', default=False)
     parser.add_argument('-d', '--disable-interrupts',
                         help='disable interrupt handler',
                         dest='disable_interrupts',
@@ -243,12 +241,6 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     # default: assertion checking is enabled
     if parsed_args.assertions:
         vm_args += ['-ea', '-esa']
-
-    if parsed_args.debug:
-        vm_args += [
-            '-d64', '-Xdebug',
-            '-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=y'
-        ]
 
     if parsed_args.gc:
         vm_args += ['-XX:+PrintGC', '-XX:+PrintGCDetails']
