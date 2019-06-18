@@ -79,6 +79,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         mouse = new SqueakMouse(this);
         keyboard = new SqueakKeyboard(this);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.setFocusTraversalKeysEnabled(false); // Ensure `Tab` key is captured.
         frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
         frame.getContentPane().add(canvas);
         frame.setResizable(true);
