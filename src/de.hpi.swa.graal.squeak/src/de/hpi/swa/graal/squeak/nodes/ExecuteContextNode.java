@@ -82,8 +82,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Specialization(guards = "context == null")
     protected final Object doVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context,
                     @Cached("create(code)") final MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode) {
+        final boolean shouldCheckStackDepth = CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot();
         try {
-            if (stackDepth++ > STACK_DEPTH_LIMIT) {
+            if (shouldCheckStackDepth && stackDepth++ > STACK_DEPTH_LIMIT) {
                 throw ProcessSwitch.createWithBoundary(getGetOrCreateContextNode().executeGet(frame));
             }
             if (triggerInterruptHandlerNode != null) {
@@ -102,7 +103,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw ps;
         } finally {
-            stackDepth--;
+            if (shouldCheckStackDepth) {
+                stackDepth--;
+            }
             materializeContextOnMethodExitNode.execute(frame);
         }
     }
