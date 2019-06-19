@@ -6,10 +6,12 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -216,6 +218,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return ArrayConversionUtils.bytesToString(getByteStorage());
     }
 
+    public String asStringFromWideString() {
+        return ArrayConversionUtils.bytesToString(ArrayConversionUtils.bytesFromInts(getIntStorage()));
+    }
+
     @TruffleBoundary
     @Override
     public String toString() {
@@ -232,7 +238,11 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         } else if (isShortType()) {
             return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
-            return "int[" + getIntLength() + "]";
+            if (getSqueakClass().isWideStringClass()) {
+                return asStringFromWideString();
+            } else {
+                return "int[" + getIntLength() + "]";
+            }
         } else if (isLongType()) {
             return "long[" + getLongLength() + "]";
         } else {
@@ -259,13 +269,16 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @ExportMessage
     public boolean isString() {
         final ClassObject squeakClass = getSqueakClass();
-        return squeakClass.isStringClass() || squeakClass.isSymbolClass();
+        return squeakClass.isStringClass() || squeakClass.isSymbolClass() || squeakClass.isWideStringClass();
     }
 
     @ExportMessage
-    public String asString() throws UnsupportedMessageException {
-        if (isString()) {
+    public String asString(@Cached("createBinaryProfile()") final ConditionProfile byteStringOrSymbolProfile) throws UnsupportedMessageException {
+        final ClassObject squeakClass = getSqueakClass();
+        if (byteStringOrSymbolProfile.profile(squeakClass.isStringClass() || squeakClass.isSymbolClass())) {
             return asStringUnsafe();
+        } else if (squeakClass.isWideStringClass()) {
+            return asStringFromWideString();
         } else {
             throw UnsupportedMessageException.create();
         }

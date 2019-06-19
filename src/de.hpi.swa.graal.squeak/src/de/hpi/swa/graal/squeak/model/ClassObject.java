@@ -209,6 +209,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.aboutToReturnSelector.getSqueakClass();
     }
 
+    /** WideString. */
+    public boolean isWideStringClass() {
+        return getSuperclassOrNull() == image.stringClass.getSuperclassOrNull();
+    }
+
     /**
      * {@link ClassObject}s are filled in at an earlier stage in
      * {@link SqueakImageReader#fillInClassObjects}.
