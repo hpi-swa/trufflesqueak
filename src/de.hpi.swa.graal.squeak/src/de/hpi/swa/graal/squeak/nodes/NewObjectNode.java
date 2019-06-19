@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -28,16 +28,16 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
         return NewObjectNodeGen.create(image);
     }
 
-    public final AbstractSqueakObjectWithClassAndHash execute(final ClassObject classObject) {
+    public final AbstractSqueakObjectWithHash execute(final ClassObject classObject) {
         return execute(classObject, 0);
     }
 
-    public final AbstractSqueakObjectWithClassAndHash execute(final ClassObject classObject, final int extraSize) {
+    public final AbstractSqueakObjectWithHash execute(final ClassObject classObject, final int extraSize) {
         image.reportNewAllocationRequest();
         return image.reportNewAllocationResult(executeAllocation(classObject, extraSize));
     }
 
-    protected abstract AbstractSqueakObjectWithClassAndHash executeAllocation(ClassObject classObject, int extraSize);
+    protected abstract AbstractSqueakObjectWithHash executeAllocation(ClassObject classObject, int extraSize);
 
     @Specialization(guards = "classObject.isZeroSized()")
     protected final EmptyObject doEmpty(final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {

@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 
 @ExportLibrary(InteropLibrary.class)
-public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
+public final class FloatObject extends AbstractSqueakObjectWithHash {
     public static final int PRECISION = 53;
     public static final int EMIN = -1022;
     public static final int EMAX = 1023;
@@ -19,17 +19,22 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
     private double doubleValue;
 
     public FloatObject(final SqueakImageContext image) {
-        super(image, image.floatClass);
+        super(image);
     }
 
     private FloatObject(final FloatObject original) {
-        super(original.image, original.getSqueakClass());
+        super(original.image);
         doubleValue = original.doubleValue;
     }
 
     private FloatObject(final SqueakImageContext image, final double doubleValue) {
         this(image);
         this.doubleValue = doubleValue;
+    }
+
+    @Override
+    public ClassObject getSqueakClass() {
+        return image.floatClass;
     }
 
     @Override

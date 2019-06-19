@@ -117,7 +117,6 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
         for (int i = 0; i < from.length; i++) {
             if (from[i] == oldClass) {
                 final ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject
-                obj.setSqueakClass(newClass);
                 updateHashNode.executeUpdate(oldClass, newClass, copyHash);
             }
         }

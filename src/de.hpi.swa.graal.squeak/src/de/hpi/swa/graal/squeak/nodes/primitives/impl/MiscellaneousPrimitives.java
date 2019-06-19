@@ -28,6 +28,7 @@ import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -640,7 +641,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final long doMaxHash(@SuppressWarnings("unused") final Object receiver) {
-            return AbstractSqueakObjectWithClassAndHash.IDENTITY_HASH_MASK;
+            return AbstractSqueakObjectWithHash.IDENTITY_HASH_MASK;
         }
     }
 

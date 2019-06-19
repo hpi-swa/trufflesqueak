@@ -24,25 +24,25 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
-public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
+public final class ContextObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private MaterializedFrame truffleFrame;
     @CompilationFinal private int size;
     private boolean hasModifiedSender = false;
     private boolean escaped = false;
 
     private ContextObject(final SqueakImageContext image, final long hash) {
-        super(image, hash, image.methodContextClass);
+        super(image, hash);
         truffleFrame = null;
     }
 
     private ContextObject(final SqueakImageContext image, final int size) {
-        super(image, image.methodContextClass);
+        super(image);
         truffleFrame = null;
         this.size = size;
     }
 
     private ContextObject(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        super(blockOrMethod.image, blockOrMethod.image.methodContextClass);
+        super(blockOrMethod.image);
         assert FrameAccess.getSender(frame) != null;
         assert FrameAccess.getContext(frame, blockOrMethod) == null;
         truffleFrame = frame.materialize();
@@ -51,7 +51,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     private ContextObject(final ContextObject original) {
-        super(original.image, original.image.methodContextClass);
+        super(original.image);
         final CompiledCodeObject code = FrameAccess.getBlockOrMethod(original.truffleFrame);
         hasModifiedSender = original.hasModifiedSender();
         escaped = original.escaped;
@@ -91,6 +91,11 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     public static ContextObject create(final Frame frame, final CompiledCodeObject blockOrMethod) {
         return new ContextObject(frame, blockOrMethod);
+    }
+
+    @Override
+    public ClassObject getSqueakClass() {
+        return image.methodContextClass;
     }
 
     /**
@@ -487,7 +492,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void become(final ContextObject other) {
-        becomeOtherClass(other);
         final MaterializedFrame otherTruffleFrame = other.truffleFrame;
         final int otherSize = other.size;
         final boolean otherHasModifiedSender = other.hasModifiedSender;

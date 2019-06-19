@@ -27,6 +27,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -220,7 +221,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"classFormatStable"})
-        protected AbstractSqueakObjectWithClassAndHash newDirect(final ClassObject receiver,
+        protected AbstractSqueakObjectWithHash newDirect(final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached final BranchProfile outOfMemProfile) {
@@ -233,7 +234,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newDirect")
-        protected final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
+        protected final AbstractSqueakObjectWithHash newIndirect(final ClassObject receiver,
                         @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver);
@@ -257,7 +258,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(receiver, size)"}, assumptions = {"classFormatStable"})
-        protected final AbstractSqueakObjectWithClassAndHash newWithArgDirect(final ClassObject receiver, final long size,
+        protected final AbstractSqueakObjectWithHash newWithArgDirect(final ClassObject receiver, final long size,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached final BranchProfile outOfMemProfile) {
@@ -270,7 +271,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
-        protected final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
+        protected final AbstractSqueakObjectWithHash newWithArg(final ClassObject receiver, final long size,
                         @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver, (int) size);

@@ -25,7 +25,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ExportLibrary(InteropLibrary.class)
-public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHash {
+public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private Object receiver;
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
@@ -36,13 +36,13 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
 
-    public BlockClosureObject(final SqueakImageContext image, final int hash) {
-        super(image, hash, image.blockClosureClass);
-        copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
+    public BlockClosureObject(final SqueakImageContext image, final long hash) {
+        super(image, hash);
+        copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
     public BlockClosureObject(final CompiledBlockObject compiledBlock, final RootCallTarget callTarget, final Object receiver, final Object[] copied, final ContextObject outerContext) {
-        super(compiledBlock.image, compiledBlock.image.blockClosureClass);
+        super(compiledBlock.image);
         block = compiledBlock;
         this.callTarget = callTarget;
         this.outerContext = outerContext;
@@ -53,7 +53,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
-        super(original.image, original.image.blockClosureClass);
+        super(original.image);
         block = original.block;
         callTarget = original.callTarget;
         outerContext = original.outerContext;
@@ -61,6 +61,11 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         copied = original.copied;
         pc = original.pc;
         numArgs = original.numArgs;
+    }
+
+    @Override
+    public ClassObject getSqueakClass() {
+        return image.blockClosureClass;
     }
 
     @Override
@@ -132,7 +137,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public void become(final BlockClosureObject other) {
-        becomeOtherClass(other);
         final Object[] otherCopied = other.copied;
         other.setCopied(copied);
         setCopied(otherCopied);

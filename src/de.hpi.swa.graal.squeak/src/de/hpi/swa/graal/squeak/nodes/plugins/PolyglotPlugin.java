@@ -37,7 +37,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.ConvertToSqueakNode;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -629,7 +629,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doIdentityHash(final Object receiver) {
-            return receiver.hashCode() & AbstractSqueakObjectWithClassAndHash.IDENTITY_HASH_MASK;
+            return receiver.hashCode() & AbstractSqueakObjectWithHash.IDENTITY_HASH_MASK;
         }
     }
 

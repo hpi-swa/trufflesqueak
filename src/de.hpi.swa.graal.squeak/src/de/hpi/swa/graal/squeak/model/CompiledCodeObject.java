@@ -21,7 +21,7 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
-public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
+public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal(dimensions = 1) private static final int[] HEADER_SPLIT_PATTERN = new int[]{15, 1, 1, 1, 6, 4, 2, 1};
 
     public enum SLOT_IDENTIFIER {
@@ -58,7 +58,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
 
     protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues) {
-        super(image, hash, image.compiledMethodClass);
+        super(image, hash);
         if (ALWAYS_NON_VIRTUALIZED) {
             invalidateCanBeVirtualizedAssumption();
         }
@@ -72,7 +72,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
     }
 
     protected CompiledCodeObject(final CompiledCodeObject original) {
-        super(original.image, original.image.compiledMethodClass);
+        super(original.image);
         numCopiedValues = original.numCopiedValues;
         frameDescriptor = original.frameDescriptor;
         thisMarkerSlot = original.thisMarkerSlot;
@@ -186,6 +186,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
     }
 
     @Override
+    public final ClassObject getSqueakClass() {
+        return image.compiledMethodClass;
+    }
+
+    @Override
     public final void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final long[] words = chunk.getWords();
@@ -248,7 +253,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
     }
 
     public final void become(final CompiledCodeObject other) {
-        becomeOtherClass(other);
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;

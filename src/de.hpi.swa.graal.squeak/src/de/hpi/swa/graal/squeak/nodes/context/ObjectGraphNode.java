@@ -16,7 +16,7 @@ import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -47,10 +47,10 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     @TruffleBoundary
     public Set<AbstractSqueakObject> executeAllInstances() {
         final IdentityHashMap<AbstractSqueakObject, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        final ArrayDeque<AbstractSqueakObjectWithHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
-        AbstractSqueakObjectWithClassAndHash currentObject;
+        AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
             if (seen.put(currentObject, SEEN_MARKER) == null) {
                 tracePointers(pending, currentObject);
@@ -63,10 +63,10 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     @TruffleBoundary
     public void executePointersBecomeOneWay(final SqueakObjectPointersBecomeOneWayNode pointersBecomeNode, final Object[] fromPointers,
                     final Object[] toPointers, final boolean copyHash) {
-        final IdentityHashMap<AbstractSqueakObjectWithClassAndHash, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        final IdentityHashMap<AbstractSqueakObjectWithHash, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
+        final ArrayDeque<AbstractSqueakObjectWithHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
-        AbstractSqueakObjectWithClassAndHash currentObject;
+        AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
             if (seen.put(currentObject, SEEN_MARKER) == null) {
                 pointersBecomeNode.execute(currentObject, fromPointers, toPointers, copyHash);
@@ -81,10 +81,10 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         assert classObj != image.nilClass;
         final ArrayDeque<AbstractSqueakObject> result = new ArrayDeque<>();
         final IdentityHashMap<AbstractSqueakObject, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        final ArrayDeque<AbstractSqueakObjectWithHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
-        AbstractSqueakObjectWithClassAndHash currentObject;
+        AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
             if (seen.put(currentObject, SEEN_MARKER) == null) {
                 if (classObj == currentObject.getSqueakClass()) {
@@ -100,11 +100,11 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     @TruffleBoundary
     public AbstractSqueakObject executeSomeInstanceOf(final ClassObject classObj) {
         assert classObj != image.nilClass;
-        final IdentityHashMap<AbstractSqueakObjectWithClassAndHash, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        final IdentityHashMap<AbstractSqueakObjectWithHash, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
+        final ArrayDeque<AbstractSqueakObjectWithHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
-        AbstractSqueakObjectWithClassAndHash currentObject;
+        AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
             if (seen.put(currentObject, SEEN_MARKER) == null) {
                 if (classObj == currentObject.getSqueakClass()) {
@@ -118,7 +118,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    private static void addObjectsFromTruffleFrames(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending) {
+    private static void addObjectsFromTruffleFrames(final ArrayDeque<AbstractSqueakObjectWithHash> pending) {
         Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (!FrameAccess.isGraalSqueakFrame(current)) {
@@ -150,7 +150,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         });
     }
 
-    private static void tracePointers(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending, final AbstractSqueakObjectWithClassAndHash currentObject) {
+    private static void tracePointers(final ArrayDeque<AbstractSqueakObjectWithHash> pending, final AbstractSqueakObjectWithHash currentObject) {
         final ClassObject sqClass = currentObject.getSqueakClass();
         if (sqClass != null) {
             pending.add(sqClass);
@@ -158,14 +158,14 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         addTraceablePointers(pending, currentObject);
     }
 
-    private static void addIfAbstractSqueakObjectWithImage(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending, final Object argument) {
-        if (argument instanceof AbstractSqueakObjectWithClassAndHash) {
-            pending.add((AbstractSqueakObjectWithClassAndHash) argument);
+    private static void addIfAbstractSqueakObjectWithImage(final ArrayDeque<AbstractSqueakObjectWithHash> pending, final Object argument) {
+        if (argument instanceof AbstractSqueakObjectWithHash) {
+            pending.add((AbstractSqueakObjectWithHash) argument);
         }
     }
 
-    private static void addTraceablePointers(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending, final AbstractSqueakObjectWithClassAndHash object) {
-        final Class<? extends AbstractSqueakObjectWithClassAndHash> objectClass = object.getClass();
+    private static void addTraceablePointers(final ArrayDeque<AbstractSqueakObjectWithHash> pending, final AbstractSqueakObjectWithHash object) {
+        final Class<? extends AbstractSqueakObjectWithHash> objectClass = object.getClass();
         if (objectClass == ClassObject.class) {
             final ClassObject classObject = (ClassObject) object;
             addIfAbstractSqueakObjectWithImage(pending, classObject.getSuperclass());
