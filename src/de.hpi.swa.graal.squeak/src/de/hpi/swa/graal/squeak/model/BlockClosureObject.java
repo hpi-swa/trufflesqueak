@@ -36,14 +36,9 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
 
     private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
 
-    public BlockClosureObject(final SqueakImageContext image) {
-        super(image, image.blockClosureClass);
+    public BlockClosureObject(final SqueakImageContext image, final int hash) {
+        super(image, hash, image.blockClosureClass);
         copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
-    }
-
-    public BlockClosureObject(final SqueakImageContext image, final int size) {
-        super(image, image.blockClosureClass);
-        copied = new Object[size];
     }
 
     public BlockClosureObject(final CompiledBlockObject compiledBlock, final RootCallTarget callTarget, final Object receiver, final Object[] copied, final ContextObject outerContext) {
