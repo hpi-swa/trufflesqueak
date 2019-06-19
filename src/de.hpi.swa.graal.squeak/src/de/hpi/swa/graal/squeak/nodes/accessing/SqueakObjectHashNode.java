@@ -2,6 +2,8 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -19,6 +21,7 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 
 @GenerateUncached
+@NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectHashNode extends AbstractNode {
 
     public static SqueakObjectHashNode create() {
