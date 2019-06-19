@@ -138,7 +138,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 classNode = insert(SqueakObjectClassNode.create());
             }
-            return classNode.executeLookup(method.image, object);
+            return classNode.executeLookup(object);
         }
 
         private DispatchSendNode getDispatchSendNode() {
@@ -452,15 +452,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final ClassObject doClass(final Object receiver, @SuppressWarnings("unused") final NotProvided object,
+        protected static final ClassObject doClass(final Object receiver, @SuppressWarnings("unused") final NotProvided object,
                         @Shared("lookupNode") @Cached final SqueakObjectClassNode classNode) {
-            return classNode.executeLookup(method.image, receiver);
+            return classNode.executeLookup(receiver);
         }
 
         @Specialization(guards = "!isNotProvided(object)")
-        protected final ClassObject doClass(@SuppressWarnings("unused") final Object receiver, final Object object,
+        protected static final ClassObject doClass(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @Shared("lookupNode") @Cached final SqueakObjectClassNode classNode) {
-            return classNode.executeLookup(method.image, object);
+            return classNode.executeLookup(object);
         }
     }
 

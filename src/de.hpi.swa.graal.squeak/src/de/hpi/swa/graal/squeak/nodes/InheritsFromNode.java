@@ -30,7 +30,7 @@ public abstract class InheritsFromNode extends AbstractNode {
     @Specialization(replaces = "doCached")
     protected static final boolean doUncached(final Object receiver, final ClassObject superClass,
                     @Cached final SqueakObjectClassNode classNode) {
-        ClassObject classObject = classNode.executeLookup(superClass.image, receiver);
+        ClassObject classObject = classNode.executeLookup(receiver);
         while (classObject != superClass) {
             classObject = classObject.getSuperclassOrNull();
             if (classObject == null) {
