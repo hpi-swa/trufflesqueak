@@ -445,7 +445,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         @Specialization(guards = "receiver.isCompiledMethodClass()")
         protected final CompiledMethodObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
-            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(method.image, receiver.getBasicInstanceSize() + (int) bytecodeCount);
+            assert receiver.getBasicInstanceSize() == 0;
+            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(method.image, (int) bytecodeCount);
             newMethod.setHeader(header);
             return newMethod;
         }

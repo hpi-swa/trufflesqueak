@@ -248,7 +248,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public int instsize() {
-        return getSqueakClass().getBasicInstanceSize();
+        return METACLASS.INST_SIZE;
     }
 
     @Override

@@ -474,7 +474,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public int instsize() {
-        return getSqueakClass().getBasicInstanceSize();
+        return CONTEXT.INST_SIZE;
     }
 
     @Override

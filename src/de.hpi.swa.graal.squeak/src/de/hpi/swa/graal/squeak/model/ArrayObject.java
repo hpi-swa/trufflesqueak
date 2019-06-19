@@ -162,7 +162,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public int instsize() {
-        return getSqueakClass().getBasicInstanceSize();
+        return 0;
     }
 
     @Override

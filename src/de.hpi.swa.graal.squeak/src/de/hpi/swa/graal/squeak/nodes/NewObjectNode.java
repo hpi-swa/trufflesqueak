@@ -13,6 +13,8 @@ import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
@@ -42,13 +44,19 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
         return new EmptyObject(image, classObject);
     }
 
-    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "classObject.instancesAreClasses()"})
+    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "classObject.isMetaClass()"})
     protected final ClassObject doClass(final ClassObject classObject, final int extraSize) {
-        assert extraSize == 0;
-        return new ClassObject(image, classObject, classObject.getBasicInstanceSize());
+        assert classObject.getBasicInstanceSize() == METACLASS.INST_SIZE && extraSize == 0;
+        return new ClassObject(image, classObject, METACLASS.INST_SIZE);
     }
 
-    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!classObject.instancesAreClasses()"})
+    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!classObject.isMetaClass()", "classObject.instancesAreClasses()"})
+    protected final ClassObject doClassOdd(final ClassObject classObject, final int extraSize) {
+        assert extraSize == 0;
+        return new ClassObject(image, classObject, classObject.getBasicInstanceSize() + METACLASS.INST_SIZE);
+    }
+
+    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!classObject.isMetaClass()", "!classObject.instancesAreClasses()"})
     protected final PointersObject doClassPointers(final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
         return new PointersObject(image, classObject, classObject.getBasicInstanceSize());
@@ -56,16 +64,18 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
 
     @Specialization(guards = "classObject.isIndexableWithNoInstVars()")
     protected final ArrayObject doIndexedPointers(final ClassObject classObject, final int extraSize) {
+        assert classObject.getBasicInstanceSize() == 0;
         if (ArrayObject.ENABLE_STORAGE_STRATEGIES) {
-            return ArrayObject.createEmptyStrategy(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+            return ArrayObject.createEmptyStrategy(image, classObject, extraSize);
         } else {
-            return ArrayObject.createObjectStrategy(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+            return ArrayObject.createObjectStrategy(image, classObject, extraSize);
         }
     }
 
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isMethodContextClass()"})
     protected final ContextObject doContext(final ClassObject classObject, final int extraSize) {
-        return ContextObject.create(image, classObject.getBasicInstanceSize() + extraSize);
+        assert classObject.getBasicInstanceSize() == CONTEXT.INST_SIZE;
+        return ContextObject.create(image, CONTEXT.INST_SIZE + extraSize);
     }
 
     @SuppressWarnings("unused")
@@ -91,7 +101,8 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
 
     @Specialization(guards = "classObject.isLongs()")
     protected final NativeObject doNativeLongs(final ClassObject classObject, final int extraSize) {
-        return NativeObject.newNativeLongs(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        assert classObject.getBasicInstanceSize() == 0;
+        return NativeObject.newNativeLongs(image, classObject, extraSize);
     }
 
     @Specialization(guards = {"classObject.isWords()", "classObject.isFloatClass()"})
@@ -102,26 +113,31 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
 
     @Specialization(guards = {"classObject.isWords()", "!classObject.isFloatClass()"})
     protected final NativeObject doNativeInts(final ClassObject classObject, final int extraSize) {
-        return NativeObject.newNativeInts(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        assert classObject.getBasicInstanceSize() == 0;
+        return NativeObject.newNativeInts(image, classObject, extraSize);
     }
 
     @Specialization(guards = "classObject.isShorts()")
     protected final NativeObject doNativeShorts(final ClassObject classObject, final int extraSize) {
-        return NativeObject.newNativeShorts(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        assert classObject.getBasicInstanceSize() == 0;
+        return NativeObject.newNativeShorts(image, classObject, extraSize);
     }
 
     @Specialization(guards = {"classObject.isBytes()", "classObject.isLargePositiveIntegerClass() || classObject.isLargeNegativeIntegerClass()"})
     protected final LargeIntegerObject doLargeIntegers(final ClassObject classObject, final int extraSize) {
-        return new LargeIntegerObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        assert classObject.getBasicInstanceSize() == 0;
+        return new LargeIntegerObject(image, classObject, extraSize);
     }
 
     @Specialization(guards = {"classObject.isBytes()", "!classObject.isLargePositiveIntegerClass()", "!classObject.isLargeNegativeIntegerClass()"})
     protected final NativeObject doNativeBytes(final ClassObject classObject, final int extraSize) {
-        return NativeObject.newNativeBytes(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        assert classObject.getBasicInstanceSize() == 0;
+        return NativeObject.newNativeBytes(image, classObject, extraSize);
     }
 
     @Specialization(guards = {"classObject.isCompiledMethodClassType()"})
     protected final CompiledMethodObject doCompiledMethod(final ClassObject classObject, final int extraSize) {
-        return CompiledMethodObject.newOfSize(image, classObject.getBasicInstanceSize() + extraSize);
+        assert classObject.getBasicInstanceSize() == 0;
+        return CompiledMethodObject.newOfSize(image, extraSize);
     }
 }

@@ -106,6 +106,7 @@ public final class ObjectLayouts {
         public static final int CLOSURE_OR_NIL = 4;
         public static final int RECEIVER = 5;
         public static final int TEMP_FRAME_START = 6;
+        public static final int INST_SIZE = 6;
         public static final int SMALL_FRAMESIZE = 16;
         public static final int LARGE_FRAMESIZE = 56;
         public static final int MAX_STACK_SIZE = LARGE_FRAMESIZE - TEMP_FRAME_START;
@@ -195,6 +196,7 @@ public final class ObjectLayouts {
      */
     public static final class METACLASS {
         public static final int THIS_CLASS = 0;
+        public static final int INST_SIZE = 6;
     }
 
     public static final class METHOD_DICT {
