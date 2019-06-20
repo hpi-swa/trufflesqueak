@@ -295,10 +295,38 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"lib.hasMembers(receiver)"}, limit = "2")
-        protected static final Object doGetMembers(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib) {
+        protected final ArrayObject doGetMembers(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary lib,
+                        @CachedLibrary(limit = "2") final InteropLibrary membersLib,
+                        @CachedLibrary(limit = "2") final InteropLibrary memberNameLib) {
             try {
-                return lib.getMembers(receiver, true);
+                final Object members = lib.getMembers(receiver, true);
+                final int size = (int) membersLib.getArraySize(members);
+                final NativeObject[] byteStrings = new NativeObject[size];
+                for (int i = 0; i < size; i++) {
+                    final Object memberName = membersLib.readArrayElement(members, i);
+                    byteStrings[i] = method.image.asByteString(memberNameLib.asString(memberName));
+                }
+                return method.image.asArrayOfNativeObjects(byteStrings);
+            } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetMemberSize")
+    protected abstract static class PrimGetMemberSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimGetMemberSizeNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"lib.hasMembers(receiver)"}, limit = "2")
+        protected static final Object doGetMembers(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary lib,
+                        @CachedLibrary(limit = "2") final InteropLibrary sizeLib) {
+            try {
+                return sizeLib.getArraySize(lib.getMembers(receiver, true));
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -454,6 +482,20 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
             final Object[] result = languages.stream().filter(l -> !l.isInternal()).map(l -> l.getId()).toArray();
             return wrapNode.executeList(result);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMemberInvocable")
+    protected abstract static class PrimIsMemberInvocableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsMemberInvocableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doIsMemberInvocable(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isMemberInvocable(receiver, member.asStringUnsafe()));
         }
     }
 
@@ -738,6 +780,20 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         protected static final boolean isArrayElementReadable(final InteropLibrary lib, final Object receiver, final long index) {
             return lib.isArrayElementReadable(receiver, index - 1);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMemberReadable")
+    protected abstract static class PrimIsMemberReadableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsMemberReadableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doIsMemberReadable(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isMemberReadable(receiver, member.asStringUnsafe()));
         }
     }
 
