@@ -22,9 +22,9 @@ public final class InterruptHandlerState {
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
+    private boolean isActive = true;
     protected long nextWakeupTick = 0;
     protected boolean interruptPending = false;
-    private boolean isActive = false;
     private boolean pendingFinalizationSignals = false;
 
     /**
@@ -168,9 +168,10 @@ public final class InterruptHandlerState {
 
     public void reset() {
         CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
+        isActive = true;
         nextWakeupTick = 0;
         interruptPending = false;
-        isActive = false;
         pendingFinalizationSignals = false;
+        assert semaphoresToSignal.isEmpty();
     }
 }

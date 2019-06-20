@@ -947,7 +947,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"!method.image.interruptHandlerDisabled()"})
+        @Specialization(guards = {"!method.image.interruptHandlerDisabled()", "method.image.interrupt.isActive()"})
         protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long timeMicroseconds,
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final InterruptHandlerNode interruptNode) {
@@ -962,7 +962,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return AbstractSendNode.NO_RESULT;
         }
 
-        @Specialization(guards = {"method.image.interruptHandlerDisabled()"})
+        @Specialization(guards = {"method.image.interruptHandlerDisabled() || !method.image.interrupt.isActive()"})
         protected static final Object doNothing(final Object receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
             return receiver;
         }

@@ -47,7 +47,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
-    @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
     @Child private FrameStackReadAndClearNode readAndClearNode;
@@ -61,9 +60,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
         } else {
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
-        }
-        if (!code.image.interrupt.disabled() && !code.hasPrimitive() && bytecodeNodes.length > TriggerInterruptHandlerNode.BYTECODE_LENGTH_THRESHOLD) {
-            triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
         }
     }
 
@@ -86,9 +82,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         try {
             if (shouldCheckStackDepth && stackDepth++ > STACK_DEPTH_LIMIT) {
                 throw ProcessSwitch.createWithBoundary(getGetOrCreateContextNode().executeGet(frame));
-            }
-            if (triggerInterruptHandlerNode != null) {
-                triggerInterruptHandlerNode.executeGeneric(frame);
             }
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
@@ -114,9 +107,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     protected final Object doNonVirtualized(final VirtualFrame frame, final ContextObject context) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
         try {
-            if (triggerInterruptHandlerNode != null) {
-                triggerInterruptHandlerNode.executeGeneric(frame);
-            }
             final long initialPC = context.getInstructionPointerForBytecodeLoop();
             assert initialPC >= 0 : "Trying to execute a terminated/illegal context";
             if (initialPC == 0) {
@@ -328,6 +318,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         return bytecodeNodes[pc];
     }
 
+    // FIXME: Trigger interrupt check on sends and in loops.
     @NodeInfo(cost = NodeCost.NONE)
     protected abstract static class TriggerInterruptHandlerNode extends AbstractNodeWithCode {
         protected static final int BYTECODE_LENGTH_THRESHOLD = 32;
@@ -336,6 +327,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             super(code);
         }
 
+        @SuppressWarnings("unused")
         private static TriggerInterruptHandlerNode create(final CompiledCodeObject code) {
             return TriggerInterruptHandlerNodeGen.create(code);
         }
