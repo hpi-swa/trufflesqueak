@@ -1,3 +1,0 @@
-interop
-asLong
-	^ self primitiveAsLong

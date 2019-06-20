@@ -1,3 +1,3 @@
 class behavior
 instSize
-	^ self getMembers size
+	^ self primitiveGetMemberSize

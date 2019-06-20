@@ -1,3 +1,3 @@
-interop
+overrides
 isString
 	^ self primitiveIsString

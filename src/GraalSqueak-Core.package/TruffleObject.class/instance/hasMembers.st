@@ -1,3 +1,0 @@
-interop
-hasMembers
-	^ self primitiveHasMembers

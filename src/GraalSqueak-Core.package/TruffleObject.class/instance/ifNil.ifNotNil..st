@@ -1,5 +1,5 @@
 testing
 ifNil: nilBlock ifNotNil: ifNotNilBlock
-	^ self isNull
+	^ self primitiveIsNull
 		ifTrue: [ nilBlock value ]
 		ifFalse: [ ifNotNilBlock value ]

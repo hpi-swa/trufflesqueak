@@ -1,4 +1,4 @@
 accessing
 basicAt: index
-	self isString ifTrue: [ ^ self asString at: index ].
+	self primitiveIsString ifTrue: [ ^ self primitiveAsString at: index ].
 	^ self primitiveReadArrayElement: index

@@ -1,3 +1,0 @@
-interop
-isNull
-	^ self primitiveIsNull

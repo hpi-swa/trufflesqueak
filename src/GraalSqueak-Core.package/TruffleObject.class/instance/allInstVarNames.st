@@ -1,5 +1,5 @@
 class behavior
 allInstVarNames
-	^ self hasMembers
-		ifTrue: [ self getMembers ]
+	^ self primitiveHasMembers
+		ifTrue: [ self primitiveGetMembers ]
 		ifFalse: [ #() ]

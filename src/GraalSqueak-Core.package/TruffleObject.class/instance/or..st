@@ -1,3 +1,3 @@
 controlling
 or: alternativeBlock
-	^ self asBoolean or: alternativeBlock
+	^ self primitiveAsBoolean or: alternativeBlock

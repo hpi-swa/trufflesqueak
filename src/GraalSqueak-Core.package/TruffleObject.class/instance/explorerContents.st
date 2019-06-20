@@ -2,7 +2,7 @@ explorer
 explorerContents
 	^ (self explorableMembers asOrderedCollection withIndexCollect: [:member :index |
 		ObjectExplorerWrapper
-			with: (self readMember: member)
+			with: (self primitiveReadMember: member)
 			name: member
 			model: self]) ,
 		((1 to: self basicSize) collect: [:index |

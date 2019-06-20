@@ -1,3 +1,0 @@
-interop
-isHostObject
-	^ self primitiveIsHostObject

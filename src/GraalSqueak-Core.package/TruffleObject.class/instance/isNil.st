@@ -1,3 +1,3 @@
 testing
 isNil
-	^ self isNull
+	^ self primitiveIsNull

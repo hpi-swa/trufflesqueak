@@ -1,3 +1,0 @@
-interop
-fitsInLong
-	^ self primitiveFitsInLong

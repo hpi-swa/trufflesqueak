@@ -1,7 +1,7 @@
-interop
+convenience
 asSmalltalk
-	self isBoolean ifTrue: [ ^ self asBoolean ].
-	self isString ifTrue: [ ^ self asString ].
-	self fitsInLong ifTrue: [ ^ self asLong ].
-	self fitsInDouble ifTrue: [ ^ self asDouble ].
+	self primitiveIsBoolean ifTrue: [ ^ self primitiveAsBoolean ].
+	self primitiveIsString ifTrue: [ ^ self primitiveAsString ].
+	self primitiveFitsInLong ifTrue: [ ^ self primitiveAsLong ].
+	self primitiveFitsInDouble ifTrue: [ ^ self primitiveAsDouble ].
 	self error: 'Unable to convert to Smalltalk object'

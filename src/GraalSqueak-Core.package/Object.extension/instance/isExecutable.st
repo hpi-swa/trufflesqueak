@@ -1,3 +1,0 @@
-*GraalSqueak-Core
-isExecutable
-	^ false

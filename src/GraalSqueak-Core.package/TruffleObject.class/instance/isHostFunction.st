@@ -1,3 +1,0 @@
-interop
-isHostFunction
-	^ self primitiveIsHostFunction

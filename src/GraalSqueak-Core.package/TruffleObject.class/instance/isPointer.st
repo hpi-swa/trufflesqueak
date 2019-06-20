@@ -1,3 +1,0 @@
-interop
-isPointer
-	^ self primitiveIsPointer

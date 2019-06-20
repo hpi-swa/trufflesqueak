@@ -1,3 +1,0 @@
-interop
-isInstantiable
-	^ self primitiveIsInstantiable

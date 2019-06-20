@@ -1,4 +1,4 @@
 testing
 ifNil: nilBlock
-	self isNull ifTrue: [ ^ nilBlock value ].
+	self primitiveIsNull ifTrue: [ ^ nilBlock value ].
 	^ self
