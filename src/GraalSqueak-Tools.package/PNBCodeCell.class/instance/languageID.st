@@ -1,3 +1,3 @@
 accessing
 languageID
-	^ languageID ifNil: [ languageID := PolyglotNotebook markdownID ]
+	^ languageID ifNil: [ languageID := Polyglot languageIdMarkdown ]

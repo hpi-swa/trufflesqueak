@@ -2,7 +2,7 @@ events-processing
 handleMouseDown: anEvent
 	| menu action |
 	menu := CustomMenu new.
-	menu add: PolyglotNotebook markdownName action: PolyglotNotebook markdownID.
+	menu add: PolyglotNotebook markdownName action: Polyglot languageIdMarkdown.
 	menu addLine.
 	
 	Polyglot availableLanguages do: [:ea |
@@ -16,7 +16,7 @@ handleMouseDown: anEvent
 	menu addLine.
 	menu add: 'remove...' action: #remove.
 	anEvent wasHandled: true.
-	action := menu startUp: PolyglotNotebook markdownID.
+	action := menu startUp: Polyglot languageIdMarkdown.
 	action = #run ifTrue: [ self codeCell run. ^ self ].
 	action = #up ifTrue: [ self codeCell up. ^ self ].
 	action = #down ifTrue: [ self codeCell down. ^ self ].

@@ -1,3 +1,3 @@
 testing
 isMarkdown
-	^ self languageID = PolyglotNotebook markdownID
+	^ self languageID = Polyglot languageIdMarkdown

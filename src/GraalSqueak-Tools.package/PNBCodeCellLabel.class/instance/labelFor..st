@@ -12,5 +12,5 @@ labelFor: aLanguageID
 	  hResizing: #shrinkWrap;
 	  vResizing: #shrinkWrap.
 	result addMorph: languageName asMorph.
-	result addMorph: (self iconFor: aLanguageID) asMorph.
+	result addMorph: (Polyglot iconFor: aLanguageID) asMorph.
 	^ result

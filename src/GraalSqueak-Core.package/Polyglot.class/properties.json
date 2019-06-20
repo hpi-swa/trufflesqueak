@@ -1,7 +1,8 @@
 {
 	"category" : "GraalSqueak-Core",
 	"classinstvars" : [
-		"LanguageIDToPolyglotImport" ],
+		"LanguageIDToPolyglotImport",
+		"LanguageIDToIcon" ],
 	"classvars" : [
 		 ],
 	"commentStamp" : "fn 11/25/2018 15:08",

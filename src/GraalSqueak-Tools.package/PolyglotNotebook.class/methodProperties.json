@@ -1,17 +1,9 @@
 {
 	"class" : {
-		"colorFor:" : "fn 3/27/2019 10:22",
+		"colorFor:" : "fn 6/20/2019 17:18",
 		"explorerMorphFor:" : "fn 3/26/2019 11:59",
-		"iconJavascript" : "fn 3/26/2019 18:27",
-		"iconLLVM" : "fn 3/26/2019 18:28",
-		"iconMarkdown" : "fn 3/26/2019 18:24",
-		"iconPython" : "fn 3/26/2019 18:23",
-		"iconR" : "fn 3/26/2019 18:27",
-		"iconRuby" : "fn 3/26/2019 18:27",
-		"iconSqueakSmalltalk" : "fn 3/26/2019 18:32",
 		"initialize" : "fn 4/14/2019 00:01",
-		"markdownID" : "fn 3/26/2019 11:58",
-		"markdownName" : "fn 3/26/2019 11:58",
+		"markdownName" : "fn 6/20/2019 17:19",
 		"open" : "fn 3/26/2019 09:18",
 		"registerInWorldMenu" : "fn 4/13/2019 23:58" },
 	"instance" : {

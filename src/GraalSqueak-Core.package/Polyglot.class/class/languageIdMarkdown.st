@@ -1,0 +1,3 @@
+constants
+languageIdMarkdown
+	^ 'markdown'

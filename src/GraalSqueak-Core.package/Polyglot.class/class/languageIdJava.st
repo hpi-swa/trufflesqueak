@@ -1,0 +1,3 @@
+constants
+languageIdJava
+	^ 'java'

@@ -1,3 +1,3 @@
 constants
 markdownName
-	^ self markdownID asString capitalized
+	^ Polyglot languageIdMarkdown capitalized
