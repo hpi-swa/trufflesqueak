@@ -44,7 +44,7 @@
 		"primitiveGetPolyglotBindings" : "fn 12/3/2018 10:34",
 		"primitiveImport:" : "GraalSqueak 11/11/2018 21:33",
 		"primitiveIsPolyglotAccessAllowed" : "fn 5/25/2019 18:44",
-		"primitiveLastError" : "fn 4/13/2019 14:08",
+		"primitiveLastError" : "fn 6/20/2019 17:34",
 		"primitiveListAvailableLanguageIDs" : "fn 11/25/2018 16:27",
 		"signalPolyglotError" : "fn 4/13/2019 14:08",
 		"startUp:" : "fn 12/3/2018 10:47",
