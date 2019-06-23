@@ -52,7 +52,11 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.B2D;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBlt;
+import de.hpi.swa.graal.squeak.nodes.plugins.JPEGReader;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
+import de.hpi.swa.graal.squeak.nodes.plugins.Zip;
 import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
@@ -64,7 +68,7 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class SqueakImageContext {
-    // Special objects
+    /* Special objects */
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
     public final PointersObject schedulerAssociation = new PointersObject(this);
@@ -98,11 +102,6 @@ public final class SqueakImageContext {
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
-
-    private final SqueakLanguage language;
-    @CompilationFinal private PrintWriter output;
-    @CompilationFinal private PrintWriter error;
-    @CompilationFinal public SqueakLanguage.Env env;
 
     // Special selectors
     public final NativeObject plus = new NativeObject(this);
@@ -148,35 +147,51 @@ public final class SqueakImageContext {
                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0
     };
 
+    /* System Information */
+    public final SqueakImageFlags flags = new SqueakImageFlags();
     @CompilationFinal private String imagePath;
     @CompilationFinal private boolean isHeadless;
-    public final SqueakImageFlags flags = new SqueakImageFlags();
     public final SqueakContextOptions options;
-    public final OSDetector os = new OSDetector();
-    public final InterruptHandlerState interrupt;
-    public final long startUpMillis = System.currentTimeMillis();
-    private final AllocationReporter allocationReporter;
 
+    /* System */
     @CompilationFinal private SqueakDisplayInterface display;
+    public final InterruptHandlerState interrupt;
+    public final PrimitiveNodeFactory primitiveNodeFactory = new PrimitiveNodeFactory();
+    public final long startUpMillis = System.currentTimeMillis();
+    public final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
+
+    /* Truffle */
+    private final AllocationReporter allocationReporter;
+    @CompilationFinal public SqueakLanguage.Env env;
+    private final SqueakLanguage language;
+    private Source lastParseRequestSource;
+    @CompilationFinal private PrintWriter output;
+    @CompilationFinal private PrintWriter error;
+
+    @CompilationFinal private SqueakImage squeakImage;
+
+    /* Utilities */
+    public final OSDetector os = new OSDetector();
 
     @CompilationFinal private ClassObject compilerClass = null;
     @CompilationFinal private ClassObject parserClass = null;
     @CompilationFinal private PointersObject scheduler = null;
 
-    public final PrimitiveNodeFactory primitiveNodeFactory = new PrimitiveNodeFactory();
+    /* Plugins */
+    public final B2D b2d = new B2D(this);
+    public final BitBlt bitblt = new BitBlt();
+    public String[] dropPluginFileList = new String[0];
     public final EconomicMap<Long, SeekableByteChannel> filePluginHandles = EconomicMap.create();
+    public final JPEGReader jpegReader = new JPEGReader();
     public final EconomicMap<Long, SqueakSocket> socketPluginHandles = EconomicMap.create();
     public final EconomicMap<Long, SqSSL> squeakSSLHandles = EconomicMap.create();
-    public final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
-    public String[] dropPluginFileList = new String[0];
+    public final Zip zip = new Zip();
 
+    /* Error detection for headless execution */
     @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes();
     @CompilationFinal private NativeObject debugErrorSelector = null;
     @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes();
     @CompilationFinal private NativeObject debugSyntaxErrorSelector = null;
-
-    private Source lastParseRequestSource;
-    @CompilationFinal private SqueakImage squeakImage;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
