@@ -264,6 +264,9 @@ public final class B2D {
     /* BalloonEngineBase>>#smallSqrtTable */
     @CompilationFinal(dimensions = 1) private static final int[] SMALL_SQRT_TABLE = new int[]{0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6};
 
+    /* BalloonEnginePlugin>>#rShiftTable */
+    @CompilationFinal(dimensions = 1) private static final int[] R_SHIFT_TABLE = new int[]{0, 5, 4, 0, 3, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1};
+
     /* Variables */
     private int aetBufferIndex;
     private long dispatchedValue;
@@ -845,7 +848,7 @@ public final class B2D {
             }
             return uncheckedTransformColor(value);
         }
-        rShift = rShiftTable()[bmDepth];
+        rShift = R_SHIFT_TABLE[bmDepth];
         /* cMask - mask out the pixel from the word */
         value = bits[(int) (bmRaster * yp + shr(xp, rShift))];
         /* rShift - shift value to move the pixel in the word to the lowest bit position */
@@ -6063,11 +6066,6 @@ public final class B2D {
     /* BalloonEnginePlugin>>#returnWideLineWidth */
     private long returnWideLineWidth() {
         return dispatchReturnValue = wideLineWidthOf(dispatchedValue);
-    }
-
-    /* BalloonEnginePlugin>>#rShiftTable */
-    private static int[] rShiftTable() {
-        return new int[]{0, 5, 4, 0, 3, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1};
     }
 
     /*
