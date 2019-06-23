@@ -15,7 +15,6 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_TAG;
@@ -369,19 +368,8 @@ public final class SqueakImageReader {
         setPrebuiltObject(SPECIAL_OBJECT.SPECIAL_SELECTORS, image.specialSelectors);
     }
 
-    private void initPrebuiltSelectors() {
-        final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
-        final SqueakImageChunk specialSelectorChunk = getChunk(specialObjectsChunk.getWords()[SPECIAL_OBJECT.SPECIAL_SELECTORS]);
-
-        final NativeObject[] specialSelectors = image.specialSelectorsArray;
-        for (int i = 0; i < specialSelectors.length; i++) {
-            getChunk(specialSelectorChunk.getWords()[i * 2]).object = specialSelectors[i];
-        }
-    }
-
     private void initObjects() {
         initPrebuiltConstant();
-        initPrebuiltSelectors();
         fillInClassObjects();
         fillInObjects();
         fillInContextObjects();

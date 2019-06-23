@@ -69,36 +69,36 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                     "45  <AB 1F> jumpTrue: 799",
                     "46  <AF 1F> jumpFalse: 799",
                     "47  <7D> blockReturn",
-                    "48 <B0> send: plus",
-                    "49 <B1> send: minus",
-                    "50 <B2> send: lt",
-                    "51 <B3> send: gt",
-                    "52 <B4> send: le",
-                    "53 <B5> send: ge",
-                    "54 <B6> send: eq",
-                    "55 <B7> send: ne",
-                    "56 <B8> send: times",
-                    "57 <B9> send: divide",
-                    "58 <BA> send: modulo",
-                    "59 <BB> send: pointAt",
-                    "60 <BC> send: bitShift",
-                    "61 <BD> send: floorDivide",
-                    "62 <BE> send: bitAnd",
-                    "63 <BF> send: bitOr",
-                    "64 <C0> send: at",
-                    "65 <C1> send: atput",
+                    "48 <B0> send: +",
+                    "49 <B1> send: -",
+                    "50 <B2> send: <",
+                    "51 <B3> send: >",
+                    "52 <B4> send: <=",
+                    "53 <B5> send: >=",
+                    "54 <B6> send: =",
+                    "55 <B7> send: ~=",
+                    "56 <B8> send: *",
+                    "57 <B9> send: /",
+                    "58 <BA> send: \\",
+                    "59 <BB> send: @",
+                    "60 <BC> send: bitShift:",
+                    "61 <BD> send: //",
+                    "62 <BE> send: bitAnd:",
+                    "63 <BF> send: bitOr:",
+                    "64 <C0> send: at:",
+                    "65 <C1> send: at:put:",
                     "66 <C2> send: size",
                     "67 <C3> send: next",
-                    "68 <C4> send: nextPut",
+                    "68 <C4> send: nextPut:",
                     "69 <C5> send: atEnd",
-                    "70 <C6> send: equivalent",
-                    "71 <C7> send: klass",
+                    "70 <C6> send: ==",
+                    "71 <C7> send: class",
                     "72 <C8> send: ~~",
                     "73 <C9> send: value",
-                    "74 <CA> send: valueWithArg",
-                    "75 <CB> send: do",
+                    "74 <CA> send: value:",
+                    "75 <CB> send: do:",
                     "76 <CC> send: new",
-                    "77 <CD> send: newWithArg",
+                    "77 <CD> send: new:",
                     "78 <CE> send: x",
                     "79 <CF> send: y",
                     "80 <D0> send: someSelector",
@@ -118,13 +118,13 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         assertSame(DupNode.class, bytecodeNodes[1].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[2].getClass());
 
-        assertEquals("send: " + image.equivalent.asStringUnsafe(), bytecodeNodes[3].toString());
+        assertEquals("send: ==", bytecodeNodes[3].toString());
 
         assertSame(ConditionalJumpNode.class, bytecodeNodes[4].getClass());
         assertSame(PopNode.class, bytecodeNodes[5].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[6].getClass());
 
-        assertEquals("send: " + image.klass.asStringUnsafe(), bytecodeNodes[7].toString());
+        assertEquals("send: class", bytecodeNodes[7].toString());
 
         assertSame(PopNode.class, bytecodeNodes[8].getClass());
         assertTrue(ReturnReceiverNode.class.isAssignableFrom(bytecodeNodes[9].getClass()));

@@ -164,8 +164,8 @@ public final class SendBytecodes {
         }
 
         public static SendSelectorNode createForSpecialSelector(final CompiledCodeObject code, final int index, final int selectorIndex) {
-            final NativeObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
-            final int numArguments = code.image.specialSelectorsNumArgs[selectorIndex];
+            final NativeObject specialSelector = code.image.getSpecialSelector(selectorIndex);
+            final int numArguments = code.image.getSpecialSelectorNumArgs(selectorIndex);
             return new SendSelectorNode(code, index, 1, specialSelector, numArguments);
         }
     }

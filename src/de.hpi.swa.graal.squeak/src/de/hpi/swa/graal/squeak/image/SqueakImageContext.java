@@ -48,10 +48,9 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.ENVIRONMENT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SMALLTALK_IMAGE;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.B2D;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBlt;
 import de.hpi.swa.graal.squeak.nodes.plugins.JPEGReader;
@@ -102,50 +101,6 @@ public final class SqueakImageContext {
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
-
-    // Special selectors
-    public final NativeObject plus = new NativeObject(this);
-    public final NativeObject minus = new NativeObject(this);
-    public final NativeObject lt = new NativeObject(this);
-    public final NativeObject gt = new NativeObject(this);
-    public final NativeObject le = new NativeObject(this);
-    public final NativeObject ge = new NativeObject(this);
-    public final NativeObject eq = new NativeObject(this);
-    public final NativeObject ne = new NativeObject(this);
-    public final NativeObject times = new NativeObject(this);
-    public final NativeObject divide = new NativeObject(this);
-    public final NativeObject modulo = new NativeObject(this);
-    public final NativeObject pointAt = new NativeObject(this);
-    public final NativeObject bitShift = new NativeObject(this);
-    public final NativeObject floorDivide = new NativeObject(this);
-    public final NativeObject bitAnd = new NativeObject(this);
-    public final NativeObject bitOr = new NativeObject(this);
-    public final NativeObject at = new NativeObject(this);
-    public final NativeObject atput = new NativeObject(this);
-    public final NativeObject sqSize = new NativeObject(this);
-    public final NativeObject next = new NativeObject(this);
-    public final NativeObject nextPut = new NativeObject(this);
-    public final NativeObject atEnd = new NativeObject(this);
-    public final NativeObject equivalent = new NativeObject(this);
-    public final NativeObject klass = new NativeObject(this);
-    public final NativeObject nonEquivalent = new NativeObject(this);
-    public final NativeObject sqValue = new NativeObject(this);
-    public final NativeObject valueWithArg = new NativeObject(this);
-    public final NativeObject sqDo = new NativeObject(this);
-    public final NativeObject sqNew = new NativeObject(this);
-    public final NativeObject newWithArg = new NativeObject(this);
-    public final NativeObject x = new NativeObject(this);
-    public final NativeObject y = new NativeObject(this);
-
-    @CompilationFinal(dimensions = 1) public final NativeObject[] specialSelectorsArray = new NativeObject[]{
-                    plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
-                    floorDivide, bitAnd, bitOr, at, atput, sqSize, next, nextPut, atEnd, equivalent,
-                    klass, nonEquivalent, sqValue, valueWithArg, sqDo, sqNew, newWithArg, x, y
-    };
-
-    @CompilationFinal(dimensions = 1) public final int[] specialSelectorsNumArgs = new int[]{
-                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0
-    };
 
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
@@ -380,11 +335,23 @@ public final class SqueakImageContext {
     }
 
     public Object getSpecialObject(final int index) {
-        return ArrayObjectReadNode.getUncached().execute(specialObjectsArray, index);
+        return specialObjectsArray.getObjectStorage()[index];
     }
 
     public void setSpecialObject(final int index, final Object value) {
-        ArrayObjectWriteNode.getUncached().execute(specialObjectsArray, index, value);
+        specialObjectsArray.getObjectStorage()[index] = value;
+    }
+
+    private ArrayObject getSpecialSelectors() {
+        return (ArrayObject) getSpecialObject(SPECIAL_OBJECT.SPECIAL_SELECTORS);
+    }
+
+    public NativeObject getSpecialSelector(final int index) {
+        return (NativeObject) getSpecialSelectors().getObjectStorage()[index * 2];
+    }
+
+    public int getSpecialSelectorNumArgs(final int index) {
+        return (int) (long) getSpecialSelectors().getObjectStorage()[index * 2 + 1];
     }
 
     public void setSemaphore(final int index, final AbstractSqueakObject semaphore) {
