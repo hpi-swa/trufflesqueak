@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-readonly DEFAULT_GIT_TAG="0.8.2" # TODO: use 0.8.4 when merging into dev
-readonly IMAGE32_NAME="GraalSqueakTestImage-18615-32bit.zip"
-readonly IMAGE64_NAME="GraalSqueakTestImage-18615-64bit.zip"
+readonly DEFAULT_GIT_TAG="0.8.4"
+readonly IMAGE32_NAME="GraalSqueakTestImage-18618-32bit.zip"
+readonly IMAGE64_NAME="GraalSqueakTestImage-18618-64bit.zip"
 readonly GITHUB_SLUG="hpi-swa-lab/graalsqueak"
 readonly MX_GIT="https://github.com/graalvm/mx.git"
 
