@@ -2,11 +2,13 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.AbstractCollection;
 import java.util.List;
+import java.util.Set;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -17,19 +19,21 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FloatObject;
-import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
@@ -37,10 +41,11 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectTraceableToObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
@@ -52,6 +57,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -75,13 +81,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
-        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
+        @Child private ArrayObjectTraceableToObjectArrayNode getObjectArrayNode = ArrayObjectTraceableToObjectArrayNode.create();
 
         protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        // TODO: specialize for arrays -> object/native/abstractsqueak only
         protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             final Object[] fromPointers = getObjectArrayNode.execute(fromArray);
             final Object[] toPointers = getObjectArrayNode.execute(toArray);
@@ -175,6 +180,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 68)
     protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimCompiledMethodObjectAtNode(final CompiledMethodObject method) {
@@ -215,7 +221,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"classFormatStable"})
-        protected Object newDirect(final ClassObject receiver,
+        protected AbstractSqueakObjectWithHash newDirect(final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached final BranchProfile outOfMemProfile) {
@@ -228,7 +234,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newDirect")
-        protected final Object newIndirect(final ClassObject receiver,
+        protected final AbstractSqueakObjectWithHash newIndirect(final ClassObject receiver,
                         @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver);
@@ -252,7 +258,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(receiver, size)"}, assumptions = {"classFormatStable"})
-        protected final Object newWithArgDirect(final ClassObject receiver, final long size,
+        protected final AbstractSqueakObjectWithHash newWithArgDirect(final ClassObject receiver, final long size,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached final BranchProfile outOfMemProfile) {
@@ -265,7 +271,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
-        protected final Object newWithArg(final ClassObject receiver, final long size,
+        protected final AbstractSqueakObjectWithHash newWithArg(final ClassObject receiver, final long size,
                         @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver, (int) size);
@@ -294,33 +300,41 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
+        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "fromArray.isTraceable()", "toArray.isTraceable()"}, limit = "1")
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             return performPointersBecomeOneWay(fromArray, toArray, true);
         }
 
         @SuppressWarnings("unused")
+        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "!fromArray.isTraceable() || !toArray.isTraceable()"}, limit = "1")
+        protected static final ArrayObject doInapproriateOperation(final ArrayObject fromArray, final ArrayObject toArray,
+                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
+            throw new PrimitiveFailed(ERROR_TABLE.INAPPROPRIATE_OPERATION);
+        }
+
+        @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
-        protected static final ArrayObject doFail(final ArrayObject fromArray, final ArrayObject toArray,
+        protected static final ArrayObject doBadArgument(final ArrayObject fromArray, final ArrayObject toArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
-        protected static final ArrayObject doFail(final Object receiver, final ArrayObject argument) {
+        protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
-        protected static final ArrayObject doFail(final ArrayObject receiver, final Object argument) {
+        protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 73)
     protected abstract static class PrimInstVarAtNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
@@ -331,7 +345,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doAt(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected final Object doAt(final Object receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return at0Node.execute(receiver, index - 1);
         }
 
@@ -342,6 +356,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 74)
     protected abstract static class PrimInstVarAtPutNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
@@ -352,69 +367,30 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doAtPut(final AbstractSqueakObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected final Object doAtPut(final Object receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
             atPut0Node.execute(receiver, index - 1, value);
             return value;
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(target))") // Context>>#object:instVarAt:put:
-        protected final Object doAtPut(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject target, final long index, final Object value) {
+        protected final Object doAtPut(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value) {
             atPut0Node.execute(target, index - 1, value);
             return value;
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {75, 171, 175})
-    protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    @NodeInfo(cost = NodeCost.NONE)
+    @SqueakPrimitive(indices = 75)
+    protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimIdentityHashNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doNil(@SuppressWarnings("unused") final NilObject receiver) {
-            return NilObject.getSqueakHash();
-        }
-
-        @Specialization(guards = "obj == method.image.sqFalse")
-        protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean obj) {
-            return 2L;
-        }
-
-        @Specialization(guards = "obj != method.image.sqFalse")
-        protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean obj) {
-            return 3L;
-        }
-
-        @Specialization
-        protected static final long doChar(final char obj) {
-            return obj;
-        }
-
-        @Specialization
-        protected static final long doChar(final CharacterObject obj) {
-            return obj.getValue();
-        }
-
-        @Specialization
-        protected static final long doLong(final long obj) {
-            return obj;
-        }
-
-        @Specialization
-        protected static final long doFloatObject(final FloatObject receiver) {
-            return Double.doubleToLongBits(receiver.getValue());
-        }
-
-        @Specialization
-        protected static final long doDouble(final double receiver) {
-            return Double.doubleToLongBits(receiver);
-        }
-
-        @Specialization(guards = {"!isCharacterObject(receiver)", "!isFloatObject(receiver)"})
-        protected static final long doSqueakObject(final AbstractSqueakObjectWithClassAndHash receiver) {
-            return receiver.getSqueakHash();
+        protected static final long doHash(final Object receiver, @Cached final SqueakObjectHashNode hashNode) {
+            return hashNode.execute(receiver);
         }
     }
 
@@ -470,7 +446,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         @Specialization(guards = "receiver.isCompiledMethodClass()")
         protected final CompiledMethodObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
-            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(method.image, receiver.getBasicInstanceSize() + (int) bytecodeCount);
+            assert receiver.getBasicInstanceSize() == 0;
+            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(method.image, (int) bytecodeCount);
             newMethod.setHeader(header);
             return newMethod;
         }
@@ -532,29 +509,31 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 129)
-    protected abstract static class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimSpecialObjectsArrayNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final ArrayObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver) {
             return method.image.specialObjectsArray;
         }
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 138)
-    protected abstract static class PrimSomeObjectNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSomeObjectNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimSomeObjectNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final ArrayObject doSome(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final ArrayObject doSome(@SuppressWarnings("unused") final Object receiver) {
             return method.image.specialObjectsArray;
         }
     }
@@ -573,7 +552,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractCollection<AbstractSqueakObject> allInstances) {
+        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final Set<AbstractSqueakObject> allInstances) {
             boolean foundMyself = false;
             for (final AbstractSqueakObject instance : allInstances) {
                 if (instance == receiver) {
@@ -595,29 +574,48 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return CharacterObject.valueOf(method.image, Math.toIntExact(receiver));
+        protected static final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target,
+                        @Shared("isFiniteProfile") @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return CharacterObject.valueOf(Math.toIntExact(receiver), isFiniteProfile);
         }
 
-        @Specialization(guards = "receiver.fitsIntoInt()")
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return CharacterObject.valueOf(method.image, receiver.intValueExact());
-        }
-
+        /* Character class>>#value: */
         @Specialization
-        protected final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target) {
-            return CharacterObject.valueOf(method.image, Math.toIntExact(target));
-        }
-
-        @Specialization(guards = "target.fitsIntoInt()")
-        protected final Object doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject target) {
-            return CharacterObject.valueOf(method.image, target.intValueExact());
+        protected static final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target,
+                        @Shared("isFiniteProfile") @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return CharacterObject.valueOf(Math.toIntExact(target), isFiniteProfile);
         }
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
+    @SqueakPrimitive(indices = 171)
+    protected abstract static class PrimImmediateAsIntegerNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimImmediateAsIntegerNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doChar(final char receiver) {
+            return receiver;
+        }
+
+        @Specialization
+        protected static final long doCharacterObject(final CharacterObject receiver) {
+            return receiver.getValue();
+        }
+
+        @Specialization
+        protected static final long doDouble(final double receiver) {
+            return Double.doubleToRawLongBits(receiver);
+        }
+    }
+
+    @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 173)
-    protected abstract static class PrimSlotAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSlotAtNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
@@ -626,14 +624,20 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doSlotAt(final AbstractSqueakObject receiver, final long index) {
+        protected final Object doSlotAt(final Object receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return at0Node.execute(receiver, index - 1);
+        }
+
+        @Specialization(guards = "inBounds1(index, sizeNode.execute(target))")
+        protected final Object doSlotAt(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index) {
+            return at0Node.execute(target, index - 1);
         }
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 174)
-    protected abstract static class PrimSlotAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimSlotAtPutNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
@@ -642,22 +646,43 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
-        protected final Object doSlotAtPut(final AbstractSqueakObject receiver, final long index, final Object value) {
+        protected final Object doSlotAtPut(final Object receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
             atPut0Node.execute(receiver, index - 1, value);
+            return value;
+        }
+
+        @Specialization(guards = "inBounds1(index, sizeNode.execute(target))")
+        protected final Object doSlotAtPut(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value) {
+            atPut0Node.execute(target, index - 1, value);
             return value;
         }
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
+    @SqueakPrimitive(indices = 175)
+    protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimBehaviorHashNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doClass(final ClassObject receiver) {
+            return receiver.getSqueakHash();
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 178)
-    protected abstract static class PrimAllObjectsNode extends AbstractInstancesPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimAllObjectsNode extends AbstractInstancesPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimAllObjectsNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final ArrayObject doAll(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asArrayOfObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
         }
     }
@@ -715,28 +740,35 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "sizeNode.execute(fromArray) == sizeNode.execute(toArray)", limit = "1")
+        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "fromArray.isTraceable()", "toArray.isTraceable()"}, limit = "1")
         protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             return performPointersBecomeOneWay(fromArray, toArray, copyHash);
         }
 
         @SuppressWarnings("unused")
+        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "!fromArray.isTraceable() || !toArray.isTraceable()"}, limit = "1")
+        protected static final ArrayObject doInapproriateOperation(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
+            throw new PrimitiveFailed(ERROR_TABLE.INAPPROPRIATE_OPERATION);
+        }
+
+        @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
-        protected static final ArrayObject doFail(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+        protected static final ArrayObject doBadArgument(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
-        protected static final ArrayObject doFail(final Object receiver, final ArrayObject argument, final boolean copyHash) {
+        protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
-        protected static final ArrayObject doFail(final ArrayObject receiver, final Object argument, final boolean copyHash) {
+        protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }

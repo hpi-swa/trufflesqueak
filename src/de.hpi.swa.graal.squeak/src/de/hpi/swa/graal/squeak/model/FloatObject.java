@@ -4,11 +4,13 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 
 @ExportLibrary(InteropLibrary.class)
-public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
+public final class FloatObject extends AbstractSqueakObjectWithHash {
     public static final int PRECISION = 53;
     public static final int EMIN = -1022;
     public static final int EMAX = 1023;
@@ -17,17 +19,35 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
     private double doubleValue;
 
     public FloatObject(final SqueakImageContext image) {
-        super(image, image.floatClass);
+        super(image);
     }
 
     private FloatObject(final FloatObject original) {
-        super(original.image, original.getSqueakClass());
+        super(original.image);
         doubleValue = original.doubleValue;
     }
 
     private FloatObject(final SqueakImageContext image, final double doubleValue) {
         this(image);
         this.doubleValue = doubleValue;
+    }
+
+    @Override
+    public ClassObject getSqueakClass() {
+        return image.floatClass;
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        // Nothing to do.
+    }
+
+    public static Object boxIfNecessary(final SqueakImageContext image, final double value) {
+        return Double.isFinite(value) ? value : new FloatObject(image, value);
+    }
+
+    public static Object boxIfNecessary(final SqueakImageContext image, final double value, final ConditionProfile isFiniteProfile) {
+        return isFiniteProfile.profile(Double.isFinite(value)) ? value : new FloatObject(image, value);
     }
 
     public static FloatObject valueOf(final SqueakImageContext image, final double value) {
@@ -37,11 +57,7 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
     public static Object newFromChunkWords(final SqueakImageContext image, final int[] ints) {
         assert ints.length == 2 : "Unexpected number of int values for double conversion";
         final double value = Double.longBitsToDouble(Integer.toUnsignedLong(ints[1]) << 32 | Integer.toUnsignedLong(ints[0]));
-        if (Double.isNaN(value)) {
-            return new FloatObject(image, value);
-        } else {
-            return value;
-        }
+        return boxIfNecessary(image, value);
     }
 
     public long getHigh() {
@@ -87,6 +103,10 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
                         (byte) (bits >> 24), (byte) (bits >> 16), (byte) (bits >> 8), (byte) bits};
     }
 
+    public boolean isFinite() {
+        return Double.isFinite(doubleValue);
+    }
+
     public boolean isNaN() {
         return Double.isNaN(doubleValue);
     }
@@ -111,7 +131,7 @@ public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
         return "" + doubleValue;
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public FloatObject shallowCopy() {
         return new FloatObject(this);
     }
 

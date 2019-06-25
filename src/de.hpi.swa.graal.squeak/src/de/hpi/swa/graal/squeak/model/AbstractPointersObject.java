@@ -39,7 +39,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public final void setPointers(final Object[] pointers) {
         // TODO: find out if invalidation should be avoided by copying values if pointers != null
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.pointers = pointers;
+        setPointersUnsafe(pointers);
     }
 
     @Override

@@ -10,12 +10,23 @@ import mx_unittest
 
 LANGUAGE_NAME = 'squeaksmalltalk'
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 BASE_VM_ARGS = [
-    '-Xss64M',  # Increase thread stack size
+    # RUNTIME
+    '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
 
-    # Tweak GC for faster image loading
-    '-Xms2G',  # Initial heap size
-    '-XX:MetaspaceSize=48M',  # Initial size of Metaspaces
+    # GARBAGE COLLECTOR (optimized for GraalSqueak image)
+    '-XX:OldSize=256M',         # Initial tenured generation size
+    '-XX:NewSize=1G',           # Initial new generation size
+    '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
+]
+BASE_VM_ARGS_TESTING = [
+    # RUNTIME
+    '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
+
+    # GARBAGE COLLECTOR (optimized for Travis CI)
+    '-Xms4G',                   # Initial heap size
+    '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ]
 SVM_BINARY = 'graalsqueak-svm'
 SVM_TARGET = os.path.join('bin', SVM_BINARY)
@@ -32,6 +43,11 @@ def _graal_vm_args(args):
             '-Dgraal.TraceTruffleCompilation=true',
         ]
 
+    if args.truffle_compilation_details:
+        graal_args += [
+            '-Dgraal.TraceTruffleCompilationDetails=true',
+            '-Dgraal.TraceTruffleExpansionSource=true']
+
     if args.truffle_compilation_stats:
         graal_args += [
             '-Dgraal.TruffleCompilationStatistics=true',
@@ -40,9 +56,7 @@ def _graal_vm_args(args):
     if args.perf_warnings:
         graal_args += [
             '-Dgraal.TruffleCompilationExceptionsAreFatal=true',
-            '-Dgraal.TraceTrufflePerformanceWarnings=true',
-            '-Dgraal.TraceTruffleCompilationDetails=true',
-            '-Dgraal.TraceTruffleExpansionSource=true']
+            '-Dgraal.TraceTrufflePerformanceWarnings=true']
 
     if args.trace_invalidation:
         graal_args += [
@@ -125,8 +139,6 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         dest='cpusampler', action='store_true', default=False)
     parser.add_argument('--cputracer', help='enable CPU tracing',
                         dest='cputracer', action='store_true', default=False)
-    parser.add_argument('-D', '--debug', help='enable Java debugger',
-                        dest='debug', action='store_true', default=False)
     parser.add_argument('-d', '--disable-interrupts',
                         help='disable interrupt handler',
                         dest='disable_interrupts',
@@ -196,6 +208,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         help='print splitting summary on shutdown',
         dest='trace_splitting', action='store_true', default=False)
     parser.add_argument(
+        '-tcd', '--truffle-compilation-details',
+        help='print Truffle compilation details',
+        dest='truffle_compilation_details', action='store_true', default=False)
+    parser.add_argument(
         '-tcs', '--truffle-compilation-statistics',
         help='print Truffle compilation statistics at the end of a run',
         dest='truffle_compilation_stats', action='store_true', default=False)
@@ -225,12 +241,6 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     # default: assertion checking is enabled
     if parsed_args.assertions:
         vm_args += ['-ea', '-esa']
-
-    if parsed_args.debug:
-        vm_args += [
-            '-d64', '-Xdebug',
-            '-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=y'
-        ]
 
     if parsed_args.gc:
         vm_args += ['-XX:+PrintGC', '-XX:+PrintGCDetails']
@@ -280,7 +290,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append(
             '--log.squeaksmalltalk.%s.level=%s' % (split[0], split[1]))
     if parsed_args.memtracer:
-        squeak_arguments.append('--memtracer')
+        squeak_arguments.extend(['--experimental-options', '--memtracer'])
 
     squeak_arguments.append('--polyglot')  # enable polyglot mode by default
 
@@ -301,22 +311,46 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
-    unittest_args = BASE_VM_ARGS
+    supports_coverage = os.environ.get('JDK') == 'openjdk8'  # see .travis.yml
 
-    supports_coverage = os.environ.get('JDK') == 'jdk8'  # see `.travis.yml`
-    jacoco_args = mx_gate.get_jacoco_agent_args()
-    if supports_coverage and jacoco_args:
-        unittest_args.extend(jacoco_args)
-    unittest_args += [
-        '--suite', 'graalsqueak', '--very-verbose', '--enable-timing']
-    with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
+    with mx_gate.Task('GraalSqueak JUnit and SUnit tests',
+                      tasks, tags=['test']) as t:
         if t:
+            unittest_args = BASE_VM_ARGS_TESTING[:]
+            jacoco_args = mx_gate.get_jacoco_agent_args()
+            if supports_coverage and jacoco_args:
+                unittest_args.extend(jacoco_args)
+            unittest_args.extend([
+                '--suite', 'graalsqueak', '--very-verbose', '--enable-timing'])
             mx_unittest.unittest(unittest_args)
+
+    if _compiler:
+        with mx_gate.Task('GraalSqueak TCK tests', tasks, tags=['test']) as t:
+            if t:
+                unittest_args = BASE_VM_ARGS_TESTING[:]
+                test_image = _get_path_to_test_image()
+                unittest_args.extend([
+                    '-Dgraal.TruffleCompilation=false',
+                    '-Dtck.language=squeaksmalltalk',
+                    '-Dpolyglot.squeaksmalltalk.ImagePath=%s' % test_image,
+                    'com.oracle.truffle.tck.tests'])
+                mx_unittest.unittest(unittest_args)
 
     if supports_coverage:
         with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
             if t:
                 mx.command_function('jacocoreport')(['--format', 'xml', '.'])
+
+
+def _get_path_to_test_image():
+    images_dir = os.path.join(BASE_DIR, 'images')
+    image_64bit = os.path.join(images_dir, 'test-64bit.image')
+    if os.path.isfile(image_64bit):
+        return image_64bit
+    image_32bit = os.path.join(images_dir, 'test-32bit.image')
+    if os.path.isfile(image_32bit):
+        return image_32bit
+    mx.abort('Unable to locate test image.')
 
 
 def _squeak_svm(args):
@@ -343,7 +377,7 @@ def _get_svm_binary_from_graalvm():
 
 _svmsuite = mx.suite('substratevm', fatalIfMissing=False)
 if _svmsuite:
-    _svmsuite.extensions.flag_suitename_map['squeak'] = (
+    _svmsuite.extensions.flag_suitename_map[LANGUAGE_NAME] = (
         'graalsqueak',
         ['GRAALSQUEAK', 'GRAALSQUEAK_LAUNCHER', 'GRAALSQUEAK_SHARED'], [])
 
@@ -351,7 +385,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,
     name='GraalSqueak',
     short_name='sq',
-    dir_name='squeak',
+    dir_name=LANGUAGE_NAME,
     license_files=[],
     third_party_license_files=[],
     truffle_jars=[
@@ -370,10 +404,10 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
             ],
             main_class='%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME,
             build_args=[
-                '--language:squeak',
                 # '--pgo-instrument',  # (uncomment to enable profiling)
                 # '--pgo',  # (uncomment to recompile with profiling info)
-            ]
+            ],
+            language=LANGUAGE_NAME
         )
     ],
 ))

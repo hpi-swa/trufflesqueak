@@ -21,7 +21,7 @@ import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @GenerateWrapper
@@ -29,7 +29,7 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
     private SourceSection sourceSection;
 
     @Child private ExecuteContextNode executeContextNode;
-    @Child private StackPushNode pushStackNode;
+    @Child private FrameStackWriteNode pushNode;
 
     protected EnterCodeNode(final EnterCodeNode codeNode) {
         this(codeNode.code);
@@ -38,7 +38,7 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
     protected EnterCodeNode(final CompiledCodeObject code) {
         super(code);
         executeContextNode = ExecuteContextNode.create(code);
-        pushStackNode = StackPushNode.create(code);
+        pushNode = FrameStackWriteNode.create(code);
     }
 
     public static SqueakCodeRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
@@ -94,7 +94,7 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
     @Fallback
     protected final Object enter(final VirtualFrame frame) {
         initializeSlots(code, frame);
-        final ContextObject newContext = ContextObject.create(frame);
+        final ContextObject newContext = ContextObject.create(frame, code);
         assert newContext == FrameAccess.getContext(frame, code);
         initializeArgumentsAndTemps(frame);
         return executeContextNode.executeContext(frame, newContext);
@@ -112,12 +112,12 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
         final Object[] arguments = frame.getArguments();
         assert arguments.length == FrameAccess.expectedArgumentSize(code.getNumArgsAndCopied());
         for (int i = 0; i < code.getNumArgsAndCopied(); i++) {
-            pushStackNode.executeWrite(frame, arguments[FrameAccess.getArgumentStartIndex() + i]);
+            pushNode.executePush(frame, arguments[FrameAccess.getArgumentStartIndex() + i]);
         }
         // Initialize remaining temporary variables with nil in newContext.
         final int remainingTemps = code.getNumTemps() - code.getNumArgs();
         for (int i = 0; i < remainingTemps; i++) {
-            pushStackNode.executeWrite(frame, NilObject.SINGLETON);
+            pushNode.executePush(frame, NilObject.SINGLETON);
         }
         assert FrameAccess.getStackPointer(frame, code) >= remainingTemps;
     }

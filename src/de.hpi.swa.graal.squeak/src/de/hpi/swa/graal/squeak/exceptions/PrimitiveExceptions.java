@@ -70,10 +70,6 @@ public final class PrimitiveExceptions {
         }
     }
 
-    public static class PrimitiveWithoutResultException extends ControlFlowException {
-        private static final long serialVersionUID = 1L;
-    }
-
     private PrimitiveExceptions() {
     }
 }

@@ -1,12 +1,11 @@
 package de.hpi.swa.graal.squeak.model;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
-public final class CharacterObject extends AbstractSqueakObjectWithClassAndHash {
+public final class CharacterObject extends AbstractSqueakObject {
     private final int value;
 
-    private CharacterObject(final SqueakImageContext image, final int value) {
-        super(image, image.characterClass);
+    private CharacterObject(final int value) {
         assert value > Character.MAX_VALUE : "CharacterObject should only be used for non-primitive chars.";
         this.value = value;
     }
@@ -21,11 +20,19 @@ public final class CharacterObject extends AbstractSqueakObjectWithClassAndHash 
         return 0;
     }
 
-    public static Object valueOf(final SqueakImageContext image, final int value) {
+    public static Object valueOf(final int value) {
         if (value <= Character.MAX_VALUE) {
             return (char) value;
         } else {
-            return new CharacterObject(image, value);
+            return new CharacterObject(value);
+        }
+    }
+
+    public static Object valueOf(final int value, final ConditionProfile isFiniteProfile) {
+        if (isFiniteProfile.profile(value <= Character.MAX_VALUE)) {
+            return (char) value;
+        } else {
+            return new CharacterObject(value);
         }
     }
 

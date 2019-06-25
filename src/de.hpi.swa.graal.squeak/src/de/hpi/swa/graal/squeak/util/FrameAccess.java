@@ -153,7 +153,7 @@ public final class FrameAccess {
     }
 
     public static void initializeMarker(final Frame frame, final CompiledCodeObject code) {
-        setMarker(frame, code, new FrameMarker(frame));
+        setMarker(frame, code, new FrameMarker());
     }
 
     public static ContextObject getContext(final Frame frame) {
@@ -171,20 +171,12 @@ public final class FrameAccess {
         frame.setObject(thisContextSlot, context);
     }
 
-    public static int getInstructionPointer(final Frame frame) {
-        return getInstructionPointer(frame, getBlockOrMethod(frame));
-    }
-
     public static int getInstructionPointer(final Frame frame, final CompiledCodeObject code) {
         return FrameUtil.getIntSafe(frame, code.getInstructionPointerSlot());
     }
 
     public static void setInstructionPointer(final Frame frame, final CompiledCodeObject code, final int value) {
         frame.setInt(code.getInstructionPointerSlot(), value);
-    }
-
-    public static int getStackPointer(final Frame frame) {
-        return getStackPointer(frame, getBlockOrMethod(frame));
     }
 
     public static int getStackPointer(final Frame frame, final CompiledCodeObject code) {
@@ -195,20 +187,17 @@ public final class FrameAccess {
         frame.setInt(code.getStackPointerSlot(), value);
     }
 
-    public static int getStackSize(final Frame frame) {
-        return getBlockOrMethod(frame).getSqueakContextSize();
-    }
-
     /** Write to a frame slot (slow operation), prefer {@link FrameStackWriteNode}. */
     public static void setStackSlot(final Frame frame, final FrameSlot frameSlot, final Object value) {
         final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        if (value instanceof Boolean) {
+        final Class<? extends Object> valueClass = value.getClass();
+        if (valueClass == Boolean.class) {
             frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Boolean);
             frame.setBoolean(frameSlot, (boolean) value);
-        } else if (value instanceof Long) {
+        } else if (valueClass == Long.class) {
             frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Long);
             frame.setLong(frameSlot, (long) value);
-        } else if (value instanceof Double) {
+        } else if (valueClass == Double.class) {
             frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Double);
             frame.setDouble(frameSlot, (double) value);
         } else {
@@ -224,7 +213,7 @@ public final class FrameAccess {
 
     public static boolean isGraalSqueakFrame(final Frame frame) {
         final Object[] arguments = frame.getArguments();
-        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()] instanceof CompiledMethodObject;
+        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()].getClass() == CompiledMethodObject.class;
     }
 
     public static Object[] newWith(final CompiledMethodObject method, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {

@@ -3,8 +3,6 @@ package de.hpi.swa.graal.squeak.test;
 import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -18,9 +16,8 @@ import org.junit.BeforeClass;
 import com.oracle.truffle.api.Truffle;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
@@ -28,12 +25,12 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
-    private static final int TIMEOUT_SECONDS = 60;
+    private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2;
+    private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
     private static final int PRIORITY_10_LIST_INDEX = 9;
+    private static final String PASSED_VALUE = "passed";
 
     private static PointersObject idleProcess;
 
@@ -59,11 +56,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void patchImageForTesting() {
-        image.getActiveProcess().atputNil0(PROCESS.SUSPENDED_CONTEXT);
-        image.getOutput().println("Modifying StartUpList for testing...");
-        evaluate("{Delay. EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
-        image.getOutput().println("Processing StartUpList...");
-        evaluate("Smalltalk processStartUpList: true");
+        image.interrupt.start();
         final ArrayObject lists = (ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
         final Object firstLink = priority10List.at0(LINKED_LIST.FIRST_LINK);
@@ -71,13 +64,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
         idleProcess = (PointersObject) firstLink;
         assert idleProcess.at0(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
-        image.getOutput().println("Setting author information...");
-        evaluate("Utilities authorName: 'GraalSqueak'");
-        evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
-        image.getOutput().println("Initializing fresh MorphicUIManager...");
-        evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
         image.getOutput().println("Increasing default timeout...");
-        patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ " + TIMEOUT_SECONDS);
+        patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ " + SQUEAK_TIMEOUT_SECONDS);
         if (!runsOnMXGate()) {
             // Patch TestCase>>#performTest, so errors are printed to stderr for debugging purposes.
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
@@ -159,7 +147,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
                 linkedList.atput0(LINKED_LIST.LAST_LINK, expectedValue);
             }
         }
-
     }
 
     protected static void patchMethod(final String className, final String selector, final String body) {
@@ -172,46 +159,41 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     protected static TestResult runTestCase(final TestRequest request) {
         return runWithTimeout(request, () -> {
-            final String testCommand = testCommand(request);
             context.enter();
             try {
-                return extractFailuresAndErrorsFromTestResult(evaluate(testCommand));
+                return extractFailuresAndErrorsFromTestResult(request);
             } finally {
                 context.leave();
             }
         });
     }
 
+    private static TestResult extractFailuresAndErrorsFromTestResult(final TestRequest request) {
+        final Object result = evaluate(testCommand(request));
+        if (!(result instanceof NativeObject) || !((NativeObject) result).isString()) {
+            return TestResult.failure("did not return a ByteString, got " + result);
+        }
+        final String testResult = ((NativeObject) result).toString();
+        if (PASSED_VALUE.equals(testResult)) {
+            assert ((NativeObject) result).isByteType() : "Passing result should always be a ByteString";
+            return TestResult.success(testResult);
+        } else {
+            final boolean shouldPass = (boolean) evaluate(shouldPassCommand(request));
+            if (shouldPass) {
+                return TestResult.failure(testResult);
+            } else {
+                return TestResult.success("expected failure");
+            }
+        }
+    }
+
     private static String testCommand(final TestRequest request) {
-        return String.format("%s run: #%s", request.testCase, request.testSelector);
+        return String.format("[[(%s selector: #%s) runCase. '%s'] on: TestFailure do: [:e | e asString ]] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack]",
+                        request.testCase, request.testSelector, PASSED_VALUE);
     }
 
-    private static TestResult extractFailuresAndErrorsFromTestResult(final Object result) {
-        if (!(result instanceof AbstractSqueakObject) || !result.toString().equals("a TestResult")) {
-            return TestResult.failure("did not return a TestResult, got " + result);
-        }
-        final PointersObject testResult = (PointersObject) result;
-        final boolean hasPassed = (boolean) testResult.send("hasPassed");
-        if (hasPassed) {
-            return TestResult.success("passed");
-        }
-        final AbstractSqueakObjectWithClassAndHash failures = (AbstractSqueakObjectWithClassAndHash) testResult.send("failures");
-        final AbstractSqueakObjectWithClassAndHash errors = (AbstractSqueakObjectWithClassAndHash) testResult.send("errors");
-        final List<String> output = new ArrayList<>();
-        appendTestResult(output, (ArrayObject) failures.send("asArray"), " (F)");
-        appendTestResult(output, (ArrayObject) errors.send("asArray"), " (E)");
-        assert output.size() > 0 : "Should not be empty";
-        return TestResult.failure(String.join(", ", output));
-    }
-
-    private static void appendTestResult(final List<String> output, final ArrayObject array, final String suffix) {
-        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-        final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        for (int i = 0; i < sizeNode.execute(array); i++) {
-            final AbstractSqueakObject value = (AbstractSqueakObject) at0Node.execute(array, i);
-            assert value != NilObject.SINGLETON;
-            output.add(((PointersObject) value).at0(0) + suffix);
-        }
+    private static String shouldPassCommand(final TestRequest request) {
+        return String.format("(%s selector: #%s) shouldPass", request.testCase, request.testSelector, PASSED_VALUE);
     }
 
     private static TestResult runWithTimeout(final TestRequest request, final Supplier<TestResult> action) {

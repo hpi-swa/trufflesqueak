@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -23,7 +24,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doCanWrite(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asBoolean(method.image.env.getCurrentWorkingDirectory().isWritable());
+            return BooleanObject.wrap(method.image.env.getCurrentWorkingDirectory().isWritable());
         }
     }
 

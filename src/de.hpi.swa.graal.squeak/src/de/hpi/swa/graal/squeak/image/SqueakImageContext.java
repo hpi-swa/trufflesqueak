@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.image;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.lang.ref.ReferenceQueue;
 import java.math.BigInteger;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
@@ -24,7 +25,7 @@ import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.interop.InteropMap;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
@@ -33,6 +34,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -46,9 +48,14 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.ENVIRONMENT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SMALLTALK_IMAGE;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.B2D;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBlt;
+import de.hpi.swa.graal.squeak.nodes.plugins.JPEGReader;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
+import de.hpi.swa.graal.squeak.nodes.plugins.Zip;
 import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
@@ -60,9 +67,7 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class SqueakImageContext {
-    public final boolean sqFalse = false;
-    public final boolean sqTrue = true;
-    // Special objects
+    /* Special objects */
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
     public final PointersObject schedulerAssociation = new PointersObject(this);
@@ -95,92 +100,58 @@ public final class SqueakImageContext {
     public final NativeObject runWithInSelector = new NativeObject(this);
     public final ArrayObject primitiveErrorTable = new ArrayObject(this);
     public final ArrayObject specialSelectors = new ArrayObject(this);
-    @CompilationFinal public ClassObject smallFloatClass;
+    @CompilationFinal public ClassObject smallFloatClass = null;
     @CompilationFinal public ClassObject truffleObjectClass = null;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
 
-    private final SqueakLanguage language;
-    @CompilationFinal private PrintWriter output;
-    @CompilationFinal private PrintWriter error;
-    @CompilationFinal public SqueakLanguage.Env env;
-
-    // Special selectors
-    public final NativeObject plus = new NativeObject(this);
-    public final NativeObject minus = new NativeObject(this);
-    public final NativeObject lt = new NativeObject(this);
-    public final NativeObject gt = new NativeObject(this);
-    public final NativeObject le = new NativeObject(this);
-    public final NativeObject ge = new NativeObject(this);
-    public final NativeObject eq = new NativeObject(this);
-    public final NativeObject ne = new NativeObject(this);
-    public final NativeObject times = new NativeObject(this);
-    public final NativeObject divide = new NativeObject(this);
-    public final NativeObject modulo = new NativeObject(this);
-    public final NativeObject pointAt = new NativeObject(this);
-    public final NativeObject bitShift = new NativeObject(this);
-    public final NativeObject floorDivide = new NativeObject(this);
-    public final NativeObject bitAnd = new NativeObject(this);
-    public final NativeObject bitOr = new NativeObject(this);
-    public final NativeObject at = new NativeObject(this);
-    public final NativeObject atput = new NativeObject(this);
-    public final NativeObject sqSize = new NativeObject(this);
-    public final NativeObject next = new NativeObject(this);
-    public final NativeObject nextPut = new NativeObject(this);
-    public final NativeObject atEnd = new NativeObject(this);
-    public final NativeObject equivalent = new NativeObject(this);
-    public final NativeObject klass = new NativeObject(this);
-    public final NativeObject nonEquivalent = new NativeObject(this);
-    public final NativeObject sqValue = new NativeObject(this);
-    public final NativeObject valueWithArg = new NativeObject(this);
-    public final NativeObject sqDo = new NativeObject(this);
-    public final NativeObject sqNew = new NativeObject(this);
-    public final NativeObject newWithArg = new NativeObject(this);
-    public final NativeObject x = new NativeObject(this);
-    public final NativeObject y = new NativeObject(this);
-
-    @CompilationFinal(dimensions = 1) public final NativeObject[] specialSelectorsArray = new NativeObject[]{
-                    plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
-                    floorDivide, bitAnd, bitOr, at, atput, sqSize, next, nextPut, atEnd, equivalent,
-                    klass, nonEquivalent, sqValue, valueWithArg, sqDo, sqNew, newWithArg, x, y
-    };
-
-    @CompilationFinal(dimensions = 1) public final int[] specialSelectorsNumArgs = new int[]{
-                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0
-    };
-
+    /* System Information */
+    public final SqueakImageFlags flags = new SqueakImageFlags();
     @CompilationFinal private String imagePath;
     @CompilationFinal private boolean isHeadless;
-    public final SqueakImageFlags flags = new SqueakImageFlags();
     public final SqueakContextOptions options;
-    public final OSDetector os = new OSDetector();
-    public final InterruptHandlerState interrupt;
-    public final long startUpMillis = System.currentTimeMillis();
-    private final AllocationReporter allocationReporter;
 
+    /* System */
     @CompilationFinal private SqueakDisplayInterface display;
+    public final InterruptHandlerState interrupt;
+    public final PrimitiveNodeFactory primitiveNodeFactory = new PrimitiveNodeFactory();
+    public final long startUpMillis = System.currentTimeMillis();
+    public final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
+
+    /* Truffle */
+    private final AllocationReporter allocationReporter;
+    @CompilationFinal public SqueakLanguage.Env env;
+    private final SqueakLanguage language;
+    private Source lastParseRequestSource;
+    @CompilationFinal private PrintWriter output;
+    @CompilationFinal private PrintWriter error;
+
+    @CompilationFinal private SqueakImage squeakImage;
+
+    /* Utilities */
+    public final OSDetector os = new OSDetector();
 
     @CompilationFinal private ClassObject compilerClass = null;
     @CompilationFinal private ClassObject parserClass = null;
-    @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
 
-    public final PrimitiveNodeFactory primitiveNodeFactory = new PrimitiveNodeFactory();
+    /* Plugins */
+    public final B2D b2d = new B2D(this);
+    public final BitBlt bitblt = new BitBlt();
+    public String[] dropPluginFileList = new String[0];
     public final EconomicMap<Long, SeekableByteChannel> filePluginHandles = EconomicMap.create();
+    public final JPEGReader jpegReader = new JPEGReader();
     public final EconomicMap<Long, SqueakSocket> socketPluginHandles = EconomicMap.create();
     public final EconomicMap<Long, SqSSL> squeakSSLHandles = EconomicMap.create();
-    public String[] dropPluginFileList = new String[0];
+    public final Zip zip = new Zip();
 
-    public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes(); // for testing
-    @CompilationFinal private NativeObject debugErrorSelector = null; // for testing
-    public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes(); // for
-                                                                                                  // testing
-    @CompilationFinal private NativeObject debugSyntaxErrorSelector = null; // for testing
-
-    private Source lastParseRequestSource;
-    @CompilationFinal private SqueakImage squeakImage;
+    /* Error detection for headless execution */
+    @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes();
+    @CompilationFinal private NativeObject debugErrorSelector = null;
+    @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes();
+    @CompilationFinal private NativeObject debugSyntaxErrorSelector = null;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
@@ -194,14 +165,15 @@ public final class SqueakImageContext {
     public void ensureLoaded() {
         if (!loaded()) {
             // Load image.
-            Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(this)).call();
+            SqueakImageReader.load(this);
+            getOutput().println("Preparing image for headless execution...");
             // Remove active context.
             getActiveProcess().atputNil0(PROCESS.SUSPENDED_CONTEXT);
             // Modify StartUpList for headless execution.
-            // TODO: Also start ProcessorScheduler and WeakArray (see SqueakSUnitTest).
-            evaluate("{EventSensor. ProcessorScheduler. Project. WeakArray} do: [:ea | Smalltalk removeFromStartUpList: ea]");
+            evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
             try {
-                evaluate("[Smalltalk processStartUpList: true] value");
+                /** See SmalltalkImage>>#snapshot:andQuit:withExitCode:embedded:. */
+                evaluate("[Smalltalk clearExternalObjects. Smalltalk processStartUpList: true. Smalltalk setPlatformPreferences] value");
             } catch (final Exception e) {
                 printToStdErr("startUpList failed:");
                 e.printStackTrace();
@@ -215,7 +187,7 @@ public final class SqueakImageContext {
     }
 
     /**
-     * Returns `true` if image has been loaded. {@link SqueakImageReaderNode} calls
+     * Returns `true` if image has been loaded. {@link SqueakImageReader} calls
      * {@link #getSqueakImage()} and initializes `squeakImage`.
      */
     public boolean loaded() {
@@ -226,15 +198,19 @@ public final class SqueakImageContext {
         if (squeakImage == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             squeakImage = new SqueakImage(this);
-            primitiveNodeFactory.initialize(this);
         }
         return squeakImage;
     }
 
-    private Object evaluate(final String sourceCode) {
+    public Object evaluate(final String sourceCode) {
         CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
         final Source source = Source.newBuilder(SqueakLanguageConfig.NAME, sourceCode, "<image#evaluate>").build();
         return Truffle.getRuntime().createCallTarget(getDoItContextNode(source)).call();
+    }
+
+    public Object lookup(final String member) {
+        final Object symbol = getCompilerClass().send("evaluate:", asByteString("'" + member + "' asSymbol"));
+        return smalltalk.send("at:ifAbsent:", symbol, NilObject.SINGLETON);
     }
 
     public boolean patch(final SqueakLanguage.Env newEnv) {
@@ -242,12 +218,10 @@ public final class SqueakImageContext {
         env = newEnv;
         output = new PrintWriter(env.out(), true);
         error = new PrintWriter(env.err(), true);
-        simulatePrimitiveArgsSelector = null;
         return true;
     }
 
     public ExecuteTopLevelContextNode getActiveContextNode() {
-        assert lastParseRequestSource == null : "Image should not have been executed manually before.";
         final PointersObject activeProcess = getActiveProcess();
         final ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atputNil0(PROCESS.SUSPENDED_CONTEXT);
@@ -269,7 +243,7 @@ public final class SqueakImageContext {
 
         final AbstractSqueakObjectWithClassAndHash parser = (AbstractSqueakObjectWithClassAndHash) parserClass.send("new");
         final AbstractSqueakObjectWithClassAndHash methodNode = (AbstractSqueakObjectWithClassAndHash) parser.send(
-                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, sqTrue, NilObject.SINGLETON, new BlockClosureObject(this));
+                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, new BlockClosureObject(this, 0));
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
@@ -334,18 +308,13 @@ public final class SqueakImageContext {
         this.parserClass = parserClass;
     }
 
-    public NativeObject getSimulatePrimitiveArgsSelector() {
-        return simulatePrimitiveArgsSelector;
-    }
-
-    public void setSimulatePrimitiveArgsSelector(final NativeObject simulatePrimitiveArgsSelector) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.simulatePrimitiveArgsSelector = simulatePrimitiveArgsSelector;
-    }
-
     public void setSmallFloat(final ClassObject classObject) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         smallFloatClass = classObject;
+    }
+
+    public void initializePrimitives() {
+        primitiveNodeFactory.initialize(this);
     }
 
     public ClassObject initializeTruffleObject() {
@@ -370,9 +339,29 @@ public final class SqueakImageContext {
         return (PointersObject) getScheduler().at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
-    public void setSemaphore(final long index, final AbstractSqueakObject semaphore) {
+    public Object getSpecialObject(final int index) {
+        return specialObjectsArray.getObjectStorage()[index];
+    }
+
+    public void setSpecialObject(final int index, final Object value) {
+        specialObjectsArray.getObjectStorage()[index] = value;
+    }
+
+    private ArrayObject getSpecialSelectors() {
+        return (ArrayObject) getSpecialObject(SPECIAL_OBJECT.SPECIAL_SELECTORS);
+    }
+
+    public NativeObject getSpecialSelector(final int index) {
+        return (NativeObject) getSpecialSelectors().getObjectStorage()[index * 2];
+    }
+
+    public int getSpecialSelectorNumArgs(final int index) {
+        return (int) (long) getSpecialSelectors().getObjectStorage()[index * 2 + 1];
+    }
+
+    public void setSemaphore(final int index, final AbstractSqueakObject semaphore) {
         assert semaphore == NilObject.SINGLETON || ((AbstractSqueakObjectWithClassAndHash) semaphore).getSqueakClass().isSemaphoreClass();
-        specialObjectsArray.atput0Object(index, semaphore);
+        setSpecialObject(index, semaphore);
     }
 
     public boolean hasDisplay() {
@@ -464,10 +453,6 @@ public final class SqueakImageContext {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 
-    public boolean asBoolean(final boolean value) {
-        return value ? sqTrue : sqFalse;
-    }
-
     public NativeObject asByteArray(final byte[] bytes) {
         return NativeObject.newNativeBytes(this, byteArrayClass, bytes);
     }
@@ -548,7 +533,7 @@ public final class SqueakImageContext {
         allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
     }
 
-    public Object reportNewAllocationResult(final Object value) {
+    public <T extends Object> T reportNewAllocationResult(final T value) {
         allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
         return value;
     }

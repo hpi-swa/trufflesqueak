@@ -134,10 +134,19 @@ public final class SqueakGuards {
     }
 
     public static boolean isPowerOfTwo(final long value) {
-        return value != 1 && (value & value - 1) == 0;
+        return value > 1 && (value & value - 1) == 0;
+    }
+
+    public static boolean isUsedJavaPrimitive(final Object value) {
+        final Class<? extends Object> clazz = value.getClass();
+        return clazz == Boolean.class || clazz == Long.class || clazz == Double.class || clazz == Character.class;
     }
 
     public static boolean isZero(final double value) {
         return value == 0;
+    }
+
+    public static boolean isZeroOrGreater(final double value) {
+        return value >= 0;
     }
 }

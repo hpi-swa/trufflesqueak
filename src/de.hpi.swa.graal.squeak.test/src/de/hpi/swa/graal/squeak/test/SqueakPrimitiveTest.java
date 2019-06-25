@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
@@ -26,7 +27,7 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPrimReplaceFromTo() {
         final PointersObject rcvr = new PointersObject(image, image.arrayClass,
-                        new Object[]{NilObject.SINGLETON, image.sqFalse, image.sqTrue, image.characterClass, image.metaClass,
+                        new Object[]{NilObject.SINGLETON, BooleanObject.FALSE, BooleanObject.TRUE, image.characterClass, image.metaClass,
                                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                                         image.specialObjectsArray});
         assertSame(NilObject.SINGLETON, rcvr.at0(0));

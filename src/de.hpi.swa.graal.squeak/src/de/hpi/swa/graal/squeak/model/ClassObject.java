@@ -21,6 +21,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METACLASS;
@@ -54,6 +55,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         super(image, hash);
     }
 
+    public ClassObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
+        super(image, hash, squeakClass);
+    }
+
     private ClassObject(final ClassObject original, final ArrayObject copiedInstanceVariablesOrNull) {
         this(original.image, original.getSqueakClass(), original.pointers.clone());
         instancesAreClasses = original.instancesAreClasses;
@@ -77,19 +82,25 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public String nameAsClass() {
+    public String getClassName() {
         CompilerAsserts.neverPartOfCompilation();
         assert isClass();
         if (isAMetaClass()) {
-            final ClassObject classInstance = getThisClass();
-            return "Metaclass (" + classInstance.getClassName() + ")";
+            final Object classInstance = pointers[METACLASS.THIS_CLASS];
+            if (classInstance != NilObject.SINGLETON) {
+                return "Metaclass (" + ((ClassObject) classInstance).getClassNameUnsafe() + ")";
+            } else {
+                return "Metaclass (unknown)";
+            }
+        } else if (size() >= 11) {
+            return getClassNameUnsafe();
         } else {
-            return getClassName();
+            return "Unknown behavior";
         }
     }
 
-    private ClassObject getThisClass() {
-        return (ClassObject) pointers[METACLASS.THIS_CLASS];
+    public String getClassNameUnsafe() {
+        return ((NativeObject) pointers[CLASS.NAME]).asStringUnsafe();
     }
 
     private boolean isAMetaClass() {
@@ -161,11 +172,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return getInstanceSpecification() == 0;
     }
 
-    public void setInstancesAreClasses(final String className) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        // TODO: think about better check for the below.
-        instancesAreClasses = isMetaClass() || isAMetaClass() || "Behavior".equals(className) || "ClassDescription".equals(className) || "Class".equals(className) ||
-                        "TraitBehavior".equals(className) || "TraitDescription".equals(className) || "ClassTrait".equals(className) || "Trait".equals(className);
+    public void setInstancesAreClasses() {
+        if (!instancesAreClasses) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            instancesAreClasses = true;
+        }
     }
 
     public boolean instancesAreClasses() {
@@ -188,9 +199,19 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.semaphoreClass;
     }
 
-    public boolean isStringOrSymbolClass() {
-        /** ByteString or ByteSymbol. */
-        return this == image.stringClass || this == image.aboutToReturnSelector.getSqueakClass();
+    /** ByteString. */
+    public boolean isStringClass() {
+        return this == image.stringClass;
+    }
+
+    /** ByteSymbol. */
+    public boolean isSymbolClass() {
+        return this == image.aboutToReturnSelector.getSqueakClass();
+    }
+
+    /** WideString. */
+    public boolean isWideStringClass() {
+        return getSuperclassOrNull() == image.stringClass.getSuperclassOrNull();
     }
 
     private boolean includesBehavior(final ClassObject squeakClass) {
@@ -208,14 +229,31 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return includesBehavior(image.externalFunctionClass);
     }
 
+    /**
+     * {@link ClassObject}s are filled in at an earlier stage in
+     * {@link SqueakImageReader#fillInClassObjects}.
+     */
+    @Override
     public void fillin(final SqueakImageChunk chunk) {
-        final Object[] chunkPointers = chunk.getPointers();
-        superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
-        methodDict = (PointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
-        format = (long) chunkPointers[CLASS_DESCRIPTION.FORMAT];
-        instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
-        organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
-        pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
+        if (methodDict == null) {
+            final Object[] chunkPointers = chunk.getPointers();
+            superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
+            methodDict = (PointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
+            format = (long) chunkPointers[CLASS_DESCRIPTION.FORMAT];
+            instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
+            organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
+            pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
+            if (size() > 7) {
+                final String className = getClassNameUnsafe();
+                if (image.getCompilerClass() == null && "Compiler".equals(className)) {
+                    image.setCompilerClass(this);
+                } else if (image.getParserClass() == null && "Parser".equals(className)) {
+                    image.setParserClass(this);
+                } else if (!image.flags.is64bit() && image.smallFloatClass == null && "SmallFloat64".equals(className)) {
+                    image.setSmallFloat(this);
+                }
+            }
+        }
     }
 
     public void setFormat(final long format) {
@@ -225,7 +263,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public int instsize() {
-        return getSqueakClass().getBasicInstanceSize();
+        return METACLASS.INST_SIZE;
     }
 
     @Override
@@ -267,10 +305,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public PointersObject getMethodDict() {
         return methodDict;
-    }
-
-    public String getClassName() {
-        return ((NativeObject) pointers[CLASS.NAME]).asStringUnsafe();
     }
 
     public boolean hasInstanceVariables() {
@@ -339,8 +373,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             final PointersObject methodDictObject = lookupClass.getMethodDict();
             for (int i = METHOD_DICT.NAMES; i < methodDictObject.size(); i++) {
                 final Object methodSelector = methodDictObject.at0(i);
-                if (methodSelector != NilObject.SINGLETON) {
-                    methodNames.add(methodSelector.toString());
+                if (methodSelector instanceof NativeObject) {
+                    methodNames.add(((NativeObject) methodSelector).asStringUnsafe());
                 }
             }
             lookupClass = lookupClass.getSuperclassOrNull();
@@ -356,7 +390,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return (int) (format >> 16 & 0x1f);
     }
 
-    public AbstractSqueakObject shallowCopy(final ArrayObject copiedInstanceVariablesOrNull) {
+    public ClassObject shallowCopy(final ArrayObject copiedInstanceVariablesOrNull) {
         return new ClassObject(this, copiedInstanceVariablesOrNull);
     }
 

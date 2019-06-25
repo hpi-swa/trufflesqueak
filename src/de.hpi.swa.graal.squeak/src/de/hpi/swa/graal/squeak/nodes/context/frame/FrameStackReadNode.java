@@ -5,14 +5,12 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-@NodeInfo(cost = NodeCost.NONE)
 @ImportStatic(CONTEXT.class)
 public abstract class FrameStackReadNode extends AbstractNodeWithCode {
 
@@ -22,6 +20,10 @@ public abstract class FrameStackReadNode extends AbstractNodeWithCode {
 
     public static FrameStackReadNode create(final CompiledCodeObject code) {
         return FrameStackReadNodeGen.create(code);
+    }
+
+    public final Object executeTop(final Frame frame) {
+        return execute(frame, FrameAccess.getStackPointer(frame, code) - 1);
     }
 
     public abstract Object execute(Frame frame, int stackIndex);

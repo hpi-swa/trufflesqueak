@@ -9,7 +9,6 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -60,12 +59,6 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
     @Specialization(guards = {"argument.isBytes()"})
     protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject receiver, final ClassObject argument) {
-        receiver.setSqueakClass(argument);
-        return receiver;
-    }
-
-    @Specialization(guards = {"argument.isWords()"})
-    protected static final FloatObject doFloat(final FloatObject receiver, final ClassObject argument) {
         receiver.setSqueakClass(argument);
         return receiver;
     }

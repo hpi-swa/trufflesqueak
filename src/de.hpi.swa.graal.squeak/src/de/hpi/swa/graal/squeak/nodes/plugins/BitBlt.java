@@ -2,12 +2,13 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.function.LongBinaryOperator;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -65,7 +66,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#default8To32Table */
-    private static final long[] DEFAULT_8_TO_32_TABLE = new long[]{
+    @CompilationFinal(dimensions = 1) private static final long[] DEFAULT_8_TO_32_TABLE = new long[]{
                     0x0L, 0xFF000001L, 0xFFFFFFFFL, 0xFF808080L, 0xFFFF0000L, 0xFF00FF00L, 0xFF0000FFL, 0xFF00FFFFL,
                     0xFFFFFF00L, 0xFFFF00FFL, 0xFF202020L, 0xFF404040L, 0xFF606060L, 0xFF9F9F9FL, 0xFFBFBFBFL, 0xFFDFDFDFL,
                     0xFF080808L, 0xFF101010L, 0xFF181818L, 0xFF282828L, 0xFF303030L, 0xFF383838L, 0xFF484848L, 0xFF505050L,
@@ -100,120 +101,117 @@ public final class BitBlt {
                     0xFFFFCCCCL, 0xFFFFFFCCL, 0xFFFF00FFL, 0xFFFF33FFL, 0xFFFF66FFL, 0xFFFF99FFL, 0xFFFFCCFFL, 0xFFFFFFFFL};
 
     /* Variables */
-    private static int affectedB;
-    private static int affectedL;
-    private static int affectedR;
-    private static int affectedT;
-    private static int bbH;
-    private static int bbW;
-    private static PointersObject bitBltOop;
-    private static long bitCount;
-    private static int clipHeight;
-    private static int clipWidth;
-    private static int clipX;
-    private static int clipY;
-    private static long cmBitsPerColor;
-    private static long cmFlags;
-    private static int[] cmLookupTable;
-    private static long cmMask;
-    private static int[] cmMaskTable;
-    private static int[] cmShiftTable;
-    private static int combinationRule;
-    private static long componentAlphaModeAlpha;
-    private static long componentAlphaModeColor;
-    private static int[] destBits;
-    private static byte[] destBytes;
-    private static long destDelta;
-    private static int destDepth;
-    private static PointersObject destForm;
-    private static int destHeight;
-    private static long destIndex;
-    private static long destMask;
-    private static boolean destMSB;
-    private static int destPitch;
-    private static int destPPW;
-    private static int destWidth;
-    private static int destX;
-    private static int destY;
-    private static final int[] DITHER_8_LOOKUP = new int[4096];
-    private static final int[] DITHER_MATRIX_4X4 = new int[]{
+    private int affectedB;
+    private int affectedL;
+    private int affectedR;
+    private int affectedT;
+    private int bbH;
+    private int bbW;
+    private PointersObject bitBltOop;
+    private long bitCount;
+    private int clipHeight;
+    private int clipWidth;
+    private int clipX;
+    private int clipY;
+    private long cmBitsPerColor;
+    private long cmFlags;
+    private int[] cmLookupTable;
+    private long cmMask;
+    private int[] cmMaskTable;
+    private int[] cmShiftTable;
+    private int combinationRule;
+    private long componentAlphaModeAlpha;
+    private long componentAlphaModeColor;
+    private int[] destBits;
+    private byte[] destBytes;
+    private long destDelta;
+    private int destDepth;
+    private PointersObject destForm;
+    private int destHeight;
+    private long destIndex;
+    private long destMask;
+    private boolean destMSB;
+    private int destPitch;
+    private int destPPW;
+    private int destWidth;
+    private int destX;
+    private int destY;
+    @CompilationFinal(dimensions = 1) private static final int[] DITHER_8_LOOKUP = new int[4096];
+    @CompilationFinal(dimensions = 1) private static final int[] DITHER_MATRIX_4X4 = new int[]{
                     0, 8, 2, 10,
                     12, 4, 14, 6,
                     3, 11, 1, 9,
                     15, 7, 13, 5
     };
-    private static final int[] DITHER_THRESHOLDS_16 = new int[]{0, 2, 4, 6, 8, 12, 14, 16};
-    private static final int[] DITHER_VALUES_16 = new int[]{
+    @CompilationFinal(dimensions = 1) private static final int[] DITHER_THRESHOLDS_16 = new int[]{0, 2, 4, 6, 8, 12, 14, 16};
+    @CompilationFinal(dimensions = 1) private static final int[] DITHER_VALUES_16 = new int[]{
                     0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
                     15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30
     };
-    private static long dstBitShift;
-    private static int dx;
-    private static int dy;
-    private static long endOfDestination;
-    private static long endOfSource;
-    private static long[] gammaLookupTable;
-    private static AbstractSqueakObject halftoneForm;
-    private static int[] halftoneBits;
-    private static long halftoneHeight;
-    private static boolean hasSurfaceLock;
-    private static long hDir;
-    private static int height;
-    @SuppressWarnings("unused") private static boolean isWarping;
-    private static long mask1;
-    private static long mask2;
-    private static final int[] MASK_TABLE = new int[]{
+    private long dstBitShift;
+    private int dx;
+    private int dy;
+    private long endOfDestination;
+    private long endOfSource;
+    private long[] gammaLookupTable;
+    private AbstractSqueakObject halftoneForm;
+    private int[] halftoneBits;
+    private long halftoneHeight;
+    private boolean hasSurfaceLock;
+    private long hDir;
+    private int height;
+    @SuppressWarnings("unused") private boolean isWarping;
+    private long mask1;
+    private long mask2;
+    @CompilationFinal(dimensions = 1) private static final int[] MASK_TABLE = new int[]{
                     0, 1, 3, 0, 15, 31, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 65535,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1
     };
     private static final String MODULE_NAME = "BitBltPlugin * VMMaker.oscog-eem.2480 (GraalSqueak)";
-    private static boolean noHalftone;
-    private static boolean noSource;
-    private static int nWords;
-    private static final LongBinaryOperator[] OP_TABLE = new LongBinaryOperator[43];
-    private static boolean preload;
-    private static long skew;
-    private static long sourceAlpha;
-    private static int[] sourceBits;
-    private static long sourceDelta;
-    private static int sourceDepth;
-    private static PointersObject sourceForm;
-    private static int sourceHeight;
-    private static long sourceIndex;
-    private static boolean sourceMSB;
-    private static int sourcePitch;
-    private static int sourcePPW;
-    private static int sourceWidth;
-    private static int sourceX;
-    private static int sourceY;
-    private static long srcBitShift;
-    private static int sx;
-    private static int sy;
-    private static long[] ungammaLookupTable;
-    private static long vDir;
-    private static long warpAlignMask;
-    private static long warpAlignShift;
-    private static int[] warpBitShiftTable = new int[32];
-    private static long warpSrcMask;
-    private static long warpSrcShift;
-    private static int width;
+    private boolean noHalftone;
+    private boolean noSource;
+    private int nWords;
+    @CompilationFinal(dimensions = 1) private static final LongBinaryOperator[] OP_TABLE = new LongBinaryOperator[43];
+    private boolean preload;
+    private long skew;
+    private long sourceAlpha;
+    private int[] sourceBits;
+    private long sourceDelta;
+    private int sourceDepth;
+    private PointersObject sourceForm;
+    private int sourceHeight;
+    private long sourceIndex;
+    private boolean sourceMSB;
+    private int sourcePitch;
+    private int sourcePPW;
+    private int sourceWidth;
+    private int sourceX;
+    private int sourceY;
+    private long srcBitShift;
+    private int sx;
+    private int sy;
+    private long[] ungammaLookupTable;
+    private long vDir;
+    private long warpAlignMask;
+    private long warpAlignShift;
+    private int[] warpBitShiftTable = new int[32];
+    private long warpSrcMask;
+    private long warpSrcShift;
+    private int width;
 
-    private static boolean successFlag = false;
+    private boolean successFlag = false;
 
-    static {
+    public BitBlt() {
         initialiseModule();
     }
 
-    private BitBlt() {
-    }
-
     /* BitBltSimulation>>#addWord:with: */
-    private static long addWordwith(final long sourceWord, final long destinationWord) {
+    private long addWordwith(final long sourceWord, final long destinationWord) {
         return sourceWord + destinationWord;
     }
 
     /* BitBltSimulation>>#alphaBlendConst:with: */
-    private static long alphaBlendConstwith(final long sourceWord, final long destinationWord) {
+    private long alphaBlendConstwith(final long sourceWord, final long destinationWord) {
         return alphaBlendConstwithpaintMode(sourceWord, destinationWord, false);
     }
 
@@ -233,7 +231,7 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#alphaBlendConst:with:paintMode: */
     @ExplodeLoop
-    private static long alphaBlendConstwithpaintMode(final long sourceWord, final long destinationWord, final boolean paintMode) {
+    private long alphaBlendConstwithpaintMode(final long sourceWord, final long destinationWord, final boolean paintMode) {
         final long bitsPerColor;
         long blend;
         long blendAG;
@@ -304,7 +302,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#alphaBlendScaled:with: */
-    private static long alphaBlendScaledwith(final long sourceWord, final long destinationWord) {
+    private long alphaBlendScaledwith(final long sourceWord, final long destinationWord) {
         /* High 8 bits of source pixel is source opacity (ARGB format) */
         final long unAlpha = 0xFF - (sourceWord >>> 24);
         /* blend red and blue components */
@@ -327,7 +325,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#alphaBlend:with: */
-    private static long alphaBlendwith(final long sourceWord, final long destinationWord) {
+    private long alphaBlendwith(final long sourceWord, final long destinationWord) {
         /* High 8 bits of source pixel */
         final long alpha = sourceWord >>> 24;
         if (alpha == 0) {
@@ -348,7 +346,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#alphaPaintConst:with: */
-    private static long alphaPaintConstwith(final long sourceWord, final long destinationWord) {
+    private long alphaPaintConstwith(final long sourceWord, final long destinationWord) {
         if (sourceWord == 0) {
             return destinationWord;
         }
@@ -361,7 +359,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#alphaSourceBlendBits16 */
-    private static void alphaSourceBlendBits16() {
+    private void alphaSourceBlendBits16() {
         int deltaX;
         int deltaY;
         long destWord;
@@ -464,7 +462,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#alphaSourceBlendBits32 */
-    private static void alphaSourceBlendBits32() {
+    private void alphaSourceBlendBits32() {
         int deltaX;
         int deltaY;
         long destWord;
@@ -542,7 +540,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#alphaSourceBlendBits8 */
-    private static void alphaSourceBlendBits8() {
+    private void alphaSourceBlendBits8() {
         long adjust;
         int deltaX;
         int deltaY;
@@ -696,7 +694,7 @@ public final class BitBlt {
     /* ar 10/19/1999: This method requires surfaces to be locked. */
 
     /* BitBltSimulation>>#checkSourceOverlap */
-    private static void checkSourceOverlap() {
+    private void checkSourceOverlap() {
         final long t;
 
         if (sourceForm == destForm && dy >= sy) {
@@ -734,7 +732,7 @@ public final class BitBlt {
     /* first in x */
 
     /* BitBltSimulation>>#clipRange */
-    private static void clipRange() {
+    private void clipRange() {
         if (destX >= clipX) {
             sx = sourceX;
             dx = destX;
@@ -783,11 +781,11 @@ public final class BitBlt {
     /* This function is exported for the Balloon engine */
 
     /* BitBltSimulation>>#copyBits */
-    private static void copyBits() {
+    private void copyBits() {
         copyBits(-1);
     }
 
-    private static void copyBits(final long factor) {
+    private void copyBits(final long factor) {
         clipRange();
         if (bbW <= 0 || bbH <= 0) {
             /* zero width or height; noop */
@@ -804,7 +802,7 @@ public final class BitBlt {
     /* Support for the balloon engine. */
 
     /* BitBltSimulation>>#copyBitsFrom:to:at: */
-    protected static void copyBitsFromtoat(final int startX, final int stopX, final int yValue) {
+    protected void copyBitsFromtoat(final int startX, final int stopX, final int yValue) {
         destX = startX;
         destY = yValue;
         sourceX = startX;
@@ -819,11 +817,11 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#copyBitsLockedAndClipped */
-    private static void copyBitsLockedAndClipped() {
+    private void copyBitsLockedAndClipped() {
         copyBitsLockedAndClipped(-1);
     }
 
-    private static void copyBitsLockedAndClipped(final long factorOrMinusOne) {
+    private void copyBitsLockedAndClipped(final long factorOrMinusOne) {
         copyBitsRule41Test();
         if (failed()) {
             PrimitiveFailed.andTransferToInterpreter();
@@ -871,7 +869,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#copyBitsRule41Test */
-    private static void copyBitsRule41Test() {
+    private void copyBitsRule41Test() {
         if (combinationRule == 41) {
             /* fetch the forecolor into componentAlphaModeColor. */
             componentAlphaModeAlpha = 0xFF;
@@ -916,7 +914,7 @@ public final class BitBlt {
     /* This version of the inner loop assumes noSource = false. */
 
     /* BitBltSimulation>>#copyLoop */
-    private static void copyLoop() {
+    private void copyLoop() {
         long destWord;
         long halftoneWord;
         final long hInc;
@@ -1103,7 +1101,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#copyLoopNoSource */
-    private static void copyLoopNoSource() {
+    private void copyLoopNoSource() {
         long destWord;
         long halftoneWord;
         long mergeWord;
@@ -1170,7 +1168,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#copyLoopPixMap */
-    private static long copyLoopPixMap() {
+    private long copyLoopPixMap() {
         final long destPixMask;
         long destWord;
         long dstShift;
@@ -1294,7 +1292,7 @@ public final class BitBlt {
     /* Compute masks for left and right destination words */
 
     /* BitBltSimulation>>#destMaskAndPointerInit */
-    private static void destMaskAndPointerInit() {
+    private void destMaskAndPointerInit() {
         final long endBits;
         final long pixPerM1;
         final long startBits;
@@ -1346,7 +1344,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#drawLoopX:Y: */
-    private static void drawLoopXY(final long xDelta, final long yDelta) {
+    private void drawLoopXY(final long xDelta, final long yDelta) {
         int affB;
         int affL;
         int affR;
@@ -1569,7 +1567,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#fixAlpha:with: */
-    private static long fixAlphawith(final long sourceWord, final long destinationWord) {
+    private long fixAlphawith(final long sourceWord, final long destinationWord) {
         if (destDepth != 32) {
             return destinationWord;
         }
@@ -1594,16 +1592,17 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#ignoreSourceOrHalftone: */
-    private static boolean ignoreSourceOrHalftone(final Object formPointer) {
+    private boolean ignoreSourceOrHalftone(final Object formPointer) {
         return formPointer == null || combinationRule == 0 || combinationRule == 5 || combinationRule == 10 || combinationRule == 15;
     }
 
     /* BitBltSimulation>>#initBBOpTable */
-    private static long initBBOpTable() {
+    private void initBBOpTable() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         OP_TABLE[0 + 1] = BitBlt::clearWordwith;
         OP_TABLE[1 + 1] = BitBlt::bitAndwith;
         OP_TABLE[2 + 1] = BitBlt::bitAndInvertwith;
-        OP_TABLE[3 + 1] = BitBlt::sourceWordwith;
+        OP_TABLE[3 + 1] = this::sourceWordwith;
         OP_TABLE[4 + 1] = BitBlt::bitInvertAndwith;
         OP_TABLE[5 + 1] = BitBlt::destinationWordwith;
         OP_TABLE[6 + 1] = BitBlt::bitXorwith;
@@ -1618,35 +1617,35 @@ public final class BitBlt {
         OP_TABLE[15 + 1] = BitBlt::destinationWordwith;
         OP_TABLE[16 + 1] = BitBlt::destinationWordwith;
         OP_TABLE[17 + 1] = BitBlt::destinationWordwith;
-        OP_TABLE[18 + 1] = BitBlt::addWordwith;
-        OP_TABLE[19 + 1] = BitBlt::subWordwith;
-        OP_TABLE[20 + 1] = BitBlt::rgbAddwith;
-        OP_TABLE[21 + 1] = BitBlt::rgbSubwith;
-        OP_TABLE[22 + 1] = BitBlt::oLDrgbDiffwith;
-        OP_TABLE[23 + 1] = BitBlt::oLDtallyIntoMapwith;
-        OP_TABLE[24 + 1] = BitBlt::alphaBlendwith;
-        OP_TABLE[25 + 1] = BitBlt::pixPaintwith;
-        OP_TABLE[26 + 1] = BitBlt::pixMaskwith;
-        OP_TABLE[27 + 1] = BitBlt::rgbMaxwith;
-        OP_TABLE[28 + 1] = BitBlt::rgbMinwith;
-        OP_TABLE[29 + 1] = BitBlt::rgbMinInvertwith;
-        OP_TABLE[30 + 1] = BitBlt::alphaBlendConstwith;
-        OP_TABLE[31 + 1] = BitBlt::alphaPaintConstwith;
-        OP_TABLE[32 + 1] = BitBlt::rgbDiffwith;
-        OP_TABLE[33 + 1] = BitBlt::tallyIntoMapwith;
-        OP_TABLE[34 + 1] = BitBlt::alphaBlendScaledwith;
-        OP_TABLE[35 + 1] = BitBlt::alphaBlendScaledwith;
-        OP_TABLE[36 + 1] = BitBlt::alphaBlendScaledwith;
-        OP_TABLE[37 + 1] = BitBlt::rgbMulwith;
-        OP_TABLE[38 + 1] = BitBlt::pixSwapwith;
-        OP_TABLE[39 + 1] = BitBlt::pixClearwith;
-        OP_TABLE[40 + 1] = BitBlt::fixAlphawith;
-        OP_TABLE[41 + 1] = BitBlt::rgbComponentAlphawith;
-        return 0;
+        OP_TABLE[18 + 1] = this::addWordwith;
+        OP_TABLE[19 + 1] = this::subWordwith;
+        OP_TABLE[20 + 1] = this::rgbAddwith;
+        OP_TABLE[21 + 1] = this::rgbSubwith;
+        OP_TABLE[22 + 1] = this::oLDrgbDiffwith;
+        OP_TABLE[23 + 1] = this::oLDtallyIntoMapwith;
+        OP_TABLE[24 + 1] = this::alphaBlendwith;
+        OP_TABLE[25 + 1] = this::pixPaintwith;
+        OP_TABLE[26 + 1] = this::pixMaskwith;
+        OP_TABLE[27 + 1] = this::rgbMaxwith;
+        OP_TABLE[28 + 1] = this::rgbMinwith;
+        OP_TABLE[29 + 1] = this::rgbMinInvertwith;
+        OP_TABLE[30 + 1] = this::alphaBlendConstwith;
+        OP_TABLE[31 + 1] = this::alphaPaintConstwith;
+        OP_TABLE[32 + 1] = this::rgbDiffwith;
+        OP_TABLE[33 + 1] = this::tallyIntoMapwith;
+        OP_TABLE[34 + 1] = this::alphaBlendScaledwith;
+        OP_TABLE[35 + 1] = this::alphaBlendScaledwith;
+        OP_TABLE[36 + 1] = this::alphaBlendScaledwith;
+        OP_TABLE[37 + 1] = this::rgbMulwith;
+        OP_TABLE[38 + 1] = this::pixSwapwith;
+        OP_TABLE[39 + 1] = this::pixClearwith;
+        OP_TABLE[40 + 1] = this::fixAlphawith;
+        OP_TABLE[41 + 1] = this::rgbComponentAlphawith;
     }
 
     /* BitBltSimulation>>#initDither8Lookup */
     private static void initDither8Lookup() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         long value;
 
         for (int b = 0; b <= 0xFF; b++) {
@@ -1658,7 +1657,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#initialiseModule */
-    private static void initialiseModule() {
+    private void initialiseModule() {
         initBBOpTable();
         initDither8Lookup();
     }
@@ -1679,7 +1678,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#loadBitBltDestForm */
-    private static boolean loadBitBltDestForm() {
+    private boolean loadBitBltDestForm() {
         if (!(isPointers(destForm) && slotSizeOf(destForm) >= 4)) {
             return false;
         }
@@ -1721,7 +1720,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#loadBitBltFrom: */
-    protected static boolean loadBitBltFrom(final PointersObject bbObj) {
+    protected boolean loadBitBltFrom(final PointersObject bbObj) {
         return loadBitBltFromwarping(bbObj, false);
     }
 
@@ -1732,7 +1731,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#loadBitBltFrom:warping: */
-    private static boolean loadBitBltFromwarping(final PointersObject bbObj, final boolean aBool) {
+    private boolean loadBitBltFromwarping(final PointersObject bbObj, final boolean aBool) {
         boolean ok;
 
         bitBltOop = bbObj;
@@ -1810,7 +1809,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#loadBitBltSourceForm */
-    private static boolean loadBitBltSourceForm() {
+    private boolean loadBitBltSourceForm() {
         if (!(isPointers(sourceForm) && slotSizeOf(sourceForm) >= 4)) {
             return false;
         }
@@ -1849,7 +1848,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#loadColorMap */
-    private static boolean loadColorMap() {
+    private boolean loadColorMap() {
         final Object cmOop;
         final long cmSize;
         boolean oldStyle;
@@ -1940,7 +1939,7 @@ public final class BitBlt {
     /* Load the halftone form */
 
     /* BitBltSimulation>>#loadHalftoneForm */
-    private static boolean loadHalftoneForm() {
+    private boolean loadHalftoneForm() {
         if (noHalftone) {
             halftoneBits = null;
             return true;
@@ -1970,12 +1969,12 @@ public final class BitBlt {
     /* BitBltSimulation>>#loadSurfacePlugin not needed for GraalSqueak */
 
     /* BitBltSimulation>>#loadWarpBltFrom: */
-    private static boolean loadWarpBltFrom(final PointersObject bbObj) {
+    private boolean loadWarpBltFrom(final PointersObject bbObj) {
         return loadBitBltFromwarping(bbObj, true);
     }
 
     /* BitBltSimulation>>#lockSurfaces */
-    private static boolean lockSurfaces() {
+    private boolean lockSurfaces() {
         hasSurfaceLock = false;
 
         // Actual locking code not needed for GraalSqueak.
@@ -1990,7 +1989,7 @@ public final class BitBlt {
     /* Color map the given source pixel. */
 
     /* BitBltSimulation>>#mapPixel:flags: */
-    private static long mapPixelflags(final long sourcePixel, final long mapperFlags) {
+    private long mapPixelflags(final long sourcePixel, final long mapperFlags) {
         long pv;
 
         pv = sourcePixel;
@@ -2026,7 +2025,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#OLDrgbDiff:with: */
-    private static long oLDrgbDiffwith(final long sourceWord, final long destinationWord) {
+    private long oLDrgbDiffwith(final long sourceWord, final long destinationWord) {
         long diff;
         final int pixMask;
 
@@ -2063,7 +2062,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#OLDtallyIntoMap:with: */
-    private static long oLDtallyIntoMapwith(@SuppressWarnings("unused") final long sourceWord, final long destinationWord) {
+    private long oLDtallyIntoMapwith(@SuppressWarnings("unused") final long sourceWord, final long destinationWord) {
         long mapIndex;
         final long pixMask;
         long shiftWord;
@@ -2250,7 +2249,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#partitionedRgbComponentAlpha:dest:nBits:nPartitions: */
-    private static long partitionedRgbComponentAlphadestnBitsnPartitions(final long sourceWord, final long destWord, final int nBits, final int nParts) {
+    private long partitionedRgbComponentAlphadestnBitsnPartitions(final long sourceWord, final long destWord, final int nBits, final int nParts) {
         long mask;
         long p1;
         long p2;
@@ -2325,7 +2324,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#performCopyLoop */
-    private static void performCopyLoop() {
+    private void performCopyLoop() {
         destMaskAndPointerInit();
         if (noSource) {
             /* Simple fill loop */
@@ -2353,7 +2352,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pickSourcePixels:flags:srcMask:destMask:srcShiftInc:dstShiftInc: */
-    private static long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final long nPixels, final long mapperFlags, final long srcMask, final long dstMask, final long srcShiftInc,
+    private long pickSourcePixelsflagssrcMaskdestMasksrcShiftIncdstShiftInc(final long nPixels, final long mapperFlags, final long srcMask, final long dstMask, final long srcShiftInc,
                     final long dstShiftInc) {
         long destPix;
         long destWord;
@@ -2416,7 +2415,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pickWarpPixelAtX:y: */
-    private static long pickWarpPixelAtXy(final long xx, final long yy) {
+    private long pickWarpPixelAtXy(final long xx, final long yy) {
         final long sourcePix;
         final long sourceWord;
         final long x;
@@ -2443,7 +2442,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#pixClear:with: */
-    private static long pixClearwith(final long sourceWord, final long destinationWord) {
+    private long pixClearwith(final long sourceWord, final long destinationWord) {
         long mask;
         final int nBits;
         long pv;
@@ -2473,12 +2472,12 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#pixMask:with: */
-    private static long pixMaskwith(final long sourceWord, final long destinationWord) {
+    private long pixMaskwith(final long sourceWord, final long destinationWord) {
         return partitionedANDtonBitsnPartitions(~sourceWord, destinationWord, destDepth, destPPW);
     }
 
     /* BitBltSimulation>>#pixPaint:with: */
-    private static long pixPaintwith(final long sourceWord, final long destinationWord) {
+    private long pixPaintwith(final long sourceWord, final long destinationWord) {
         if (sourceWord == 0) {
             return destinationWord;
         }
@@ -2488,7 +2487,7 @@ public final class BitBlt {
     /* Swap the pixels in destWord */
 
     /* BitBltSimulation>>#pixSwap:with: */
-    private static long pixSwapwith(@SuppressWarnings("unused") final long sourceWord, final long destWord) {
+    private long pixSwapwith(@SuppressWarnings("unused") final long sourceWord, final long destWord) {
         long highMask;
         long lowMask;
         long result;
@@ -2521,7 +2520,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitiveCopyBits */
-    public static Object primitiveCopyBits(final PointersObject rcvr, final long factor) {
+    public Object primitiveCopyBits(final PointersObject rcvr, final long factor) {
         if (!loadBitBltFromwarping(rcvr, false)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -2537,23 +2536,37 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#primitiveDisplayString */
-    public static Object primitiveDisplayString(final PointersObject bbObj, final NativeObject sourceString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
-                    final ArrayObject xTable, final int kernDelta) {
+    public Object primitiveDisplayString(final PointersObject bbObj, final NativeObject sourceString, final long startIndex, final long stopIndex, final long[] glyphMap,
+                    final long[] xTable, final int kernDelta) {
         int ascii;
         int glyphIndex;
         final int left;
         final long maxGlyph;
         final boolean quickBlt;
 
-        if (!(slotSizeOf(glyphMap) == 256 && isBytes(sourceString) && startIndex > 0 && stopIndex >= 0 &&
-                        stopIndex <= sourceString.getByteLength() && loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
+        /**
+         * Most checks moved to guard of specialization in {@link PrimDisplayStringNode}.
+         *
+         * <pre>
+         * if (!(slotSizeOf(glyphMap) == 256 && isBytes(sourceString) && startIndex > 0 && stopIndex >= 0 &&
+         *              stopIndex <= sourceString.getByteLength() && loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
+         * </pre>
+         */
+        if (!(loadBitBltFromwarping(bbObj, false) && combinationRule != 30 && combinationRule != 0x1F)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        if (stopIndex == 0) {
-            return bbObj;
-        }
+        /**
+         * Check moved to guard of specialization in {@link PrimDisplayStringNode}.
+         *
+         * <pre>
+         * if (stopIndex == 0) {
+         *     return bbObj;
+         * }
+         * </pre>
+         */
+
         /* See if we can go directly into copyLoopPixMap (usually we can) */
-        maxGlyph = slotSizeOf(xTable) - 2;
+        maxGlyph = xTable.length - 2;
         /* no point using slower version */
         quickBlt = (destBits != null || destBytes != null) && sourceBits != null &&
                         !noSource && sourceForm != destForm && (cmFlags != 0 || sourceMSB != destMSB || sourceDepth != destDepth);
@@ -2566,17 +2579,15 @@ public final class BitBlt {
             }
         }
         left = destX;
-        final long[] glyphs = glyphMap.getLongStorage();
-        final long[] xTableLongs = xTable.getLongStorage();
         final byte[] sourceStringBytes = sourceString.getByteStorage();
         for (int charIndex = (int) startIndex; charIndex <= stopIndex; charIndex++) {
             ascii = Byte.toUnsignedInt(sourceStringBytes[charIndex - 1]);
-            glyphIndex = (int) glyphs[ascii];
+            glyphIndex = (int) glyphMap[ascii];
             if (glyphIndex < 0 || glyphIndex > maxGlyph) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
-            sourceX = (int) xTableLongs[glyphIndex];
-            width = (int) (xTableLongs[glyphIndex + 1] - sourceX);
+            sourceX = (int) xTable[glyphIndex];
+            width = (int) (xTable[glyphIndex + 1] - sourceX);
             assert !failed();
             clipRange();
             if (bbW > 0 && bbH > 0) {
@@ -2606,7 +2617,7 @@ public final class BitBlt {
     /* Invoke the line drawing primitive. */
 
     /* BitBltSimulation>>#primitiveDrawLoop */
-    public static Object primitiveDrawLoop(final PointersObject rcvr, final long xDelta, final long yDelta) {
+    public Object primitiveDrawLoop(final PointersObject rcvr, final long xDelta, final long yDelta) {
         if (!loadBitBltFromwarping(rcvr, false)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -2624,7 +2635,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitivePixelValueAtX:y: */
-    public static long primitivePixelValueAt(final PointersObject rcvr, final long xVal, final long yVal) {
+    public long primitivePixelValueAt(final PointersObject rcvr, final long xVal, final long yVal) {
         final NativeObject bitmap;
         final long bitsSize;
         final long depth;
@@ -2690,7 +2701,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitiveWarpBits */
-    public static PointersObject primitiveWarpBits(final PointersObject rcvr, final long n, final AbstractSqueakObject sourceMap) {
+    public PointersObject primitiveWarpBits(final PointersObject rcvr, final long n, final AbstractSqueakObject sourceMap) {
         if (!loadWarpBltFrom(rcvr)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -2702,7 +2713,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#rgbAdd:with: */
-    private static long rgbAddwith(final long sourceWord, final long destinationWord) {
+    private long rgbAddwith(final long sourceWord, final long destinationWord) {
         long carryOverflowMask;
         long componentMask;
 
@@ -2731,7 +2742,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbComponentAlpha16 */
-    private static void rgbComponentAlpha16() {
+    private void rgbComponentAlpha16() {
         int deltaX;
         int deltaY;
         long destWord;
@@ -2821,7 +2832,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbComponentAlpha32 */
-    private static void rgbComponentAlpha32() {
+    private void rgbComponentAlpha32() {
         long deltaX;
         int deltaY;
         long destWord;
@@ -2893,7 +2904,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbComponentAlpha32:with: */
-    private static long rgbComponentAlpha32with(final long sourceWord, final long destinationWord) {
+    private long rgbComponentAlpha32with(final long sourceWord, final long destinationWord) {
         long a;
         long aA;
         long aB;
@@ -2990,7 +3001,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbComponentAlpha8 */
-    private static long rgbComponentAlpha8() {
+    private long rgbComponentAlpha8() {
         long adjust;
         int deltaX;
         int deltaY;
@@ -3097,7 +3108,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbComponentAlpha:with: */
-    private static long rgbComponentAlphawith(final long sourceWord, final long destinationWord) {
+    private long rgbComponentAlphawith(final long sourceWord, final long destinationWord) {
         final long alpha = sourceWord;
         if (alpha == 0) {
             return destinationWord;
@@ -3111,7 +3122,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbDiff:with: */
-    private static long rgbDiffwith(final long sourceWord, final long destinationWord) {
+    private long rgbDiffwith(final long sourceWord, final long destinationWord) {
         final int bitsPerColor;
         long destPixVal;
         long destShifted;
@@ -3180,7 +3191,7 @@ public final class BitBlt {
     /* Perform the RGBA conversion for the given source pixel */
 
     /* BitBltSimulation>>#rgbMapPixel:flags: */
-    private static long rgbMapPixelflags(final long sourcePixel) {
+    private long rgbMapPixelflags(final long sourcePixel) {
         long val;
         val = shift(sourcePixel & cmMaskTable[0], cmShiftTable[0]);
         val = val | shift(sourcePixel & cmMaskTable[1], cmShiftTable[1]);
@@ -3249,7 +3260,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#rgbMax:with: */
-    private static long rgbMaxwith(final long sourceWord, final long destinationWord) {
+    private long rgbMaxwith(final long sourceWord, final long destinationWord) {
         if (destDepth < 16) {
             /* Max each pixel separately */
             return partitionedMaxwithnBitsnPartitions(sourceWord, destinationWord, destDepth, destPPW);
@@ -3265,7 +3276,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#rgbMinInvert:with: */
-    private static long rgbMinInvertwith(final long wordToInvert, final long destinationWord) {
+    private long rgbMinInvertwith(final long wordToInvert, final long destinationWord) {
         final long sourceWord;
 
         sourceWord = ~wordToInvert;
@@ -3284,7 +3295,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#rgbMin:with: */
-    private static long rgbMinwith(final long sourceWord, final long destinationWord) {
+    private long rgbMinwith(final long sourceWord, final long destinationWord) {
         if (destDepth < 16) {
             /* Min each pixel separately */
             return partitionedMinwithnBitsnPartitions(sourceWord, destinationWord, destDepth, destPPW);
@@ -3300,7 +3311,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#rgbMul:with: */
-    private static long rgbMulwith(final long sourceWord, final long destinationWord) {
+    private long rgbMulwith(final long sourceWord, final long destinationWord) {
         if (destDepth < 16) {
             /* Mul each pixel separately */
             return partitionedMulwithnBitsnPartitions(sourceWord, destinationWord, destDepth, destPPW);
@@ -3316,7 +3327,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#rgbSub:with: */
-    private static long rgbSubwith(final long sourceWord, final long destinationWord) {
+    private long rgbSubwith(final long sourceWord, final long destinationWord) {
         if (destDepth < 16) {
             /* Sub each pixel separately */
             return partitionedSubfromnBitsnPartitions(sourceWord, destinationWord, destDepth, destPPW);
@@ -3334,7 +3345,7 @@ public final class BitBlt {
     /* WARNING: For WarpBlt w/ smoothing the source depth is wrong here! */
 
     /* BitBltSimulation>>#setupColorMasks */
-    private static void setupColorMasks() {
+    private void setupColorMasks() {
         long bits;
         long targetBits;
 
@@ -3370,7 +3381,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#setupColorMasksFrom:to: */
-    private static void setupColorMasksFromto(final long srcBits, final long targetBits) {
+    private void setupColorMasksFromto(final long srcBits, final long targetBits) {
         final int deltaBits;
         final long mask;
         final int[] masks = new int[]{0, 0, 0, 0};
@@ -3404,7 +3415,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#showDisplayBits */
-    private static void showDisplayBits() {
+    private void showDisplayBits() {
         if (destForm.image.hasDisplay()) {
             destForm.image.getDisplay().showDisplayBitsLeftTopRightBottom(destForm, affectedL, affectedT, affectedR, affectedB);
         }
@@ -3416,7 +3427,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#sourceSkewAndPointerInit (modified, copied from SqueakJS) */
-    private static void sourceSkewAndPointerInit() {
+    private void sourceSkewAndPointerInit() {
         final long dxLowBits;
         final long dWid;
         final long pixPerM1;
@@ -3462,12 +3473,12 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#sourceWord:with: */
-    private static long sourceWordwith(final long sourceWord, @SuppressWarnings("unused") final long destinationWord) {
+    private long sourceWordwith(final long sourceWord, @SuppressWarnings("unused") final long destinationWord) {
         return sourceWord;
     }
 
     /* BitBltSimulation>>#subWord:with: */
-    private static long subWordwith(final long sourceWord, final long destinationWord) {
+    private long subWordwith(final long sourceWord, final long destinationWord) {
         return sourceWord - destinationWord;
     }
 
@@ -3478,7 +3489,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#tallyIntoMap:with: */
-    private static long tallyIntoMapwith(@SuppressWarnings("unused") final long sourceWord, final long destinationWord) {
+    private long tallyIntoMapwith(@SuppressWarnings("unused") final long sourceWord, final long destinationWord) {
         long destShifted;
         long mapIndex;
         long maskShifted;
@@ -3523,7 +3534,7 @@ public final class BitBlt {
     /* We need a source. */
 
     /* BitBltSimulation>>#tryCopyingBitsQuickly */
-    private static boolean tryCopyingBitsQuickly() {
+    private boolean tryCopyingBitsQuickly() {
         if (noSource) {
             return false;
         }
@@ -3586,7 +3597,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#unlockSurfaces */
-    private static void unlockSurfaces() {
+    private void unlockSurfaces() {
         if (!hasSurfaceLock) {
             return;
         }
@@ -3595,7 +3606,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#warpBits */
-    private static void warpBits(final long smoothingCount, final AbstractSqueakObject sourceMap) {
+    private void warpBits(final long smoothingCount, final AbstractSqueakObject sourceMap) {
         final boolean ns = noSource;
         noSource = true;
         clipRange();
@@ -3633,7 +3644,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#warpLoop */
-    private static long warpLoop(final long smoothingCountValue, final AbstractSqueakObject sourceMapOopValue) {
+    private long warpLoop(final long smoothingCountValue, final AbstractSqueakObject sourceMapOopValue) {
         final int deltaP12x;
         final int deltaP12y;
         final int deltaP43x;
@@ -3839,7 +3850,7 @@ public final class BitBlt {
     /* Setup values for faster pixel fetching. */
 
     /* BitBltSimulation>>#warpLoopSetup */
-    private static void warpLoopSetup() {
+    private void warpLoopSetup() {
         long words;
 
         /* warpSrcShift = log2(sourceDepth) */
@@ -3876,7 +3887,7 @@ public final class BitBlt {
      * BitBltSimulation>>#warpPickSmoothPixels:xDeltah:yDeltah:xDeltav:yDeltav:sourceMap:smoothing:
      * dstShiftInc:
      */
-    private static long warpPickSmoothPixelsxDeltahyDeltahxDeltavyDeltavsourceMapsmoothingdstShiftInc(final int nPixels, final long xDeltah, final long yDeltah, final long xDeltav,
+    private long warpPickSmoothPixelsxDeltahyDeltahxDeltavyDeltavsourceMapsmoothingdstShiftInc(final int nPixels, final long xDeltah, final long yDeltah, final long xDeltav,
                     final long yDeltav, final long[] sourceMap, final long n, final long dstShiftInc) {
         long a;
         long b;
@@ -3991,7 +4002,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#warpPickSourcePixels:xDeltah:yDeltah:xDeltav:yDeltav:dstShiftInc:flags: */
-    private static long warpPickSourcePixelsxDeltahyDeltahxDeltavyDeltavdstShiftIncflags(final long nPixels, final long xDeltah, final long yDeltah, final long dstShiftInc, final long mapperFlags) {
+    private long warpPickSourcePixelsxDeltahyDeltahxDeltavyDeltavdstShiftIncflags(final long nPixels, final long xDeltah, final long yDeltah, final long dstShiftInc, final long mapperFlags) {
         long destPix;
         long destWord;
         final int dstMask;
@@ -4030,7 +4041,7 @@ public final class BitBlt {
      * POLYFILLS
      */
 
-    private static int fetchIntegerofObject(final int index, final PointersObject object) {
+    private int fetchIntegerofObject(final int index, final PointersObject object) {
         final Object value = fetchPointerofObject(index, object);
         if (value instanceof Long) {
             return (int) (long) value;
@@ -4070,11 +4081,11 @@ public final class BitBlt {
         return object.isIntType();
     }
 
-    private static boolean isWords(final Object object) {
+    private boolean isWords(final Object object) {
         return SqueakGuards.isNativeObject(object) && isWords((NativeObject) object);
     }
 
-    private static boolean isWordsOrBytes(final Object object) {
+    private boolean isWordsOrBytes(final Object object) {
         return SqueakGuards.isNativeObject(object) && (isWords((NativeObject) object) || isBytes((NativeObject) object));
     }
 
@@ -4086,19 +4097,15 @@ public final class BitBlt {
         return object.size();
     }
 
-    private static int slotSizeOf(final ArrayObject object) {
-        return object.getLongLength();
-    }
-
     private static boolean isPointers(final Object object) {
         return object != null && object instanceof PointersObject;
     }
 
-    private static boolean failed() {
+    private boolean failed() {
         return !successFlag;
     }
 
-    protected static void resetSuccessFlag() {
+    protected void resetSuccessFlag() {
         successFlag = true;
     }
 
@@ -4126,7 +4133,7 @@ public final class BitBlt {
         target.atput0(index, value);
     }
 
-    private static long dstLongAt(final long index) {
+    private long dstLongAt(final long index) {
         final int i = (int) index >>> 2;
         assert i < endOfDestination;
         if (destBits != null) {
@@ -4145,14 +4152,14 @@ public final class BitBlt {
      * Store the given value back into destination form, using dstMask to mask out the bits to be
      * modified. This is an essential read-modify-write operation on the destination form.
      */
-    private static void destLongAtputmask(final long dstIndex, final long dstMask, final long sourceWord) {
+    private void destLongAtputmask(final long dstIndex, final long dstMask, final long sourceWord) {
         long dstValue = dstLongAt(dstIndex);
         dstValue = dstValue & dstMask;
         dstValue = dstValue | sourceWord;
         dstLongAtput(dstIndex, dstValue);
     }
 
-    private static void dstLongAtput(final long index, final long value) {
+    private void dstLongAtput(final long index, final long value) {
         final int i = (int) index >>> 2;
         if (destBits != null) {
             destBits[i] = (int) value;
@@ -4165,11 +4172,11 @@ public final class BitBlt {
         }
     }
 
-    private static long halftoneLongAt(final long index) {
+    private long halftoneLongAt(final long index) {
         return Integer.toUnsignedLong(halftoneBits[mod(index, halftoneHeight)]);
     }
 
-    private static long srcLongAt(final long index) {
+    private long srcLongAt(final long index) {
         /**
          * Unfortunately, BitBlt tries to read past the end of {@link sourceBits} sometimes, so
          * return `0` in these cases. An example is #testPivelValueAt (confirmed by SqueakJS's

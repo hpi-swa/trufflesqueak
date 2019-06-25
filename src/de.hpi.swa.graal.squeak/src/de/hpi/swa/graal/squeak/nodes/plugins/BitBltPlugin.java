@@ -3,11 +3,13 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -15,6 +17,8 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -39,16 +43,18 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doCopy(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveCopyBits(receiver, -1); // Not provided represented by `-1` here.
+        protected final Object doCopy(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            method.image.bitblt.resetSuccessFlag();
+            return method.image.bitblt.primitiveCopyBits(receiver, -1); // Not provided
+                                                                        // represented by
+                                                                        // `-1` here.
         }
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doCopyTranslucent(final PointersObject receiver, final long factor) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveCopyBits(receiver, factor);
+        protected final Object doCopyTranslucent(final PointersObject receiver, final long factor) {
+            method.image.bitblt.resetSuccessFlag();
+            return method.image.bitblt.primitiveCopyBits(receiver, factor);
         }
     }
 
@@ -60,17 +66,44 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"startIndex >= 1", "stopIndex >= 0", "aString.isByteType()", "aString.getByteLength() > 0",
-                        "stopIndex <= aString.getByteLength()"})
+        @Specialization(guards = {"startIndex >= 1", "stopIndex > 0", "aString.isByteType()", "aString.getByteLength() > 0",
+                        "stopIndex <= aString.getByteLength()", "glyphMap.isLongType()", "glyphMap.getLongLength() == 256", "xTable.isLongType()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doDisplay(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
+        protected final Object doDisplayLongArrays(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
                         final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMap, xTable, (int) kernDelta);
+            method.image.bitblt.resetSuccessFlag();
+            return method.image.bitblt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMap.getLongStorage(), xTable.getLongStorage(), (int) kernDelta);
+        }
+
+        @Specialization(guards = {"startIndex >= 1", "stopIndex > 0", "aString.isByteType()", "aString.getByteLength() > 0",
+                        "stopIndex <= aString.getByteLength()", "!glyphMap.isLongType() || !xTable.isLongType()", "sizeNode.execute(glyphMap) == 256"}, limit = "1")
+        @TruffleBoundary(transferToInterpreterOnException = false)
+        protected final Object doDisplayGeneric(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
+                        final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta,
+                        @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
+                        @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
+            method.image.bitblt.resetSuccessFlag();
+            final long[] glyphMapValues = toLongArray(toObjectArrayNode.execute(glyphMap));
+            glyphMap.setStorage(glyphMapValues); // re-specialize.
+            final long[] xTableValues = toLongArray(toObjectArrayNode.execute(xTable));
+            xTable.setStorage(xTableValues); // re-specialize.
+            return method.image.bitblt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMapValues, xTableValues, (int) kernDelta);
+        }
+
+        private static long[] toLongArray(final Object[] values) {
+            final long[] longs = new long[values.length];
+            try {
+                for (int i = 0; i < values.length; i++) {
+                    longs[i] = ((Number) values[i]).longValue();
+                }
+            } catch (final ClassCastException e) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
+            return longs;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"aString.isByteType()", "aString.getByteLength() == 0"})
+        @Specialization(guards = {"aString.isByteType()", "aString.getByteLength() == 0 || stopIndex == 0"})
         protected static final Object doNothing(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
                         final ArrayObject xTable, final long kernDelta) {
             return receiver;
@@ -87,9 +120,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doDrawLoop(final PointersObject receiver, final long xDelta, final long yDelta) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveDrawLoop(receiver, xDelta, yDelta);
+        protected final Object doDrawLoop(final PointersObject receiver, final long xDelta, final long yDelta) {
+            method.image.bitblt.resetSuccessFlag();
+            return method.image.bitblt.primitiveDrawLoop(receiver, xDelta, yDelta);
         }
     }
 
@@ -110,9 +143,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"xValue >= 0", "yValue >= 0", "receiver.size() > OFFSET"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitivePixelValueAt(receiver, xValue, yValue);
+        protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
+            method.image.bitblt.resetSuccessFlag();
+            return method.image.bitblt.primitivePixelValueAt(receiver, xValue, yValue);
         }
     }
 
@@ -126,23 +159,23 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doValueAt(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NotProvided notProvided) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveWarpBits(receiver, n, null);
+        protected final Object doValueAt(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NotProvided notProvided) {
+            method.image.bitblt.resetSuccessFlag();
+            return method.image.bitblt.primitiveWarpBits(receiver, n, null);
         }
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doValueAt(final PointersObject receiver, final long n, final NilObject nil) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveWarpBits(receiver, n, nil);
+        protected final Object doValueAt(final PointersObject receiver, final long n, final NilObject nil) {
+            method.image.bitblt.resetSuccessFlag();
+            return method.image.bitblt.primitiveWarpBits(receiver, n, nil);
         }
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doValueAt(final PointersObject receiver, final long n, final NativeObject sourceMap) {
-            BitBlt.resetSuccessFlag();
-            return BitBlt.primitiveWarpBits(receiver, n, sourceMap);
+        protected final Object doValueAt(final PointersObject receiver, final long n, final NativeObject sourceMap) {
+            method.image.bitblt.resetSuccessFlag();
+            return method.image.bitblt.primitiveWarpBits(receiver, n, sourceMap);
         }
     }
 }

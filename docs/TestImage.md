@@ -1,10 +1,12 @@
 # Test Image Creation
 
+1. Load GraalSqueak image code via Monticello (copy from other image).
+2. Run the following in a workspace, then save and quit:
 
 ```smalltalk
 | manifest load |
 manifest := #(
-    ('http://source.squeak.org/FFI'          1 ('FFI-Pools' 'FFI-Kernel'))
+    ('http://source.squeak.org/FFI'          1 ('FFI-Pools' 'FFI-Kernel' 'FFI-Tests'))
     ('http://source.squeak.org/VMMaker'      6 ('Balloon-Engine-Pools' 'VMMaker.oscog'))
     ('http://www.squeaksource.com/OSProcess' 4 ('OSProcess'))
 ).
@@ -53,6 +55,8 @@ Utilities authorInitials: 'GraalSqueak'.
 (Smalltalk at: #BitBltSimulation) compile: 'assert: aBlock "disable #assert:"'.
 (Smalltalk at: #ThisOSProcess) class compile: 'startUp: resuming "disable #startUp:"'.
 
+TruffleObject ensureInitialized.
+
 "Disable performance killers"
 World setAsBackground: Color black lighter.
 Morph useSoftDropShadow: false.
@@ -64,4 +68,6 @@ PluggableButtonMorph gradientButton: false.
 ScrollBar gradientScrollBar: false.
 
 Morph indicateKeyboardFocus: false.
+
+Smalltalk condenseChanges.
 ```

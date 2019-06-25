@@ -16,8 +16,8 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
 public final class JumpBytecodes {
 
@@ -26,14 +26,12 @@ public final class JumpBytecodes {
         private final boolean isIfTrue;
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
-        @Child private StackPopNode popNode;
         @Child private HandleConditionResultNode handleConditionResultNode;
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);
             offset = (bytecode & 7) + 1;
             isIfTrue = false;
-            popNode = StackPopNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
         }
 
@@ -41,7 +39,6 @@ public final class JumpBytecodes {
             super(code, index, numBytecodes);
             offset = ((bytecode & 3) << 8) + parameter;
             isIfTrue = condition;
-            popNode = StackPopNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
         }
 
@@ -50,12 +47,12 @@ public final class JumpBytecodes {
             // nothing to do
         }
 
-        public boolean executeCondition(final VirtualFrame frame) {
-            final Object result = popNode.executeRead(frame);
+        public boolean executeCondition(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
+            final Object result = readAndClearNode.executePop(frame);
             return conditionProfile.profile(handleConditionResultNode.execute(frame, isIfTrue, result));
         }
 
-        public int getJumpSuccessor() {
+        public int getJumpSuccessorIndex() {
             return getSuccessorIndex() + offset;
         }
 
@@ -70,7 +67,7 @@ public final class JumpBytecodes {
         }
 
         protected abstract static class HandleConditionResultNode extends AbstractNodeWithCode {
-            @Child private StackPushNode pushNode;
+            @Child private FrameStackWriteNode pushNode;
             @Child private AbstractSendNode sendMustBeBooleanNode;
 
             protected HandleConditionResultNode(final CompiledCodeObject code) {
@@ -99,15 +96,15 @@ public final class JumpBytecodes {
 
             @Fallback
             protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result) {
-                getPushNode().executeWrite(frame, result);
+                getPushNode().executePush(frame, result);
                 getSendMustBeBooleanNode().executeSend(frame);
                 throw SqueakException.create("Should not be reached");
             }
 
-            private StackPushNode getPushNode() {
+            private FrameStackWriteNode getPushNode() {
                 if (pushNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    pushNode = insert(StackPushNode.create(code));
+                    pushNode = insert(FrameStackWriteNode.create(code));
                 }
                 return pushNode;
             }

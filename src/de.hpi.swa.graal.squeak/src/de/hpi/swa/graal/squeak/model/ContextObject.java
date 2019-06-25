@@ -14,6 +14,8 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
@@ -22,25 +24,25 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
-public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
+public final class ContextObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private MaterializedFrame truffleFrame;
     @CompilationFinal private int size;
     private boolean hasModifiedSender = false;
     private boolean escaped = false;
 
     private ContextObject(final SqueakImageContext image, final long hash) {
-        super(image, hash, image.methodContextClass);
+        super(image, hash);
         truffleFrame = null;
     }
 
     private ContextObject(final SqueakImageContext image, final int size) {
-        super(image, image.methodContextClass);
+        super(image);
         truffleFrame = null;
         this.size = size;
     }
 
     private ContextObject(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        super(blockOrMethod.image, blockOrMethod.image.methodContextClass);
+        super(blockOrMethod.image);
         assert FrameAccess.getSender(frame) != null;
         assert FrameAccess.getContext(frame, blockOrMethod) == null;
         truffleFrame = frame.materialize();
@@ -49,7 +51,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     private ContextObject(final ContextObject original) {
-        super(original.image, original.image.methodContextClass);
+        super(original.image);
         final CompiledCodeObject code = FrameAccess.getBlockOrMethod(original.truffleFrame);
         hasModifiedSender = original.hasModifiedSender();
         escaped = original.escaped;
@@ -65,7 +67,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         final int numStackSlots = code.getNumStackSlots();
         for (int i = 0; i < numStackSlots; i++) {
             final FrameSlot slot = code.getStackSlot(i);
-            FrameAccess.setStackSlot(truffleFrame, slot, original.truffleFrame.getValue(slot));
+            final Object value = original.truffleFrame.getValue(slot);
+            if (value != null) {
+                FrameAccess.setStackSlot(truffleFrame, slot, value);
+            } else {
+                break; // This and all following slots are not in use.
+            }
         }
     }
 
@@ -78,10 +85,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static ContextObject create(final FrameInstance frameInstance) {
-        return ContextObject.create(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
-    }
-
-    public static ContextObject create(final Frame frame) {
+        final Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
         return create(frame, FrameAccess.getBlockOrMethod(frame));
     }
 
@@ -89,7 +93,22 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return new ContextObject(frame, blockOrMethod);
     }
 
-    public void fillIn(final Object[] pointers) {
+    @Override
+    public ClassObject getSqueakClass() {
+        return image.methodContextClass;
+    }
+
+    /**
+     * {@link ContextObject}s are filled in at a later stage by a
+     * {@link SqueakImageReader#fillInContextObjects}.
+     */
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        // Do nothing.
+    }
+
+    public void fillinContext(final SqueakImageChunk chunk) {
+        final Object[] pointers = chunk.getPointers();
         size = pointers.length;
         assert size > CONTEXT.TEMP_FRAME_START;
         final CompiledMethodObject method = (CompiledMethodObject) pointers[CONTEXT.METHOD];
@@ -331,7 +350,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getInstructionPointerForBytecodeLoop() {
-        return FrameAccess.getInstructionPointer(truffleFrame);
+        return FrameAccess.getInstructionPointer(truffleFrame, getBlockOrMethod());
     }
 
     public void setInstructionPointer(final int value) {
@@ -346,7 +365,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getStackPointer() {
-        return FrameAccess.getStackPointer(truffleFrame);
+        return FrameAccess.getStackPointer(truffleFrame, getBlockOrMethod());
     }
 
     public void setStackPointer(final int value) {
@@ -419,7 +438,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return getInstructionPointerForBytecodeLoop() < 0 && getSender() == NilObject.SINGLETON;
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public ContextObject shallowCopy() {
         return new ContextObject(this);
     }
 
@@ -460,7 +479,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public int instsize() {
-        return getSqueakClass().getBasicInstanceSize();
+        return CONTEXT.INST_SIZE;
     }
 
     @Override
@@ -469,11 +488,10 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getStackSize() {
-        return FrameAccess.getStackSize(truffleFrame);
+        return getBlockOrMethod().getSqueakContextSize();
     }
 
     public void become(final ContextObject other) {
-        becomeOtherClass(other);
         final MaterializedFrame otherTruffleFrame = other.truffleFrame;
         final int otherSize = other.size;
         final boolean otherHasModifiedSender = other.hasModifiedSender;

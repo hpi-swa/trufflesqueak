@@ -6,13 +6,13 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
@@ -24,7 +24,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"buf.isByteType()", "expanded.isIntType()", "expanded.getIntLength() == 80", "buf.getByteLength() == 64"})
-        protected static final AbstractSqueakObject doExpand(final AbstractSqueakObject receiver, final NativeObject buf, final NativeObject expanded) {
+        protected static final Object doExpand(final Object receiver, final NativeObject buf, final NativeObject expanded) {
             final int[] words = expanded.getIntStorage();
             final byte[] bytes = buf.getByteStorage();
             for (int i = 0; i <= 15; i++) {
@@ -41,14 +41,14 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHasSecureHashPrimitive")
-    protected abstract static class PrimHasSecureHashPrimitiveNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimHasSecureHashPrimitiveNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimHasSecureHashPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final boolean doHas(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return method.image.sqFalse;
+        protected static final boolean doHas(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.TRUE;
         }
     }
 
@@ -60,7 +60,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"buf.isIntType()", "state.isIntType()", "state.getIntLength() == 5", "buf.getIntLength() == 80"})
-        protected static final AbstractSqueakObject doHash(final AbstractSqueakObject receiver, final NativeObject buf, final NativeObject state) {
+        protected static final Object doHash(final Object receiver, final NativeObject buf, final NativeObject state) {
             final int[] statePtr = state.getIntStorage();
             final int[] bufPtr = buf.getIntStorage();
 

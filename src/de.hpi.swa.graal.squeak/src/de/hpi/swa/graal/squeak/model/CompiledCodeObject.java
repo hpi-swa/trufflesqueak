@@ -21,8 +21,8 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
-public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
-    private static final int[] HEADER_SPLIT_PATTERN = new int[]{15, 1, 1, 1, 6, 4, 2, 1};
+public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
+    @CompilationFinal(dimensions = 1) private static final int[] HEADER_SPLIT_PATTERN = new int[]{15, 1, 1, 1, 6, 4, 2, 1};
 
     public enum SLOT_IDENTIFIER {
         THIS_MARKER,
@@ -41,11 +41,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
-    @CompilationFinal private int numArgs;
+    @CompilationFinal protected int numArgs;
     @CompilationFinal protected int numLiterals;
-    @CompilationFinal private boolean hasPrimitive;
+    @CompilationFinal protected boolean hasPrimitive;
     @CompilationFinal protected boolean needsLargeFrame = false;
-    @CompilationFinal private int numTemps;
+    @CompilationFinal protected int numTemps;
 
     private final int numCopiedValues; // for block closures
 
@@ -58,7 +58,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
 
     protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues) {
-        super(image, hash, image.compiledMethodClass);
+        super(image, hash);
         if (ALWAYS_NON_VIRTUALIZED) {
             invalidateCanBeVirtualizedAssumption();
         }
@@ -72,7 +72,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
     }
 
     protected CompiledCodeObject(final CompiledCodeObject original) {
-        super(original.image, original.image.compiledMethodClass);
+        super(original.image);
         numCopiedValues = original.numCopiedValues;
         frameDescriptor = original.frameDescriptor;
         thisMarkerSlot = original.thisMarkerSlot;
@@ -185,6 +185,12 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
         return getNumArgsAndCopied() + getSqueakContextSize();
     }
 
+    @Override
+    public final ClassObject getSqueakClass() {
+        return image.compiledMethodClass;
+    }
+
+    @Override
     public final void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final long[] words = chunk.getWords();
@@ -208,17 +214,23 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
         final int header = getHeader();
         final int[] splitHeader = MiscUtils.bitSplitter(header, HEADER_SPLIT_PATTERN);
         numLiterals = splitHeader[0];
-        // TODO: isOptimized = splitHeader[1] == 1;
         hasPrimitive = splitHeader[2] == 1;
         needsLargeFrame = splitHeader[3] == 1;
         numTemps = splitHeader[4];
         numArgs = splitHeader[5];
-        // TODO: accessModifier = splitHeader[6];
-        // TODO: altInstructionSet = splitHeader[7] == 1;
+        /** Jit without counters - reserved for methods that have been optimized by Sista. */
+        // isOptimized = splitHeader[1] == 1;
+        /**
+         * reserved for an access modifier (00-unused, 01-private, 10-protected, 11-public),
+         * although accessors for bit 29 exist (see #flag).
+         */
+        // accessModifier = splitHeader[6];
+        /** selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag). */
+        // altInstructionSet = splitHeader[7] == 1;
         ensureCorrectNumberOfStackSlots();
     }
 
-    private void ensureCorrectNumberOfStackSlots() {
+    protected void ensureCorrectNumberOfStackSlots() {
         final int requiredNumberOfStackSlots = getNumStackSlots();
         if (stackSlots == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -241,7 +253,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithClassAn
     }
 
     public final void become(final CompiledCodeObject other) {
-        becomeOtherClass(other);
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;

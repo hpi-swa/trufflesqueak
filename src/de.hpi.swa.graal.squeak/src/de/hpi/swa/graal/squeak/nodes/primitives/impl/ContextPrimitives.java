@@ -280,7 +280,6 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    @ImportStatic(FrameAccess.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211)
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
@@ -307,7 +306,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver.hasTruffleFrame()")
         protected static final long doSize(final ContextObject receiver) {
-            return FrameAccess.getStackPointer(receiver.getTruffleFrame());
+            return receiver.getStackPointer();
         }
 
         @Specialization(guards = "!receiver.hasTruffleFrame()")

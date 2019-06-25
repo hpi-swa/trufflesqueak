@@ -2,10 +2,12 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -18,6 +20,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public static final long LONG_NIL_TAG = Long.MIN_VALUE + 42; // Rather unlikely long.
     public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L); // NaN+1.
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
+    public static final NativeObject NATIVE_OBJECT_NIL_TAG = null;
     public static final boolean ENABLE_STORAGE_STRATEGIES = true;
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ArrayObject.class);
 
@@ -50,6 +53,10 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return new ArrayObject(image, classObject, storage);
     }
 
+    public static boolean isCharNilTag(final char value) {
+        return value == CHAR_NIL_TAG;
+    }
+
     public static boolean isDoubleNilTag(final double value) {
         return Double.doubleToRawLongBits(value) == DOUBLE_NIL_TAG_LONG;
     }
@@ -58,108 +65,25 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return value == LONG_NIL_TAG;
     }
 
-    public Object at0Boolean(final long index) {
-        final byte value = getBooleanStorage()[(int) index];
-        if (value == BOOLEAN_FALSE_TAG) {
-            return image.sqFalse;
-        } else if (value == BOOLEAN_TRUE_TAG) {
-            return image.sqTrue;
-        } else {
-            assert value == BOOLEAN_NIL_TAG;
-            return NilObject.SINGLETON;
+    public static boolean isNativeObjectNilTag(final NativeObject value) {
+        return value == NATIVE_OBJECT_NIL_TAG;
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        final Object[] pointers = chunk.getPointers();
+        if (!ENABLE_STORAGE_STRATEGIES) {
+            storage = pointers;
+            return;
         }
-    }
-
-    public Object at0Char(final long index) {
-        final char value = getCharStorage()[(int) index];
-        return value == CHAR_NIL_TAG ? NilObject.SINGLETON : value;
-    }
-
-    public Object at0Double(final long index) {
-        final double value = getDoubleStorage()[(int) index];
-        return Double.doubleToRawLongBits(value) == DOUBLE_NIL_TAG_LONG ? NilObject.SINGLETON : value;
-    }
-
-    public Object at0Long(final long index) {
-        final long value = getLongStorage()[(int) index];
-        return value == LONG_NIL_TAG ? NilObject.SINGLETON : value;
-    }
-
-    public AbstractSqueakObject at0NativeObject(final long index) {
-        return NilObject.nullToNil(getNativeObjectStorage()[(int) index]);
-    }
-
-    public Object at0Object(final int index) {
-        final Object value = getObjectStorage()[index];
-        assert value != null;
-        return value;
-    }
-
-    public Object at0Object(final long index) {
-        return at0Object((int) index);
-    }
-
-    public void atput0Boolean(final long index, final boolean value) {
-        getBooleanStorage()[(int) index] = value ? BOOLEAN_TRUE_TAG : BOOLEAN_FALSE_TAG;
-    }
-
-    public void atput0Char(final long index, final char value) {
-        if (value == CHAR_NIL_TAG) {
-            transitionFromCharsToObjects();
-            atput0Object(index, value);
-        } else {
-            getCharStorage()[(int) index] = value;
+        final int valuesLength = pointers.length;
+        storage = valuesLength;
+        if (valuesLength > 0) {
+            final ArrayObjectWriteNode writeNode = ArrayObjectWriteNode.getUncached();
+            for (int i = 0; i < pointers.length; i++) {
+                writeNode.execute(this, i, pointers[i]);
+            }
         }
-    }
-
-    public void atput0Double(final long index, final double value) {
-        if (value == DOUBLE_NIL_TAG) {
-            transitionFromDoublesToObjects();
-            atput0Object(index, value);
-        } else {
-            getDoubleStorage()[(int) index] = value;
-        }
-    }
-
-    public void atput0Long(final long index, final long value) {
-        if (value == LONG_NIL_TAG) {
-            transitionFromLongsToObjects();
-            atput0Object(index, value);
-        } else {
-            getLongStorage()[(int) index] = value;
-        }
-    }
-
-    public void atput0NativeObject(final long index, final NativeObject value) {
-        getNativeObjectStorage()[(int) index] = value;
-    }
-
-    public void atput0Object(final int index, final Object value) {
-        getObjectStorage()[index] = value;
-    }
-
-    public void atput0Object(final long index, final Object value) {
-        atput0Object((int) index, value);
-    }
-
-    public void atputNil0Boolean(final long index) {
-        getBooleanStorage()[(int) index] = BOOLEAN_NIL_TAG;
-    }
-
-    public void atputNil0Char(final long index) {
-        getCharStorage()[(int) index] = CHAR_NIL_TAG;
-    }
-
-    public void atputNil0Double(final long index) {
-        getDoubleStorage()[(int) index] = DOUBLE_NIL_TAG;
-    }
-
-    public void atputNil0Long(final long index) {
-        getLongStorage()[(int) index] = LONG_NIL_TAG;
-    }
-
-    public void atputNil0NativeObject(final long index) {
-        getNativeObjectStorage()[(int) index] = null;
     }
 
     public void become(final ArrayObject other) {
@@ -229,7 +153,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public Object[] getObjectStorage() {
         assert isObjectType();
-        return (Object[]) storage;
+        return CompilerDirectives.castExact(storage, Object[].class);
     }
 
     public Class<? extends Object> getStorageType() {
@@ -238,7 +162,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public int instsize() {
-        return getSqueakClass().getBasicInstanceSize();
+        return 0;
     }
 
     @Override
@@ -274,8 +198,8 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return storage.getClass() == Object[].class;
     }
 
-    public boolean isTraceableObjectType() {
-        return isObjectType();
+    public boolean isTraceable() {
+        return isObjectType() || isNativeObjectType();
     }
 
     public boolean hasSameStorageType(final ArrayObject other) {
@@ -286,19 +210,31 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         storage = newStorage;
     }
 
-    public void setStorageAndSpecialize(final Object[] values, final ArrayObjectWriteNode writeNode) {
-        if (!ENABLE_STORAGE_STRATEGIES) {
-            storage = values;
-            return;
+    public static Object toObjectFromBoolean(final byte value) {
+        if (value == BOOLEAN_FALSE_TAG) {
+            return BooleanObject.FALSE;
+        } else if (value == BOOLEAN_TRUE_TAG) {
+            return BooleanObject.TRUE;
+        } else {
+            assert value == BOOLEAN_NIL_TAG;
+            return NilObject.SINGLETON;
         }
-        final int valuesLength = values.length;
-        storage = valuesLength;
-        if (valuesLength > 0) {
-            storage = valuesLength;
-            for (int i = 0; i < values.length; i++) {
-                writeNode.execute(this, i, values[i]);
-            }
-        }
+    }
+
+    public static Object toObjectFromChar(final char value) {
+        return isCharNilTag(value) ? NilObject.SINGLETON : value;
+    }
+
+    public static Object toObjectFromLong(final long value) {
+        return isLongNilTag(value) ? NilObject.SINGLETON : value;
+    }
+
+    public static Object toObjectFromDouble(final double value) {
+        return isDoubleNilTag(value) ? NilObject.SINGLETON : value;
+    }
+
+    public static Object toObjectFromNativeObject(final NativeObject value) {
+        return isNativeObjectNilTag(value) ? NilObject.SINGLETON : value;
     }
 
     public void transitionFromBooleansToObjects() {
@@ -306,15 +242,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final byte[] booleans = getBooleanStorage();
         final Object[] objects = new Object[booleans.length];
         for (int i = 0; i < booleans.length; i++) {
-            final byte value = booleans[i];
-            if (value == BOOLEAN_FALSE_TAG) {
-                objects[i] = image.sqFalse;
-            } else if (value == BOOLEAN_TRUE_TAG) {
-                objects[i] = image.sqTrue;
-            } else {
-                assert value == BOOLEAN_NIL_TAG;
-                objects[i] = NilObject.SINGLETON;
-            }
+            objects[i] = toObjectFromBoolean(booleans[i]);
         }
         storage = objects;
     }
@@ -324,7 +252,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final char[] chars = getCharStorage();
         final Object[] objects = new Object[chars.length];
         for (int i = 0; i < chars.length; i++) {
-            objects[i] = chars[i] == CHAR_NIL_TAG ? NilObject.SINGLETON : chars[i];
+            objects[i] = toObjectFromChar(chars[i]);
         }
         storage = objects;
     }
@@ -334,7 +262,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final double[] doubles = getDoubleStorage();
         final Object[] objects = new Object[doubles.length];
         for (int i = 0; i < doubles.length; i++) {
-            objects[i] = doubles[i] == DOUBLE_NIL_TAG ? NilObject.SINGLETON : doubles[i];
+            objects[i] = toObjectFromDouble(doubles[i]);
         }
         storage = objects;
     }
@@ -375,7 +303,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final long[] longs = getLongStorage();
         final Object[] objects = new Object[longs.length];
         for (int i = 0; i < longs.length; i++) {
-            objects[i] = longs[i] == LONG_NIL_TAG ? NilObject.SINGLETON : longs[i];
+            objects[i] = toObjectFromLong(longs[i]);
         }
         storage = objects;
     }
@@ -385,7 +313,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         final NativeObject[] natives = getNativeObjectStorage();
         final Object[] objects = new Object[natives.length];
         for (int i = 0; i < natives.length; i++) {
-            objects[i] = NilObject.nullToNil(natives[i]);
+            objects[i] = toObjectFromNativeObject(natives[i]);
         }
         storage = objects;
     }

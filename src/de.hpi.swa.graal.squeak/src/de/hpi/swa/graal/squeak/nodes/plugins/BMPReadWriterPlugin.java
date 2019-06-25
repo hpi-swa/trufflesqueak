@@ -6,10 +6,8 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
@@ -17,28 +15,33 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
 
+    protected abstract static class AbstractBMPPluginNode extends AbstractPrimitiveNode {
+        private AbstractBMPPluginNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        protected static final boolean inBounds(final long formBitsIndex, final long width, final NativeObject formBits, final NativeObject pixelLine) {
+            return formBitsIndex + width <= formBits.getIntLength() && width * 3 <= pixelLine.getByteLength();
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRead24BmpLine")
-    protected abstract static class PrimRead24BmpLineNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimRead24BmpLineNode extends AbstractBMPPluginNode implements QuinaryPrimitive {
 
         protected PrimRead24BmpLineNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()"})
-        protected static final Object doRead(final PointersObject receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
+        @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
+        protected static final Object doRead(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
             final byte[] bytes = pixelLine.getByteStorage();
             final int[] ints = formBits.getIntStorage();
-            int pixelIndex = 0;
-            int bitsIndex = (int) formBitsIndex - 1;
-            int rgb = 0;
-            for (int j = 0; j < width; j++) {
-                rgb = bytes[pixelIndex++] & 0xFF | (bytes[pixelIndex++] & 0xFF) << 8 | (bytes[pixelIndex++] & 0xFF) << 16;
-                if (rgb == 0) {
-                    ints[bitsIndex++] = 0xFF000001;
-                } else {
-                    ints[bitsIndex++] = rgb | 0xFF000000;
-                }
+            final int bitsStartIndex = (int) formBitsIndex - 1;
+            for (int i = 0; i < width; i++) {
+                final int pixelIndex = i * 3;
+                final int rgb = bytes[pixelIndex] & 0xFF | (bytes[pixelIndex + 1] & 0xFF) << 8 | (bytes[pixelIndex + 2] & 0xFF) << 16;
+                ints[bitsStartIndex + i] = rgb == 0 ? 0xFF000001 : rgb | 0xFF000000;
             }
             return receiver;
         }
@@ -46,24 +49,23 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWrite24BmpLine")
-    protected abstract static class PrimWrite24BmpLineNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimWrite24BmpLineNode extends AbstractBMPPluginNode implements QuinaryPrimitive {
 
         protected PrimWrite24BmpLineNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()"})
-        protected static final Object doWrite(final AbstractSqueakObject receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
+        @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
+        protected static final Object doWrite(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
             final byte[] bytes = pixelLine.getByteStorage();
             final int[] ints = formBits.getIntStorage();
-            int pixelIndex = 0;
-            int bitsIndex = (int) formBitsIndex - 1;
-            int rgb = 0;
-            for (int j = 0; j < width; j++) {
-                rgb = ints[bitsIndex++] & 0xFFFFFF;
-                bytes[pixelIndex++] = (byte) (rgb & 0xFF);
-                bytes[pixelIndex++] = (byte) (rgb >> 8 & 0xFF);
-                bytes[pixelIndex++] = (byte) (rgb >> 16 & 0xFF);
+            final int bitsStartIndex = (int) formBitsIndex - 1;
+            for (int i = 0; i < width; i++) {
+                final int rgb = ints[bitsStartIndex + i] & 0xFFFFFF;
+                final int pixelIndex = i * 3;
+                bytes[pixelIndex] = (byte) (rgb & 0xFF);
+                bytes[pixelIndex + 1] = (byte) (rgb >> 8 & 0xFF);
+                bytes[pixelIndex + 2] = (byte) (rgb >> 16 & 0xFF);
             }
             return receiver;
         }

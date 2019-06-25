@@ -5,27 +5,30 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 
 public final class CompiledBlockObject extends CompiledCodeObject {
-    private final CompiledMethodObject outerMethod;
     private final int offset;
 
-    private CompiledBlockObject(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset, final int blockSize) {
+    private CompiledBlockObject(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArguments, final int numCopied, final int bytecodeOffset, final int blockSize) {
         super(code.image, 0, numCopied);
-        this.outerMethod = outerMethod;
         final int additionalOffset = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getOffset() : 0;
         offset = additionalOffset + bytecodeOffset;
         final Object[] outerLiterals = outerMethod.getLiterals();
         final int outerLiteralsLength = outerLiterals.length;
         literals = new Object[outerLiteralsLength + 1];
-        literals[0] = makeHeader(numArgs, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
+        literals[0] = makeHeader(numArguments, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
         System.arraycopy(outerLiterals, 1, literals, 1, outerLiteralsLength - 1);
         literals[outerLiteralsLength] = outerMethod; // Last literal is back pointer to method.
         bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, bytecodeOffset + blockSize);
-        decodeHeader();
+        /* Instead of calling decodeHeader(), set fields directly. */
+        numLiterals = code.numLiterals;
+        hasPrimitive = false;
+        needsLargeFrame = outerMethod.needsLargeFrame;
+        numTemps = numCopied;
+        numArgs = numArguments;
+        ensureCorrectNumberOfStackSlots();
     }
 
     private CompiledBlockObject(final CompiledBlockObject original) {
         super(original);
-        outerMethod = original.outerMethod;
         offset = original.offset;
     }
 
@@ -49,11 +52,11 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
         String selector = "unknownSelector";
-        final ClassObject methodClass = outerMethod.getMethodClass();
+        final ClassObject methodClass = getMethod().getMethodClass();
         if (methodClass != null) {
-            className = methodClass.nameAsClass();
+            className = methodClass.getClassName();
         }
-        final NativeObject selectorObj = outerMethod.getCompiledInSelector();
+        final NativeObject selectorObj = getMethod().getCompiledInSelector();
         if (selectorObj != null) {
             selector = selectorObj.asStringUnsafe();
         }
@@ -61,23 +64,23 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     }
 
     public CompiledMethodObject getMethod() {
-        return outerMethod;
+        return (CompiledMethodObject) literals[literals.length - 1];
     }
 
     public int getInitialPC() {
-        return outerMethod.getInitialPC() + getOffset();
+        return getMethod().getInitialPC() + getOffset();
     }
 
     public int getOffset() {
         return offset;
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public CompiledBlockObject shallowCopy() {
         return new CompiledBlockObject(this);
     }
 
     @Override
     public int size() {
-        return outerMethod.size();
+        return getMethod().size();
     }
 }

@@ -7,7 +7,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -27,13 +26,13 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"method.image.hasDisplay()", "id == 1"})
-        protected final Object doClose(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id) {
+        protected final Object doClose(final Object receiver, @SuppressWarnings("unused") final long id) {
             method.image.getDisplay().close();
             return receiver;
         }
 
         @Specialization(guards = {"!method.image.hasDisplay()", "id == 1"})
-        protected static final Object doCloseHeadless(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id) {
+        protected static final Object doCloseHeadless(final Object receiver, @SuppressWarnings("unused") final long id) {
             return receiver;
         }
     }
@@ -47,7 +46,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"id == 1"})
-        protected final Object doSize(final AbstractSqueakObject receiver, final long id) {
+        protected final Object doSize(final Object receiver, final long id) {
             return method.image.asPoint(0L, 0L);
         }
     }
@@ -60,14 +59,14 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"method.image.hasDisplay()", "id == 1"})
-        protected final Object doSize(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id, final long width, final long height) {
+        protected final Object doSize(final Object receiver, @SuppressWarnings("unused") final long id, final long width, final long height) {
             method.image.getDisplay().resizeTo((int) width, (int) height);
             return receiver;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!method.image.hasDisplay()", "id == 1"})
-        protected static final Object doSizeHeadless(final AbstractSqueakObject receiver, final long id, final long width, final long height) {
+        protected static final Object doSizeHeadless(final Object receiver, final long id, final long width, final long height) {
             return receiver;
         }
     }
@@ -82,13 +81,13 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"method.image.hasDisplay()", "id == 1", "title.isByteType()"})
         @TruffleBoundary
-        protected final Object doTitle(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id, final NativeObject title) {
+        protected final Object doTitle(final Object receiver, @SuppressWarnings("unused") final long id, final NativeObject title) {
             method.image.getDisplay().setWindowTitle(title.asStringUnsafe());
             return receiver;
         }
 
         @Specialization(guards = {"!method.image.hasDisplay()", "id == 1", "title.isByteType()"})
-        protected static final Object doTitleHeadless(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id, @SuppressWarnings("unused") final NativeObject title) {
+        protected static final Object doTitleHeadless(final Object receiver, @SuppressWarnings("unused") final long id, @SuppressWarnings("unused") final NativeObject title) {
             return receiver;
         }
     }

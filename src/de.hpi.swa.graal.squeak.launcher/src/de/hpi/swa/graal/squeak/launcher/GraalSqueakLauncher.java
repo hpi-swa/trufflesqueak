@@ -14,6 +14,7 @@ import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleOptions;
@@ -78,16 +79,32 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             contextBuilder.option(SqueakLanguageConfig.ID + ".Headless", "true");
         }
         contextBuilder.arguments(getLanguageId(), remainingArguments);
-        try (Context context = contextBuilder.allowAllAccess(true).build()) {
-            println("[graalsqueak] Running " + SqueakLanguageConfig.NAME + " on " + getRuntimeName() + "...");
+        contextBuilder.allowAllAccess(true);
+        final SqueakTranscriptForwarder out = new SqueakTranscriptForwarder(System.out, true);
+        contextBuilder.out(out);
+        final SqueakTranscriptForwarder err = new SqueakTranscriptForwarder(System.err, true);
+        contextBuilder.err(err);
+        try (Context context = contextBuilder.build()) {
+            println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
             if (sourceCode != null) {
                 final Object result = context.eval(
                                 Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).cached(false).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
-                println("[graalsqueak] Result: " + result);
+                println("[graalsqueak] Result: %s", result);
                 return 0;
             } else {
-                context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute();
+                final Value image = context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build());
+                out.setUp(context);
+                err.setUp(context);
+                image.execute();
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
+            }
+        } catch (final IllegalArgumentException e) {
+            if (e.getMessage().contains("Could not find option")) {
+                final String thisPackageName = getClass().getPackage().getName();
+                final String parentPackageName = thisPackageName.substring(0, thisPackageName.lastIndexOf("."));
+                throw abort(String.format("Failed to load GraalSqueak. Please ensure '%s' is on the Java class path.", parentPackageName));
+            } else {
+                throw e;
             }
         } catch (final PolyglotException e) {
             if (e.isExit()) {
@@ -126,13 +143,15 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         options.addAll(Arrays.asList("-c", "--code"));
     }
 
-    private static void println(final String string) {
+    private static void println(final String string, final Object... arguments) {
         // Checkstyle: stop
-        System.out.println(string);
+        System.out.println(String.format(string, arguments));
         // Checkstyle: resume
     }
 
     private static String getRuntimeName() {
-        return Truffle.getRuntime().getName() + " (Java " + System.getProperty("java.version") + ")";
+        final String vmName = System.getProperty("java.vm.name", "unknown");
+        final String mode = Truffle.getRuntime().getName().equals("Interpreted") ? "interpreted" : "Graal-compiled";
+        return String.format("%s (%s)", vmName, mode);
     }
 }

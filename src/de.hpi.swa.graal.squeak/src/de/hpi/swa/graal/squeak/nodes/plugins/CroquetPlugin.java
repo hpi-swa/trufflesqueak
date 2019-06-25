@@ -6,7 +6,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -24,9 +24,9 @@ public final class CroquetPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "byteArray.isByteType()")
-        protected final Object doGather(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject byteArray) {
+        protected static final Object doGather(@SuppressWarnings("unused") final Object receiver, final NativeObject byteArray) {
             ArrayUtils.fillRandomly(byteArray.getByteStorage());
-            return method.image.sqTrue;
+            return BooleanObject.TRUE;
         }
     }
 

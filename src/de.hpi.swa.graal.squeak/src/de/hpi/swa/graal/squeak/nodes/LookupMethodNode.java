@@ -8,13 +8,9 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 
 public abstract class LookupMethodNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 3;
-
-    @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
 
     public static LookupMethodNode create() {
         return LookupMethodNodeGen.create();
@@ -35,15 +31,13 @@ public abstract class LookupMethodNode extends AbstractNode {
     }
 
     @Specialization(replaces = "doCached")
-    protected final Object doUncached(final ClassObject classObject, final NativeObject selector) {
+    protected static final Object doUncached(final ClassObject classObject, final NativeObject selector) {
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
-            final PointersObject methodDict = lookupClass.getMethodDict();
-            for (int i = METHOD_DICT.NAMES; i < methodDict.size(); i++) {
-                final Object methodSelector = methodDict.at0(i);
-                if (selector == methodSelector) {
-                    final ArrayObject values = (ArrayObject) methodDict.at0(METHOD_DICT.VALUES);
-                    return readNode.execute(values, i - METHOD_DICT.NAMES);
+            final Object[] methodDictPointers = lookupClass.getMethodDict().getPointers();
+            for (int i = METHOD_DICT.NAMES; i < methodDictPointers.length; i++) {
+                if (selector == methodDictPointers[i]) {
+                    return ((ArrayObject) methodDictPointers[METHOD_DICT.VALUES]).getObjectStorage()[i - METHOD_DICT.NAMES];
                 }
             }
             lookupClass = lookupClass.getSuperclassOrNull();

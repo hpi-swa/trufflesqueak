@@ -4,15 +4,15 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
-import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
+import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -38,14 +38,11 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                     @Cached("createTemporaryWriteNode(0)") final FrameSlotReadNode blockArgumentNode,
                     @SuppressWarnings("unused") @Cached("createTemporaryWriteNode(1)") final FrameSlotReadNode completeTempReadNode,
-                    @Cached("create(code, 1)") final TemporaryWriteNode completeTempWriteNode,
+                    @Cached("create(code, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
                     @Cached final BlockActivationNode dispatchNode) {
-        completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
+        completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
         final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
-        try {
-            dispatchNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY));
-        } catch (final LocalReturn blockLR) { // ignore
-        }
+        dispatchNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY));
     }
 
     @SuppressWarnings("unused")
@@ -57,12 +54,12 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"code.isUnwindMarked()", "hasModifiedSender(frame)"})
     protected final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
-                    @Cached("create(code)") final StackPushNode pushNode,
+                    @Cached("create(code)") final FrameStackWriteNode pushNode,
                     @Cached("createAboutToReturnSend()") final SendSelectorNode sendAboutToReturnNode) {
         final ContextObject context = getContext(frame);
-        pushNode.executeWrite(frame, nlr.getTargetContextOrMarker());
-        pushNode.executeWrite(frame, nlr.getReturnValue());
-        pushNode.executeWrite(frame, context);
+        pushNode.executePush(frame, nlr.getTargetContextOrMarker());
+        pushNode.executePush(frame, nlr.getReturnValue());
+        pushNode.executePush(frame, context);
         sendAboutToReturnNode.executeSend(frame);
     }
 

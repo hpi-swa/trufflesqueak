@@ -26,17 +26,11 @@ public final class SqueakMouse extends MouseInputAdapter {
     @Override
     public void mouseDragged(final MouseEvent e) {
         recordMouseEvent(MOUSE_EVENT.MOVE, e);
-        if (!display.usesEventQueue) {
-            position = e.getPoint();
-        }
     }
 
     @Override
     public void mouseMoved(final MouseEvent e) {
         recordMouseEvent(MOUSE_EVENT.MOVE, e);
-        if (!display.usesEventQueue) {
-            position = e.getPoint();
-        }
     }
 
     @Override
@@ -51,9 +45,7 @@ public final class SqueakMouse extends MouseInputAdapter {
 
     @Override
     public void mouseWheelMoved(final MouseWheelEvent e) {
-        if (display.usesEventQueue) {
-            display.addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L /* X-Axis Scrolling is not supported */, e.getWheelRotation() * MOUSE.WHEEL_DELTA_FACTOR, display.buttons >> 3, 0L);
-        }
+        display.addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L /* X-Axis Scrolling is not supported */, e.getWheelRotation() * MOUSE.WHEEL_DELTA_FACTOR, display.buttons >> 3, 0L);
     }
 
     private void recordMouseEvent(final MOUSE_EVENT type, final MouseEvent e) {
@@ -72,9 +64,7 @@ public final class SqueakMouse extends MouseInputAdapter {
         }
 
         display.buttons = buttons | display.recordModifiers(e);
-        if (display.usesEventQueue) {
-            display.addEvent(EVENT_TYPE.MOUSE, e.getX(), e.getY(), display.buttons & MOUSE.ALL, display.buttons >> 3);
-        }
+        display.addEvent(EVENT_TYPE.MOUSE, e.getX(), e.getY(), display.buttons & MOUSE.ALL, display.buttons >> 3);
     }
 
     private static int mapButton(final MouseEvent e) {

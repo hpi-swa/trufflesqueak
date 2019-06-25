@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.util;
 
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -12,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
@@ -20,11 +20,11 @@ public final class InterruptHandlerState {
 
     private final SqueakImageContext image;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
+    private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
+    private boolean isActive = true;
     protected long nextWakeupTick = 0;
     protected boolean interruptPending = false;
-    private boolean isActive = false;
     private boolean pendingFinalizationSignals = false;
 
     /**
@@ -54,13 +54,17 @@ public final class InterruptHandlerState {
         if (image.options.disableInterruptHandler) {
             return;
         }
-        final Object interruptSema = image.specialObjectsArray.at0Object(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
+        final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
         if (interruptSema instanceof PointersObject) {
             setInterruptSemaphore((PointersObject) interruptSema);
+        } else {
+            assert interruptSema == NilObject.SINGLETON;
         }
-        final Object timerSema = image.specialObjectsArray.at0Object(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
+        final Object timerSema = image.getSpecialObject(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
         if (timerSema instanceof PointersObject) {
             setTimerSemaphore((PointersObject) timerSema);
+        } else {
+            assert timerSema == NilObject.SINGLETON;
         }
         executor.scheduleWithFixedDelay(() -> shouldTrigger = true,
                         INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
@@ -115,14 +119,8 @@ public final class InterruptHandlerState {
         return pendingFinalizationSignals;
     }
 
-    @TruffleBoundary
-    protected boolean hasSemaphoresToSignal() {
-        return !semaphoresToSignal.isEmpty();
-    }
-
-    @TruffleBoundary
-    protected int nextSemaphoreToSignal() {
-        return semaphoresToSignal.removeFirst();
+    protected Integer nextSemaphoreToSignal() {
+        return semaphoresToSignal.pollFirst();
     }
 
     public static int getInterruptChecksEveryNms() {
@@ -134,18 +132,17 @@ public final class InterruptHandlerState {
         semaphoresToSignal.addLast(index);
     }
 
+    public boolean isActiveAndShouldTrigger() {
+        return isActive && shouldTrigger();
+    }
+
     public boolean shouldTrigger() {
-        if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot()) {
-            return false; // do not trigger in inlined code
-        }
-        if (!isActive) {
-            return false;
-        }
         if (shouldTrigger) {
             shouldTrigger = false;
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     public PointersObject getInterruptSemaphore() {
@@ -171,9 +168,10 @@ public final class InterruptHandlerState {
 
     public void reset() {
         CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
+        isActive = true;
         nextWakeupTick = 0;
         interruptPending = false;
-        isActive = false;
         pendingFinalizationSignals = false;
+        assert semaphoresToSignal.isEmpty();
     }
 }

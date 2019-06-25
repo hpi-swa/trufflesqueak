@@ -69,7 +69,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         String selector = "unknownSelector";
         final ClassObject methodClass = getMethodClass();
         if (methodClass != null) {
-            className = methodClass.nameAsClass();
+            className = methodClass.getClassName();
         }
         final NativeObject selectorObj = getCompiledInSelector();
         if (selectorObj != null) {
@@ -147,7 +147,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public CompiledMethodObject shallowCopy() {
         return new CompiledMethodObject(this);
     }
 

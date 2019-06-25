@@ -43,12 +43,10 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
 
     @Specialization(replaces = {"writeBool", "writeLong", "writeDouble"})
     protected final void writeObject(final Frame frame, final Object value) {
-        assert !(value instanceof Byte || value instanceof Integer || value instanceof Float) : "Illegal write operation";
-
         /* Initialize type on first write. No-op if kind is already Object. */
         frame.getFrameDescriptor().setFrameSlotKind(frameSlot, FrameSlotKind.Object);
 
-        assert value != null;
+        assert verifyWrite(value) : "Illegal write operation: " + value;
         frame.setObject(frameSlot, value);
     }
 
@@ -65,5 +63,9 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
     protected final boolean isDoubleOrIllegal(final Frame frame) {
         final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(frameSlot);
         return kind == FrameSlotKind.Double || kind == FrameSlotKind.Illegal;
+    }
+
+    private static boolean verifyWrite(final Object value) {
+        return value != null && !(value instanceof Byte || value instanceof Integer || value instanceof Float);
     }
 }

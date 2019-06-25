@@ -8,23 +8,22 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class SoundCodecPrims extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGSMNewState")
-    protected abstract static class PrimGSMNewStateNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimGSMNewStateNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimGSMNewStateNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final Object doFakeNewState(@SuppressWarnings("unused") final PointersObject receiver) {
+        protected static final Object doFakeNewState(@SuppressWarnings("unused") final Object receiver) {
             return NilObject.SINGLETON;
         }
     }

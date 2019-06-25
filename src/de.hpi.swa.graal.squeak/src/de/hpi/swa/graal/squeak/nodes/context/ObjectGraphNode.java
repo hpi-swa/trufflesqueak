@@ -2,7 +2,8 @@ package de.hpi.swa.graal.squeak.nodes.context;
 
 import java.util.AbstractCollection;
 import java.util.ArrayDeque;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -15,7 +16,7 @@ import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -29,10 +30,11 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayN
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ObjectGraphNode extends AbstractNodeWithImage {
-    private static final float SEEN_LOAD_FACTOR = 0.9F;
     private static final int PENDING_INITIAL_SIZE = 256;
+    private static final Object SEEN_MARKER = new Object();
+    private static final int ADDITIONAL_SPACE = 10_000;
 
-    private static int lastSeenObjects = 500000;
+    private static int lastSeenObjects = 500_000;
 
     protected ObjectGraphNode(final SqueakImageContext image) {
         super(image);
@@ -43,30 +45,30 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    public AbstractCollection<AbstractSqueakObject> executeAllInstances() {
-        final HashSet<AbstractSqueakObject> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+    public Set<AbstractSqueakObject> executeAllInstances() {
+        final IdentityHashMap<AbstractSqueakObject, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
+        final ArrayDeque<AbstractSqueakObjectWithHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
-        while (!pending.isEmpty()) {
-            final AbstractSqueakObjectWithClassAndHash currentObject = pending.pop();
-            if (seen.add(currentObject)) {
+        AbstractSqueakObjectWithHash currentObject;
+        while ((currentObject = pending.pollFirst()) != null) {
+            if (seen.put(currentObject, SEEN_MARKER) == null) {
                 tracePointers(pending, currentObject);
             }
         }
         lastSeenObjects = seen.size();
-        return seen;
+        return seen.keySet();
     }
 
     @TruffleBoundary
     public void executePointersBecomeOneWay(final SqueakObjectPointersBecomeOneWayNode pointersBecomeNode, final Object[] fromPointers,
                     final Object[] toPointers, final boolean copyHash) {
-        final HashSet<AbstractSqueakObjectWithClassAndHash> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        final IdentityHashMap<AbstractSqueakObjectWithHash, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
+        final ArrayDeque<AbstractSqueakObjectWithHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
-        while (!pending.isEmpty()) {
-            final AbstractSqueakObjectWithClassAndHash currentObject = pending.pop();
-            if (seen.add(currentObject)) {
+        AbstractSqueakObjectWithHash currentObject;
+        while ((currentObject = pending.pollFirst()) != null) {
+            if (seen.put(currentObject, SEEN_MARKER) == null) {
                 pointersBecomeNode.execute(currentObject, fromPointers, toPointers, copyHash);
                 tracePointers(pending, currentObject);
             }
@@ -78,13 +80,13 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     public AbstractCollection<AbstractSqueakObject> executeAllInstancesOf(final ClassObject classObj) {
         assert classObj != image.nilClass;
         final ArrayDeque<AbstractSqueakObject> result = new ArrayDeque<>();
-        final HashSet<AbstractSqueakObject> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        final IdentityHashMap<AbstractSqueakObject, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
+        final ArrayDeque<AbstractSqueakObjectWithHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
-        while (!pending.isEmpty()) {
-            final AbstractSqueakObjectWithClassAndHash currentObject = pending.pop();
-            if (seen.add(currentObject)) {
+        AbstractSqueakObjectWithHash currentObject;
+        while ((currentObject = pending.pollFirst()) != null) {
+            if (seen.put(currentObject, SEEN_MARKER) == null) {
                 if (classObj == currentObject.getSqueakClass()) {
                     result.add(currentObject);
                 }
@@ -98,13 +100,13 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     @TruffleBoundary
     public AbstractSqueakObject executeSomeInstanceOf(final ClassObject classObj) {
         assert classObj != image.nilClass;
-        final HashSet<AbstractSqueakObjectWithClassAndHash> seen = new HashSet<>((int) (lastSeenObjects / SEEN_LOAD_FACTOR), SEEN_LOAD_FACTOR);
-        final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
+        final IdentityHashMap<AbstractSqueakObjectWithHash, Object> seen = new IdentityHashMap<>(lastSeenObjects + ADDITIONAL_SPACE);
+        final ArrayDeque<AbstractSqueakObjectWithHash> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
-        while (!pending.isEmpty()) {
-            final AbstractSqueakObjectWithClassAndHash currentObject = pending.pop();
-            if (seen.add(currentObject)) {
+        AbstractSqueakObjectWithHash currentObject;
+        while ((currentObject = pending.pollFirst()) != null) {
+            if (seen.put(currentObject, SEEN_MARKER) == null) {
                 if (classObj == currentObject.getSqueakClass()) {
                     return currentObject;
                 }
@@ -116,7 +118,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    private static void addObjectsFromTruffleFrames(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending) {
+    private static void addObjectsFromTruffleFrames(final ArrayDeque<AbstractSqueakObjectWithHash> pending) {
         Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (!FrameAccess.isGraalSqueakFrame(current)) {
@@ -148,7 +150,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         });
     }
 
-    private static void tracePointers(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending, final AbstractSqueakObjectWithClassAndHash currentObject) {
+    private static void tracePointers(final ArrayDeque<AbstractSqueakObjectWithHash> pending, final AbstractSqueakObjectWithHash currentObject) {
         final ClassObject sqClass = currentObject.getSqueakClass();
         if (sqClass != null) {
             pending.add(sqClass);
@@ -156,14 +158,15 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         addTraceablePointers(pending, currentObject);
     }
 
-    private static void addIfAbstractSqueakObjectWithImage(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending, final Object argument) {
-        if (argument instanceof AbstractSqueakObjectWithClassAndHash) {
-            pending.add((AbstractSqueakObjectWithClassAndHash) argument);
+    private static void addIfAbstractSqueakObjectWithImage(final ArrayDeque<AbstractSqueakObjectWithHash> pending, final Object argument) {
+        if (argument instanceof AbstractSqueakObjectWithHash) {
+            pending.add((AbstractSqueakObjectWithHash) argument);
         }
     }
 
-    private static void addTraceablePointers(final ArrayDeque<AbstractSqueakObjectWithClassAndHash> pending, final AbstractSqueakObjectWithClassAndHash object) {
-        if (object instanceof ClassObject) {
+    private static void addTraceablePointers(final ArrayDeque<AbstractSqueakObjectWithHash> pending, final AbstractSqueakObjectWithHash object) {
+        final Class<? extends AbstractSqueakObjectWithHash> objectClass = object.getClass();
+        if (objectClass == ClassObject.class) {
             final ClassObject classObject = (ClassObject) object;
             addIfAbstractSqueakObjectWithImage(pending, classObject.getSuperclass());
             addIfAbstractSqueakObjectWithImage(pending, classObject.getMethodDict());
@@ -172,14 +175,14 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
             for (final Object value : classObject.getOtherPointers()) {
                 addIfAbstractSqueakObjectWithImage(pending, value);
             }
-        } else if (object instanceof BlockClosureObject) {
+        } else if (objectClass == BlockClosureObject.class) {
             final BlockClosureObject closure = (BlockClosureObject) object;
             addIfAbstractSqueakObjectWithImage(pending, closure.getReceiver());
             addIfAbstractSqueakObjectWithImage(pending, closure.getOuterContext());
             for (final Object value : closure.getCopied()) {
                 addIfAbstractSqueakObjectWithImage(pending, value);
             }
-        } else if (object instanceof ContextObject) {
+        } else if (objectClass == ContextObject.class) {
             final ContextObject context = (ContextObject) object;
             if (context.hasTruffleFrame()) {
                 addIfAbstractSqueakObjectWithImage(pending, context.getSender());
@@ -192,18 +195,18 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                     addIfAbstractSqueakObjectWithImage(pending, context.atTemp(i));
                 }
             }
-        } else if (object instanceof CompiledMethodObject) {
+        } else if (objectClass == CompiledMethodObject.class) {
             for (final Object literal : ((CompiledMethodObject) object).getLiterals()) {
                 addIfAbstractSqueakObjectWithImage(pending, literal);
             }
-        } else if (object instanceof ArrayObject) {
+        } else if (objectClass == ArrayObject.class) {
             final ArrayObject array = (ArrayObject) object;
             if (array.isObjectType()) {
                 for (final Object value : array.getObjectStorage()) {
                     addIfAbstractSqueakObjectWithImage(pending, value);
                 }
             }
-        } else if (object instanceof PointersObject) {
+        } else if (objectClass == PointersObject.class) {
             for (final Object pointer : ((PointersObject) object).getPointers()) {
                 addIfAbstractSqueakObjectWithImage(pending, pointer);
             }

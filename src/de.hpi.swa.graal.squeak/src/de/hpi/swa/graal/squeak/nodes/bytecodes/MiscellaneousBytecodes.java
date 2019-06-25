@@ -1,20 +1,11 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import java.util.logging.Level;
-
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.nodes.HandlePrimitiveFailedNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodesFactory.CallPrimitiveNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
@@ -27,23 +18,17 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLo
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoAssociationNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoReceiverVariableNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoTempNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class MiscellaneousBytecodes {
 
-    public abstract static class CallPrimitiveNode extends AbstractBytecodeNode {
-        private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
+    public static final class CallPrimitiveNode extends AbstractBytecodeNode {
         public static final int NUM_BYTECODES = 3;
 
-        @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
-        @Child protected AbstractPrimitiveNode primitiveNode;
+        @Child public AbstractPrimitiveNode primitiveNode;
         private final int primitiveIndex;
 
         public CallPrimitiveNode(final CompiledMethodObject method, final int index, final int byte1, final int byte2) {
@@ -54,38 +39,16 @@ public final class MiscellaneousBytecodes {
         }
 
         public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int byte1, final int byte2) {
-            return CallPrimitiveNodeGen.create(code, index, byte1, byte2);
-        }
-
-        @Specialization(guards = {"primitiveNode != null"})
-        protected final void doPrimitive(final VirtualFrame frame) {
-            try {
-                throw new LocalReturn(primitiveNode.executePrimitive(frame));
-            } catch (final PrimitiveFailed e) {
-                /** getHandlePrimitiveFailedNode() acts as branch profile. */
-                getHandlePrimitiveFailedNode().executeHandle(frame, e);
-                LOG.log(Level.FINE, () -> (primitiveNode instanceof PrimitiveFailedNode ? FrameAccess.getMethod(frame) : primitiveNode) +
-                                " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
-            }
-            /** continue with fallback code. */
-        }
-
-        // Cannot use `@Fallback` here, so manually negate previous guards
-        @Specialization(guards = {"primitiveNode == null"})
-        protected final void doFallbackCode() {
-            /** continue with fallback code immediately. */
-        }
-
-        private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
-            if (handlePrimitiveFailedNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                handlePrimitiveFailedNode = HandlePrimitiveFailedNode.create(code);
-            }
-            return handlePrimitiveFailedNode;
+            return new CallPrimitiveNode(code, index, byte1, byte2);
         }
 
         @Override
-        public final String toString() {
+        public void executeVoid(final VirtualFrame frame) {
+            throw SqueakException.create("Should never be called directly.");
+        }
+
+        @Override
+        public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "callPrimitive: " + primitiveIndex;
         }
@@ -119,18 +82,18 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class DupNode extends AbstractBytecodeNode {
-        @Child private StackPushNode pushNode;
-        @Child private StackTopNode topNode;
+        @Child private FrameStackWriteNode pushNode;
+        @Child private FrameStackReadNode topNode;
 
         public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            pushNode = StackPushNode.create(code);
-            topNode = StackTopNode.create(code);
+            pushNode = FrameStackWriteNode.create(code);
+            topNode = FrameStackReadNode.create(code);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, topNode.executeRead(frame));
+            pushNode.executePush(frame, topNode.executeTop(frame));
         }
 
         @Override
@@ -200,16 +163,16 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class PopNode extends AbstractBytecodeNode {
-        @Child private StackPopNode popNode;
+        @Child private FrameStackReadAndClearNode popNode;
 
         public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            popNode = StackPopNode.create(code);
+            popNode = FrameStackReadAndClearNode.create(code);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            popNode.executeRead(frame);
+            popNode.executePop(frame);
         }
 
         @Override

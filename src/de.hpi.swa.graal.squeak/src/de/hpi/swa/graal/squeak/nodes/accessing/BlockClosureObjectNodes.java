@@ -4,6 +4,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
@@ -23,17 +24,17 @@ public final class BlockClosureObjectNodes {
         public abstract Object execute(BlockClosureObject closure, long index);
 
         @Specialization(guards = "index == OUTER_CONTEXT")
-        protected static final Object doClosureOuterContext(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
+        protected static final AbstractSqueakObject doClosureOuterContext(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
             return closure.getOuterContext();
         }
 
         @Specialization(guards = "index == START_PC")
-        protected static final Object doClosureStartPC(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
+        protected static final long doClosureStartPC(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
             return closure.getStartPC();
         }
 
         @Specialization(guards = "index == ARGUMENT_COUNT")
-        protected static final Object doClosureArgumentCount(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
+        protected static final long doClosureArgumentCount(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
             return closure.getNumArgs();
         }
 

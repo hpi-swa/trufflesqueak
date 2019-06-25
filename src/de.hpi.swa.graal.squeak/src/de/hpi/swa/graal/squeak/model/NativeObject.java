@@ -1,13 +1,17 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -85,6 +89,27 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final short[] shorts) {
         return new NativeObject(img, klass, shorts);
+    }
+
+    @Override
+    public void fillin(final SqueakImageChunk chunk) {
+        if (isByteType()) {
+            final byte[] bytes = chunk.getBytes();
+            setStorage(bytes);
+            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, bytes)) {
+                image.setDebugErrorSelector(this);
+            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, bytes)) {
+                image.setDebugSyntaxErrorSelector(this);
+            }
+        } else if (isShortType()) {
+            setStorage(chunk.getShorts());
+        } else if (isIntType()) {
+            setStorage(chunk.getInts());
+        } else if (isLongType()) {
+            setStorage(chunk.getLongs());
+        } else {
+            throw SqueakException.create("Unsupported type");
+        }
     }
 
     @Override
@@ -184,11 +209,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return storage.getClass() == short[].class;
     }
 
-    public LargeIntegerObject normalize() {
-        // FIXME: getSqueakClass()?
-        return new LargeIntegerObject(image, getSqueakClass(), getByteStorage());
-    }
-
     public void setStorage(final Object storage) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.storage = storage;
@@ -198,18 +218,33 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return ArrayConversionUtils.bytesToString(getByteStorage());
     }
 
+    public String asStringFromWideString() {
+        return ArrayConversionUtils.bytesToString(ArrayConversionUtils.bytesFromInts(getIntStorage()));
+    }
+
     @TruffleBoundary
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         if (isByteType()) {
-            return asStringUnsafe();
+            final ClassObject squeakClass = getSqueakClass();
+            if (squeakClass.isStringClass()) {
+                return asStringUnsafe();
+            } else if (squeakClass.isSymbolClass()) {
+                return "#" + asStringUnsafe();
+            } else {
+                return "byte[" + getByteLength() + "]";
+            }
         } else if (isShortType()) {
-            return "ShortArray(size=" + getShortLength() + ")";
+            return "short[" + getShortLength() + "]";
         } else if (isIntType()) {
-            return "IntArray(size=" + getIntLength() + ")";
+            if (getSqueakClass().isWideStringClass()) {
+                return asStringFromWideString();
+            } else {
+                return "int[" + getIntLength() + "]";
+            }
         } else if (isLongType()) {
-            return "LongArray(size=" + getLongLength() + ")";
+            return "long[" + getLongLength() + "]";
         } else {
             throw SqueakException.create("Unexpected native object type");
         }
@@ -233,13 +268,17 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     @ExportMessage
     public boolean isString() {
-        return getSqueakClass().isStringOrSymbolClass();
+        final ClassObject squeakClass = getSqueakClass();
+        return squeakClass.isStringClass() || squeakClass.isSymbolClass() || squeakClass.isWideStringClass();
     }
 
     @ExportMessage
-    public String asString() throws UnsupportedMessageException {
-        if (isString()) {
+    public String asString(@Cached("createBinaryProfile()") final ConditionProfile byteStringOrSymbolProfile) throws UnsupportedMessageException {
+        final ClassObject squeakClass = getSqueakClass();
+        if (byteStringOrSymbolProfile.profile(squeakClass.isStringClass() || squeakClass.isSymbolClass())) {
             return asStringUnsafe();
+        } else if (squeakClass.isWideStringClass()) {
+            return asStringFromWideString();
         } else {
             throw UnsupportedMessageException.create();
         }

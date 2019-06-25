@@ -6,7 +6,7 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 
 @TypeSystem
-public class SqueakArithmeticTypes {
+public class ArithmeticBaseTypeSystem {
     @ImplicitCast
     public static final double fromFloatObject(final FloatObject object) {
         return object.getValue();

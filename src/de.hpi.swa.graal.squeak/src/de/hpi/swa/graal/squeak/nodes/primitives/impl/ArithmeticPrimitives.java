@@ -2,17 +2,21 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakArithmeticTypes;
+import de.hpi.swa.graal.squeak.nodes.ArithmeticBaseTypeSystem;
 import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers.PrimDigitBitShiftMagnitudeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -31,161 +35,167 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long a, final long b) {
-            return Math.addExact(a, b);
+        protected static final long doLong(final long lhs, final long rhs) {
+            return Math.addExact(lhs, rhs);
         }
 
         @Specialization
-        protected final Object doLongWithOverflow(final long a, final long b) {
-            return LargeIntegerObject.add(method.image, a, b);
+        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
+            return LargeIntegerObject.add(method.image, lhs, rhs);
         }
 
-        @Specialization(guards = {"a == 0"})
-        protected static final LargeIntegerObject doLongLargeIntegerWithZero(@SuppressWarnings("unused") final long a, final LargeIntegerObject b) {
-            return b;
+        @Specialization(guards = {"lhs == 0"})
+        protected static final LargeIntegerObject doLongLargeIntegerWithZero(@SuppressWarnings("unused") final long lhs, final LargeIntegerObject rhs) {
+            return rhs;
         }
 
-        @Specialization(guards = {"a != 0", "b.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
-        protected static final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = {"lhs != 0", "rhs.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = {"a != 0", "b.fitsIntoLong()"})
-        protected static final Object doLongLargeIntegerOverflow(final long a, final LargeIntegerObject b) {
-            return b.add(a);
+        @Specialization(guards = {"lhs != 0", "rhs.fitsIntoLong()"})
+        protected static final Object doLongLargeIntegerOverflow(final long lhs, final LargeIntegerObject rhs) {
+            return rhs.add(lhs);
         }
 
-        @Specialization(guards = {"a != 0", "!b.fitsIntoLong()"})
-        protected static final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return b.add(a);
+        @Specialization(guards = {"lhs != 0", "!rhs.fitsIntoLong()"})
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return rhs.add(lhs);
         }
 
-        @Specialization(guards = {"b == 0"})
-        protected static final LargeIntegerObject doLongLargeIntegerWithZero(final LargeIntegerObject a, @SuppressWarnings("unused") final long b) {
-            return a;
+        @Specialization(guards = {"rhs == 0"})
+        protected static final LargeIntegerObject doLongLargeIntegerWithZero(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
+            return lhs;
         }
 
-        @Specialization(guards = {"b != 0", "a.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
-        protected static final long doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = {"rhs != 0", "lhs.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = {"b != 0", "a.fitsIntoLong()"})
-        protected static final Object doLargeIntegerAsLongLongOverflow(final LargeIntegerObject a, final long b) {
-            return a.add(b);
+        @Specialization(guards = {"rhs != 0", "lhs.fitsIntoLong()"})
+        protected static final Object doLargeIntegerAsLongLongOverflow(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.add(rhs);
         }
 
-        @Specialization(guards = {"b != 0", "!a.fitsIntoLong()"})
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.add(b);
+        @Specialization(guards = {"rhs != 0", "!lhs.fitsIntoLong()"})
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.add(rhs);
         }
 
-        @Specialization(guards = {"a.sameSign(b)"})
-        protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.addNoReduce(b); // Value can only grow, no need to try to reduce.
+        @Specialization(guards = {"lhs.sameSign(rhs)"})
+        protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.addNoReduce(rhs); // Value can only grow, no need to try to reduce.
         }
 
-        @Specialization(guards = "!a.sameSign(b)")
-        protected static final Object doLargeIntegerNegative(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.add(b);
-        }
-
-        @Specialization
-        protected static final double doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = "!lhs.sameSign(rhs)")
+        protected static final Object doLargeIntegerNegative(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.add(rhs);
         }
 
         @Specialization
-        protected static final double doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected final Object doLongDouble(final long lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(lhs, rhs, isFiniteProfile);
         }
 
         @Specialization
-        protected static final double doDouble(final double a, final double b) {
-            return a + b;
+        protected final Object doDoubleLong(final double lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(lhs, rhs, isFiniteProfile);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, lhs + rhs, isFiniteProfile);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {2, 22, 42, 542})
-    public abstract static class PrimSubstractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        public PrimSubstractNode(final CompiledMethodObject method) {
+    public abstract static class PrimSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        public PrimSubtractNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long a, final long b) {
-            return Math.subtractExact(a, b);
+        protected static final long doLong(final long lhs, final long rhs) {
+            return Math.subtractExact(lhs, rhs);
         }
 
         @Specialization
-        protected final Object doLongWithOverflow(final long a, final long b) {
-            return LargeIntegerObject.subtract(method.image, a, b);
+        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
+            return LargeIntegerObject.subtract(method.image, lhs, rhs);
         }
 
-        @Specialization(guards = {"a == 0"})
-        protected static final LargeIntegerObject doLongLargeIntegerWithZero(@SuppressWarnings("unused") final long a, final LargeIntegerObject b) {
-            return b.negate();
+        @Specialization(guards = {"lhs == 0"})
+        protected static final LargeIntegerObject doLongLargeIntegerWithZero(@SuppressWarnings("unused") final long lhs, final LargeIntegerObject rhs) {
+            return rhs.negate();
         }
 
-        @Specialization(guards = {"a != 0", "b.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
-        protected static final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = {"lhs != 0", "rhs.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = {"a != 0", "b.fitsIntoLong()"})
-        protected static final Object doLongLargeIntegerOverflow(final long a, final LargeIntegerObject b) {
-            return LargeIntegerObject.subtract(a, b);
+        @Specialization(guards = {"lhs != 0", "rhs.fitsIntoLong()"})
+        protected static final Object doLongLargeIntegerOverflow(final long lhs, final LargeIntegerObject rhs) {
+            return LargeIntegerObject.subtract(lhs, rhs);
         }
 
-        @Specialization(guards = {"a != 0", "!b.fitsIntoLong()"})
-        protected static final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return LargeIntegerObject.subtract(a, b);
+        @Specialization(guards = {"lhs != 0", "!rhs.fitsIntoLong()"})
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return LargeIntegerObject.subtract(lhs, rhs);
         }
 
-        @Specialization(guards = {"b == 0"})
-        protected static final LargeIntegerObject doLongLargeIntegerWithZero(final LargeIntegerObject a, @SuppressWarnings("unused") final long b) {
-            return a;
+        @Specialization(guards = {"rhs == 0"})
+        protected static final LargeIntegerObject doLongLargeIntegerWithZero(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
+            return lhs;
         }
 
-        @Specialization(guards = {"b != 0", "a.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
-        protected static final long doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = {"rhs != 0", "lhs.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = {"b != 0", "a.fitsIntoLong()"})
-        protected static final Object doLargeIntegerAsLongLongOverflow(final LargeIntegerObject a, final long b) {
-            return a.subtract(b);
+        @Specialization(guards = {"rhs != 0", "lhs.fitsIntoLong()"})
+        protected static final Object doLargeIntegerAsLongLongOverflow(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.subtract(rhs);
         }
 
-        @Specialization(guards = {"b != 0", "!a.fitsIntoLong()"})
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.subtract(b);
+        @Specialization(guards = {"rhs != 0", "!lhs.fitsIntoLong()"})
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.subtract(rhs);
         }
 
-        @Specialization(guards = {"a.sameSign(b)"})
-        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.subtract(b);
+        @Specialization(guards = {"lhs.sameSign(rhs)"})
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.subtract(rhs);
         }
 
-        @Specialization(guards = "!a.sameSign(b)")
-        protected static final Object doLargeIntegerNegative(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.subtractNoReduce(b); // Value can only grow, no need to try to reduce.
-        }
-
-        @Specialization
-        protected static final double doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = "!lhs.sameSign(rhs)")
+        protected static final Object doLargeIntegerNegative(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.subtractNoReduce(rhs); // Value can only grow, no need to try to reduce.
         }
 
         @Specialization
-        protected static final double doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected final Object doLongDouble(final long lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(lhs, rhs, isFiniteProfile);
         }
 
         @Specialization
-        protected static final double doDouble(final double a, final double b) {
-            return a - b;
+        protected final Object doDoubleLong(final double lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(lhs, rhs, isFiniteProfile);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, lhs - rhs, isFiniteProfile);
         }
     }
 
@@ -197,48 +207,48 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doLong(final long a, final long b) {
-            return a < b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLong(final long lhs, final long rhs) {
+            return BooleanObject.wrap(lhs < rhs);
         }
 
         @Specialization
-        protected final boolean doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) < 0 ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) < 0);
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
-        protected final boolean doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = "rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = "!b.fitsIntoLong()")
-        protected final boolean doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return b.compareTo(a) >= 0 ? method.image.sqTrue : method.image.sqFalse;
+        @Specialization(guards = "!rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(rhs.compareTo(lhs) >= 0);
         }
 
-        @Specialization(guards = "a.fitsIntoLong()")
-        protected final boolean doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = "lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = "!a.fitsIntoLong()")
-        protected final boolean doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.compareTo(b) < 0 ? method.image.sqTrue : method.image.sqFalse;
-        }
-
-        @Specialization
-        protected final boolean doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = "!lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) < 0);
         }
 
         @Specialization
-        protected final boolean doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected static final boolean doLongDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs < rhs);
         }
 
         @Specialization
-        protected final boolean doDouble(final double a, final double b) {
-            return a < b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(lhs < rhs);
+        }
+
+        @Specialization
+        protected static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs < rhs);
         }
     }
 
@@ -250,48 +260,48 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doLong(final long a, final long b) {
-            return a > b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLong(final long lhs, final long rhs) {
+            return BooleanObject.wrap(lhs > rhs);
         }
 
         @Specialization
-        protected final boolean doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) > 0 ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) > 0);
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
-        protected final boolean doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = "rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = "!b.fitsIntoLong()")
-        protected final boolean doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return b.compareTo(a) <= 0 ? method.image.sqTrue : method.image.sqFalse;
+        @Specialization(guards = "!rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(rhs.compareTo(lhs) <= 0);
         }
 
-        @Specialization(guards = "a.fitsIntoLong()")
-        protected final boolean doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = "lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = "!a.fitsIntoLong()")
-        protected final boolean doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.compareTo(b) > 0 ? method.image.sqTrue : method.image.sqFalse;
-        }
-
-        @Specialization
-        protected final boolean doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = "!lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) > 0);
         }
 
         @Specialization
-        protected final boolean doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected static final boolean doLongDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs > rhs);
         }
 
         @Specialization
-        protected final boolean doDouble(final double a, final double b) {
-            return a > b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(lhs > rhs);
+        }
+
+        @Specialization
+        protected static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs > rhs);
         }
     }
 
@@ -303,48 +313,48 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doLong(final long a, final long b) {
-            return a <= b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLong(final long lhs, final long rhs) {
+            return BooleanObject.wrap(lhs <= rhs);
         }
 
         @Specialization
-        protected final boolean doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) <= 0 ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) <= 0);
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
-        protected final boolean doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = "rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = "!b.fitsIntoLong()")
-        protected final boolean doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return b.compareTo(a) > 0 ? method.image.sqTrue : method.image.sqFalse;
+        @Specialization(guards = "!rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(rhs.compareTo(lhs) > 0);
         }
 
-        @Specialization(guards = "a.fitsIntoLong()")
-        protected final boolean doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = "lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = "!a.fitsIntoLong()")
-        protected final boolean doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.compareTo(b) <= 0 ? method.image.sqTrue : method.image.sqFalse;
-        }
-
-        @Specialization
-        protected final boolean doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = "!lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) <= 0);
         }
 
         @Specialization
-        protected final boolean doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected static final boolean doLongDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs <= rhs);
         }
 
         @Specialization
-        protected final boolean doDouble(final double a, final double b) {
-            return a <= b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(lhs <= rhs);
+        }
+
+        @Specialization
+        protected static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs <= rhs);
         }
     }
 
@@ -356,48 +366,48 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doLong(final long a, final long b) {
-            return a >= b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLong(final long lhs, final long rhs) {
+            return BooleanObject.wrap(lhs >= rhs);
         }
 
         @Specialization
-        protected final boolean doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) >= 0 ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) >= 0);
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
-        protected final boolean doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = "rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = "!b.fitsIntoLong()")
-        protected final boolean doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return b.compareTo(a) < 0 ? method.image.sqTrue : method.image.sqFalse;
+        @Specialization(guards = "!rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(rhs.compareTo(lhs) < 0);
         }
 
-        @Specialization(guards = "a.fitsIntoLong()")
-        protected final boolean doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = "lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = "!a.fitsIntoLong()")
-        protected final boolean doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.compareTo(b) >= 0 ? method.image.sqTrue : method.image.sqFalse;
-        }
-
-        @Specialization
-        protected final boolean doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = "!lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) >= 0);
         }
 
         @Specialization
-        protected final boolean doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected static final boolean doLongDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs >= rhs);
         }
 
         @Specialization
-        protected final boolean doDouble(final double a, final double b) {
-            return a >= b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(lhs >= rhs);
+        }
+
+        @Specialization
+        protected static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs >= rhs);
         }
     }
 
@@ -409,63 +419,61 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doLong(final long a, final long b) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLong(final long lhs, final long rhs) {
+            return BooleanObject.wrap(lhs == rhs);
         }
 
         @Specialization
-        protected final boolean doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) == 0 ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) == 0);
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
-        protected final boolean doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = "rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = "!b.fitsIntoLong()")
-        protected final boolean doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return b.compareTo(a) == 0 ? method.image.sqTrue : method.image.sqFalse;
+        @Specialization(guards = "!rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(rhs.compareTo(lhs) == 0);
         }
 
-        @Specialization(guards = "a.fitsIntoLong()")
-        protected final boolean doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = "lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = "!a.fitsIntoLong()")
-        protected final boolean doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.compareTo(b) == 0 ? method.image.sqTrue : method.image.sqFalse;
+        @Specialization(guards = "!lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) == 0);
         }
 
-        @Specialization(guards = "isAnExactFloat(a)")
-        protected final boolean doLongExactDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = "isAnExactFloat(lhs)")
+        protected static final boolean doLongExactDouble(final long lhs, final double rhs) {
+            return doDouble(lhs, rhs);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!isAnExactFloat(a)")
-        protected final boolean doLongNotExactDouble(final long a, final double b) {
-            return method.image.sqFalse;
+        @Specialization(guards = "!isAnExactFloat(lhs)")
+        protected static final boolean doLongNotExactDouble(final long lhs, final double rhs) {
+            return BooleanObject.FALSE;
         }
 
         @Specialization
-        protected final boolean doDoubleLongExact(final double a, final long b) {
-            return doDouble(a, b);
+        protected static final boolean doDoubleLongExact(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
         }
 
         @Specialization
-        protected final boolean doDouble(final double a, final double b) {
-            return a == b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs == rhs);
         }
 
-        /*
-         * Quick return false if b is not a Number or Complex.
-         */
+        /** Quick return `false` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isFloatObject(b)", "!isLargeIntegerObject(b)", "!isPointersObject(b)"})
-        protected final boolean doFail(final Object a, final AbstractSqueakObject b) {
-            return method.image.sqFalse;
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
+        protected static final boolean doQuickFalse(final Object lhs, final AbstractSqueakObject rhs) {
+            return BooleanObject.FALSE;
         }
     }
 
@@ -477,54 +485,61 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final boolean doLong(final long a, final long b) {
-            return a != b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLong(final long lhs, final long rhs) {
+            return BooleanObject.wrap(lhs != rhs);
         }
 
         @Specialization
-        protected final boolean doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) != 0 ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) != 0);
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
-        protected final boolean doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = "rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = "!b.fitsIntoLong()")
-        protected final boolean doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return b.compareTo(a) != 0 ? method.image.sqTrue : method.image.sqFalse;
+        @Specialization(guards = "!rhs.fitsIntoLong()")
+        protected static final boolean doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return BooleanObject.wrap(rhs.compareTo(lhs) != 0);
         }
 
-        @Specialization(guards = "a.fitsIntoLong()")
-        protected final boolean doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = "lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = "!a.fitsIntoLong()")
-        protected final boolean doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.compareTo(b) != 0 ? method.image.sqTrue : method.image.sqFalse;
+        @Specialization(guards = "!lhs.fitsIntoLong()")
+        protected static final boolean doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.compareTo(rhs) != 0);
         }
 
-        @Specialization(guards = "isAnExactFloat(a)")
-        protected final boolean doLongExactDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = "isAnExactFloat(lhs)")
+        protected static final boolean doLongExactDouble(final long lhs, final double rhs) {
+            return doDouble(lhs, rhs);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!isAnExactFloat(a)")
-        protected final boolean doLongNotExactDouble(final long a, final double b) {
-            return method.image.sqTrue;
+        @Specialization(guards = "!isAnExactFloat(lhs)")
+        protected static final boolean doLongNotExactDouble(final long lhs, final double rhs) {
+            return BooleanObject.TRUE;
         }
 
         @Specialization
-        protected final boolean doDoubleLongExact(final double a, final long b) {
-            return doDouble(a, b);
+        protected static final boolean doDoubleLongExact(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
         }
 
         @Specialization
-        protected final boolean doDouble(final double a, final double b) {
-            return a != b ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doDouble(final double lhs, final double rhs) {
+            return BooleanObject.wrap(lhs != rhs);
+        }
+
+        /** Quick return `true` if b is not a Number or Complex. */
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
+        protected static final boolean doQuickTrue(final Object lhs, final AbstractSqueakObject rhs) {
+            return BooleanObject.TRUE;
         }
     }
 
@@ -535,101 +550,104 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"a != 0", "b != 0"}, rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long a, final long b) {
-            return Math.multiplyExact(a, b);
+        @Specialization(guards = {"lhs != 0", "rhs != 0"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLong(final long lhs, final long rhs) {
+            return Math.multiplyExact(lhs, rhs);
         }
 
-        @Specialization(guards = {"a != 0", "b != 0"})
-        protected final Object doLongWithOverflow(final long a, final long b) {
-            return LargeIntegerObject.multiply(method.image, a, b);
+        @Specialization(guards = {"lhs != 0", "rhs != 0"})
+        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
+            return LargeIntegerObject.multiply(method.image, lhs, rhs);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"a == 0 || b == 0"})
-        protected static final Object doLongWithZero(final long a, final long b) {
+        @Specialization(guards = {"lhs == 0 || rhs == 0"})
+        protected static final Object doLongWithZero(final long lhs, final long rhs) {
             return 0L;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"a == 0 || b.isZero()"})
-        protected static final long doLongLargeIntegerWithZero(final long a, final LargeIntegerObject b) {
+        @Specialization(guards = {"lhs == 0 || rhs.isZero()"})
+        protected static final long doLongLargeIntegerWithZero(final long lhs, final LargeIntegerObject rhs) {
             return 0L;
         }
 
-        @Specialization(guards = {"a != 0 ", "b.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
-        protected static final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = {"lhs != 0 ", "rhs.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = {"a != 0", "b.fitsIntoLong()"})
-        protected static final Object doLongLargeIntegerOverflow(final long a, final LargeIntegerObject b) {
-            return b.multiply(a);
+        @Specialization(guards = {"lhs != 0", "rhs.fitsIntoLong()"})
+        protected static final Object doLongLargeIntegerOverflow(final long lhs, final LargeIntegerObject rhs) {
+            return rhs.multiply(lhs);
         }
 
-        @Specialization(guards = {"isPowerOfTwo(a)", "!b.fitsIntoLong()"})
-        protected static final LargeIntegerObject doLargeIntegerLongShift(final long a, final LargeIntegerObject b) {
-            final long shiftBy = Long.numberOfTrailingZeros(a);
-            assert 0 < shiftBy && shiftBy <= Integer.MAX_VALUE && a == Long.highestOneBit(a);
-            return b.shiftLeftNoReduce((int) shiftBy);
+        @Specialization(guards = {"isPowerOfTwo(lhs)", "!rhs.fitsIntoLong()"})
+        protected static final LargeIntegerObject doLargeIntegerLongShift(final long lhs, final LargeIntegerObject rhs) {
+            final long shiftBy = Long.numberOfTrailingZeros(lhs);
+            assert 0 < shiftBy && shiftBy <= Integer.MAX_VALUE && lhs == Long.highestOneBit(lhs);
+            return rhs.shiftLeftNoReduce((int) shiftBy);
         }
 
-        @Specialization(guards = {"a != 0", "!isPowerOfTwo(a)", "!b.fitsIntoLong()"})
-        protected final LargeIntegerObject doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return doLargeIntegerNoReduce(asLargeInteger(a), b);
+        @Specialization(guards = {"lhs != 0", "!isPowerOfTwo(lhs)", "!rhs.fitsIntoLong()"})
+        protected final LargeIntegerObject doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return doLargeIntegerNoReduce(asLargeInteger(lhs), rhs);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"a.isZero() || b == 0"})
-        protected static final long doLongLargeIntegerWithZero(final LargeIntegerObject a, final long b) {
+        @Specialization(guards = {"lhs.isZero() || rhs == 0"})
+        protected static final long doLongLargeIntegerWithZero(final LargeIntegerObject lhs, final long rhs) {
             return 0L;
         }
 
-        @Specialization(guards = {"b != 0", "a.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
-        protected static final long doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = {"rhs != 0", "lhs.fitsIntoLong()"}, rewriteOn = ArithmeticException.class)
+        protected static final long doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = {"b != 0", "a.fitsIntoLong()"})
-        protected static final Object doLargeIntegerAsLongLongOverflow(final LargeIntegerObject a, final long b) {
-            return a.multiply(b);
+        @Specialization(guards = {"rhs != 0", "lhs.fitsIntoLong()"})
+        protected static final Object doLargeIntegerAsLongLongOverflow(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.multiply(rhs);
         }
 
-        @Specialization(guards = {"isPowerOfTwo(b)", "!a.fitsIntoLong()"})
-        protected static final LargeIntegerObject doLargeIntegerLongShift(final LargeIntegerObject a, @SuppressWarnings("unused") final long b) {
-            final long shiftBy = Long.numberOfTrailingZeros(b);
-            assert 0 < shiftBy && shiftBy <= Integer.MAX_VALUE && b == Long.highestOneBit(b);
-            return a.shiftLeftNoReduce((int) shiftBy);
+        @Specialization(guards = {"isPowerOfTwo(rhs)", "!lhs.fitsIntoLong()"})
+        protected static final LargeIntegerObject doLargeIntegerLongShift(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
+            final long shiftBy = Long.numberOfTrailingZeros(rhs);
+            assert 0 < shiftBy && shiftBy <= Integer.MAX_VALUE && rhs == Long.highestOneBit(rhs);
+            return lhs.shiftLeftNoReduce((int) shiftBy);
         }
 
-        @Specialization(guards = {"b != 0", "!isPowerOfTwo(b)", "!a.fitsIntoLong()"})
-        protected final LargeIntegerObject doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return doLargeIntegerNoReduce(a, asLargeInteger(b));
+        @Specialization(guards = {"rhs != 0", "!isPowerOfTwo(rhs)", "!lhs.fitsIntoLong()"})
+        protected final LargeIntegerObject doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLargeIntegerNoReduce(lhs, asLargeInteger(rhs));
         }
 
-        @Specialization(guards = {"!a.fitsIntoLong() || !b.fitsIntoLong()", "!a.isZero()", "!b.isZero()"})
-        protected static final LargeIntegerObject doLargeIntegerNoReduce(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.multiplyNoReduce(b);
+        @Specialization(guards = {"!lhs.fitsIntoLong() || !rhs.fitsIntoLong()", "!lhs.isZero()", "!rhs.isZero()"})
+        protected static final LargeIntegerObject doLargeIntegerNoReduce(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.multiplyNoReduce(rhs);
         }
 
-        @Specialization(guards = {"a.fitsIntoLong()", "b.fitsIntoLong()"})
-        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.multiply(b);
-        }
-
-        @Specialization
-        protected static final double doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = {"lhs.fitsIntoLong()", "rhs.fitsIntoLong()"})
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.multiply(rhs);
         }
 
         @Specialization
-        protected static final double doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        protected final Object doLongDouble(final long lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(lhs, rhs, isFiniteProfile);
         }
 
         @Specialization
-        protected static final double doDouble(final double a, final double b) {
-            return a * b;
+        protected final Object doDoubleLong(final double lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(lhs, rhs, isFiniteProfile);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, lhs * rhs, isFiniteProfile);
         }
     }
 
@@ -640,56 +658,54 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"b != 0", "isIntegralWhenDividedBy(a, b)", "!isOverflowDivision(a, b)"})
-        public static final long doLong(final long a, final long b) {
-            return a / b;
+        @Specialization(guards = {"rhs != 0", "isIntegralWhenDividedBy(lhs, rhs)", "!isOverflowDivision(lhs, rhs)"})
+        public static final long doLong(final long lhs, final long rhs) {
+            return lhs / rhs;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isOverflowDivision(a, b)")
-        protected final LargeIntegerObject doLongWithOverflow(final long a, final long b) {
+        @Specialization(guards = "isOverflowDivision(lhs, rhs)")
+        protected final LargeIntegerObject doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
-        @Specialization(guards = {"!b.isZero()", "a.isIntegralWhenDividedBy(b)"})
-        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.divide(b);
+        @Specialization(guards = {"!rhs.isZero()", "lhs.isIntegralWhenDividedBy(rhs)"})
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.divide(rhs);
         }
 
-        @Specialization(guards = {"b != 0", "a.isIntegralWhenDividedBy(b)"})
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.divide(b);
+        @Specialization(guards = {"rhs != 0", "lhs.isIntegralWhenDividedBy(rhs)"})
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.divide(rhs);
         }
 
-        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "isIntegralWhenDividedBy(a, b.longValue())", "!isOverflowDivision(a, b.longValue())"})
-        protected static final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = {"!rhs.isZero()", "rhs.fitsIntoLong()", "isIntegralWhenDividedBy(lhs, rhs.longValue())", "!isOverflowDivision(lhs, rhs.longValue())"})
+        protected static final long doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "isOverflowDivision(a, b.longValue())"})
-        protected final LargeIntegerObject doLongLargeIntegerAsLongWithOverflow(final long a, final LargeIntegerObject b) {
+        @Specialization(guards = {"!rhs.isZero()", "rhs.fitsIntoLong()", "isOverflowDivision(lhs, rhs.longValue())"})
+        protected final LargeIntegerObject doLongLargeIntegerAsLongWithOverflow(final long lhs, final LargeIntegerObject rhs) {
             return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
-        /**
-         * Fail if `a` is long and `b` is !b.isZero()" and "!b.fitsIntoLong()"
-         * (isIntegralWhenDividedBy is always `false`).
-         */
-
-        @Specialization(guards = {"!isZero(b)"})
-        protected static final double doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
+        @Specialization(guards = {"!isZero(rhs)"})
+        protected final Object doLongDouble(final long lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(lhs, rhs, isFiniteProfile);
         }
 
-        @Specialization(guards = {"b != 0"})
-        protected static final double doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
+        @Specialization(guards = {"rhs != 0"})
+        protected final Object doDoubleLong(final double lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(lhs, rhs, isFiniteProfile);
         }
 
-        @Specialization(guards = {"!isZero(b)"})
-        protected static final double doDouble(final double a, final double b) {
-            return a / b;
+        @Specialization(guards = {"!isZero(rhs)"})
+        protected final Object doDouble(final double lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, lhs / rhs, isFiniteProfile);
         }
     }
 
@@ -700,34 +716,34 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"b != 0"})
-        protected long doLong(final long a, final long b) {
-            return Math.floorMod(a, b);
+        @Specialization(guards = {"rhs != 0"})
+        protected long doLong(final long lhs, final long rhs) {
+            return Math.floorMod(lhs, rhs);
         }
 
         @Specialization
-        protected Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.floorMod(b);
+        protected Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.floorMod(rhs);
         }
 
-        @Specialization(guards = "b.fitsIntoLong()")
-        protected final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = "rhs.fitsIntoLong()")
+        protected final long doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = "!b.fitsIntoLong()")
-        protected static final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return LargeIntegerObject.floorMod(a, b);
+        @Specialization(guards = "!rhs.fitsIntoLong()")
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return LargeIntegerObject.floorMod(lhs, rhs);
         }
 
-        @Specialization(guards = "a.fitsIntoLong()")
-        protected final long doLargeIntegerAsLongLong(final LargeIntegerObject a, final long b) {
-            return doLong(a.longValue(), b);
+        @Specialization(guards = "lhs.fitsIntoLong()")
+        protected final long doLargeIntegerAsLongLong(final LargeIntegerObject lhs, final long rhs) {
+            return doLong(lhs.longValue(), rhs);
         }
 
-        @Specialization(guards = "!a.fitsIntoLong()")
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.floorMod(b);
+        @Specialization(guards = "!lhs.fitsIntoLong()")
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.floorMod(rhs);
         }
     }
 
@@ -738,41 +754,41 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"b != 0", "!isOverflowDivision(a, b)"})
-        protected static final long doLong(final long a, final long b) {
-            return Math.floorDiv(a, b);
+        @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
+        protected static final long doLong(final long lhs, final long rhs) {
+            return Math.floorDiv(lhs, rhs);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isOverflowDivision(a, b)")
-        protected final LargeIntegerObject doLongWithOverflow(final long a, final long b) {
+        @Specialization(guards = "isOverflowDivision(lhs, rhs)")
+        protected final LargeIntegerObject doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
-        @Specialization(guards = "!b.isZero()")
-        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.floorDivide(b);
+        @Specialization(guards = "!rhs.isZero()")
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.floorDivide(rhs);
         }
 
-        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "!isOverflowDivision(a, b.longValue())"})
-        protected static final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = {"!rhs.isZero()", "rhs.fitsIntoLong()", "!isOverflowDivision(lhs, rhs.longValue())"})
+        protected static final long doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValue())"})
-        protected final LargeIntegerObject doLongLargeIntegerAsLongWithOverflow(final long a, final LargeIntegerObject b) {
+        @Specialization(guards = {"rhs.fitsIntoLong()", "isOverflowDivision(lhs, rhs.longValue())"})
+        protected final LargeIntegerObject doLongLargeIntegerAsLongWithOverflow(final long lhs, final LargeIntegerObject rhs) {
             return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
-        @Specialization(guards = {"!b.isZero()", "!b.fitsIntoLong()"})
-        protected static final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return LargeIntegerObject.floorDivide(a, b);
+        @Specialization(guards = {"!rhs.isZero()", "!rhs.fitsIntoLong()"})
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return LargeIntegerObject.floorDivide(lhs, rhs);
         }
 
-        @Specialization(guards = "b != 0")
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.floorDivide(b);
+        @Specialization(guards = "rhs != 0")
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.floorDivide(rhs);
         }
     }
 
@@ -783,41 +799,41 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"b != 0", "!isOverflowDivision(a, b)"})
-        public static final long doLong(final long a, final long b) {
-            return a / b;
+        @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
+        public static final long doLong(final long lhs, final long rhs) {
+            return lhs / rhs;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isOverflowDivision(a, b)")
-        protected final LargeIntegerObject doLongWithOverflow(final long a, final long b) {
+        @Specialization(guards = "isOverflowDivision(lhs, rhs)")
+        protected final LargeIntegerObject doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
-        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()", "!isOverflowDivision(a, b.longValue())"})
-        protected static final long doLongLargeIntegerAsLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = {"!rhs.isZero()", "rhs.fitsIntoLong()", "!isOverflowDivision(lhs, rhs.longValue())"})
+        protected static final long doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"b.fitsIntoLong()", "isOverflowDivision(a, b.longValue())"})
-        protected final LargeIntegerObject doLongLargeIntegerWithOverflow(final long a, final LargeIntegerObject b) {
+        @Specialization(guards = {"rhs.fitsIntoLong()", "isOverflowDivision(lhs, rhs.longValue())"})
+        protected final LargeIntegerObject doLongLargeIntegerWithOverflow(final long lhs, final LargeIntegerObject rhs) {
             return LargeIntegerObject.createLongMinOverflowResult(method.image);
         }
 
-        @Specialization(guards = {"!b.isZero()", "!b.fitsIntoLong()"})
-        protected static final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return LargeIntegerObject.divide(a, b);
+        @Specialization(guards = {"!rhs.isZero()", "!rhs.fitsIntoLong()"})
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return LargeIntegerObject.divide(lhs, rhs);
         }
 
-        @Specialization(guards = "!b.isZero()")
-        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.divide(b);
+        @Specialization(guards = "!rhs.isZero()")
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.divide(rhs);
         }
 
-        @Specialization(guards = "b != 0")
-        protected static final Object doLargeInteger(final LargeIntegerObject a, final long b) {
-            return a.divide(b);
+        @Specialization(guards = "rhs != 0")
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.divide(rhs);
         }
     }
 
@@ -833,14 +849,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver & arg;
         }
 
-        @Specialization(guards = {"arg.fitsIntoLong()"})
+        @Specialization(guards = {"arg.fitsIntoLong() || receiver >= 0"})
         protected static final long doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
-            return doLong(receiver, arg.longValue());
+            return receiver & arg.longValue();
         }
 
-        @Specialization(guards = {"!arg.fitsIntoLong()"})
-        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return asLargeInteger(receiver).and(arg);
+        @Specialization(guards = {"!arg.fitsIntoLong()", "receiver < 0"})
+        protected static final Object doLongLargeNegative(final long receiver, final LargeIntegerObject arg) {
+            return arg.and(receiver);
         }
     }
 
@@ -899,29 +915,29 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"b != 0"})
-        protected static final long doLong(final long a, final long b) {
-            return a % b;
+        @Specialization(guards = {"rhs != 0"})
+        protected static final long doLong(final long lhs, final long rhs) {
+            return lhs % rhs;
         }
 
-        @Specialization(guards = {"!b.isZero()"})
-        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.remainder(b);
+        @Specialization(guards = {"!rhs.isZero()"})
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+            return lhs.remainder(rhs);
         }
 
-        @Specialization(guards = {"!b.isZero()", "b.fitsIntoLong()"})
-        protected static final long doLong(final long a, final LargeIntegerObject b) {
-            return doLong(a, b.longValue());
+        @Specialization(guards = {"!rhs.isZero()", "rhs.fitsIntoLong()"})
+        protected static final long doLong(final long lhs, final LargeIntegerObject rhs) {
+            return doLong(lhs, rhs.longValue());
         }
 
-        @Specialization(guards = {"!b.isZero()", "!b.fitsIntoLong()"})
-        protected final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return doLargeInteger(asLargeInteger(a), b);
+        @Specialization(guards = {"!rhs.isZero()", "!rhs.fitsIntoLong()"})
+        protected final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return doLargeInteger(asLargeInteger(lhs), rhs);
         }
 
-        @Specialization(guards = {"b != 0"})
-        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
-            return doLargeInteger(a, asLargeInteger(b));
+        @Specialization(guards = {"rhs != 0"})
+        protected final Object doLargeInteger(final LargeIntegerObject lhs, final long rhs) {
+            return doLargeInteger(lhs, asLargeInteger(rhs));
         }
     }
 
@@ -1021,24 +1037,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "receiver == 0")
-        protected static final long doLongZero(@SuppressWarnings("unused") final long receiver) {
-            return 0L;
-        }
-
         @Specialization(guards = "isZero(receiver)")
         protected static final long doDoubleZero(@SuppressWarnings("unused") final double receiver) {
             return 0L;
-        }
-
-        @Specialization(guards = "isZero(receiver.getValue())")
-        protected static final long doFloatZero(@SuppressWarnings("unused") final FloatObject receiver) {
-            return 0L;
-        }
-
-        @Specialization(guards = "receiver != 0")
-        protected static final long doLong(final long receiver) {
-            return doDouble(receiver);
         }
 
         @Specialization(guards = "!isZero(receiver)")
@@ -1053,11 +1054,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return bits - BIAS; // apply bias
             }
         }
-
-        @Specialization(guards = "!isZero(receiver.getValue())")
-        protected static final long doFloat(final FloatObject receiver) {
-            return doDouble(receiver.getValue());
-        }
     }
 
     @GenerateNodeFactory
@@ -1067,13 +1063,20 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"!isZero(matissa)", "!isInfinite(matissa)", "exponent != 0"})
-        protected static final double doDoubleLong(final double matissa, final long exponent) {
-            return doDouble(matissa, exponent);
+        @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "exponent != 0"})
+        protected final Object doDoubleLong(final double matissa, final long exponent,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return doDouble(matissa, exponent, isFiniteProfile);
         }
 
-        @Specialization(guards = {"!isZero(matissa)", "!isInfinite(matissa)", "!isZero(exponent)"})
-        protected static final double doDouble(final double matissa, final double exponent) {
+        @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "exponent == 0"})
+        protected static final double doDoubleExponentLongZero(final double matissa, @SuppressWarnings("unused") final long exponent) {
+            return matissa;
+        }
+
+        @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "!isZero(exponent)"})
+        protected final Object doDouble(final double matissa, final double exponent,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
             final double steps = Math.min(3, Math.ceil(Math.abs(exponent) / 1023));
             double result = matissa;
             for (int i = 0; i < steps; i++) {
@@ -1081,7 +1084,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
                 result *= pow;
             }
-            return result;
+            return FloatObject.boxIfNecessary(method.image, result, isFiniteProfile);
+        }
+
+        @Specialization(guards = {"!isZero(matissa)", "isFinite(matissa)", "isZero(exponent)"})
+        protected static final double doDoubleExponentZero(final double matissa, @SuppressWarnings("unused") final double exponent) {
+            return matissa;
         }
 
         @SuppressWarnings("unused")
@@ -1090,19 +1098,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return 0D;
         }
 
-        @Specialization(guards = {"exponent == 0"})
-        protected static final double doDoubleExponentZero(final double matissa, @SuppressWarnings("unused") final long exponent) {
-            return matissa;
-        }
-
-        @Specialization(guards = {"isZero(exponent)"})
-        protected static final double doDoubleExponentZero(final double matissa, @SuppressWarnings("unused") final double exponent) {
-            return matissa;
-        }
-
         @SuppressWarnings("unused")
-        @Specialization(guards = {"isInfinite(matissa)"})
-        protected static final double doDoubleNaN(final double matissa, final Object exponent) {
+        @Specialization(guards = {"!matissa.isFinite()"})
+        protected static final FloatObject doDoubleNotFinite(final FloatObject matissa, final Object exponent) {
             return matissa;
         }
     }
@@ -1114,19 +1112,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
-        protected static final double doLong(final long receiver) {
-            return Math.sqrt(receiver);
-        }
-
-        @Specialization
-        protected static final double doLargeInteger(final LargeIntegerObject receiver) {
-            return doDouble(receiver.doubleValue());
-        }
-
-        @Specialization
+        @Specialization(guards = {"isFinite(receiver)", "isZeroOrGreater(receiver)"})
         protected static final double doDouble(final double receiver) {
             return Math.sqrt(receiver);
+        }
+
+        @Specialization(guards = "!receiver.isFinite()")
+        protected static final FloatObject doNotFinite(final FloatObject receiver) {
+            return receiver;
         }
     }
 
@@ -1137,9 +1130,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "isFinite(receiver)")
         protected static final double doDouble(final double receiver) {
             return Math.sin(receiver);
+        }
+
+        @Specialization(guards = "!receiver.isFinite()")
+        protected final FloatObject doInfinite(@SuppressWarnings("unused") final FloatObject receiver) {
+            return FloatObject.valueOf(method.image, Double.NaN);
         }
     }
 
@@ -1150,12 +1148,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "!isNaN(receiver)")
         protected static final double doDouble(final double receiver) {
             return Math.atan(receiver);
         }
+
+        @Specialization(guards = "receiver.isNaN()")
+        protected static final FloatObject doInfinite(final FloatObject receiver) {
+            return receiver;
+        }
     }
 
+    @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {58, 558})
     protected abstract static class PrimLogNNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
@@ -1163,9 +1167,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "isFinite(receiver)")
         protected static final double doDouble(final double receiver) {
             return Math.log(receiver);
+        }
+
+        @Specialization(guards = "!receiver.isFinite()")
+        protected static final FloatObject doInfinite(final FloatObject receiver) {
+            return receiver;
         }
     }
 
@@ -1176,9 +1185,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
-        protected static final double doDouble(final double receiver) {
-            return Math.exp(receiver);
+        @Specialization(guards = "isFinite(receiver)")
+        protected final Object doDouble(final double receiver,
+                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
+            return FloatObject.boxIfNecessary(method.image, Math.exp(receiver), isFiniteProfile);
+        }
+
+        @Specialization(guards = "!receiver.isFinite()")
+        protected static final FloatObject doInfinite(final FloatObject receiver) {
+            return receiver;
         }
     }
 
@@ -1203,7 +1218,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @TypeSystemReference(SqueakArithmeticTypes.class)
+    @ImportStatic(Double.class)
+    @TypeSystemReference(ArithmeticBaseTypeSystem.class)
     public abstract static class AbstractArithmeticPrimitiveNode extends AbstractPrimitiveNode {
         public AbstractArithmeticPrimitiveNode(final CompiledMethodObject method) {
             super(method);
@@ -1217,8 +1233,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return value - 1 <= FloatObject.EMAX && h - Math.log(Long.lowestOneBit(Math.abs(value))) / Math.log(2) < FloatObject.PRECISION;
         }
 
-        protected static final boolean sameSign(final long a, final long b) {
-            return a >= 0 && b >= 0 || a < 0 && b < 0;
+        protected static final boolean sameSign(final long lhs, final long rhs) {
+            return lhs >= 0 && rhs >= 0 || lhs < 0 && rhs < 0;
         }
     }
 

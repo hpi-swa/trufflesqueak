@@ -33,10 +33,6 @@ public final class NilObject extends AbstractSqueakObject {
         return 0;
     }
 
-    public static NilObject shallowCopy() {
-        return SINGLETON;
-    }
-
     @Override
     public String toString() {
         return "nil";

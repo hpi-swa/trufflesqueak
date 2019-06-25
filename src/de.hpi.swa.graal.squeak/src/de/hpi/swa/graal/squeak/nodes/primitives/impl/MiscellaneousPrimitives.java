@@ -24,11 +24,13 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -103,8 +105,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             method.image.interrupt.setNextWakeupTick(msTime);
         }
 
-        protected final void signalAtMilliseconds(final NilObject semaphore, @SuppressWarnings("unused") final long msTime) {
-            method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
+        protected final void resetTimerSemaphore() {
+            method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, NilObject.SINGLETON);
             method.image.interrupt.setTimerSemaphore(null);
             method.image.interrupt.setNextWakeupTick(0);
         }
@@ -122,7 +124,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject.isImmediateClassType()")
-        protected static final Object doSmallIntegerClass(final ClassObject classObject) {
+        protected static final Object doImmeditate(final ClassObject classObject) {
             throw new PrimitiveFailed();
         }
 
@@ -246,28 +248,29 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 121)
-    protected abstract static class PrimImageNameNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimImageNameNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimImageNameNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final NativeObject doName(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final NativeObject doName(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asByteString(method.image.getImagePath());
         }
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 122)
-    protected abstract static class PrimNoopNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimNoopNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimNoopNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final AbstractSqueakObject get(final AbstractSqueakObject receiver) {
+        protected static final Object doNothing(final Object receiver) {
             return receiver;
         }
     }
@@ -281,7 +284,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObjectWithClassAndHash semaphore) {
+        protected final Object get(final Object receiver, final AbstractSqueakObjectWithClassAndHash semaphore) {
             method.image.setSemaphore(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE, semaphore);
             return receiver;
         }
@@ -296,7 +299,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected static final AbstractSqueakObject doSet(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long numBytes) {
+        protected static final Object doSet(final Object receiver, @SuppressWarnings("unused") final long numBytes) {
             // TODO: do something with numBytes
             return receiver;
         }
@@ -311,107 +314,107 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final boolean doClass(final ClassObject receiver, final Object thang) {
-            return receiver.pointsTo(thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doClass(final ClassObject receiver, final Object thang) {
+            return BooleanObject.wrap(receiver.pointsTo(thang));
         }
 
         @Specialization
-        protected final boolean doClass(final CompiledCodeObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getLiterals(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doClass(final CompiledCodeObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getLiterals(), thang));
         }
 
         @Specialization
-        protected final boolean doContext(final ContextObject receiver, final Object thang) {
-            return receiver.pointsTo(thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doContext(final ContextObject receiver, final Object thang) {
+            return BooleanObject.wrap(receiver.pointsTo(thang));
         }
 
         @Specialization(guards = {"receiver.isEmptyType()", "receiver.getEmptyStorage() > 0"})
-        protected final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
-            return thang == NilObject.SINGLETON ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
+            return BooleanObject.wrap(thang == NilObject.SINGLETON);
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
-        protected final boolean doArrayOfBooleans(final ArrayObject receiver, final boolean thang) {
-            return ArrayUtils.contains(receiver.getBooleanStorage(), thang ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfBooleans(final ArrayObject receiver, final boolean thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getBooleanStorage(), thang ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG));
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
-        protected final boolean doArrayOfBooleans(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getBooleanStorage(), ArrayObject.BOOLEAN_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfBooleans(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getBooleanStorage(), ArrayObject.BOOLEAN_NIL_TAG));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isBooleanType()", "!isBoolean(thang)", "!isNil(thang)"})
-        protected final boolean doArrayOfBooleans(final ArrayObject receiver, final Object thang) {
-            return method.image.sqFalse;
+        protected static final boolean doArrayOfBooleans(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.FALSE;
         }
 
         @Specialization(guards = "receiver.isCharType()")
-        protected final boolean doArrayOfChars(final ArrayObject receiver, final char thang) {
-            return ArrayUtils.contains(receiver.getCharStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfChars(final ArrayObject receiver, final char thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getCharStorage(), thang));
         }
 
         @Specialization(guards = "receiver.isCharType()")
-        protected final boolean doArrayOfChars(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getCharStorage(), ArrayObject.CHAR_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfChars(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getCharStorage(), ArrayObject.CHAR_NIL_TAG));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isCharType()", "!isCharacter(thang)", "!isNil(thang)"})
-        protected final boolean doArrayOfChars(final ArrayObject receiver, final Object thang) {
-            return method.image.sqFalse;
+        protected static final boolean doArrayOfChars(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.FALSE;
         }
 
         @Specialization(guards = "receiver.isLongType()")
-        protected final boolean doArrayOfLongs(final ArrayObject receiver, final long thang) {
-            return ArrayUtils.contains(receiver.getLongStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfLongs(final ArrayObject receiver, final long thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getLongStorage(), thang));
         }
 
         @Specialization(guards = "receiver.isLongType()")
-        protected final boolean doArrayOfLongs(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getLongStorage(), ArrayObject.LONG_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfLongs(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getLongStorage(), ArrayObject.LONG_NIL_TAG));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isLongType()", "!isLong(thang)", "!isNil(thang)"})
-        protected final boolean doArrayOfLongss(final ArrayObject receiver, final Object thang) {
-            return method.image.sqFalse;
+        protected static final boolean doArrayOfLongss(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.FALSE;
         }
 
         @Specialization(guards = "receiver.isDoubleType()")
-        protected final boolean doArrayOfDoubles(final ArrayObject receiver, final double thang) {
-            return ArrayUtils.contains(receiver.getDoubleStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfDoubles(final ArrayObject receiver, final double thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getDoubleStorage(), thang));
         }
 
         @Specialization(guards = "receiver.isDoubleType()")
-        protected final boolean doArrayOfDoubles(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
-            return ArrayUtils.contains(receiver.getDoubleStorage(), ArrayObject.DOUBLE_NIL_TAG) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfDoubles(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getDoubleStorage(), ArrayObject.DOUBLE_NIL_TAG));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"receiver.isDoubleType()", "!isDouble(thang)", "!isNil(thang)"})
-        protected final boolean doArrayOfDoubles(final ArrayObject receiver, final Object thang) {
-            return method.image.sqFalse;
+        protected static final boolean doArrayOfDoubles(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.FALSE;
         }
 
         @Specialization(guards = "receiver.isNativeObjectType()")
-        protected final boolean doArrayOfNatives(final ArrayObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getNativeObjectStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfNatives(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getNativeObjectStorage(), thang));
         }
 
         @Specialization(guards = "receiver.isObjectType()")
-        protected final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getObjectStorage(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getObjectStorage(), thang));
         }
 
         @Specialization
-        protected final boolean doPointers(final PointersObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getPointers(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doPointers(final PointersObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getPointers(), thang));
         }
 
         @Specialization
-        protected final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getPointers(), thang) ? method.image.sqTrue : method.image.sqFalse;
+        protected static final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
+            return BooleanObject.wrap(ArrayUtils.contains(receiver.getPointers(), thang));
         }
     }
 
@@ -424,14 +427,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final PointersObject semaphore) {
+        protected final Object get(final Object receiver, final PointersObject semaphore) {
             method.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
             method.image.interrupt.setInterruptSemaphore(semaphore);
             return receiver;
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final NilObject semaphore) {
+        protected final Object get(final Object receiver, final NilObject semaphore) {
             method.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
             method.image.interrupt.setInterruptSemaphore(null);
             return receiver;
@@ -440,14 +443,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 135)
-    protected abstract static class PrimMillisecondClockNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimMillisecondClockNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimMillisecondClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
+        protected final long doClock(@SuppressWarnings("unused") final Object receiver) {
             return System.currentTimeMillis() - method.image.startUpMillis;
         }
     }
@@ -461,28 +464,29 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "semaphore.getSqueakClass().isSemaphoreClass()")
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long msTime) {
+        protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long msTime) {
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
 
+        @SuppressWarnings("unused")
         @Specialization
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final NilObject semaphore, final long msTime) {
-            signalAtMilliseconds(semaphore, msTime);
+        protected final Object doSignal(final Object receiver, final NilObject semaphore, final long msTime) {
+            resetTimerSemaphore();
             return receiver;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 137)
-    protected abstract static class PrimSecondClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSecondClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimSecondClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
+        protected final long doClock(@SuppressWarnings("unused") final Object receiver) {
             return currentMicrosecondsLocal() / 1000000;
         }
     }
@@ -526,7 +530,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 142)
-    protected abstract static class PrimVMPathNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimVMPathNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimVMPathNode(final CompiledMethodObject method) {
             super(method);
@@ -534,7 +538,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         @TruffleBoundary
-        protected final NativeObject doVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver) {
             return method.image.asByteString(System.getProperty("java.home") + File.separatorChar);
         }
     }
@@ -738,16 +742,17 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 176)
-    protected abstract static class PrimMaxIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimMaxIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimMaxIdentityHashNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doMaxHash(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return AbstractSqueakObjectWithClassAndHash.IDENTITY_HASH_MASK;
+        protected static final long doMaxHash(@SuppressWarnings("unused") final Object receiver) {
+            return AbstractSqueakObjectWithHash.IDENTITY_HASH_MASK;
         }
     }
 
@@ -789,7 +794,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         protected final boolean isPinned(final AbstractSqueakObjectWithClassAndHash receiver) {
             PrimPinNode.printWarningIfNotTesting(method);
-            return receiver.isPinned() ? method.image.sqTrue : method.image.sqFalse;
+            return BooleanObject.wrap(receiver.isPinned());
         }
     }
 
@@ -806,7 +811,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             printWarningIfNotTesting(method);
             final boolean wasPinned = receiver.isPinned();
             receiver.setPinned();
-            return wasPinned ? method.image.sqTrue : method.image.sqFalse;
+            return BooleanObject.wrap(wasPinned);
         }
 
         @Specialization(guards = "!enable")
@@ -814,7 +819,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             printWarningIfNotTesting(method);
             final boolean wasPinned = receiver.isPinned();
             receiver.unsetPinned();
-            return wasPinned ? method.image.sqTrue : method.image.sqFalse;
+            return BooleanObject.wrap(wasPinned);
         }
 
         protected static final void printWarningIfNotTesting(final CompiledCodeObject code) {
@@ -830,28 +835,28 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 240)
-    protected abstract static class PrimUTCClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimUTCClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimUTCClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final long doTime(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected static final long doTime(@SuppressWarnings("unused") final Object receiver) {
             return currentMicrosecondsUTC();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 241)
-    protected abstract static class PrimLocalMicrosecondsClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimLocalMicrosecondsClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimLocalMicrosecondsClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final long doTime(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final long doTime(@SuppressWarnings("unused") final Object receiver) {
             return currentMicrosecondsLocal();
         }
     }
@@ -865,15 +870,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "semaphore.getSqueakClass().isSemaphoreClass()")
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long usecsUTC) {
+        protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long usecsUTC) {
             final long msTime = (usecsUTC - AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS) / 1000;
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
 
+        @SuppressWarnings("unused")
         @Specialization
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final NilObject semaphore, @SuppressWarnings("unused") final long usecsUTC) {
-            signalAtMilliseconds(semaphore, -1);
+        protected final Object doSignal(final Object receiver, final NilObject semaphore, final long usecsUTC) {
+            resetTimerSemaphore();
             return receiver;
         }
     }
@@ -910,7 +916,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"})
-        protected static final Object getVMParameters(final Object receiver, final long index, final NotProvided value) {
+        protected final Object getVMParameters(final Object receiver, final long index, final NotProvided value) {
             return vmParameterAt((int) index);
         }
 
@@ -920,7 +926,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return NilObject.SINGLETON; // ignore writes
         }
 
-        private static Object vmParameterAt(final int index) {
+        private Object vmParameterAt(final int index) {
             //@formatter:off
             switch (index) {
                 case 1: return 1L; // end (v3)/size(Spur) of old-space (0-based, read-only)
@@ -956,7 +962,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 38: return 0L; // milliseconds taken by current IGC (read-only)
                 case 39: return MiscUtils.getObjectPendingFinalizationCount(); // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
                 case 40: return 8L; // BytesPerOop for this image
-                case 41: return SqueakImageReaderNode.IMAGE_64BIT_VERSION; // imageFormatVersion for the VM
+                case 41: return SqueakImageReader.IMAGE_64BIT_VERSION; // imageFormatVersion for the VM
                 case 42: return 50L; // number of stack pages in use (see SmalltalkImage>>isRunningCog)
                 case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
                 case 44: return 0L; // size of eden, in bytes
@@ -964,7 +970,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 46: return NilObject.SINGLETON; // machine code zone size, in bytes (Cog only; otherwise nil)
                 case 47: return NilObject.SINGLETON; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
                 case 48: return 0L; // various header flags.  See getCogVMFlags.
-                case 49: return 256L; // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
+                case 49: return (long) method.image.flags.getMaxExternalSemaphoreTableSize(); // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
                 case 50: case 51: return NilObject.SINGLETON; // nil; reserved for VM parameters that persist in the image (such as eden above)
                 case 52: return 65536L; // root table capacity
                 case 53: return 2L; // number of segments (Spur only; otherwise nil)
@@ -1032,7 +1038,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "inBounds1(index, getExternalModuleNames().length)")
-        protected final NativeObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
+        protected final NativeObject doGet(@SuppressWarnings("unused") final Object receiver, final long index) {
             return method.image.asByteString(getExternalModuleNames()[(int) index - 1]);
         }
 
@@ -1047,7 +1053,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "!inBounds1(index, getExternalModuleNames().length)")
         @SuppressWarnings("unused")
-        protected static final NilObject doGetOutOfBounds(final AbstractSqueakObject receiver, final long index) {
+        protected static final NilObject doGetOutOfBounds(final Object receiver, final long index) {
             return NilObject.SINGLETON;
         }
     }

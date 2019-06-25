@@ -75,9 +75,6 @@ public final class SqueakIOConstants {
     };
 
     public static final int EVENT_SIZE = 8;
-    @CompilationFinal(dimensions = 1) public static final long[] NULL_EVENT = new long[]{
-                    EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE,
-                    EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE};
 
     public enum MOUSE_EVENT {
         DOWN,
@@ -104,7 +101,7 @@ public final class SqueakIOConstants {
         public static final int ALT = 32;
         public static final int CMD = 64;
         public static final int ALL = SHIFT + CTRL + ALT + CMD;
-        public static final int INTERRUPT_KEYCODE = 2175;
+        public static final int INTERRUPT_KEYCODE = 2094; // "CMD + ."
     }
 
     public static final class KEY {
@@ -165,5 +162,10 @@ public final class SqueakIOConstants {
     }
 
     private SqueakIOConstants() {
+    }
+
+    public static long[] newNullEvent() {
+        return new long[]{EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE,
+                        EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE};
     }
 }

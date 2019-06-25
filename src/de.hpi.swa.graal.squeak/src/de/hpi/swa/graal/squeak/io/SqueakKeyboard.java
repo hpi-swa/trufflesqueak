@@ -2,28 +2,16 @@ package de.hpi.swa.graal.squeak.io;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD_EVENT;
 
 public final class SqueakKeyboard implements KeyListener {
-    private static final int TYPEAHEAD_LIMIT = 8;
     private final SqueakDisplay display;
-    private final Deque<Integer> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
 
     public SqueakKeyboard(final SqueakDisplay display) {
         this.display = display;
-    }
-
-    public int nextKey() {
-        return keys.isEmpty() ? 0 : keys.removeFirst();
-    }
-
-    public int peekKey() {
-        return keys.isEmpty() ? 0 : keys.peek();
     }
 
     @Override
@@ -55,11 +43,8 @@ public final class SqueakKeyboard implements KeyListener {
         final int code = buttonsShifted << 8 | key;
         if (code == KEYBOARD.INTERRUPT_KEYCODE) {
             display.image.interrupt.setInterruptPending();
-        } else if (display.usesEventQueue) {
-            display.addEvent(EVENT_TYPE.KEYBOARD, key, KEYBOARD_EVENT.CHAR, buttonsShifted, key);
         } else {
-            // No event queue, queue keys the old-fashioned way.
-            keys.push(code);
+            display.addEvent(EVENT_TYPE.KEYBOARD, key, KEYBOARD_EVENT.CHAR, buttonsShifted, key);
         }
     }
 

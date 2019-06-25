@@ -18,12 +18,11 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.interop.SqueakFileDetector;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.nodes.LookupClassNodes.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
@@ -53,7 +52,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         final Source source = request.getSource();
         if (source.hasBytes()) {
             image.setImagePath(source.getPath());
-            return Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(image));
+            return image.getSqueakImage().asCallTarget();
         } else {
             image.ensureLoaded();
             if (source.isInternal()) {
@@ -69,12 +68,17 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     @Override
+    protected boolean isThreadAccessAllowed(final Thread thread, final boolean singleThreaded) {
+        return true; // TODO: Experimental, make GraalSqueak work in multiple threads.
+    }
+
+    @Override
     protected Object findMetaObject(final SqueakImageContext image, final Object value) {
         // TODO: return ContextObject instead?
         if (value instanceof FrameMarker) {
             return image.nilClass;
         }
-        return LookupClassNode.getUncached().executeLookup(WrapToSqueakNode.getUncached().executeWrap(value));
+        return SqueakObjectClassNode.getUncached().executeLookup(WrapToSqueakNode.getUncached().executeWrap(value));
     }
 
     @Override

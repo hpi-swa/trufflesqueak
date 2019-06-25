@@ -10,6 +10,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.WeakPointersObjectNodesFactory.WeakPointersObjectWriteNodeGen;
 
 public final class WeakPointersObjectNodes {
 
@@ -35,6 +36,10 @@ public final class WeakPointersObjectNodes {
 
     @GenerateUncached
     public abstract static class WeakPointersObjectWriteNode extends AbstractNode {
+
+        public static WeakPointersObjectWriteNode getUncached() {
+            return WeakPointersObjectWriteNodeGen.getUncached();
+        }
 
         public abstract void execute(WeakPointersObject pointers, long index, Object value);
 
