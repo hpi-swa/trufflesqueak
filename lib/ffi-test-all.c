@@ -6,6 +6,10 @@
 /*****************************************************************************/
 /*****************************************************************************/
 
+#include <stdlib.h>
+#include <stdio.h>
+
+
 #ifdef _WIN32
 #	define EXPORT(returnType) extern __declspec(dllexport) returnType
 #else

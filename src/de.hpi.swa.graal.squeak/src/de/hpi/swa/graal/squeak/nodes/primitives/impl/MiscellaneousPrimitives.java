@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -19,20 +18,13 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
-import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
@@ -45,7 +37,6 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
@@ -54,8 +45,8 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_ERROR;
-import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_TYPES;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -147,9 +138,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 120)
-    public abstract static class PrimCalloutToFFINode extends AbstractPrimitiveNode implements DuodecimaryPrimitive {
-
-        @Child private WrapToSqueakNode wrapNode = WrapToSqueakNode.create();
+    public abstract static class PrimCalloutToFFINode extends AbstractFFIPrimitiveNode implements DuodecimaryPrimitive {
 
         protected PrimCalloutToFFINode(final CompiledMethodObject method) {
             super(method);
@@ -245,67 +234,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
         }
 
-        protected final Object doCallout(final AbstractSqueakObject receiver, final Object... arguments) {
+        private Object doCallout(final AbstractSqueakObject receiver, final Object... arguments) {
             final Object literal1 = method.getLiterals()[1];
             if (!(literal1 instanceof PointersObject)) {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
             final PointersObject externalLibraryFunction = (PointersObject) literal1;
-            if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
-                throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
-            }
-            final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
-            final Object moduleObject = externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
-            final String module;
-            if (moduleObject != NilObject.SINGLETON) {
-                module = ((NativeObject) moduleObject).asStringUnsafe();
-            } else {
-                module = ((NativeObject) ((PointersObject) receiver).at0(1)).asStringUnsafe();
-            }
-            final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
-            final List<String> argumentList = new ArrayList<>();
-            String nfiCodeParams = "";
-            if (argTypes != null) {
-                for (final Object argType : argTypes.getObjectStorage()) {
-                    if (argType instanceof PointersObject) {
-                        final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
-                        final int headerWord = compiledSpec.getIntStorage()[0];
-                        final int atomicType = (headerWord & FFI_TYPES.ATOMIC_TYPE_MASK.getValue()) >> FFI_TYPES.ATOMIC_TYPE_SHIFT.getValue();
-                        final String atomicName = FFI_TYPES.getTruffleTypeFromInt(atomicType);
-                        argumentList.add(atomicName);
-                    }
-                }
-                if (!argumentList.isEmpty()) {
-                    final String returnType = argumentList.get(0);
-                    argumentList.remove(0);
-                    if (!argumentList.isEmpty()) {
-                        nfiCodeParams = "(" + String.join(",", argumentList) + "):";
-                    }
-                    nfiCodeParams += returnType + ";";
-                }
-            }
-
-            final String ffiExtension = method.image.os.getFFIExtension();
-            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
-            final String nfiCode = String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
-
-            // method.image.env = com.oracle.truffle.api.TruffleLanguage$Env@1a1d76bd
-            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
-            final Object ffiTest = method.image.env.parse(source).call();
-            // method.image.env.addToHostClassPath(entry);
-            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
-            try {
-                final Object value = interopLib.invokeMember(ffiTest, name, arguments);
-                assert value != null;
-                return wrapNode.executeWrap(value);
-            } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
-                // e.printStackTrace();
-                // TODO: return correct error code.
-                throw new PrimitiveFailed();
-            } catch (final Exception e) {
-                // TODO: handle exception
-                throw new PrimitiveFailed();
-            }
+            return doCallout(externalLibraryFunction, receiver, arguments);
         }
     }
 

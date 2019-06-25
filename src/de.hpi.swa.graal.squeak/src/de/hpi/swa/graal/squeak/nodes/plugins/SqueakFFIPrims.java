@@ -1,6 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
+import java.io.File;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -8,14 +10,27 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts;
+import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_ERROR;
+import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_TYPES;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -28,17 +43,88 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
     /** "primitiveCallout" implemented as {@link PrimCalloutToFFINode}. */
 
+    public abstract static class AbstractFFIPrimitiveNode extends AbstractPrimitiveNode {
+
+        @Child private WrapToSqueakNode wrapNode = WrapToSqueakNode.create();
+
+        public AbstractFFIPrimitiveNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        protected final Object doCallout(final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
+            if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
+                throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
+            }
+            final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
+            final Object moduleObject = externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
+            final String module;
+            if (moduleObject != NilObject.SINGLETON) {
+                module = ((NativeObject) moduleObject).asStringUnsafe();
+            } else {
+                module = ((NativeObject) ((PointersObject) receiver).at0(1)).asStringUnsafe();
+            }
+            final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
+            final List<String> argumentList = new ArrayList<>();
+            String nfiCodeParams = "";
+            if (argTypes != null) {
+                for (final Object argType : argTypes.getObjectStorage()) {
+                    if (argType instanceof PointersObject) {
+                        final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
+                        final int headerWord = compiledSpec.getIntStorage()[0];
+                        final int atomicType = (headerWord & FFI_TYPES.ATOMIC_TYPE_MASK.getValue()) >> FFI_TYPES.ATOMIC_TYPE_SHIFT.getValue();
+                        final String atomicName = FFI_TYPES.getTruffleTypeFromInt(atomicType);
+                        argumentList.add(atomicName);
+                    }
+                }
+                if (!argumentList.isEmpty()) {
+                    final String returnType = argumentList.get(0);
+                    argumentList.remove(0);
+                    if (!argumentList.isEmpty()) {
+                        nfiCodeParams = "(" + String.join(",", argumentList) + "):";
+                    }
+                    nfiCodeParams += returnType + ";";
+                }
+            }
+
+            final String ffiExtension = method.image.os.getFFIExtension();
+            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
+            final String nfiCode = String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
+
+            // method.image.env = com.oracle.truffle.api.TruffleLanguage$Env@1a1d76bd
+            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
+            final Object ffiTest = method.image.env.parse(source).call();
+            // method.image.env.addToHostClassPath(entry);
+            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
+            try {
+                final Object value = interopLib.invokeMember(ffiTest, name, arguments);
+                assert value != null;
+                return wrapNode.executeWrap(value);
+            } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
+                // e.printStackTrace();
+                // TODO: return correct error code.
+                throw new PrimitiveFailed();
+            } catch (final Exception e) {
+                // TODO: handle exception
+                throw new PrimitiveFailed();
+            }
+        }
+
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCalloutWithArgs")
-    protected abstract static class PrimCalloutWithArgsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimCalloutWithArgsNode extends AbstractFFIPrimitiveNode implements BinaryPrimitive {
+
+        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
+
         protected PrimCalloutWithArgsNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected static final Object doCalloutWithArgs(final AbstractSqueakObject receiver, final ArrayObject argArray) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+        protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray) {
+            return doCallout(receiver, receiver, getObjectArrayNode.execute(argArray));
         }
     }
 
@@ -108,6 +194,19 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         protected PrimFFIIntegerAtPutNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 1", "isSigned", "inSignedBounds(value, MAX_VALUE_SIGNED_1)"})
+        protected static final Object doAtPut1Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
+            return doAtPut1Unsigned(byteArray, byteOffsetLong, value, byteSize, isSigned);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 1", "!isSigned", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_1)"})
+        protected static final Object doAtPut1Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
+            byteArray.getByteStorage()[(int) byteOffsetLong - 1] = (byte) value;
+            return value;
         }
 
         @SuppressWarnings("unused")
