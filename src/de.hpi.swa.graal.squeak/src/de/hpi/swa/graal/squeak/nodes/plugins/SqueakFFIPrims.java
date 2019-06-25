@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -20,6 +21,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -27,6 +29,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -42,6 +45,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.PrimCalloutToFFINode;
 
@@ -195,6 +199,60 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray) {
             return doCallout(receiver, receiver, getObjectArrayNode.execute(argArray));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveLoadSymbolFromModule")
+    protected abstract static class PrimLoadSymbolFromModuleNode extends AbstractFFIPrimitiveNode implements TernaryPrimitive {
+
+        protected PrimLoadSymbolFromModuleNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"moduleSymbol.isByteType()", "module.isByteType()"})
+        protected final Object doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
+                        @Cached final BranchProfile failProfile) {
+            final String moduleSymbolName = moduleSymbol.asStringUnsafe();
+            final String moduleName = module.asStringUnsafe();
+            final String ffiExtension = method.image.os.getFFIExtension();
+            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + moduleName + ffiExtension;
+            if (!method.image.env.getTruffleFile(libPath).isRegularFile()) {
+                failProfile.enter();
+                throw new PrimitiveFailed();
+            }
+            final String nfiCode = String.format("load \"%s\"", libPath);
+            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
+            final Object library = method.image.env.parse(source).call();
+            final InteropLibrary lib = InteropLibrary.getFactory().getUncached();
+            final Object symbol;
+            try {
+                symbol = lib.readMember(library, moduleSymbolName);
+            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                failProfile.enter();
+                throw new PrimitiveFailed();
+            }
+            final long pointer;
+            try {
+                pointer = lib.asPointer(symbol);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+            return newExternalAddress(receiver, pointer);
+        }
+
+        private static NativeObject newExternalAddress(final ClassObject externalAddressClass, final long pointer) {
+            final byte[] bytes = new byte[8];
+            bytes[0] = (byte) pointer;
+            bytes[1] = (byte) (pointer >> 8);
+            bytes[2] = (byte) (pointer >> 16);
+            bytes[3] = (byte) (pointer >> 24);
+            bytes[4] = (byte) (pointer >> 32);
+            bytes[5] = (byte) (pointer >> 40);
+            bytes[6] = (byte) (pointer >> 48);
+            bytes[7] = (byte) (pointer >> 56);
+            return NativeObject.newNativeBytes(externalAddressClass.image, externalAddressClass, bytes);
         }
     }
 
