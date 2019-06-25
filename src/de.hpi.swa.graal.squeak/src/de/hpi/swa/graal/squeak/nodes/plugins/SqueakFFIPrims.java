@@ -7,7 +7,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
@@ -15,10 +17,13 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -29,6 +34,7 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrimsFactory.ArgTypeConversionNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_ERROR;
 import de.hpi.swa.graal.squeak.nodes.plugins.ffi.FFIConstants.FFI_TYPES;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -43,8 +49,59 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
     /** "primitiveCallout" implemented as {@link PrimCalloutToFFINode}. */
 
+    @ImportStatic(FFI_TYPES.class)
+    protected abstract static class ArgTypeConversionNode extends Node {
+
+        protected static ArgTypeConversionNode create() {
+            return ArgTypeConversionNodeGen.create();
+        }
+
+        public abstract Object execute(int headerWord, Object value);
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 10", "!isPointerType(headerWord)"})
+        protected static final char doChar(@SuppressWarnings("unused") final int headerWord, final boolean value) {
+            return (char) (value ? 0 : 1);
+        }
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 10", "!isPointerType(headerWord)"})
+        protected static final char doChar(@SuppressWarnings("unused") final int headerWord, final char value) {
+            return value;
+        }
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 10", "!isPointerType(headerWord)"})
+        protected static final char doChar(@SuppressWarnings("unused") final int headerWord, final long value) {
+            return (char) value;
+        }
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 10", "!isPointerType(headerWord)"})
+        protected static final char doChar(@SuppressWarnings("unused") final int headerWord, final double value) {
+            return (char) value;
+        }
+
+        @Specialization(guards = {"getAtomicType(headerWord) == 10", "isPointerType(headerWord)"}, limit = "1")
+        protected static final String doString(@SuppressWarnings("unused") final int headerWord, final Object value,
+                        @CachedLibrary("value") final InteropLibrary lib) {
+            try {
+                return lib.asString(value);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+
+        @Specialization(guards = "getAtomicType(headerWord) == 12")
+        protected static final float doFloat(@SuppressWarnings("unused") final int headerWord, final double value) {
+            return (float) value;
+        }
+
+        @Fallback
+        protected static final Object doFallback(@SuppressWarnings("unused") final int headerWord, final Object value) {
+            return value;
+        }
+    }
+
     public abstract static class AbstractFFIPrimitiveNode extends AbstractPrimitiveNode {
 
+        @Child private ArgTypeConversionNode conversionNode = ArgTypeConversionNode.create();
         @Child private WrapToSqueakNode wrapNode = WrapToSqueakNode.create();
 
         public AbstractFFIPrimitiveNode(final CompiledMethodObject method) {
@@ -63,16 +120,26 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             } else {
                 module = ((NativeObject) ((PointersObject) receiver).at0(1)).asStringUnsafe();
             }
+            final Object[] argumentsConverted = new Object[arguments.length];
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
+            int returnArgHeader = 0;
             final List<String> argumentList = new ArrayList<>();
             String nfiCodeParams = "";
             if (argTypes != null) {
-                for (final Object argType : argTypes.getObjectStorage()) {
+                final Object[] argTypesValues = argTypes.getObjectStorage();
+                assert argTypesValues.length == 1 + arguments.length;
+                for (int i = 0; i < argTypesValues.length; i++) {
+                    final Object argType = argTypesValues[i];
                     if (argType instanceof PointersObject) {
                         final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                         final int headerWord = compiledSpec.getIntStorage()[0];
-                        final int atomicType = (headerWord & FFI_TYPES.ATOMIC_TYPE_MASK.getValue()) >> FFI_TYPES.ATOMIC_TYPE_SHIFT.getValue();
-                        final String atomicName = FFI_TYPES.getTruffleTypeFromInt(atomicType);
+                        if (i == 0) {
+                            returnArgHeader = headerWord;
+                        } else if (i > 0) {
+                            argumentsConverted[i - 1] = conversionNode.execute(headerWord, arguments[i - 1]);
+                        }
+                        final String atomicName;
+                        atomicName = FFI_TYPES.getTruffleTypeFromInt(headerWord);
                         argumentList.add(atomicName);
                     }
                 }
@@ -98,14 +165,15 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             // method.image.env.addToHostClassPath(entry);
             final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
             try {
-                final Object value = interopLib.invokeMember(ffiTest, name, arguments);
+                final Object value = interopLib.invokeMember(ffiTest, name, argumentsConverted);
                 assert value != null;
-                return wrapNode.executeWrap(value);
+                return wrapNode.executeWrap(conversionNode.execute(returnArgHeader, value));
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
-                // e.printStackTrace();
+                e.printStackTrace();
                 // TODO: return correct error code.
                 throw new PrimitiveFailed();
             } catch (final Exception e) {
+                e.printStackTrace();
                 // TODO: handle exception
                 throw new PrimitiveFailed();
             }

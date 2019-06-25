@@ -60,7 +60,7 @@ public class FFIConstants {
          * // DOUBLE
          */
 
-        VOID("void", "POINTER", 0), // TODO: aendern
+        VOID("void", "OBJECT", 0), // TODO: aendern
         BOOL("bool", "UINT8", 1), // OBJECT BOOL UINT8
         // basic integer types
         UNSIGNED_BYTE("byte", "UINT8", 2), // UINT8
@@ -74,14 +74,14 @@ public class FFIConstants {
         SIGNED_LONG_LONG("longlong", "SINT64", 9), // SINT64
         // special integer types
         UNSIGNED_CHAR("string", "UINT8", 10), // STRING //UINT8
-        SIGNED_CHAR("schar", "POINTER", 11), // POINTER
+        SIGNED_CHAR("schar", "UINT8", 11), // POINTER
         // float types
         SINGLE_FLOAT("float", "FLOAT", 12), // FLOAT
         DOUBLE_FLOAT("double", "DOUBLE", 13), // DOUBLE
 
         // type flags
         FLAG_ATOMIC(0x40000), // type is atomic
-        FLAG_POINTER(0x2000), // type is pointer to base type public
+        FLAG_POINTER(0x20000), // type is pointer to base type public
         FLAG_STRUCTURE(0x10000), // baseType is structure of 64k length
         // public
         STRUCT_SIZE_MASK(0xFFFF), // mask for max size of structure public
@@ -125,13 +125,29 @@ public class FFIConstants {
             return null;
         }
 
-        public static String getTruffleTypeFromInt(final int typeValue) {
+        public static String getTruffleTypeFromInt(final int headerWord) {
+            final int atomicType = getAtomicType(headerWord);
+            if (FFI_TYPES.UNSIGNED_CHAR.integerValue == atomicType && isPointerType(headerWord)) {
+                return "STRING";
+            }
             for (final FFI_TYPES type : FFI_TYPES.values()) {
-                if (type.integerValue == typeValue) {
+                if (type.integerValue == atomicType) {
                     return type.truffleType;
                 }
             }
             return null;
+        }
+
+        public static int getAtomicType(final int headerWord) {
+            return (headerWord & FFI_TYPES.ATOMIC_TYPE_MASK.getValue()) >> FFI_TYPES.ATOMIC_TYPE_SHIFT.getValue();
+        }
+
+        public static boolean isPointerType(final int headerWord) {
+            return !isStructType(headerWord) && (headerWord & FLAG_POINTER.getValue()) != 0;
+        }
+
+        public static boolean isStructType(final int headerWord) {
+            return (headerWord & FLAG_STRUCTURE.getValue()) != 0;
         }
 
         @Override
