@@ -16,7 +16,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
 
     public WeakPointersObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
         super(image, classObject);
-        setPointers(ArrayUtils.withAll(size, NilObject.SINGLETON));
+        setPointersUnsafe(ArrayUtils.withAll(size, NilObject.SINGLETON));
     }
 
     private WeakPointersObject(final WeakPointersObject original) {
