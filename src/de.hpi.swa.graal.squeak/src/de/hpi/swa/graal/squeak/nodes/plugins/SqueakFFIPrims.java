@@ -80,9 +80,11 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                     final String returnType = argumentList.get(0);
                     argumentList.remove(0);
                     if (!argumentList.isEmpty()) {
-                        nfiCodeParams = "(" + String.join(",", argumentList) + "):";
+                        nfiCodeParams = "(" + String.join(",", argumentList) + ")";
+                    } else {
+                        nfiCodeParams = "()";
                     }
-                    nfiCodeParams += returnType + ";";
+                    nfiCodeParams += ":" + returnType + ";";
                 }
             }
 
