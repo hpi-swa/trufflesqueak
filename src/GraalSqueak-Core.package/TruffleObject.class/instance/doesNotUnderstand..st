@@ -10,6 +10,6 @@ doesNotUnderstand: aMessage
 	(self primitiveIsMemberInvocable: identifier)
 		ifTrue: [ ^ self primitiveInvoke: identifier arguments: arguments ].
 	result := self primitiveReadMember: identifier.
-	^ result primitiveIsExecutable
+	^ (result isTruffleObject and: [ result primitiveIsExecutable ])
 		ifTrue: [ result primitiveExecuteWithArguments: arguments ]
 		ifFalse: [ result ]
