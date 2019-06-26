@@ -106,6 +106,16 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    private static Object newFileEntry(final SqueakImageContext image, final File file) {
+        return newFileEntry(image, file, file.getName());
+    }
+
+    private static Object newFileEntry(final SqueakImageContext image, final File file, final String fileName) {
+        final long lastModifiedSeconds = MiscUtils.toSqueakSecondsLocal(file.lastModified() / 1000);
+        return image.asArrayOfObjects(image.asByteString(fileName), lastModifiedSeconds, lastModifiedSeconds,
+                        BooleanObject.wrap(file.isDirectory()), file.length());
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDirectoryCreate")
     protected abstract static class PrimDirectoryCreateNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
@@ -174,20 +184,17 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doEntry(@SuppressWarnings("unused") final Object receiver, final NativeObject fullPath, final NativeObject fName) {
             final String pathName = asString(fullPath);
             final String fileName = asString(fName);
-            final File path;
+            final File file;
             if (".".equals(fileName)) {
-                path = new File(pathName);
+                file = new File(pathName);
             } else {
-                path = new File(pathName + File.separator + fileName);
+                file = new File(pathName + File.separator + fileName);
             }
-            if (path.exists()) {
-                final NativeObject pathNameNative = method.image.asByteString(path.getName());
-                final long pathLastModifiedSeconds = MiscUtils.toSqueakSecondsLocal(path.lastModified() / 1000);
-                final boolean pathIsDirectory = BooleanObject.wrap(path.isDirectory());
-                final long pathLength = path.length();
-                return method.image.asArrayOfObjects(pathNameNative, pathLastModifiedSeconds, pathLastModifiedSeconds, pathIsDirectory, pathLength);
+            if (file.exists()) {
+                return newFileEntry(method.image, file);
+            } else {
+                return NilObject.SINGLETON;
             }
-            return NilObject.SINGLETON;
         }
     }
 
@@ -213,11 +220,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 final File file = files[index];
                 // Use getPath here, getName returns empty string on root path.
                 // Squeak strips the trailing backslash from C:\ on Windows.
-                final NativeObject pathNameNative = method.image.asByteString(file.getPath().replace("\\", ""));
-                final long pathLastModified = file.lastModified();
-                final boolean pathIsDirectory = BooleanObject.wrap(file.isDirectory());
-                final long pathLength = file.length();
-                return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
+                return newFileEntry(method.image, file, file.getPath().replace("\\", ""));
             } else {
                 return NilObject.SINGLETON;
             }
@@ -238,11 +241,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final int index = (int) longIndex - 1;
             if (files != null && index < files.length) {
                 final File file = files[index];
-                final NativeObject pathNameNative = method.image.asByteString(file.getName());
-                final long pathLastModified = file.lastModified();
-                final boolean pathIsDirectory = BooleanObject.wrap(file.isDirectory());
-                final long pathLength = file.length();
-                return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
+                return newFileEntry(method.image, file);
             } else {
                 return NilObject.SINGLETON;
             }
