@@ -5,17 +5,27 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.RuntimeMXBean;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Properties;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 public final class MiscUtils {
-    private static final CompilationMXBean compilationBean = ManagementFactory.getCompilationMXBean();
-    private static final MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
-    private static final RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
-    private static final List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
+    private static final CompilationMXBean COMPILATION_BEAN = ManagementFactory.getCompilationMXBean();
+    private static final MemoryMXBean MEMORY_BEAN = ManagementFactory.getMemoryMXBean();
+    private static final RuntimeMXBean RUNTIME_BEAN = ManagementFactory.getRuntimeMXBean();
+    private static final List<GarbageCollectorMXBean> GC_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
+
+    // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
+    public static final long EPOCH_DELTA_SECONDS = (69L * 365 + 17) * 24 * 3600;
+    public static final long EPOCH_DELTA_MICROSECONDS = EPOCH_DELTA_SECONDS * 1000 * 1000;
+    public static final long SEC_TO_USEC = 1000 * 1000;
+    public static final long TIME_ZONE_OFFSET_MICROSECONDS = (Calendar.getInstance().get(Calendar.ZONE_OFFSET) + Calendar.getInstance().get(Calendar.DST_OFFSET)) * 1000L;
+    public static final long TIME_ZONE_OFFSET_SECONDS = TIME_ZONE_OFFSET_MICROSECONDS / 1000 / 1000;
+    public static final long USEC_TO_NANO = 1000;
 
     private MiscUtils() {
     }
@@ -39,7 +49,7 @@ public final class MiscUtils {
     @TruffleBoundary
     public static long getCollectionCount() {
         long totalCollectionCount = 0;
-        for (final GarbageCollectorMXBean gcBean : gcBeans) {
+        for (final GarbageCollectorMXBean gcBean : GC_BEANS) {
             totalCollectionCount += Math.min(gcBean.getCollectionCount(), 0);
         }
         return totalCollectionCount;
@@ -48,10 +58,24 @@ public final class MiscUtils {
     @TruffleBoundary
     public static long getCollectionTime() {
         long totalCollectionTime = 0;
-        for (final GarbageCollectorMXBean gcBean : gcBeans) {
+        for (final GarbageCollectorMXBean gcBean : GC_BEANS) {
             totalCollectionTime += Math.min(gcBean.getCollectionTime(), 0);
         }
         return totalCollectionTime;
+    }
+
+    @TruffleBoundary
+    public static long getCurrentJavaMicrosecondsUTC() {
+        final Instant now = Instant.now();
+        return now.getEpochSecond() * SEC_TO_USEC + now.getNano() / USEC_TO_NANO;
+    }
+
+    public static long getCurrentSqueakMicrosecondsUTC() {
+        return toSqueakMicrosecondsUTC(getCurrentJavaMicrosecondsUTC());
+    }
+
+    public static long getCurrentSqueakMicrosecondsLocal() {
+        return toSqueakMicrosecondsLocal(getCurrentJavaMicrosecondsUTC());
     }
 
     @TruffleBoundary
@@ -66,12 +90,12 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static long getHeapMemoryMax() {
-        return memoryBean.getHeapMemoryUsage().getMax();
+        return MEMORY_BEAN.getHeapMemoryUsage().getMax();
     }
 
     @TruffleBoundary
     public static long getHeapMemoryUsed() {
-        return memoryBean.getHeapMemoryUsage().getUsed();
+        return MEMORY_BEAN.getHeapMemoryUsage().getUsed();
     }
 
     @TruffleBoundary
@@ -81,12 +105,12 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static long getObjectPendingFinalizationCount() {
-        return memoryBean.getObjectPendingFinalizationCount();
+        return MEMORY_BEAN.getObjectPendingFinalizationCount();
     }
 
     @TruffleBoundary
     public static long getStartTime() {
-        return runtimeBean.getStartTime();
+        return RUNTIME_BEAN.getStartTime();
     }
 
     @TruffleBoundary
@@ -106,8 +130,8 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static long getTotalCompilationTime() {
-        if (compilationBean.isCompilationTimeMonitoringSupported()) {
-            return compilationBean.getTotalCompilationTime();
+        if (COMPILATION_BEAN.isCompilationTimeMonitoringSupported()) {
+            return COMPILATION_BEAN.getTotalCompilationTime();
         } else {
             return -1L;
         }
@@ -115,7 +139,7 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static long getUptime() {
-        return runtimeBean.getUptime();
+        return RUNTIME_BEAN.getUptime();
     }
 
     @TruffleBoundary
@@ -131,6 +155,22 @@ public final class MiscUtils {
     @TruffleBoundary
     public static void systemGC() {
         System.gc();
+    }
+
+    public static long toJavaMicrosecondsLocal(final long microseconds) {
+        return microseconds - EPOCH_DELTA_MICROSECONDS - TIME_ZONE_OFFSET_MICROSECONDS;
+    }
+
+    public static long toSqueakMicrosecondsLocal(final long microseconds) {
+        return toSqueakMicrosecondsUTC(microseconds) + TIME_ZONE_OFFSET_MICROSECONDS;
+    }
+
+    public static long toSqueakMicrosecondsUTC(final long microseconds) {
+        return microseconds + EPOCH_DELTA_MICROSECONDS;
+    }
+
+    public static long toSqueakSecondsLocal(final long seconds) {
+        return seconds + EPOCH_DELTA_SECONDS + TIME_ZONE_OFFSET_SECONDS;
     }
 
     @TruffleBoundary

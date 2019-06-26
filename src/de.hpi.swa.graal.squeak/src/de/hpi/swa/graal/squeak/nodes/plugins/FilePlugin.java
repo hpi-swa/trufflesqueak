@@ -41,6 +41,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimiti
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, FilePlugin.class);
@@ -181,10 +182,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             }
             if (path.exists()) {
                 final NativeObject pathNameNative = method.image.asByteString(path.getName());
-                final long pathLastModified = path.lastModified();
+                final long pathLastModifiedSeconds = MiscUtils.toSqueakSecondsLocal(path.lastModified() / 1000);
                 final boolean pathIsDirectory = BooleanObject.wrap(path.isDirectory());
                 final long pathLength = path.length();
-                return method.image.asArrayOfObjects(pathNameNative, pathLastModified, pathLastModified, pathIsDirectory, pathLength);
+                return method.image.asArrayOfObjects(pathNameNative, pathLastModifiedSeconds, pathLastModifiedSeconds, pathIsDirectory, pathLength);
             }
             return NilObject.SINGLETON;
         }

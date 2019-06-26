@@ -2,9 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -64,30 +62,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return MiscellaneousPrimitivesFactory.getFactories();
-    }
-
-    private abstract static class AbstractClockPrimitiveNode extends AbstractPrimitiveNode {
-        // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
-        private static final long EPOCH_DELTA_MICROSECONDS = (long) (69 * 365 + 17) * 24 * 3600 * 1000 * 1000;
-        private static final long SEC_TO_USEC = 1000 * 1000;
-        private static final long USEC_TO_NANO = 1000;
-        private final long timeZoneOffsetMicroseconds;
-
-        private AbstractClockPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
-            final Calendar rightNow = Calendar.getInstance();
-            timeZoneOffsetMicroseconds = ((long) rightNow.get(Calendar.ZONE_OFFSET) + rightNow.get(Calendar.DST_OFFSET)) * 1000;
-        }
-
-        @TruffleBoundary
-        protected static final long currentMicrosecondsUTC() {
-            final Instant now = Instant.now();
-            return now.getEpochSecond() * SEC_TO_USEC + now.getNano() / USEC_TO_NANO + EPOCH_DELTA_MICROSECONDS;
-        }
-
-        protected final long currentMicrosecondsLocal() {
-            return currentMicrosecondsUTC() + timeZoneOffsetMicroseconds;
-        }
     }
 
     private abstract static class AbstractSignalAtPrimitiveNode extends AbstractPrimitiveNode {
@@ -368,15 +342,15 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 137)
-    protected abstract static class PrimSecondClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimSecondClockNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimSecondClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final long doClock(@SuppressWarnings("unused") final Object receiver) {
-            return currentMicrosecondsLocal() / 1000000;
+        protected static final long doClock(@SuppressWarnings("unused") final Object receiver) {
+            return MiscUtils.getCurrentSqueakMicrosecondsLocal() / 1000000;
         }
     }
 
@@ -724,7 +698,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 240)
-    protected abstract static class PrimUTCClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimUTCClockNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimUTCClockNode(final CompiledMethodObject method) {
             super(method);
@@ -732,21 +706,21 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final long doTime(@SuppressWarnings("unused") final Object receiver) {
-            return currentMicrosecondsUTC();
+            return MiscUtils.getCurrentSqueakMicrosecondsUTC();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 241)
-    protected abstract static class PrimLocalMicrosecondsClockNode extends AbstractClockPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimLocalMicrosecondsClockNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimLocalMicrosecondsClockNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final long doTime(@SuppressWarnings("unused") final Object receiver) {
-            return currentMicrosecondsLocal();
+        protected static final long doTime(@SuppressWarnings("unused") final Object receiver) {
+            return MiscUtils.getCurrentSqueakMicrosecondsLocal();
         }
     }
 
@@ -760,7 +734,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "semaphore.getSqueakClass().isSemaphoreClass()")
         protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long usecsUTC) {
-            final long msTime = (usecsUTC - AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS) / 1000;
+            final long msTime = MiscUtils.toJavaMicrosecondsLocal(usecsUTC) / 1000;
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
