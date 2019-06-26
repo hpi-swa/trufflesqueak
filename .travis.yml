@@ -7,6 +7,11 @@ python:
   - "2.7"
 
 aliases:
+  - &build-libraries
+    |
+      pushd lib > /dev/null
+      make
+      popd > /dev/null
   - &clone-mx
     |
       export MX_PATH=${TRAVIS_BUILD_DIR}/../mx
@@ -55,7 +60,9 @@ aliases:
       local ecj_tar="ci-dep-ecj-4.5.2.jar"
       ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${ecj_tar}" 0.8.0 "${JDT}"
   - &openjdk8-jvmci-test-setup # set up jvmci, download image, enable coverage testing
-    install: *use-openjdk8-jvmci
+    install:
+      - *use-openjdk8-jvmci
+      - *build-libraries
     before_script:
       - scripts/download-test-image.sh
       - curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
@@ -64,7 +71,9 @@ aliases:
       - bash <(curl -s https://codecov.io/bash)
       - java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
   - &graalvm-test-setup # set up graalvm and download image
-    install: *use-graalvm
+    install:
+      - *use-graalvm
+      - *build-libraries
     before_script: scripts/download-test-image.sh
     script: mx --dy /compiler gate ${MX_OPTS} --strict-mode --tags ${GATE}
   - &jdk11-test-setup # set up oraclejdk11 and download image

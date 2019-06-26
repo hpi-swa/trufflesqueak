@@ -42,4 +42,6 @@ graalsqueak*.zip
 graalsqueak*.jar
 graalsqueak-svm
 images
-lib
+lib/**/*.dll
+lib/**/*.dylib
+lib/**/*.so
