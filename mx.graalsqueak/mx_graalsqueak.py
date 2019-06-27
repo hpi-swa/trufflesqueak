@@ -332,6 +332,7 @@ def _graalsqueak_gate_runner(args, tasks):
                 unittest_args.extend([
                     '-Dgraal.TruffleCompilation=false',
                     '-Dtck.language=squeaksmalltalk',
+                    '-Dpolyglot.squeaksmalltalk.Headless=true',
                     '-Dpolyglot.squeaksmalltalk.ImagePath=%s' % test_image,
                     'com.oracle.truffle.tck.tests'])
                 mx_unittest.unittest(unittest_args)
