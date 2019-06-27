@@ -414,11 +414,10 @@ public final class SqueakImageContext {
         return isHeadless;
     }
 
-    public void disableHeadless() {
-        if (isHeadless) {
+    public void attachDisplayIfNecessary() {
+        if (!isHeadless) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             display = new SqueakDisplay(this);
-            isHeadless = false;
         }
     }
 

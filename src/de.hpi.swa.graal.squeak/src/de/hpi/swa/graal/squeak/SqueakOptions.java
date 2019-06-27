@@ -22,7 +22,7 @@ public final class SqueakOptions {
     public static final OptionKey<String> ImageArguments = new OptionKey<>("");
 
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Run without a display")//
-    public static final OptionKey<Boolean> Headless = new OptionKey<>(true);
+    public static final OptionKey<Boolean> Headless = new OptionKey<>(false);
 
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Disable image interrupt handler")//
     public static final OptionKey<Boolean> DisableInterruptHandler = new OptionKey<>(false);
