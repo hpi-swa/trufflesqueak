@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -21,7 +21,6 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -210,28 +209,27 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @SuppressWarnings("unused")
         @Specialization(guards = {"moduleSymbol.isByteType()", "module.isByteType()"})
-        protected final Object doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
-                        @Cached final BranchProfile failProfile) {
+        protected final Object doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module) {
             final String moduleSymbolName = moduleSymbol.asStringUnsafe();
             final String moduleName = module.asStringUnsafe();
             final String ffiExtension = method.image.os.getFFIExtension();
             final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + moduleName + ffiExtension;
-            if (!method.image.env.getTruffleFile(libPath).isRegularFile()) {
-                failProfile.enter();
-                throw new PrimitiveFailed();
-            }
             final String nfiCode = String.format("load \"%s\"", libPath);
             final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
-            final Object library = method.image.env.parse(source).call();
+            final CallTarget target = method.image.env.parse(source);
+            final Object library;
+            try {
+                library = target.call();
+            } catch (final Throwable e) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
             final InteropLibrary lib = InteropLibrary.getFactory().getUncached();
             final Object symbol;
             try {
                 symbol = lib.readMember(library, moduleSymbolName);
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                failProfile.enter();
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
             final long pointer;
             try {
