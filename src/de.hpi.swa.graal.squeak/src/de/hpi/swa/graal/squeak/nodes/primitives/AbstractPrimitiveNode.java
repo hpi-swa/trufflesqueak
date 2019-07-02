@@ -2,11 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.GenerateWrapper;
-import com.oracle.truffle.api.instrumentation.InstrumentableNode;
-import com.oracle.truffle.api.instrumentation.ProbeNode;
-import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.instrumentation.Tag;
 
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -17,9 +12,8 @@ import de.hpi.swa.graal.squeak.nodes.context.ArgumentNodes.AbstractArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.AbstractPrimitive;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-@GenerateWrapper
 @NodeChild(value = "arguments", type = AbstractArgumentNode[].class)
-public abstract class AbstractPrimitiveNode extends AbstractNode implements AbstractPrimitive, InstrumentableNode {
+public abstract class AbstractPrimitiveNode extends AbstractNode implements AbstractPrimitive {
     protected final CompiledMethodObject method;
 
     public AbstractPrimitiveNode(final CompiledMethodObject method) {
@@ -46,20 +40,5 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
 
     protected final FloatObject asFloatObject(final double value) {
         return FloatObject.valueOf(method.image, value);
-    }
-
-    @Override
-    public final boolean hasTag(final Class<? extends Tag> tag) {
-        return tag == StandardTags.StatementTag.class;
-    }
-
-    @Override
-    public final boolean isInstrumentable() {
-        return true;
-    }
-
-    @Override
-    public final WrapperNode createWrapper(final ProbeNode probe) {
-        return new AbstractPrimitiveNodeWrapper(this, this, probe);
     }
 }
