@@ -51,7 +51,7 @@ import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 @GenerateWrapper
 public abstract class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
-    private static final boolean DECODE_BYTECODE_ON_DEMAND = false;
+    private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
@@ -333,6 +333,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode implements
         if (DECODE_BYTECODE_ON_DEMAND && bytecodeNodes[pc] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
+            notifyInserted(bytecodeNodes[pc]);
         }
         return bytecodeNodes[pc];
     }
