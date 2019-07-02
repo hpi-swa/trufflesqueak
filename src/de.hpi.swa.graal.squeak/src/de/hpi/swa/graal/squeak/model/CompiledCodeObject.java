@@ -168,7 +168,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         if (stackSlots[i] == null) {
             // Lazily add frame slots.
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
+            stackSlots[i] = frameDescriptor.addFrameSlot(i + 1, FrameSlotKind.Illegal);
         }
         return stackSlots[i];
     }
