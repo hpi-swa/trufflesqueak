@@ -9,15 +9,23 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.TriggerInterruptHandlerNodeGen;
@@ -40,9 +48,10 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
-public abstract class ExecuteContextNode extends AbstractNodeWithCode {
+@GenerateWrapper
+public abstract class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
-    private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
+    private static final boolean DECODE_BYTECODE_ON_DEMAND = false;
     private static final int STACK_DEPTH_LIMIT = 25000;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
@@ -51,6 +60,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
 
     @Child private FrameStackReadAndClearNode readAndClearNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
+
+    private SourceSection section;
 
     private static int stackDepth = 0;
 
@@ -61,6 +72,10 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         } else {
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
+    }
+
+    protected ExecuteContextNode(final ExecuteContextNode executeContextNode) {
+        this(executeContextNode.code);
     }
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
@@ -201,6 +216,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 } else if (node instanceof ReturnTopFromMethodNode) {
                     returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop;
+                } else {
+                    throw SqueakException.create("Unexpected AbstractReturnNode");
                 }
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
@@ -287,6 +304,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 } else if (node instanceof ReturnTopFromMethodNode) {
                     returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
                     break bytecode_loop_slow;
+                } else {
+                    throw SqueakException.create("Unexpected AbstractReturnNode");
                 }
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
@@ -316,6 +335,35 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
         }
         return bytecodeNodes[pc];
+    }
+
+    @Override
+    public final boolean isInstrumentable() {
+        return true;
+    }
+
+    @Override
+    public final WrapperNode createWrapper(final ProbeNode probe) {
+        return new ExecuteContextNodeWrapper(this, this, probe);
+    }
+
+    @Override
+    public final boolean hasTag(final Class<? extends Tag> tag) {
+        return StandardTags.RootTag.class == tag;
+    }
+
+    @Override
+    public String getDescription() {
+        return code.toString();
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        if (section == null) {
+            final Source source = code.asSource();
+            section = source.createSection(1, 1, source.getLength());
+        }
+        return section;
     }
 
     // FIXME: Trigger interrupt check on sends and in loops.

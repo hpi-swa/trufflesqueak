@@ -2,7 +2,10 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -19,10 +22,11 @@ import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class SendBytecodes {
-    public abstract static class AbstractSendNode extends AbstractBytecodeNode {
+    public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
         public static final Object NO_RESULT = new Object();
 
         protected final NativeObject selector;
@@ -111,6 +115,17 @@ public final class SendBytecodes {
         }
 
         @Override
+        public final boolean hasTag(final Class<? extends Tag> tag) {
+            if (tag == StandardTags.CallTag.class) {
+                return true;
+            }
+            if (tag == DebuggerTags.AlwaysHalt.class) {
+                return PrimExitToDebuggerNode.SELECTOR_NAME.equals(selector.asStringUnsafe());
+            }
+            return super.hasTag(tag);
+        }
+
+        @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "send: " + selector.asStringUnsafe();
@@ -151,7 +166,7 @@ public final class SendBytecodes {
             super(code, index, numBytecodes, selector, argCount);
         }
 
-        public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int argCount) {
+        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int argCount) {
             final Object selector = code.getLiteral(literalIndex);
             return new SendLiteralSelectorNode(code, index, numBytecodes, selector, argCount);
         }

@@ -49,19 +49,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     private final int numCopiedValues; // for block closures
 
-    private static final boolean ALWAYS_NON_VIRTUALIZED = false;
-    private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
-
-    private Source source;
-
     @CompilationFinal private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
 
     protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues) {
         super(image, hash);
-        if (ALWAYS_NON_VIRTUALIZED) {
-            invalidateCanBeVirtualizedAssumption();
-        }
         this.numCopiedValues = numCopiedValues;
 
         frameDescriptor = new FrameDescriptor();
@@ -91,16 +83,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         createNewCallTarget();
     }
 
-    public final Source getSource() {
-        if (source == null) {
-            /*
-             * sourceSection requested when logging transferToInterpreters. Therefore, do not
-             * trigger another TTI here which otherwise would cause endless recursion in Truffle
-             * debug code.
-             */
-            source = Source.newBuilder(SqueakLanguageConfig.ID, CompiledCodeObjectPrinter.getString(this), toString()).build();
-        }
-        return source;
+    public final Source asSource() {
+        return Source.newBuilder(SqueakLanguageConfig.ID, CompiledCodeObjectPrinter.getString(this), toString()).build();
     }
 
     public final int getSqueakContextSize() {
@@ -328,18 +312,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     public final byte[] getBytes() {
         return bytes;
-    }
-
-    public final boolean canBeVirtualized() {
-        return canBeVirtualized.isValid();
-    }
-
-    public final Assumption getCanBeVirtualizedAssumption() {
-        return canBeVirtualized;
-    }
-
-    public final void invalidateCanBeVirtualizedAssumption() {
-        canBeVirtualized.invalidate();
     }
 
     public static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {

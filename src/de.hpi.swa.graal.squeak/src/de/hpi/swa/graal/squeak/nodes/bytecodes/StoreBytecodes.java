@@ -33,7 +33,7 @@ public final class StoreBytecodes {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    private abstract static class AbstractStoreIntoNode extends AbstractBytecodeNode {
+    private abstract static class AbstractStoreIntoNode extends AbstractInstrumentableBytecodeNode {
         @Child protected SqueakObjectAtPutAndMarkContextsNode storeNode;
 
         private AbstractStoreIntoNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
@@ -80,7 +80,7 @@ public final class StoreBytecodes {
         }
     }
 
-    private abstract static class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
+    private abstract static class AbstractStoreIntoTempNode extends AbstractInstrumentableBytecodeNode {
         protected final int tempIndex;
 
         @Child protected TemporaryWriteMarkContextsNode storeNode;

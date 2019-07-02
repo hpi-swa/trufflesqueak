@@ -1,7 +1,7 @@
 package de.hpi.swa.graal.squeak;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.graalvm.options.OptionDescriptors;
 
@@ -18,12 +18,16 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.interop.ContextObjectInfo;
+import de.hpi.swa.graal.squeak.interop.InteropArray;
 import de.hpi.swa.graal.squeak.interop.SqueakFileDetector;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @TruffleLanguage.Registration(//
@@ -37,7 +41,7 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
                 internal = false, //
                 name = SqueakLanguageConfig.NAME, //
                 version = SqueakLanguageConfig.VERSION)
-@ProvidedTags({StandardTags.CallTag.class, StandardTags.RootTag.class, StandardTags.StatementTag.class, DebuggerTags.AlwaysHalt.class})
+@ProvidedTags({StandardTags.StatementTag.class, StandardTags.CallTag.class, StandardTags.RootTag.class, DebuggerTags.AlwaysHalt.class})
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
@@ -88,15 +92,15 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected Iterable<Scope> findLocalScopes(final SqueakImageContext context, final Node node, final Frame frame) {
-        // TODO Implement for LSP
-        final ArrayList<Scope> scopes = new ArrayList<>();
-        for (final Scope s : super.findLocalScopes(context, node, frame)) {
-            scopes.add(s);
+        if (!FrameAccess.isGraalSqueakFrame(frame)) {
+            return super.findLocalScopes(context, node, frame);
         }
-        if (frame != null) {
-            // do stuff with frame (read stack slots)
-        }
-        return scopes;
+        final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(frame);
+        final String name = blockOrMethod.toString();
+        final Object receiver = FrameAccess.getReceiver(frame);
+        final ContextObjectInfo variables = new ContextObjectInfo(frame);
+        final InteropArray arguments = new InteropArray(frame.getArguments());
+        return Collections.singletonList(Scope.newBuilder(name, variables).node(node).receiver(receiver.toString(), receiver).arguments(arguments).build());
     }
 
     @Override

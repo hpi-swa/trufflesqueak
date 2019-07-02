@@ -21,7 +21,6 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
@@ -499,14 +498,16 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 114)
-    protected abstract static class PrimExitToDebuggerNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    public abstract static class PrimExitToDebuggerNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        public static final String SELECTOR_NAME = "exitToDebugger";
+
         protected PrimExitToDebuggerNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final Object debugger(@SuppressWarnings("unused") final Object receiver) {
-            throw SqueakException.create("EXIT TO DEBUGGER");
+        protected static final Object doDebugger(@SuppressWarnings("unused") final Object receiver) {
+            return receiver;
         }
     }
 

@@ -56,7 +56,7 @@ public final class MiscellaneousBytecodes {
 
     public static final class DoubleExtendedDoAnythingNode {
 
-        public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int second, final int third) {
+        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int second, final int third) {
             final int opType = second >> 5;
             switch (opType) {
                 case 0:
@@ -81,7 +81,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static final class DupNode extends AbstractBytecodeNode {
+    public static final class DupNode extends AbstractInstrumentableBytecodeNode {
         @Child private FrameStackWriteNode pushNode;
         @Child private FrameStackReadNode topNode;
 
@@ -105,7 +105,7 @@ public final class MiscellaneousBytecodes {
 
     public static final class ExtendedBytecodes {
 
-        public static AbstractBytecodeNode createPopInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
+        public static AbstractInstrumentableBytecodeNode createPopInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
             final int variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
@@ -121,7 +121,7 @@ public final class MiscellaneousBytecodes {
             }
         }
 
-        public static AbstractBytecodeNode createPush(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
+        public static AbstractInstrumentableBytecodeNode createPush(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
             final int variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
@@ -137,7 +137,7 @@ public final class MiscellaneousBytecodes {
             }
         }
 
-        public static AbstractBytecodeNode createStoreInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
+        public static AbstractInstrumentableBytecodeNode createStoreInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
             final int variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
@@ -162,7 +162,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static final class PopNode extends AbstractBytecodeNode {
+    public static final class PopNode extends AbstractInstrumentableBytecodeNode {
         @Child private FrameStackReadAndClearNode popNode;
 
         public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
@@ -182,7 +182,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static final class UnknownBytecodeNode extends AbstractBytecodeNode {
+    public static final class UnknownBytecodeNode extends AbstractInstrumentableBytecodeNode {
         private final long bytecode;
 
         public UnknownBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bc) {

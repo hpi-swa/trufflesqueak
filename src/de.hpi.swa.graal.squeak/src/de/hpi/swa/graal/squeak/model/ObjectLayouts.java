@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
 
@@ -113,13 +112,13 @@ public final class ObjectLayouts {
     }
 
     public static final class DICTIONARY {
-        public static Map<Object, Object> toJavaMap(final PointersObject dictionary) {
+        public static HashMap<String, Object> toJavaMap(final PointersObject dictionary) {
             final ArrayObject classBindings = (ArrayObject) dictionary.at0(HASHED_COLLECTION.ARRAY);
-            final Map<Object, Object> keyValues = new HashMap<>();
+            final HashMap<String, Object> keyValues = new HashMap<>();
             for (final Object classBinding : classBindings.getObjectStorage()) {
                 if (classBinding != NilObject.SINGLETON) {
                     final PointersObject classBindingPointer = (PointersObject) classBinding;
-                    keyValues.put(classBindingPointer.at0(CLASS_BINDING.KEY), classBindingPointer.at0(CLASS_BINDING.VALUE));
+                    keyValues.put(((NativeObject) classBindingPointer.at0(CLASS_BINDING.KEY)).asStringUnsafe(), classBindingPointer.at0(CLASS_BINDING.VALUE));
                 }
             }
             return keyValues;

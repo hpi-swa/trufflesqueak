@@ -12,13 +12,13 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 
 @ExportLibrary(InteropLibrary.class)
 public final class InteropMap implements TruffleObject {
-    private final Map<Object, Object> map;
+    private final Map<String, Object> map;
 
     public InteropMap(final PointersObject squeakDictionary) {
         map = DICTIONARY.toJavaMap(squeakDictionary);
     }
 
-    public InteropMap(final Map<Object, Object> map) {
+    public InteropMap(final Map<String, Object> map) {
         this.map = map;
     }
 

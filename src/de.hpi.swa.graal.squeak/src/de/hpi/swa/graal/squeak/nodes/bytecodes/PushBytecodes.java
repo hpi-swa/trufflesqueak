@@ -7,6 +7,11 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -29,7 +34,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class PushBytecodes {
 
-    private abstract static class AbstractPushNode extends AbstractBytecodeNode {
+    private abstract static class AbstractPushNode extends AbstractInstrumentableBytecodeNode {
         @Child protected FrameStackWriteNode pushNode;
 
         protected AbstractPushNode(final CompiledCodeObject code, final int index) {
@@ -63,11 +68,13 @@ public final class PushBytecodes {
         }
     }
 
-    public static final class PushClosureNode extends AbstractPushNode {
+    @GenerateWrapper
+    public static class PushClosureNode extends AbstractBytecodeNode implements InstrumentableNode {
         private final int blockSize;
         private final int numArgs;
         private final int numCopied;
 
+        @Child protected FrameStackWriteNode pushNode;
         @Child private GetOrCreateContextNode getOrCreateContextNode;
 
         @CompilationFinal private CompiledBlockObject block;
@@ -78,6 +85,15 @@ public final class PushBytecodes {
             numArgs = i & 0xF;
             numCopied = i >> 4 & 0xF;
             blockSize = j << 8 | k;
+            pushNode = FrameStackWriteNode.create(code);
+            getOrCreateContextNode = GetOrCreateContextNode.create(code);
+        }
+
+        public PushClosureNode(final PushClosureNode node) {
+            super(node.code, node.index, node.numBytecodes);
+            numArgs = node.numArgs;
+            numCopied = node.numCopied;
+            blockSize = node.blockSize;
             getOrCreateContextNode = GetOrCreateContextNode.create(code);
         }
 
@@ -116,6 +132,21 @@ public final class PushBytecodes {
             final Object[] copiedValues = readAndClearNode.executePopN(frame, numCopied);
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
             return new BlockClosureObject(getBlock(frame), blockCallTarget, receiver, copiedValues, outerContext);
+        }
+
+        @Override
+        public final boolean isInstrumentable() {
+            return true;
+        }
+
+        @Override
+        public WrapperNode createWrapper(final ProbeNode probe) {
+            return new PushClosureNodeWrapper(this, this, probe);
+        }
+
+        @Override
+        public boolean hasTag(final Class<? extends Tag> tag) {
+            return tag == StandardTags.StatementTag.class;
         }
 
         @Override
@@ -300,7 +331,7 @@ public final class PushBytecodes {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public static final class PushTemporaryLocationNode extends AbstractBytecodeNode {
+    public static final class PushTemporaryLocationNode extends AbstractInstrumentableBytecodeNode {
         @Child private FrameStackWriteNode pushNode;
         @Child private FrameSlotReadNode tempNode;
         private final int tempIndex;

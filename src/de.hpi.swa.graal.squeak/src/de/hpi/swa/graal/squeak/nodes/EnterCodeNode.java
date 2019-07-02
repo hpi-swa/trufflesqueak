@@ -1,103 +1,42 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.GenerateWrapper;
-import com.oracle.truffle.api.instrumentation.InstrumentableNode;
-import com.oracle.truffle.api.instrumentation.ProbeNode;
-import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-@GenerateWrapper
-public abstract class EnterCodeNode extends AbstractNodeWithCode implements InstrumentableNode {
-    private SourceSection sourceSection;
+public final class EnterCodeNode extends RootNode {
+    private final CompiledCodeObject code;
 
     @Child private ExecuteContextNode executeContextNode;
     @Child private FrameStackWriteNode pushNode;
 
-    protected EnterCodeNode(final EnterCodeNode codeNode) {
-        this(codeNode.code);
-    }
-
-    protected EnterCodeNode(final CompiledCodeObject code) {
-        super(code);
+    protected EnterCodeNode(final SqueakLanguage language, final CompiledCodeObject code) {
+        super(language, code.getFrameDescriptor());
+        this.code = code;
         executeContextNode = ExecuteContextNode.create(code);
         pushNode = FrameStackWriteNode.create(code);
     }
 
-    public static SqueakCodeRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
-        return new SqueakCodeRootNode(language, code);
+    protected EnterCodeNode(final EnterCodeNode codeNode) {
+        this(codeNode.code.image.getLanguage(), codeNode.code);
     }
 
-    public abstract Object execute(VirtualFrame frame);
-
-    @NodeInfo(cost = NodeCost.NONE)
-    protected static final class SqueakCodeRootNode extends RootNode {
-        @Child private EnterCodeNode codeNode;
-
-        protected SqueakCodeRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
-            super(language, code.getFrameDescriptor());
-            codeNode = EnterCodeNodeGen.create(code);
-        }
-
-        @Override
-        public Object execute(final VirtualFrame frame) {
-            return codeNode.execute(frame);
-        }
-
-        @Override
-        public String getName() {
-            return codeNode.toString();
-        }
-
-        @Override
-        public SourceSection getSourceSection() {
-            return codeNode.getSourceSection();
-        }
-
-        @Override
-        public String toString() {
-            CompilerAsserts.neverPartOfCompilation();
-            return codeNode.toString();
-        }
-
-        @Override
-        public boolean isCloningAllowed() {
-            return true;
-        }
+    public static EnterCodeNode create(final SqueakLanguage language, final CompiledCodeObject code) {
+        return new EnterCodeNode(language, code);
     }
 
-    @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
-    protected final Object enterVirtualized(final VirtualFrame frame) {
-        CompilerDirectives.ensureVirtualized(frame);
+    @Override
+    public Object execute(final VirtualFrame frame) {
         initializeSlots(code, frame);
         initializeArgumentsAndTemps(frame);
         return executeContextNode.executeContext(frame, null);
-    }
-
-    @Fallback
-    protected final Object enter(final VirtualFrame frame) {
-        initializeSlots(code, frame);
-        final ContextObject newContext = ContextObject.create(frame, code);
-        assert newContext == FrameAccess.getContext(frame, code);
-        initializeArgumentsAndTemps(frame);
-        return executeContextNode.executeContext(frame, newContext);
     }
 
     private static void initializeSlots(final CompiledCodeObject code, final VirtualFrame frame) {
@@ -123,33 +62,18 @@ public abstract class EnterCodeNode extends AbstractNodeWithCode implements Inst
     }
 
     @Override
-    public final String toString() {
+    public String getName() {
+        return toString();
+    }
+
+    @Override
+    public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return code.toString();
     }
 
     @Override
-    public final boolean hasTag(final Class<? extends Tag> tag) {
-        return tag == StandardTags.RootTag.class;
-    }
-
-    @Override
-    public final boolean isInstrumentable() {
+    public boolean isCloningAllowed() {
         return true;
-    }
-
-    @Override
-    public final WrapperNode createWrapper(final ProbeNode probe) {
-        return new EnterCodeNodeWrapper(this, this, probe);
-    }
-
-    @Override
-    @TruffleBoundary
-    public final SourceSection getSourceSection() {
-        CompilerAsserts.neverPartOfCompilation();
-        if (sourceSection == null) {
-            sourceSection = code.getSource().createSection(1);
-        }
-        return sourceSection;
     }
 }
