@@ -174,6 +174,11 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static byte[] toBytes(final String value) {
+        return value.getBytes();
+    }
+
+    @TruffleBoundary
     public static String toString(final Object value) {
         return value.toString();
     }

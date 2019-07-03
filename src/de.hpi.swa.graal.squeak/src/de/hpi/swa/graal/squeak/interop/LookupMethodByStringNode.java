@@ -15,6 +15,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 /** Similar to {@link LookupMethodNode}, but for interop. */
 @GenerateUncached
@@ -43,7 +44,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
     @Specialization(replaces = "doCached")
     protected static final Object doUncached(final ClassObject classObject, final String selector,
                     @Cached final ArrayObjectReadNode readNode) {
-        final byte[] selectorBytes = selector.getBytes();
+        final byte[] selectorBytes = MiscUtils.toBytes(selector);
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
             final PointersObject methodDict = lookupClass.getMethodDict();
