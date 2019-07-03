@@ -117,7 +117,7 @@ public final class Zip {
                     /* 500 */ 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29
     };
     private int[] zipDistanceFreq;
-    // private int[] zipDistances;
+    private int[] zipDistances;
     private int[] zipDistTable;
     private int zipDistTableSize;
     @CompilationFinal(dimensions = 1) private static final int[] zipExtraDistanceBits = {
@@ -317,7 +317,7 @@ public final class Zip {
     /* DeflatePlugin>>#encodeLiteral: */
     private boolean encodeLiteral(final int lit) {
         zipLiterals[zipLiteralCount] = (byte) lit;
-        // zipDistances[zipLiteralCount] = 0;
+        zipDistances[zipLiteralCount] = 0;
         zipLiteralFreq[lit] = zipLiteralFreq[lit] + 1;
         zipLiteralCount++;
         return zipLiteralCount == zipLiteralSize || (zipLiteralCount & 0xFFF) == 0 && shouldFlush();
@@ -331,7 +331,7 @@ public final class Zip {
         final int literal;
 
         zipLiterals[zipLiteralCount] = (byte) (length - DeflateMinMatch);
-        // zipDistances[zipLiteralCount] = dist;
+        zipDistances[zipLiteralCount] = dist;
         literal = zipMatchLengthCodes[length - DeflateMinMatch];
         zipLiteralFreq[literal] = zipLiteralFreq[literal] + 1;
         if (dist < 257) {
@@ -458,8 +458,7 @@ public final class Zip {
         zipBlockPos = fetchIntegerofObject(writeStreamInstSize + 3, rcvr);
         zipLiterals = fetchBytePointerOfObject(rcvr, writeStreamInstSize + 5);
         zipLiteralSize = zipLiterals.length;
-        // zipDistances = fetchNativePointerOfObjectWithExpectedLength(rcvr, writeStreamInstSize +
-        // 6, zipLiteralSize);
+        zipDistances = fetchNativePointerOfObjectWithExpectedLength(rcvr, writeStreamInstSize + 6, zipLiteralSize);
         zipLiteralFreq = fetchNativePointerOfObjectWithExpectedLength(rcvr, writeStreamInstSize + 7, DeflateMaxLiteralCodes);
         zipDistanceFreq = fetchNativePointerOfObjectWithExpectedLength(rcvr, writeStreamInstSize + 8, DeflateMaxDistanceCodes);
         zipLiteralCount = fetchIntegerofObject(writeStreamInstSize + 9, rcvr);
