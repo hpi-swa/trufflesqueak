@@ -158,6 +158,7 @@ public final class PushBytecodes {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushConstantNode extends AbstractPushNode {
         private final Object constant;
 
@@ -178,6 +179,7 @@ public final class PushBytecodes {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushLiteralConstantNode extends AbstractPushNode {
         private final int literalIndex;
 
@@ -198,6 +200,7 @@ public final class PushBytecodes {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushLiteralVariableNode extends AbstractPushNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         private final int literalIndex;
