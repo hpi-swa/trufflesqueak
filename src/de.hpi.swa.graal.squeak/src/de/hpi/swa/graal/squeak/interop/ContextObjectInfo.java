@@ -60,22 +60,22 @@ public final class ContextObjectInfo implements TruffleObject {
         if (frame == null) {
             return NilObject.SINGLETON;
         }
-        if (member == SENDER) {
+        if (SENDER.equals(member)) {
             return FrameAccess.getSender(frame);
         }
-        if (member == PC) {
+        if (PC.equals(member)) {
             return FrameAccess.getInstructionPointer(frame, FrameAccess.getBlockOrMethod(frame));
         }
-        if (member == STACKP) {
+        if (STACKP.equals(member)) {
             return FrameAccess.getStackPointer(frame, FrameAccess.getBlockOrMethod(frame));
         }
-        if (member == METHOD) {
+        if (METHOD.equals(member)) {
             return FrameAccess.getMethod(frame);
         }
-        if (member == CLOSURE_OR_NIL) {
+        if (CLOSURE_OR_NIL.equals(member)) {
             return NilObject.nullToNil(FrameAccess.getClosure(frame));
         }
-        if (member == RECEIVER) {
+        if (RECEIVER.equals(member)) {
             return FrameAccess.getReceiver(frame);
         }
         final FrameSlot slot = slots.get(member);
