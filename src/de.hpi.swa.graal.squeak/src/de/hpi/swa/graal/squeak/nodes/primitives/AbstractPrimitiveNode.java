@@ -39,6 +39,6 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
     }
 
     protected final FloatObject asFloatObject(final double value) {
-        return FloatObject.valueOf(method.image, value);
+        return method.image.asFloatObject(value);
     }
 }

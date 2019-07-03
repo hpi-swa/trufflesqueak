@@ -1137,7 +1137,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!receiver.isFinite()")
         protected final FloatObject doInfinite(@SuppressWarnings("unused") final FloatObject receiver) {
-            return FloatObject.valueOf(method.image, Double.NaN);
+            return method.image.asFloatObject(Double.NaN);
         }
     }
 

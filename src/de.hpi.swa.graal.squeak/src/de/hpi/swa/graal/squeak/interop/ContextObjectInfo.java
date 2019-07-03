@@ -50,13 +50,13 @@ public final class ContextObjectInfo implements TruffleObject {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    boolean hasMembers() {
+    public boolean hasMembers() {
         return true;
     }
 
     @ExportMessage
     @TruffleBoundary
-    Object readMember(final String member) throws UnknownIdentifierException {
+    public Object readMember(final String member) throws UnknownIdentifierException {
         if (frame == null) {
             return NilObject.SINGLETON;
         }
@@ -88,7 +88,7 @@ public final class ContextObjectInfo implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
+    public Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
         final String[] members = new String[ALL_FIELDS.length + slots.size()];
         System.arraycopy(ALL_FIELDS, 0, members, 0, ALL_FIELDS.length);
         int index = ALL_FIELDS.length;
@@ -100,7 +100,7 @@ public final class ContextObjectInfo implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    boolean isMemberReadable(final String member) {
+    public boolean isMemberReadable(final String member) {
         for (final String field : ALL_FIELDS) {
             if (field.equals(member)) {
                 return true;
@@ -123,13 +123,13 @@ public final class ContextObjectInfo implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    boolean isMemberModifiable(final String member) {
+    public boolean isMemberModifiable(final String member) {
         return slots.containsKey(member) && frame != null;
     }
 
     @ExportMessage
     @TruffleBoundary
-    void writeMember(final String member, final Object value) throws UnknownIdentifierException, UnsupportedMessageException {
+    public void writeMember(final String member, final Object value) throws UnknownIdentifierException, UnsupportedMessageException {
         if (frame == null) {
             throw UnsupportedMessageException.create();
         }
@@ -143,7 +143,7 @@ public final class ContextObjectInfo implements TruffleObject {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    boolean isMemberInsertable(@SuppressWarnings("unused") final String member) {
+    public boolean isMemberInsertable(@SuppressWarnings("unused") final String member) {
         return false;
     }
 }

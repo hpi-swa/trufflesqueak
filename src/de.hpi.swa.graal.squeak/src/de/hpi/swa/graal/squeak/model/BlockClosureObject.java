@@ -202,10 +202,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         return block;
     }
 
-    public boolean hasHomeContext() {
-        return outerContext != null;
-    }
-
     public ContextObject getHomeContext() {
         // Recursively unpack closures until home context is reached.
         final BlockClosureObject closure = outerContext.getClosure();

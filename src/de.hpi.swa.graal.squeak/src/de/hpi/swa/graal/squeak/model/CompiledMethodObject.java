@@ -53,15 +53,6 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
     }
 
-    public AbstractSqueakObject penultimateLiteral() {
-        final int index = numLiterals - 1;
-        if (index > 0) {
-            return (AbstractSqueakObject) literals[index];
-        } else {
-            return NilObject.SINGLETON;
-        }
-    }
-
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
