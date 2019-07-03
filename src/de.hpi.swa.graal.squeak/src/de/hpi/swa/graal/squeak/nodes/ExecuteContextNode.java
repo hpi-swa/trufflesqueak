@@ -28,7 +28,8 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.TriggerInterruptHandlerNodeGen;
+import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeFactory.TriggerInterruptHandlerNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -40,6 +41,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNod
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromBlockNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromMethodNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
@@ -49,7 +51,7 @@ import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 @GenerateWrapper
-public abstract class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
+public class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
@@ -58,8 +60,10 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode implements
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
+    @Child private FrameStackWriteNode pushNode;
     @Child private FrameStackReadAndClearNode readAndClearNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
+    @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
 
     private SourceSection section;
 
@@ -72,6 +76,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode implements
         } else {
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
+        pushNode = FrameStackWriteNode.create(code);
+        materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create(code);
     }
 
     protected ExecuteContextNode(final ExecuteContextNode executeContextNode) {
@@ -79,10 +85,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode implements
     }
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
-        return ExecuteContextNodeGen.create(code);
+        return new ExecuteContextNode(code);
     }
-
-    public abstract Object executeContext(VirtualFrame frame, ContextObject context);
 
     @Override
     public final String toString() {
@@ -90,9 +94,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode implements
         return code.toString();
     }
 
-    @Specialization(guards = "context == null")
-    protected final Object doVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context,
-                    @Cached("create(code)") final MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode) {
+    public Object executeFresh(final VirtualFrame frame) {
+        initializeSlots(code, frame);
+        initializeArgumentsAndTemps(frame);
         final boolean shouldCheckStackDepth = CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot();
         try {
             if (shouldCheckStackDepth && stackDepth++ > STACK_DEPTH_LIMIT) {
@@ -118,8 +122,29 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode implements
         }
     }
 
-    @Fallback
-    protected final Object doNonVirtualized(final VirtualFrame frame, final ContextObject context) {
+    private static void initializeSlots(final CompiledCodeObject code, final VirtualFrame frame) {
+        FrameAccess.initializeMarker(frame, code);
+        FrameAccess.setInstructionPointer(frame, code, 0);
+        FrameAccess.setStackPointer(frame, code, 0);
+    }
+
+    @ExplodeLoop
+    private void initializeArgumentsAndTemps(final VirtualFrame frame) {
+        // Push arguments and copied values onto the newContext.
+        final Object[] arguments = frame.getArguments();
+        assert arguments.length == FrameAccess.expectedArgumentSize(code.getNumArgsAndCopied());
+        for (int i = 0; i < code.getNumArgsAndCopied(); i++) {
+            pushNode.executePush(frame, arguments[FrameAccess.getArgumentStartIndex() + i]);
+        }
+        // Initialize remaining temporary variables with nil in newContext.
+        final int remainingTemps = code.getNumTemps() - code.getNumArgs();
+        for (int i = 0; i < remainingTemps; i++) {
+            pushNode.executePush(frame, NilObject.SINGLETON);
+        }
+        assert FrameAccess.getStackPointer(frame, code) >= remainingTemps;
+    }
+
+    public Object executeResume(final VirtualFrame frame, final ContextObject context) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
         try {
             final long initialPC = context.getInstructionPointerForBytecodeLoop();

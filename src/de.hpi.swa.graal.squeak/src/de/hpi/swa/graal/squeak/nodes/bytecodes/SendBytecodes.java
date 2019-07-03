@@ -138,7 +138,7 @@ public final class SendBytecodes {
 
     @NodeInfo(cost = NodeCost.NONE)
     protected static final class LookupClassNode extends AbstractLookupClassNode {
-        @Child SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
+        @Child private SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
 
         @Override
         protected ClassObject executeLookup(final VirtualFrame frame, final Object receiver) {
@@ -172,15 +172,15 @@ public final class SendBytecodes {
         }
     }
 
-    public static final class SendSelectorNode extends AbstractSendNode {
-        public SendSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argcount) {
+    public static final class SendSpecialSelectorNode extends AbstractSendNode {
+        private SendSpecialSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argcount) {
             super(code, index, numBytecodes, selector, argcount);
         }
 
-        public static SendSelectorNode createForSpecialSelector(final CompiledCodeObject code, final int index, final int selectorIndex) {
+        public static SendSpecialSelectorNode create(final CompiledCodeObject code, final int index, final int selectorIndex) {
             final NativeObject specialSelector = code.image.getSpecialSelector(selectorIndex);
             final int numArguments = code.image.getSpecialSelectorNumArgs(selectorIndex);
-            return new SendSelectorNode(code, index, 1, specialSelector, numArguments);
+            return new SendSpecialSelectorNode(code, index, 1, specialSelector, numArguments);
         }
     }
 

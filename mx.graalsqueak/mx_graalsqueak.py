@@ -330,7 +330,6 @@ def _graalsqueak_gate_runner(args, tasks):
                 unittest_args = BASE_VM_ARGS_TESTING[:]
                 test_image = _get_path_to_test_image()
                 unittest_args.extend([
-                    '-Dgraal.TruffleCompilation=false',
                     '-Dtck.language=squeaksmalltalk',
                     '-Dpolyglot.squeaksmalltalk.Headless=true',
                     '-Dpolyglot.squeaksmalltalk.ImagePath=%s' % test_image,

@@ -81,7 +81,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     executeContextNode.replace(ExecuteContextNode.create(code));
                 }
                 // doIt: activeContext.printSqStackTrace();
-                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(), activeContext);
+                final Object result = executeContextNode.executeResume(activeContext.getTruffleFrame(), activeContext);
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
                 LOG.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
             } catch (final ProcessSwitch ps) {

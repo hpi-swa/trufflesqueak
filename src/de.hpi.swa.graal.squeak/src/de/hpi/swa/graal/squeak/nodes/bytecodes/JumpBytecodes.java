@@ -13,11 +13,9 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
 public final class JumpBytecodes {
 
@@ -67,8 +65,7 @@ public final class JumpBytecodes {
         }
 
         protected abstract static class HandleConditionResultNode extends AbstractNodeWithCode {
-            @Child private FrameStackWriteNode pushNode;
-            @Child private AbstractSendNode sendMustBeBooleanNode;
+            @Child private SendSelectorNode sendMustBeBooleanNode;
 
             protected HandleConditionResultNode(final CompiledCodeObject code) {
                 super(code);
@@ -96,23 +93,14 @@ public final class JumpBytecodes {
 
             @Fallback
             protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result) {
-                getPushNode().executePush(frame, result);
-                getSendMustBeBooleanNode().executeSend(frame);
+                getSendMustBeBooleanNode().executeSend(frame, result);
                 throw SqueakException.create("Should not be reached");
             }
 
-            private FrameStackWriteNode getPushNode() {
-                if (pushNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    pushNode = insert(FrameStackWriteNode.create(code));
-                }
-                return pushNode;
-            }
-
-            private AbstractSendNode getSendMustBeBooleanNode() {
+            private SendSelectorNode getSendMustBeBooleanNode() {
                 if (sendMustBeBooleanNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    sendMustBeBooleanNode = insert(new SendSelectorNode(code, -1, 1, code.image.mustBeBooleanSelector, 0));
+                    sendMustBeBooleanNode = insert(SendSelectorNode.create(code.image.mustBeBooleanSelector));
                 }
                 return sendMustBeBooleanNode;
             }

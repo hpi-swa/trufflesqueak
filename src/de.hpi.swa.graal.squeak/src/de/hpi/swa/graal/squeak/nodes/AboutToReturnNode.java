@@ -8,11 +8,8 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -54,13 +51,8 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"code.isUnwindMarked()", "hasModifiedSender(frame)"})
     protected final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
-                    @Cached("create(code)") final FrameStackWriteNode pushNode,
                     @Cached("createAboutToReturnSend()") final SendSelectorNode sendAboutToReturnNode) {
-        final ContextObject context = getContext(frame);
-        pushNode.executePush(frame, nlr.getTargetContextOrMarker());
-        pushNode.executePush(frame, nlr.getReturnValue());
-        pushNode.executePush(frame, context);
-        sendAboutToReturnNode.executeSend(frame);
+        sendAboutToReturnNode.executeSend(frame, getContext(frame), nlr.getReturnValue(), nlr.getTargetContextOrMarker());
     }
 
     @SuppressWarnings("unused")
@@ -74,6 +66,6 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     protected final SendSelectorNode createAboutToReturnSend() {
-        return new SendSelectorNode(code, -1, -1, code.image.aboutToReturnSelector, 2);
+        return SendSelectorNode.create(code.image.aboutToReturnSelector);
     }
 }
