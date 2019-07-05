@@ -267,7 +267,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         /* Lazily insert node because it is not needed if primitive succeeds. */
         if (readAndClearNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            readAndClearNode = FrameStackReadAndClearNode.create(code);
+            readAndClearNode = insert(FrameStackReadAndClearNode.create(code));
         }
         return readAndClearNode;
     }
