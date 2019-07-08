@@ -53,6 +53,11 @@ def _graal_vm_args(args):
             '-Dgraal.TruffleCompilationStatistics=true',
         ]
 
+    if args.truffle_expansion_histogram:
+        graal_args += [
+            '-Dgraal.PrintTruffleExpansionHistogram=true',
+        ]
+
     if args.perf_warnings:
         graal_args += [
             '-Dgraal.TruffleCompilationExceptionsAreFatal=true',
@@ -215,6 +220,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         '-tcs', '--truffle-compilation-statistics',
         help='print Truffle compilation statistics at the end of a run',
         dest='truffle_compilation_stats', action='store_true', default=False)
+    parser.add_argument(
+        '-teh', '--truffle-expansion-histogram',
+        help='print a histogram of all expanded Java methods',
+        dest='truffle_expansion_histogram', action='store_true', default=False)
     parser.add_argument('-v', '--verbose',
                         help='enable verbose output',
                         dest='verbose',
