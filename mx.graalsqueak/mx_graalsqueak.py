@@ -39,9 +39,7 @@ def _graal_vm_args(args):
     graal_args = []
 
     if args.trace_compilation:
-        graal_args += [
-            '-Dgraal.TraceTruffleCompilation=true',
-        ]
+        graal_args += ['-Dgraal.TraceTruffleCompilation=true']
 
     if args.truffle_compilation_details:
         graal_args += [
@@ -49,13 +47,15 @@ def _graal_vm_args(args):
             '-Dgraal.TraceTruffleExpansionSource=true']
 
     if args.truffle_compilation_stats:
-        graal_args += [
-            '-Dgraal.TruffleCompilationStatistics=true',
-        ]
+        graal_args += ['-Dgraal.TruffleCompilationStatistics=true']
 
     if args.truffle_expansion_histogram:
+        graal_args += ['-Dgraal.PrintTruffleExpansionHistogram=true']
+
+    if args.truffle_instrument_boundaries:
         graal_args += [
-            '-Dgraal.PrintTruffleExpansionHistogram=true',
+            '-Dgraal.TruffleInstrumentBoundaries=true',
+            '-Dgraal.TruffleInstrumentBoundariesPerInlineSite=true',
         ]
 
     if args.perf_warnings:
@@ -70,9 +70,7 @@ def _graal_vm_args(args):
         ]
 
     if args.trace_inlining:
-        graal_args += [
-            '-Dgraal.TraceTruffleInlining=true',
-        ]
+        graal_args += ['-Dgraal.TraceTruffleInlining=true']
 
     if args.trace_splitting:
         graal_args += [
@@ -115,7 +113,7 @@ def _graal_vm_args(args):
     graal_args += [
         '-Djvmci.Compiler=graal',
         '-XX:+UseJVMCICompiler',
-        # '-XX:+UseJVMCINativeLibrary',  # For libgraal (once available)
+        # '-XX:-UseJVMCINativeLibrary',  # to disable libgraal
     ]
     return graal_args
 
@@ -224,6 +222,11 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         '-teh', '--truffle-expansion-histogram',
         help='print a histogram of all expanded Java methods',
         dest='truffle_expansion_histogram', action='store_true', default=False)
+    parser.add_argument(
+        '-tib', '--truffle-instrument-boundaries',
+        help='Instrument Truffle boundaries and output profiling information',
+        dest='truffle_instrument_boundaries', action='store_true',
+        default=False)
     parser.add_argument('-v', '--verbose',
                         help='enable verbose output',
                         dest='verbose',
