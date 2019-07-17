@@ -117,15 +117,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
                 final Source source = newBuilder.build();
-                final boolean wasActive = image.interrupt.isActive();
-                image.interrupt.deactivate();
-                try {
-                    return image.env.parse(source).call();
-                } finally {
-                    if (wasActive) {
-                        image.interrupt.activate();
-                    }
-                }
+                return image.env.parse(source).call();
             } catch (final RuntimeException e) {
                 PrimGetLastErrorNode.setLastError(e);
                 throw new PrimitiveFailed();
