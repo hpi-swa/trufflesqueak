@@ -1,5 +1,5 @@
 icons
-iconFor: aLanguage
+iconFor: aLanguageId
 	"LanguageIDToIcon := nil"
 	^ (LanguageIDToIcon ifNil: [
 		LanguageIDToIcon := Dictionary newFromPairs: {
@@ -11,4 +11,4 @@ iconFor: aLanguage
 			self languageIdR. self iconR.
 			self languageIdRuby. self iconRuby.
 			self languageIdSqueakSmalltalk. self iconSqueakSmalltalk }
-		]) at: aLanguage ifAbsent: [ nil ]
+		]) at: aLanguageId ifAbsent: [ nil ]

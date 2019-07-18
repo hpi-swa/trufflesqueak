@@ -6,7 +6,7 @@ displayResult: anObject
 		layoutPolicy: ProportionalLayout new.
 	result := anObject.
 	anObject isString ifTrue: [ | morph |
-		morph := anObject asText asMorph readOnly: true; yourself.
+		morph := anObject asString asText asMorph readOnly: true; yourself.
 		self addMorph: morph fullFrame: (LayoutFrame fractions: (0@0 corner: 1@1)).
 		self addCornerGrips.
 		^ self ].
