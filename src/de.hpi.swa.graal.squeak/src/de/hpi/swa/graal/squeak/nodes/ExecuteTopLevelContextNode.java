@@ -99,6 +99,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 LOG.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
             executeContextNode.replace(getNextExecuteContextNode(activeContext));
+            notifyInserted(executeContextNode);
         }
     }
 
