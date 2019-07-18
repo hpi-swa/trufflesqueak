@@ -41,7 +41,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         super(language, code.getFrameDescriptor());
         image = code.image;
         initialContext = context;
-        executeContextNode = getNextExecuteContextNode(context);
+        executeContextNode = insert(getNextExecuteContextNode(context));
         this.needsShutdown = needsShutdown;
     }
 
