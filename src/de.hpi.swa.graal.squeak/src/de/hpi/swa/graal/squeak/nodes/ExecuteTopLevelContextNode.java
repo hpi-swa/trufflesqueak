@@ -136,9 +136,4 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     public String getName() {
         return "<" + SqueakLanguageConfig.ID + "-toplevel>";
     }
-
-    @Override
-    public boolean isCloningAllowed() {
-        return true;
-    }
 }
