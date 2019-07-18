@@ -15,7 +15,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
@@ -365,10 +364,6 @@ public final class SqueakImageContext {
 
     public SqueakDisplayInterface getDisplay() {
         return display;
-    }
-
-    public static boolean isAOT() {
-        return TruffleOptions.AOT;
     }
 
     public String imageRelativeFilePathFor(final String fileName) {

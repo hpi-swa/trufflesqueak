@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.TruffleOptions;
+
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -43,6 +45,10 @@ public final class SqueakGuards {
 
     public static boolean isAbstractSqueakObject(final Object object) {
         return object instanceof AbstractSqueakObject;
+    }
+
+    public static boolean isAOT() {
+        return TruffleOptions.AOT;
     }
 
     public static boolean isArrayObject(final Object object) {

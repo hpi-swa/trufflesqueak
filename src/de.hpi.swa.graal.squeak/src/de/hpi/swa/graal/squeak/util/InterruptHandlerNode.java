@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.util;
 
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -10,16 +9,13 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
-@ImportStatic(SqueakImageContext.class)
 public abstract class InterruptHandlerNode extends Node {
     protected final SqueakImageContext image;
-    private final InterruptHandlerState istate;
 
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
     protected InterruptHandlerNode(final CompiledCodeObject code) {
         image = code.image;
-        istate = image.interrupt;
         signalSemaporeNode = SignalSemaphoreNode.create(code);
     }
 
@@ -29,31 +25,19 @@ public abstract class InterruptHandlerNode extends Node {
 
     public abstract void executeTrigger(VirtualFrame frame);
 
-    @Specialization(guards = {"isAOT()", "image.hasDisplay()", "!image.externalObjectsArray.isEmptyType()"})
-    protected final void doFullCheckAOT(final VirtualFrame frame) {
-        image.getDisplay().pollEvents();
-        performChecks(frame);
-        checkSemaphoresToSignal(frame);
-    }
-
-    @Specialization(guards = {"isAOT()", "image.hasDisplay()", "image.externalObjectsArray.isEmptyType()"})
-    protected final void doCheckAOT(final VirtualFrame frame) {
-        image.getDisplay().pollEvents();
-        performChecks(frame);
-    }
-
-    @Specialization(guards = {"!isAOT() || !image.hasDisplay()", "!image.externalObjectsArray.isEmptyType()"})
+    @Specialization(guards = {"!image.externalObjectsArray.isEmptyType()"})
     protected final void doFullCheck(final VirtualFrame frame) {
         performChecks(frame);
         checkSemaphoresToSignal(frame);
     }
 
-    @Specialization(guards = {"!isAOT() || !image.hasDisplay()", "image.externalObjectsArray.isEmptyType()"})
+    @Specialization(guards = {"image.externalObjectsArray.isEmptyType()"})
     protected final void doCheck(final VirtualFrame frame) {
         performChecks(frame);
     }
 
     private void performChecks(final VirtualFrame frame) {
+        final InterruptHandlerState istate = image.interrupt;
         if (istate.interruptPending()) {
             istate.interruptPending = false; // reset interrupt flag
             signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
@@ -71,7 +55,7 @@ public abstract class InterruptHandlerNode extends Node {
     private void checkSemaphoresToSignal(final VirtualFrame frame) {
         final Object[] semaphores = image.externalObjectsArray.getObjectStorage();
         Integer semaIndex;
-        while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
+        while ((semaIndex = image.interrupt.nextSemaphoreToSignal()) != null) {
             final Object semaphore = semaphores[semaIndex - 1];
             signalSemaporeIfNotNil(frame, semaphore);
         }

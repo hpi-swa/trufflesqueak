@@ -208,6 +208,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     }
 
     @Override
+    @TruffleBoundary
     public void pollEvents() {
         while (SDL.pollEvent(event) != 0) {
             final long time = getEventTime();

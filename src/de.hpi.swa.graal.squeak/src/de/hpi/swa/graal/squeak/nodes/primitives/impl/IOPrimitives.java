@@ -132,11 +132,18 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "method.image.hasDisplay()")
+        @Specialization(guards = {"!isAOT()", "method.image.hasDisplay()"})
         protected final PointersObject doGetNext(final PointersObject eventSensor, final ArrayObject targetArray,
                         @Cached("createIdentityProfile()") final ValueProfile displayProfile) {
             targetArray.setStorage(displayProfile.profile(method.image.getDisplay()).getNextEvent());
             return eventSensor;
+        }
+
+        @Specialization(guards = {"isAOT()", "method.image.hasDisplay()"})
+        protected final PointersObject doGetNextAOT(final PointersObject eventSensor, final ArrayObject targetArray,
+                        @Cached("createIdentityProfile()") final ValueProfile displayProfile) {
+            method.image.getDisplay().pollEvents();
+            return doGetNext(eventSensor, targetArray, displayProfile);
         }
 
         @Specialization(guards = "!method.image.hasDisplay()")
