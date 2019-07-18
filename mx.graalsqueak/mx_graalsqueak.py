@@ -82,7 +82,8 @@ def _graal_vm_args(args):
         print 'Sending Graal dumps to igv...'
         graal_args += [
             '-Dgraal.TruffleBackgroundCompilation=false',
-            '-Dgraal.Dump=Truffle',
+            # Use `Truffle:2` for graphs between each compiler phase
+            '-Dgraal.Dump=Truffle:1',
             '-Dgraal.DumpOnError=true',
         ]
 
