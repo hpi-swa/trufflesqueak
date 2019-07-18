@@ -1,7 +1,9 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import java.util.HashMap;
 import java.util.logging.Level;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -29,6 +31,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private final SqueakImageContext image;
     private final ContextObject initialContext;
+    private final HashMap<ContextObject, ExecuteContextNode> executeContextNodeCache = new HashMap<>();
     private final boolean needsShutdown;
 
     @Child private ExecuteContextNode executeContextNode;
@@ -38,6 +41,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         super(language, code.getFrameDescriptor());
         image = code.image;
         initialContext = context;
+        executeContextNode = getNextExecuteContextNode(context);
         this.needsShutdown = needsShutdown;
     }
 
@@ -52,8 +56,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         } catch (final TopLevelReturn e) {
             return e.getReturnValue();
         } finally {
+            CompilerAsserts.neverPartOfCompilation();
+            executeContextNodeCache.clear(); // Ensure node cache is empty.
             if (needsShutdown) {
-                CompilerDirectives.transferToInterpreter();
                 image.interrupt.shutdown();
                 if (image.hasDisplay()) {
                     image.getDisplay().close();
@@ -73,29 +78,40 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 MaterializeContextOnMethodExitNode.reset();
-                final CompiledCodeObject code = activeContext.getBlockOrMethod();
-                // FIXME: do not create node here?
-                if (executeContextNode == null) {
-                    executeContextNode = insert(ExecuteContextNode.create(code));
-                } else {
-                    executeContextNode.replace(ExecuteContextNode.create(code));
-                }
                 // doIt: activeContext.printSqStackTrace();
                 final Object result = executeContextNode.executeResume(activeContext.getTruffleFrame(), activeContext);
+                removeFromCacheIfNecessary(activeContext);
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
                 LOG.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
             } catch (final ProcessSwitch ps) {
+                removeFromCacheIfNecessary(activeContext);
                 activeContext = ps.getNewContext();
                 assert ExecuteContextNode.getStackDepth() == 0 : "Stack depth should be zero when switching to another context";
                 LOG.log(Level.FINE, "Process Switch: {0}", activeContext);
             } catch (final NonLocalReturn nlr) {
-                final AbstractSqueakObject target = (AbstractSqueakObject) nlr.getTargetContextOrMarker();
+                removeFromCacheIfNecessary(activeContext);
+                final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
                 activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
                 LOG.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
             } catch (final NonVirtualReturn nvr) {
+                removeFromCacheIfNecessary(activeContext);
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                 LOG.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
+            executeContextNode.replace(getNextExecuteContextNode(activeContext));
+        }
+    }
+
+    private ExecuteContextNode getNextExecuteContextNode(final ContextObject context) {
+        CompilerAsserts.neverPartOfCompilation();
+        assert executeContextNodeCache.size() <= 32 : "Caching more than 32 nodes. Could this be a memory leak?";
+        return executeContextNodeCache.computeIfAbsent(context, (c) -> ExecuteContextNode.create(context.getBlockOrMethod()));
+    }
+
+    private void removeFromCacheIfNecessary(final ContextObject context) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (context.isTerminated()) {
+            executeContextNodeCache.remove(context);
         }
     }
 
