@@ -1,3 +1,0 @@
-helpers
-isForeign
-	^ object isTruffleObject
