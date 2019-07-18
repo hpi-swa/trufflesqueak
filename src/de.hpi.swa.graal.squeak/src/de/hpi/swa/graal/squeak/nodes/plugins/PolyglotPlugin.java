@@ -204,7 +204,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @TruffleBoundary(transferToInterpreterOnException = false)
+        @TruffleBoundary
         private Source generateSourcefromCCode(final String foreignCode, final String cFile, final String llvmFile) throws IOException, InterruptedException {
             Files.write(Paths.get(cFile), foreignCode.getBytes());
             final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
@@ -260,105 +260,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "name.isByteType()")
-        @TruffleBoundary(transferToInterpreterOnException = false)
+        @TruffleBoundary
         public final Object exportSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name, final Object value) {
             method.image.env.exportSymbol(name.asStringUnsafe(), value);
             return value;
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveGetMembers")
-    protected abstract static class PrimGetMembersNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        protected PrimGetMembersNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = {"lib.hasMembers(receiver)"}, limit = "2")
-        protected final ArrayObject doGetMembers(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @CachedLibrary(limit = "2") final InteropLibrary membersLib,
-                        @CachedLibrary(limit = "2") final InteropLibrary memberNameLib) {
-            try {
-                final Object members = lib.getMembers(receiver, true);
-                final int size = (int) membersLib.getArraySize(members);
-                final NativeObject[] byteStrings = new NativeObject[size];
-                for (int i = 0; i < size; i++) {
-                    final Object memberName = membersLib.readArrayElement(members, i);
-                    byteStrings[i] = method.image.asByteString(memberNameLib.asString(memberName));
-                }
-                return method.image.asArrayOfNativeObjects(byteStrings);
-            } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
-                throw primitiveFailedCapturing(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveGetMemberSize")
-    protected abstract static class PrimGetMemberSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        protected PrimGetMemberSizeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = {"lib.hasMembers(receiver)"}, limit = "2")
-        protected static final Object doGetMembers(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @CachedLibrary(limit = "2") final InteropLibrary sizeLib) {
-            try {
-                return sizeLib.getArraySize(lib.getMembers(receiver, true));
-            } catch (final UnsupportedMessageException e) {
-                throw primitiveFailedCapturing(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveHasArrayElements")
-    protected abstract static class PrimHasArrayElementsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-
-        protected PrimHasArrayElementsNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final boolean doHasArrayElements(final Object receiver,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.hasArrayElements(receiver));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveHasMembers")
-    protected abstract static class PrimHasMembersNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-
-        protected PrimHasMembersNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final boolean doHasArrayElements(final Object receiver,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.hasMembers(receiver));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveGetArraySize")
-    protected abstract static class PrimGetArraySizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-
-        protected PrimGetArraySizeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "lib.hasArrayElements(receiver)", limit = "2")
-        protected static final long doGetArraySize(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib) {
-            try {
-                return lib.getArraySize(receiver);
-            } catch (final UnsupportedMessageException e) {
-                throw primitiveFailedCapturing(e);
-            }
         }
     }
 
@@ -370,7 +275,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "languageID.isByteType()")
-        @TruffleBoundary(transferToInterpreterOnException = false)
+        @TruffleBoundary
         protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageID,
                         @Cached final WrapToSqueakNode wrapNode) {
             final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
@@ -411,7 +316,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary(transferToInterpreterOnException = false)
+        @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final Object receiver) {
             return method.image.env.getPolyglotBindings();
         }
@@ -425,13 +330,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "name.isByteType()")
-        @TruffleBoundary(transferToInterpreterOnException = false)
+        @TruffleBoundary
         public final Object importSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name) {
-            final Object object = method.image.env.importSymbol(name.asStringUnsafe());
-            if (object == null) {
-                return NilObject.SINGLETON;
-            }
-            return object;
+            return NilObject.nullToNil(method.image.env.importSymbol(name.asStringUnsafe()));
         }
     }
 
@@ -456,26 +357,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary(transferToInterpreterOnException = false)
+        @TruffleBoundary
         protected final ArrayObject doList(@SuppressWarnings("unused") final Object receiver,
                         @Cached final WrapToSqueakNode wrapNode) {
             final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
             final Object[] result = languages.stream().filter(l -> !l.isInternal()).map(l -> l.getId()).toArray();
             return wrapNode.executeList(result);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsMemberInvocable")
-    protected abstract static class PrimIsMemberInvocableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        protected PrimIsMemberInvocableNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = {"member.isByteType()"})
-        protected static final boolean doIsMemberInvocable(final Object receiver, final NativeObject member,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isMemberInvocable(receiver, member.asStringUnsafe()));
         }
     }
 
@@ -636,20 +523,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIdentityHash")
-    protected abstract static class PrimPolyglotIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-
-        protected PrimPolyglotIdentityHashNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final long doIdentityHash(final Object receiver) {
-            return receiver.hashCode() & AbstractSqueakObjectWithHash.IDENTITY_HASH_MASK;
-        }
-    }
-
-    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsExecutable")
     protected abstract static class PrimIsExecutableNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
@@ -730,6 +603,128 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    /*
+     * Array-like objects
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetArraySize")
+    protected abstract static class PrimGetArraySizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        protected PrimGetArraySizeNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "lib.hasArrayElements(receiver)", limit = "2")
+        protected static final long doGetArraySize(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
+            try {
+                return lib.getArraySize(receiver);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasArrayElements")
+    protected abstract static class PrimHasArrayElementsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+
+        protected PrimHasArrayElementsNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doHasArrayElements(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasArrayElements(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsArrayElementExisting")
+    protected abstract static class PrimIsArrayElementExistingNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsArrayElementExistingNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsArrayElementExisting(final Object receiver, final long index,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isArrayElementExisting(receiver, index - 1));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsArrayElementInsertable")
+    protected abstract static class PrimIsArrayElementInsertableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsArrayElementInsertableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsArrayElementInsertable(final Object receiver, final long index,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isArrayElementInsertable(receiver, index - 1));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsArrayElementModifiable")
+    protected abstract static class PrimIsArrayElementModifiableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsArrayElementModifiableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsArrayElementModifiable(final Object receiver, final long index,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isArrayElementModifiable(receiver, index - 1));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsArrayElementReadable")
+    protected abstract static class PrimIsArrayElementReadableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsArrayElementReadableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsArrayElementReadable(final Object receiver, final long index,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isArrayElementReadable(receiver, index - 1));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsArrayElementRemovable")
+    protected abstract static class PrimIsArrayElementRemovableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsArrayElementRemovableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsArrayElementRemovable(final Object receiver, final long index,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isArrayElementRemovable(receiver, index - 1));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsArrayElementWritable")
+    protected abstract static class PrimIsArrayElementWritableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsArrayElementWritableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsArrayElementWritable(final Object receiver, final long index,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isArrayElementWritable(receiver, index - 1));
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveReadArrayElement")
     protected abstract static class PrimReadArrayElementNode extends AbstractPrimitiveNode implements BinaryPrimitive {
@@ -737,7 +732,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"isArrayElementReadable(lib, receiver, index)"}, limit = "2")
+        @Specialization(guards = {"lib.isArrayElementReadable(receiver, to0(index))"}, limit = "2")
         protected static final Object doReadArrayElement(final Object receiver, final long index,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedLibrary("receiver") final InteropLibrary lib) {
@@ -747,9 +742,206 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 throw primitiveFailedCapturing(e);
             }
         }
+    }
 
-        protected static final boolean isArrayElementReadable(final InteropLibrary lib, final Object receiver, final long index) {
-            return lib.isArrayElementReadable(receiver, index - 1);
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveRemoveArrayElement")
+    protected abstract static class PrimRemoveArrayElementNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimRemoveArrayElementNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"lib.isArrayElementRemovable(receiver, to0(index))"}, limit = "2")
+        protected static final Object doRemoveArrayElement(final Object receiver, final long index,
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
+            try {
+                lib.removeArrayElement(receiver, index - 1);
+                return receiver;
+            } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
+                throw primitiveFailedCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveWriteArrayElement")
+    protected abstract static class PrimWriteArrayElementNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        protected PrimWriteArrayElementNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"lib.isArrayElementWritable(receiver, index)"}, limit = "2")
+        protected static final Object doWrite(final Object receiver, final long index, final Object value,
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
+            try {
+                lib.writeArrayElement(receiver, index, value);
+                return value;
+            } catch (UnsupportedTypeException | UnsupportedMessageException | InvalidArrayIndexException e) {
+                throw primitiveFailedCapturing(e);
+            }
+        }
+    }
+
+    /*
+     * Dictionary-like objects
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetMembers")
+    protected abstract static class PrimGetMembersNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimGetMembersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"lib.hasMembers(receiver)"}, limit = "2")
+        protected final ArrayObject doGetMembers(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary lib,
+                        @CachedLibrary(limit = "2") final InteropLibrary membersLib,
+                        @CachedLibrary(limit = "2") final InteropLibrary memberNameLib) {
+            try {
+                final Object members = lib.getMembers(receiver, true);
+                final int size = (int) membersLib.getArraySize(members);
+                final NativeObject[] byteStrings = new NativeObject[size];
+                for (int i = 0; i < size; i++) {
+                    final Object memberName = membersLib.readArrayElement(members, i);
+                    byteStrings[i] = method.image.asByteString(memberNameLib.asString(memberName));
+                }
+                return method.image.asArrayOfNativeObjects(byteStrings);
+            } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
+                throw primitiveFailedCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetMemberSize")
+    protected abstract static class PrimGetMemberSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimGetMemberSizeNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"lib.hasMembers(receiver)"}, limit = "2")
+        protected static final Object doGetMembers(final Object receiver,
+                        @CachedLibrary("receiver") final InteropLibrary lib,
+                        @CachedLibrary(limit = "2") final InteropLibrary sizeLib) {
+            try {
+                return sizeLib.getArraySize(lib.getMembers(receiver, true));
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasMembers")
+    protected abstract static class PrimHasMembersNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+
+        protected PrimHasMembersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doHasArrayElements(final Object receiver,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasMembers(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasMemberReadSideEffects")
+    protected abstract static class PrimHasMemberReadSideEffectsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimHasMemberReadSideEffectsNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doHasMemberReadSideEffects(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasMemberReadSideEffects(receiver, member.asStringUnsafe()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasMemberWriteSideEffects")
+    protected abstract static class PrimHasMemberWriteSideEffectsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimHasMemberWriteSideEffectsNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doHasMemberWriteSideEffects(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasMemberWriteSideEffects(receiver, member.asStringUnsafe()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMemberExisting")
+    protected abstract static class PrimIsMemberExistingNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsMemberExistingNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doIsMemberExisting(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isMemberExisting(receiver, member.asStringUnsafe()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMemberInsertable")
+    protected abstract static class PrimIsMemberInsertableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsMemberInsertableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doIsMemberInsertable(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isMemberInsertable(receiver, member.asStringUnsafe()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMemberInternal")
+    protected abstract static class PrimIsMemberInternalNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsMemberInternalNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doIsMemberInternal(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isMemberInternal(receiver, member.asStringUnsafe()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMemberInvocable")
+    protected abstract static class PrimIsMemberInvocableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsMemberInvocableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doIsMemberInvocable(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isMemberInvocable(receiver, member.asStringUnsafe()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMemberModifiable")
+    protected abstract static class PrimIsMemberModifiableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsMemberModifiableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doIsMemberModifiable(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isMemberModifiable(receiver, member.asStringUnsafe()));
         }
     }
 
@@ -764,6 +956,54 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doIsMemberReadable(final Object receiver, final NativeObject member,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             return BooleanObject.wrap(lib.isMemberReadable(receiver, member.asStringUnsafe()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMemberRemovable")
+    protected abstract static class PrimIsMemberRemovableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsMemberRemovableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doIsMemberRemovable(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isMemberRemovable(receiver, member.asStringUnsafe()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMemberWritable")
+    protected abstract static class PrimIsMemberWritableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimIsMemberWritableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()"})
+        protected static final boolean doIsMemberWritable(final Object receiver, final NativeObject member,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isMemberWritable(receiver, member.asStringUnsafe()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveInvokeMember")
+    protected abstract static class PrimInvokeMemberNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        protected PrimInvokeMemberNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberInvocable(receiver, member.asStringUnsafe())"}, limit = "2")
+        protected static final Object doRemove(final Object receiver, final NativeObject member, final ArrayObject argumentArray,
+                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached final WrapToSqueakNode wrapNode,
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
+            try {
+                return wrapNode.executeWrap(lib.invokeMember(receiver, member.asStringUnsafe(), getObjectArrayNode.execute(argumentArray)));
+            } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                throw primitiveFailedCapturing(e);
+            }
         }
     }
 
@@ -796,33 +1036,20 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveStringRepresentation")
-    protected abstract static class PrimStringRepresentationNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-
-        protected PrimStringRepresentationNode(final CompiledMethodObject method) {
+    @SqueakPrimitive(names = "primitiveRemoveMember")
+    protected abstract static class PrimRemoveMemberNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimRemoveMemberNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
-        protected final NativeObject doRead(final Object receiver) {
-            return method.image.asByteString(MiscUtils.toString(receiver));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveWriteArrayElement")
-    protected abstract static class PrimWriteArrayElementNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimWriteArrayElementNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = {"lib.isArrayElementWritable(receiver, index)"}, limit = "2")
-        protected static final Object doWrite(final Object receiver, final long index, final Object value,
+        @Specialization(guards = {"member.isByteType()", "lib.isMemberRemovable(receiver, member.asStringUnsafe())"}, limit = "2")
+        protected static final Object doRemove(final Object receiver, final NativeObject member,
                         @CachedLibrary("receiver") final InteropLibrary lib) {
+            final String identifier = member.asStringUnsafe();
             try {
-                lib.writeArrayElement(receiver, index, value);
-                return value;
-            } catch (UnsupportedTypeException | UnsupportedMessageException | InvalidArrayIndexException e) {
+                lib.removeMember(receiver, identifier);
+                return receiver;
+            } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw primitiveFailedCapturing(e);
             }
         }
@@ -931,7 +1158,34 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver) {
             return BooleanObject.wrap(method.image.env.isHostSymbol(receiver));
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIdentityHash")
+    protected abstract static class PrimPolyglotIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+
+        protected PrimPolyglotIdentityHashNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doIdentityHash(final Object receiver) {
+            return receiver.hashCode() & AbstractSqueakObjectWithHash.IDENTITY_HASH_MASK;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveStringRepresentation")
+    protected abstract static class PrimStringRepresentationNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+
+        protected PrimStringRepresentationNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final NativeObject doRead(final Object receiver) {
+            return method.image.asByteString(MiscUtils.toString(receiver));
+        }
     }
 
     /*
@@ -943,7 +1197,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         return new PrimitiveFailed();
     }
 
-    @TruffleBoundary(transferToInterpreterOnException = false)
+    @TruffleBoundary
     private static String findLanguageByMimeType(final Env env, final String mimeType) {
         final Map<String, LanguageInfo> languages = env.getLanguages();
         for (final String registeredMimeType : languages.keySet()) {

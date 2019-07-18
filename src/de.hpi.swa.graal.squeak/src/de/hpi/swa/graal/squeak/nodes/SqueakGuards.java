@@ -155,4 +155,8 @@ public final class SqueakGuards {
     public static boolean isZeroOrGreater(final double value) {
         return value >= 0;
     }
+
+    public static long to0(final long value) {
+        return value - 1;
+    }
 }
