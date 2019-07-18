@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -38,7 +39,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Child private UnwindContextChainNode unwindContextChainNode = UnwindContextChainNode.create();
 
     private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean needsShutdown) {
-        super(language, code.getFrameDescriptor());
+        super(language, new FrameDescriptor());
         image = code.image;
         initialContext = context;
         executeContextNode = insert(getNextExecuteContextNode(context));
