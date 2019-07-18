@@ -70,7 +70,7 @@ public final class Returns {
         }
     }
 
-    public static class TopLevelReturn extends AbstractReturn {
+    public static final class TopLevelReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
 
         public TopLevelReturn(final Object result) {
@@ -78,7 +78,7 @@ public final class Returns {
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "TLR (value: " + returnValue + ")";
         }
