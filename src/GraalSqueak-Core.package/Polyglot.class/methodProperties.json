@@ -2,7 +2,7 @@
 	"class" : {
 		"availableLanguages" : "fn 11/25/2018 16:26",
 		"bindings" : "fn 12/3/2018 10:32",
-		"code:of:withBindingsNamed:" : "fn 12/3/2018 11:30",
+		"code:of:withBindingsNamed:" : "fn 6/27/2019 21:33",
 		"defaultLanguage" : "fn 4/13/2019 13:50",
 		"defaultLanguageInfo" : "fn 12/3/2018 11:43",
 		"eval:file:" : "fn 6/14/2019 16:02",
@@ -21,7 +21,7 @@
 		"iconRuby" : "fn 6/20/2019 17:11",
 		"iconSqueakSmalltalk" : "fn 6/20/2019 17:11",
 		"import:" : "GraalSqueak 11/11/2018 21:34",
-		"importStatementFor:named:" : "fn 6/20/2019 17:08",
+		"importStatementFor:named:" : "fn 6/27/2019 21:35",
 		"initialize" : "fn 12/3/2018 10:47",
 		"isPolyglotAccessAllowed" : "fn 5/2/2019 18:36",
 		"languageDefaultMimeTypeOf:" : "fn 11/25/2018 16:20",
