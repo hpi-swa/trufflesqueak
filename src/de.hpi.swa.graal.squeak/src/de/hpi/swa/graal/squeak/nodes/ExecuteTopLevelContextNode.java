@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import java.util.HashMap;
+import java.util.WeakHashMap;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -32,7 +32,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private final SqueakImageContext image;
     private final ContextObject initialContext;
-    private final HashMap<ContextObject, ExecuteContextNode> executeContextNodeCache = new HashMap<>();
+    private final WeakHashMap<ContextObject, ExecuteContextNode> executeContextNodeCache = new WeakHashMap<>();
     private final boolean needsShutdown;
 
     @Child private ExecuteContextNode executeContextNode;
