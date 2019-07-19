@@ -71,6 +71,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     private int lastMouseYPos;
     private int button = 0;
     private int key = 0;
+    private boolean isKeyDown = false;
 
     Target_de_hpi_swa_graal_squeak_io_SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
@@ -200,11 +201,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     @Override
     public long[] getNextEvent() {
         final long[] nextEvent = deferredEvents.pollFirst();
-        if (nextEvent == null) {
-            return SqueakIOConstants.newNullEvent();
-        } else {
-            return nextEvent;
-        }
+        return nextEvent != null ? nextEvent : SqueakIOConstants.newNullEvent();
     }
 
     @Override
@@ -222,6 +219,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
             } else if (eventType == SDL.EventType.MOUSEWHEEL.getCValue()) {
                 queueEvent(getNextMouseWheelEvent(time));
             } else if (eventType == SDL.EventType.KEYDOWN.getCValue()) {
+                isKeyDown = true;
                 handleKeyboardEvent();
                 long[] later = null;
                 // No TEXTINPUT event for this key will follow, but Squeak needs a KeyStroke anyway.
@@ -238,6 +236,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
                 handleTextInputEvent();
                 queueEvent(getNextKeyEvent(KEYBOARD_EVENT.CHAR, time));
             } else if (eventType == SDL.EventType.KEYUP.getCValue()) {
+                isKeyDown = false;
                 handleKeyboardEvent();
                 fixKeyCodeCase();
                 queueEvent(getNextKeyEvent(KEYBOARD_EVENT.UP, time));
@@ -556,11 +555,11 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         final MouseButtonEvent mouseButtonEvent = (MouseButtonEvent) event;
         int btn = mouseButtonEvent.button();
         if (btn == SDL.buttonRight()) {
-            btn = MOUSE.YELLOW;
-        } else if (btn == SDL.buttonMiddle()) {
             btn = MOUSE.BLUE;
+        } else if (btn == SDL.buttonMiddle()) {
+            btn = MOUSE.YELLOW;
         } else if (btn == SDL.buttonLeft()) {
-            btn = MOUSE.RED;
+            btn = isKeyDown && key == KEY.COMMAND ? MOUSE.YELLOW : MOUSE.RED;
         }
         if (event.type() == SDL.EventType.MOUSEBUTTONDOWN.getCValue()) {
             button |= btn;
