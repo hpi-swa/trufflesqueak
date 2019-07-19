@@ -22,10 +22,14 @@ import com.oracle.truffle.api.TruffleOptions;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
+    private static final String OPTION_IMAGE_PATH = SqueakLanguageConfig.ID + ".ImagePath";
+    private static final String OPTION_HEADLESS = SqueakLanguageConfig.ID + ".Headless";
+    private static final String OPTION_HEADLESS_FLAG = "--" + OPTION_HEADLESS;
     private static final String POLYGLOT_FLAG = "--polyglot";
     private String[] remainingArguments;
     private String imagePath = "Squeak.image";
     private String sourceCode = null;
+    private boolean isHeadless;
 
     public static void main(final String[] arguments) throws RuntimeException {
         final String[] argumentsForLauncher;
@@ -57,12 +61,13 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 final List<String> remainingArgumentsList = arguments.subList(i + 1, arguments.size());
                 remainingArguments = remainingArgumentsList.toArray(new String[remainingArgumentsList.size()]);
                 break;
-            }
-            if ("-c".equals(arg) || "--code".equals(arg)) {
+            } else if ("-c".equals(arg) || "--code".equals(arg)) {
                 arguments.remove(i);
                 sourceCode = arguments.get(i);
                 arguments.remove(i);
                 i--;
+            } else if (OPTION_HEADLESS_FLAG.equals(arg)) {
+                isHeadless = true;
             }
         }
         return unrecognized;
@@ -74,16 +79,24 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     }
 
     protected int execute(final Context.Builder contextBuilder) {
-        contextBuilder.option(SqueakLanguageConfig.ID + ".ImagePath", imagePath);
+        contextBuilder.option(OPTION_IMAGE_PATH, imagePath);
         if (sourceCode != null) {
-            contextBuilder.option(SqueakLanguageConfig.ID + ".Headless", "true");
+            isHeadless = true;
+            contextBuilder.option(OPTION_HEADLESS, "true");
         }
         contextBuilder.arguments(getLanguageId(), remainingArguments);
         contextBuilder.allowAllAccess(true);
-        final SqueakTranscriptForwarder out = new SqueakTranscriptForwarder(System.out, true);
-        contextBuilder.out(out);
-        final SqueakTranscriptForwarder err = new SqueakTranscriptForwarder(System.err, true);
-        contextBuilder.err(err);
+        final SqueakTranscriptForwarder out;
+        final SqueakTranscriptForwarder err;
+        if (!isHeadless) {
+            out = new SqueakTranscriptForwarder(System.out, true);
+            contextBuilder.out(out);
+            err = new SqueakTranscriptForwarder(System.err, true);
+            contextBuilder.err(err);
+        } else {
+            out = null;
+            err = null;
+        }
         try (Context context = contextBuilder.build()) {
             println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
             if (sourceCode != null) {
@@ -93,8 +106,10 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 return 0;
             } else {
                 final Value image = context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build());
-                out.setUp(context);
-                err.setUp(context);
+                if (out != null || err != null) {
+                    out.setUp(context);
+                    err.setUp(context);
+                }
                 image.execute();
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }

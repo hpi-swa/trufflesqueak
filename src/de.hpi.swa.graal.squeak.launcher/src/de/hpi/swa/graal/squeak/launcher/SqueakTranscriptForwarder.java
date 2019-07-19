@@ -35,6 +35,8 @@ public final class SqueakTranscriptForwarder extends PrintStream {
             if (transcriptBlock != null) {
                 transcriptBlock.execute(new String(b));
             }
+        } catch (final Exception e) {
+            e.printStackTrace();
         } finally {
             super.write(b);
         }
@@ -46,6 +48,8 @@ public final class SqueakTranscriptForwarder extends PrintStream {
             if (transcriptBlock != null) {
                 transcriptBlock.execute(new String(Arrays.copyOfRange(b, off, off + len)));
             }
+        } catch (final Exception e) {
+            e.printStackTrace();
         } finally {
             super.write(b, off, len);
         }
