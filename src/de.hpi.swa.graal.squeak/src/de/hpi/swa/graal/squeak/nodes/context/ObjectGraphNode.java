@@ -185,7 +185,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         } else if (objectClass == ContextObject.class) {
             final ContextObject context = (ContextObject) object;
             if (context.hasTruffleFrame()) {
-                addIfAbstractSqueakObjectWithImage(pending, context.getSender());
+                addIfAbstractSqueakObjectWithImage(pending, context.getFrameSender());
                 addIfAbstractSqueakObjectWithImage(pending, context.getMethod());
                 if (context.hasClosure()) {
                     pending.add(context.getClosure());
