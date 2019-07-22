@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.plugins.network;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.logging.Level;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -37,6 +39,17 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SocketPlugin.class);
+
+    protected static final byte[] LOCAL_HOST_NAME = getLocalHostName().getBytes();
+
+    private static String getLocalHostName() {
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (final UnknownHostException e) {
+            e.printStackTrace();
+            return "unknown";
+        }
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverStatus")
@@ -182,6 +195,21 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @ImportStatic(SocketPlugin.class)
+    @SqueakPrimitive(names = "primitiveResolverHostNameResult")
+    protected abstract static class PrimResolverHostNameResultNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimResolverHostNameResultNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"targetString.isByteType()", "targetString.getByteLength() >= LOCAL_HOST_NAME.length"})
+        protected static final Object doResult(@SuppressWarnings("unused") final Object receiver, final NativeObject targetString) {
+            System.arraycopy(LOCAL_HOST_NAME, 0, targetString.getByteStorage(), 0, LOCAL_HOST_NAME.length);
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverHostNameSize")
     protected abstract static class PrimResolverHostNameSizeNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         protected PrimResolverHostNameSizeNode(final CompiledMethodObject method) {
@@ -189,8 +217,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final AbstractSqueakObject doSize(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // Signals that IPv6 is not available.
+        protected static final long doSize(@SuppressWarnings("unused") final Object receiver) {
+            return LOCAL_HOST_NAME.length;
         }
     }
 
