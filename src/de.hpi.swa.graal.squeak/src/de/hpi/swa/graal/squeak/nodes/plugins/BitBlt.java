@@ -171,7 +171,7 @@ public final class BitBlt {
     private boolean noHalftone;
     private boolean noSource;
     private int nWords;
-    @CompilationFinal(dimensions = 1) private static final LongBinaryOperator[] OP_TABLE = new LongBinaryOperator[43];
+    @CompilationFinal(dimensions = 1) private final LongBinaryOperator[] opTable = new LongBinaryOperator[43];
     private boolean preload;
     private long skew;
     private long sourceAlpha;
@@ -929,7 +929,7 @@ public final class BitBlt {
         int y;
 
         /* unskew is a bitShift and MUST remain signed, while skewMask is unsigned. */
-        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRule + 1];
+        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
         assert mergeFnwith != null;
         assert !(preload && skew == 0);
         /* Byte delta */
@@ -1108,7 +1108,7 @@ public final class BitBlt {
         long word;
 
         halftoneWord = 0;
-        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRule + 1];
+        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
         assert mergeFnwith != null;
         if (noHalftone) {
             halftoneWord = ALL_ONES;
@@ -1189,7 +1189,7 @@ public final class BitBlt {
         long words;
 
         halftoneWord = 0;
-        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRule + 1];
+        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
         assert mergeFnwith != null;
         sourcePPW = div(32, sourceDepth);
         sourcePixMask = MASK_TABLE[sourceDepth];
@@ -1599,48 +1599,48 @@ public final class BitBlt {
     /* BitBltSimulation>>#initBBOpTable */
     private void initBBOpTable() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        OP_TABLE[0 + 1] = BitBlt::clearWordwith;
-        OP_TABLE[1 + 1] = BitBlt::bitAndwith;
-        OP_TABLE[2 + 1] = BitBlt::bitAndInvertwith;
-        OP_TABLE[3 + 1] = this::sourceWordwith;
-        OP_TABLE[4 + 1] = BitBlt::bitInvertAndwith;
-        OP_TABLE[5 + 1] = BitBlt::destinationWordwith;
-        OP_TABLE[6 + 1] = BitBlt::bitXorwith;
-        OP_TABLE[7 + 1] = BitBlt::bitOrwith;
-        OP_TABLE[8 + 1] = BitBlt::bitInvertAndInvertwith;
-        OP_TABLE[9 + 1] = BitBlt::bitInvertXorwith;
-        OP_TABLE[10 + 1] = BitBlt::bitInvertDestinationwith;
-        OP_TABLE[11 + 1] = BitBlt::bitOrInvertwith;
-        OP_TABLE[12 + 1] = BitBlt::bitInvertSourcewith;
-        OP_TABLE[13 + 1] = BitBlt::bitInvertOrwith;
-        OP_TABLE[14 + 1] = BitBlt::bitInvertOrInvertwith;
-        OP_TABLE[15 + 1] = BitBlt::destinationWordwith;
-        OP_TABLE[16 + 1] = BitBlt::destinationWordwith;
-        OP_TABLE[17 + 1] = BitBlt::destinationWordwith;
-        OP_TABLE[18 + 1] = this::addWordwith;
-        OP_TABLE[19 + 1] = this::subWordwith;
-        OP_TABLE[20 + 1] = this::rgbAddwith;
-        OP_TABLE[21 + 1] = this::rgbSubwith;
-        OP_TABLE[22 + 1] = this::oLDrgbDiffwith;
-        OP_TABLE[23 + 1] = this::oLDtallyIntoMapwith;
-        OP_TABLE[24 + 1] = this::alphaBlendwith;
-        OP_TABLE[25 + 1] = this::pixPaintwith;
-        OP_TABLE[26 + 1] = this::pixMaskwith;
-        OP_TABLE[27 + 1] = this::rgbMaxwith;
-        OP_TABLE[28 + 1] = this::rgbMinwith;
-        OP_TABLE[29 + 1] = this::rgbMinInvertwith;
-        OP_TABLE[30 + 1] = this::alphaBlendConstwith;
-        OP_TABLE[31 + 1] = this::alphaPaintConstwith;
-        OP_TABLE[32 + 1] = this::rgbDiffwith;
-        OP_TABLE[33 + 1] = this::tallyIntoMapwith;
-        OP_TABLE[34 + 1] = this::alphaBlendScaledwith;
-        OP_TABLE[35 + 1] = this::alphaBlendScaledwith;
-        OP_TABLE[36 + 1] = this::alphaBlendScaledwith;
-        OP_TABLE[37 + 1] = this::rgbMulwith;
-        OP_TABLE[38 + 1] = this::pixSwapwith;
-        OP_TABLE[39 + 1] = this::pixClearwith;
-        OP_TABLE[40 + 1] = this::fixAlphawith;
-        OP_TABLE[41 + 1] = this::rgbComponentAlphawith;
+        opTable[0 + 1] = BitBlt::clearWordwith;
+        opTable[1 + 1] = BitBlt::bitAndwith;
+        opTable[2 + 1] = BitBlt::bitAndInvertwith;
+        opTable[3 + 1] = this::sourceWordwith;
+        opTable[4 + 1] = BitBlt::bitInvertAndwith;
+        opTable[5 + 1] = BitBlt::destinationWordwith;
+        opTable[6 + 1] = BitBlt::bitXorwith;
+        opTable[7 + 1] = BitBlt::bitOrwith;
+        opTable[8 + 1] = BitBlt::bitInvertAndInvertwith;
+        opTable[9 + 1] = BitBlt::bitInvertXorwith;
+        opTable[10 + 1] = BitBlt::bitInvertDestinationwith;
+        opTable[11 + 1] = BitBlt::bitOrInvertwith;
+        opTable[12 + 1] = BitBlt::bitInvertSourcewith;
+        opTable[13 + 1] = BitBlt::bitInvertOrwith;
+        opTable[14 + 1] = BitBlt::bitInvertOrInvertwith;
+        opTable[15 + 1] = BitBlt::destinationWordwith;
+        opTable[16 + 1] = BitBlt::destinationWordwith;
+        opTable[17 + 1] = BitBlt::destinationWordwith;
+        opTable[18 + 1] = this::addWordwith;
+        opTable[19 + 1] = this::subWordwith;
+        opTable[20 + 1] = this::rgbAddwith;
+        opTable[21 + 1] = this::rgbSubwith;
+        opTable[22 + 1] = this::oLDrgbDiffwith;
+        opTable[23 + 1] = this::oLDtallyIntoMapwith;
+        opTable[24 + 1] = this::alphaBlendwith;
+        opTable[25 + 1] = this::pixPaintwith;
+        opTable[26 + 1] = this::pixMaskwith;
+        opTable[27 + 1] = this::rgbMaxwith;
+        opTable[28 + 1] = this::rgbMinwith;
+        opTable[29 + 1] = this::rgbMinInvertwith;
+        opTable[30 + 1] = this::alphaBlendConstwith;
+        opTable[31 + 1] = this::alphaPaintConstwith;
+        opTable[32 + 1] = this::rgbDiffwith;
+        opTable[33 + 1] = this::tallyIntoMapwith;
+        opTable[34 + 1] = this::alphaBlendScaledwith;
+        opTable[35 + 1] = this::alphaBlendScaledwith;
+        opTable[36 + 1] = this::alphaBlendScaledwith;
+        opTable[37 + 1] = this::rgbMulwith;
+        opTable[38 + 1] = this::pixSwapwith;
+        opTable[39 + 1] = this::pixClearwith;
+        opTable[40 + 1] = this::fixAlphawith;
+        opTable[41 + 1] = this::rgbComponentAlphawith;
     }
 
     /* BitBltSimulation>>#initDither8Lookup */
@@ -3671,7 +3671,7 @@ public final class BitBlt {
         int yDelta;
 
         halftoneWord = 0;
-        final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRule + 1];
+        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
         if (slotSizeOf(bitBltOop) < BB_WARP_BASE + 12) {
             PrimitiveFailed.andTransferToInterpreter();
         }
