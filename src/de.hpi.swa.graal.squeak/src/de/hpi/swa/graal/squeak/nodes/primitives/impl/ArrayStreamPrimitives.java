@@ -92,8 +92,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization(guards = {"inBoundsOfSqueakObject(index, receiver)", "!isUsedJavaPrimitive(receiver)", "!isNativeObject(receiver)"})
-        protected final Object doSqueakObject(final Object receiver, final long index, final Object value,
+        @Specialization(guards = {"inBoundsOfSqueakObject(index, receiver)", "!isNativeObject(receiver)"})
+        protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
                         @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("atput0Node") @Cached final SqueakObjectAtPut0Node atput0Node) {
             atput0Node.execute(receiver, index - 1 + instSizeNode.execute(receiver), value);
@@ -109,7 +109,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization(guards = {"inBoundsOfSqueakObject(index, target)", "!isUsedJavaPrimitive(target)", "!isNativeObject(target)"})
+        @Specialization(guards = {"inBoundsOfSqueakObject(index, target)", "!isNativeObject(target)"})
         protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index,
                         final Object value,
                         @Shared("atput0Node") @Cached final SqueakObjectAtPut0Node atput0Node) {
@@ -135,16 +135,16 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             super(method);
         }
 
-        @Specialization(guards = {"!isUsedJavaPrimitive(receiver)"})
-        protected static final long doSqueakObject(final Object receiver, @SuppressWarnings("unused") final NotProvided notProvided,
+        @Specialization
+        protected static final long doSqueakObject(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
                         @Shared("instSizeNode") @Cached final SqueakObjectInstSizeNode instSizeNode) {
             return sizeNode.execute(receiver) - instSizeNode.execute(receiver);
         }
 
         /* Context>>#objectSize: */
-        @Specialization(guards = {"!isUsedJavaPrimitive(target)", "!isNotProvided(target)"})
-        protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target,
+        @Specialization
+        protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target,
                         @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
                         @Shared("instSizeNode") @Cached final SqueakObjectInstSizeNode instSizeNode) {
             return sizeNode.execute(target) - instSizeNode.execute(target);
