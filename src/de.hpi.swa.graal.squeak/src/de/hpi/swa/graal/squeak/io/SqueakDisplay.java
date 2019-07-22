@@ -71,7 +71,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     public int buttons = 0;
     private Dimension rememberedWindowSize = null;
-    private Point rememberedWindowLocation;
+    private Point rememberedWindowLocation = null;
     private boolean deferUpdates = false;
 
     public SqueakDisplay(final SqueakImageContext image) {
@@ -288,7 +288,13 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             frame.setResizable(true);
         }
         frame.pack();
-        frame.setLocation(rememberedWindowLocation);
+        if (!enable) {
+            if (rememberedWindowLocation != null) {
+                frame.setLocation(rememberedWindowLocation);
+            }
+            rememberedWindowLocation = null;
+            rememberedWindowSize = null;
+        }
         frame.setVisible(true);
     }
 
