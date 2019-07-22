@@ -36,7 +36,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
                     @Cached("createTemporaryWriteNode(0)") final FrameSlotReadNode blockArgumentNode,
                     @SuppressWarnings("unused") @Cached("createTemporaryWriteNode(1)") final FrameSlotReadNode completeTempReadNode,
                     @Cached("create(code, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
-                    @Cached final BlockActivationNode dispatchNode) {
+                    @Cached final DispatchBlockNode dispatchNode) {
         completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
         final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
         dispatchNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY));
