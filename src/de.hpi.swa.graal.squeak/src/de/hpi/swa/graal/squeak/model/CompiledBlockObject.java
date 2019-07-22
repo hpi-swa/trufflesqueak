@@ -23,6 +23,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         numTemps = numCopied;
         numArgs = numArguments;
         ensureCorrectNumberOfStackSlots();
+        initializeCallTargetUnsafe();
     }
 
     private CompiledBlockObject(final CompiledBlockObject original) {

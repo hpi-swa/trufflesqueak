@@ -179,7 +179,9 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
 
     /** Special version of getCompiledBlock for image loader. */
     public CompiledBlockObject getCompiledBlock(final CompiledMethodObject method) {
-        initializeCompiledBlock(method);
+        if (block == null) {
+            initializeCompiledBlock(method);
+        }
         return block;
     }
 
@@ -222,7 +224,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
                     @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws ArityException {
         if (getNumArgs() == arguments.length) {
             final Object[] frameArguments = FrameAccess.newClosureArguments(this, NilObject.SINGLETON, wrapNode.executeObjects(arguments));
-            return block.getCallTarget().call(frameArguments);
+            return getCompiledBlock().getCallTarget().call(frameArguments);
         } else {
             throw ArityException.create((int) getNumArgs(), arguments.length);
         }

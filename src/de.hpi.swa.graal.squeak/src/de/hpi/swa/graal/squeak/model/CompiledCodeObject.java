@@ -80,7 +80,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         this.literals = literals;
         decodeHeader();
         this.bytes = bytes;
-        createNewCallTarget();
+        renewCallTarget();
     }
 
     public final Source asSource() {
@@ -91,19 +91,20 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
-    public RootCallTarget getSplitCallTarget() {
-        return getCallTarget();
-    }
-
     public final RootCallTarget getCallTarget() {
         if (callTarget == null) {
-            createNewCallTarget();
+            renewCallTarget();
         }
         return callTarget;
     }
 
-    private void createNewCallTarget() {
+    private void renewCallTarget() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
+        callTargetStable.invalidate();
+        initializeCallTargetUnsafe();
+    }
+
+    protected final void initializeCallTargetUnsafe() {
         callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
     }
 
