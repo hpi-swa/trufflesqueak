@@ -54,8 +54,8 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected static final Object doCreate(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+        protected static final long doCreate(@SuppressWarnings("unused") final Object receiver) {
+            return 0L; /* See ExtendedClipboardInterface>>initialize. */
         }
     }
 
