@@ -9,12 +9,12 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 @TypeSystem
 public class SqueakTypes {
     @TypeCheck(NilObject.class)
-    public static boolean isNilObject(final Object value) {
+    public static final boolean isNilObject(final Object value) {
         return value == NilObject.SINGLETON;
     }
 
     @TypeCast(NilObject.class)
-    public static NilObject asNilObject(final Object value) {
+    public static final NilObject asNilObject(final Object value) {
         assert isNilObject(value);
         return NilObject.SINGLETON;
     }
