@@ -143,7 +143,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         private DispatchSendNode getDispatchSendNode() {
             if (dispatchSendNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dispatchSendNode = insert(DispatchSendNode.create(method.image));
+                dispatchSendNode = insert(DispatchSendNode.create(method));
             }
             return dispatchSendNode;
         }

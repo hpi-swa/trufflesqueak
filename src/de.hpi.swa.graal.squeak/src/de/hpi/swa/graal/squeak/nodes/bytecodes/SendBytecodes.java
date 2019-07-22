@@ -50,7 +50,7 @@ public final class SendBytecodes {
             selector = sel instanceof NativeObject ? (NativeObject) sel : code.image.doesNotUnderstand;
             argumentCount = argcount;
             this.lookupClassNode = lookupClassNode;
-            dispatchSendNode = DispatchSendNode.create(code.image);
+            dispatchSendNode = DispatchSendNode.create(code);
             popNNode = FrameStackReadAndClearNode.create(code);
         }
 

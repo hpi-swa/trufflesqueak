@@ -51,6 +51,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     @CompilationFinal private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
+    private final Assumption doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
 
     protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues) {
         super(image, hash);
@@ -110,6 +111,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     public final Assumption getCallTargetStable() {
         return callTargetStable.getAssumption();
+    }
+
+    public final Assumption getDoesNotNeedSenderAssumption() {
+        return doesNotNeedSender;
     }
 
     public final FrameDescriptor getFrameDescriptor() {
