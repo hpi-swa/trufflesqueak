@@ -200,6 +200,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         help='trace interop errors, ...',
         dest='trace_interop', action='store_true', default=False)
     parser.add_argument(
+        '-tif', '--trace-iterate-frames',
+        help='trace iterate frames',
+        dest='trace_iterate_frames', action='store_true', default=False)
+    parser.add_argument(
         '-tpf', '--trace-primitive-failures',
         help='trace primitive failures',
         dest='trace_primitive_failures', action='store_true', default=False)
@@ -289,6 +293,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.trace_interop:
         parsed_args.log = (
             '%s.nodes.plugins.PolyglotPlugin=FINE' % PACKAGE_NAME)
+    if parsed_args.trace_iterate_frames:
+        parsed_args.log = (
+            '%s.util.FrameAccess=FINE' % PACKAGE_NAME)
     if parsed_args.trace_primitive_failures:
         parsed_args.log = (
             '%s.nodes.bytecodes.MiscellaneousBytecodes$CallPrimitiveNode=FINE'

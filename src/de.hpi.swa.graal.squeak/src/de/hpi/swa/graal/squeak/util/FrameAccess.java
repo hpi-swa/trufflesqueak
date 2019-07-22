@@ -6,6 +6,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
@@ -13,6 +14,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -21,6 +23,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 /**
  * GraalSqueak frame argument layout.
@@ -65,6 +68,7 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
  * </pre>
  */
 public final class FrameAccess {
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, FrameAccess.class);
 
     private enum ArgumentIndicies {
         METHOD, // 0
@@ -273,15 +277,22 @@ public final class FrameAccess {
     @TruffleBoundary
     public static Frame findFrameForMarker(final FrameMarker frameMarker) {
         CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
-        return Truffle.getRuntime().iterateFrames(frameInstance -> {
+        LOG.fine("Iterating frames to find a marker...");
+        final Frame frame = Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (!isGraalSqueakFrame(current)) {
                 return null;
             }
+            LOG.fine(() -> "..." + FrameAccess.getMethod(current).toString());
             if (frameMarker == getMarker(current)) {
                 return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
             }
             return null;
         });
+        if (frame == null) {
+            throw SqueakException.create("Could not find frame for:", frameMarker);
+        } else {
+            return frame;
+        }
     }
 }
