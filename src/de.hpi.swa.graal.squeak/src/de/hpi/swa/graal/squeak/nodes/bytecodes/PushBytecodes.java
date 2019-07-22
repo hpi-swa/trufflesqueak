@@ -3,8 +3,6 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -21,7 +19,6 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeGen;
@@ -78,7 +75,6 @@ public final class PushBytecodes {
         @Child private GetOrCreateContextNode getOrCreateContextNode;
 
         @CompilationFinal private CompiledBlockObject block;
-        @CompilationFinal private RootCallTarget blockCallTarget;
 
         private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
             super(code, index, numBytecodes);
@@ -105,7 +101,6 @@ public final class PushBytecodes {
             if (block == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 block = CompiledBlockObject.create(code, FrameAccess.getMethod(frame), numArgs, numCopied, index + numBytecodes, blockSize);
-                blockCallTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
             }
             return block;
         }
@@ -131,7 +126,7 @@ public final class PushBytecodes {
             final Object receiver = FrameAccess.getReceiver(frame);
             final Object[] copiedValues = readAndClearNode.executePopN(frame, numCopied);
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
-            return new BlockClosureObject(getBlock(frame), blockCallTarget, receiver, copiedValues, outerContext);
+            return new BlockClosureObject(getBlock(frame), receiver, copiedValues, outerContext);
         }
 
         @Override
