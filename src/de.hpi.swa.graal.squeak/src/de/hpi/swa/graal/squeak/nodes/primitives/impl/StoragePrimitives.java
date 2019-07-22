@@ -4,7 +4,6 @@ import java.util.AbstractCollection;
 import java.util.List;
 import java.util.Set;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -220,10 +219,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"classFormatStable"})
+        @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
         protected AbstractSqueakObjectWithHash newDirect(final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
-                        @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(cachedReceiver);
@@ -257,10 +255,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"classFormatStable"})
+        @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
         protected final AbstractSqueakObjectWithHash newWithArgDirect(final ClassObject receiver, final long size,
                         @Cached("receiver") final ClassObject cachedReceiver,
-                        @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(cachedReceiver, (int) size);

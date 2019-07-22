@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.interop;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -26,12 +25,10 @@ public abstract class ListMethodsNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass",
-                    "selector.equals(cachedSelector)"}, assumptions = {"classHierarchyStable", "methodDictStable"})
+                    "selector.equals(cachedSelector)"}, assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()"})
     protected static final Object doCached(final ClassObject classObject, final String selector,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("selector") final String cachedSelector,
-                    @Cached("cachedClass.getClassHierarchyStable()") final Assumption classHierarchyStable,
-                    @Cached("cachedClass.getMethodDictStable()") final Assumption methodDictStable,
                     @Cached final ArrayObjectReadNode readNode,
                     @Cached("doUncached(cachedClass, cachedSelector, readNode)") final Object cachedMethod) {
         return cachedMethod;

@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -17,11 +16,10 @@ public abstract class InheritsFromNode extends AbstractNode {
     public abstract boolean execute(Object object, ClassObject classObject);
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "CACHE_SIZE", guards = {"object == cachedObject", "classObject == cachedClass"}, assumptions = {"classHierarchyStable"})
+    @Specialization(limit = "CACHE_SIZE", guards = {"object == cachedObject", "classObject == cachedClass"}, assumptions = {"cachedClass.getClassHierarchyStable()"})
     protected static final boolean doCached(final Object object, final ClassObject classObject,
                     @Cached("object") final Object cachedObject,
                     @Cached("classObject") final ClassObject cachedClass,
-                    @Cached("cachedClass.getClassHierarchyStable()") final Assumption classHierarchyStable,
                     @Cached final SqueakObjectClassNode classNode,
                     @Cached("doUncached(object, cachedClass, classNode)") final boolean inInheritanceChain) {
         return inInheritanceChain;

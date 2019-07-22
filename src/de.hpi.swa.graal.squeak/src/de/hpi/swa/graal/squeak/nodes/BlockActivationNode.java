@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DirectCallNode;
@@ -21,11 +19,10 @@ public abstract class BlockActivationNode extends AbstractNode {
     public abstract Object executeBlock(BlockClosureObject block, Object[] arguments);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"block.getCallTarget() == cachedTarget"}, assumptions = {"callTargetStable"})
+    @Specialization(guards = {"block == cachedBlock"}, assumptions = {"cachedBlock.getCallTargetStable()"})
     protected static final Object doDirect(final BlockClosureObject block, final Object[] arguments,
-                    @Cached("block.getCallTarget()") final RootCallTarget cachedTarget,
-                    @Cached("block.getCallTargetStable()") final Assumption callTargetStable,
-                    @Cached("create(cachedTarget)") final DirectCallNode directCallNode) {
+                    @Cached("block") final BlockClosureObject cachedBlock,
+                    @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
         return directCallNode.call(arguments);
     }
 

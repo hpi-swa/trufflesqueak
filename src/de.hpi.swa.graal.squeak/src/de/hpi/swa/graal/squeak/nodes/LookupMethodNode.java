@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -20,12 +19,10 @@ public abstract class LookupMethodNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass",
-                    "selector == cachedSelector"}, assumptions = {"classHierarchyStable", "methodDictStable"})
+                    "selector == cachedSelector"}, assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()"})
     protected static final Object doCached(final ClassObject classObject, final NativeObject selector,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("selector") final NativeObject cachedSelector,
-                    @Cached("cachedClass.getClassHierarchyStable()") final Assumption classHierarchyStable,
-                    @Cached("cachedClass.getMethodDictStable()") final Assumption methodDictStable,
                     @Cached("doUncached(cachedClass, cachedSelector)") final Object cachedMethod) {
         return cachedMethod;
     }

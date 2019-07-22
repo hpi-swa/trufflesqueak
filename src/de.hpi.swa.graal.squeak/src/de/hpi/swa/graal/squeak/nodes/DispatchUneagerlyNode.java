@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -21,13 +19,12 @@ public abstract class DispatchUneagerlyNode extends AbstractNode {
 
     public abstract Object executeDispatch(CompiledMethodObject method, Object[] receiverAndArguments, Object contextOrMarker);
 
-    @Specialization(guards = {"code.getCallTarget() == cachedTarget"}, //
-                    limit = "INLINE_CACHE_SIZE", assumptions = "callTargetStable")
-    protected static final Object doDirect(final CompiledMethodObject code, final Object[] receiverAndArguments, final Object contextOrMarker,
-                    @SuppressWarnings("unused") @Cached("code.getCallTargetStable()") final Assumption callTargetStable,
-                    @SuppressWarnings("unused") @Cached("code.getCallTarget()") final RootCallTarget cachedTarget,
-                    @Cached("create(cachedTarget)") final DirectCallNode callNode) {
-        return callNode.call(FrameAccess.newWith(code, contextOrMarker, null, receiverAndArguments));
+    @Specialization(guards = {"method == cachedMethod"}, //
+                    limit = "INLINE_CACHE_SIZE", assumptions = "cachedMethod.getCallTargetStable()")
+    protected static final Object doDirect(@SuppressWarnings("unused") final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
+                    @SuppressWarnings("unused") @Cached("method") final CompiledMethodObject cachedMethod,
+                    @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
+        return callNode.call(FrameAccess.newWith(cachedMethod, contextOrMarker, null, receiverAndArguments));
     }
 
     @Specialization(replaces = "doDirect")
