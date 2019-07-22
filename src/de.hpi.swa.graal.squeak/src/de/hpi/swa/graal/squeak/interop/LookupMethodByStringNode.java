@@ -33,9 +33,12 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
     protected static final Object doCached(final ClassObject classObject, final String selector,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("selector") final String cachedSelector,
-                    @Cached final ArrayObjectReadNode readNode,
-                    @Cached("doUncached(cachedClass, cachedSelector, readNode)") final Object cachedMethod) {
+                    @Cached("doUncached(cachedClass, cachedSelector)") final Object cachedMethod) {
         return cachedMethod;
+    }
+
+    protected static final Object doUncached(final ClassObject classObject, final String selector) {
+        return doUncached(classObject, selector, ArrayObjectReadNode.getUncached());
     }
 
     @Specialization(replaces = "doCached")

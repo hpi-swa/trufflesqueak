@@ -20,9 +20,12 @@ public abstract class InheritsFromNode extends AbstractNode {
     protected static final boolean doCached(final Object object, final ClassObject classObject,
                     @Cached("object") final Object cachedObject,
                     @Cached("classObject") final ClassObject cachedClass,
-                    @Cached final SqueakObjectClassNode classNode,
-                    @Cached("doUncached(object, cachedClass, classNode)") final boolean inInheritanceChain) {
+                    @Cached("doUncached(object, cachedClass)") final boolean inInheritanceChain) {
         return inInheritanceChain;
+    }
+
+    protected static final boolean doUncached(final Object receiver, final ClassObject superClass) {
+        return doUncached(receiver, superClass, SqueakObjectClassNode.getUncached());
     }
 
     @Specialization(replaces = "doCached")
