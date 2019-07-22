@@ -36,7 +36,7 @@ public final class ClassObjectNodes {
         @Specialization(guards = {"isMethodDictIndex(index)", "squeakClass == cachedSqueakClass"}, assumptions = {"cachedSqueakClass.getMethodDictStable()"}, limit = "CACHE_LIMIT")
         protected static final PointersObject doClassMethodDictConstant(final ClassObject squeakClass, final long index,
                         @Cached("squeakClass") final ClassObject cachedSqueakClass,
-                        @Cached("squeakClass.getMethodDict()") final PointersObject cachedMethodDict) {
+                        @Cached("cachedSqueakClass.getMethodDict()") final PointersObject cachedMethodDict) {
             return cachedMethodDict;
         }
 
@@ -49,7 +49,7 @@ public final class ClassObjectNodes {
         @Specialization(guards = {"isFormatIndex(index)", "squeakClass == cachedSqueakClass"}, assumptions = {"cachedSqueakClass.getClassFormatStable()"}, limit = "CACHE_LIMIT")
         protected static final long doClassFormatConstant(final ClassObject squeakClass, final long index,
                         @Cached("squeakClass") final ClassObject cachedSqueakClass,
-                        @Cached("squeakClass.getFormat()") final long cachedFormat) {
+                        @Cached("cachedSqueakClass.getFormat()") final long cachedFormat) {
             return cachedFormat;
         }
 
