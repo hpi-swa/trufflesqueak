@@ -1,15 +1,13 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
-import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
+import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
@@ -82,9 +80,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
         final Object methodObject = LookupMethodByStringNode.getUncached().executeLookup(getSqueakClass(), selector);
         if (methodObject instanceof CompiledMethodObject) {
-            final CompiledMethodObject method = (CompiledMethodObject) methodObject;
-            final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(ArrayUtils.EMPTY_ARRAY, method.getFrameDescriptor());
-            return DispatchSendNode.create(image).executeSend(frame, method.getCompiledInSelector(), method, getSqueakClass(), ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);
+            return DispatchUneagerlyNode.getUncached().executeDispatch((CompiledMethodObject) methodObject, ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);
         } else {
             throw SqueakExceptions.SqueakException.create("CompiledMethodObject expected, got: " + methodObject);
         }

@@ -17,6 +17,10 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public abstract class DispatchUneagerlyNode extends AbstractNode {
     protected static final int INLINE_CACHE_SIZE = 3;
 
+    public static DispatchUneagerlyNode getUncached() {
+        return DispatchUneagerlyNodeGen.getUncached();
+    }
+
     public abstract Object executeDispatch(CompiledMethodObject method, Object[] receiverAndArguments, Object contextOrMarker);
 
     @Specialization(guards = {"method == cachedMethod"}, //
