@@ -24,7 +24,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private Object receiver;
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
-    @CompilationFinal private long pc = -1;
+    @CompilationFinal private long startPC = -1;
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal(dimensions = 1) private Object[] copied;
 
@@ -39,8 +39,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         this.outerContext = outerContext;
         this.receiver = receiver;
         this.copied = copied;
-        pc = block.getInitialPC();
         this.numArgs = numArgs;
+        /* startPC does not need to be initialized, it's often not needed for a block activation. */
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
@@ -49,7 +49,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         outerContext = original.outerContext;
         receiver = original.receiver;
         copied = original.copied;
-        pc = original.pc;
+        startPC = original.startPC;
         numArgs = original.numArgs;
     }
 
@@ -64,7 +64,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         final Object[] pointers = chunk.getPointers();
         assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
         outerContext = (ContextObject) pointers[BLOCK_CLOSURE.OUTER_CONTEXT];
-        pc = (long) pointers[BLOCK_CLOSURE.START_PC];
+        startPC = (long) pointers[BLOCK_CLOSURE.START_PC];
         numArgs = (long) pointers[BLOCK_CLOSURE.ARGUMENT_COUNT];
         copied = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FIRST_COPIED_VALUE, pointers.length);
     }
@@ -78,11 +78,11 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     public long getStartPC() {
-        if (pc == -1) {
+        if (startPC == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            pc = block.getInitialPC();
+            startPC = block.getInitialPC();
         }
-        return pc;
+        return startPC;
     }
 
     public long getNumArgs() {
@@ -108,7 +108,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
 
     public void setStartPC(final int pc) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.pc = pc;
+        startPC = pc;
     }
 
     public void setNumArgs(final int numArgs) {
@@ -157,8 +157,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
 
     private void initializeCompiledBlock(final CompiledMethodObject method) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert pc >= 0;
-        final int offset = (int) pc - method.getInitialPC();
+        assert startPC >= 0;
+        final int offset = (int) startPC - method.getInitialPC();
         final int j = method.getBytes()[offset - 2];
         final int k = method.getBytes()[offset - 1];
         final int blockSize = j << 8 | k & 0xff;
