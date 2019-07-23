@@ -25,7 +25,6 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -35,11 +34,10 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnConstantNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromBlockNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromMethodNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -228,22 +226,18 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 }
                 pc = node.getSuccessorIndex();
                 continue bytecode_loop;
-            } else if (node instanceof AbstractReturnNode) {
-                if (node instanceof ReturnConstantNode) {
-                    returnValue = ((ReturnConstantNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
-                    break bytecode_loop;
-                } else if (node instanceof ReturnReceiverNode) {
-                    returnValue = ((ReturnReceiverNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
-                    break bytecode_loop;
-                } else if (node instanceof ReturnTopFromBlockNode) {
-                    returnValue = ((ReturnTopFromBlockNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
-                    break bytecode_loop;
-                } else if (node instanceof ReturnTopFromMethodNode) {
-                    returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
-                    break bytecode_loop;
-                } else {
-                    throw SqueakException.create("Unexpected AbstractReturnNode");
-                }
+            } else if (node instanceof ReturnConstantNodeGen) {
+                returnValue = ((ReturnConstantNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                break bytecode_loop;
+            } else if (node instanceof ReturnReceiverNodeGen) {
+                returnValue = ((ReturnReceiverNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                break bytecode_loop;
+            } else if (node instanceof ReturnTopFromBlockNodeGen) {
+                returnValue = ((ReturnTopFromBlockNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                break bytecode_loop;
+            } else if (node instanceof ReturnTopFromMethodNodeGen) {
+                returnValue = ((ReturnTopFromMethodNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                break bytecode_loop;
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
                 pushClosureNode.executePush(frame, getFrameStackReadAndClearNode());
@@ -316,22 +310,18 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 }
                 pc = node.getSuccessorIndex();
                 continue bytecode_loop_slow;
-            } else if (node instanceof AbstractReturnNode) {
-                if (node instanceof ReturnConstantNode) {
-                    returnValue = ((ReturnConstantNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
-                    break bytecode_loop_slow;
-                } else if (node instanceof ReturnReceiverNode) {
-                    returnValue = ((ReturnReceiverNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
-                    break bytecode_loop_slow;
-                } else if (node instanceof ReturnTopFromBlockNode) {
-                    returnValue = ((ReturnTopFromBlockNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
-                    break bytecode_loop_slow;
-                } else if (node instanceof ReturnTopFromMethodNode) {
-                    returnValue = ((ReturnTopFromMethodNode) node).executeReturn(frame, getFrameStackReadAndClearNode());
-                    break bytecode_loop_slow;
-                } else {
-                    throw SqueakException.create("Unexpected AbstractReturnNode");
-                }
+            } else if (node instanceof ReturnConstantNodeGen) {
+                returnValue = ((ReturnConstantNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                break bytecode_loop_slow;
+            } else if (node instanceof ReturnReceiverNodeGen) {
+                returnValue = ((ReturnReceiverNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                break bytecode_loop_slow;
+            } else if (node instanceof ReturnTopFromBlockNodeGen) {
+                returnValue = ((ReturnTopFromBlockNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                break bytecode_loop_slow;
+            } else if (node instanceof ReturnTopFromMethodNodeGen) {
+                returnValue = ((ReturnTopFromMethodNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                break bytecode_loop_slow;
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
                 pushClosureNode.executePush(frame, getFrameStackReadAndClearNode());
