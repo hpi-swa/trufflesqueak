@@ -37,19 +37,19 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"!code.image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null", "lookupResult == cachedMethod"}, //
                     assumptions = {"cachedMethod.getDoesNotNeedSenderAssumption()"})
-    protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
+    protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker,
                     @SuppressWarnings("unused") @Cached("lookupResult") final CompiledMethodObject cachedMethod) {
-        return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
+        return dispatchNode.executeDispatch(frame, cachedMethod, rcvrAndArgs, contextOrMarker);
     }
 
     @Specialization(guards = {"!code.image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null", "lookupResult == cachedMethod",
                     "!cachedMethod.getDoesNotNeedSenderAssumption().isValid()"})
-    protected final Object doDispatchFoo(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
+    protected final Object doDispatchFoo(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, @SuppressWarnings("unused") final Object contextOrMarker,
                     @SuppressWarnings("unused") @Cached("lookupResult") final CompiledMethodObject cachedMethod,
                     @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode) {
-        return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, getOrCreateContextNode.executeGet(frame));
+        return dispatchNode.executeDispatch(frame, cachedMethod, rcvrAndArgs, getOrCreateContextNode.executeGet(frame));
     }
 
     @Specialization(guards = {"!code.image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null"})
