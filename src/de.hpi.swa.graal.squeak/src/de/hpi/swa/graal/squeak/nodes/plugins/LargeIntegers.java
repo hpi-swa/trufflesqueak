@@ -30,11 +30,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primAnyBitFromTo")
-    public abstract static class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
         private final BranchProfile startLargerThanStopProfile = BranchProfile.create();
         private final BranchProfile firstAndLastDigitIndexIdenticalProfile = BranchProfile.create();
 
-        public PrimAnyBitFromToNode(final CompiledMethodObject method) {
+        protected PrimAnyBitFromToNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -120,8 +120,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitAdd")
-    public abstract static class PrimDigitAddNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        public PrimDigitAddNode(final CompiledMethodObject method) {
+    protected abstract static class PrimDigitAddNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        protected PrimDigitAddNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -178,8 +178,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitSubtract")
-    public abstract static class PrimDigitSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        public PrimDigitSubtractNode(final CompiledMethodObject method) {
+    protected abstract static class PrimDigitSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        protected PrimDigitSubtractNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -236,8 +236,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitMultiplyNegative")
-    public abstract static class PrimDigitMultiplyNegativeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        public PrimDigitMultiplyNegativeNode(final CompiledMethodObject method) {
+    protected abstract static class PrimDigitMultiplyNegativeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        protected PrimDigitMultiplyNegativeNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -290,8 +290,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitAnd")
-    public abstract static class PrimDigitBitAndNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        public PrimDigitBitAndNode(final CompiledMethodObject method) {
+    protected abstract static class PrimDigitBitAndNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        protected PrimDigitBitAndNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -328,8 +328,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitOr")
-    public abstract static class PrimDigitBitOrNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        public PrimDigitBitOrNode(final CompiledMethodObject method) {
+    protected abstract static class PrimDigitBitOrNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        protected PrimDigitBitOrNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -357,8 +357,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 17, names = "primDigitBitShiftMagnitude")
     public abstract static class PrimDigitBitShiftMagnitudeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-
-        public PrimDigitBitShiftMagnitudeNode(final CompiledMethodObject method) {
+        protected PrimDigitBitShiftMagnitudeNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -436,8 +435,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitCompare")
-    public abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        public PrimDigitCompareNode(final CompiledMethodObject method) {
+    protected abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        protected PrimDigitCompareNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -496,10 +495,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitDivNegative")
-    public abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
         private final BranchProfile signProfile = BranchProfile.create();
 
-        public PrimDigitDivNegativeNode(final CompiledMethodObject method) {
+        protected PrimDigitDivNegativeNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -542,9 +541,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primGetModuleName")
-    public abstract static class PrimGetModuleNameNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-
-        public PrimGetModuleNameNode(final CompiledMethodObject method) {
+    protected abstract static class PrimGetModuleNameNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimGetModuleNameNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -556,9 +554,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primMontgomeryDigitLength")
-    public abstract static class PrimMontgomeryDigitLengthNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-
-        public PrimMontgomeryDigitLengthNode(final CompiledMethodObject method) {
+    protected abstract static class PrimMontgomeryDigitLengthNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimMontgomeryDigitLengthNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -570,9 +567,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primMontgomeryTimesModulo")
-    public abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode implements QuaternaryPrimitive {
-
-        public PrimMontgomeryTimesModuloNode(final CompiledMethodObject method) {
+    protected abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode implements QuaternaryPrimitive {
+        protected PrimMontgomeryTimesModuloNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -734,14 +730,14 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = {"primNormalizePositive", "primNormalizeNegative"})
-    public abstract static class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
 
-        public PrimNormalizeNode(final CompiledMethodObject method) {
+        protected PrimNormalizeNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        public static final Object doLargeInteger(final LargeIntegerObject value) {
+        protected static final Object doLargeInteger(final LargeIntegerObject value) {
             return value.reduceIfPossible();
         }
 
