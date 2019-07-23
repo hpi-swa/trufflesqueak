@@ -87,7 +87,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             } catch (final ProcessSwitch ps) {
                 removeFromCacheIfNecessary(activeContext);
                 activeContext = ps.getNewContext();
-                assert ExecuteContextNode.getStackDepth() == 0 : "Stack depth should be zero when switching to another context";
                 LOG.log(Level.FINE, "Process Switch: {0}", activeContext);
             } catch (final NonLocalReturn nlr) {
                 removeFromCacheIfNecessary(activeContext);
@@ -99,6 +98,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                 LOG.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
+            assert ExecuteContextNode.getStackDepth() == 0 : "Stack depth should be zero before switching to another context";
             executeContextNode.replace(getNextExecuteContextNode(activeContext));
             notifyInserted(executeContextNode);
         }
