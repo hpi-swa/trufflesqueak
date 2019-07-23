@@ -26,7 +26,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private long startPC = -1;
     @CompilationFinal private long numArgs = -1;
-    @CompilationFinal(dimensions = 1) private Object[] copied;
+    @CompilationFinal(dimensions = 0) private Object[] copied;
 
     public BlockClosureObject(final SqueakImageContext image, final long hash) {
         super(image, hash);
@@ -117,7 +117,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setCopiedAt0(final int index, final Object value) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = value;
     }
 
