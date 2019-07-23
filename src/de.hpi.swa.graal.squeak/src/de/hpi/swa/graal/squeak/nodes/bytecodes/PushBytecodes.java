@@ -126,7 +126,7 @@ public final class PushBytecodes {
             final Object receiver = FrameAccess.getReceiver(frame);
             final Object[] copiedValues = readAndClearNode.executePopN(frame, numCopied);
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
-            return new BlockClosureObject(getBlock(frame), receiver, copiedValues, outerContext);
+            return new BlockClosureObject(getBlock(frame), numArgs, receiver, copiedValues, outerContext);
         }
 
         @Override
