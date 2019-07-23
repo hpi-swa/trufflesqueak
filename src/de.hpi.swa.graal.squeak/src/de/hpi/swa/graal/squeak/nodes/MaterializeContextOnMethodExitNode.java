@@ -10,8 +10,6 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWithCode {
-    private static ContextObject lastSeenContext; // FIXME: Do not use static field here.
-
     protected MaterializeContextOnMethodExitNode(final CompiledCodeObject code) {
         super(code);
     }
@@ -22,27 +20,18 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
 
     public abstract void execute(VirtualFrame frame);
 
-    public static final void reset() {
-        lastSeenContext = null;
-    }
-
-    public static final void stopMaterializationHere() {
-        if (lastSeenContext != null) {
-            reset();
-        }
-    }
-
     @Specialization(guards = {"!hasLastSeenContext(frame)", "!isVirtualized(frame)", "getContext(frame).hasEscaped()"})
     protected final void doStartMaterialization(final VirtualFrame frame) {
-        lastSeenContext = getContext(frame);
+        code.image.lastSeenContext = getContext(frame);
     }
 
     @Specialization(guards = {"hasLastSeenContext(frame)"})
-    protected static final void doMaterialize(final VirtualFrame frame,
-                    @Cached("createCountingProfile()") final ConditionProfile isNotLastSeenContextProfile,
-                    @Cached("createCountingProfile()") final ConditionProfile lastSeenNeedsSenderProfile,
-                    @Cached("createCountingProfile()") final ConditionProfile continueProfile,
+    protected final void doMaterialize(final VirtualFrame frame,
+                    @Cached("createBinaryProfile()") final ConditionProfile isNotLastSeenContextProfile,
+                    @Cached("createBinaryProfile()") final ConditionProfile lastSeenNeedsSenderProfile,
+                    @Cached("createBinaryProfile()") final ConditionProfile continueProfile,
                     @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode) {
+        final ContextObject lastSeenContext = code.image.lastSeenContext;
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
         if (isNotLastSeenContextProfile.profile(context != lastSeenContext)) {
             assert context.hasTruffleFrame();
@@ -51,10 +40,10 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
             }
             if (continueProfile.profile(!context.isTerminated() && context.hasEscaped())) {
                 // Materialization needs to continue in parent frame.
-                lastSeenContext = context;
+                code.image.lastSeenContext = context;
             } else {
                 // If context has not escaped, materialization can terminate here.
-                lastSeenContext = null;
+                code.image.lastSeenContext = null;
             }
         }
     }
@@ -67,7 +56,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
          */
     }
 
-    protected static final boolean hasLastSeenContext(@SuppressWarnings("unused") final VirtualFrame frame) {
-        return lastSeenContext != null;
+    protected final boolean hasLastSeenContext(@SuppressWarnings("unused") final VirtualFrame frame) {
+        return code.image.lastSeenContext != null;
     }
 }

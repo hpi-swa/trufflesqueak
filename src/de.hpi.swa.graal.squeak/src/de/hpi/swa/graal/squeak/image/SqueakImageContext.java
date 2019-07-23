@@ -124,6 +124,10 @@ public final class SqueakImageContext {
 
     @CompilationFinal private SqueakImage squeakImage;
 
+    /* Stack Management */
+    public int stackDepth = 0;
+    public ContextObject lastSeenContext;
+
     /* Utilities */
     public final OSDetector os = new OSDetector();
 

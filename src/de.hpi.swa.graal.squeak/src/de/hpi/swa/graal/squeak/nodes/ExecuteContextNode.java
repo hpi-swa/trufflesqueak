@@ -63,8 +63,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
 
     private SourceSection section;
 
-    private static int stackDepth = 0;
-
     protected ExecuteContextNode(final CompiledCodeObject code) {
         super(code);
         if (DECODE_BYTECODE_ON_DEMAND) {
@@ -95,7 +93,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         initializeArgumentsAndTemps(frame);
         final boolean shouldCheckStackDepth = CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot();
         try {
-            if (shouldCheckStackDepth && stackDepth++ > STACK_DEPTH_LIMIT) {
+            if (shouldCheckStackDepth && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
                 throw ProcessSwitch.createWithBoundary(getGetOrCreateContextNode().executeGet(frame));
             }
             return startBytecode(frame);
@@ -112,7 +110,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             throw ps;
         } finally {
             if (shouldCheckStackDepth) {
-                stackDepth--;
+                code.image.stackDepth--;
             }
             materializeContextOnMethodExitNode.execute(frame);
         }
@@ -156,12 +154,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } finally {
-            MaterializeContextOnMethodExitNode.stopMaterializationHere();
+            code.image.lastSeenContext = null; // Stop materialization here.
         }
-    }
-
-    public static int getStackDepth() {
-        return stackDepth;
     }
 
     private GetOrCreateContextNode getGetOrCreateContextNode() {

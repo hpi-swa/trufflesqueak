@@ -78,7 +78,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             final AbstractSqueakObject sender = activeContext.getSender();
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
-                MaterializeContextOnMethodExitNode.reset();
+                image.lastSeenContext = null;  // Reset materialization mechanism.
                 // doIt: activeContext.printSqStackTrace();
                 final Object result = executeContextNode.executeResume(activeContext.getTruffleFrame(), activeContext);
                 removeFromCacheIfNecessary(activeContext);
@@ -98,7 +98,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                 LOG.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
-            assert ExecuteContextNode.getStackDepth() == 0 : "Stack depth should be zero before switching to another context";
+            assert image.stackDepth == 0 : "Stack depth should be zero before switching to another context";
             executeContextNode.replace(getNextExecuteContextNode(activeContext));
             notifyInserted(executeContextNode);
         }
