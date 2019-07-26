@@ -59,7 +59,7 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     public final SourceSection getSourceSection() {
         if (sourceSection == null) {
             final int lineNumber = SqueakBytecodeDecoder.findLineNumber(code, index);
-            sourceSection = code.asSource().createSection(lineNumber);
+            sourceSection = code.getSource().createSection(lineNumber);
         }
         return sourceSection;
     }

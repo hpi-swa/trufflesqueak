@@ -353,7 +353,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Override
     public SourceSection getSourceSection() {
         if (section == null) {
-            final Source source = code.asSource();
+            final Source source = code.getSource();
             section = source.createSection(1, 1, source.getLength());
         }
         return section;

@@ -49,6 +49,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     private final int numCopiedValues; // for block closures
 
+    private Source source;
+
     @CompilationFinal private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
     private final Assumption doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
@@ -84,8 +86,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         renewCallTarget();
     }
 
-    public final Source asSource() {
-        return Source.newBuilder(SqueakLanguageConfig.ID, CompiledCodeObjectPrinter.getString(this), toString()).build();
+    public final Source getSource() {
+        if (source == null) {
+            source = Source.newBuilder(SqueakLanguageConfig.ID, CompiledCodeObjectPrinter.getString(this), toString()).build();
+        }
+        return source;
     }
 
     public final int getSqueakContextSize() {
