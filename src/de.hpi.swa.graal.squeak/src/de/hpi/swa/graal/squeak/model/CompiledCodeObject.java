@@ -47,6 +47,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal protected boolean needsLargeFrame = false;
     @CompilationFinal protected int numTemps;
 
+    @CompilationFinal(dimensions = 1) private CompiledBlockObject[] innerBlocks;
+
     private final int numCopiedValues; // for block closures
 
     private Source source;
@@ -327,5 +329,20 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     public static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
         return (numArgs & 0x0F) << 24 | (numTemps & 0x3F) << 18 | numLiterals & 0x7FFF | (needsLargeFrame ? 0x20000 : 0) | (hasPrimitive ? 0x10000 : 0);
+    }
+
+    public CompiledBlockObject[] getInnerBlocks() {
+        return innerBlocks;
+    }
+
+    public CompiledBlockObject addInnerBlock(final CompiledBlockObject innerBlock) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        if (innerBlocks == null) {
+            innerBlocks = new CompiledBlockObject[]{innerBlock};
+        } else {
+            innerBlocks = Arrays.copyOf(innerBlocks, innerBlocks.length + 1);
+            innerBlocks[innerBlocks.length - 1] = innerBlock;
+        }
+        return innerBlock;
     }
 }

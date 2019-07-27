@@ -1,8 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -10,6 +8,7 @@ import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -74,8 +73,6 @@ public final class PushBytecodes {
         @Child protected FrameStackWriteNode pushNode;
         @Child private GetOrCreateContextNode getOrCreateContextNode;
 
-        @CompilationFinal private CompiledBlockObject block;
-
         private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
             super(code, index, numBytecodes);
             numArgs = i & 0xF;
@@ -97,12 +94,19 @@ public final class PushBytecodes {
             return new PushClosureNode(code, index, numBytecodes, i, j, k);
         }
 
+        @ExplodeLoop
         private CompiledBlockObject getBlock(final VirtualFrame frame) {
-            if (block == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                block = CompiledBlockObject.create(code, FrameAccess.getMethod(frame), numArgs, numCopied, index + numBytecodes, blockSize);
+            if (code.getInnerBlocks() != null) {
+                // TODO: Avoid instanceof checks (same code in CompiledBlockObject).
+                final int additionalOffset = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getOffset() : 0;
+                final int offset = additionalOffset + getSuccessorIndex();
+                for (final CompiledBlockObject innerBlock : code.getInnerBlocks()) {
+                    if (innerBlock.getOffset() == offset) {
+                        return innerBlock;
+                    }
+                }
             }
-            return block;
+            return code.addInnerBlock(CompiledBlockObject.create(code, FrameAccess.getMethod(frame), numArgs, numCopied, getSuccessorIndex(), blockSize));
         }
 
         public int getBockSize() {
