@@ -6,7 +6,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     private final int offset;
 
     private CompiledBlockObject(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArguments, final int numCopied, final int bytecodeOffset, final int blockSize) {
-        super(code.image, 0, numCopied);
+        super(code.image, -1, numCopied);
         final int additionalOffset = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getOffset() : 0;
         offset = additionalOffset + bytecodeOffset;
         final Object[] outerLiterals = outerMethod.getLiterals();
