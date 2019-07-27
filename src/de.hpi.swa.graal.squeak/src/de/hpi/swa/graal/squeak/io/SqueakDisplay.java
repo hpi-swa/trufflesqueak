@@ -38,7 +38,6 @@ import javax.swing.JFrame;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -73,6 +72,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private Dimension rememberedWindowSize = null;
     private Point rememberedWindowLocation = null;
     private boolean deferUpdates = false;
+    private int[] cursorMergedWords = new int[SqueakIOConstants.CURSOR_HEIGHT];
 
     public SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
@@ -364,9 +364,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         canvas.setCursor(cursor);
     }
 
-    @ExplodeLoop
-    private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
-        final int[] words = new int[SqueakIOConstants.CURSOR_HEIGHT];
+    private int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
         int cursorWord;
         int maskWord;
         int bit;
@@ -380,9 +378,9 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                 merged = merged | (maskWord & bit) >> x | (cursorWord & bit) >> x + 1;
                 bit = bit >>> 1;
             }
-            words[y] = merged;
+            cursorMergedWords[y] = merged;
         }
-        return words;
+        return cursorMergedWords;
     }
 
     @Override
