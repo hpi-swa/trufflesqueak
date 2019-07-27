@@ -8,6 +8,7 @@ import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -138,7 +139,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         assert FrameAccess.getStackPointer(frame, code) >= remainingTemps;
     }
 
-    public Object executeResume(final VirtualFrame frame, final ContextObject context) {
+    public Object executeResume(@SuppressWarnings("unused") final VirtualFrame dummyFrame, final ContextObject context) {
+        final MaterializedFrame frame = context.getTruffleFrame();
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
         try {
             final long initialPC = context.getInstructionPointerForBytecodeLoop();
@@ -353,6 +355,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Override
     public SourceSection getSourceSection() {
         if (section == null) {
+            if (code.image.isTesting()) {
+                // Cannot provide source section in case of AbstractSqueakTestCaseWithDummyImage.
+                return null;
+            }
             final Source source = code.getSource();
             section = source.createSection(1, 1, source.getLength());
         }
