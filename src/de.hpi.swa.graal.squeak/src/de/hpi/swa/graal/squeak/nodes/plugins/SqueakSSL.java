@@ -254,6 +254,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         return encode(ssl, ssl.engine::unwrap, sourceBuffer, targetBuffer);
     }
 
+    @TruffleBoundary
     private static SSLEngineResult encode(final SqSSL ssl, final Encoder encoder, final ByteBuffer sourceBuffer, final ByteBuffer targetBuffer) throws SSLException {
         final int bufferSize = getBufferSize(ssl);
         ByteBuffer intermediateTarget = ByteBuffer.allocate(bufferSize);
