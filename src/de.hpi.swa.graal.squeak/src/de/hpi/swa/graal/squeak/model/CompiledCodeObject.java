@@ -85,6 +85,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         this.literals = literals;
         decodeHeader();
         this.bytes = bytes;
+        innerBlocks = null; // Remove any inner blocks.
         renewCallTarget();
     }
 
@@ -200,6 +201,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         decodeHeader();
         assert bytes == null;
         bytes = chunk.getBytes(ptrs.length * image.flags.wordSize());
+        assert innerBlocks == null : "Should not have any inner blocks yet";
     }
 
     private int getHeader() {
