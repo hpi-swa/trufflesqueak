@@ -8,7 +8,6 @@ import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -139,8 +138,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         assert FrameAccess.getStackPointer(frame, code) >= remainingTemps;
     }
 
-    public Object executeResume(@SuppressWarnings("unused") final VirtualFrame dummyFrame, final ContextObject context) {
-        final MaterializedFrame frame = context.getTruffleFrame();
+    public Object executeResume(final VirtualFrame frame, final ContextObject context) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
         try {
             final long initialPC = context.getInstructionPointerForBytecodeLoop();

@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -19,6 +20,7 @@ import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.graal.squeak.nodes.ResumeContextNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -27,6 +29,7 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 public final class ContextObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private MaterializedFrame truffleFrame;
     @CompilationFinal private int size;
+    @CompilationFinal private CallTarget callTarget;
     private boolean hasModifiedSender = false;
     private boolean escaped = false;
 
@@ -136,6 +139,14 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         for (int i = CONTEXT.TEMP_FRAME_START; i < pointers.length; i++) {
             atput0(i, pointers[i]);
         }
+    }
+
+    public CallTarget getCallTarget() {
+        if (callTarget == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            callTarget = Truffle.getRuntime().createCallTarget(ResumeContextNode.create(image.getLanguage(), this));
+        }
+        return callTarget;
     }
 
     /** Turns a ContextObject back into an array of pointers (fillIn reversed). */

@@ -1,16 +1,13 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import java.util.WeakHashMap;
 import java.util.logging.Level;
 
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
@@ -34,10 +31,10 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private final SqueakImageContext image;
     private final ContextObject initialContext;
-    private final WeakHashMap<ContextObject, CallTarget> callTargetCache = new WeakHashMap<>();
     private final boolean needsShutdown;
 
     @Child private UnwindContextChainNode unwindContextChainNode = UnwindContextChainNode.create();
+    @Child private IndirectCallNode callNode = IndirectCallNode.create();
 
     private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean needsShutdown) {
         super(language, new FrameDescriptor());
@@ -58,7 +55,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             return e.getReturnValue();
         } finally {
             CompilerAsserts.neverPartOfCompilation();
-            callTargetCache.clear(); // Ensure node cache is empty.
             if (needsShutdown) {
                 image.interrupt.shutdown();
                 if (image.hasDisplay()) {
@@ -73,45 +69,27 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         ContextObject activeContext = initialContext;
         ensureCachedContextCanRunAgain(activeContext);
         while (true) {
-            CompilerDirectives.transferToInterpreter();
             assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
             final AbstractSqueakObject sender = activeContext.getSender();
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 image.lastSeenContext = null;  // Reset materialization mechanism.
                 // doIt: activeContext.printSqStackTrace();
-                final Object result = getCallTarget(activeContext).call();
-                removeFromCacheIfNecessary(activeContext);
+                final Object result = callNode.call(activeContext.getCallTarget());
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
                 LOG.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
             } catch (final ProcessSwitch ps) {
-                removeFromCacheIfNecessary(activeContext);
                 activeContext = ps.getNewContext();
                 LOG.log(Level.FINE, "Process Switch: {0}", activeContext);
             } catch (final NonLocalReturn nlr) {
-                removeFromCacheIfNecessary(activeContext);
                 final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
                 activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
                 LOG.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
             } catch (final NonVirtualReturn nvr) {
-                removeFromCacheIfNecessary(activeContext);
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                 LOG.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
             assert image.stackDepth == 0 : "Stack depth should be zero before switching to another context";
-        }
-    }
-
-    private CallTarget getCallTarget(final ContextObject context) {
-        CompilerAsserts.neverPartOfCompilation();
-        assert callTargetCache.size() <= 32 : "Caching more than 32 call targets. Could this be a memory leak?";
-        return callTargetCache.computeIfAbsent(context, (c) -> Truffle.getRuntime().createCallTarget(ResumeContextNode.create(context.image.getLanguage(), context)));
-    }
-
-    private void removeFromCacheIfNecessary(final ContextObject context) {
-        CompilerAsserts.neverPartOfCompilation();
-        if (context.isTerminated()) {
-            callTargetCache.remove(context);
         }
     }
 

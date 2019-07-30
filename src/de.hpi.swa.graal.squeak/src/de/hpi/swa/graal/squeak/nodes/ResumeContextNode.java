@@ -32,8 +32,13 @@ public final class ResumeContextNode extends RootNode {
     }
 
     @Override
+    protected boolean isInstrumentable() {
+        return false;
+    }
+
+    @Override
     public Object execute(final VirtualFrame frame) {
-        return executeContextNode.executeResume(frame, activeContext);
+        return executeContextNode.executeResume(activeContext.getTruffleFrame(), activeContext);
     }
 
     @Override
