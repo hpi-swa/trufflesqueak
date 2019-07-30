@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -23,7 +22,6 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchSendNode extends AbstractNodeWithCode {
     @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
-    @Child private LookupMethodNode lookupNode;
 
     protected DispatchSendNode(final CompiledCodeObject code) {
         super(code);
@@ -75,8 +73,9 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"lookupResult == null"})
     protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final ClassObject rcvrClass,
-                    final Object[] rcvrAndArgs, final Object contextOrMarker) {
-        final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) getLookupNode().executeLookup(rcvrClass, code.image.doesNotUnderstand);
+                    final Object[] rcvrAndArgs, final Object contextOrMarker,
+                    @Cached final LookupMethodNode lookupNode) {
+        final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) lookupNode.executeLookup(rcvrClass, code.image.doesNotUnderstand);
         final PointersObject message = createMessage(selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
         return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);
     }
@@ -85,12 +84,13 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
     protected final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, @SuppressWarnings("unused") final ClassObject rcvrClass,
                     final Object[] rcvrAndArgs, final Object contextOrMarker,
                     @Cached final SqueakObjectClassNode classNode,
+                    @Cached final LookupMethodNode lookupNode,
                     @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
         final ClassObject targetClass = classNode.executeLookup(targetObject);
-        final Object newLookupResult = getLookupNode().executeLookup(targetClass, code.image.runWithInSelector);
+        final Object newLookupResult = lookupNode.executeLookup(targetClass, code.image.runWithInSelector);
         if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
-            final Object doesNotUnderstandMethod = getLookupNode().executeLookup(targetClass, code.image.doesNotUnderstand);
+            final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, code.image.doesNotUnderstand);
             return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
         } else {
             return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, code.image.asArrayOfObjects(arguments), rcvrAndArgs[0]},
@@ -100,14 +100,6 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
 
     protected static final boolean isAllowedInHeadlessMode(final NativeObject selector) {
         return !selector.isDebugErrorSelector() && !selector.isDebugSyntaxErrorSelector();
-    }
-
-    private LookupMethodNode getLookupNode() {
-        if (lookupNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lookupNode = insert(LookupMethodNode.create());
-        }
-        return lookupNode;
     }
 
     private PointersObject createMessage(final NativeObject selector, final ClassObject rcvrClass, final Object[] arguments) {

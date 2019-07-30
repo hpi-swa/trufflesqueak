@@ -23,12 +23,12 @@ public abstract class LookupMethodNode extends AbstractNode {
     protected static final Object doCached(final ClassObject classObject, final NativeObject selector,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("selector") final NativeObject cachedSelector,
-                    @Cached("doUncached(cachedClass, cachedSelector)") final Object cachedMethod) {
+                    @Cached("doGeneric(cachedClass, cachedSelector)") final Object cachedMethod) {
         return cachedMethod;
     }
 
     @Specialization(replaces = "doCached")
-    protected static final Object doUncached(final ClassObject classObject, final NativeObject selector) {
+    protected static final Object doGeneric(final ClassObject classObject, final NativeObject selector) {
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
             final Object[] methodDictPointers = lookupClass.getMethodDict().getPointers();
