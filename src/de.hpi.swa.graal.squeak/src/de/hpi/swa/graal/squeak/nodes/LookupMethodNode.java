@@ -9,7 +9,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
 
 public abstract class LookupMethodNode extends AbstractNode {
-    protected static final int LOOKUP_CACHE_SIZE = 3;
+    protected static final int LOOKUP_CACHE_SIZE = 6;
 
     public static LookupMethodNode create() {
         return LookupMethodNodeGen.create();

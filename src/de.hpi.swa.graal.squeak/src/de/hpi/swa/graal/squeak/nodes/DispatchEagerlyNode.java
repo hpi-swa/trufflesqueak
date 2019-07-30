@@ -16,7 +16,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchEagerlyNode extends AbstractNode {
-    protected static final int INLINE_CACHE_SIZE = 3;
+    protected static final int INLINE_CACHE_SIZE = 6;
 
     public static DispatchEagerlyNode create() {
         return DispatchEagerlyNodeGen.create();
