@@ -39,7 +39,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
             final int[] ints = object.getIntStorage();
             if (ints.length != MATRIX_SIZE) {
                 invalidSizeProfile.enter();
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return ints;
         }
@@ -86,7 +86,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -99,7 +99,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -140,7 +140,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -153,7 +153,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 }

@@ -28,7 +28,7 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object doAdd(final PointersObject receiver, final Object clipboard, final Object data, final Object dataFormat) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -42,7 +42,7 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object doClear(final PointersObject receiver, final Object clipboard) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -69,7 +69,7 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object doGet(final PointersObject receiver, final Object clipboard, final long formatNumber) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -83,7 +83,7 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object doRead(final PointersObject receiver, final Object clipboard, final Object dataFormat) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 

@@ -647,7 +647,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final int secondLen = secondInts.length;
             final int thirdLen = thirdInts.length;
             if (firstLen > thirdLen || secondLen > thirdLen) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
             final int limit1 = firstLen - 1;
             final int limit2 = secondLen - 1;

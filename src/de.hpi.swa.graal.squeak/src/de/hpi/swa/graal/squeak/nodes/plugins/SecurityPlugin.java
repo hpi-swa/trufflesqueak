@@ -37,7 +37,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doDisable(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -50,7 +50,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -63,7 +63,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 

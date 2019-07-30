@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -14,7 +15,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
@@ -60,7 +60,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Fallback
         protected static final long doFail(final Object receiver, final Object string1, final Object string2, final Object order) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 
@@ -172,7 +172,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"!ba.isByteType()"})
         protected static final long doFailBadArgument(final Object receiver, final Object bm, final NativeObject ba) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 
@@ -246,7 +246,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 final long n = anInt >> 2;
                 if (k + n > pastEnd) {
-                    throw PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_INDEX);
+                    CompilerDirectives.transferToInterpreter();
+                    throw PrimitiveFailed.BAD_INDEX;
                 }
                 switch (anInt & 3) {
                     case 0: // skip
@@ -313,13 +314,13 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"start >= 1", "!string.isByteType() || !inclusionMap.isByteType()"})
         protected static final long doFailBadArgument(final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"start < 1"})
         protected static final long doFailBadIndex(final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 
@@ -365,7 +366,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "!key.isByteType() || (!body.isByteType() || !matchTable.isByteType())")
         protected static final long doInvalidKey(final Object receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 
@@ -474,13 +475,13 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"start >= 1", "!string.isByteType()"})
         protected static final AbstractSqueakObject doFailBadArguments(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"hasBadIndex(string, start, stop)"})
         protected static final AbstractSqueakObject doFailBadIndex(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
 
         protected static final boolean hasBadIndex(final NativeObject string, final long start, final long stop) {

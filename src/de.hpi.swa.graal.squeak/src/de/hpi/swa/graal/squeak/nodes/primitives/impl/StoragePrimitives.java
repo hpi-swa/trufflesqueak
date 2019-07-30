@@ -35,7 +35,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -227,7 +226,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 return newNode.execute(cachedReceiver);
             } catch (final OutOfMemoryError e) {
                 outOfMemProfile.enter();
-                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+                throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
         }
 
@@ -238,7 +237,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 return newNode.execute(receiver);
             } catch (final OutOfMemoryError e) {
                 outOfMemProfile.enter();
-                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+                throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
         }
     }
@@ -263,7 +262,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 return newNode.execute(cachedReceiver, (int) size);
             } catch (final OutOfMemoryError e) {
                 outOfMemProfile.enter();
-                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+                throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
         }
 
@@ -274,7 +273,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 return newNode.execute(receiver, (int) size);
             } catch (final OutOfMemoryError e) {
                 outOfMemProfile.enter();
-                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+                throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
         }
 
@@ -285,7 +284,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Fallback
         protected static final Object doBadArgument(final Object receiver, final Object value) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 
@@ -307,26 +306,26 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "!fromArray.isTraceable() || !toArray.isTraceable()"}, limit = "1")
         protected static final ArrayObject doInapproriateOperation(final ArrayObject fromArray, final ArrayObject toArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
-            throw new PrimitiveFailed(ERROR_TABLE.INAPPROPRIATE_OPERATION);
+            throw PrimitiveFailed.INAPPROPRIATE_OPERATION;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
         protected static final ArrayObject doBadArgument(final ArrayObject fromArray, final ArrayObject toArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
         protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
+            throw PrimitiveFailed.BAD_RECEIVER;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
         protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 
@@ -480,7 +479,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     for (int j = 0; j < numBecomes; j++) {
                         becomeNode.execute(lefts[j], rights[j]);
                     }
-                    throw new PrimitiveFailed();
+                    throw PrimitiveFailed.GENERIC_ERROR;
                 }
             }
             return receiver;
@@ -489,19 +488,19 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"sizeNode.execute(receiver) != sizeNode.execute(other)"})
         @SuppressWarnings("unused")
         protected static final ArrayObject doBadSize(final ArrayObject receiver, final ArrayObject other) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
 
         @Specialization(guards = {"!isArrayObject(receiver)"})
         @SuppressWarnings("unused")
         protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject other) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
+            throw PrimitiveFailed.BAD_RECEIVER;
         }
 
         @Specialization(guards = {"!isArrayObject(other)"})
         @SuppressWarnings("unused")
         protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object other) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 
@@ -747,26 +746,26 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "!fromArray.isTraceable() || !toArray.isTraceable()"}, limit = "1")
         protected static final ArrayObject doInapproriateOperation(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
-            throw new PrimitiveFailed(ERROR_TABLE.INAPPROPRIATE_OPERATION);
+            throw PrimitiveFailed.INAPPROPRIATE_OPERATION;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
         protected static final ArrayObject doBadArgument(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(receiver)"})
         protected static final ArrayObject doBadReceiver(final Object receiver, final ArrayObject argument, final boolean copyHash) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
+            throw PrimitiveFailed.BAD_RECEIVER;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isArrayObject(argument)"})
         protected static final ArrayObject doBadArgument(final ArrayObject receiver, final Object argument, final boolean copyHash) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 }

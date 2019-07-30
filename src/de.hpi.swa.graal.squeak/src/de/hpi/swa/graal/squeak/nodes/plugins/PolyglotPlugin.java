@@ -282,7 +282,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             return wrapNode.executeList(languages.stream().//
                             filter(l -> !l.isInternal() && l.getId().equals(languageID.asStringUnsafe())).//
                             map(l -> new Object[]{l.getId(), l.getName(), l.getVersion(), l.getDefaultMimeType(), l.getMimeTypes().toArray()}).//
-                            findFirst().orElseThrow(PrimitiveFailed::new));
+                            findFirst().orElseThrow(() -> PrimitiveFailed.GENERIC_ERROR));
         }
     }
 
@@ -1114,7 +1114,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 hostValue = null;
             }
             if (hostValue == null) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 return hostValue;
             }
@@ -1194,7 +1194,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     private static PrimitiveFailed primitiveFailedCapturing(final Exception e) {
         PrimGetLastErrorNode.setLastError(e);
-        return new PrimitiveFailed();
+        return PrimitiveFailed.GENERIC_ERROR;
     }
 
     @TruffleBoundary

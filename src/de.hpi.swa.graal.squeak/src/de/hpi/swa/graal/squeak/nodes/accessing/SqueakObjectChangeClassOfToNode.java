@@ -73,6 +73,6 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
     @SuppressWarnings("unused")
     @Fallback
     protected static final AbstractSqueakObject doFail(final AbstractSqueakObjectWithClassAndHash receiver, final ClassObject argument) {
-        throw new PrimitiveFailed();
+        throw PrimitiveFailed.GENERIC_ERROR;
     }
 }

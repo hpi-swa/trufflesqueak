@@ -473,7 +473,7 @@ public final class Zip {
     /* DeflatePlugin>>#nextZipBits:put: */
     private void nextZipBitsput(final int nBits, final int value) {
         if (!(value >= 0 && 1L << nBits > value)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         zipBitBuf = zipBitBuf | shl(value, zipBitPos);
         zipBitPos += nBits;
@@ -490,7 +490,7 @@ public final class Zip {
     /* DeflatePlugin>>#primitiveDeflateBlock */
     public boolean primitiveDeflateBlock(final PointersObject rcvr, final int lastIndex, final int chainLength, final int goodMatch) {
         if (!loadDeflateStreamFrom(rcvr)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         final boolean result = deflateBlockchainLengthgoodMatch(lastIndex, chainLength, goodMatch);
         /* Store back modified values */
@@ -632,11 +632,11 @@ public final class Zip {
         litLimit = fetchIntegerofObject(2, literalStream);
         litArray = fetchBytePointerOfObject(literalStream, 0);
         if (!(litPos <= litLimit && litLimit <= litArray.length)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         distArray = fetchNativePointerOfObject(distanceStream, 0);
         if (!(litLimit <= distArray.length && fetchIntegerofObject(1, distanceStream) == litPos && fetchIntegerofObject(2, distanceStream) == litLimit)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         llBitLengths = fetchNativePointerOfObject(litTree, 0);
         litBlCount = llBitLengths.length;
@@ -654,18 +654,18 @@ public final class Zip {
                 /* literal */
                 sum++;
                 if (lit >= litBlCount) {
-                    throw new PrimitiveFailed();
+                    throw PrimitiveFailed.GENERIC_ERROR;
                 }
                 nextZipBitsput(llBitLengths[Byte.toUnsignedInt(lit)], llCodes[Byte.toUnsignedInt(lit)]);
             } else {
                 /* match */
                 sum = sum + Byte.toUnsignedInt(lit) + DeflateMinMatch;
                 if (Byte.toUnsignedInt(lit) >= 256) {
-                    throw new PrimitiveFailed();
+                    throw PrimitiveFailed.GENERIC_ERROR;
                 }
                 code = zipMatchLengthCodes[Byte.toUnsignedInt(lit)];
                 if (code >= litBlCount) {
-                    throw new PrimitiveFailed();
+                    throw PrimitiveFailed.GENERIC_ERROR;
                 }
                 nextZipBitsput(llBitLengths[code], llCodes[code]);
                 extra = zipExtraLengthBits[code - 257];
@@ -675,7 +675,7 @@ public final class Zip {
                 }
                 dist--;
                 if (dist >= 32768) {
-                    throw new PrimitiveFailed();
+                    throw PrimitiveFailed.GENERIC_ERROR;
                 }
                 if (dist < 256) {
                     code = zipDistanceCodes[dist];
@@ -684,7 +684,7 @@ public final class Zip {
                 }
 
                 if (code >= distBlCount) {
-                    throw new PrimitiveFailed();
+                    throw PrimitiveFailed.GENERIC_ERROR;
                 }
                 nextZipBitsput(distBitLengths[code], distCodes[code]);
                 extra = zipExtraDistanceBits[code];
@@ -756,7 +756,7 @@ public final class Zip {
         /* Initial bits needed */
         bitsNeeded = (int) (Integer.toUnsignedLong(table[0]) >> 24);
         if (bitsNeeded > MaxBits) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         /* First real table */
         tableIndex = 2;
@@ -765,7 +765,7 @@ public final class Zip {
             bits = zipNextBits(bitsNeeded);
             index = tableIndex + bits - 1;
             if (index >= tableSize) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             /* Lookup entry in table */
             value = table[index];
@@ -777,7 +777,7 @@ public final class Zip {
             /* Additional bits in high 8 bit */
             bitsNeeded = (int) (Integer.toUnsignedLong(value) >> 24 & 0xFF);
             if (bitsNeeded > MaxBits) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }
@@ -895,7 +895,7 @@ public final class Zip {
     private static byte[] fetchBytePointerOfObject(final PointersObject rcvr, final int index) {
         final Object oop = fetchPointerofObject(index, rcvr);
         if (!isBytes(oop)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         return ((NativeObject) oop).getByteStorage();
     }
@@ -903,7 +903,7 @@ public final class Zip {
     private static int[] fetchNativePointerOfObject(final PointersObject rcvr, final int index) {
         final Object oop = fetchPointerofObject(index, rcvr);
         if (!isWords(oop)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         return ((NativeObject) oop).getIntStorage();
     }
@@ -911,7 +911,7 @@ public final class Zip {
     private static int[] fetchNativePointerOfObjectWithExpectedLength(final PointersObject rcvr, final int index, final int expectedLength) {
         final Object oop = fetchPointerofObject(index, rcvr);
         if (!(isWords(oop) && ((NativeObject) oop).getIntLength() == expectedLength)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         return ((NativeObject) oop).getIntStorage();
     }
@@ -921,7 +921,7 @@ public final class Zip {
         if (value instanceof Long) {
             return (int) (long) value;
         } else {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
 

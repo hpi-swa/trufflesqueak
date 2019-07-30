@@ -171,7 +171,7 @@ public final class JPEGReader {
 
         byteValue = jpegDecodeValueFromsize(dcTable, dcTableSize);
         if (byteValue < 0) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         if (byteValue != 0) {
             bits = getBits(byteValue);
@@ -186,7 +186,7 @@ public final class JPEGReader {
         while (index < DCTSize2) {
             byteValue = jpegDecodeValueFromsize(acTable, acTableSize);
             if (byteValue < 0) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             zeroCount = (int) (Integer.toUnsignedLong(byteValue) >> 4);
             byteValue = byteValue & 15;
@@ -195,7 +195,7 @@ public final class JPEGReader {
                 bits = getBits(byteValue);
                 byteValue = scaleAndSignExtendinFieldWidth(bits, byteValue);
                 if (index < 0 || index >= DCTSize2) {
-                    throw new PrimitiveFailed();
+                    throw PrimitiveFailed.GENERIC_ERROR;
                 }
                 anArray[jpegNaturalOrder[index]] = byteValue;
             } else {
@@ -401,7 +401,7 @@ public final class JPEGReader {
         jpegBits = bits.getIntStorage();
         jpegBitsSize = jpegBits.length;
         if (!yColorComponentFrom(componentArray)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         /* begin colorConvertGrayscaleMCU */
         yComponent[CurrentXIndex] = 0;
@@ -446,13 +446,13 @@ public final class JPEGReader {
         jpegBits = bits.getIntStorage();
         jpegBitsSize = jpegBits.length;
         if (!yColorComponentFrom(fetchPointerofObject(0, componentArray))) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         if (!cbColorComponentFrom(fetchPointerofObject(1, componentArray))) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         if (!crColorComponentFrom(fetchPointerofObject(2, componentArray))) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         /* begin colorConvertMCU */
         yComponent[CurrentXIndex] = 0;
@@ -518,14 +518,14 @@ public final class JPEGReader {
     public Object primitiveDecodeMCU(final Object receiver, final NativeObject sampleBuffer, final PointersObject comp, final NativeObject dcTableValue, final NativeObject acTableValue,
                     final PointersObject jpegStream) {
         if (!loadJPEGStreamFrom(jpegStream)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         acTable = acTableValue.getIntStorage();
         acTableSize = acTable.length;
         dcTable = dcTableValue.getIntStorage();
         dcTableSize = dcTable.length;
         if (!colorComponentfrom(yComponent, comp)) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
         decodeBlockIntocomponent(sampleBuffer.getIntStorage(), yComponent);
         if (failed()) {

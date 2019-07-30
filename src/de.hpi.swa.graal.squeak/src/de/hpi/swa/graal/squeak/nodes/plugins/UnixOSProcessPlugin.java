@@ -107,7 +107,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             final String key = aSymbol.asStringUnsafe();
             final String value = systemGetEnv(key);
             if (value == null) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 return method.image.asByteString(value);
             }

@@ -29,7 +29,6 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CHARACTER_SCANNER;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -167,7 +166,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         public static final Object doSnapshot(final VirtualFrame frame, final PointersObject receiver) {
             // TODO: implement primitiveSnapshot
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
 
@@ -589,7 +588,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "!inBounds(rcvr, start, stop, repl, replStart)")
         protected static final AbstractSqueakObject doBadIndex(final AbstractSqueakObject rcvr, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
+            throw PrimitiveFailed.BAD_INDEX;
         }
 
         protected static final boolean inBounds(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize, final long replStart) {

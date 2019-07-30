@@ -32,7 +32,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doCountry(@SuppressWarnings("unused") final Object receiver) {
             final String country = Locale.getDefault().getCountry();
             if (country.isEmpty()) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return method.image.asByteString(country);
         }
@@ -47,7 +47,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -60,7 +60,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -73,7 +73,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -86,7 +86,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -99,7 +99,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -114,7 +114,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
         protected final Object doLanguage(@SuppressWarnings("unused") final Object receiver) {
             final String language = Locale.getDefault().getLanguage();
             if (language.isEmpty()) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return method.image.asByteString(language);
         }
@@ -129,7 +129,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -142,7 +142,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -155,7 +155,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -168,7 +168,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -181,7 +181,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 
@@ -194,7 +194,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
         }
     }
 }

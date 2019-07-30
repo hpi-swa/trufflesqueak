@@ -37,10 +37,9 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
                     }
                 } catch (final NumberFormatException e) {
                 }
-                throw new PrimitiveFailed();
             } catch (final LinkageError err) {
-                throw new PrimitiveFailed();
             }
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
 

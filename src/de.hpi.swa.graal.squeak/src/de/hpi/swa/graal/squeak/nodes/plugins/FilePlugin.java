@@ -67,7 +67,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected SeekableByteChannel getFileOrPrimFail(final long fileDescriptor) {
             final SeekableByteChannel handle = method.image.filePluginHandles.get(fileDescriptor);
             if (handle == null) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return handle;
         }
@@ -102,7 +102,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return fileId;
         } catch (IOException | UnsupportedOperationException | SecurityException e) {
             LOG.fine(() -> "File Handle Creation FAILED: " + truffleFile.getPath() + " (writable: " + writableFlag + ")");
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
 
@@ -131,7 +131,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 asTruffleFile(fullPath).createDirectory();
                 return receiver;
             } catch (IOException | UnsupportedOperationException | SecurityException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }
@@ -151,7 +151,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 asTruffleFile(fullPath).delete();
                 return receiver;
             } catch (IOException | UnsupportedOperationException | SecurityException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }
@@ -308,7 +308,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 final SeekableByteChannel file = getFileOrPrimFail(fileDescriptor);
                 return BooleanObject.wrap(file.position() >= file.size());
             } catch (final IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }
@@ -329,7 +329,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 LOG.fine(() -> "File Closed SUCCEEDED: " + fileDescriptor);
             } catch (final IOException e) {
                 LOG.fine(() -> "File Closed FAILED: " + fileDescriptor);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return receiver;
         }
@@ -348,7 +348,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doDelete(final Object receiver, final NativeObject nativeFileName) {
             final File file = new File(asString(nativeFileName));
             if (!file.delete()) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return receiver;
         }
@@ -382,7 +382,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getFileOrPrimFail(fileDescriptor).position();
             } catch (final IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }
@@ -421,7 +421,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
             } catch (final IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
 
@@ -443,7 +443,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 return Math.max(readInts, 0L); // `read` can be `-1`, Squeak expects zero.
             } catch (final IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
 
@@ -481,7 +481,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 asTruffleFile(oldName).move(asTruffleFile(newName));
             } catch (final IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return receiver;
         }
@@ -501,7 +501,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getFileOrPrimFail(fileDescriptor).position(position);
             } catch (IllegalArgumentException | IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return receiver;
         }
@@ -521,7 +521,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getFileOrPrimFail(fileDescriptor).size();
             } catch (final IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }
@@ -552,7 +552,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getFileOrPrimFail(fileDescriptor).truncate(to);
             } catch (IllegalArgumentException | IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return receiver;
         }
@@ -627,7 +627,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 written = getFileOrPrimFail(fileDescriptor).write(buffer);
             } catch (final IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return written / elementSize;
         }
@@ -640,7 +640,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 outputStream.write(content, byteStart, Math.max(byteEnd - byteStart, 0));
                 outputStream.flush();
             } catch (final IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
             return byteEnd - byteStart;
         }

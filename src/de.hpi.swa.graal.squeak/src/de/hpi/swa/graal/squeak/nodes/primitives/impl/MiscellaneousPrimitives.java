@@ -96,7 +96,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject.isImmediateClassType()")
         protected static final Object doImmeditate(final ClassObject classObject) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
 
         @Specialization(guards = "!classObject.isImmediateClassType()")
@@ -104,7 +104,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             try {
                 return objectGraphNode.executeSomeInstanceOf(classObject);
             } catch (final IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }

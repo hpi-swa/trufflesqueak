@@ -32,7 +32,6 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
@@ -97,12 +96,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
 
         @Override
         public Object executePrimitive(final VirtualFrame frameValue) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
 
         @Override
@@ -314,7 +313,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!receiver.isActiveProcess()", "hasNilList(receiver)"})
         protected static final Object doBadReceiver(@SuppressWarnings("unused") final PointersObject receiver) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
+            throw PrimitiveFailed.BAD_RECEIVER;
         }
 
         protected static final boolean hasNilList(final PointersObject process) {
@@ -360,7 +359,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "!inheritsFromNode.execute(receiver, superClass)")
         protected static final Object doFail(final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass, final NotProvided np) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
+            throw PrimitiveFailed.BAD_RECEIVER;
         }
 
         /*
@@ -376,7 +375,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "!inheritsFromNode.execute(target, superClass)")
         protected static final Object doFail(final Object receiver, final Object target, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass) {
-            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
+            throw PrimitiveFailed.BAD_RECEIVER;
         }
     }
 
@@ -607,7 +606,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, receiver);
             final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.forIndex(method, (int) primitiveIndex);
             if (primitiveNode == null) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
             }

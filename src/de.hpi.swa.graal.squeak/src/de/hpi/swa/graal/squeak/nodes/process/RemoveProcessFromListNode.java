@@ -40,7 +40,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
             if (next == process) {
                 break;
             } else if (next == NilObject.SINGLETON) {
-                throw new PrimitiveFailed(); // TODO: make this better.
+                throw PrimitiveFailed.GENERIC_ERROR; // TODO: make this better.
             } else {
                 temp = (PointersObject) next;
             }
@@ -55,6 +55,6 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
     @SuppressWarnings("unused")
     @Specialization
     protected static final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final NilObject first, final AbstractSqueakObject last) {
-        throw new PrimitiveFailed(); // TODO: make sure this is needed (and make it better).
+        throw PrimitiveFailed.GENERIC_ERROR; // TODO: make sure this is needed (and make it better).
     }
 }

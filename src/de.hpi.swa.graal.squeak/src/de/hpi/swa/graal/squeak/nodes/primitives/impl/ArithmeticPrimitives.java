@@ -10,7 +10,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -1010,7 +1010,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             if (value == rounded) {
                 return value;
             } else {
-                throw new PrimitiveExceptions.PrimitiveFailed();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }
