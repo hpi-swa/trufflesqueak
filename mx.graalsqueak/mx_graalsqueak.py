@@ -331,6 +331,11 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
+    _run_tck_tests(tasks)
+    _run_unit_tests(tasks)
+
+
+def _run_unit_tests(tasks):
     supports_coverage = os.environ.get('JDK') == 'openjdk8'  # see .travis.yml
 
     with mx_gate.Task('GraalSqueak JUnit and SUnit tests',
@@ -344,6 +349,13 @@ def _graalsqueak_gate_runner(args, tasks):
                 '--suite', 'graalsqueak', '--very-verbose', '--enable-timing'])
             mx_unittest.unittest(unittest_args)
 
+    if supports_coverage:
+        with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
+            if t:
+                mx.command_function('jacocoreport')(['--format', 'xml', '.'])
+
+
+def _run_tck_tests(tasks):
     if _compiler:
         with mx_gate.Task('GraalSqueak TCK tests', tasks, tags=['test']) as t:
             if t:
@@ -355,11 +367,6 @@ def _graalsqueak_gate_runner(args, tasks):
                     '-Dpolyglot.squeaksmalltalk.ImagePath=%s' % test_image,
                     'com.oracle.truffle.tck.tests'])
                 mx_unittest.unittest(unittest_args)
-
-    if supports_coverage:
-        with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
-            if t:
-                mx.command_function('jacocoreport')(['--format', 'xml', '.'])
 
 
 def _get_path_to_test_image():
