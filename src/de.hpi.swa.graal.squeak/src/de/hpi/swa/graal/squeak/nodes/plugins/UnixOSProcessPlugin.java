@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -32,8 +33,8 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @TruffleBoundary
-    private static String systemGetEnv(final String key) {
-        return System.getenv(key);
+    private static String systemGetEnv(final Env env, final String key) {
+        return env.getEnvironment().get(key);
     }
 
     @Override
@@ -76,7 +77,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
             final String key = getEnvironmentKeys()[(int) index - 1].toString();
             assert key != null : "key should not be null";
-            final String value = systemGetEnv(key);
+            final String value = systemGetEnv(method.image.env, key);
             assert value != null : "value should not be null";
             return method.image.asByteString(key + "=" + value);
         }
@@ -105,7 +106,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         @Specialization(guards = "aSymbol.isByteType()")
         protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final NativeObject aSymbol) {
             final String key = aSymbol.asStringUnsafe();
-            final String value = systemGetEnv(key);
+            final String value = systemGetEnv(method.image.env, key);
             if (value == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {

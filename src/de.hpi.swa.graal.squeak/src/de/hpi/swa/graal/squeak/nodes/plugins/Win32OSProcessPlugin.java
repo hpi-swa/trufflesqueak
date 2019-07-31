@@ -40,7 +40,7 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
         @Specialization
         @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final Object receiver) {
-            final Map<String, String> envMap = System.getenv();
+            final Map<String, String> envMap = method.image.env.getEnvironment();
             final List<String> strings = new ArrayList<>();
             for (final Map.Entry<String, String> entry : envMap.entrySet()) {
                 strings.add(entry.getKey() + "=" + entry.getValue());
