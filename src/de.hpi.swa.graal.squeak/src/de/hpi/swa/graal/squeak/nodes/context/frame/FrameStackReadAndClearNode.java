@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context.frame;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -33,6 +34,7 @@ public abstract class FrameStackReadAndClearNode extends AbstractNodeWithCode {
 
     @ExplodeLoop
     public final Object[] executePopN(final VirtualFrame frame, final int numPop) {
+        CompilerAsserts.compilationConstant(numPop);
         final int currentSP = FrameAccess.getStackPointer(frame, code);
         assert currentSP - numPop >= 0;
         final Object[] result = new Object[numPop];
