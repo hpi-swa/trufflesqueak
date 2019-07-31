@@ -27,14 +27,14 @@ public abstract class TemporaryWriteMarkContextsNode extends AbstractNodeWithCod
 
     @Specialization
     protected final void doWriteContext(final VirtualFrame frame, final ContextObject value) {
-        assert value != null;
+        assert value != null : "Unexpected `null` value";
         value.markEscaped();
         writeNode.executeWrite(frame, value);
     }
 
     @Specialization(guards = {"!isContextObject(value)"})
     protected final void doWriteOther(final VirtualFrame frame, final Object value) {
-        assert value != null;
+        assert value != null : "Unexpected `null` value";
         writeNode.executeWrite(frame, value);
     }
 }

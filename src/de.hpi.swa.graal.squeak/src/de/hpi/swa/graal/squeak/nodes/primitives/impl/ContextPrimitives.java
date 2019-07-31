@@ -154,7 +154,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private void terminateBetween(final FrameMarker start, final ContextObject end) {
-            assert start != null;
+            assert start != null : "Unexpected `null` value";
             final ContextObject[] bottomContextOnTruffleStack = new ContextObject[1];
             final ContextObject result = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;

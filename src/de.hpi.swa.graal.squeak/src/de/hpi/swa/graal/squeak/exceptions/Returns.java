@@ -11,7 +11,7 @@ public final class Returns {
         protected final Object returnValue;
 
         private AbstractReturn(final Object result) {
-            assert result != null;
+            assert result != null : "Unexpected `null` value";
             returnValue = result;
         }
 

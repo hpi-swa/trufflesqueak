@@ -21,7 +21,7 @@ public abstract class FrameSlotReadAndClearNode extends AbstractFrameSlotReadNod
         if (!frame.isObject(frameSlot)) {
             CompilerDirectives.transferToInterpreter();
             final Object value = frame.getValue(frameSlot);
-            assert value != null;
+            assert value != null : "Unexpected `null` value";
             frame.setObject(frameSlot, null);
             return value;
         }

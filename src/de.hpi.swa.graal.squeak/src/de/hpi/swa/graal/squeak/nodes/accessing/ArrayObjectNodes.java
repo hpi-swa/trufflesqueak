@@ -79,7 +79,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object doArrayOfObjects(final ArrayObject obj, final long index) {
-            assert obj.getObjectStorage()[(int) index] != null;
+            assert obj.getObjectStorage()[(int) index] != null : "Unexpected `null` value";
             return obj.getObjectStorage()[(int) index];
         }
     }

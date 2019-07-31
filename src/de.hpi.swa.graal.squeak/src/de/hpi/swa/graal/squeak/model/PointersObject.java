@@ -41,7 +41,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public void atput0(final long i, final Object obj) {
-        assert obj != null; // null indicates a problem
+        assert obj != null : "Unexpected `null` value";
         setPointer((int) i, obj);
     }
 

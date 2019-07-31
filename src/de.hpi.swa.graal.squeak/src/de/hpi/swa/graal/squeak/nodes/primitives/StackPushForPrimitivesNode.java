@@ -30,7 +30,6 @@ public abstract class StackPushForPrimitivesNode extends AbstractNode {
     public static final void executeWrite(final VirtualFrame frame, final Object value,
                     @SuppressWarnings("unused") @Cached("getBlockOrMethod(frame)") final CompiledCodeObject codeObject,
                     @Cached("create(codeObject)") final FrameStackWriteNode writeNode) {
-        assert value != null;
         writeNode.executePush(frame, value);
     }
 }

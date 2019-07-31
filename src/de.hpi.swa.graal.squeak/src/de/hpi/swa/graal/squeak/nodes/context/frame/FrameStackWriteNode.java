@@ -23,7 +23,7 @@ public abstract class FrameStackWriteNode extends AbstractNodeWithCode {
     }
 
     public final void executePush(final VirtualFrame frame, final Object value) {
-        assert value != null;
+        assert value != null : "Unexpected `null` value";
         final int currentStackPointer = FrameAccess.getStackPointer(frame, code);
         FrameAccess.setStackPointer(frame, code, currentStackPointer + 1);
         execute(frame, currentStackPointer, value);

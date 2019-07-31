@@ -467,7 +467,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void push(final Object value) {
-        assert value != null;
+        assert value != null : "Unexpected `null` value";
         final int currentStackPointer = getStackPointer();
         assert currentStackPointer < CONTEXT.MAX_STACK_SIZE;
         setStackPointer(currentStackPointer + 1);

@@ -930,7 +930,7 @@ public final class BitBlt {
 
         /* unskew is a bitShift and MUST remain signed, while skewMask is unsigned. */
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
-        assert mergeFnwith != null;
+        assert mergeFnwith != null : "Unexpected `null` value";
         assert !(preload && skew == 0);
         /* Byte delta */
         hInc = hDir * 4;
@@ -1109,7 +1109,7 @@ public final class BitBlt {
 
         halftoneWord = 0;
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
-        assert mergeFnwith != null;
+        assert mergeFnwith != null : "Unexpected `null` value";
         if (noHalftone) {
             halftoneWord = ALL_ONES;
         }
@@ -1190,7 +1190,7 @@ public final class BitBlt {
 
         halftoneWord = 0;
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
-        assert mergeFnwith != null;
+        assert mergeFnwith != null : "Unexpected `null` value";
         sourcePPW = div(32, sourceDepth);
         sourcePixMask = MASK_TABLE[sourceDepth];
         destPixMask = MASK_TABLE[destDepth];
@@ -1978,7 +1978,7 @@ public final class BitBlt {
         hasSurfaceLock = false;
 
         // Actual locking code not needed for GraalSqueak.
-        assert destBits != null || destBytes != null;
+        assert destBits != null || destBytes != null : "Unexpected `null` value";
         assert sourceBits != null || noSource;
 
         endOfSource = noSource || sourceBits == null ? 0 : sourcePitch * sourceHeight;

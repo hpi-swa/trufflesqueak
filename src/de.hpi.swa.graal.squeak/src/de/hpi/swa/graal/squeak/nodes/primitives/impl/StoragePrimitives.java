@@ -147,7 +147,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
-                                assert toPointer != null;
+                                assert toPointer != null : "Unexpected `null` value";
                                 current.setObject(frameSlot, toPointer);
                                 updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                             } else {
