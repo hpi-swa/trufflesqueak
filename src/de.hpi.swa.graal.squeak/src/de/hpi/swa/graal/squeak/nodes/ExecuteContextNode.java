@@ -26,7 +26,6 @@ import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeFactory.TriggerInterruptHandlerNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
@@ -138,17 +137,20 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         assert FrameAccess.getStackPointer(frame, code) >= remainingTemps;
     }
 
-    public Object executeResume(final VirtualFrame frame, final ContextObject context) {
-        // maybe persist newContext, so there's no need to lookup the context to update its pc.
+    public final Object executeResumeAtStart(final VirtualFrame frame) {
         try {
-            final long initialPC = context.getInstructionPointerForBytecodeLoop();
-            assert initialPC >= 0 : "Trying to execute a terminated/illegal context";
-            if (initialPC == 0) {
-                return startBytecode(frame);
-            } else {
-                // Avoid optimizing cases in which a context is resumed.
-                return resumeBytecode(frame, initialPC);
-            }
+            return startBytecode(frame);
+        } catch (final NonLocalReturn nlr) {
+            /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
+            return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
+        } finally {
+            code.image.lastSeenContext = null; // Stop materialization here.
+        }
+    }
+
+    public final Object executeResumeInMiddle(final VirtualFrame frame, final long initialPC) {
+        try {
+            return resumeBytecode(frame, initialPC);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -269,7 +271,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
      * Non-optimized version of startBytecode which is used to resume contexts.
      */
     private Object resumeBytecode(final VirtualFrame frame, final long initialPC) {
-        assert initialPC > 0;
+        assert initialPC > 0 : "Trying to resume a fresh/terminated/illegal context";
         int pc = (int) initialPC;
         Object returnValue = null;
         bytecode_loop_slow: while (true) {

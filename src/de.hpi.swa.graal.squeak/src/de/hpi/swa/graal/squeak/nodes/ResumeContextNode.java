@@ -1,59 +1,85 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class ResumeContextNode extends RootNode {
-    private final ContextObject activeContext;
-
+public abstract class ResumeContextNode extends Node {
     @Child private ExecuteContextNode executeContextNode;
 
-    protected ResumeContextNode(final SqueakLanguage language, final ContextObject activeContext) {
-        super(language, activeContext.getTruffleFrame().getFrameDescriptor());
-        this.activeContext = activeContext;
-        executeContextNode = ExecuteContextNode.create(activeContext.getBlockOrMethod());
+    protected ResumeContextNode(final CompiledCodeObject code) {
+        executeContextNode = ExecuteContextNode.create(code);
     }
 
-    protected ResumeContextNode(final ResumeContextNode codeNode) {
-        super(codeNode.activeContext.image.getLanguage(), codeNode.getFrameDescriptor());
-        activeContext = codeNode.activeContext;
-        executeContextNode = codeNode.executeContextNode;
+    protected abstract Object executeResume(ContextObject context);
+
+    @Specialization(guards = "context.getInstructionPointerForBytecodeLoop() == 0")
+    protected final Object doResumeAtStart(final ContextObject context) {
+        return executeContextNode.executeResumeAtStart(context.getTruffleFrame());
     }
 
-    public static ResumeContextNode create(final SqueakLanguage language, final ContextObject activeContext) {
-        return new ResumeContextNode(language, activeContext);
+    @Specialization(guards = "context.getInstructionPointerForBytecodeLoop() > 0")
+    protected final Object doResumeInMiddle(final ContextObject context) {
+        final long initialPC = context.getInstructionPointerForBytecodeLoop();
+        return executeContextNode.executeResumeInMiddle(context.getTruffleFrame(), initialPC);
     }
 
-    @Override
-    protected boolean isInstrumentable() {
-        return false;
-    }
+    @NodeInfo(cost = NodeCost.NONE)
+    public static final class ResumeContextRootNode extends RootNode {
+        private final ContextObject activeContext;
 
-    @Override
-    public Object execute(final VirtualFrame frame) {
-        return executeContextNode.executeResume(activeContext.getTruffleFrame(), activeContext);
-    }
+        @Child private ResumeContextNode executeContextNode;
 
-    @Override
-    public String getName() {
-        return toString();
-    }
+        protected ResumeContextRootNode(final SqueakLanguage language, final ContextObject context) {
+            super(language, context.getTruffleFrame().getFrameDescriptor());
+            activeContext = context;
+            executeContextNode = ResumeContextNodeGen.create(context.getBlockOrMethod());
+        }
 
-    @Override
-    public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return activeContext.toString();
-    }
+        protected ResumeContextRootNode(final ResumeContextRootNode codeNode) {
+            super(codeNode.activeContext.image.getLanguage(), codeNode.getFrameDescriptor());
+            activeContext = codeNode.activeContext;
+            executeContextNode = codeNode.executeContextNode;
+        }
 
-    @Override
-    public boolean isCloningAllowed() {
-        return true;
+        public static ResumeContextRootNode create(final SqueakLanguage language, final ContextObject activeContext) {
+            return new ResumeContextRootNode(language, activeContext);
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame) {
+            return executeContextNode.executeResume(activeContext);
+        }
+
+        @Override
+        protected boolean isInstrumentable() {
+            return false;
+        }
+
+        @Override
+        public String getName() {
+            CompilerAsserts.neverPartOfCompilation();
+            return activeContext.toString();
+        }
+
+        @Override
+        public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return activeContext.toString();
+        }
+
+        @Override
+        public boolean isCloningAllowed() {
+            return true;
+        }
     }
 }
