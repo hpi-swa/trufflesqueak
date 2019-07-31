@@ -29,7 +29,7 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 public final class ContextObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private MaterializedFrame truffleFrame;
     @CompilationFinal private int size;
-    @CompilationFinal private CallTarget callTarget;
+    private CallTarget callTarget;
     private boolean hasModifiedSender = false;
     private boolean escaped = false;
 
@@ -141,9 +141,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
     }
 
+    @TruffleBoundary
     public CallTarget getCallTarget() {
         if (callTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             callTarget = Truffle.getRuntime().createCallTarget(ResumeContextNode.create(image.getLanguage(), this));
         }
         return callTarget;

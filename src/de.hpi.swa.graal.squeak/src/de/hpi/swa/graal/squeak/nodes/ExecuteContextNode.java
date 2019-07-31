@@ -147,7 +147,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 return startBytecode(frame);
             } else {
                 // Avoid optimizing cases in which a context is resumed.
-                CompilerDirectives.transferToInterpreter();
                 return resumeBytecode(frame, initialPC);
             }
         } catch (final NonLocalReturn nlr) {
