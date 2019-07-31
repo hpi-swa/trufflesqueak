@@ -91,9 +91,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     public Object executeFresh(final VirtualFrame frame) {
         initializeSlots(code, frame);
         initializeArgumentsAndTemps(frame);
-        final boolean shouldCheckStackDepth = CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot();
+        final boolean enableStackDepthProtection = enableStackDepthProtection();
         try {
-            if (shouldCheckStackDepth && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
+            if (enableStackDepthProtection && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
                 throw ProcessSwitch.createWithBoundary(getGetOrCreateContextNode().executeGet(frame));
             }
             return startBytecode(frame);
@@ -109,7 +109,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw ps;
         } finally {
-            if (shouldCheckStackDepth) {
+            if (enableStackDepthProtection) {
                 code.image.stackDepth--;
             }
             materializeContextOnMethodExitNode.execute(frame);
@@ -328,6 +328,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             notifyInserted(bytecodeNodes[pc]);
         }
         return bytecodeNodes[pc];
+    }
+
+    /* Only use stackDepthProtection in interpreter or once per compilation unit (if at all). */
+    private boolean enableStackDepthProtection() {
+        return code.image.options.enableStackDepthProtection && (CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot());
     }
 
     @Override

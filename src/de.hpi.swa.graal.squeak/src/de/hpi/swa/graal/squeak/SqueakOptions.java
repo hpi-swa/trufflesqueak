@@ -27,6 +27,9 @@ public final class SqueakOptions {
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Disable image interrupt handler")//
     public static final OptionKey<Boolean> DisableInterruptHandler = new OptionKey<>(false);
 
+    @Option(category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = "Enable stack depth protection")//
+    public static final OptionKey<Boolean> EnableStackDepthProtection = new OptionKey<>(false);
+
     @Option(category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = "For internal testing purposes only")//
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
 
@@ -42,6 +45,7 @@ public final class SqueakOptions {
         public final String imageArguments;
         public final boolean isHeadless;
         public final boolean disableInterruptHandler;
+        public final boolean enableStackDepthProtection;
         public final boolean isTesting;
 
         public SqueakContextOptions(final Env env) {
@@ -50,6 +54,7 @@ public final class SqueakOptions {
             imageArguments = options.get(SqueakOptions.ImageArguments);
             isHeadless = options.get(SqueakOptions.Headless);
             disableInterruptHandler = options.get(SqueakOptions.DisableInterruptHandler);
+            enableStackDepthProtection = options.get(SqueakOptions.EnableStackDepthProtection);
             isTesting = options.get(SqueakOptions.Testing);
         }
     }
