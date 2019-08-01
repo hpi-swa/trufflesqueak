@@ -21,68 +21,57 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchSendNode extends AbstractNodeWithCode {
-    @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
+    @Child private DispatchEagerlyNode dispatchNode;
 
     protected DispatchSendNode(final CompiledCodeObject code) {
         super(code);
+        dispatchNode = DispatchEagerlyNode.create(code);
     }
 
     public static DispatchSendNode create(final CompiledCodeObject code) {
         return DispatchSendNodeGen.create(code);
     }
 
-    public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments, Object contextOrMarker);
+    public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments);
 
-    @Specialization(guards = {"!code.image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null", "lookupResult == cachedMethod"}, //
-                    assumptions = {"cachedMethod.getDoesNotNeedSenderAssumption()"})
+    @Specialization(guards = {"!code.image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final CompiledMethodObject lookupResult,
-                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker,
-                    @SuppressWarnings("unused") @Cached("lookupResult") final CompiledMethodObject cachedMethod) {
-        return dispatchNode.executeDispatch(frame, cachedMethod, rcvrAndArgs, contextOrMarker);
-    }
-
-    @Specialization(guards = {"!code.image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null", "lookupResult == cachedMethod",
-                    "!cachedMethod.getDoesNotNeedSenderAssumption().isValid()"})
-    protected final Object doDispatchFoo(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final CompiledMethodObject lookupResult,
-                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, @SuppressWarnings("unused") final Object contextOrMarker,
-                    @SuppressWarnings("unused") @Cached("lookupResult") final CompiledMethodObject cachedMethod,
-                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode) {
-        return dispatchNode.executeDispatch(frame, cachedMethod, rcvrAndArgs, getOrCreateContextNode.executeGet(frame));
+                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
+        return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs);
     }
 
     @Specialization(guards = {"!code.image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null"})
     protected final Object doDispatchNeedsSender(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
-                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, @SuppressWarnings("unused") final Object contextOrMarker,
-                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode) {
-        return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, getOrCreateContextNode.executeGet(frame));
+                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
+        return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"code.image.isHeadless()", "selector.isDebugErrorSelector()", "lookupResult != null"})
     protected final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
-                    final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
+                    final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
         throw new SqueakError(this, MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asStringUnsafe()));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"code.image.isHeadless()", "selector.isDebugSyntaxErrorSelector()", "lookupResult != null"})
     protected static final Object doDispatchHeadlessSyntaxError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
-                    final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
+                    final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
         throw new SqueakSyntaxError((PointersObject) rcvrAndArgs[1]);
     }
 
     @Specialization(guards = {"lookupResult == null"})
     protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final ClassObject rcvrClass,
-                    final Object[] rcvrAndArgs, final Object contextOrMarker,
+                    final Object[] rcvrAndArgs,
                     @Cached final LookupMethodNode lookupNode) {
         final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) lookupNode.executeLookup(rcvrClass, code.image.doesNotUnderstand);
         final PointersObject message = createMessage(selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
-        return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);
+        return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message});
     }
 
     @Specialization(guards = {"!isCompiledMethodObject(targetObject)"})
     protected final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, @SuppressWarnings("unused") final ClassObject rcvrClass,
-                    final Object[] rcvrAndArgs, final Object contextOrMarker,
+                    final Object[] rcvrAndArgs,
                     @Cached final SqueakObjectClassNode classNode,
                     @Cached final LookupMethodNode lookupNode,
                     @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile) {
@@ -91,10 +80,9 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
         final Object newLookupResult = lookupNode.executeLookup(targetClass, code.image.runWithInSelector);
         if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
             final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, code.image.doesNotUnderstand);
-            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
+            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod, new Object[]{targetObject, createMessage(selector, targetClass, arguments)});
         } else {
-            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, code.image.asArrayOfObjects(arguments), rcvrAndArgs[0]},
-                            contextOrMarker);
+            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, code.image.asArrayOfObjects(arguments), rcvrAndArgs[0]});
         }
     }
 

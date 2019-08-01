@@ -9,25 +9,29 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class DispatchEagerlyNode extends AbstractNode {
+public abstract class DispatchEagerlyNode extends AbstractNodeWithCode {
     protected static final int INLINE_CACHE_SIZE = 6;
 
-    public static DispatchEagerlyNode create() {
-        return DispatchEagerlyNodeGen.create();
+    protected DispatchEagerlyNode(final CompiledCodeObject code) {
+        super(code);
     }
 
-    public abstract Object executeDispatch(VirtualFrame frame, CompiledMethodObject method, Object[] receiverAndArguments, Object contextOrMarker);
+    public static DispatchEagerlyNode create(final CompiledCodeObject code) {
+        return DispatchEagerlyNodeGen.create(code);
+    }
+
+    public abstract Object executeDispatch(VirtualFrame frame, CompiledMethodObject method, Object[] receiverAndArguments);
 
     @Specialization(guards = {"method.hasPrimitive()", "method == cachedMethod", "primitiveNode != null"}, //
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()"}, rewriteOn = PrimitiveFailed.class)
     protected static final Object doPrimitiveEagerly(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledMethodObject method, final Object[] receiverAndArguments,
-                    @SuppressWarnings("unused") final Object contextOrMarker,
                     @SuppressWarnings("unused") @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("cachedMethod.image.primitiveNodeFactory.forIndex(cachedMethod, cachedMethod.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
                     @Cached final CreateEagerArgumentsNode createEagerArgumentsNode) {
@@ -35,16 +39,40 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     }
 
     @Specialization(guards = {"method == cachedMethod"}, //
-                    limit = "INLINE_CACHE_SIZE", assumptions = "cachedMethod.getCallTargetStable()", replaces = "doPrimitiveEagerly")
-    protected static final Object doDirect(@SuppressWarnings("unused") final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
+                    limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()", "cachedMethod.getDoesNotNeedSenderAssumption()"}, replaces = "doPrimitiveEagerly")
+    protected final Object doDirect(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledMethodObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
+        return callDirect(callNode, cachedMethod, getContextOrMarker(frame), receiverAndArguments);
+    }
+
+    @Specialization(guards = {"method == cachedMethod"}, //
+                    limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()"}, replaces = {"doPrimitiveEagerly"})
+    protected static final Object doDirectWithSender(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledMethodObject method, final Object[] receiverAndArguments,
+                    @SuppressWarnings("unused") @Cached("method") final CompiledMethodObject cachedMethod,
+                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
+                    @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
+        return callDirect(callNode, cachedMethod, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
+    }
+
+    @Specialization(guards = "method.getDoesNotNeedSenderAssumption().isValid()", replaces = {"doDirect", "doDirectWithSender"})
+    protected final Object doIndirect(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments,
+                    @Cached final IndirectCallNode callNode) {
+        return callIndirect(callNode, method, getContextOrMarker(frame), receiverAndArguments);
+    }
+
+    @Specialization(guards = "!method.getDoesNotNeedSenderAssumption().isValid()", replaces = {"doDirect", "doDirectWithSender"})
+    protected static final Object doIndirectWithSender(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments,
+                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
+                    @Cached final IndirectCallNode callNode) {
+        return callIndirect(callNode, method, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
+    }
+
+    private static Object callDirect(final DirectCallNode callNode, final CompiledMethodObject cachedMethod, final Object contextOrMarker, final Object[] receiverAndArguments) {
         return callNode.call(FrameAccess.newWith(cachedMethod, contextOrMarker, null, receiverAndArguments));
     }
 
-    @Specialization(replaces = "doDirect")
-    protected static final Object doIndirect(final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
-                    @Cached final IndirectCallNode callNode) {
+    private static Object callIndirect(final IndirectCallNode callNode, final CompiledMethodObject method, final Object contextOrMarker, final Object[] receiverAndArguments) {
         return callNode.call(method.getCallTarget(), FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
     }
 }

@@ -127,8 +127,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
-            final Object contextOrMarker = getContextOrMarker(frame);
-            return getDispatchSendNode().executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
+            return getDispatchSendNode().executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs);
         }
 
         protected final ClassObject lookupClass(final Object object) {
@@ -888,12 +887,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 188)
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode implements QuaternaryPrimitive {
-        @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
+        @Child private DispatchEagerlyNode dispatchNode;
         @Child private ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
         @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
 
         protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method) {
             super(method);
+            dispatchNode = DispatchEagerlyNode.create(method);
         }
 
         /** Deprecated since Kernel-eem.1204. Kept for backward compatibility. */
@@ -912,8 +912,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = readNode.execute(argArray, i);
             }
-            final Object thisContext = getContextOrMarker(frame);
-            return dispatchNode.executeDispatch(frame, methodObject, dispatchRcvrAndArgs, thisContext);
+            return dispatchNode.executeDispatch(frame, methodObject, dispatchRcvrAndArgs);
         }
     }
 

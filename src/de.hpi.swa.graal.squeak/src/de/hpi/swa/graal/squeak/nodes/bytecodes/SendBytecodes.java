@@ -14,7 +14,6 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
@@ -65,7 +64,7 @@ public final class SendBytecodes {
                 final Object[] rcvrAndArgs = popNNode.executePopN(frame, 1 + argumentCount);
                 final ClassObject rcvrClass = lookupClassNode.executeLookup(frame, rcvrAndArgs[0]);
                 final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
-                result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
+                result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs);
                 assert result != null : "Result of a message send should not be null";
                 if (result != NO_RESULT) {
                     getPushNode().executePush(frame, result);
@@ -85,11 +84,6 @@ public final class SendBytecodes {
                     throw nvr;
                 }
             }
-        }
-
-        private Object getContextOrMarker(final VirtualFrame frame) {
-            final ContextObject context = getContext(frame);
-            return context != null ? context : getMarker(frame);
         }
 
         private FrameStackWriteNode getPushNode() {

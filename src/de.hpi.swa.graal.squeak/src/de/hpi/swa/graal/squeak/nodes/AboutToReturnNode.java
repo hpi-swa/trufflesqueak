@@ -66,6 +66,6 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     protected final SendSelectorNode createAboutToReturnSend() {
-        return SendSelectorNode.create(code.image.aboutToReturnSelector);
+        return SendSelectorNode.create(code, code.image.aboutToReturnSelector);
     }
 }
