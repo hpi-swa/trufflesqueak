@@ -5,10 +5,13 @@ import java.util.Arrays;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -142,7 +145,20 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
             final Object fromPointer = from[i];
             // Skip sender (for performance), pc, and sp.
             // TODO: Check that all pointers are actually traced (obj.size()?).
-            for (int j = CONTEXT.METHOD; j < obj.size(); j++) {
+            for (int j = CONTEXT.METHOD; j < CONTEXT.TEMP_FRAME_START; j++) {
+                final Object newPointer = readNode.execute(obj, j);
+                if (newPointer == fromPointer) {
+                    final Object toPointer = to[i];
+                    writeNode.execute(obj, j, toPointer);
+                    updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
+                }
+            }
+            final CompiledCodeObject blockOrMethod = obj.getBlockOrMethod();
+            for (int j = CONTEXT.TEMP_FRAME_START; j < obj.size(); j++) {
+                final FrameSlot stackSlot = blockOrMethod.getStackSlot(j - CONTEXT.TEMP_FRAME_START);
+                if (blockOrMethod.getFrameDescriptor().getFrameSlotKind(stackSlot) == FrameSlotKind.Illegal) {
+                    break; // This and all following slots are not (yet) in use.
+                }
                 final Object newPointer = readNode.execute(obj, j);
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
