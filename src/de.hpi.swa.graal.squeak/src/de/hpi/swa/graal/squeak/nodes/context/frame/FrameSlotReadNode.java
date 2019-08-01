@@ -13,7 +13,6 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotReadNode {
 
     @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
     protected final Object readObject(final Frame frame) {
-        final Object value;
         if (!frame.isObject(getSlot())) {
             /*
              * The FrameSlotKind has been set to Object, so from now on all writes to the slot will
@@ -23,12 +22,12 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotReadNode {
              * for the same slot of the same frame.
              */
             CompilerDirectives.transferToInterpreter();
-            value = frame.getValue(getSlot());
+            final Object value = frame.getValue(getSlot());
+            assert value != null : "Unexpected `null` value";
             frame.setObject(getSlot(), value);
+            return value;
         } else {
-            value = FrameUtil.getObjectSafe(frame, getSlot());
+            return FrameUtil.getObjectSafe(frame, getSlot());
         }
-        assert value != null : "Unexpected `null` value";
-        return value;
     }
 }
