@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -27,6 +28,8 @@ public abstract class ResumeContextNode extends Node {
         return executeContextNode.executeResumeAtStart(context.getTruffleFrame());
     }
 
+    /* Avoid compilation of contexts that are not resumed from the start. */
+    @TruffleBoundary
     @Specialization(guards = "context.getInstructionPointerForBytecodeLoop() > 0")
     protected final Object doResumeInMiddle(final ContextObject context) {
         final long initialPC = context.getInstructionPointerForBytecodeLoop();
