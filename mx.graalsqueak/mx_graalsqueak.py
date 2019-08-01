@@ -402,12 +402,6 @@ def _get_svm_binary_from_graalvm():
         '%s.image' % SVM_BINARY, SVM_BINARY)
 
 
-_svmsuite = mx.suite('substratevm', fatalIfMissing=False)
-if _svmsuite:
-    _svmsuite.extensions.flag_suitename_map[LANGUAGE_NAME] = (
-        'graalsqueak',
-        ['GRAALSQUEAK', 'GRAALSQUEAK_LAUNCHER', 'GRAALSQUEAK_SHARED'], [])
-
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,
     name='GraalSqueak',
