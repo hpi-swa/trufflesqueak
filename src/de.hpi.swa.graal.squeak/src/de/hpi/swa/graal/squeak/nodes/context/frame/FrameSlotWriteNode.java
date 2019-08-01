@@ -6,11 +6,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
 public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
-
-    protected FrameSlotWriteNode(final FrameSlot slot) {
-        super(slot);
-    }
-
     public static FrameSlotWriteNode create(final FrameSlot slot) {
         return FrameSlotWriteNodeGen.create(slot);
     }
@@ -20,48 +15,48 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
     @Specialization(guards = "isBooleanOrIllegal(frame)")
     protected final void writeBool(final Frame frame, final boolean value) {
         /* Initialize type on first write. No-op if kind is already Boolean. */
-        frame.getFrameDescriptor().setFrameSlotKind(frameSlot, FrameSlotKind.Boolean);
+        frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Boolean);
 
-        frame.setBoolean(frameSlot, value);
+        frame.setBoolean(getSlot(), value);
     }
 
     @Specialization(guards = "isLongOrIllegal(frame)")
     protected final void writeLong(final Frame frame, final long value) {
         /* Initialize type on first write. No-op if kind is already Long. */
-        frame.getFrameDescriptor().setFrameSlotKind(frameSlot, FrameSlotKind.Long);
+        frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Long);
 
-        frame.setLong(frameSlot, value);
+        frame.setLong(getSlot(), value);
     }
 
     @Specialization(guards = "isDoubleOrIllegal(frame)")
     protected final void writeDouble(final Frame frame, final double value) {
         /* Initialize type on first write. No-op if kind is already Double. */
-        frame.getFrameDescriptor().setFrameSlotKind(frameSlot, FrameSlotKind.Double);
+        frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Double);
 
-        frame.setDouble(frameSlot, value);
+        frame.setDouble(getSlot(), value);
     }
 
     @Specialization(replaces = {"writeBool", "writeLong", "writeDouble"})
     protected final void writeObject(final Frame frame, final Object value) {
         /* Initialize type on first write. No-op if kind is already Object. */
-        frame.getFrameDescriptor().setFrameSlotKind(frameSlot, FrameSlotKind.Object);
+        frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Object);
 
         assert verifyWrite(value) : "Illegal write operation: " + value;
-        frame.setObject(frameSlot, value);
+        frame.setObject(getSlot(), value);
     }
 
     protected final boolean isBooleanOrIllegal(final Frame frame) {
-        final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(frameSlot);
+        final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(getSlot());
         return kind == FrameSlotKind.Boolean || kind == FrameSlotKind.Illegal;
     }
 
     protected final boolean isLongOrIllegal(final Frame frame) {
-        final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(frameSlot);
+        final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(getSlot());
         return kind == FrameSlotKind.Long || kind == FrameSlotKind.Illegal;
     }
 
     protected final boolean isDoubleOrIllegal(final Frame frame) {
-        final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(frameSlot);
+        final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(getSlot());
         return kind == FrameSlotKind.Double || kind == FrameSlotKind.Illegal;
     }
 

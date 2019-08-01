@@ -7,24 +7,28 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 public abstract class FrameSlotReadNode extends AbstractFrameSlotReadNode {
-
-    protected FrameSlotReadNode(final FrameSlot frameSlot) {
-        super(frameSlot);
-    }
-
     public static FrameSlotReadNode create(final FrameSlot frameSlot) {
         return FrameSlotReadNodeGen.create(frameSlot);
     }
 
     @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
     protected final Object readObject(final Frame frame) {
-        if (!frame.isObject(frameSlot)) {
+        final Object value;
+        if (!frame.isObject(getSlot())) {
+            /*
+             * The FrameSlotKind has been set to Object, so from now on all writes to the slot will
+             * be Object writes. However, now we are in a frame that still has an old non-Object
+             * value. This is a slow-path operation: we read the non-Object value, and write it
+             * immediately as an Object value so that we do not hit this path again multiple times
+             * for the same slot of the same frame.
+             */
             CompilerDirectives.transferToInterpreter();
-            final Object value = frame.getValue(frameSlot);
-            assert value != null : "Unexpected `null` value";
-            frame.setObject(frameSlot, value);
-            return value;
+            value = frame.getValue(getSlot());
+            frame.setObject(getSlot(), value);
+        } else {
+            value = FrameUtil.getObjectSafe(frame, getSlot());
         }
-        return FrameUtil.getObjectSafe(frame, frameSlot);
+        assert value != null : "Unexpected `null` value";
+        return value;
     }
 }
