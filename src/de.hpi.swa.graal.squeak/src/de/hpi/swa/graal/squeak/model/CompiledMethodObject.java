@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -167,8 +167,8 @@ public final class CompiledMethodObject extends CompiledCodeObject {
 
     @ExportMessage
     public Object execute(final Object[] receiverAndArguments,
-                    @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode,
-                    @Shared("dispatchNode") @Cached final DispatchUneagerlyNode dispatchNode) throws ArityException {
+                    @Exclusive @Cached final WrapToSqueakNode wrapNode,
+                    @Exclusive @Cached final DispatchUneagerlyNode dispatchNode) throws ArityException {
         final int actualArity = receiverAndArguments.length;
         final int expectedArity = 1 + getNumArgs(); // receiver + arguments
         if (actualArity == expectedArity) {

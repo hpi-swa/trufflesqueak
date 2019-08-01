@@ -7,20 +7,28 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
+@ExportLibrary(InteropLibrary.class)
 public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal(dimensions = 1) private static final int[] HEADER_SPLIT_PATTERN = new int[]{15, 1, 1, 1, 6, 4, 2, 1};
 
@@ -346,5 +354,47 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
             innerBlocks[innerBlocks.length - 1] = innerBlock;
         }
         return innerBlock;
+    }
+
+    /*
+     * INTEROPERABILITY
+     */
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected final boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    protected final long getArraySize() {
+        return literals.length;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage(name = "isArrayElementReadable")
+    @ExportMessage(name = "isArrayElementModifiable")
+    @ExportMessage(name = "isArrayElementInsertable")
+    protected final boolean isArrayElementReadable(final long index) {
+        return 0 <= index && index < literals.length;
+    }
+
+    @ExportMessage
+    protected final Object readArrayElement(final long index) throws InvalidArrayIndexException {
+        if (isArrayElementReadable(index)) {
+            return literals[(int) index];
+        } else {
+            throw InvalidArrayIndexException.create(index);
+        }
+    }
+
+    @ExportMessage
+    protected final void writeArrayElement(final long index, final Object value,
+                    @Exclusive @Cached final WrapToSqueakNode wrapNode) throws InvalidArrayIndexException {
+        if (isArrayElementReadable(index)) {
+            literals[(int) index] = wrapNode.executeWrap(value);
+        } else {
+            throw InvalidArrayIndexException.create(index);
+        }
     }
 }

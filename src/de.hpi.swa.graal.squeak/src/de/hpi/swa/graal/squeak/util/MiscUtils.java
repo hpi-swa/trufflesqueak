@@ -153,6 +153,11 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static String stringValueOf(final char value) {
+        return String.valueOf(value);
+    }
+
+    @TruffleBoundary
     public static void systemGC() {
         System.gc();
     }

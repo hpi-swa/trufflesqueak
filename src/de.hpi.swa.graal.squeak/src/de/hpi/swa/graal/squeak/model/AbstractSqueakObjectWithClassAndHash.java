@@ -1,8 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -10,7 +8,6 @@ import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-@ExportLibrary(InteropLibrary.class)
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObjectWithHash {
     private ClassObject squeakClass;
 

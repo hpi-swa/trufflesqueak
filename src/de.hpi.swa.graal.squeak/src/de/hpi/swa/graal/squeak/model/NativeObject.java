@@ -7,7 +7,10 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -16,6 +19,10 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 @ExportLibrary(InteropLibrary.class)
@@ -265,6 +272,41 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     /*
      * INTEROPERABILITY
      */
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    protected long getArraySize(@Shared("sizeNode") @Cached final NativeObjectSizeNode sizeNode) {
+        return sizeNode.execute(this);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage(name = "isArrayElementReadable")
+    @ExportMessage(name = "isArrayElementModifiable")
+    @ExportMessage(name = "isArrayElementInsertable")
+    protected boolean isArrayElementReadable(final long index, @Shared("sizeNode") @Cached final NativeObjectSizeNode sizeNode) {
+        return 0 <= index && index < sizeNode.execute(this);
+    }
+
+    @ExportMessage
+    protected Object readArrayElement(final long index, @Cached final NativeObjectReadNode readNode) {
+        return readNode.execute(this, index);
+    }
+
+    @ExportMessage
+    protected void writeArrayElement(final long index, final Object value,
+                    @Exclusive @Cached final WrapToSqueakNode wrapNode,
+                    @Cached final NativeObjectWriteNode writeNode) throws InvalidArrayIndexException {
+        try {
+            writeNode.execute(this, index, wrapNode.executeWrap(value));
+        } catch (final ArrayIndexOutOfBoundsException e) {
+            throw InvalidArrayIndexException.create(index);
+        }
+    }
 
     @ExportMessage
     public boolean isString() {

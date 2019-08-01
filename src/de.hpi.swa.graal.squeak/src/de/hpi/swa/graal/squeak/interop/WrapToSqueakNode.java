@@ -10,6 +10,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @GenerateUncached
 public abstract class WrapToSqueakNode extends AbstractNode {
@@ -74,8 +75,9 @@ public abstract class WrapToSqueakNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final char doChar(final char value) {
-        return value;
+    protected static final NativeObject doChar(final char value,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return image.asByteString(MiscUtils.stringValueOf(value));
     }
 
     @Specialization

@@ -2,6 +2,8 @@ package de.hpi.swa.graal.squeak.tck;
 
 import static org.graalvm.polyglot.tck.TypeDescriptor.ANY;
 import static org.graalvm.polyglot.tck.TypeDescriptor.BOOLEAN;
+import static org.graalvm.polyglot.tck.TypeDescriptor.EXECUTABLE;
+import static org.graalvm.polyglot.tck.TypeDescriptor.INSTANTIABLE;
 import static org.graalvm.polyglot.tck.TypeDescriptor.NULL;
 import static org.graalvm.polyglot.tck.TypeDescriptor.NUMBER;
 import static org.graalvm.polyglot.tck.TypeDescriptor.OBJECT;
@@ -12,21 +14,18 @@ import static org.graalvm.polyglot.tck.TypeDescriptor.union;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.tck.LanguageProvider;
-import org.graalvm.polyglot.tck.ResultVerifier;
 import org.graalvm.polyglot.tck.Snippet;
 import org.graalvm.polyglot.tck.TypeDescriptor;
 
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class SqueakLanguageProvider implements LanguageProvider {
-    private static final TypeDescriptor NUMBER_AND_STRING = union(NUMBER, STRING);
+    private static final TypeDescriptor NUMBER_AND_OBJECT = union(NUMBER, OBJECT);
 
     @Override
     public String getId() {
@@ -52,35 +51,34 @@ public final class SqueakLanguageProvider implements LanguageProvider {
         addValueConstructor(context, snippets, "Array:SmallIntegers", array(NUMBER), "[ #(8 2 4) ]");
         addValueConstructor(context, snippets, "Array:SmallFloats", array(NUMBER), "[ #(2.3 1.2 3.4) ]");
         addValueConstructor(context, snippets, "Array:ByteStrings", array(STRING), "[ #('foo' 'bar') ]");
-        addValueConstructor(context, snippets, "Array:Mixed", array(union(NUMBER, STRING)), "[ #(24 'bar') ]");
+        addValueConstructor(context, snippets, "Array:Mixed", array(union(BOOLEAN, NULL, NUMBER, STRING)), "[ #(true false nil 24 'bar') ]");
         addValueConstructor(context, snippets, "Object:Empty", OBJECT, "[ Object new ]");
+        addValueConstructor(context, snippets, "Object:Smalltalk", OBJECT, "[ Smalltalk ]");
+        addValueConstructor(context, snippets, "Object:SpecialObjectsArray", OBJECT, "[ Smalltalk specialObjectsArray ]");
+        addValueConstructor(context, snippets, "Class:Object", INSTANTIABLE, "[ Object ]");
+        addValueConstructor(context, snippets, "CompiledMethod:Object>>#hash", EXECUTABLE, "[ Object>>#hash ]");
+        addValueConstructor(context, snippets, "BlockClosure", EXECUTABLE, "[ [ 42 ] ]");
         return snippets;
     }
 
     @Override
     public Collection<? extends Snippet> createExpressions(final Context context) {
         final Collection<Snippet> snippets = new ArrayList<>();
-        // addition
-        // addExpressionSnippet(context, snippets, "+", "[ :x :y | x + y ]", NUMBER, NUMBER,
-        // NUMBER_AND_STRING);
 
-        // subtraction
-        // addExpressionSnippet(context, snippets, "-", "[ :x :y | x - y ]", NUMBER, NUMBER,
-        // NUMBER_AND_STRING);
-
-        // multiplication
-        // addExpressionSnippet(context, snippets, "*", "[ :x :y | x * y ]", NUMBER, NUMBER,
-        // NUMBER_AND_STRING);
-
-        // division
-        // addExpressionSnippet(context, snippets, "/", "[ :x :y | x / y ]", NUMBER, NUMBER,
-        // NUMBER);
+        // arithmetic
+        addExpressionSnippet(context, snippets, "*", "[ :x :y | x * y ]", NUMBER_AND_OBJECT, NUMBER, NUMBER);
+        addExpressionSnippet(context, snippets, "+", "[ :x :y | x + y ]", NUMBER_AND_OBJECT, NUMBER, NUMBER);
+        addExpressionSnippet(context, snippets, "-", "[ :x :y | x - y ]", NUMBER_AND_OBJECT, NUMBER, NUMBER);
+        addExpressionSnippet(context, snippets, "/", "[ :x :y | x / y ]", NUMBER_AND_OBJECT, NUMBER, NUMBER);
 
         // comparison
-        addExpressionSnippet(context, snippets, ">", "[ :x :y | x > y ]", BOOLEAN, ComparisonVerifier.INSTANCE, NUMBER_AND_STRING, NUMBER_AND_STRING);
-        addExpressionSnippet(context, snippets, ">=", "[ :x :y | x >= y ]", BOOLEAN, ComparisonVerifier.INSTANCE, NUMBER_AND_STRING, NUMBER_AND_STRING);
-        addExpressionSnippet(context, snippets, "<", "[ :x :y | x < y ]", BOOLEAN, ComparisonVerifier.INSTANCE, NUMBER_AND_STRING, NUMBER_AND_STRING);
-        addExpressionSnippet(context, snippets, "<=", "[ :x :y | x <= y ]", BOOLEAN, ComparisonVerifier.INSTANCE, NUMBER_AND_STRING, NUMBER_AND_STRING);
+        addExpressionSnippet(context, snippets, "<", "[ :x :y | x < y ]", BOOLEAN, NUMBER, NUMBER);
+        addExpressionSnippet(context, snippets, "<=", "[ :x :y | x <= y ]", BOOLEAN, NUMBER, NUMBER);
+        addExpressionSnippet(context, snippets, "=", "[ :x :y | x = y ]", BOOLEAN, ANY, ANY);
+        addExpressionSnippet(context, snippets, ">", "[ :x :y | x > y ]", BOOLEAN, NUMBER, NUMBER);
+        addExpressionSnippet(context, snippets, ">=", "[ :x :y | x >= y ]", BOOLEAN, NUMBER, NUMBER);
+
+        addExpressionSnippet(context, snippets, "[ = ]", "[ [ :x :y | x = y ] ]", TypeDescriptor.executable(ANY, ANY, ANY));
 
         return snippets;
     }
@@ -92,16 +90,21 @@ public final class SqueakLanguageProvider implements LanguageProvider {
         addStatementSnippet(context, statements, "class", "[ :p | p class ]", OBJECT, ANY);
         addStatementSnippet(context, statements, "basicSize", "[ :p | p basicSize ]", NUMBER, ANY);
         addStatementSnippet(context, statements, "hash", "[ :p | p hash ]", NUMBER, ANY);
+        addStatementSnippet(context, statements, "isNil", "[ :p | p isNil ]", BOOLEAN, ANY);
+        addStatementSnippet(context, statements, "notNil", "[ :p | p notNil ]", BOOLEAN, ANY);
+        addStatementSnippet(context, statements, "printString", "[ :p | p printString ]", STRING, ANY);
 
+        addStatementSnippet(context, statements, "ifTrue:", "[ :p | | x | x := false. p ifTrue: [ true ] ]", ANY, BOOLEAN);
         addStatementSnippet(context, statements, "ifTrue:ifFalse:", "[ :p | p ifTrue: [ true ] ifFalse: [ false ] ]", BOOLEAN, BOOLEAN);
-        addStatementSnippet(context, statements, "ifFalse:ifTrue:", "[ :p | p ifFalse: [ -1 ] ifTrue: [ 1 ] ]", NUMBER, BOOLEAN);
-        addStatementSnippet(context, statements, "ifTrue:", "[ :p | p ifTrue: [ true ] ]", ANY, BOOLEAN);
         addStatementSnippet(context, statements, "ifFalse:", "[ :p | p ifFalse: [ true ] ]", ANY, BOOLEAN);
+        addStatementSnippet(context, statements, "ifFalse:ifTrue:", "[ :p | p ifFalse: [ -1 ] ifTrue: [ 1 ] ]", NUMBER, BOOLEAN);
 
         addStatementSnippet(context, statements, "and:", "[ :p1 :p2 | p1 and: p2 ]", ANY, BOOLEAN, ANY);
         addStatementSnippet(context, statements, "or:", "[ :p1 :p2 | p1 or: p2 ]", ANY, BOOLEAN, ANY);
 
+        addStatementSnippet(context, statements, "ifNil:", "[ :p | | x | x := false. p ifNil: [ x := true ]. x ]", BOOLEAN, ANY);
         addStatementSnippet(context, statements, "ifNil:ifNotNil:", "[ :p | p ifNil: [ true ] ifNotNil: [ false ] ]", BOOLEAN, ANY);
+        addStatementSnippet(context, statements, "ifNotNil:", "[ :p | | x | x := -1. p ifNotNil: [ x := 1 ]. x ]", NUMBER, ANY);
         addStatementSnippet(context, statements, "ifNotNil:ifNil:", "[ :p | p ifNotNil: [ 1 ] ifNil: [ -1 ] ]", NUMBER, ANY);
 
         return statements;
@@ -125,16 +128,9 @@ public final class SqueakLanguageProvider implements LanguageProvider {
         snippets.add(Snippet.newBuilder(id, context.eval(SqueakLanguageConfig.ID, code), returnType).build());
     }
 
-    // private static void addExpressionSnippet(final Context context, final Collection<Snippet>
-    // snippets, final String id, final String code, final TypeDescriptor returnType,
-    // final TypeDescriptor... parameterTypes) {
-    // snippets.add(Snippet.newBuilder(id, context.eval(SqueakLanguageConfig.ID, code),
-    // returnType).parameterTypes(parameterTypes).build());
-    // }
-
-    private static void addExpressionSnippet(final Context context, final Collection<Snippet> snippets, final String id, final String code, final TypeDescriptor returnType, final ResultVerifier rv,
+    private static void addExpressionSnippet(final Context context, final Collection<Snippet> snippets, final String id, final String code, final TypeDescriptor returnType,
                     final TypeDescriptor... parameterTypes) {
-        snippets.add(Snippet.newBuilder(id, context.eval(SqueakLanguageConfig.ID, code), returnType).resultVerifier(rv).parameterTypes(parameterTypes).build());
+        snippets.add(Snippet.newBuilder(id, context.eval(SqueakLanguageConfig.ID, code), returnType).parameterTypes(parameterTypes).build());
     }
 
     private static void addSource(final Collection<Source> scripts, final String name, final CharSequence code) {
@@ -148,46 +144,5 @@ public final class SqueakLanguageProvider implements LanguageProvider {
     private static void addStatementSnippet(final Context context, final Collection<Snippet> snippets, final String id, final String code, final TypeDescriptor returnType,
                     final TypeDescriptor... parameterTypes) {
         snippets.add(Snippet.newBuilder(id, context.eval(SqueakLanguageConfig.ID, code), returnType).parameterTypes(parameterTypes).build());
-    }
-
-    private static class ComparisonVerifier implements ResultVerifier {
-        private static final ComparisonVerifier INSTANCE = new ComparisonVerifier();
-
-        @Override
-        public void accept(final SnippetRun snippetRun) throws PolyglotException {
-            final List<? extends Value> parameters = snippetRun.getParameters();
-            assert parameters.size() == 2;
-
-            final Value par0 = parameters.get(0);
-            final Value par1 = parameters.get(1);
-
-            if (isSqueakNumberOrCharacter(par0) && isSqueakNumberOrCharacter(par1)) {
-                if (snippetRun.getException() != null) {
-                    throw new AssertionError("Squeak Numbers and Characters should not throw exception: " + snippetRun.getException());
-                }
-            } else if (isSqueakString(par0) && isSqueakString(par1)) {
-                if (snippetRun.getException() != null) {
-                    throw new AssertionError("Squeak Strings and Strings should not throw exception: " + snippetRun.getException());
-                }
-            } else if (isSqueakString(par0) || isSqueakString(par1)) {
-                if (snippetRun.getException() == null) {
-                    throw new AssertionError("Squeak Strings and Numbers should raise an exception, result: " + snippetRun.getResult());
-                }
-            } else {
-                ResultVerifier.getDefaultResultVerifier().accept(snippetRun);
-            }
-        }
-
-        private static boolean isSqueakNumberOrCharacter(final Value val) {
-            return val.isNumber() || isSqueakCharacter(val);
-        }
-
-        private static boolean isSqueakCharacter(final Value val) {
-            return val.isString() && val.asString().length() == 1;
-        }
-
-        private static boolean isSqueakString(final Value val) {
-            return val.isString() && val.asString().length() != 1;
-        }
     }
 }

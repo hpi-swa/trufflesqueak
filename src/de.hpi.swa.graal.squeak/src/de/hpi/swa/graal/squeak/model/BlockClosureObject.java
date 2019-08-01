@@ -6,7 +6,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -220,7 +220,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
 
     @ExportMessage
     public Object execute(final Object[] arguments,
-                    @Shared("wrapNode") @Cached final WrapToSqueakNode wrapNode) throws ArityException {
+                    @Exclusive @Cached final WrapToSqueakNode wrapNode) throws ArityException {
         if (getNumArgs() == arguments.length) {
             final Object[] frameArguments = FrameAccess.newClosureArguments(this, NilObject.SINGLETON, wrapNode.executeObjects(arguments));
             return getCompiledBlock().getCallTarget().call(frameArguments);
