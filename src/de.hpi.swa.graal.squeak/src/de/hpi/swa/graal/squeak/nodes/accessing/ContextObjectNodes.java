@@ -74,7 +74,7 @@ public final class ContextObjectNodes {
             return NilObject.nullToNil(value);
         }
 
-        @Specialization(guards = "index >= TEMP_FRAME_START")
+        @Specialization(guards = "index >= TEMP_FRAME_START", replaces = "doTempCached")
         protected static final Object doTemp(final ContextObject context, final long index) {
             return context.atTemp((int) (index - CONTEXT.TEMP_FRAME_START));
         }
@@ -145,7 +145,7 @@ public final class ContextObjectNodes {
             writeNode.execute(context.getTruffleFrame(), stackIndex, value);
         }
 
-        @Specialization(guards = "index >= TEMP_FRAME_START")
+        @Specialization(guards = "index >= TEMP_FRAME_START", replaces = "doTempCached")
         protected static final void doTemp(final ContextObject context, final long index, final Object value) {
             context.atTempPut((int) (index - CONTEXT.TEMP_FRAME_START), value);
         }
