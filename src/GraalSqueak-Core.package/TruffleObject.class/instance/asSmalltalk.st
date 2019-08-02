@@ -1,4 +1,4 @@
-convenience
+converting
 asSmalltalk
 	self primitiveIsBoolean ifTrue: [ ^ self primitiveAsBoolean ].
 	self primitiveIsString ifTrue: [ ^ self primitiveAsString ].
