@@ -350,7 +350,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final long doClock(@SuppressWarnings("unused") final Object receiver) {
-            return MiscUtils.getCurrentSqueakMicrosecondsLocal() / 1000000;
+            return MiscUtils.toSqueakSecondsLocal(System.currentTimeMillis() / 1000);
         }
     }
 
@@ -706,7 +706,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final long doTime(@SuppressWarnings("unused") final Object receiver) {
-            return MiscUtils.getCurrentSqueakMicrosecondsUTC();
+            return MiscUtils.toSqueakMicrosecondsUTC(System.currentTimeMillis() * 1000);
         }
     }
 
@@ -720,7 +720,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final long doTime(@SuppressWarnings("unused") final Object receiver) {
-            return MiscUtils.getCurrentSqueakMicrosecondsLocal();
+            return MiscUtils.toSqueakMicrosecondsLocal(System.currentTimeMillis() * 1000);
         }
     }
 

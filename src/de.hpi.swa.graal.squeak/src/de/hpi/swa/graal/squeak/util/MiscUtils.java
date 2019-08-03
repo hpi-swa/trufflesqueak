@@ -5,7 +5,6 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.RuntimeMXBean;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
@@ -62,20 +61,6 @@ public final class MiscUtils {
             totalCollectionTime += Math.min(gcBean.getCollectionTime(), 0);
         }
         return totalCollectionTime;
-    }
-
-    @TruffleBoundary
-    public static long getCurrentJavaMicrosecondsUTC() {
-        final Instant now = Instant.now();
-        return now.getEpochSecond() * SEC_TO_USEC + now.getNano() / USEC_TO_NANO;
-    }
-
-    public static long getCurrentSqueakMicrosecondsUTC() {
-        return toSqueakMicrosecondsUTC(getCurrentJavaMicrosecondsUTC());
-    }
-
-    public static long getCurrentSqueakMicrosecondsLocal() {
-        return toSqueakMicrosecondsLocal(getCurrentJavaMicrosecondsUTC());
     }
 
     @TruffleBoundary
