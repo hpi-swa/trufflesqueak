@@ -41,7 +41,7 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         return FrameUtil.getDoubleSafe(frame, getSlot());
     }
 
-    @Specialization(guards = "!clear", replaces = {"readBoolean", "readLong", "readDouble"})
+    @Specialization(guards = "!shouldClear()", replaces = {"readBoolean", "readLong", "readDouble"})
     protected final Object readObject(final Frame frame) {
         if (!frame.isObject(getSlot())) {
             /*
@@ -61,7 +61,7 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         }
     }
 
-    @Specialization(guards = "clear", replaces = {"readBoolean", "readLong", "readDouble"})
+    @Specialization(guards = "shouldClear()", replaces = {"readBoolean", "readLong", "readDouble"})
     protected final Object readAndClearObject(final Frame frame) {
         final Object value;
         if (!frame.isObject(getSlot())) {
@@ -80,5 +80,9 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         }
         frame.setObject(getSlot(), null);
         return value;
+    }
+
+    protected final boolean shouldClear() {
+        return clear; // Work around "Useless condition" error in generated code.
     }
 }
