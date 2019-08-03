@@ -32,11 +32,10 @@ public abstract class FrameStackWriteNode extends AbstractNodeWithCode {
     public abstract void execute(Frame frame, int stackIndex, Object value);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"index == cachedIndex", "code == cacheCode"}, limit = "MAX_STACK_SIZE")
+    @Specialization(guards = {"index == cachedIndex"}, limit = "MAX_STACK_SIZE")
     protected static final void doWrite(final VirtualFrame frame, final int index, final Object value,
                     @Cached("index") final int cachedIndex,
-                    @Cached("code") final CompiledCodeObject cacheCode,
-                    @Cached("create(cacheCode.getStackSlot(index))") final FrameSlotWriteNode writeNode) {
+                    @Cached("create(code.getStackSlot(index))") final FrameSlotWriteNode writeNode) {
         writeNode.executeWrite(frame, value);
     }
 }

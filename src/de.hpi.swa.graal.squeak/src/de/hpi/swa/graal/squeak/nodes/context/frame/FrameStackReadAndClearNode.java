@@ -5,7 +5,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
@@ -52,14 +51,13 @@ public abstract class FrameStackReadAndClearNode extends AbstractNodeWithCode {
     @Specialization(guards = {"index == cachedIndex"}, limit = "MAX_STACK_SIZE")
     protected static final Object doClear(final Frame frame, final int index,
                     @Cached("index") final int cachedIndex,
-                    @Cached("code.getStackSlot(index)") final FrameSlot slot,
-                    @Cached("createReadNode(slot, index)") final FrameSlotReadNode clearNode) {
+                    @Cached("createReadNode(index)") final FrameSlotReadNode clearNode) {
         return clearNode.executeRead(frame);
     }
 
-    protected final FrameSlotReadNode createReadNode(final FrameSlot frameSlot, final int index) {
+    protected final FrameSlotReadNode createReadNode(final int index) {
         // Only clear stack values, not receiver, arguments, or temporary variables.
         final boolean clear = index >= code.getNumArgsAndCopied() + code.getNumTemps();
-        return FrameSlotReadNode.create(frameSlot, clear);
+        return FrameSlotReadNode.create(code.getStackSlot(index), clear);
     }
 }
