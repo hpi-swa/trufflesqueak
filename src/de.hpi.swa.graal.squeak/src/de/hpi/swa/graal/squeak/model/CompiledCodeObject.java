@@ -5,6 +5,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -24,6 +25,7 @@ import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
+import de.hpi.swa.graal.squeak.nodes.ResumeContextNode.ResumeContextRootNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
@@ -64,6 +66,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
     private final Assumption doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
+    @CompilationFinal private RootCallTarget resumptionCallTarget;
 
     protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues) {
         super(image, hash);
@@ -127,6 +130,24 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     public final Assumption getCallTargetStable() {
         return callTargetStable.getAssumption();
+    }
+
+    @TruffleBoundary
+    public final RootCallTarget getResumptionCallTarget(final ContextObject context) {
+        if (resumptionCallTarget == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            resumptionCallTarget = Truffle.getRuntime().createCallTarget(ResumeContextRootNode.create(image.getLanguage(), context));
+        } else {
+            final ResumeContextRootNode resumeNode = (ResumeContextRootNode) resumptionCallTarget.getRootNode();
+            if (resumeNode.getActiveContext() != context) {
+                /**
+                 * This is a trick: we set the activeContext of the {@link ResumeContextRootNode} to
+                 * the given context to be able to reuse the call target.
+                 */
+                resumeNode.setActiveContext(context);
+            }
+        }
+        return resumptionCallTarget;
     }
 
     public final Assumption getDoesNotNeedSenderAssumption() {

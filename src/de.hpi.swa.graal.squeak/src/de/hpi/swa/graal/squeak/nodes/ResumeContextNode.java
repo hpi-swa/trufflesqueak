@@ -38,7 +38,7 @@ public abstract class ResumeContextNode extends Node {
 
     @NodeInfo(cost = NodeCost.NONE)
     public static final class ResumeContextRootNode extends RootNode {
-        private final ContextObject activeContext;
+        private ContextObject activeContext;
 
         @Child private ResumeContextNode executeContextNode;
 
@@ -61,6 +61,14 @@ public abstract class ResumeContextNode extends Node {
         @Override
         public Object execute(final VirtualFrame frame) {
             return executeContextNode.executeResume(activeContext);
+        }
+
+        public ContextObject getActiveContext() {
+            return activeContext;
+        }
+
+        public void setActiveContext(final ContextObject activeContext) {
+            this.activeContext = activeContext;
         }
 
         @Override
