@@ -18,7 +18,7 @@ public abstract class ResumeContextNode extends Node {
     @Child private ExecuteContextNode executeContextNode;
 
     protected ResumeContextNode(final CompiledCodeObject code) {
-        executeContextNode = ExecuteContextNode.create(code);
+        executeContextNode = ExecuteContextNode.create(code, true);
     }
 
     protected abstract Object executeResume(ContextObject context);

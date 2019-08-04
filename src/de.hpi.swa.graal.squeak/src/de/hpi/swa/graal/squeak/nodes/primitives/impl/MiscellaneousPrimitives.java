@@ -872,13 +872,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "!DEBUG_META_PRIMITIVE_FAILURES")
         protected static final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
-            throw new SimulationPrimitiveFailed(reasonCode);
+            throw new SimulationPrimitiveFailed((int) reasonCode);
         }
 
         @Specialization(guards = "DEBUG_META_PRIMITIVE_FAILURES")
         protected final Object doFailAndLog(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
             debugMetaPrimitiveFailures(reasonCode);
-            throw new SimulationPrimitiveFailed(reasonCode);
+            throw new SimulationPrimitiveFailed((int) reasonCode);
         }
 
         @TruffleBoundary

@@ -18,7 +18,7 @@ public final class EnterCodeNode extends RootNode {
     protected EnterCodeNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
-        executeContextNode = ExecuteContextNode.create(code);
+        executeContextNode = ExecuteContextNode.create(code, false);
     }
 
     protected EnterCodeNode(final EnterCodeNode codeNode) {

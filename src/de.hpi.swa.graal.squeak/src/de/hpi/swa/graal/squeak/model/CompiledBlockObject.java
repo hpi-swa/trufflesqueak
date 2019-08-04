@@ -20,7 +20,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         numLiterals = code.numLiterals;
         hasPrimitive = false;
         needsLargeFrame = outerMethod.needsLargeFrame;
-        numTemps = numCopied;
+        numTemps = numArguments + numCopied;
         numArgs = numArguments;
         ensureCorrectNumberOfStackSlots();
         initializeCallTargetUnsafe();
