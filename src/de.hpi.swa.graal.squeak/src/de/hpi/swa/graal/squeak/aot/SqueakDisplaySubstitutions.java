@@ -263,11 +263,6 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     }
 
     @Override
-    public void adjustDisplay(final long newDepth, final long newWidth, final long newHeight, final boolean fullscreen) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
     public void resizeTo(final int newWidth, final int newHeight) {
         if (width == newWidth && height == newHeight) {
             return;

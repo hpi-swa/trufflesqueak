@@ -10,8 +10,6 @@ public interface SqueakDisplayInterface {
 
     void close();
 
-    void adjustDisplay(long depth, long width, long height, boolean fullscreen);
-
     void resizeTo(int width, int height);
 
     DisplayPoint getWindowSize();

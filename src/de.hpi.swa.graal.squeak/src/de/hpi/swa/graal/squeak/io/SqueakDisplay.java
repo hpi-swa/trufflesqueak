@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.color.ColorSpace;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -20,8 +21,11 @@ import java.awt.event.InputEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferInt;
 import java.awt.image.DirectColorModel;
 import java.awt.image.Raster;
+import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
@@ -126,95 +130,44 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private final class Canvas extends JComponent {
         private static final long serialVersionUID = 1L;
         @CompilationFinal private BufferedImage bufferedImage;
-        @CompilationFinal private NativeObject bitmap;
-        @CompilationFinal private int width;
-        @CompilationFinal private int height;
-        @CompilationFinal private int depth;
 
         @Override
         public void paintComponent(final Graphics g) {
-            if (bitmap == null || bufferedImage == null) {
-                return;
+            if (bufferedImage != null) {
+                g.drawImage(bufferedImage, 0, 0, null);
             }
-            //@formatter:off
-            switch (depth) {
-                case 1: case 2: case 4: case 8: // colors need to be decoded
-                    bufferedImage.setRGB(0, 0, width, height, decodeColors(), 0, width);
-                    break;
-                case 16:
-                    bufferedImage.setData(get16bitRaster());
-                    break;
-                case 32: // use words directly
-                    final int[] words = bitmap.getIntStorage();
-                    assert words.length / width / height == 1;
-                    final int drawWidth = Math.min(width, frame.getWidth());
-                    final int drawHeight = Math.min(height, frame.getHeight());
-                    bufferedImage.setRGB(0, 0, drawWidth, drawHeight, words, 0, width);
-                    break;
-                default:
-                    throw SqueakException.create("Unsupported form depth:",  depth);
-            }
-            //@formatter:on
-            g.drawImage(bufferedImage, 0, 0, null);
-        }
-
-        private int[] decodeColors() {
-            final int shift = 4 - depth;
-            int pixelmask = (1 << depth) - 1 << shift;
-            final int[] table = SqueakIOConstants.PIXEL_LOOKUP_TABLE[depth - 1];
-            final int[] words = bitmap.getIntStorage();
-            final int[] rgb = new int[words.length];
-            for (int i = 0; i < words.length; i++) {
-                final int pixel = (words[i] & pixelmask) >> shift - i * depth;
-                rgb[i] = table[pixel];
-                pixelmask >>= depth;
-            }
-            return rgb;
-        }
-
-        private Raster get16bitRaster() {
-            final int[] words = bitmap.getIntStorage();
-            assert words.length * 2 / width / height == 1;
-            final DirectColorModel colorModel = new DirectColorModel(16,
-                            0x001f, // red
-                            0x03e0, // green
-                            0x7c00, // blue
-                            0x8000  // alpha
-            );
-            final WritableRaster raster = colorModel.createCompatibleWritableRaster(width, height);
-            int word;
-            int high;
-            int low;
-            int x;
-            int y;
-            Object pixel = null;
-            for (int i = 0; i < words.length; i++) {
-                word = words[i];
-                high = word >> 16;
-                low = word & 0xffff;
-                x = i % width / 2 * 2;
-                y = i / width;
-                pixel = colorModel.getDataElements(high, pixel);
-                raster.setDataElements(x, y, pixel);
-                pixel = colorModel.getDataElements(low, pixel);
-                raster.setDataElements(x + 1, y, pixel);
-            }
-            return raster;
         }
 
         private void setSqDisplay(final PointersObject sqDisplay) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
+            final NativeObject bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            width = (int) (long) sqDisplay.at0(FORM.WIDTH);
-            height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
-            depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
+            final int width = (int) (long) sqDisplay.at0(FORM.WIDTH);
+            final int height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
+            assert (long) sqDisplay.at0(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
-                bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                bufferedImage = newBufferedImage(bitmap, width, height);
                 repaint();
             }
+        }
+
+        /* Wraps bitmap in a BufferedImage for efficient drawing. */
+        private BufferedImage newBufferedImage(final NativeObject bitmap, final int width, final int height) {
+            final DataBufferInt db = new DataBufferInt(bitmap.getIntStorage(), bitmap.getIntLength());
+            final DirectColorModel colorModel = new DirectColorModel(
+                            ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                            32,
+                            0x00ff0000,  // Red
+                            0x0000ff00,  // Green
+                            0x000000ff,  // Blue
+                            0xff000000,  // Alpha
+                            true,        // Alpha Premultiplied
+                            DataBuffer.TYPE_INT);
+            final SampleModel sm = colorModel.createCompatibleSampleModel(width, height);
+            final WritableRaster raster = Raster.createWritableRaster(sm, db, new Point(0, 0));
+            return new BufferedImage(colorModel, raster, true, null);
         }
     }
 
@@ -247,14 +200,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     public void close() {
         frame.setVisible(false);
         frame.dispose();
-    }
-
-    @Override
-    public void adjustDisplay(final long depth, final long width, final long height, final boolean fullscreen) {
-        canvas.depth = (int) depth;
-        canvas.width = (int) width;
-        canvas.height = (int) height;
-        setFullscreen(fullscreen);
     }
 
     @Override

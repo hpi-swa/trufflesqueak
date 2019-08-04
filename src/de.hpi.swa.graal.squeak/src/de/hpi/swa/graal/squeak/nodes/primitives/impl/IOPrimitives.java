@@ -82,26 +82,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 92)
-    protected abstract static class PrimSetDisplayModeNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
-
-        protected PrimSetDisplayModeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "method.image.hasDisplay()")
-        protected final Object doSet(final Object receiver, final long depth, final long width, final long height, final boolean fullscreen) {
-            method.image.getDisplay().adjustDisplay(depth, width, height, fullscreen);
-            return receiver;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!method.image.hasDisplay()")
-        protected static final Object doSetHeadless(final Object receiver, final long depth, final long width, final long height, final boolean fullscreen) {
-            return receiver;
-        }
-    }
+    /* primitiveSetDisplayMode (#92) no longer in use, support dropped in GraalSqueak.. */
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 93)
