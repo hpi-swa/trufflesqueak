@@ -16,7 +16,6 @@ BASE_VM_ARGS = [
     '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
 
     # GARBAGE COLLECTOR (optimized for GraalSqueak image)
-    '-XX:+UseG1GC',
     '-XX:OldSize=256M',         # Initial tenured generation size
     '-XX:NewSize=1G',           # Initial new generation size
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
@@ -26,7 +25,6 @@ BASE_VM_ARGS_TESTING = [
     '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
 
     # GARBAGE COLLECTOR (optimized for Travis CI)
-    '-XX:+UseG1GC',
     '-Xms4G',                   # Initial heap size
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ]

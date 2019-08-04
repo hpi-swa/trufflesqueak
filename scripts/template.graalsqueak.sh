@@ -28,7 +28,7 @@ fi
 # Parse arguments, prepare Java command, and execute.                 #
 #######################################################################
 PROGRAM_ARGS="--polyglot"
-JAVA_ARGS="-Xss64M -XX:+UseG1GC -XX:OldSize=256M -XX:NewSize=1G -XX:MetaspaceSize=32M"
+JAVA_ARGS="-Xss64M -XX:OldSize=256M -XX:NewSize=1G -XX:MetaspaceSize=32M"
 
 for opt in "$@"; do
   case $opt in
