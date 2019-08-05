@@ -87,9 +87,9 @@ public final class SqueakImageChunk {
                 object = new ArrayObject(image, hash, squeakClass);
             } else if (format == 3) { // fixed and indexable fields
                 if (squeakClass == image.methodContextClass) {
-                    object = ContextObject.createWithHash(image, hash);
+                    object = ContextObject.createWithHash(hash);
                 } else if (squeakClass == image.blockClosureClass) {
-                    object = new BlockClosureObject(image, hash);
+                    object = new BlockClosureObject(hash);
                 } else {
                     object = new PointersObject(image, hash, squeakClass);
                 }
@@ -103,7 +103,7 @@ public final class SqueakImageChunk {
                 object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
                 if (squeakClass == image.floatClass) {
-                    object = FloatObject.newFromChunkWords(image, getInts());
+                    object = FloatObject.newFromChunkWords(getInts());
                 } else {
                     object = NativeObject.newNativeInts(this);
                 }

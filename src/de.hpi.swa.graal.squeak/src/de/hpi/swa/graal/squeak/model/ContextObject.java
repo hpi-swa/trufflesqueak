@@ -31,19 +31,19 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     private boolean hasModifiedSender = false;
     private boolean escaped = false;
 
-    private ContextObject(final SqueakImageContext image, final long hash) {
-        super(image, hash);
+    private ContextObject(final long hash) {
+        super(hash);
         truffleFrame = null;
     }
 
-    private ContextObject(final SqueakImageContext image, final int size) {
-        super(image);
+    private ContextObject(final int size) {
+        super();
         truffleFrame = null;
         this.size = size;
     }
 
     private ContextObject(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        super(blockOrMethod.image);
+        super();
         assert FrameAccess.getSender(frame) != null;
         assert FrameAccess.getContext(frame, blockOrMethod) == null;
         truffleFrame = frame.materialize();
@@ -52,7 +52,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     private ContextObject(final ContextObject original) {
-        super(original.image);
+        super();
         final CompiledCodeObject code = FrameAccess.getBlockOrMethod(original.truffleFrame);
         hasModifiedSender = original.hasModifiedSender();
         escaped = original.escaped;
@@ -77,12 +77,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
     }
 
-    public static ContextObject create(final SqueakImageContext image, final int size) {
-        return new ContextObject(image, size);
+    public static ContextObject create(final int size) {
+        return new ContextObject(size);
     }
 
-    public static ContextObject createWithHash(final SqueakImageContext image, final long hash) {
-        return new ContextObject(image, hash);
+    public static ContextObject createWithHash(final long hash) {
+        return new ContextObject(hash);
     }
 
     public static ContextObject create(final FrameInstance frameInstance) {
@@ -95,7 +95,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     @Override
-    public ClassObject getSqueakClass() {
+    public ClassObject getSqueakClass(final SqueakImageContext image) {
         return image.methodContextClass;
     }
 
@@ -525,10 +525,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public void transferTo(final PointersObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
-        final PointersObject scheduler = image.getScheduler();
+        final PointersObject scheduler = newProcess.image.getScheduler();
         // assert newProcess != image.getActiveProcess() : "trying to switch to already active
         // process";
-        final PointersObject currentProcess = image.getActiveProcess(); // overwritten in next line.
+        final PointersObject currentProcess = newProcess.image.getActiveProcess(); // overwritten in
+                                                                                   // next line.
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         currentProcess.atput0(PROCESS.SUSPENDED_CONTEXT, this);
         final ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
@@ -550,7 +551,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         while (current != null) {
             final CompiledCodeObject code = current.getBlockOrMethod();
             final Object[] rcvrAndArgs = current.getReceiverAndNArguments(code.getNumArgsAndCopied());
-            image.getOutput().println(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
+            code.image.getOutput().println(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
             final Object sender = current.getSender();
             if (sender == NilObject.SINGLETON) {
                 break;

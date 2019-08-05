@@ -274,11 +274,11 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public boolean isPositive() {
-        return getSqueakClass() == image.largePositiveIntegerClass;
+        return getSqueakClass().isLargePositiveIntegerClass();
     }
 
     public boolean isNegative() {
-        return getSqueakClass() == image.largeNegativeIntegerClass;
+        return getSqueakClass().isLargeNegativeIntegerClass();
     }
 
     /*

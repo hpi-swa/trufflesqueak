@@ -5,7 +5,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNodes.AbstractArgumentNode;
@@ -36,9 +35,5 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
     protected final LargeIntegerObject asLargeInteger(final long value) {
         // TODO: don't allocate for long operations
         return LargeIntegerObject.valueOf(method.image, value);
-    }
-
-    protected final FloatObject asFloatObject(final double value) {
-        return method.image.asFloatObject(value);
     }
 }

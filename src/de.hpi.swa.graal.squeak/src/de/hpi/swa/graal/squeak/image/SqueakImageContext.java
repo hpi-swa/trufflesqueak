@@ -37,7 +37,6 @@ import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -241,10 +240,10 @@ public final class SqueakImageContext {
 
         final AbstractSqueakObjectWithClassAndHash parser = (AbstractSqueakObjectWithClassAndHash) parserClass.send("new");
         final AbstractSqueakObjectWithClassAndHash methodNode = (AbstractSqueakObjectWithClassAndHash) parser.send(
-                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, new BlockClosureObject(this, 0));
+                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, new BlockClosureObject(0));
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
-        final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
+        final ContextObject doItContext = ContextObject.create(doItMethod.getSqueakContextSize());
         doItContext.atput0(CONTEXT.METHOD, doItMethod);
         doItContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) doItMethod.getInitialPC());
         doItContext.atput0(CONTEXT.RECEIVER, nilClass);
@@ -452,10 +451,6 @@ public final class SqueakImageContext {
 
     public NativeObject asByteString(final String value) {
         return NativeObject.newNativeBytes(this, stringClass, ArrayConversionUtils.stringToBytes(value));
-    }
-
-    public FloatObject asFloatObject(final double value) {
-        return FloatObject.valueOf(this, value);
     }
 
     public LargeIntegerObject asLargeInteger(final BigInteger i) {

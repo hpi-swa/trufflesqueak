@@ -1,8 +1,11 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.Returns.TopLevelReturn;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -34,12 +37,13 @@ public abstract class UnwindContextChainNode extends AbstractNode {
     }
 
     @Specialization(guards = {"startContext != targetContext"})
-    protected static final ContextObject doUnwind(final ContextObject startContext, final ContextObject targetContext, final Object returnValue) {
+    protected static final ContextObject doUnwind(final ContextObject startContext, final ContextObject targetContext, final Object returnValue,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         ContextObject context = startContext;
         while (context != targetContext) {
             final AbstractSqueakObject sender = context.getSender();
             if (sender == NilObject.SINGLETON) {
-                context.image.printToStdErr("Unwind error: sender of", context, "is nil, unwinding towards", targetContext, "with return value:", returnValue);
+                image.printToStdErr("Unwind error: sender of", context, "is nil, unwinding towards", targetContext, "with return value:", returnValue);
                 break;
             }
             context.terminate();

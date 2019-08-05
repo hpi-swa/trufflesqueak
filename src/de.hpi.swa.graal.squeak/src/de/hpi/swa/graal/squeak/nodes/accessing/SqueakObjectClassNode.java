@@ -89,8 +89,9 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ClassObject doClosure(final BlockClosureObject value) {
-        return value.getSqueakClass();
+    protected static final ClassObject doClosure(final BlockClosureObject value,
+                    @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return value.getSqueakClass(image);
     }
 
     @Specialization
@@ -106,12 +107,13 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
 
     @Specialization
     protected static final ClassObject doMethod(final CompiledMethodObject value) {
-        return value.getSqueakClass();
+        return value.image.compiledMethodClass;
     }
 
     @Specialization
-    protected static final ClassObject doContext(final ContextObject value) {
-        return value.getSqueakClass();
+    protected static final ClassObject doContext(final ContextObject value,
+                    @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return value.getSqueakClass(image);
     }
 
     @Specialization
@@ -120,9 +122,9 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ClassObject doFloat(@SuppressWarnings("unused") final FloatObject value,
+    protected static final ClassObject doFloat(final FloatObject value,
                     @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.floatClass;
+        return value.getSqueakClass(image);
     }
 
     @Specialization

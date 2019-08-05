@@ -48,12 +48,6 @@ public abstract class ResumeContextNode extends Node {
             executeContextNode = ResumeContextNodeGen.create(context.getBlockOrMethod());
         }
 
-        protected ResumeContextRootNode(final ResumeContextRootNode codeNode) {
-            super(codeNode.activeContext.image.getLanguage(), codeNode.getFrameDescriptor());
-            activeContext = codeNode.activeContext;
-            executeContextNode = codeNode.executeContextNode;
-        }
-
         public static ResumeContextRootNode create(final SqueakLanguage language, final ContextObject activeContext) {
             return new ResumeContextRootNode(language, activeContext);
         }

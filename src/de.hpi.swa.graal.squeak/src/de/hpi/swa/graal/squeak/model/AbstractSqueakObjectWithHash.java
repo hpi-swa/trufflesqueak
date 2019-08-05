@@ -10,24 +10,21 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
     private static final int PINNED_BIT_MASK = 1 << PINNED_BIT_SHIFT;
 
     private long squeakHash;
-    public final SqueakImageContext image;
 
     // For special/well-known objects only.
-    protected AbstractSqueakObjectWithHash(final SqueakImageContext image) {
-        this.image = image;
+    protected AbstractSqueakObjectWithHash() {
         squeakHash = HASH_UNINITIALIZED;
     }
 
-    protected AbstractSqueakObjectWithHash(final SqueakImageContext image, final long hash) {
-        this.image = image;
+    protected AbstractSqueakObjectWithHash(final long hash) {
         // TODO: Generate new hash if `0`. This might have something to do with compact classes?
         squeakHash = hash != 0 ? hash : HASH_UNINITIALIZED;
     }
 
-    public abstract ClassObject getSqueakClass();
+    public abstract ClassObject getSqueakClass(SqueakImageContext image);
 
-    public final boolean needsSqueakClass() {
-        return getSqueakClass() == null;
+    public final boolean needsSqueakClass(final SqueakImageContext image) {
+        return getSqueakClass(image) == null;
     }
 
     public void setSqueakClass(@SuppressWarnings("unused") final ClassObject classObject) {

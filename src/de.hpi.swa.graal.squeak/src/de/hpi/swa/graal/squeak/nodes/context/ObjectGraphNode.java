@@ -87,7 +87,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
             if (seen.put(currentObject, SEEN_MARKER) == null) {
-                if (classObj == currentObject.getSqueakClass()) {
+                if (classObj == currentObject.getSqueakClass(image)) {
                     result.add(currentObject);
                 }
                 tracePointers(pending, currentObject);
@@ -107,7 +107,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.pollFirst()) != null) {
             if (seen.put(currentObject, SEEN_MARKER) == null) {
-                if (classObj == currentObject.getSqueakClass()) {
+                if (classObj == currentObject.getSqueakClass(image)) {
                     return currentObject;
                 }
                 tracePointers(pending, currentObject);
@@ -150,8 +150,8 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         });
     }
 
-    private static void tracePointers(final ArrayDeque<AbstractSqueakObjectWithHash> pending, final AbstractSqueakObjectWithHash currentObject) {
-        final ClassObject sqClass = currentObject.getSqueakClass();
+    private void tracePointers(final ArrayDeque<AbstractSqueakObjectWithHash> pending, final AbstractSqueakObjectWithHash currentObject) {
+        final ClassObject sqClass = currentObject.getSqueakClass(image);
         if (sqClass != null) {
             pending.add(sqClass);
         }
