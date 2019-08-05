@@ -166,7 +166,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
             final Object ffiTest = method.image.env.parse(source).call();
             // method.image.env.addToHostClassPath(entry);
-            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
+            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached();
             try {
                 final Object value = interopLib.invokeMember(ffiTest, name, argumentsConverted);
                 assert value != null;

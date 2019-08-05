@@ -128,7 +128,7 @@ public class FFIConstants {
         public static String getTruffleTypeFromInt(final int headerWord) {
             final int atomicType = getAtomicType(headerWord);
             if (FFI_TYPES.UNSIGNED_CHAR.integerValue == atomicType && isPointerType(headerWord)) {
-                return "STRING";
+                return "string";
             }
             for (final FFI_TYPES type : FFI_TYPES.values()) {
                 if (type.integerValue == atomicType) {
