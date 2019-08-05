@@ -53,7 +53,7 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
         final WrapToSqueakNode wrapNode = WrapToSqueakNode.getUncached();
         for (int i = 0; i < testValues.length; i++) {
             final Object[] values = testValues[i];
-            assertEquals(wrapNode.executeWrap(values[2]), runBinaryPrimitive(21, wrapNode.executeWrap(values[0]), wrapNode.executeWrap(values[1])));
+            assertEquals(wrapNode.executeWrap(values[2]), runBinaryPrimitive(1, wrapNode.executeWrap(values[0]), wrapNode.executeWrap(values[1])));
         }
     }
 
@@ -65,12 +65,13 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
                         {Long.MAX_VALUE, Long.MAX_VALUE - 1, 1L},
                         {Long.MAX_VALUE, Long.MAX_VALUE - Integer.MAX_VALUE, (long) Integer.MAX_VALUE},
                         {Long.MIN_VALUE, 1L, image.asLargeInteger(BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE))},
-                        {Long.MAX_VALUE, Long.MAX_VALUE - Integer.MAX_VALUE, (long) Integer.MAX_VALUE},
-                        {image.asLargeInteger(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE)), 1L, Long.MAX_VALUE}};
+                        {Long.MAX_VALUE, Long.MAX_VALUE - Integer.MAX_VALUE, (long) Integer.MAX_VALUE}};
         final WrapToSqueakNode wrapNode = WrapToSqueakNode.getUncached();
         for (int i = 0; i < testValues.length; i++) {
             final Object[] values = testValues[i];
-            assertEquals(wrapNode.executeWrap(values[2]), runBinaryPrimitive(22, wrapNode.executeWrap(values[0]), wrapNode.executeWrap(values[1])));
+            assertEquals(wrapNode.executeWrap(values[2]), runBinaryPrimitive(2, wrapNode.executeWrap(values[0]), wrapNode.executeWrap(values[1])));
         }
+        assertEquals(wrapNode.executeWrap(Long.MAX_VALUE),
+                        runBinaryPrimitive(22, wrapNode.executeWrap(image.asLargeInteger(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE))), wrapNode.executeWrap(1L)));
     }
 }

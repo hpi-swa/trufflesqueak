@@ -35,7 +35,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -161,19 +160,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 return null;
             });
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 18)
-    protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-        protected PrimMakePointNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected final PointersObject doObject(final Object xPos, final Object yPos) {
-            return method.image.asPoint(xPos, yPos);
         }
     }
 

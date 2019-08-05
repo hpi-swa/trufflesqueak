@@ -355,53 +355,15 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = 17, names = "primDigitBitShiftMagnitude")
+    @SqueakPrimitive(names = "primDigitBitShiftMagnitude")
     public abstract static class PrimDigitBitShiftMagnitudeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         protected PrimDigitBitShiftMagnitudeNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"arg >= 0", "!isLShiftLongOverflow(receiver, arg)"})
-        protected static final long doLong(final long receiver, final long arg) {
-            return receiver << arg;
-        }
-
-        @Specialization(guards = {"arg >= 0", "isLShiftLongOverflow(receiver, arg)"})
-        protected final Object doLongLargeInteger(final long receiver, final long arg) {
-            return LargeIntegerObject.shiftLeft(method.image, receiver, (int) arg);
-        }
-
-        @Specialization(guards = {"arg < 0", "isArgInLongSizeRange(arg)"})
-        protected static final long doLongNegativeLong(final long receiver, final long arg) {
-            // The result of a right shift can only become smaller than the receiver and 0 or -1 at
-            // minimum, so no BigInteger needed here
-            return receiver >> -arg;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"arg < 0", "!isArgInLongSizeRange(arg)"})
-        protected static final long doLongNegative(final long receiver, final long arg) {
-            return receiver >= 0 ? 0L : -1L;
-        }
-
-        @Specialization(guards = {"arg >= 0"})
+        @Specialization
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
             return receiver.shiftLeft((int) arg);
-        }
-
-        @Specialization(guards = {"arg < 0"})
-        protected static final Object doLargeIntegerNegative(final LargeIntegerObject receiver, final long arg) {
-            return receiver.shiftRight((int) -arg);
-        }
-
-        protected static final boolean isLShiftLongOverflow(final long receiver, final long arg) {
-            // -1 needed, because we do not want to shift a positive long into negative long (most
-            // significant bit indicates positive/negative)
-            return Long.numberOfLeadingZeros(receiver) - 1 < arg;
-        }
-
-        protected static final boolean isArgInLongSizeRange(final long value) {
-            return -Long.SIZE < value;
         }
     }
 

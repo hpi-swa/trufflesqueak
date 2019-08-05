@@ -220,7 +220,6 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     private static Object reduceIfPossible(final SqueakImageContext image, final BigInteger value) {
         if (value.bitLength() < Long.SIZE) {
-            assert value.longValueExact() <= Long.MAX_VALUE : "Should never throw an ArithmeticException";
             return value.longValue();
         } else {
             return new LargeIntegerObject(image, value);
