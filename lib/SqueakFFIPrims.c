@@ -181,9 +181,10 @@ EXPORT(double) ffiTestMixedDoublesAndLongs(double d1, long l1, double d2, long l
 }
 
 /* test passing and returning doubles */
-EXPORT(double) ffiTestDoubles(double d1, double d2) {
-	printf("The two floats are %f and %f\n", (float)d1, (float)d2);
-	return d1+d2;
+EXPORT(double) ffiTestDoubles(double d1, double d2)
+{
+  printf(("The two doubles are %f and %f\n", d1, d2));
+  return d1+d2;
 }
 
 /* test passing and returning strings */
