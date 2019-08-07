@@ -39,4 +39,8 @@ public final class CharacterObject extends AbstractSqueakObject {
     public long getValue() {
         return Integer.toUnsignedLong(value);
     }
+
+    public long getValueRaw() {
+        return value;
+    }
 }

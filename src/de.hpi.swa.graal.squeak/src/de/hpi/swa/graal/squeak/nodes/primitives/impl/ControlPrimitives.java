@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -46,6 +45,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObj
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -378,8 +378,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    /** Complements {@link PrimNotIdenticalNode}. */
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 110)
     protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode implements TernaryPrimitiveWithoutFallback {
         protected PrimIdenticalNode(final CompiledMethodObject method) {
@@ -387,23 +387,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doDouble(final double a, final double b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return BooleanObject.wrap(Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b));
-        }
-
-        @Specialization
-        protected static final boolean doObject(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return BooleanObject.wrap(a == b);
-        }
-
-        @Specialization
-        protected static final boolean doDouble(@SuppressWarnings("unused") final Object context, final double a, final double b) {
-            return BooleanObject.wrap(Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b));
+        protected static final boolean doObject(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided,
+                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
+            return identityNode.execute(a, b);
         }
 
         @Specialization(guards = "!isNotProvided(b)")
-        public static final boolean doObject(@SuppressWarnings("unused") final Object context, final Object a, final Object b) {
-            return BooleanObject.wrap(a == b);
+        public static final boolean doObject(@SuppressWarnings("unused") final Object context, final Object a, final Object b,
+                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode) {
+            return identityNode.execute(a, b);
         }
     }
 
@@ -695,8 +687,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    /** Complements {@link PrimIdenticalNode}. */
     @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 169)
     protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
         protected PrimNotIdenticalNode(final CompiledMethodObject method) {
@@ -704,13 +696,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doDouble(final double a, final double b) {
-            return BooleanObject.wrap(Double.doubleToRawLongBits(a) != Double.doubleToRawLongBits(b));
-        }
-
-        @Fallback
-        public static final boolean doObject(final Object a, final Object b) {
-            return BooleanObject.wrap(a != b);
+        public static final boolean doObject(final Object a, final Object b,
+                        @Cached final SqueakObjectIdentityNode identityNode) {
+            return !identityNode.execute(a, b);
         }
     }
 
