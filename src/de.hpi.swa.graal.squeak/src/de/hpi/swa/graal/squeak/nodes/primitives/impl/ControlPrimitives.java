@@ -387,42 +387,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doBoolean(final boolean a, final boolean b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return BooleanObject.wrap(a == b);
-        }
-
-        @Specialization
-        protected static final boolean doChar(final char a, final char b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return BooleanObject.wrap(a == b);
-        }
-
-        @Specialization
-        protected static final boolean doLong(final long a, final long b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return BooleanObject.wrap(a == b);
-        }
-
-        @Specialization
         protected static final boolean doDouble(final double a, final double b, @SuppressWarnings("unused") final NotProvided notProvided) {
             return BooleanObject.wrap(Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b));
         }
 
         @Specialization
         protected static final boolean doObject(final Object a, final Object b, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return BooleanObject.wrap(a == b);
-        }
-
-        @Specialization
-        protected static final boolean doBoolean(@SuppressWarnings("unused") final Object context, final boolean a, final boolean b) {
-            return BooleanObject.wrap(a == b);
-        }
-
-        @Specialization
-        protected static final boolean doChar(@SuppressWarnings("unused") final Object context, final char a, final char b) {
-            return BooleanObject.wrap(a == b);
-        }
-
-        @Specialization
-        protected static final boolean doLong(@SuppressWarnings("unused") final Object context, final long a, final long b) {
             return BooleanObject.wrap(a == b);
         }
 
@@ -731,21 +701,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
         protected PrimNotIdenticalNode(final CompiledMethodObject method) {
             super(method);
-        }
-
-        @Specialization
-        protected static final boolean doBoolean(final boolean a, final boolean b) {
-            return BooleanObject.wrap(a != b);
-        }
-
-        @Specialization
-        protected static final boolean doChar(final char a, final char b) {
-            return BooleanObject.wrap(a != b);
-        }
-
-        @Specialization
-        protected static final boolean doLong(final long a, final long b) {
-            return BooleanObject.wrap(a != b);
         }
 
         @Specialization
