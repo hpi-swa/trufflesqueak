@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -28,14 +27,13 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
     @Specialization(guards = {"hasLastSeenContext(frame)"})
     protected final void doMaterialize(final VirtualFrame frame,
                     @Cached("createBinaryProfile()") final ConditionProfile isNotLastSeenContextProfile,
-                    @Cached("createBinaryProfile()") final ConditionProfile lastSeenNeedsSenderProfile,
                     @Cached("createBinaryProfile()") final ConditionProfile continueProfile,
                     @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode) {
         final ContextObject lastSeenContext = code.image.lastSeenContext;
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
         if (isNotLastSeenContextProfile.profile(context != lastSeenContext)) {
             assert context.hasTruffleFrame();
-            if (lastSeenNeedsSenderProfile.profile(lastSeenContext != null && !lastSeenContext.hasMaterializedSender())) {
+            if (lastSeenContext != null && !lastSeenContext.hasMaterializedSender()) {
                 lastSeenContext.setSender(context);
             }
             if (continueProfile.profile(!context.isTerminated() && context.hasEscaped())) {
@@ -48,8 +46,8 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
         }
     }
 
-    @Fallback
-    protected final void doNothing() {
+    @Specialization(guards = {"isVirtualized(frame) || !getContext(frame).hasEscaped()"})
+    protected final void doNothing(@SuppressWarnings("unused") final VirtualFrame frame) {
         /*
          * Nothing to do because neither was a child context materialized nor has this context been
          * requested and allocated.
