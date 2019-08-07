@@ -46,6 +46,9 @@ def _graal_vm_args(args):
             '-Dgraal.TraceTruffleCompilationDetails=true',
             '-Dgraal.TraceTruffleExpansionSource=true']
 
+    if args.truffle_compilation_polymorphism:
+        graal_args += ['-Dgraal.TraceTruffleCompilationPolymorphism=true']
+
     if args.truffle_compilation_stats:
         graal_args += ['-Dgraal.TruffleCompilationStatistics=true']
 
@@ -219,6 +222,11 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         '-tcd', '--truffle-compilation-details',
         help='print Truffle compilation details',
         dest='truffle_compilation_details', action='store_true', default=False)
+    parser.add_argument(
+        '-tcp', '--truffle-compilation-polymorphism',
+        help='print all polymorphic and generic nodes after each compilation',
+        dest='truffle_compilation_polymorphism', action='store_true',
+        default=False)
     parser.add_argument(
         '-tcs', '--truffle-compilation-statistics',
         help='print Truffle compilation statistics at the end of a run',
