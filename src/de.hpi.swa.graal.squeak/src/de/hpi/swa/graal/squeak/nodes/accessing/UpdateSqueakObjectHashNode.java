@@ -4,7 +4,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 
 public abstract class UpdateSqueakObjectHashNode extends Node {
     public static UpdateSqueakObjectHashNode create() {
@@ -14,7 +14,7 @@ public abstract class UpdateSqueakObjectHashNode extends Node {
     public abstract void executeUpdate(Object fromPointer, Object toPointer, boolean copyHash);
 
     @Specialization(guards = "copyHash")
-    protected static final void doCopy(final AbstractSqueakObjectWithClassAndHash fromPointer, final AbstractSqueakObjectWithClassAndHash toPointer,
+    protected static final void doCopy(final AbstractSqueakObjectWithHash fromPointer, final AbstractSqueakObjectWithHash toPointer,
                     @SuppressWarnings("unused") final boolean copyHash) {
         toPointer.setSqueakHash(fromPointer.getSqueakHash());
     }
