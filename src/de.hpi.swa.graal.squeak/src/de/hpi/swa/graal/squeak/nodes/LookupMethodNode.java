@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -8,6 +9,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
 
+@ReportPolymorphism
 public abstract class LookupMethodNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 6;
 

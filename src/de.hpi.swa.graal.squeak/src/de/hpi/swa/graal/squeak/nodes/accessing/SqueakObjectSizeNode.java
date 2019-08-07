@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -23,6 +24,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeN
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 
 @GenerateUncached
+@ReportPolymorphism
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectSizeNode extends AbstractNode {
 

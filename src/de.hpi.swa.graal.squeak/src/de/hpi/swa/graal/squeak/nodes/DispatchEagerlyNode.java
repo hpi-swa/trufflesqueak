@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
@@ -15,6 +16,7 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
+@ReportPolymorphism
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchEagerlyNode extends AbstractNodeWithCode {
     protected static final int INLINE_CACHE_SIZE = 6;

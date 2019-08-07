@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.context.frame;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -13,6 +14,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
+@ReportPolymorphism
 @ImportStatic(CONTEXT.class)
 public abstract class FrameStackReadAndClearNode extends AbstractNodeWithCode {
 
