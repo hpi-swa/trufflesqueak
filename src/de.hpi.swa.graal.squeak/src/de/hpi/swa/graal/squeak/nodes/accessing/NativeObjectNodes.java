@@ -1,15 +1,18 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeAcceptsValueNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeGetBytesNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeObjectSizeNodeGen;
@@ -17,90 +20,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeOb
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class NativeObjectNodes {
-
-    @GenerateUncached
-    public abstract static class NativeAcceptsValueNode extends AbstractNode {
-
-        public static NativeAcceptsValueNode create() {
-            return NativeAcceptsValueNodeGen.create();
-        }
-
-        public abstract boolean execute(NativeObject obj, Object value);
-
-        @Specialization(guards = "obj.isByteType()")
-        protected static final boolean doNativeBytes(@SuppressWarnings("unused") final NativeObject obj, final char value) {
-            return value <= NativeObject.BYTE_MAX;
-        }
-
-        @Specialization(guards = "obj.isShortType()")
-        protected static final boolean doNativeShorts(@SuppressWarnings("unused") final NativeObject obj, final char value) {
-            return value <= NativeObject.SHORT_MAX;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "obj.isIntType() || obj.isLongType()")
-        protected static final boolean doNativeInts(final NativeObject obj, final char value) {
-            return true;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "obj.isByteType()")
-        protected static final boolean doNativeBytes(final NativeObject obj, final CharacterObject value) {
-            return false; // Value of CharacterObjects is always larger than `Character.MAX_VALUE`.
-        }
-
-        @Specialization(guards = "obj.isShortType()")
-        protected static final boolean doNativeShorts(@SuppressWarnings("unused") final NativeObject obj, final CharacterObject value) {
-            return value.getValue() <= NativeObject.SHORT_MAX;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "obj.isIntType() || obj.isLongType()")
-        protected static final boolean doNativeInts(final NativeObject obj, final CharacterObject value) {
-            return true;
-        }
-
-        @Specialization(guards = "obj.isByteType()")
-        protected static final boolean doNativeBytes(@SuppressWarnings("unused") final NativeObject obj, final long value) {
-            return 0 <= value && value <= NativeObject.BYTE_MAX;
-        }
-
-        @Specialization(guards = "obj.isShortType()")
-        protected static final boolean doNativeShorts(@SuppressWarnings("unused") final NativeObject obj, final long value) {
-            return 0 <= value && value <= NativeObject.SHORT_MAX;
-        }
-
-        @Specialization(guards = "obj.isIntType()")
-        protected static final boolean doNativeInts(@SuppressWarnings("unused") final NativeObject obj, final long value) {
-            return 0 <= value && value <= NativeObject.INTEGER_MAX;
-        }
-
-        @Specialization(guards = "obj.isLongType()")
-        protected static final boolean doNativeLongs(@SuppressWarnings("unused") final NativeObject obj, final long value) {
-            return 0 <= value;
-        }
-
-        @Specialization(guards = {"obj.isByteType()"})
-        protected static final boolean doNativeBytesLargeInteger(@SuppressWarnings("unused") final NativeObject obj, final LargeIntegerObject value) {
-            return value.inRange(0, NativeObject.BYTE_MAX);
-        }
-
-        @Specialization(guards = {"obj.isShortType()"})
-        protected static final boolean doNativeShortsLargeInteger(@SuppressWarnings("unused") final NativeObject obj, final LargeIntegerObject value) {
-            return value.inRange(0, NativeObject.SHORT_MAX);
-        }
-
-        @Specialization(guards = {"obj.isIntType()"})
-        protected static final boolean doNativeIntsLargeInteger(@SuppressWarnings("unused") final NativeObject obj, final LargeIntegerObject value) {
-            return value.inRange(0, NativeObject.INTEGER_MAX);
-        }
-
-        @Specialization(guards = {"obj.isLongType()"})
-        protected static final boolean doNativeLongsLargeInteger(@SuppressWarnings("unused") final NativeObject obj, final LargeIntegerObject value) {
-            return value.isZeroOrPositive() && value.lessThanOneShiftedBy64();
-        }
-    }
-
     @GenerateUncached
     public abstract static class NativeObjectReadNode extends AbstractNode {
 
@@ -126,9 +45,10 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final Object doNativeLongs(final NativeObject obj, final long index) {
+        protected static final Object doNativeLongs(final NativeObject obj, final long index,
+                        @Cached("createBinaryProfile()") final ConditionProfile positiveValueProfile) {
             final long value = obj.getLongStorage()[(int) index];
-            if (value >= 0) {
+            if (positiveValueProfile.profile(0 <= value)) {
                 return value;
             } else {
                 return LargeIntegerObject.valueOf(obj.image, value).toUnsigned();
@@ -185,14 +105,18 @@ public final class NativeObjectNodes {
             doNativeInts(obj, index, value);
         }
 
-        @Specialization(guards = "obj.isIntType()")
-        protected static final void doNativeIntsChar(final NativeObject obj, final long index, final CharacterObject value) {
-            doNativeInts(obj, index, value.getValue());
-        }
-
         @Specialization(guards = "obj.isLongType()")
         protected static final void doNativeLongsChar(final NativeObject obj, final long index, final char value) {
             doNativeLongs(obj, index, value);
+        }
+
+        /*
+         * CharacterObject hold values > Character.MAX_VALUE, which cannot fit into byte/short type.
+         */
+
+        @Specialization(guards = "obj.isIntType()")
+        protected static final void doNativeIntsChar(final NativeObject obj, final long index, final CharacterObject value) {
+            doNativeInts(obj, index, value.getValue());
         }
 
         @Specialization(guards = "obj.isLongType()")
@@ -202,27 +126,37 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = {"obj.isByteType()", "value.inRange(0, BYTE_MAX)"})
         protected static final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            doNativeBytes(obj, index, value.longValueExact());
+            doNativeBytes(obj, index, value.longValue());
         }
 
         @Specialization(guards = {"obj.isShortType()", "value.inRange(0, SHORT_MAX)"})
         protected static final void doNativeShortsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            doNativeShorts(obj, index, value.longValueExact());
+            doNativeShorts(obj, index, value.longValue());
         }
 
         @Specialization(guards = {"obj.isIntType()", "value.inRange(0, INTEGER_MAX)"})
         protected static final void doNativeIntsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            doNativeInts(obj, index, value.longValueExact());
+            doNativeInts(obj, index, value.longValue());
         }
 
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "value.fitsIntoLong()"})
         protected static final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            doNativeLongs(obj, index, value.longValueExact());
+            doNativeLongs(obj, index, value.longValue());
         }
 
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "!value.fitsIntoLong()", "value.lessThanOneShiftedBy64()"})
         protected static final void doNativeLongsLargeIntegerSigned(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            doNativeLongs(obj, index, value.toSigned().longValueExact());
+            doNativeLongs(obj, index, value.toSigned().longValue());
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected static final void doFail(final NativeObject obj, final long index, final Object value) {
+            /*
+             * Throw primitive failed (instead of UnsupportedSpecializationException) here for
+             * PrimBasicAtPutNode.
+             */
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
 

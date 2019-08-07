@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -19,8 +18,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeAcceptsValueNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectInstSizeNode;
@@ -70,7 +67,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"inBoundsOfSqueakObject(index, target)"})
         protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target, final long index,
                         @Shared("at0Node") @Cached final SqueakObjectAt0Node at0Node) {
-            return at0Node.execute(target, index - 1 + instSizeNode.execute(target));
+            return doSqueakObject(target, index, NotProvided.SINGLETON, at0Node);
         }
     }
 
@@ -78,21 +75,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 61)
     protected abstract static class PrimBasicAtPutNode extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitive {
-        @Child private NativeAcceptsValueNode nativeAcceptsNode;
-
         protected PrimBasicAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"inBoundsOfSqueakObject(index, receiver)", "getNativeAcceptsNode().execute(receiver, value)"})
-        protected static final Object doNativeObject(final NativeObject receiver, final long index, final Object value,
-                        @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("nativeWriteNode") @Cached final NativeObjectWriteNode writeNode) {
-            writeNode.execute(receiver, index - 1, value);
-            return value;
-        }
-
-        @Specialization(guards = {"inBoundsOfSqueakObject(index, receiver)", "!isNativeObject(receiver)"})
+        @Specialization(guards = {"inBoundsOfSqueakObject(index, receiver)"})
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
                         @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("atput0Node") @Cached final SqueakObjectAtPut0Node atput0Node) {
@@ -101,29 +88,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         /* Context>>#object:basicAt:put: */
-
-        @Specialization(guards = {"inBoundsOfSqueakObject(index, target)", "getNativeAcceptsNode().execute(target, value)"})
-        protected static final Object doNativeObject(@SuppressWarnings("unused") final Object receiver, final NativeObject target, final long index, final Object value,
-                        @Shared("nativeWriteNode") @Cached final NativeObjectWriteNode writeNode) {
-            writeNode.execute(target, index - 1, value);
-            return value;
-        }
-
-        @Specialization(guards = {"inBoundsOfSqueakObject(index, target)", "!isNativeObject(target)"})
-        protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index,
-                        final Object value,
+        @Specialization(guards = {"inBoundsOfSqueakObject(index, target)"})
+        protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
                         @Shared("atput0Node") @Cached final SqueakObjectAtPut0Node atput0Node) {
-            atput0Node.execute(target, index - 1 + instSizeNode.execute(target), value);
-            return value;
-        }
-
-        /* TODO: Use @Shared as soon as https://github.com/oracle/graal/issues/1207 is fixed. */
-        protected final NativeAcceptsValueNode getNativeAcceptsNode() {
-            if (nativeAcceptsNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                nativeAcceptsNode = insert(NativeAcceptsValueNode.create());
-            }
-            return nativeAcceptsNode;
+            return doSqueakObject(target, index, value, NotProvided.SINGLETON, atput0Node);
         }
     }
 

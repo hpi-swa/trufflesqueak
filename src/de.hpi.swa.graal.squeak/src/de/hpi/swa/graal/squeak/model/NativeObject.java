@@ -12,10 +12,12 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
@@ -300,9 +302,12 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @ExportMessage
     protected void writeArrayElement(final long index, final Object value,
                     @Exclusive @Cached final WrapToSqueakNode wrapNode,
-                    @Cached final NativeObjectWriteNode writeNode) throws InvalidArrayIndexException {
+                    @Cached final NativeObjectWriteNode writeNode) throws InvalidArrayIndexException, UnsupportedTypeException {
         try {
             writeNode.execute(this, index, wrapNode.executeWrap(value));
+        } catch (final PrimitiveFailed e) {
+            /* NativeObjectWriteNode may throw PrimitiveFailed if value cannot be stored. */
+            throw UnsupportedTypeException.create(new Object[]{value}, "Cannot store value in NativeObject");
         } catch (final ArrayIndexOutOfBoundsException e) {
             throw InvalidArrayIndexException.create(index);
         }
