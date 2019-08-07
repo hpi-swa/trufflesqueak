@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -92,7 +93,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 205)
     protected abstract static class PrimClosureValueNode extends AbstractPrimitiveNode implements SenaryPrimitive {
-        @Child private DispatchBlockNode dispatchNode = DispatchBlockNode.create();
 
         protected PrimClosureValueNode(final CompiledMethodObject method) {
             super(method);
@@ -100,12 +100,14 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"block.getNumArgs() == 4"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final NotProvided arg5) {
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final NotProvided arg5,
+                        @Shared("dispatchNode") @Cached final DispatchBlockNode dispatchNode) {
             return dispatchNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3, arg4}));
         }
 
         @Specialization(guards = {"block.getNumArgs() == 5", "!isNotProvided(arg5)"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5) {
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
+                        @Shared("dispatchNode") @Cached final DispatchBlockNode dispatchNode) {
             return dispatchNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3, arg4, arg5}));
         }
     }

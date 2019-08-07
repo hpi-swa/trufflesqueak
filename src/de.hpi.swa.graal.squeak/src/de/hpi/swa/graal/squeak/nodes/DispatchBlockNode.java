@@ -13,10 +13,6 @@ import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchBlockNode extends AbstractNode {
 
-    public static DispatchBlockNode create() {
-        return DispatchBlockNodeGen.create();
-    }
-
     public abstract Object executeBlock(BlockClosureObject block, Object[] arguments);
 
     @SuppressWarnings("unused")
