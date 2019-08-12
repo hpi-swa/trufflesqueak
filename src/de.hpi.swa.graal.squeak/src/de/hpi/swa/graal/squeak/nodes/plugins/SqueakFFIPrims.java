@@ -168,7 +168,57 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             // method.image.env.addToHostClassPath(entry);
             final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached();
             try {
-                final Object value = interopLib.invokeMember(ffiTest, name, argumentsConverted);
+                Object value = null;
+
+                if (argumentsConverted.length == 2) {
+                    final Boolean typePoint1 = argumentsConverted[0].getClass().equals(PointersObject.class);
+                    final Boolean typePoint2 = argumentsConverted[1].getClass().equals(PointersObject.class);
+                    if (typePoint1 && typePoint2) {
+                        long[] point1;
+                        long[] point2;
+                        final Object at0 = ((PointersObject) argumentsConverted[0]).at0(0);
+                        final int byteLength = ((NativeObject) at0).getByteLength();
+                        if (byteLength == 8) {
+                            final long pointX = ((NativeObject) at0).getByteStorage()[0];
+                            final long pointY = ((NativeObject) at0).getByteStorage()[4];
+
+                            final long[] point = {pointX, pointY};
+                            final long[] pointA = {1, 2};
+                            final long[] pointB = {3, 4};
+                            value = interopLib.invokeMember(ffiTest, name, pointA, pointB);
+                        } else if (byteLength == 16) {
+                            final long pointX = ((NativeObject) at0).getByteStorage()[0];
+                            final long pointY = ((NativeObject) at0).getByteStorage()[4];
+                            final long pointZ = ((NativeObject) at0).getByteStorage()[8];
+                            final long pointW = ((NativeObject) at0).getByteStorage()[12];
+                            value = interopLib.invokeMember(ffiTest, name, pointX, pointY, pointZ, pointW);
+                        }
+                }
+                for (int i = 0; i < argumentsConverted.length; i++) {
+                    //final Boolean typePoint = argumentsConverted[i].getClass().equals(PointersObject.class);
+                    final Boolean typePoint1 = argumentsConverted[0].getClass().equals(PointersObject.class);
+                    final Boolean typePoint2 = argumentsConverted[1].getClass().equals(PointersObject.class);
+                    if (typePoint1 && typePoint2) {
+                        
+                        final Object at0 = ((PointersObject) argumentsConverted[i]).at0(0);
+                        final int byteLength = ((NativeObject) at0).getByteLength();
+                        if (byteLength == 8) {
+                            final long pointX = ((NativeObject) at0).getByteStorage()[0];
+                            final long pointY = ((NativeObject) at0).getByteStorage()[4];
+
+                            final long[] point = {pointX, pointY};
+                            value = interopLib.invokeMember(ffiTest, name, point);
+                        } else if (byteLength == 16) {
+                            final long pointX = ((NativeObject) at0).getByteStorage()[0];
+                            final long pointY = ((NativeObject) at0).getByteStorage()[4];
+                            final long pointZ = ((NativeObject) at0).getByteStorage()[8];
+                            final long pointW = ((NativeObject) at0).getByteStorage()[12];
+                            value = interopLib.invokeMember(ffiTest, name, pointX, pointY, pointZ, pointW);
+                        }
+                    } else {
+                        value = interopLib.invokeMember(ffiTest, name, argumentsConverted);
+                    }
+                }
                 assert value != null;
                 return wrapNode.executeWrap(conversionNode.execute(returnArgHeader, value));
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
