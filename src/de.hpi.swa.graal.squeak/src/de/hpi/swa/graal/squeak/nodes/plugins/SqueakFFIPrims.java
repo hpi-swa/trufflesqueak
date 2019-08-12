@@ -127,7 +127,6 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
             int returnArgHeader = 0;
             final List<String> argumentList = new ArrayList<>();
-            String nfiCodeParams = "";
             if (argTypes != null) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
                 assert argTypesValues.length == 1 + arguments.length;
@@ -146,17 +145,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                         argumentList.add(atomicName);
                     }
                 }
-                if (!argumentList.isEmpty()) {
-                    final String returnType = argumentList.get(0);
-                    argumentList.remove(0);
-                    if (!argumentList.isEmpty()) {
-                        nfiCodeParams = "(" + String.join(",", argumentList) + ")";
-                    } else {
-                        nfiCodeParams = "()";
-                    }
-                    nfiCodeParams += ":" + returnType + ";";
-                }
             }
+            final String nfiCodeParams = creatNfiCodeParamsString(argumentList);
 
             final String ffiExtension = method.image.os.getFFIExtension();
             final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
@@ -180,6 +170,21 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 // TODO: handle exception
                 throw new PrimitiveFailed();
             }
+        }
+
+        private static String creatNfiCodeParamsString(final List<String> argumentList) {
+            String nfiCodeParams = "";
+            if (!argumentList.isEmpty()) {
+                final String returnType = argumentList.get(0);
+                argumentList.remove(0);
+                if (!argumentList.isEmpty()) {
+                    nfiCodeParams = "(" + String.join(",", argumentList) + ")";
+                } else {
+                    nfiCodeParams = "()";
+                }
+                nfiCodeParams += ":" + returnType + ";";
+            }
+            return nfiCodeParams;
         }
 
     }
