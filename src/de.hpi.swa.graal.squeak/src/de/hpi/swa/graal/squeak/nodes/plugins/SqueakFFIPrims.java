@@ -127,7 +127,6 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
             int returnArgHeader = 0;
             final List<String> argumentList = new ArrayList<>();
-            String nfiCodeParams = "";
             if (argTypes != null) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
                 assert argTypesValues.length == 1 + arguments.length;
@@ -146,17 +145,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                         argumentList.add(atomicName);
                     }
                 }
-                if (!argumentList.isEmpty()) {
-                    final String returnType = argumentList.get(0);
-                    argumentList.remove(0);
-                    if (!argumentList.isEmpty()) {
-                        nfiCodeParams = "(" + String.join(",", argumentList) + ")";
-                    } else {
-                        nfiCodeParams = "()";
-                    }
-                    nfiCodeParams += ":" + returnType + ";";
-                }
             }
+            final String nfiCodeParams = creatNfiCodeParamsString(argumentList);
 
             final String ffiExtension = method.image.os.getFFIExtension();
             final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
@@ -169,13 +159,12 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached();
             try {
                 Object value = null;
-
                 if (argumentsConverted.length == 2) {
                     final Boolean typePoint1 = argumentsConverted[0].getClass().equals(PointersObject.class);
                     final Boolean typePoint2 = argumentsConverted[1].getClass().equals(PointersObject.class);
                     if (typePoint1 && typePoint2) {
-                        long[] point1;
-                        long[] point2;
+                        final long[] point1;
+                        final long[] point2;
                         final Object at0 = ((PointersObject) argumentsConverted[0]).at0(0);
                         final int byteLength = ((NativeObject) at0).getByteLength();
                         if (byteLength == 8) {
@@ -185,29 +174,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                             final long[] point = {pointX, pointY};
                             final long[] pointA = {1, 2};
                             final long[] pointB = {3, 4};
-                            value = interopLib.invokeMember(ffiTest, name, pointA, pointB);
-                        } else if (byteLength == 16) {
-                            final long pointX = ((NativeObject) at0).getByteStorage()[0];
-                            final long pointY = ((NativeObject) at0).getByteStorage()[4];
-                            final long pointZ = ((NativeObject) at0).getByteStorage()[8];
-                            final long pointW = ((NativeObject) at0).getByteStorage()[12];
-                            value = interopLib.invokeMember(ffiTest, name, pointX, pointY, pointZ, pointW);
-                        }
-                }
-                for (int i = 0; i < argumentsConverted.length; i++) {
-                    //final Boolean typePoint = argumentsConverted[i].getClass().equals(PointersObject.class);
-                    final Boolean typePoint1 = argumentsConverted[0].getClass().equals(PointersObject.class);
-                    final Boolean typePoint2 = argumentsConverted[1].getClass().equals(PointersObject.class);
-                    if (typePoint1 && typePoint2) {
-                        
-                        final Object at0 = ((PointersObject) argumentsConverted[i]).at0(0);
-                        final int byteLength = ((NativeObject) at0).getByteLength();
-                        if (byteLength == 8) {
-                            final long pointX = ((NativeObject) at0).getByteStorage()[0];
-                            final long pointY = ((NativeObject) at0).getByteStorage()[4];
-
-                            final long[] point = {pointX, pointY};
-                            value = interopLib.invokeMember(ffiTest, name, point);
+                            value = interopLib.invokeMember(ffiTest, name, pointX, pointY);
                         } else if (byteLength == 16) {
                             final long pointX = ((NativeObject) at0).getByteStorage()[0];
                             final long pointY = ((NativeObject) at0).getByteStorage()[4];
@@ -230,6 +197,21 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 // TODO: handle exception
                 throw new PrimitiveFailed();
             }
+        }
+
+        private static String creatNfiCodeParamsString(final List<String> argumentList) {
+            String nfiCodeParams = "";
+            if (!argumentList.isEmpty()) {
+                final String returnType = argumentList.get(0);
+                argumentList.remove(0);
+                if (!argumentList.isEmpty()) {
+                    nfiCodeParams = "(" + String.join(",", argumentList) + ")";
+                } else {
+                    nfiCodeParams = "()";
+                }
+                nfiCodeParams += ":" + returnType + ";";
+            }
+            return nfiCodeParams;
         }
 
     }
