@@ -122,7 +122,7 @@ public class FFIConstants {
                 // TODO: if we have an pointer type this has to be implemented here
             }
             if (FFI_TYPES.VOID.integerValue == atomicType && isStructType(headerWord)) {
-                return "OBJECT";
+                return "SINT32";
             }
             for (final FFI_TYPES type : FFI_TYPES.values()) {
                 if (type.integerValue == atomicType) {

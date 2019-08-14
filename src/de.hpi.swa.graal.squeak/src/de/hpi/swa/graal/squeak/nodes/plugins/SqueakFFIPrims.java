@@ -130,20 +130,28 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             if (argTypes != null) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
                 assert argTypesValues.length == 1 + arguments.length;
+                final int[] argumentWordArray = null;
+                String atomicName = null;
+                final List<Integer> argumentWords = new ArrayList<>();
                 for (int i = 0; i < argTypesValues.length; i++) {
                     final Object argType = argTypesValues[i];
                     if (argType instanceof PointersObject) {
                         final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                         final int headerWord = compiledSpec.getIntStorage()[0];
+                        argumentWords.add(i, compiledSpec.getIntStorage()[i]);
+
+                        // argumentWordArray = new int[compiledSpec.getIntLength()];
+                        // argumentWordArray[i] = compiledSpec.getIntStorage()[i];
                         if (i == 0) {
                             returnArgHeader = headerWord;
                         } else if (i > 0) {
                             argumentsConverted[i - 1] = conversionNode.execute(headerWord, arguments[i - 1]);
                         }
-                        final String atomicName;
-                        atomicName = FFI_TYPES.getTruffleTypeFromInt(headerWord);
-                        argumentList.add(atomicName);
                     }
+                }
+                for (final int argument : argumentWords) {
+                    atomicName = FFI_TYPES.getTruffleTypeFromInt(argument);
+                    argumentList.add(atomicName);
                 }
             }
             final String nfiCodeParams = creatNfiCodeParamsString(argumentList);
@@ -152,36 +160,42 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
             final String nfiCode = String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
 
-            // method.image.env = com.oracle.truffle.api.TruffleLanguage$Env@1a1d76bd
             final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
             final Object ffiTest = method.image.env.parse(source).call();
-            // method.image.env.addToHostClassPath(entry);
             final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached();
             try {
+                final boolean hasArray = interopLib.hasArrayElements(arguments);
                 Object value = null;
+                final long[] point = new long[2];
+                final List<long[]> pointList = new ArrayList<>();
                 if (argumentsConverted.length == 2) {
                     final Boolean typePoint1 = argumentsConverted[0].getClass().equals(PointersObject.class);
                     final Boolean typePoint2 = argumentsConverted[1].getClass().equals(PointersObject.class);
                     if (typePoint1 && typePoint2) {
-                        final long[] point1;
-                        final long[] point2;
-                        final Object at0 = ((PointersObject) argumentsConverted[0]).at0(0);
-                        final int byteLength = ((NativeObject) at0).getByteLength();
-                        if (byteLength == 8) {
-                            final long pointX = ((NativeObject) at0).getByteStorage()[0];
-                            final long pointY = ((NativeObject) at0).getByteStorage()[4];
+                        for (int i = 0; i < argumentsConverted.length; i++) {
+                            final Object at0 = ((PointersObject) argumentsConverted[i]).at0(0);
+                            final int byteLength = ((NativeObject) at0).getByteLength();
+                            if (byteLength == 8) {
+                                final long pointX = ((NativeObject) at0).getByteStorage()[0];
+                                final long pointY = ((NativeObject) at0).getByteStorage()[4];
 
-                            final long[] point = {pointX, pointY};
-                            final long[] pointA = {1, 2};
-                            final long[] pointB = {3, 4};
-                            value = interopLib.invokeMember(ffiTest, name, pointX, pointY);
-                        } else if (byteLength == 16) {
-                            final long pointX = ((NativeObject) at0).getByteStorage()[0];
-                            final long pointY = ((NativeObject) at0).getByteStorage()[4];
-                            final long pointZ = ((NativeObject) at0).getByteStorage()[8];
-                            final long pointW = ((NativeObject) at0).getByteStorage()[12];
-                            value = interopLib.invokeMember(ffiTest, name, pointX, pointY, pointZ, pointW);
+                                // point[0] = pointX;
+                                // point[1] = pointY;
+
+                                final long[] pointA = {1, 2};
+                                final long[] pointB = {3, 4};
+
+                                final Object[] points = {pointA, pointB};
+
+                                value = interopLib.invokeMember(ffiTest, name, argumentsConverted);
+
+                            }
+                            pointList.add(i, point);
                         }
+                        /*
+                         * for (final long[] points : pointList) { value =
+                         * interopLib.invokeMember(ffiTest, name, points); }
+                         */
                     } else {
                         value = interopLib.invokeMember(ffiTest, name, argumentsConverted);
                     }
