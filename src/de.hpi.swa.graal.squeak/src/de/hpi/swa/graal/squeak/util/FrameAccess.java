@@ -194,20 +194,31 @@ public final class FrameAccess {
     /** Write to a frame slot (slow operation), prefer {@link FrameStackWriteNode}. */
     public static void setStackSlot(final Frame frame, final FrameSlot frameSlot, final Object value) {
         final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        assert frame.getFrameDescriptor().getSlots().contains(frameSlot);
         final Class<? extends Object> valueClass = value.getClass();
+        final FrameSlotKind frameSlotKind = frameDescriptor.getFrameSlotKind(frameSlot);
+        final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
         if (valueClass == Boolean.class) {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Boolean);
-            frame.setBoolean(frameSlot, (boolean) value);
+            if (isIllegal || frameSlotKind == FrameSlotKind.Boolean) {
+                frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Boolean);
+                frame.setBoolean(frameSlot, (boolean) value);
+                return;
+            }
         } else if (valueClass == Long.class) {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Long);
-            frame.setLong(frameSlot, (long) value);
+            if (isIllegal || frameSlotKind == FrameSlotKind.Long) {
+                frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Long);
+                frame.setLong(frameSlot, (long) value);
+                return;
+            }
         } else if (valueClass == Double.class) {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Double);
-            frame.setDouble(frameSlot, (double) value);
-        } else {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Object);
-            frame.setObject(frameSlot, value);
+            if (isIllegal || frameSlotKind == FrameSlotKind.Double) {
+                frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Double);
+                frame.setDouble(frameSlot, (double) value);
+                return;
+            }
         }
+        frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Object);
+        frame.setObject(frameSlot, value);
     }
 
     public static void terminate(final Frame frame, final CompiledCodeObject blockOrMethod) {
