@@ -134,10 +134,10 @@ public final class ContextObjectInfo implements TruffleObject {
             throw UnsupportedMessageException.create();
         }
         final FrameSlot slot = slots.get(member);
-        if (slot == null) {
-            throw UnknownIdentifierException.create(member);
+        if (slot != null) {
+            FrameAccess.setStackSlot(frame, slot, value);
         } else {
-            frame.setObject(slot, value);
+            throw UnknownIdentifierException.create(member);
         }
     }
 
