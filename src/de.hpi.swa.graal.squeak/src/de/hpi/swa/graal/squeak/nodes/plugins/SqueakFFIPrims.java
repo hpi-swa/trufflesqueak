@@ -142,6 +142,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                         } else if (i > 0) {
                             argumentsConverted[i - 1] = conversionNode.execute(headerWord, arguments[i - 1]);
                         }
+                        atomicName = FFI_TYPES.getTruffleTypeFromInt(headerWord);
+                        argumentList.add(atomicName);
                     }
                 }
                 for (final int argument : argumentWords) {
