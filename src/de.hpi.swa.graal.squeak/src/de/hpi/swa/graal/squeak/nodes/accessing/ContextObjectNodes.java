@@ -4,16 +4,16 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ContextObjectNodes {
@@ -64,14 +64,17 @@ public final class ContextObjectNodes {
             return context.getReceiver();
         }
 
-        @Specialization(guards = {"index >= TEMP_FRAME_START", "codeObject == context.getBlockOrMethod()"}, //
-                        limit = "2" /** thisContext and sender */
-        )
-        protected static final Object doTempCached(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @SuppressWarnings("unused") @Cached(value = "context.getBlockOrMethod()", allowUncached = true) final CompiledCodeObject codeObject,
-                        @Cached(value = "create(codeObject)", allowUncached = true) final FrameStackReadNode readNode) {
-            final Object value = readNode.execute(context.getTruffleFrame(), (int) (index - CONTEXT.TEMP_FRAME_START));
-            return NilObject.nullToNil(value);
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"index >= TEMP_FRAME_START", "context == cachedContext", "index == cachedIndex"}, limit = "4")
+        protected static final Object doTempCached(final ContextObject context, final long index,
+                        @Cached("context") final ContextObject cachedContext,
+                        @Cached("index") final long cachedIndex,
+                        @Cached("createReadNode(cachedContext, cachedIndex)") final FrameSlotReadNode readNode) {
+            return NilObject.nullToNil(readNode.executeRead(cachedContext.getTruffleFrame()));
+        }
+
+        protected static final FrameSlotReadNode createReadNode(final ContextObject context, final long index) {
+            return FrameSlotReadNode.create(context.getBlockOrMethod().getStackSlot((int) (index - CONTEXT.TEMP_FRAME_START)));
         }
 
         @Specialization(guards = "index >= TEMP_FRAME_START", replaces = "doTempCached")
@@ -134,15 +137,19 @@ public final class ContextObjectNodes {
             context.setReceiver(value);
         }
 
-        @Specialization(guards = {"index >= TEMP_FRAME_START", "context.getBlockOrMethod() == codeObject"}, //
-                        limit = "2"/** thisContext and sender */
-        )
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"index >= TEMP_FRAME_START", "context == cachedContext", "index == cachedIndex"}, limit = "4")
         protected static final void doTempCached(final ContextObject context, final long index, final Object value,
-                        @SuppressWarnings("unused") @Cached(value = "context.getBlockOrMethod()", allowUncached = true) final CompiledCodeObject codeObject,
-                        @Cached(value = "create(codeObject)", allowUncached = true) final FrameStackWriteNode writeNode) {
-            final int stackIndex = (int) (index - CONTEXT.TEMP_FRAME_START);
-            FrameAccess.setArgumentIfInRange(context.getTruffleFrame(), stackIndex, value);
-            writeNode.execute(context.getTruffleFrame(), stackIndex, value);
+                        @Cached("context") final ContextObject cachedContext,
+                        @Cached("index") final long cachedIndex,
+                        @Cached("createWriteNode(cachedContext, cachedIndex)") final FrameSlotWriteNode writeNode) {
+            final MaterializedFrame truffleFrame = cachedContext.getTruffleFrame();
+            FrameAccess.setArgumentIfInRange(truffleFrame, (int) (index - CONTEXT.TEMP_FRAME_START), value);
+            writeNode.executeWrite(truffleFrame, value);
+        }
+
+        protected static final FrameSlotWriteNode createWriteNode(final ContextObject context, final long index) {
+            return FrameSlotWriteNode.create(context.getBlockOrMethod().getStackSlot((int) (index - CONTEXT.TEMP_FRAME_START)));
         }
 
         @Specialization(guards = "index >= TEMP_FRAME_START", replaces = "doTempCached")
