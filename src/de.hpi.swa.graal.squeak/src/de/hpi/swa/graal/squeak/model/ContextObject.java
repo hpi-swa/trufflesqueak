@@ -420,18 +420,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         FrameAccess.setReceiver(getOrCreateTruffleFrame(), value);
     }
 
+    @TruffleBoundary
     public Object atTemp(final int index) {
-        final CompiledCodeObject blockOrMethod = getBlockOrMethod();
-        assert index < blockOrMethod.getNumStackSlots() : "Invalid context stack access at #" + index;
-        return NilObject.nullToNil(truffleFrame.getValue(blockOrMethod.getStackSlot(index)));
+        return NilObject.nullToNil(truffleFrame.getValue(getBlockOrMethod().getStackSlot(index)));
     }
 
+    @TruffleBoundary
     public void atTempPut(final int index, final Object value) {
         FrameAccess.setArgumentIfInRange(getOrCreateTruffleFrame(), index, value);
-        final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(truffleFrame);
-        assert index < blockOrMethod.getNumStackSlots() : "Invalid context stack access at #" + index;
-        final FrameSlot frameSlot = blockOrMethod.getStackSlot(index);
-        FrameAccess.setStackSlot(truffleFrame, frameSlot, value);
+        FrameAccess.setStackSlot(truffleFrame, getBlockOrMethod().getStackSlot(index), value);
     }
 
     public void terminate() {
