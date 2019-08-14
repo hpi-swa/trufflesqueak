@@ -48,18 +48,6 @@ public class FFIConstants {
     }
 
     public enum FFI_TYPES {
-
-        /*
-         * // void type, boolean type VOID("void", 0), // VOID BOOL("bool", 1), // OBJECT BOOL UINT8
-         * // basic integer types UNSIGNED_BYTE("byte", 2), // UINT8 SIGNED_BYTE("sbyte", 3), //
-         * SINT8 UNSIGNED_SHORT("ushort", 4), // UINT16 SIGNED_SHORT("short", 5), // SINT16
-         * UNSIGNED_INT("ulong", 6), // UINT32 SIGNED_INT("long", 7), // SINT32 // 64bit types
-         * UNSIGNED_LONG_LONG("ulonglong", 8), // UINT64 SIGNED_LONG_LONG("longlong", 9), // SINT64
-         * // special integer types UNSIGNED_CHAR("string", 10), // STRING SIGNED_CHAR("schar", 11),
-         * // POINTER // float types SINGLE_FLOAT("float", 12), // FLOAT DOUBLE_FLOAT("double", 13),
-         * // DOUBLE
-         */
-
         VOID("void", "OBJECT", 0), // TODO: aendern
         BOOL("bool", "UINT8", 1), // OBJECT BOOL UINT8
         // basic integer types
@@ -128,7 +116,13 @@ public class FFIConstants {
         public static String getTruffleTypeFromInt(final int headerWord) {
             final int atomicType = getAtomicType(headerWord);
             if (FFI_TYPES.UNSIGNED_CHAR.integerValue == atomicType && isPointerType(headerWord)) {
-                return "STRING";
+                return "string";
+            }
+            if (FFI_TYPES.VOID.integerValue == atomicType && isPointerType(headerWord)) {
+                // TODO: if we have an pointer type this has to be implemented here
+            }
+            if (FFI_TYPES.VOID.integerValue == atomicType && isStructType(headerWord)) {
+                return "SINT32";
             }
             for (final FFI_TYPES type : FFI_TYPES.values()) {
                 if (type.integerValue == atomicType) {

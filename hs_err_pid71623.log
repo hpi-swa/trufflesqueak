@@ -1,0 +1,695 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  SIGSEGV (0xb) at pc=0x000000010a6890e8, pid=71623, tid=0x000000000000a803
+#
+# JRE version: OpenJDK Runtime Environment (8.0_212-b03) (build 1.8.0_212-20190420112649.buildslave.jdk8u-src-tar--b03)
+# Java VM: OpenJDK GraalVM CE 19.0.0 (25.212-b03-jvmci-19-b01 mixed mode bsd-amd64 compressed oops)
+# Problematic frame:
+# j  de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrimsFactory$ArgTypeConversionNodeGen.fallbackGuard_(IILjava/lang/Object;)Z+0
+#
+# Failed to write core dump. Core dumps have been disabled. To enable core dumping, try "ulimit -c unlimited" before starting Java again
+#
+# If you would like to submit a bug report, please visit:
+#   http://bugreport.java.com/bugreport/crash.jsp
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00007fc330089000):  JavaThread "ForkJoinPool.commonPool-worker-1" daemon [_thread_in_Java, id=43011, stack(0x0000700006b83000,0x0000700006c83000)]
+
+siginfo: si_signo: 11 (SIGSEGV), si_code: 1 (SEGV_MAPERR), si_addr: 0x0000000ef388f8b0
+
+Registers:
+RAX=0x0000000ef388f8a8, RBX=0x000000000000001a, RCX=0x000000013a13bf88, RDX=0x000000013a13bea0
+RSP=0x0000700006c7d340, RBP=0x0000700006c7d380, RSI=0x0000700006c7d3c0, RDI=0x0000000000000001
+R8 =0x00000007736a8c38, R9 =0x00000006c0168c00, R10=0x000000010a0b4120, R11=0x000000012324a588
+R12=0x0000000000000000, R13=0x000000013a13d3ef, R14=0x0000700006c7d3a0, R15=0x00007fc330089000
+RIP=0x000000010a6890e8, EFLAGS=0x0000000000010246, ERR=0x0000000000000004
+  TRAPNO=0x000000000000000e
+
+Top of Stack: (sp=0x0000700006c7d340)
+0x0000700006c7d340:   0000700006c7d340 000000013a13d3e8
+0x0000700006c7d350:   0000700006c7d3a0 000000013a13d660
+0x0000700006c7d360:   000000013a2bba78 000000013a13d4e0
+0x0000700006c7d370:   0000000000000000 0000700006c7d390
+0x0000700006c7d380:   0000700006c7d3e8 000000010a6687d0
+0x0000700006c7d390:   0000000ef388f8a8 0000000000020008
+0x0000700006c7d3a0:   0000000000000080 0000700006c7d3a8
+0x0000700006c7d3b0:   000000013a13c9b9 0000700006c7d420
+0x0000700006c7d3c0:   000000013a13d660 0000000000000000
+0x0000700006c7d3d0:   000000013a13ca70 0000700006c7d390
+0x0000700006c7d3e0:   0000700006c7d410 0000700006c7d470
+0x0000700006c7d3f0:   000000010a668d80 0000000000000000
+0x0000700006c7d400:   0000000000000000 0000000000000080
+0x0000700006c7d410:   0000000ef388f8a8 0000000000020008
+0x0000700006c7d420:   0000000779c4c6c0 0000000779c4c6e0
+0x0000700006c7d430:   0000700006c7d430 0000000138e6d209
+0x0000700006c7d440:   0000700006c7d510 000000013a13a8c8
+0x0000700006c7d450:   0000000000000000 0000000138e6d408
+0x0000700006c7d460:   0000700006c7d410 0000700006c7d4f8
+0x0000700006c7d470:   0000700006c7d558 000000010a668d80
+0x0000700006c7d480:   0000000ef388f8a8 00000006c0170148
+0x0000700006c7d490:   0000000779c4e4f8 0000000779c4d9c8
+0x0000700006c7d4a0:   0000000779c4d938 0000000779c4d0d0
+0x0000700006c7d4b0:   0000000773a70260 0000000779c4ce20
+0x0000700006c7d4c0:   0000000779c4ca40 0000000000020008
+0x0000700006c7d4d0:   00000006c143ebc8 0000000779c4ca28
+0x0000700006c7d4e0:   0000000779c4c9e0 00000006c143eb48
+0x0000700006c7d4f0:   0000000779c4c998 0000000779c4c980
+0x0000700006c7d500:   00000006c031c1f0 00000006c143eb00
+0x0000700006c7d510:   0000000779c4c670 0000700006c7d518
+0x0000700006c7d520:   0000000138e6bfed 0000700006c7d588
+0x0000700006c7d530:   000000013a282000 0000000000000000 
+
+Instructions: (pc=0x000000010a6890e8)
+0x000000010a6890c8:   87 28 02 00 00 49 ba 00 00 00 00 00 00 00 00 4d
+0x000000010a6890d8:   89 97 28 02 00 00 5a 8b 52 08 48 c1 e2 03 eb 0c
+0x000000010a6890e8:   8b 50 08 48 c1 e2 03 48 8b 44 d9 50 48 8b 4d e0
+0x000000010a6890f8:   48 85 c9 0f 84 00 05 00 00 48 8b 79 18 48 3b fa 
+
+instanceof  193 instanceof  [0x000000010a689000, 0x000000010a6896c0]  1728 bytes
+Register to memory mapping:
+
+RAX=0x0000000ef388f8a8 is an unknown value
+RBX=0x000000000000001a is an unknown value
+RCX=0x000000013a13bf88 is pointing into metadata
+RDX=0x000000013a13bea0 is pointing into metadata
+RSP=0x0000700006c7d340 is pointing into the stack for thread: 0x00007fc330089000
+RBP=0x0000700006c7d380 is pointing into the stack for thread: 0x00007fc330089000
+RSI=0x0000700006c7d3c0 is pointing into the stack for thread: 0x00007fc330089000
+RDI=0x0000000000000001 is an unknown value
+R8 =0x00000007736a8c38 is an oop
+[Ljava.lang.ThreadLocal$ThreadLocalMap$Entry; 
+ - klass: 'java/lang/ThreadLocal$ThreadLocalMap$Entry'[]
+ - length: 16
+R9 =0x00000006c0168c00 is an oop
+java.lang.ThreadLocal 
+ - klass: 'java/lang/ThreadLocal'
+R10=0x000000010a0b4120: _ZN19TemplateInterpreter13_active_tableE+0x4000 in /Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/server/libjvm.dylib at 0x0000000109800000
+R11=0x000000012324a588 is pointing into metadata
+R12=0x0000000000000000 is an unknown value
+R13=0x000000013a13d3ef is pointing into metadata
+R14=0x0000700006c7d3a0 is pointing into the stack for thread: 0x00007fc330089000
+R15=0x00007fc330089000 is a thread
+
+
+Stack: [0x0000700006b83000,0x0000700006c83000],  sp=0x0000700006c7d340,  free space=1000k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+j  de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrimsFactory$ArgTypeConversionNodeGen.fallbackGuard_(IILjava/lang/Object;)Z+0
+j  de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrimsFactory$ArgTypeConversionNodeGen.execute(ILjava/lang/Object;)Ljava/lang/Object;+337
+j  de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrims$AbstractFFIPrimitiveNode.doCallout(Lde/hpi/swa/graal/squeak/model/PointersObject;Lde/hpi/swa/graal/squeak/model/AbstractSqueakObject;[Ljava/lang/Object;)Ljava/lang/Object;+553
+j  de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives$PrimCalloutToFFINode.doCallout(Lde/hpi/swa/graal/squeak/model/AbstractSqueakObject;[Ljava/lang/Object;)Ljava/lang/Object;+37
+j  de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives$PrimCalloutToFFINode.doArg2(Lde/hpi/swa/graal/squeak/model/AbstractSqueakObject;Ljava/lang/Object;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;)Ljava/lang/Object;+14
+j  de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitivesFactory$PrimCalloutToFFINodeFactory$PrimCalloutToFFINodeGen.executeAndSpecialize(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;+378
+j  de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitivesFactory$PrimCalloutToFFINodeFactory$PrimCalloutToFFINodeGen.executeWithArguments(Lcom/oracle/truffle/api/frame/VirtualFrame;[Ljava/lang/Object;)Ljava/lang/Object;+1876
+J 2960 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode.doPrimitiveEagerly(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;Lcom/oracle/truffle/api/Assumption;Lde/hpi/swa/graal/squeak/nodes/primitives/AbstractPrimitiveNode;Lde/hpi/swa/graal/squeak/nodes/context/frame/CreateEagerArgumentsNode;Lcom/oracle/truffle/api/RootCallTarget;Lcom/oracle/truffle/api/nodes/DirectCallNode;Lcom/oracle/truffle/api/profiles/BranchProfile;)Ljava/lang/Object; (38 bytes) @ 0x000000010a90fcd6 [0x000000010a90fc00+0xd6]
+J 3269 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (842 bytes) @ 0x000000010af2e944 [0x000000010af2e100+0x844]
+J 2914 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeDispatch(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (276 bytes) @ 0x000000010a7a834c [0x000000010a7a81e0+0x16c]
+J 3053 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchSendNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/NativeObject;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/ClassObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (527 bytes) @ 0x000000010aa31c54 [0x000000010aa31a40+0x214]
+J 2869 JVMCI-native de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes$AbstractSendNode.executeVoid(Lcom/oracle/truffle/api/frame/VirtualFrame;)V (192 bytes) @ 0x000000010a9e733c [0x000000010a9e6d00+0x63c]
+J 3168 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.startBytecode(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (458 bytes) @ 0x000000010acd93f1 [0x000000010acd9060+0x391]
+J 3090 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.doVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;Lde/hpi/swa/graal/squeak/nodes/MaterializeContextOnMethodExitNode;)Ljava/lang/Object; (169 bytes) @ 0x000000010aee3ecc [0x000000010aee3e60+0x6c]
+J 3629 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (183 bytes) @ 0x000000010aeb937c [0x000000010aeb9100+0x27c]
+J 3089 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeContext(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (61 bytes) @ 0x000000010aaa0fc4 [0x000000010aaa0d80+0x244]
+J 2992 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode.enterVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (27 bytes) @ 0x000000010abc5e24 [0x000000010abc5c60+0x1c4]
+J 2860 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode$SqueakCodeRootNode.execute(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (9 bytes) @ 0x000000010a9664ec [0x000000010a966200+0x2ec]
+J 2718 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callRoot([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010a786456 [0x000000010a786360+0xf6]
+J 3188 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callBoundary([Ljava/lang/Object;)Ljava/lang/Object; (42 bytes) @ 0x000000010af9125c [0x000000010af911a0+0xbc]
+J 3098 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedDirectCallNode.call([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010ac98ad4 [0x000000010ac98940+0x194]
+J 3269 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (842 bytes) @ 0x000000010af2ee74 [0x000000010af2e100+0xd74]
+J 2914 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeDispatch(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (276 bytes) @ 0x000000010a7a834c [0x000000010a7a81e0+0x16c]
+J 3053 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchSendNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/NativeObject;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/ClassObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (527 bytes) @ 0x000000010aa31c54 [0x000000010aa31a40+0x214]
+J 2540 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchSendNodeGen.executeSend(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/NativeObject;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/ClassObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (279 bytes) @ 0x000000010b0878cc [0x000000010b0877c0+0x10c]
+J 3093 C1 de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives$AbstractPerformPrimitiveNode.dispatch(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/NativeObject;[Ljava/lang/Object;)Ljava/lang/Object; (15 bytes) @ 0x000000010abcc8ec [0x000000010abcaec0+0x1a2c]
+j  de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives$PrimPerformNode.perform(Lcom/oracle/truffle/api/frame/VirtualFrame;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/NativeObject;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;Lde/hpi/swa/graal/squeak/model/NotProvided;)Ljava/lang/Object;+11
+j  de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory$PrimPerformNodeFactory$PrimPerformNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;+124
+J 3211 C1 de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory$PrimPerformNodeFactory$PrimPerformNodeGen.executeWithArguments(Lcom/oracle/truffle/api/frame/VirtualFrame;[Ljava/lang/Object;)Ljava/lang/Object; (558 bytes) @ 0x000000010aeeb554 [0x000000010aee8400+0x3154]
+J 2960 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode.doPrimitiveEagerly(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;Lcom/oracle/truffle/api/Assumption;Lde/hpi/swa/graal/squeak/nodes/primitives/AbstractPrimitiveNode;Lde/hpi/swa/graal/squeak/nodes/context/frame/CreateEagerArgumentsNode;Lcom/oracle/truffle/api/RootCallTarget;Lcom/oracle/truffle/api/nodes/DirectCallNode;Lcom/oracle/truffle/api/profiles/BranchProfile;)Ljava/lang/Object; (38 bytes) @ 0x000000010a90fcd6 [0x000000010a90fc00+0xd6]
+J 3269 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (842 bytes) @ 0x000000010af2e944 [0x000000010af2e100+0x844]
+J 2914 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeDispatch(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (276 bytes) @ 0x000000010a7a834c [0x000000010a7a81e0+0x16c]
+J 3053 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchSendNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/NativeObject;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/ClassObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (527 bytes) @ 0x000000010aa31c54 [0x000000010aa31a40+0x214]
+J 2869 JVMCI-native de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes$AbstractSendNode.executeVoid(Lcom/oracle/truffle/api/frame/VirtualFrame;)V (192 bytes) @ 0x000000010a9e733c [0x000000010a9e6d00+0x63c]
+J 3168 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.startBytecode(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (458 bytes) @ 0x000000010acd93f1 [0x000000010acd9060+0x391]
+J 3090 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.doVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;Lde/hpi/swa/graal/squeak/nodes/MaterializeContextOnMethodExitNode;)Ljava/lang/Object; (169 bytes) @ 0x000000010aee3ecc [0x000000010aee3e60+0x6c]
+J 3629 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (183 bytes) @ 0x000000010aeb937c [0x000000010aeb9100+0x27c]
+J 3089 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeContext(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (61 bytes) @ 0x000000010aaa0fc4 [0x000000010aaa0d80+0x244]
+J 2992 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode.enterVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (27 bytes) @ 0x000000010abc5e24 [0x000000010abc5c60+0x1c4]
+J 2860 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode$SqueakCodeRootNode.execute(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (9 bytes) @ 0x000000010a9664ec [0x000000010a966200+0x2ec]
+J 2718 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callRoot([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010a786456 [0x000000010a786360+0xf6]
+J 3188 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callBoundary([Ljava/lang/Object;)Ljava/lang/Object; (42 bytes) @ 0x000000010af9125c [0x000000010af911a0+0xbc]
+J 3098 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedDirectCallNode.call([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010ac98ad4 [0x000000010ac98940+0x194]
+J 2998 C1 de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen.executeAndSpecialize(Lde/hpi/swa/graal/squeak/model/BlockClosureObject;[Ljava/lang/Object;)Ljava/lang/Object; (450 bytes) @ 0x000000010a7ef684 [0x000000010a7ecb00+0x2b84]
+J 3612 C1 de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen.executeBlock(Lde/hpi/swa/graal/squeak/model/BlockClosureObject;[Ljava/lang/Object;)Ljava/lang/Object; (122 bytes) @ 0x000000010ae504d4 [0x000000010ae4f960+0xb74]
+J 3525 C1 de.hpi.swa.graal.squeak.nodes.primitives.impl.BlockClosurePrimitivesFactory$PrimClosureValue0NodeFactory$PrimClosureValue0NodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Ljava/lang/Object;)Ljava/lang/Object; (199 bytes) @ 0x000000010ad52504 [0x000000010ad4ffe0+0x2524]
+J 2919 C1 de.hpi.swa.graal.squeak.nodes.primitives.impl.BlockClosurePrimitivesFactory$PrimClosureValue0NodeFactory$PrimClosureValue0NodeGen.executeWithArguments(Lcom/oracle/truffle/api/frame/VirtualFrame;[Ljava/lang/Object;)Ljava/lang/Object; (86 bytes) @ 0x000000010ab0177c [0x000000010aafea60+0x2d1c]
+J 2960 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode.doPrimitiveEagerly(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;Lcom/oracle/truffle/api/Assumption;Lde/hpi/swa/graal/squeak/nodes/primitives/AbstractPrimitiveNode;Lde/hpi/swa/graal/squeak/nodes/context/frame/CreateEagerArgumentsNode;Lcom/oracle/truffle/api/RootCallTarget;Lcom/oracle/truffle/api/nodes/DirectCallNode;Lcom/oracle/truffle/api/profiles/BranchProfile;)Ljava/lang/Object; (38 bytes) @ 0x000000010a90fcd6 [0x000000010a90fc00+0xd6]
+J 3269 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (842 bytes) @ 0x000000010af2e944 [0x000000010af2e100+0x844]
+J 2914 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeDispatch(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (276 bytes) @ 0x000000010a7a834c [0x000000010a7a81e0+0x16c]
+J 3053 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchSendNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/NativeObject;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/ClassObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (527 bytes) @ 0x000000010aa31c54 [0x000000010aa31a40+0x214]
+J 2869 JVMCI-native de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes$AbstractSendNode.executeVoid(Lcom/oracle/truffle/api/frame/VirtualFrame;)V (192 bytes) @ 0x000000010a9e733c [0x000000010a9e6d00+0x63c]
+J 3168 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.startBytecode(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (458 bytes) @ 0x000000010acd93f1 [0x000000010acd9060+0x391]
+J 3090 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.doVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;Lde/hpi/swa/graal/squeak/nodes/MaterializeContextOnMethodExitNode;)Ljava/lang/Object; (169 bytes) @ 0x000000010aee3ecc [0x000000010aee3e60+0x6c]
+J 3629 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (183 bytes) @ 0x000000010aeb937c [0x000000010aeb9100+0x27c]
+J 3089 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeContext(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (61 bytes) @ 0x000000010aaa0fc4 [0x000000010aaa0d80+0x244]
+J 2992 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode.enterVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (27 bytes) @ 0x000000010abc5e24 [0x000000010abc5c60+0x1c4]
+J 2860 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode$SqueakCodeRootNode.execute(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (9 bytes) @ 0x000000010a9664ec [0x000000010a966200+0x2ec]
+J 2718 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callRoot([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010a786456 [0x000000010a786360+0xf6]
+J 3188 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callBoundary([Ljava/lang/Object;)Ljava/lang/Object; (42 bytes) @ 0x000000010af9125c [0x000000010af911a0+0xbc]
+J 3098 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedDirectCallNode.call([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010ac98ad4 [0x000000010ac98940+0x194]
+J 3269 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (842 bytes) @ 0x000000010af2ee74 [0x000000010af2e100+0xd74]
+J 2914 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeDispatch(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (276 bytes) @ 0x000000010a7a834c [0x000000010a7a81e0+0x16c]
+J 3053 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchSendNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/NativeObject;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/ClassObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (527 bytes) @ 0x000000010aa31c54 [0x000000010aa31a40+0x214]
+J 2869 JVMCI-native de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes$AbstractSendNode.executeVoid(Lcom/oracle/truffle/api/frame/VirtualFrame;)V (192 bytes) @ 0x000000010a9e733c [0x000000010a9e6d00+0x63c]
+J 3168 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.startBytecode(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (458 bytes) @ 0x000000010acd93f1 [0x000000010acd9060+0x391]
+J 3090 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.doVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;Lde/hpi/swa/graal/squeak/nodes/MaterializeContextOnMethodExitNode;)Ljava/lang/Object; (169 bytes) @ 0x000000010aee3ecc [0x000000010aee3e60+0x6c]
+J 3629 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (183 bytes) @ 0x000000010aeb937c [0x000000010aeb9100+0x27c]
+J 3089 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeContext(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (61 bytes) @ 0x000000010aaa0fc4 [0x000000010aaa0d80+0x244]
+J 2992 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode.enterVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (27 bytes) @ 0x000000010abc5e24 [0x000000010abc5c60+0x1c4]
+J 2860 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode$SqueakCodeRootNode.execute(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (9 bytes) @ 0x000000010a9664ec [0x000000010a966200+0x2ec]
+J 2718 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callRoot([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010a786456 [0x000000010a786360+0xf6]
+J 3188 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callBoundary([Ljava/lang/Object;)Ljava/lang/Object; (42 bytes) @ 0x000000010af9125c [0x000000010af911a0+0xbc]
+J 3098 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedDirectCallNode.call([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010ac98ad4 [0x000000010ac98940+0x194]
+J 3269 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (842 bytes) @ 0x000000010af2ee74 [0x000000010af2e100+0xd74]
+J 2914 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeDispatch(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (276 bytes) @ 0x000000010a7a834c [0x000000010a7a81e0+0x16c]
+J 3053 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchSendNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/NativeObject;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/ClassObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (527 bytes) @ 0x000000010aa31c54 [0x000000010aa31a40+0x214]
+J 2869 JVMCI-native de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes$AbstractSendNode.executeVoid(Lcom/oracle/truffle/api/frame/VirtualFrame;)V (192 bytes) @ 0x000000010a9e733c [0x000000010a9e6d00+0x63c]
+J 3168 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.startBytecode(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (458 bytes) @ 0x000000010acd93f1 [0x000000010acd9060+0x391]
+J 3090 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.doVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;Lde/hpi/swa/graal/squeak/nodes/MaterializeContextOnMethodExitNode;)Ljava/lang/Object; (169 bytes) @ 0x000000010aee3ecc [0x000000010aee3e60+0x6c]
+J 3629 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (183 bytes) @ 0x000000010aeb937c [0x000000010aeb9100+0x27c]
+J 3089 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeContext(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (61 bytes) @ 0x000000010aaa0fc4 [0x000000010aaa0d80+0x244]
+J 2992 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode.enterVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (27 bytes) @ 0x000000010abc5e24 [0x000000010abc5c60+0x1c4]
+J 2860 JVMCI-native de.hpi.swa.graal.squeak.nodes.EnterCodeNode$SqueakCodeRootNode.execute(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (9 bytes) @ 0x000000010a9664ec [0x000000010a966200+0x2ec]
+J 2718 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callRoot([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010a786456 [0x000000010a786360+0xf6]
+J 3188 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callBoundary([Ljava/lang/Object;)Ljava/lang/Object; (42 bytes) @ 0x000000010af9125c [0x000000010af911a0+0xbc]
+J 3098 JVMCI-native org.graalvm.compiler.truffle.runtime.OptimizedDirectCallNode.call([Ljava/lang/Object;)Ljava/lang/Object; (68 bytes) @ 0x000000010ac98ad4 [0x000000010ac98940+0x194]
+J 2998 C1 de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen.executeAndSpecialize(Lde/hpi/swa/graal/squeak/model/BlockClosureObject;[Ljava/lang/Object;)Ljava/lang/Object; (450 bytes) @ 0x000000010a7ef684 [0x000000010a7ecb00+0x2b84]
+J 3612 C1 de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen.executeBlock(Lde/hpi/swa/graal/squeak/model/BlockClosureObject;[Ljava/lang/Object;)Ljava/lang/Object; (122 bytes) @ 0x000000010ae504d4 [0x000000010ae4f960+0xb74]
+J 3525 C1 de.hpi.swa.graal.squeak.nodes.primitives.impl.BlockClosurePrimitivesFactory$PrimClosureValue0NodeFactory$PrimClosureValue0NodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Ljava/lang/Object;)Ljava/lang/Object; (199 bytes) @ 0x000000010ad52504 [0x000000010ad4ffe0+0x2524]
+J 2919 C1 de.hpi.swa.graal.squeak.nodes.primitives.impl.BlockClosurePrimitivesFactory$PrimClosureValue0NodeFactory$PrimClosureValue0NodeGen.executeWithArguments(Lcom/oracle/truffle/api/frame/VirtualFrame;[Ljava/lang/Object;)Ljava/lang/Object; (86 bytes) @ 0x000000010ab0177c [0x000000010aafea60+0x2d1c]
+J 2960 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode.doPrimitiveEagerly(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;Lcom/oracle/truffle/api/Assumption;Lde/hpi/swa/graal/squeak/nodes/primitives/AbstractPrimitiveNode;Lde/hpi/swa/graal/squeak/nodes/context/frame/CreateEagerArgumentsNode;Lcom/oracle/truffle/api/RootCallTarget;Lcom/oracle/truffle/api/nodes/DirectCallNode;Lcom/oracle/truffle/api/profiles/BranchProfile;)Ljava/lang/Object; (38 bytes) @ 0x000000010a90fcd6 [0x000000010a90fc00+0xd6]
+J 3269 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (842 bytes) @ 0x000000010af2e944 [0x000000010af2e100+0x844]
+J 2914 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNodeGen.executeDispatch(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/CompiledMethodObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (276 bytes) @ 0x000000010a7a834c [0x000000010a7a81e0+0x16c]
+J 3053 JVMCI-native de.hpi.swa.graal.squeak.nodes.DispatchSendNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/NativeObject;Ljava/lang/Object;Lde/hpi/swa/graal/squeak/model/ClassObject;[Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (527 bytes) @ 0x000000010aa31c54 [0x000000010aa31a40+0x214]
+J 2869 JVMCI-native de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes$AbstractSendNode.executeVoid(Lcom/oracle/truffle/api/frame/VirtualFrame;)V (192 bytes) @ 0x000000010a9e733c [0x000000010a9e6d00+0x63c]
+J 3168 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.startBytecode(Lcom/oracle/truffle/api/frame/VirtualFrame;)Ljava/lang/Object; (458 bytes) @ 0x000000010acd93f1 [0x000000010acd9060+0x391]
+J 3090 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNode.doVirtualized(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;Lde/hpi/swa/graal/squeak/nodes/MaterializeContextOnMethodExitNode;)Ljava/lang/Object; (169 bytes) @ 0x000000010aee3ecc [0x000000010aee3e60+0x6c]
+J 3629 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeAndSpecialize(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (183 bytes) @ 0x000000010aeb937c [0x000000010aeb9100+0x27c]
+J 3089 JVMCI-native de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.executeContext(Lcom/oracle/truffle/api/frame/VirtualFrame;Lde/hpi/swa/graal/squeak/model/ContextObject;)Ljava/lang/Object; (61 bytes) @ 0x000000010aaa0fc4 [0x000000010aaa0d80+0x244]
+...<more frames>...
+
+
+---------------  P R O C E S S  ---------------
+
+Java Threads: ( => current thread )
+  0x00007fc32e93b000 JavaThread "TruffleCompilerThread-20" daemon [_thread_in_native, id=41731, stack(0x0000700006e8c000,0x0000700006f8c000)]
+  0x00007fc32e934800 JavaThread "TruffleCompilerThread-19" daemon [_thread_in_native, id=42243, stack(0x0000700006d89000,0x0000700006e89000)]
+  0x00007fc32f37b000 JavaThread "nfi-gc" daemon [_thread_blocked, id=42755, stack(0x0000700006c86000,0x0000700006d86000)]
+=>0x00007fc330089000 JavaThread "ForkJoinPool.commonPool-worker-1" daemon [_thread_in_Java, id=43011, stack(0x0000700006b83000,0x0000700006c83000)]
+  0x00007fc33101a000 JavaThread "pool-1-thread-1" [_thread_blocked, id=3591, stack(0x0000700006a80000,0x0000700006b80000)]
+  0x00007fc32f05b800 JavaThread "ReaderThread" [_thread_in_native, id=21763, stack(0x000070000697d000,0x0000700006a7d000)]
+  0x00007fc32e01b000 JavaThread "Service Thread" daemon [_thread_blocked, id=17411, stack(0x0000700006777000,0x0000700006877000)]
+  0x00007fc32e012800 JavaThread "C1 CompilerThread3" daemon [_thread_blocked, id=17667, stack(0x0000700006574000,0x0000700006774000)]
+  0x00007fc32e011800 JavaThread "JVMCI-native CompilerThread2" daemon [_thread_blocked, id=18179, stack(0x0000700006371000,0x0000700006571000)]
+  0x00007fc32e010800 JavaThread "JVMCI-native CompilerThread1" daemon [_thread_blocked, id=15875, stack(0x000070000616e000,0x000070000636e000)]
+  0x00007fc32f034800 JavaThread "JVMCI-native CompilerThread0" daemon [_thread_blocked, id=18435, stack(0x0000700005f6b000,0x000070000616b000)]
+  0x00007fc32f027000 JavaThread "Signal Dispatcher" daemon [_thread_blocked, id=15363, stack(0x0000700005e68000,0x0000700005f68000)]
+  0x00007fc32f01b800 JavaThread "Finalizer" daemon [_thread_blocked, id=13571, stack(0x0000700005d65000,0x0000700005e65000)]
+  0x00007fc32e006800 JavaThread "Reference Handler" daemon [_thread_blocked, id=13059, stack(0x0000700005c62000,0x0000700005d62000)]
+  0x00007fc32f002800 JavaThread "main" [_thread_blocked, id=9475, stack(0x0000700005244000,0x0000700005344000)]
+
+Other Threads:
+  0x00007fc32f01b000 VMThread [stack: 0x0000700005b5f000,0x0000700005c5f000] [id=19971]
+  0x00007fc32e008000 WatcherThread [stack: 0x000070000687a000,0x000070000697a000] [id=17155]
+
+VM state:not at safepoint (normal execution)
+
+VM Mutex/Monitor currently owned by a thread: None
+
+heap address: 0x00000006c0000000, size: 4096 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 3
+Compressed class space size: 1073741824 Address: 0x00000007c0000000
+
+Heap:
+ PSYoungGen      total 425472K, used 247643K [0x000000076ab00000, 0x0000000793e00000, 0x00000007c0000000)
+  eden space 251392K, 98% used [0x000000076ab00000,0x0000000779cd6f48,0x000000077a080000)
+  from space 174080K, 0% used [0x000000077a080000,0x000000077a080000,0x0000000784a80000)
+  to   space 183808K, 0% used [0x0000000788a80000,0x0000000788a80000,0x0000000793e00000)
+ ParOldGen       total 344064K, used 151049K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 43% used [0x00000006c0000000,0x00000006c9382440,0x00000006d5000000)
+ Metaspace       used 24890K, capacity 25388K, committed 25600K, reserved 1071104K
+  class space    used 2927K, capacity 3025K, committed 3072K, reserved 1048576K
+
+Card table byte_map: [0x0000000119a21000,0x000000011a222000] byte_map_base: 0x0000000116421000
+
+Marking Bits: (ParMarkBitMap*) 0x000000010a0af1e8
+ Begin Bits: [0x000000011a778000, 0x000000011e778000)
+ End Bits:   [0x000000011e778000, 0x0000000122778000)
+
+Polling page: 0x0000000108779000
+
+CodeCache: size=245760Kb used=10982Kb max_used=11954Kb free=234777Kb
+ bounds [0x000000010a661000, 0x000000010b261000, 0x0000000119661000]
+ total_blobs=3393 nmethods=2899 adapters=405
+ compilation: enabled
+
+Compilation events (10 events):
+Event: 7.033 Thread 0x00007fc32f034800 nmethod 3749 0x000000010b1461d0 code [0x000000010b146320, 0x000000010b146538]
+Event: 7.034 Thread 0x00007fc32e011800 nmethod 3750 0x000000010b146650 code [0x000000010b1467a0, 0x000000010b146890]
+Event: 7.045 Thread 0x00007fc32e012800 3751       3       de.hpi.swa.graal.squeak.nodes.primitives.impl.ArrayStreamPrimitivesFactory$PrimBasicAtPutNodeFactory::getExecutionSignature (28 bytes)
+Event: 7.045 Thread 0x00007fc32e012800 nmethod 3751 0x000000010b144f10 code [0x000000010b1450e0, 0x000000010b145f90]
+Event: 7.045 Thread 0x00007fc32e012800 3752       3       de.hpi.swa.graal.squeak.nodes.primitives.impl.ArrayStreamPrimitivesFactory$PrimBasicAtPutNodeFactory::createNode (6 bytes)
+Event: 7.045 Thread 0x00007fc32e012800 nmethod 3752 0x000000010b144b90 code [0x000000010b144d00, 0x000000010b144e88]
+Event: 7.045 Thread 0x00007fc32e012800 3753       3       de.hpi.swa.graal.squeak.model.ContextObject::transferTo (66 bytes)
+Event: 7.046 Thread 0x00007fc32f034800 3755  s    4       org.graalvm.compiler.truffle.runtime.OptimizedCompilationProfile::ensureProfiling (72 bytes)
+Event: 7.046 Thread 0x00007fc32e010800 3754       4       org.graalvm.compiler.truffle.runtime.OptimizedCallTarget::invalidate (41 bytes)
+Event: 7.047 Thread 0x00007fc32e012800 nmethod 3753 0x000000010b141950 code [0x000000010b141c80, 0x000000010b144208]
+
+GC Heap History (10 events):
+Event: 2.032 GC heap before
+{Heap before GC invocations=7 (full 1):
+ PSYoungGen      total 141824K, used 131072K [0x000000076ab00000, 0x0000000786500000, 0x00000007c0000000)
+  eden space 131072K, 100% used [0x000000076ab00000,0x0000000772b00000,0x0000000772b00000)
+  from space 10752K, 0% used [0x0000000772b00000,0x0000000772b00000,0x0000000773580000)
+  to   space 95232K, 0% used [0x0000000780800000,0x0000000780800000,0x0000000786500000)
+ ParOldGen       total 344064K, used 159585K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 46% used [0x00000006c0000000,0x00000006c9bd84c0,0x00000006d5000000)
+ Metaspace       used 13784K, capacity 14238K, committed 14464K, reserved 1062912K
+  class space    used 1492K, capacity 1609K, committed 1664K, reserved 1048576K
+Event: 2.118 GC heap after
+Heap after GC invocations=7 (full 1):
+ PSYoungGen      total 262656K, used 78948K [0x000000076ab00000, 0x0000000785580000, 0x00000007c0000000)
+  eden space 183296K, 0% used [0x000000076ab00000,0x000000076ab00000,0x0000000775e00000)
+  from space 79360K, 99% used [0x0000000780800000,0x0000000785519378,0x0000000785580000)
+  to   space 108544K, 0% used [0x0000000778180000,0x0000000778180000,0x000000077eb80000)
+ ParOldGen       total 344064K, used 159585K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 46% used [0x00000006c0000000,0x00000006c9bd84c0,0x00000006d5000000)
+ Metaspace       used 13784K, capacity 14238K, committed 14464K, reserved 1062912K
+  class space    used 1492K, capacity 1609K, committed 1664K, reserved 1048576K
+}
+Event: 2.658 GC heap before
+{Heap before GC invocations=8 (full 1):
+ PSYoungGen      total 262656K, used 262244K [0x000000076ab00000, 0x0000000785580000, 0x00000007c0000000)
+  eden space 183296K, 100% used [0x000000076ab00000,0x0000000775e00000,0x0000000775e00000)
+  from space 79360K, 99% used [0x0000000780800000,0x0000000785519378,0x0000000785580000)
+  to   space 108544K, 0% used [0x0000000778180000,0x0000000778180000,0x000000077eb80000)
+ ParOldGen       total 344064K, used 159585K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 46% used [0x00000006c0000000,0x00000006c9bd84c0,0x00000006d5000000)
+ Metaspace       used 14027K, capacity 14462K, committed 14720K, reserved 1062912K
+  class space    used 1534K, capacity 1641K, committed 1664K, reserved 1048576K
+Event: 2.782 GC heap after
+Heap after GC invocations=8 (full 1):
+ PSYoungGen      total 328192K, used 108537K [0x000000076ab00000, 0x000000078ec80000, 0x00000007c0000000)
+  eden space 219648K, 0% used [0x000000076ab00000,0x000000076ab00000,0x0000000778180000)
+  from space 108544K, 99% used [0x0000000778180000,0x000000077eb7e6f0,0x000000077eb80000)
+  to   space 165888K, 0% used [0x0000000784a80000,0x0000000784a80000,0x000000078ec80000)
+ ParOldGen       total 344064K, used 229464K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 66% used [0x00000006c0000000,0x00000006ce0163b8,0x00000006d5000000)
+ Metaspace       used 14027K, capacity 14462K, committed 14720K, reserved 1062912K
+  class space    used 1534K, capacity 1641K, committed 1664K, reserved 1048576K
+}
+Event: 3.387 GC heap before
+{Heap before GC invocations=9 (full 1):
+ PSYoungGen      total 328192K, used 328185K [0x000000076ab00000, 0x000000078ec80000, 0x00000007c0000000)
+  eden space 219648K, 100% used [0x000000076ab00000,0x0000000778180000,0x0000000778180000)
+  from space 108544K, 99% used [0x0000000778180000,0x000000077eb7e6f0,0x000000077eb80000)
+  to   space 165888K, 0% used [0x0000000784a80000,0x0000000784a80000,0x000000078ec80000)
+ ParOldGen       total 344064K, used 229464K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 66% used [0x00000006c0000000,0x00000006ce0163b8,0x00000006d5000000)
+ Metaspace       used 19542K, capacity 20010K, committed 20096K, reserved 1067008K
+  class space    used 2531K, capacity 2635K, committed 2688K, reserved 1048576K
+Event: 3.465 GC heap after
+Heap after GC invocations=9 (full 1):
+ PSYoungGen      total 417280K, used 110945K [0x000000076ab00000, 0x0000000792b00000, 0x00000007c0000000)
+  eden space 251392K, 0% used [0x000000076ab00000,0x000000076ab00000,0x000000077a080000)
+  from space 165888K, 66% used [0x0000000784a80000,0x000000078b6d8578,0x000000078ec80000)
+  to   space 174080K, 0% used [0x000000077a080000,0x000000077a080000,0x0000000784a80000)
+ ParOldGen       total 344064K, used 229472K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 66% used [0x00000006c0000000,0x00000006ce0183b8,0x00000006d5000000)
+ Metaspace       used 19542K, capacity 20010K, committed 20096K, reserved 1067008K
+  class space    used 2531K, capacity 2635K, committed 2688K, reserved 1048576K
+}
+Event: 3.964 GC heap before
+{Heap before GC invocations=10 (full 1):
+ PSYoungGen      total 417280K, used 152344K [0x000000076ab00000, 0x0000000792b00000, 0x00000007c0000000)
+  eden space 251392K, 16% used [0x000000076ab00000,0x000000076d36dc20,0x000000077a080000)
+  from space 165888K, 66% used [0x0000000784a80000,0x000000078b6d8578,0x000000078ec80000)
+  to   space 174080K, 0% used [0x000000077a080000,0x000000077a080000,0x0000000784a80000)
+ ParOldGen       total 344064K, used 229472K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 66% used [0x00000006c0000000,0x00000006ce0183b8,0x00000006d5000000)
+ Metaspace       used 21982K, capacity 22510K, committed 22912K, reserved 1069056K
+  class space    used 2691K, capacity 2843K, committed 2944K, reserved 1048576K
+Event: 4.036 GC heap after
+Heap after GC invocations=10 (full 1):
+ PSYoungGen      total 425472K, used 122752K [0x000000076ab00000, 0x0000000793e00000, 0x00000007c0000000)
+  eden space 251392K, 0% used [0x000000076ab00000,0x000000076ab00000,0x000000077a080000)
+  from space 174080K, 70% used [0x000000077a080000,0x00000007818602f0,0x0000000784a80000)
+  to   space 183808K, 0% used [0x0000000788a80000,0x0000000788a80000,0x0000000793e00000)
+ ParOldGen       total 344064K, used 229480K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 66% used [0x00000006c0000000,0x00000006ce01a3b8,0x00000006d5000000)
+ Metaspace       used 21982K, capacity 22510K, committed 22912K, reserved 1069056K
+  class space    used 2691K, capacity 2843K, committed 2944K, reserved 1048576K
+}
+Event: 4.036 GC heap before
+{Heap before GC invocations=11 (full 2):
+ PSYoungGen      total 425472K, used 122752K [0x000000076ab00000, 0x0000000793e00000, 0x00000007c0000000)
+  eden space 251392K, 0% used [0x000000076ab00000,0x000000076ab00000,0x000000077a080000)
+  from space 174080K, 70% used [0x000000077a080000,0x00000007818602f0,0x0000000784a80000)
+  to   space 183808K, 0% used [0x0000000788a80000,0x0000000788a80000,0x0000000793e00000)
+ ParOldGen       total 344064K, used 229480K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 66% used [0x00000006c0000000,0x00000006ce01a3b8,0x00000006d5000000)
+ Metaspace       used 21982K, capacity 22510K, committed 22912K, reserved 1069056K
+  class space    used 2691K, capacity 2843K, committed 2944K, reserved 1048576K
+Event: 4.351 GC heap after
+Heap after GC invocations=11 (full 2):
+ PSYoungGen      total 425472K, used 0K [0x000000076ab00000, 0x0000000793e00000, 0x00000007c0000000)
+  eden space 251392K, 0% used [0x000000076ab00000,0x000000076ab00000,0x000000077a080000)
+  from space 174080K, 0% used [0x000000077a080000,0x000000077a080000,0x0000000784a80000)
+  to   space 183808K, 0% used [0x0000000788a80000,0x0000000788a80000,0x0000000793e00000)
+ ParOldGen       total 344064K, used 151049K [0x00000006c0000000, 0x00000006d5000000, 0x000000076ab00000)
+  object space 344064K, 43% used [0x00000006c0000000,0x00000006c9382440,0x00000006d5000000)
+ Metaspace       used 21982K, capacity 22510K, committed 22912K, reserved 1069056K
+  class space    used 2691K, capacity 2843K, committed 2944K, reserved 1048576K
+}
+
+Class unloading (0 events):
+No events
+
+Deoptimization events (10 events):
+Event: 6.769 Thread 0x00007fc32e934800 Uncommon trap: reason=null_assert_or_unreached0 action=reinterpret pc=0x000000010ae5872b method=org.graalvm.compiler.truffle.runtime.GraalTruffleRuntime.getLoopExplosionKind(Ljdk/vm/ci/meta/ResolvedJavaMethod;)Lorg/graalvm/compiler/truffle/common/TruffleC
+Event: 6.831 Thread 0x00007fc330089000 Uncommon trap: reason=null_assert_or_unreached0 action=reinterpret pc=0x000000010ad5dcbe method=de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen.executeBlock(Lde/hpi/swa/graal/squeak/model/BlockClosureObject;[Ljava/lang/Object;)Ljava/lang/Object; @ 0
+Event: 6.908 Thread 0x00007fc330089000 Uncommon trap: reason=null_assert_or_unreached0 action=reinterpret pc=0x000000010a98171e method=de.hpi.swa.graal.squeak.nodes.primitives.impl.ArrayStreamPrimitives$PrimBasicAtNode.doSqueakObject(Ljava/lang/Object;JLde/hpi/swa/graal/squeak/model/NotProvide
+Event: 6.908 Thread 0x00007fc330089000 Uncommon trap: reason=null_assert_or_unreached0 action=reinterpret pc=0x000000010b117cba method=de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0NodeGen.execute(Ljava/lang/Object;J)Ljava/lang/Object; @ 0
+Event: 6.908 Thread 0x00007fc330089000 Uncommon trap: reason=null_assert_or_unreached0 action=reinterpret pc=0x000000010ad1f808 method=de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0NodeGen.executeAndSpecialize(Ljava/lang/Object;J)Ljava/lang/Object; @ 16
+Event: 6.910 Thread 0x00007fc330089000 Uncommon trap: reason=intrinsic_or_type_checked_inlining action=reinterpret pc=0x000000010acfd8da method=java.util.regex.Pattern$Curly.match0(Ljava/util/regex/Matcher;IILjava/lang/CharSequence;)Z @ 83
+Event: 6.947 Thread 0x00007fc330089000 Uncommon trap: reason=null_assert_or_unreached0 action=reinterpret pc=0x000000010ae5edb6 method=de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes$StoreIntoTempNode.executeVoid(Lcom/oracle/truffle/api/frame/VirtualFrame;)V @ 13
+Event: 6.948 Thread 0x00007fc330089000 Uncommon trap: reason=null_assert_or_unreached0 action=reinterpret pc=0x000000010ad5d25d method=de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory$PrimClassNodeFactory$PrimClassNodeGen.executeWithArguments(Lcom/oracle/truffle/api/frame
+Event: 6.958 Thread 0x00007fc330089000 Uncommon trap: reason=transfer_to_interpreter action=reinterpret pc=0x000000010adef6ac method=org.graalvm.compiler.truffle.runtime.OptimizedCallTarget.callRoot([Ljava/lang/Object;)Ljava/lang/Object; @ 0
+Event: 6.962 Thread 0x00007fc330089000 Uncommon trap: reason=null_assert_or_unreached0 action=reinterpret pc=0x000000010b116aae method=de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNodeGen.fallbackGuard_(Lcom/oracle/truffle/api/frame/Frame;I)Z @ 14
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (10 events):
+Event: 5.944 Thread 0x00007fc32f002800 Implicit null exception at 0x000000010aac62e8 to 0x000000010a6aa32c
+Event: 6.022 Thread 0x00007fc330089000 Implicit null exception at 0x000000010aafd10d to 0x000000010a6aa32c
+Event: 6.022 Thread 0x00007fc330089000 Implicit null exception at 0x000000010ad2afc0 to 0x000000010a6aa32c
+Event: 6.022 Thread 0x00007fc330089000 Implicit null exception at 0x000000010a90ccb6 to 0x000000010a6aa32c
+Event: 6.023 Thread 0x00007fc330089000 Implicit null exception at 0x000000010ac188f0 to 0x000000010a6aa32c
+Event: 6.080 Thread 0x00007fc330089000 Implicit null exception at 0x000000010a7d7339 to 0x000000010a6aa32c
+Event: 6.736 Thread 0x00007fc330089000 Exception <a 'com/oracle/truffle/nfi/impl/NFIUnsatisfiedLinkError': dlsym(0x7fc32dd9bb60, ffi_does_not_exist): symbol not found> (0x0000000777bdb3e0) thrown at [/Users/graal/slave/e/main/graal-jvmci-8/src/share/vm/prims/jni.cpp, line 740]
+Event: 6.737 Thread 0x00007fc330089000 Exception <a 'com/oracle/truffle/nfi/impl/NFIUnsatisfiedLinkError': dlsym(0x7fc32dd9bb60, ffi_does_not_exist): symbol not found> (0x0000000777bdf778) thrown at [/Users/graal/slave/e/main/graal-jvmci-8/src/share/vm/prims/jni.cpp, line 740]
+Event: 6.741 Thread 0x00007fc330089000 Exception <a 'sun/nio/fs/UnixException'> (0x0000000777c14a10) thrown at [/Users/graal/slave/e/main/graal-jvmci-8/src/share/vm/prims/jni.cpp, line 714]
+Event: 6.742 Thread 0x00007fc330089000 Exception <a 'sun/nio/fs/UnixException'> (0x0000000777c17ee0) thrown at [/Users/graal/slave/e/main/graal-jvmci-8/src/share/vm/prims/jni.cpp, line 714]
+
+Events (10 events):
+Event: 7.030 Executing VM operation: RevokeBias
+Event: 7.030 Executing VM operation: RevokeBias done
+Event: 7.031 Executing VM operation: RevokeBias
+Event: 7.032 Executing VM operation: RevokeBias done
+Event: 7.032 Executing VM operation: RevokeBias
+Event: 7.032 Executing VM operation: RevokeBias done
+Event: 7.039 Executing VM operation: RevokeBias
+Event: 7.039 Executing VM operation: RevokeBias done
+Event: 7.040 Executing VM operation: RevokeBias
+Event: 7.040 Executing VM operation: RevokeBias done
+
+
+Dynamic libraries:
+0x00007fff2d492000 	/System/Library/Frameworks/Cocoa.framework/Versions/A/Cocoa
+0x00007fff391aa000 	/System/Library/Frameworks/Security.framework/Versions/A/Security
+0x00007fff2c127000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices
+0x00007fff59270000 	/usr/lib/libz.1.dylib
+0x00007fff56bca000 	/usr/lib/libSystem.B.dylib
+0x00007fff58401000 	/usr/lib/libobjc.A.dylib
+0x00007fff2fefc000 	/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation
+0x00007fff2dc7a000 	/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+0x00007fff2b320000 	/System/Library/Frameworks/AppKit.framework/Versions/C/AppKit
+0x00007fff2d80d000 	/System/Library/Frameworks/CoreData.framework/Versions/A/CoreData
+0x00007fff5069d000 	/System/Library/PrivateFrameworks/RemoteViewServices.framework/Versions/A/RemoteViewServices
+0x00007fff5490a000 	/System/Library/PrivateFrameworks/UIFoundation.framework/Versions/A/UIFoundation
+0x00007fff55fec000 	/System/Library/PrivateFrameworks/XCTTargetBootstrap.framework/Versions/A/XCTTargetBootstrap
+0x00007fff2db92000 	/System/Library/Frameworks/CoreDisplay.framework/Versions/A/CoreDisplay
+0x00007fff4b3f0000 	/System/Library/PrivateFrameworks/IconServices.framework/Versions/A/IconServices
+0x00007fff32820000 	/System/Library/Frameworks/Metal.framework/Versions/A/Metal
+0x00007fff4296b000 	/System/Library/PrivateFrameworks/DesktopServicesPriv.framework/Versions/A/DesktopServicesPriv
+0x00007fff57764000 	/usr/lib/libenergytrace.dylib
+0x00007fff52df3000 	/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight
+0x00007fff2e0c0000 	/System/Library/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics
+0x00007fff2a0ec000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate
+0x00007fff30644000 	/System/Library/Frameworks/IOSurface.framework/Versions/A/IOSurface
+0x00007fff427d7000 	/System/Library/PrivateFrameworks/DFRFoundation.framework/Versions/A/DFRFoundation
+0x00007fff2c60a000 	/System/Library/Frameworks/AudioToolbox.framework/Versions/A/AudioToolbox
+0x00007fff2c883000 	/System/Library/Frameworks/AudioUnit.framework/Versions/A/AudioUnit
+0x00007fff4286c000 	/System/Library/PrivateFrameworks/DataDetectorsCore.framework/Versions/A/DataDetectorsCore
+0x00007fff2cf96000 	/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/HIToolbox
+0x00007fff578bd000 	/usr/lib/libicucore.A.dylib
+0x00007fff3871f000 	/System/Library/Frameworks/QuartzCore.framework/Versions/A/QuartzCore
+0x00007fff2d36a000 	/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/SpeechRecognition.framework/Versions/A/SpeechRecognition
+0x00007fff56d1e000 	/usr/lib/libauto.dylib
+0x00007fff59164000 	/usr/lib/libxml2.2.dylib
+0x00007fff423b4000 	/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/CoreUI
+0x00007fff2d6f8000 	/System/Library/Frameworks/CoreAudio.framework/Versions/A/CoreAudio
+0x00007fff2fd31000 	/System/Library/Frameworks/DiskArbitration.framework/Versions/A/DiskArbitration
+0x00007fff57b6b000 	/usr/lib/liblangid.dylib
+0x00007fff4c7fe000 	/System/Library/PrivateFrameworks/MultitouchSupport.framework/Versions/A/MultitouchSupport
+0x00007fff305b3000 	/System/Library/Frameworks/IOKit.framework/Versions/A/IOKit
+0x00007fff5678b000 	/usr/lib/libDiagnosticMessagesClient.dylib
+0x00007fff2eecf000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices
+0x00007fff4e4a5000 	/System/Library/PrivateFrameworks/PerformanceAnalysis.framework/Versions/A/PerformanceAnalysis
+0x00007fff3790d000 	/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL
+0x00007fff2d4a0000 	/System/Library/Frameworks/ColorSync.framework/Versions/A/ColorSync
+0x00007fff2e751000 	/System/Library/Frameworks/CoreImage.framework/Versions/A/CoreImage
+0x00007fff2f8a8000 	/System/Library/Frameworks/CoreText.framework/Versions/A/CoreText
+0x00007fff306a7000 	/System/Library/Frameworks/ImageIO.framework/Versions/A/ImageIO
+0x00007fff3ea09000 	/System/Library/PrivateFrameworks/Backup.framework/Versions/A/Backup
+0x00007fff56c71000 	/usr/lib/libarchive.2.dylib
+0x00007fff2cbdb000 	/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork
+0x00007fff39904000 	/System/Library/Frameworks/SystemConfiguration.framework/Versions/A/SystemConfiguration
+0x00007fff566bc000 	/usr/lib/libCRFSuite.dylib
+0x00007fff56e0d000 	/usr/lib/libc++.1.dylib
+0x00007fff56e61000 	/usr/lib/libc++abi.dylib
+0x00007fff59a66000 	/usr/lib/system/libcache.dylib
+0x00007fff59a6b000 	/usr/lib/system/libcommonCrypto.dylib
+0x00007fff59a76000 	/usr/lib/system/libcompiler_rt.dylib
+0x00007fff59a7e000 	/usr/lib/system/libcopyfile.dylib
+0x00007fff59a88000 	/usr/lib/system/libcorecrypto.dylib
+0x00007fff59b93000 	/usr/lib/system/libdispatch.dylib
+0x00007fff59bcd000 	/usr/lib/system/libdyld.dylib
+0x00007fff59bfa000 	/usr/lib/system/libkeymgr.dylib
+0x00007fff59c08000 	/usr/lib/system/liblaunch.dylib
+0x00007fff59c09000 	/usr/lib/system/libmacho.dylib
+0x00007fff59c0f000 	/usr/lib/system/libquarantine.dylib
+0x00007fff59c12000 	/usr/lib/system/libremovefile.dylib
+0x00007fff59c14000 	/usr/lib/system/libsystem_asl.dylib
+0x00007fff59c2c000 	/usr/lib/system/libsystem_blocks.dylib
+0x00007fff59c2d000 	/usr/lib/system/libsystem_c.dylib
+0x00007fff59cb5000 	/usr/lib/system/libsystem_configuration.dylib
+0x00007fff59cb9000 	/usr/lib/system/libsystem_coreservices.dylib
+0x00007fff59cbd000 	/usr/lib/system/libsystem_darwin.dylib
+0x00007fff59cc4000 	/usr/lib/system/libsystem_dnssd.dylib
+0x00007fff59ccb000 	/usr/lib/system/libsystem_info.dylib
+0x00007fff59d40000 	/usr/lib/system/libsystem_m.dylib
+0x00007fff59d8c000 	/usr/lib/system/libsystem_malloc.dylib
+0x00007fff59db7000 	/usr/lib/system/libsystem_networkextension.dylib
+0x00007fff59dc2000 	/usr/lib/system/libsystem_notify.dylib
+0x00007fff59ddf000 	/usr/lib/system/libsystem_sandbox.dylib
+0x00007fff59de3000 	/usr/lib/system/libsystem_secinit.dylib
+0x00007fff59d17000 	/usr/lib/system/libsystem_kernel.dylib
+0x00007fff59dca000 	/usr/lib/system/libsystem_platform.dylib
+0x00007fff59dd4000 	/usr/lib/system/libsystem_pthread.dylib
+0x00007fff59de6000 	/usr/lib/system/libsystem_symptoms.dylib
+0x00007fff59dee000 	/usr/lib/system/libsystem_trace.dylib
+0x00007fff59e05000 	/usr/lib/system/libunwind.dylib
+0x00007fff59e0b000 	/usr/lib/system/libxpc.dylib
+0x00007fff56dee000 	/usr/lib/libbsm.0.dylib
+0x00007fff59bfb000 	/usr/lib/system/libkxld.dylib
+0x00007fff3ddfa000 	/System/Library/PrivateFrameworks/AppleFSCompression.framework/Versions/A/AppleFSCompression
+0x00007fff56a8a000 	/usr/lib/libOpenScriptingUtil.dylib
+0x00007fff57116000 	/usr/lib/libcoretls.dylib
+0x00007fff5712d000 	/usr/lib/libcoretls_cfhelpers.dylib
+0x00007fff58b98000 	/usr/lib/libpam.2.dylib
+0x00007fff58d58000 	/usr/lib/libsqlite3.dylib
+0x00007fff59152000 	/usr/lib/libxar.1.dylib
+0x00007fff56dff000 	/usr/lib/libbz2.1.0.dylib
+0x00007fff57b6d000 	/usr/lib/liblzma.5.dylib
+0x00007fff5801e000 	/usr/lib/libnetwork.dylib
+0x00007fff56c5a000 	/usr/lib/libapple_nghttp2.dylib
+0x00007fff58b9f000 	/usr/lib/libpcap.A.dylib
+0x00007fff2f26e000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/FSEvents.framework/Versions/A/FSEvents
+0x00007fff2ef4d000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/CarbonCore.framework/Versions/A/CarbonCore
+0x00007fff2f42a000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Metadata
+0x00007fff2f4c9000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/OSServices.framework/Versions/A/OSServices
+0x00007fff2f514000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/SearchKit.framework/Versions/A/SearchKit
+0x00007fff2eed0000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/AE.framework/Versions/A/AE
+0x00007fff2f277000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/LaunchServices
+0x00007fff2f225000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/DictionaryServices.framework/Versions/A/DictionaryServices
+0x00007fff2f57c000 	/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/SharedFileList.framework/Versions/A/SharedFileList
+0x00007fff338e8000 	/System/Library/Frameworks/NetFS.framework/Versions/A/NetFS
+0x00007fff4ca64000 	/System/Library/PrivateFrameworks/NetAuth.framework/Versions/A/NetAuth
+0x00007fff563f0000 	/System/Library/PrivateFrameworks/login.framework/Versions/A/Frameworks/loginsupport.framework/Versions/A/loginsupport
+0x00007fff54513000 	/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC
+0x00007fff41a11000 	/System/Library/PrivateFrameworks/CoreNLP.framework/Versions/A/CoreNLP
+0x00007fff4c4f7000 	/System/Library/PrivateFrameworks/MetadataUtilities.framework/Versions/A/MetadataUtilities
+0x00007fff57c42000 	/usr/lib/libmecabra.dylib
+0x00007fff2c128000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/ATS
+0x00007fff2c477000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ColorSyncLegacy.framework/Versions/A/ColorSyncLegacy
+0x00007fff2c516000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/HIServices
+0x00007fff2c569000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/LangAnalysis.framework/Versions/A/LangAnalysis
+0x00007fff2c579000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/PrintCore.framework/Versions/A/PrintCore
+0x00007fff2c5c3000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/QD.framework/Versions/A/QD
+0x00007fff2c5fd000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/SpeechSynthesis.framework/Versions/A/SpeechSynthesis
+0x00007fff56e89000 	/usr/lib/libcompression.dylib
+0x00007fff32af0000 	/System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/MetalPerformanceShaders
+0x00007fff2a104000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vImage.framework/Versions/A/vImage
+0x00007fff2b17e000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/vecLib
+0x00007fff2b0ca000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libvMisc.dylib
+0x00007fff2aee2000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libvDSP.dylib
+0x00007fff2a79e000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
+0x00007fff2aa8b000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib
+0x00007fff2ae35000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLinearAlgebra.dylib
+0x00007fff2aece000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libSparseBLAS.dylib
+0x00007fff2ae4b000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libQuadrature.dylib
+0x00007fff2aa18000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBNNS.dylib
+0x00007fff2ae51000 	/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libSparse.dylib
+0x00007fff48d53000 	/System/Library/PrivateFrameworks/GPUWrangler.framework/Versions/A/GPUWrangler
+0x00007fff4b025000 	/System/Library/PrivateFrameworks/IOAccelerator.framework/Versions/A/IOAccelerator
+0x00007fff4b030000 	/System/Library/PrivateFrameworks/IOPresentment.framework/Versions/A/IOPresentment
+0x00007fff427e7000 	/System/Library/PrivateFrameworks/DSExternalDisplay.framework/Versions/A/DSExternalDisplay
+0x00007fff36d64000 	/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libCoreFSCache.dylib
+0x00007fff328e4000 	/System/Library/Frameworks/MetalPerformanceShaders.framework/Frameworks/MPSCore.framework/Versions/A/MPSCore
+0x00007fff32904000 	/System/Library/Frameworks/MetalPerformanceShaders.framework/Frameworks/MPSImage.framework/Versions/A/MPSImage
+0x00007fff329a9000 	/System/Library/Frameworks/MetalPerformanceShaders.framework/Frameworks/MPSNeuralNetwork.framework/Versions/A/MPSNeuralNetwork
+0x00007fff32981000 	/System/Library/Frameworks/MetalPerformanceShaders.framework/Frameworks/MPSMatrix.framework/Versions/A/MPSMatrix
+0x00007fff32ad5000 	/System/Library/Frameworks/MetalPerformanceShaders.framework/Frameworks/MPSRayIntersector.framework/Versions/A/MPSRayIntersector
+0x00007fff4c520000 	/System/Library/PrivateFrameworks/MetalTools.framework/Versions/A/MetalTools
+0x00007fff3d6a7000 	/System/Library/PrivateFrameworks/AggregateDictionary.framework/Versions/A/AggregateDictionary
+0x00007fff56a6b000 	/usr/lib/libMobileGestalt.dylib
+0x00007fff2fa0b000 	/System/Library/Frameworks/CoreVideo.framework/Versions/A/CoreVideo
+0x00007fff49b63000 	/System/Library/PrivateFrameworks/GraphVisualizer.framework/Versions/A/GraphVisualizer
+0x00007fff439e3000 	/System/Library/PrivateFrameworks/FaceCore.framework/Versions/A/FaceCore
+0x00007fff36392000 	/System/Library/Frameworks/OpenCL.framework/Versions/A/OpenCL
+0x00007fff567c3000 	/usr/lib/libFosl_dynamic.dylib
+0x00007fff4d2cf000 	/System/Library/PrivateFrameworks/OTSVG.framework/Versions/A/OTSVG
+0x00007fff2c22c000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/Resources/libFontParser.dylib
+0x00007fff2c344000 	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/Resources/libFontRegistry.dylib
+0x00007fff30915000 	/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libJPEG.dylib
+0x00007fff30c27000 	/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libTIFF.dylib
+0x00007fff30bfd000 	/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libPng.dylib
+0x00007fff30833000 	/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libGIF.dylib
+0x00007fff30838000 	/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libJP2.dylib
+0x00007fff30c24000 	/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libRadiance.dylib
+0x00007fff3df51000 	/System/Library/PrivateFrameworks/AppleJPEG.framework/Versions/A/AppleJPEG
+0x00007fff36d6f000 	/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGFXShared.dylib
+0x00007fff36f32000 	/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGLU.dylib
+0x00007fff36d78000 	/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib
+0x00007fff36d84000 	/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGLImage.dylib
+0x00007fff36d61000 	/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libCVMSPluginSupport.dylib
+0x00007fff36d6a000 	/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libCoreVMClient.dylib
+0x00007fff575da000 	/usr/lib/libcups.2.dylib
+0x00007fff31deb000 	/System/Library/Frameworks/Kerberos.framework/Versions/A/Kerberos
+0x00007fff30318000 	/System/Library/Frameworks/GSS.framework/Versions/A/GSS
+0x00007fff58ced000 	/usr/lib/libresolv.9.dylib
+0x00007fff577cc000 	/usr/lib/libiconv.2.dylib
+0x00007fff49cc2000 	/System/Library/PrivateFrameworks/Heimdal.framework/Versions/A/Heimdal
+0x00007fff5779c000 	/usr/lib/libheimdal-asn1.dylib
+0x00007fff36406000 	/System/Library/Frameworks/OpenDirectory.framework/Versions/A/OpenDirectory
+0x00007fff40776000 	/System/Library/PrivateFrameworks/CommonAuth.framework/Versions/A/CommonAuth
+0x00007fff363ea000 	/System/Library/Frameworks/OpenDirectory.framework/Versions/A/Frameworks/CFOpenDirectory.framework/Versions/A/CFOpenDirectory
+0x00007fff394aa000 	/System/Library/Frameworks/SecurityFoundation.framework/Versions/A/SecurityFoundation
+0x00007fff3cbf0000 	/System/Library/PrivateFrameworks/APFS.framework/Versions/A/APFS
+0x00007fff5914e000 	/usr/lib/libutil.dylib
+0x00007fff56e77000 	/usr/lib/libcharset.1.dylib
+0x00007fff3e1ee000 	/System/Library/PrivateFrameworks/AppleSauce.framework/Versions/A/AppleSauce
+0x00007fff3e36f000 	/System/Library/PrivateFrameworks/AssertionServices.framework/Versions/A/AssertionServices
+0x00007fff3ea9f000 	/System/Library/PrivateFrameworks/BaseBoard.framework/Versions/A/BaseBoard
+0x00007fff57b9d000 	/usr/lib/libmecab.1.0.0.dylib
+0x00007fff57796000 	/usr/lib/libgermantok.dylib
+0x00007fff56c47000 	/usr/lib/libThaiTokenizer.dylib
+0x00007fff566f3000 	/usr/lib/libChineseTokenizer.dylib
+0x00007fff4b6de000 	/System/Library/PrivateFrameworks/LanguageModeling.framework/Versions/A/LanguageModeling
+0x00007fff41457000 	/System/Library/PrivateFrameworks/CoreEmoji.framework/Versions/A/CoreEmoji
+0x00007fff4b7ba000 	/System/Library/PrivateFrameworks/Lexicon.framework/Versions/A/Lexicon
+0x00007fff4b7fd000 	/System/Library/PrivateFrameworks/LinguisticData.framework/Versions/A/LinguisticData
+0x00007fff56e78000 	/usr/lib/libcmph.dylib
+0x00007fff39568000 	/System/Library/Frameworks/ServiceManagement.framework/Versions/A/ServiceManagement
+0x00007fff3ea00000 	/System/Library/PrivateFrameworks/BackgroundTaskManagement.framework/Versions/A/BackgroundTaskManagement
+0x00007fff59247000 	/usr/lib/libxslt.1.dylib
+0x00007fff2d297000 	/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/Ink.framework/Versions/A/Ink
+0x00007fff54785000 	/System/Library/PrivateFrameworks/TextureIO.framework/Versions/A/TextureIO
+0x00007fff56c9b000 	/usr/lib/libate.dylib
+0x00007fff42736000 	/System/Library/PrivateFrameworks/CrashReporterSupport.framework/Versions/A/CrashReporterSupport
+0x00007fff51ec4000 	/System/Library/PrivateFrameworks/Sharing.framework/Versions/A/Sharing
+0x00007fff3e752000 	/System/Library/PrivateFrameworks/AuthKit.framework/Versions/A/AuthKit
+0x00007fff3dca6000 	/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Apple80211
+0x00007fff424e0000 	/System/Library/PrivateFrameworks/CoreUtils.framework/Versions/A/CoreUtils
+0x00007fff2fa4b000 	/System/Library/Frameworks/CoreWLAN.framework/Versions/A/CoreWLAN
+0x00007fff30447000 	/System/Library/Frameworks/IOBluetooth.framework/Versions/A/IOBluetooth
+0x00007fff50344000 	/System/Library/PrivateFrameworks/ProtocolBuffer.framework/Versions/A/ProtocolBuffer
+0x00007fff4c75a000 	/System/Library/PrivateFrameworks/MobileKeyBag.framework/Versions/A/MobileKeyBag
+0x00007fff41d24000 	/System/Library/PrivateFrameworks/CorePhoneNumbers.framework/Versions/A/CorePhoneNumbers
+0x00007fff3df05000 	/System/Library/PrivateFrameworks/AppleIDAuthSupport.framework/Versions/A/AppleIDAuthSupport
+0x00007fff4b6b1000 	/System/Library/PrivateFrameworks/KeychainCircle.framework/Versions/A/KeychainCircle
+0x00007fff504fa000 	/System/Library/PrivateFrameworks/ROCKit.framework/Versions/A/ROCKit
+0x00007fff426d2000 	/System/Library/PrivateFrameworks/CoreWiFi.framework/Versions/A/CoreWiFi
+0x00007fff2d7e2000 	/System/Library/Frameworks/CoreBluetooth.framework/Versions/A/CoreBluetooth
+0x00007fff4292d000 	/System/Library/PrivateFrameworks/DebugSymbols.framework/Versions/A/DebugSymbols
+0x00007fff422a0000 	/System/Library/PrivateFrameworks/CoreSymbolication.framework/Versions/A/CoreSymbolication
+0x00007fff53fa0000 	/System/Library/PrivateFrameworks/Symbolication.framework/Versions/A/Symbolication
+0x00007fff53843000 	/System/Library/PrivateFrameworks/SpeechRecognitionCore.framework/Versions/A/SpeechRecognitionCore
+0x0000000109800000 	/Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/server/libjvm.dylib
+0x00007fff59029000 	/usr/lib/libstdc++.6.dylib
+0x0000000108737000 	/Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/libverify.dylib
+0x0000000108744000 	/Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/libjava.dylib
+0x00000001087c3000 	/Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/libzip.dylib
+0x0000000125522000 	/Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/libjvmcicompiler.dylib
+0x0000000128102000 	/Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/libnio.dylib
+0x0000000128112000 	/Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/./libnet.dylib
+0x00000001370e4000 	/Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/libmanagement.dylib
+0x0000000138e98000 	/Users/teresalasarow/Studium/Master/graalVM/graalvm-ce-19.0.0/Contents/Home/jre/lib/libtrufflenfi.dylib
+0x00000001370f9000 	/Users/teresalasarow/Studium/Master/graalVM/graalsqueak/lib/SqueakFFIPrims.dylib
+
+VM Arguments:
+jvm_args: -ea -DsqueakTests=FFIPluginTests -Dfile.encoding=UTF-8 -Xbootclasspath/a:/Users/teresalasarow/Studium/Master/graalVM/graal/sdk/mxbuild/dists/jdk1.8/graal-sdk.jar:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/dists/jdk1.8/truffle-api.jar 
+java_command: org.eclipse.jdt.internal.junit.runner.RemoteTestRunner -version 3 -port 62136 -testLoaderClass org.eclipse.jdt.internal.junit4.runner.JUnit4TestLoader -loaderpluginname org.eclipse.jdt.junit4.runtime -classNames de.hpi.swa.graal.squeak.test.SqueakSUnitTest
+java_class_path (initial): /Users/teresalasarow/Studium/Master/graalVM/graalsqueak/mxbuild/src/de.hpi.swa.graal.squeak.test/bin:/Users/teresalasarow/.mx/cache/JUNIT_2973d150c0dc1fefe998f834810d68f278ea58ec/junit.jar:/Users/teresalasarow/.mx/cache/HAMCREST_42a25dc3219429f0e5d060061f71acb49bf010a0/hamcrest.jar:/Users/teresalasarow/.mx/cache/ANTLR4_946f8aa9daa917dd81a8b818111bec7e288f821a/antlr4.jar:/Users/teresalasarow/.mx/cache/BOUNCY_CASTLE_CRYPTO_LIB_bd47ad3bd14b8e82595c7adaa143501e60842a84/bouncy-castle-crypto-lib.jar:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.oracle.truffle.api/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/sdk/mxbuild/src/org.graalvm.collections/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/sdk/mxbuild/src/org.graalvm.nativeimage/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/sdk/mxbuild/src/org.graalvm.options/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/sdk/mxbuild/src/org.graalvm.word/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/sdk/mxbuild/src/org.graalvm.polyglot/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.oracle.truffle.api.debug/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.oracle.truffle.api.dsl/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.oracle.truffle.api.instrumentation/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.oracle.truffle.api.profiles/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.oracle.truffle.api.interop/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.oracle.truffle.api.library/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.oracle.truffle.api.utilities/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.oracle.truffle.polyglot/bin:/Users/teresalasarow/Studium/Master/graalVM/graal/truffle/mxbuild/src/com.ora
+Launcher Type: SUN_STANDARD
+
+Environment Variables:
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+SHELL=/bin/bash
+
+Signal Handlers:
+SIGSEGV: [libjvm.dylib+0x5c62ad], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO
+SIGBUS: [libjvm.dylib+0x5c62ad], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_RESTART|SA_SIGINFO
+SIGFPE: [libjvm.dylib+0x4bac03], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_RESTART|SA_SIGINFO
+SIGPIPE: [libjvm.dylib+0x4bac03], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_RESTART|SA_SIGINFO
+SIGXFSZ: [libjvm.dylib+0x4bac03], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_RESTART|SA_SIGINFO
+SIGILL: [libjvm.dylib+0x4bac03], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_RESTART|SA_SIGINFO
+SIGUSR1: SIG_DFL, sa_mask[0]=00000000000000000000000000000000, sa_flags=none
+SIGUSR2: [libjvm.dylib+0x4bb528], sa_mask[0]=00100000000000000000000000000000, sa_flags=SA_RESTART|SA_SIGINFO
+SIGHUP: [libjvm.dylib+0x4b971d], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_RESTART|SA_SIGINFO
+SIGINT: [libjvm.dylib+0x4b971d], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_RESTART|SA_SIGINFO
+SIGTERM: [libjvm.dylib+0x4b971d], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_RESTART|SA_SIGINFO
+SIGQUIT: [libjvm.dylib+0x4b971d], sa_mask[0]=11111111011111110111111111111111, sa_flags=SA_RESTART|SA_SIGINFO
+
+
+---------------  S Y S T E M  ---------------
+
+OS:Bsduname:Darwin 18.6.0 Darwin Kernel Version 18.6.0: Thu Apr 25 23:16:27 PDT 2019; root:xnu-4903.261.4~2/RELEASE_X86_64 x86_64
+rlimit: STACK 8192k, CORE 0k, NPROC 1418, NOFILE 10240, AS infinity
+load average:1.80 1.54 1.54
+
+CPU:total 8 (initial active 8) (4 cores per cpu, 2 threads per core) family 6 model 70 stepping 1, cmov, cx8, fxsr, mmx, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, avx, avx2, aes, clmul, erms, lzcnt, ht, tsc, tscinvbit, bmi1, bmi2
+
+Memory: 4k page, physical 16777216k(133588k free)
+
+/proc/meminfo:
+
+
+vm_info: OpenJDK GraalVM CE 19.0.0 (25.212-b03-jvmci-19-b01) for bsd-amd64 JRE (8u212), built on Apr 30 2019 08:30:27 by "graal" with gcc 4.2.1 Compatible Apple LLVM 8.1.0 (clang-802.0.42)
+
+time: Fri Jun 28 20:47:10 2019
+timezone: CEST
+elapsed time: 7 seconds (0d 0h 0m 7s)
+
