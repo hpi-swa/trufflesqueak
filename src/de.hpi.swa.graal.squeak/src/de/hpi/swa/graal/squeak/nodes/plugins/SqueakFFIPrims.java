@@ -117,12 +117,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             }
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
             final Object moduleObject = externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
-            final String module;
-            if (moduleObject != NilObject.SINGLETON) {
-                module = ((NativeObject) moduleObject).asStringUnsafe();
-            } else {
-                module = ((NativeObject) ((PointersObject) receiver).at0(1)).asStringUnsafe();
-            }
+            final String moduleName = getModuleName(receiver, moduleObject);
+
             final Object[] argumentsConverted = new Object[arguments.length];
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
             int returnArgHeader = 0;
@@ -140,17 +136,13 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                         } else if (i > 0) {
                             argumentsConverted[i - 1] = conversionNode.execute(headerWord, arguments[i - 1]);
                         }
-                        final String atomicName;
-                        atomicName = FFI_TYPES.getTruffleTypeFromInt(headerWord);
+                        final String atomicName = FFI_TYPES.getTruffleTypeFromInt(headerWord);
                         argumentList.add(atomicName);
                     }
                 }
             }
-            final String nfiCodeParams = creatNfiCodeParamsString(argumentList);
-
-            final String ffiExtension = method.image.os.getFFIExtension();
-            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
-            final String nfiCode = String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
+            final String nfiCodeParams = generateNfiCodeParamsString(argumentList);
+            final String nfiCode = generateNfiCode(name, moduleName, nfiCodeParams);
 
             // method.image.env = com.oracle.truffle.api.TruffleLanguage$Env@1a1d76bd
             final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
@@ -172,7 +164,21 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private static String creatNfiCodeParamsString(final List<String> argumentList) {
+        private static String getModuleName(final AbstractSqueakObject receiver, final Object moduleObject) {
+            if (moduleObject != NilObject.SINGLETON) {
+                return ((NativeObject) moduleObject).asStringUnsafe();
+            } else {
+                return ((NativeObject) ((PointersObject) receiver).at0(ObjectLayouts.CLASS.NAME)).asStringUnsafe();
+            }
+        }
+
+        private String generateNfiCode(final String name, final String module, final String nfiCodeParams) {
+            final String ffiExtension = method.image.os.getFFIExtension();
+            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
+            return String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
+        }
+
+        private static String generateNfiCodeParamsString(final List<String> argumentList) {
             String nfiCodeParams = "";
             if (!argumentList.isEmpty()) {
                 final String returnType = argumentList.get(0);
