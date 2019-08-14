@@ -19,8 +19,8 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -34,8 +34,8 @@ public final class SendBytecodes {
         @Child private AbstractLookupClassNode lookupClassNode;
         @Child private LookupMethodNode lookupMethodNode = LookupMethodNode.create();
         @Child private DispatchSendNode dispatchSendNode;
-        @Child private FrameStackReadAndClearNode popNNode;
-        @Child private FrameStackWriteNode pushNode;
+        @Child private FrameStackPopNNode popNNode;
+        @Child private FrameStackPushNode pushNode;
 
         private final BranchProfile nlrProfile = BranchProfile.create();
         private final BranchProfile nvrProfile = BranchProfile.create();
@@ -50,7 +50,7 @@ public final class SendBytecodes {
             argumentCount = argcount;
             this.lookupClassNode = lookupClassNode;
             dispatchSendNode = DispatchSendNode.create(code);
-            popNNode = FrameStackReadAndClearNode.create(code);
+            popNNode = FrameStackPopNNode.create(code, 1 + argumentCount); // receiver + arguments.
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
@@ -61,35 +61,35 @@ public final class SendBytecodes {
         public final void executeVoid(final VirtualFrame frame) {
             final Object result;
             try {
-                final Object[] rcvrAndArgs = popNNode.executePopN(frame, 1 + argumentCount);
+                final Object[] rcvrAndArgs = popNNode.execute(frame);
                 final ClassObject rcvrClass = lookupClassNode.executeLookup(frame, rcvrAndArgs[0]);
                 final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
                 result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs);
                 assert result != null : "Result of a message send should not be null";
                 if (result != NO_RESULT) {
-                    getPushNode().executePush(frame, result);
+                    getPushNode().execute(frame, result);
                 }
             } catch (final NonLocalReturn nlr) {
                 nlrProfile.enter();
                 if (nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame)) {
-                    getPushNode().executePush(frame, nlr.getReturnValue());
+                    getPushNode().execute(frame, nlr.getReturnValue());
                 } else {
                     throw nlr;
                 }
             } catch (final NonVirtualReturn nvr) {
                 nvrProfile.enter();
                 if (nvr.getTargetContext() == getContext(frame)) {
-                    getPushNode().executePush(frame, nvr.getReturnValue());
+                    getPushNode().execute(frame, nvr.getReturnValue());
                 } else {
                     throw nvr;
                 }
             }
         }
 
-        private FrameStackWriteNode getPushNode() {
+        private FrameStackPushNode getPushNode() {
             if (pushNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                pushNode = insert(FrameStackWriteNode.create(code));
+                pushNode = insert(FrameStackPushNode.create(code));
             }
             return pushNode;
         }

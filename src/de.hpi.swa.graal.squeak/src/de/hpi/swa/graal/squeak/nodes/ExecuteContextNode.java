@@ -37,7 +37,6 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnRece
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -56,7 +55,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
     @Child private FrameStackInitializationNode frameInitializationNode;
-    @Child private FrameStackReadAndClearNode readAndClearNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
 
@@ -185,7 +183,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame, getFrameStackReadAndClearNode())) {
+                if (jumpNode.executeCondition(frame)) {
                     final int successor = jumpNode.getJumpSuccessorIndex();
                     if (CompilerDirectives.inInterpreter() && successor <= pc) {
                         backJumpCounter++;
@@ -208,20 +206,20 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = successor;
                 continue bytecode_loop;
             } else if (node instanceof ReturnConstantNodeGen) {
-                returnValue = ((ReturnConstantNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                returnValue = ((ReturnConstantNodeGen) node).executeReturn(frame);
                 break bytecode_loop;
             } else if (node instanceof ReturnReceiverNodeGen) {
-                returnValue = ((ReturnReceiverNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                returnValue = ((ReturnReceiverNodeGen) node).executeReturn(frame);
                 break bytecode_loop;
             } else if (node instanceof ReturnTopFromBlockNodeGen) {
-                returnValue = ((ReturnTopFromBlockNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                returnValue = ((ReturnTopFromBlockNodeGen) node).executeReturn(frame);
                 break bytecode_loop;
             } else if (node instanceof ReturnTopFromMethodNodeGen) {
-                returnValue = ((ReturnTopFromMethodNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                returnValue = ((ReturnTopFromMethodNodeGen) node).executeReturn(frame);
                 break bytecode_loop;
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
-                pushClosureNode.executePush(frame, getFrameStackReadAndClearNode());
+                pushClosureNode.executePush(frame);
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop;
             } else {
@@ -236,15 +234,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         assert backJumpCounter >= 0;
         LoopNode.reportLoopCount(this, backJumpCounter);
         return returnValue;
-    }
-
-    private FrameStackReadAndClearNode getFrameStackReadAndClearNode() {
-        /* Lazily insert node because it is not needed if primitive succeeds. */
-        if (readAndClearNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            readAndClearNode = insert(FrameStackReadAndClearNode.create(code));
-        }
-        return readAndClearNode;
     }
 
     private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
@@ -266,7 +255,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame, getFrameStackReadAndClearNode())) {
+                if (jumpNode.executeCondition(frame)) {
                     pc = jumpNode.getJumpSuccessorIndex();
                     continue bytecode_loop_slow;
                 } else {
@@ -277,20 +266,20 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
                 continue bytecode_loop_slow;
             } else if (node instanceof ReturnConstantNodeGen) {
-                returnValue = ((ReturnConstantNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                returnValue = ((ReturnConstantNodeGen) node).executeReturn(frame);
                 break bytecode_loop_slow;
             } else if (node instanceof ReturnReceiverNodeGen) {
-                returnValue = ((ReturnReceiverNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                returnValue = ((ReturnReceiverNodeGen) node).executeReturn(frame);
                 break bytecode_loop_slow;
             } else if (node instanceof ReturnTopFromBlockNodeGen) {
-                returnValue = ((ReturnTopFromBlockNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                returnValue = ((ReturnTopFromBlockNodeGen) node).executeReturn(frame);
                 break bytecode_loop_slow;
             } else if (node instanceof ReturnTopFromMethodNodeGen) {
-                returnValue = ((ReturnTopFromMethodNodeGen) node).executeReturn(frame, getFrameStackReadAndClearNode());
+                returnValue = ((ReturnTopFromMethodNodeGen) node).executeReturn(frame);
                 break bytecode_loop_slow;
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
-                pushClosureNode.executePush(frame, getFrameStackReadAndClearNode());
+                pushClosureNode.executePush(frame);
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop_slow;
             } else {

@@ -7,7 +7,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
@@ -29,14 +29,14 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
      */
     @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode < code.image.primitiveErrorTable.getObjectLength()"})
     protected final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
-                    @Cached("create(code)") final FrameStackWriteNode pushNode) {
-        pushNode.executePush(frame, code.image.primitiveErrorTable.getObjectStorage()[reasonCode]);
+                    @Cached("create(code)") final FrameStackPushNode pushNode) {
+        pushNode.execute(frame, code.image.primitiveErrorTable.getObjectStorage()[reasonCode]);
     }
 
     @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode >= code.image.primitiveErrorTable.getObjectLength()"})
     protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
-                    @Cached("create(code)") final FrameStackWriteNode pushNode) {
-        pushNode.executePush(frame, reasonCode);
+                    @Cached("create(code)") final FrameStackPushNode pushNode) {
+        pushNode.execute(frame, reasonCode);
     }
 
     @Specialization(guards = "!followedByExtendedStore(code)")

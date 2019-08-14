@@ -22,7 +22,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 /**
@@ -191,7 +191,7 @@ public final class FrameAccess {
         frame.setInt(code.getStackPointerSlot(), value);
     }
 
-    /** Write to a frame slot (slow operation), prefer {@link FrameStackWriteNode}. */
+    /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */
     public static void setStackSlot(final Frame frame, final FrameSlot frameSlot, final Object value) {
         final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         assert frame.getFrameDescriptor().getSlots().contains(frameSlot);

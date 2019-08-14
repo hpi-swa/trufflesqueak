@@ -18,9 +18,9 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLo
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoAssociationNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoReceiverVariableNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoTempNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackTopNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 
 public final class MiscellaneousBytecodes {
@@ -82,18 +82,18 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class DupNode extends AbstractInstrumentableBytecodeNode {
-        @Child private FrameStackWriteNode pushNode;
-        @Child private FrameStackReadNode topNode;
+        @Child private FrameStackPushNode pushNode;
+        @Child private FrameStackTopNode topNode;
 
         public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            pushNode = FrameStackWriteNode.create(code);
-            topNode = FrameStackReadNode.create(code);
+            pushNode = FrameStackPushNode.create(code);
+            topNode = FrameStackTopNode.create(code);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executePush(frame, topNode.executeTop(frame));
+            pushNode.execute(frame, topNode.execute(frame));
         }
 
         @Override
@@ -163,16 +163,16 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class PopNode extends AbstractInstrumentableBytecodeNode {
-        @Child private FrameStackReadAndClearNode popNode;
+        @Child private FrameStackPopNode popNode;
 
         public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            popNode = FrameStackReadAndClearNode.create(code);
+            popNode = FrameStackPopNode.create(code);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            popNode.executePop(frame);
+            popNode.execute(frame);
         }
 
         @Override

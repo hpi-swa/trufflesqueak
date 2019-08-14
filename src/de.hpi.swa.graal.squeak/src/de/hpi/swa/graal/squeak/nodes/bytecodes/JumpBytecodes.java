@@ -15,7 +15,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNode;
 
 public final class JumpBytecodes {
 
@@ -24,12 +24,14 @@ public final class JumpBytecodes {
         private final boolean isIfTrue;
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
+        @Child private FrameStackPopNode popNode;
         @Child private HandleConditionResultNode handleConditionResultNode;
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);
             offset = (bytecode & 7) + 1;
             isIfTrue = false;
+            popNode = FrameStackPopNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
         }
 
@@ -37,6 +39,7 @@ public final class JumpBytecodes {
             super(code, index, numBytecodes);
             offset = ((bytecode & 3) << 8) + parameter;
             isIfTrue = condition;
+            popNode = FrameStackPopNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
         }
 
@@ -45,8 +48,8 @@ public final class JumpBytecodes {
             // nothing to do
         }
 
-        public boolean executeCondition(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
-            final Object result = readAndClearNode.executePop(frame);
+        public boolean executeCondition(final VirtualFrame frame) {
+            final Object result = popNode.execute(frame);
             return conditionProfile.profile(handleConditionResultNode.execute(frame, isIfTrue, result));
         }
 

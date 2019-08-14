@@ -13,7 +13,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnCons
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ReturnBytecodes {
@@ -33,14 +33,14 @@ public final class ReturnBytecodes {
             throw SqueakException.create("executeReturn() should be called instead");
         }
 
-        public final Object executeReturn(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
-            return executeReturnSpecialized(frame, FrameAccess.getClosure(frame), readAndClearNode);
+        public final Object executeReturn(final VirtualFrame frame) {
+            return executeReturnSpecialized(frame, FrameAccess.getClosure(frame));
         }
 
-        protected abstract Object executeReturnSpecialized(VirtualFrame frame, Object closure, FrameStackReadAndClearNode readAndClearNode);
+        protected abstract Object executeReturnSpecialized(VirtualFrame frame, Object closure);
 
         @SuppressWarnings("unused")
-        protected Object getReturnValue(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             throw SqueakException.create("Needs to be overriden");
         }
     }
@@ -52,20 +52,20 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"closure == null", "!hasModifiedSender(frame)"})
-        protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closure, final FrameStackReadAndClearNode readAndClearNode) {
-            return getReturnValue(frame, readAndClearNode);
+        protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closure) {
+            return getReturnValue(frame);
         }
 
         @Specialization(guards = {"closure == null", "hasModifiedSender(frame)"})
-        protected final Object doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closure, final FrameStackReadAndClearNode readAndClearNode) {
+        protected final Object doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closure) {
             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
-            throw new NonLocalReturn(getReturnValue(frame, readAndClearNode), FrameAccess.getSender(frame));
+            throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getSender(frame));
         }
 
         @Specialization(guards = {"closure != null"})
-        protected final Object doClosureReturn(final VirtualFrame frame, final BlockClosureObject closure, final FrameStackReadAndClearNode readAndClearNode) {
+        protected final Object doClosureReturn(final VirtualFrame frame, final BlockClosureObject closure) {
             // Target is sender of closure's home context.
-            throw new NonLocalReturn(getReturnValue(frame, readAndClearNode), closure.getHomeContext().getFrameSender());
+            throw new NonLocalReturn(getReturnValue(frame), closure.getHomeContext().getFrameSender());
         }
     }
 
@@ -82,7 +82,7 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
+        protected final Object getReturnValue(final VirtualFrame frame) {
             return constant;
         }
 
@@ -104,7 +104,7 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
+        protected final Object getReturnValue(final VirtualFrame frame) {
             return FrameAccess.getReceiver(frame);
         }
 
@@ -116,8 +116,11 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnTopFromBlockNode extends AbstractReturnNode {
+        @Child private FrameStackPopNode popNode;
+
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
+            popNode = FrameStackPopNode.create(code);
         }
 
         public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
@@ -125,24 +128,24 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"!hasModifiedSender(frame)"})
-        protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closureOrNull, final FrameStackReadAndClearNode readAndClearNode) {
-            return getReturnValue(frame, readAndClearNode);
+        protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closureOrNull) {
+            return getReturnValue(frame);
         }
 
         @Specialization(guards = {"closureOrNull == null", "hasModifiedSender(frame)"})
-        protected final Object doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closureOrNull, final FrameStackReadAndClearNode readAndClearNode) {
+        protected final Object doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closureOrNull) {
             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
-            throw new NonLocalReturn(getReturnValue(frame, readAndClearNode), FrameAccess.getSender(frame));
+            throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getSender(frame));
         }
 
         @Specialization(guards = {"closureOrNull != null", "hasModifiedSender(frame)"})
-        protected final Object doNonLocalReturn(final VirtualFrame frame, final BlockClosureObject closureOrNull, final FrameStackReadAndClearNode readAndClearNode) {
-            throw new NonLocalReturn(getReturnValue(frame, readAndClearNode), closureOrNull.getHomeContext().getFrameSender());
+        protected final Object doNonLocalReturn(final VirtualFrame frame, final BlockClosureObject closureOrNull) {
+            throw new NonLocalReturn(getReturnValue(frame), closureOrNull.getHomeContext().getFrameSender());
         }
 
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
-            return readAndClearNode.executePop(frame);
+        protected final Object getReturnValue(final VirtualFrame frame) {
+            return popNode.execute(frame);
         }
 
         @Override
@@ -153,8 +156,11 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnTopFromMethodNode extends AbstractReturnWithSpecializationsNode {
+        @Child private FrameStackPopNode popNode;
+
         protected ReturnTopFromMethodNode(final CompiledCodeObject code, final int index) {
             super(code, index);
+            popNode = FrameStackPopNode.create(code);
         }
 
         public static ReturnTopFromMethodNode create(final CompiledCodeObject code, final int index) {
@@ -162,8 +168,8 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame, final FrameStackReadAndClearNode readAndClearNode) {
-            return readAndClearNode.executePop(frame);
+        protected final Object getReturnValue(final VirtualFrame frame) {
+            return popNode.execute(frame);
         }
 
         @Override

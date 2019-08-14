@@ -10,12 +10,12 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 /**
  * This node pushes values onto the stack and is intended to be used in
- * {@link AbstractPrimitiveNode}. Unlike {@link FrameStackWriteNode}, it does not need a
+ * {@link AbstractPrimitiveNode}. Unlike {@link FrameStackPushNode}, it does not need a
  * {@link CompiledCodeObject} on creation, but uses the one attached to the provided
  * {@link VirtualFrame}. This is necessary to ensure correct {@link FrameDescriptor} ownership
  * during eager primitive calls.
@@ -27,9 +27,8 @@ public abstract class StackPushForPrimitivesNode extends AbstractNode {
     public abstract void executeWrite(VirtualFrame frame, Object value);
 
     @Specialization
-    public static final void executeWrite(final VirtualFrame frame, final Object value,
-                    @SuppressWarnings("unused") @Cached("getBlockOrMethod(frame)") final CompiledCodeObject codeObject,
-                    @Cached("create(codeObject)") final FrameStackWriteNode writeNode) {
-        writeNode.executePush(frame, value);
+    protected static final void executeWrite(final VirtualFrame frame, final Object value,
+                    @Cached("create(getBlockOrMethod(frame))") final FrameStackPushNode writeNode) {
+        writeNode.execute(frame, value);
     }
 }
