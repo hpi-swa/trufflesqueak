@@ -116,8 +116,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
-            final Object moduleObject = externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
-            final String moduleName = getModuleName(receiver, moduleObject);
+            final String moduleName = getModuleName(receiver, externalLibraryFunction);
 
             final Object[] argumentsConverted = new Object[arguments.length];
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
@@ -164,7 +163,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private static String getModuleName(final AbstractSqueakObject receiver, final Object moduleObject) {
+        private static String getModuleName(final AbstractSqueakObject receiver, final PointersObject externalLibraryFunction) {
+            final Object moduleObject = externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.MODULE);
             if (moduleObject != NilObject.SINGLETON) {
                 return ((NativeObject) moduleObject).asStringUnsafe();
             } else {
