@@ -230,14 +230,6 @@ public final class ObjectLayouts {
         public static final int SIZE = 2;
     }
 
-    public static final class BIGPOINT {
-        public static final int X = 0;
-        public static final int Y = 4;
-        public static final int Z = 8;
-        public static final int W = 12;
-        public static final int SIZE = 0;
-    }
-
     public static final class PROCESS {
         public static final int NEXT_LINK = 0;
         public static final int SUSPENDED_CONTEXT = 1;
