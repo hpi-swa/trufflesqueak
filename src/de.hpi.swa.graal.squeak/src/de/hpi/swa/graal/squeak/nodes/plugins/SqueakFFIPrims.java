@@ -112,16 +112,15 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final Object doCallout(final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
+            int returnArgHeader = 0;
+            final List<String> argumentList = new ArrayList<>();
+
             if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
-            final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
-            final String moduleName = getModuleName(receiver, externalLibraryFunction);
 
             final Object[] argumentsConverted = new Object[arguments.length];
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
-            int returnArgHeader = 0;
-            final List<String> argumentList = new ArrayList<>();
             if (argTypes != null) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
                 assert argTypesValues.length == 1 + arguments.length;
@@ -140,16 +139,15 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                     }
                 }
             }
+            final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
+            final String moduleName = getModuleName(receiver, externalLibraryFunction);
             final String nfiCodeParams = generateNfiCodeParamsString(argumentList);
             final String nfiCode = generateNfiCode(name, moduleName, nfiCodeParams);
 
-            // method.image.env = com.oracle.truffle.api.TruffleLanguage$Env@1a1d76bd
             final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
             final Object ffiTest = method.image.env.parse(source).call();
-            // method.image.env.addToHostClassPath(entry);
             final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
             try {
-
                 final Object value = interopLib.invokeMember(ffiTest, name, argumentsConverted);
                 assert value != null;
                 return wrapNode.executeWrap(conversionNode.execute(returnArgHeader, value));
