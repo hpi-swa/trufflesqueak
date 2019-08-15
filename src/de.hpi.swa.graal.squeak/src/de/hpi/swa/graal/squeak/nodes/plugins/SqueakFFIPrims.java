@@ -121,7 +121,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final Object[] argumentsConverted = new Object[arguments.length];
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
             int returnArgHeader = 0;
-            final List<String> argumentList = new ArrayList<>();
+            final List<String> nfiArgTypeList = new ArrayList<>();
             if (argTypes != null) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
                 assert argTypesValues.length == 1 + arguments.length;
@@ -136,11 +136,11 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                             argumentsConverted[i - 1] = conversionNode.execute(headerWord, arguments[i - 1]);
                         }
                         final String atomicName = FFI_TYPES.getTruffleTypeFromInt(headerWord);
-                        argumentList.add(atomicName);
+                        nfiArgTypeList.add(atomicName);
                     }
                 }
             }
-            final String nfiCodeParams = generateNfiCodeParamsString(argumentList);
+            final String nfiCodeParams = generateNfiCodeParamsString(nfiArgTypeList);
             final String nfiCode = generateNfiCode(name, moduleName, nfiCodeParams);
 
             // method.image.env = com.oracle.truffle.api.TruffleLanguage$Env@1a1d76bd
