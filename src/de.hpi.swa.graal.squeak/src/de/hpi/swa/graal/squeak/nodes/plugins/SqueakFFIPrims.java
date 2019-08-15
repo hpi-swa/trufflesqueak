@@ -142,15 +142,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             }
             final String nfiCodeParams = generateNfiCodeParamsString(nfiArgTypeList);
             final String nfiCode = generateNfiCode(name, moduleName, nfiCodeParams);
-
-            // method.image.env = com.oracle.truffle.api.TruffleLanguage$Env@1a1d76bd
-            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
-            final Object ffiTest = method.image.env.parse(source).call();
-            // method.image.env.addToHostClassPath(entry);
-            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
             try {
-
-                final Object value = interopLib.invokeMember(ffiTest, name, argumentsConverted);
+                final Object value = calloutToLib(name, argumentsConverted, nfiCode);
                 assert value != null;
                 return wrapNode.executeWrap(conversionNode.execute(returnArgHeader, value));
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
@@ -162,6 +155,14 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 // TODO: handle exception
                 throw new PrimitiveFailed();
             }
+        }
+
+        private Object calloutToLib(final String name, final Object[] argumentsConverted, final String nfiCode)
+                        throws UnsupportedMessageException, ArityException, UnknownIdentifierException, UnsupportedTypeException {
+            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
+            final Object ffiTest = method.image.env.parse(source).call();
+            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
+            return interopLib.invokeMember(ffiTest, name, argumentsConverted);
         }
 
         private static String getModuleName(final AbstractSqueakObject receiver, final PointersObject externalLibraryFunction) {
