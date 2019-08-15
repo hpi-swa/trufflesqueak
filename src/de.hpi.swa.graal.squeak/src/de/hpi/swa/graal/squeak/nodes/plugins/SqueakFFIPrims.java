@@ -113,7 +113,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         protected final Object doCallout(final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
             int returnArgHeader = 0;
-            final List<String> argumentList = new ArrayList<>();
+            final List<String> nfiArgTypeList = new ArrayList<>();
 
             if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
@@ -121,6 +121,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
             final Object[] argumentsConverted = new Object[arguments.length];
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
+
             if (argTypes != null) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
                 assert argTypesValues.length == 1 + arguments.length;
@@ -135,20 +136,17 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                             argumentsConverted[i - 1] = conversionNode.execute(headerWord, arguments[i - 1]);
                         }
                         final String atomicName = FFI_TYPES.getTruffleTypeFromInt(headerWord);
-                        argumentList.add(atomicName);
+                        nfiArgTypeList.add(atomicName);
                     }
                 }
             }
+
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
             final String moduleName = getModuleName(receiver, externalLibraryFunction);
-            final String nfiCodeParams = generateNfiCodeParamsString(argumentList);
+            final String nfiCodeParams = generateNfiCodeParamsString(nfiArgTypeList);
             final String nfiCode = generateNfiCode(name, moduleName, nfiCodeParams);
-
-            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
-            final Object ffiTest = method.image.env.parse(source).call();
-            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
             try {
-                final Object value = interopLib.invokeMember(ffiTest, name, argumentsConverted);
+                final Object value = calloutToLib(name, argumentsConverted, nfiCode);
                 assert value != null;
                 return wrapNode.executeWrap(conversionNode.execute(returnArgHeader, value));
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
@@ -160,6 +158,14 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 // TODO: handle exception
                 throw new PrimitiveFailed();
             }
+        }
+
+        private Object calloutToLib(final String name, final Object[] argumentsConverted, final String nfiCode)
+                        throws UnsupportedMessageException, ArityException, UnknownIdentifierException, UnsupportedTypeException {
+            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
+            final Object ffiTest = method.image.env.parse(source).call();
+            final InteropLibrary interopLib = InteropLibrary.getFactory().getUncached(ffiTest);
+            return interopLib.invokeMember(ffiTest, name, argumentsConverted);
         }
 
         private static String getModuleName(final AbstractSqueakObject receiver, final PointersObject externalLibraryFunction) {
