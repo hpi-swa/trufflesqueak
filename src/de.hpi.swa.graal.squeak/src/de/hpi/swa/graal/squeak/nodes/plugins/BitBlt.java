@@ -117,6 +117,11 @@ public final class BitBlt {
     private long cmFlags;
     private int[] cmLookupTable;
     private long cmMask;
+
+    /** Used in {@link BitBlt#setupColorMasksFromto}. */
+    private final int[] cmMaskTableTemplate = new int[]{0, 0, 0, 0};
+    private final int[] cmShiftTableTemplate = new int[]{0, 0, 0, 0};
+
     private int[] cmMaskTable;
     private int[] cmShiftTable;
     private int combinationRule;
@@ -3384,8 +3389,8 @@ public final class BitBlt {
     private void setupColorMasksFromto(final long srcBits, final long targetBits) {
         final int deltaBits;
         final long mask;
-        final int[] masks = new int[]{0, 0, 0, 0};
-        final int[] shifts = new int[]{0, 0, 0, 0};
+        final int[] masks = cmMaskTableTemplate;
+        final int[] shifts = cmShiftTableTemplate;
 
         deltaBits = (int) (targetBits - srcBits);
         if (deltaBits == 0) {
@@ -3397,7 +3402,7 @@ public final class BitBlt {
             masks[RED_INDEX] = (int) shl(mask, srcBits * 2 - deltaBits);
             masks[GREEN_INDEX] = (int) shl(mask, srcBits - deltaBits);
             masks[BLUE_INDEX] = (int) shl(mask, 0 - deltaBits);
-            masks[ALPHA_INDEX] = 0;
+            // masks[ALPHA_INDEX] = 0; // Always zero anyway.
         } else {
             /* Mask for extracting a color part of the source */
             mask = shl(1, srcBits) - 1;
@@ -3408,7 +3413,7 @@ public final class BitBlt {
         shifts[RED_INDEX] = deltaBits * 3;
         shifts[GREEN_INDEX] = deltaBits * 2;
         shifts[BLUE_INDEX] = deltaBits;
-        shifts[ALPHA_INDEX] = 0;
+        // shifts[ALPHA_INDEX] = 0; // Always zero anyway.
         cmShiftTable = shifts;
         cmMaskTable = masks;
         cmFlags = cmFlags | COLOR_MAP_PRESENT | COLOR_MAP_FIXED_PART;
