@@ -36,6 +36,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnCons
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -223,7 +224,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 continue bytecode_loop;
             } else {
                 pc = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, pc);
+                if (node instanceof AbstractSendNode) {
+                    FrameAccess.setInstructionPointer(frame, code, pc);
+                }
                 node.executeVoid(frame);
                 continue bytecode_loop;
             }
@@ -283,7 +286,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 continue bytecode_loop_slow;
             } else {
                 final int successor = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, successor);
+                if (node instanceof AbstractSendNode) {
+                    FrameAccess.setInstructionPointer(frame, code, successor);
+                }
                 node.executeVoid(frame);
                 pc = successor;
                 continue bytecode_loop_slow;
