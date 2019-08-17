@@ -86,7 +86,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     }
 
     public Object executeFresh(final VirtualFrame frame) {
-        FrameAccess.initializeMarker(frame, code);
         FrameAccess.setInstructionPointer(frame, code, 0);
         final boolean enableStackDepthProtection = enableStackDepthProtection();
         try {

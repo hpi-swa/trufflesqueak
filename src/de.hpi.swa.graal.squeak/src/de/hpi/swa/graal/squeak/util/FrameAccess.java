@@ -160,6 +160,23 @@ public final class FrameAccess {
         setMarker(frame, code, new FrameMarker());
     }
 
+    /* Gets context or marker, lazily initializes the latter if necessary. */
+    public static Object getContextOrMarker(final Frame frame, final CompiledCodeObject blockOrMethod) {
+        final ContextObject context = getContext(frame, blockOrMethod);
+        if (context != null) {
+            return context;
+        } else {
+            final FrameMarker marker = getMarker(frame, blockOrMethod);
+            if (marker != null) {
+                return marker;
+            } else {
+                final FrameMarker newMarker = new FrameMarker();
+                setMarker(frame, blockOrMethod, newMarker);
+                return newMarker;
+            }
+        }
+    }
+
     public static ContextObject getContext(final Frame frame) {
         return getContext(frame, getBlockOrMethod(frame));
     }

@@ -31,7 +31,6 @@ public abstract class AbstractNodeWithCode extends AbstractNode {
     }
 
     protected final Object getContextOrMarker(final VirtualFrame frame) {
-        final ContextObject context = getContext(frame);
-        return context != null ? context : FrameAccess.getMarker(frame, code);
+        return FrameAccess.getContextOrMarker(frame, code);
     }
 }

@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNodes.AbstractArgumentNode;
@@ -28,8 +27,7 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
     public abstract Object executePrimitive(VirtualFrame frame);
 
     protected final Object getContextOrMarker(final VirtualFrame frame) {
-        final ContextObject context = FrameAccess.getContext(frame, method);
-        return context != null ? context : FrameAccess.getMarker(frame, method);
+        return FrameAccess.getContextOrMarker(frame, method);
     }
 
     protected final LargeIntegerObject asLargeInteger(final long value) {
