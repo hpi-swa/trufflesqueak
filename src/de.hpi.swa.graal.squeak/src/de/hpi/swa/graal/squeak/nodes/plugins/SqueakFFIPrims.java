@@ -117,16 +117,13 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
 
-            // int returnArgHeader = 0;
-            // final List<String> nfiArgTypeList = new ArrayList<>();
             final List<Integer> headerWordList = new ArrayList<>();
 
-            // final Object[] argumentsConverted = new Object[arguments.length];
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
 
             if (argTypes != null && argTypes.getObjectStorage().length == arguments.length + 1) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
-                // assert argTypesValues.length == 1 + arguments.length;
+
                 for (final Object argumentType : argTypesValues) {
                     if (argumentType instanceof PointersObject) {
                         final NativeObject compiledSpec = (NativeObject) ((PointersObject) argumentType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
@@ -136,8 +133,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 }
             }
 
-            final Object[] argumentsConverted = getConvertedArgumentFromHeaderWord(headerWordList, arguments);
-            final List<String> nfiArgTypeList = getArgTypeListFromHeaderWord(headerWordList);
+            final Object[] argumentsConverted = getConvertedArgumentsFromHeaderWords(headerWordList, arguments);
+            final List<String> nfiArgTypeList = getArgTypeListFromHeaderWords(headerWordList);
 
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
             final String moduleName = getModuleName(receiver, externalLibraryFunction);
@@ -158,43 +155,16 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private Object[] getConvertedArgumentFromHeaderWord(final List<Integer> headerWordList, final Object[] arguments) {
+        private Object[] getConvertedArgumentsFromHeaderWords(final List<Integer> headerWordList, final Object[] arguments) {
             final Object[] argumentsConverted = new Object[arguments.length];
-            // final List<Object> argumentsConvertedList = new ArrayList<>();
-            // final List<Object> argList = Arrays.asList(arguments);
-
-            /*
-             * for (final int headerWord : headerWordList.subList(1, headerWordList.size())) { for
-             * (final Object arg : argList) { final Object convertedArg =
-             * conversionNode.execute(headerWord, arg); argumentsConvertedList.add(convertedArg); //
-             * argumentsConvertedList.add(convertedArg); } }
-             */
-
-            /*
-             * for (int j = 1; j < headerWordList.size(); j++) { for (final Object arg : argList) {
-             * final Object convertedArg = conversionNode.execute(headerWordList.get(j), arg);
-             * argumentsConvertedList.add(convertedArg); } }
-             */
-
-            /*
-             * for (final Object arg : argList) { for (int j = 1; j < headerWordList.size(); j++) {
-             * final Object convertedArg = conversionNode.execute(headerWordList.get(j), a);
-             * argumentsConvertedList.add(convertedArg); } }
-             */
 
             for (int j = 1; j < headerWordList.size(); j++) {
                 argumentsConverted[j - 1] = conversionNode.execute(headerWordList.get(j), arguments[j - 1]);
             }
-
-            /*
-             * for (int i = 0; i < arguments.length; i++) { for (final int headerWord :
-             * headerWordList.subList(1, headerWordList.size())) { argumentsConverted[i] =
-             * conversionNode.execute(headerWord, arguments[i]); } }
-             */
             return argumentsConverted;
         }
 
-        private static List<String> getArgTypeListFromHeaderWord(final List<Integer> headerWordList) {
+        private static List<String> getArgTypeListFromHeaderWords(final List<Integer> headerWordList) {
             final List<String> nfiArgTypeList = new ArrayList<>();
 
             for (final int headerWord : headerWordList) {
