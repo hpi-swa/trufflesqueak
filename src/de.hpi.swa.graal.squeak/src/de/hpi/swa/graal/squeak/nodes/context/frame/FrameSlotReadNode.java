@@ -8,6 +8,8 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+
 @ImportStatic(FrameSlotKind.class)
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
     protected final boolean clear;
@@ -20,8 +22,10 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         return FrameSlotReadNodeGen.create(false, frameSlot);
     }
 
-    public static FrameSlotReadNode create(final FrameSlot frameSlot, final boolean clear) {
-        return FrameSlotReadNodeGen.create(clear, frameSlot);
+    public static FrameSlotReadNode create(final CompiledCodeObject code, final int index) {
+        // Only clear stack values, not receiver, arguments, or temporary variables.
+        final boolean clear = index >= code.getNumArgsAndCopied() + code.getNumTemps();
+        return FrameSlotReadNodeGen.create(clear, code.getStackSlot(index));
     }
 
     public abstract Object executeRead(Frame frame);

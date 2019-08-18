@@ -65,9 +65,7 @@ public abstract class FrameStackPopNNode extends AbstractNodeWithCode {
     protected final FrameSlotReadNode getReadNode(final int offset) {
         if (readNodes[offset] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            // Only clear stack values, not receiver, arguments, or temporary variables.
-            final boolean clear = stackPointer + offset >= code.getNumArgsAndCopied() + code.getNumTemps();
-            readNodes[offset] = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer + offset), clear));
+            readNodes[offset] = insert(FrameSlotReadNode.create(code, stackPointer + offset));
         }
         return readNodes[offset];
     }

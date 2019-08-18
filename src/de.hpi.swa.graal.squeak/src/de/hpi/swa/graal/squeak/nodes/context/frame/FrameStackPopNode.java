@@ -25,10 +25,7 @@ public final class FrameStackPopNode extends AbstractNodeWithCode {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stackPointer = FrameAccess.getStackPointer(frame, code) - 1;
-            assert stackPointer >= 0 : "Bad stack pointer";
-            // Only clear stack values, not receiver, arguments, or temporary variables.
-            final boolean clear = stackPointer >= code.getNumArgsAndCopied() + code.getNumTemps();
-            readNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer), clear));
+            readNode = insert(FrameSlotReadNode.create(code, stackPointer));
         }
         FrameAccess.setStackPointer(frame, code, stackPointer);
         return readNode.executeRead(frame);
