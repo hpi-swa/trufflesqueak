@@ -112,43 +112,41 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final Object doCallout(final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
-            int returnArgHeader = 0;
-            final List<String> nfiArgTypeList = new ArrayList<>();
 
             if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
                 throw new PrimitiveFailed(FFI_ERROR.NOT_FUNCTION);
             }
 
-            final Object[] argumentsConverted = new Object[arguments.length];
+            // int returnArgHeader = 0;
+            // final List<String> nfiArgTypeList = new ArrayList<>();
+            final List<Integer> headerWordList = new ArrayList<>();
+
+            // final Object[] argumentsConverted = new Object[arguments.length];
             final ArrayObject argTypes = (ArrayObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
 
-            if (argTypes != null) {
+            if (argTypes != null && argTypes.getObjectStorage().length == arguments.length + 1) {
                 final Object[] argTypesValues = argTypes.getObjectStorage();
-                assert argTypesValues.length == 1 + arguments.length;
-                for (int i = 0; i < argTypesValues.length; i++) {
-                    final Object argType = argTypesValues[i];
-                    if (argType instanceof PointersObject) {
-                        final NativeObject compiledSpec = (NativeObject) ((PointersObject) argType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
+                // assert argTypesValues.length == 1 + arguments.length;
+                for (final Object argumentType : argTypesValues) {
+                    if (argumentType instanceof PointersObject) {
+                        final NativeObject compiledSpec = (NativeObject) ((PointersObject) argumentType).at0(ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
                         final int headerWord = compiledSpec.getIntStorage()[0];
-                        if (i == 0) {
-                            returnArgHeader = headerWord;
-                        } else if (i > 0) {
-                            argumentsConverted[i - 1] = conversionNode.execute(headerWord, arguments[i - 1]);
-                        }
-                        final String atomicName = FFI_TYPES.getTruffleTypeFromInt(headerWord);
-                        nfiArgTypeList.add(atomicName);
+                        headerWordList.add(headerWord);
                     }
                 }
             }
 
+            final Object[] argumentsConverted = getConvertedArgumentFromHeaderWord(headerWordList, arguments);
+            final List<String> nfiArgTypeList = getArgTypeListFromHeaderWord(headerWordList);
+
             final String name = ((NativeObject) externalLibraryFunction.at0(ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME)).asStringUnsafe();
             final String moduleName = getModuleName(receiver, externalLibraryFunction);
             final String nfiCodeParams = generateNfiCodeParamsString(nfiArgTypeList);
-            final String nfiCode = generateNfiCode(name, moduleName, nfiCodeParams);
             try {
+                final String nfiCode = generateNfiCode(name, moduleName, nfiCodeParams);
                 final Object value = calloutToLib(name, argumentsConverted, nfiCode);
                 assert value != null;
-                return wrapNode.executeWrap(conversionNode.execute(returnArgHeader, value));
+                return wrapNode.executeWrap(conversionNode.execute(headerWordList.get(0), value));
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
                 e.printStackTrace();
                 // TODO: return correct error code.
@@ -158,6 +156,48 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 // TODO: handle exception
                 throw new PrimitiveFailed();
             }
+        }
+
+        private Object[] getConvertedArgumentFromHeaderWord(final List<Integer> headerWordList, final Object[] arguments) {
+            final Object[] argumentsConverted = new Object[arguments.length];
+            final List<Object> argumentsConvertedList = new ArrayList<>();
+            final List<Object> argList = Arrays.asList(arguments);
+
+            /*
+             * for (final int headerWord : headerWordList.subList(1, headerWordList.size())) { for
+             * (final Object arg : argList) { final Object convertedArg =
+             * conversionNode.execute(headerWord, arg); argumentsConvertedList.add(convertedArg); //
+             * argumentsConvertedList.add(convertedArg); } }
+             */
+
+            /*
+             * for (int j = 1; j < headerWordList.size(); j++) { for (final Object arg : argList) {
+             * final Object convertedArg = conversionNode.execute(headerWordList.get(j), arg);
+             * argumentsConvertedList.add(convertedArg); } }
+             */
+
+            for (final Object arg : argList) {
+                for (int j = 1; j < headerWordList.size(); j++) {
+                    final Object convertedArg = conversionNode.execute(headerWordList.get(j), arg);
+                    argumentsConvertedList.add(convertedArg);
+                }
+            }
+            /*
+             * for (int i = 0; i < arguments.length; i++) { for (final int headerWord :
+             * headerWordList.subList(1, headerWordList.size())) { argumentsConverted[i] =
+             * conversionNode.execute(headerWord, arguments[i]); } }
+             */
+            return argumentsConverted;
+        }
+
+        private static List<String> getArgTypeListFromHeaderWord(final List<Integer> headerWordList) {
+            final List<String> nfiArgTypeList = new ArrayList<>();
+
+            for (final int headerWord : headerWordList) {
+                final String atomicName = FFI_TYPES.getTruffleTypeFromInt(headerWord);
+                nfiArgTypeList.add(atomicName);
+            }
+            return nfiArgTypeList;
         }
 
         private Object calloutToLib(final String name, final Object[] argumentsConverted, final String nfiCode)
