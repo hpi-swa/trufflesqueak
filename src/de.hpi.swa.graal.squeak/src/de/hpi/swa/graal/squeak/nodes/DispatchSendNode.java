@@ -13,7 +13,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.MESSAGE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -34,13 +33,13 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
 
     public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments);
 
-    @Specialization(guards = {"!code.image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null"})
+    @Specialization(guards = {"!code.image.isHeadless() || selector.isAllowedInHeadlessMode()", "lookupResult != null"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs);
     }
 
-    @Specialization(guards = {"!code.image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null"})
+    @Specialization(guards = {"!code.image.isHeadless() || selector.isAllowedInHeadlessMode()", "lookupResult != null"})
     protected final Object doDispatchNeedsSender(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs);
@@ -65,7 +64,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
                     final Object[] rcvrAndArgs,
                     @Cached final LookupMethodNode lookupNode) {
         final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) lookupNode.executeLookup(rcvrClass, code.image.doesNotUnderstand);
-        final PointersObject message = createMessage(selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
+        final PointersObject message = code.image.newMessage(selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
         return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message});
     }
 
@@ -80,23 +79,9 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
         final Object newLookupResult = lookupNode.executeLookup(targetClass, code.image.runWithInSelector);
         if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
             final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, code.image.doesNotUnderstand);
-            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod, new Object[]{targetObject, createMessage(selector, targetClass, arguments)});
+            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod, new Object[]{targetObject, code.image.newMessage(selector, targetClass, arguments)});
         } else {
             return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, code.image.asArrayOfObjects(arguments), rcvrAndArgs[0]});
         }
-    }
-
-    protected static final boolean isAllowedInHeadlessMode(final NativeObject selector) {
-        return !selector.isDebugErrorSelector() && !selector.isDebugSyntaxErrorSelector();
-    }
-
-    private PointersObject createMessage(final NativeObject selector, final ClassObject rcvrClass, final Object[] arguments) {
-        final PointersObject message = new PointersObject(code.image, code.image.messageClass, code.image.messageClass.getBasicInstanceSize());
-        message.atput0(MESSAGE.SELECTOR, selector);
-        message.atput0(MESSAGE.ARGUMENTS, code.image.asArrayOfObjects(arguments));
-        if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // Early versions do not have lookupClass.
-            message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
-        }
-        return message;
     }
 }

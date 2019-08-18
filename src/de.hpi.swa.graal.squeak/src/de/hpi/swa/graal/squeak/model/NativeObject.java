@@ -259,6 +259,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         }
     }
 
+    public boolean isAllowedInHeadlessMode() {
+        return !isDebugErrorSelector() && !isDebugSyntaxErrorSelector();
+    }
+
     public boolean isDebugErrorSelector() {
         return this == image.getDebugErrorSelector();
     }

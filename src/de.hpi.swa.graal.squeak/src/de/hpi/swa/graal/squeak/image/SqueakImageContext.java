@@ -43,6 +43,7 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ENVIRONMENT;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.MESSAGE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SMALLTALK_IMAGE;
@@ -467,6 +468,16 @@ public final class SqueakImageContext {
 
     public ArrayObject newEmptyArray() {
         return ArrayObject.createWithStorage(this, arrayClass, ArrayUtils.EMPTY_ARRAY);
+    }
+
+    public PointersObject newMessage(final NativeObject selector, final ClassObject rcvrClass, final Object[] arguments) {
+        final PointersObject message = new PointersObject(this, messageClass, messageClass.getBasicInstanceSize());
+        message.atput0(MESSAGE.SELECTOR, selector);
+        message.atput0(MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
+        if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // Early versions do not have lookupClass.
+            message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
+        }
+        return message;
     }
 
     /*
