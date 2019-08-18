@@ -160,8 +160,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         private Object[] getConvertedArgumentFromHeaderWord(final List<Integer> headerWordList, final Object[] arguments) {
             final Object[] argumentsConverted = new Object[arguments.length];
-            final List<Object> argumentsConvertedList = new ArrayList<>();
-            final List<Object> argList = Arrays.asList(arguments);
+            // final List<Object> argumentsConvertedList = new ArrayList<>();
+            // final List<Object> argList = Arrays.asList(arguments);
 
             /*
              * for (final int headerWord : headerWordList.subList(1, headerWordList.size())) { for
@@ -176,12 +176,16 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
              * argumentsConvertedList.add(convertedArg); } }
              */
 
-            for (final Object arg : argList) {
-                for (int j = 1; j < headerWordList.size(); j++) {
-                    final Object convertedArg = conversionNode.execute(headerWordList.get(j), arg);
-                    argumentsConvertedList.add(convertedArg);
-                }
+            /*
+             * for (final Object arg : argList) { for (int j = 1; j < headerWordList.size(); j++) {
+             * final Object convertedArg = conversionNode.execute(headerWordList.get(j), a);
+             * argumentsConvertedList.add(convertedArg); } }
+             */
+
+            for (int j = 1; j < headerWordList.size(); j++) {
+                argumentsConverted[j - 1] = conversionNode.execute(headerWordList.get(j), arguments[j - 1]);
             }
+
             /*
              * for (int i = 0; i < arguments.length; i++) { for (final int headerWord :
              * headerWordList.subList(1, headerWordList.size())) { argumentsConverted[i] =
