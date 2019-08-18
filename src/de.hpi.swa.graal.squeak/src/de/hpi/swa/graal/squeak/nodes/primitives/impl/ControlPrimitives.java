@@ -59,6 +59,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.process.LinkProcessToListNode;
@@ -78,37 +79,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         return ControlPrimitivesFactory.getFactories();
     }
 
-    /*
-     * This node is not in primitive table, so that lookups fail just like when a primitive is not
-     * implemented. This way, the node does not fill any caches during dispatch.
-     *
-     * @SqueakPrimitive(indices = 19)
-     */
-    public static final class PrimitiveFailedNode extends AbstractPrimitiveNode {
-
-        protected PrimitiveFailedNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        public static PrimitiveFailedNode create(final CompiledMethodObject method) {
-            return new PrimitiveFailedNode(method);
-        }
-
-        @Override
-        public Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            throw PrimitiveFailed.GENERIC_ERROR;
-        }
-
-        @Override
-        public Object executePrimitive(final VirtualFrame frameValue) {
-            throw PrimitiveFailed.GENERIC_ERROR;
-        }
-
-        @Override
-        public int getNumArguments() {
-            return 0;
-        }
-    }
+    /* primitiveFail (#19) handled specially. */
 
     // primitiveBlockCopy / primitiveBlockValue: (#80, #81, #82) no longer needed.
 
@@ -503,39 +474,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 117)
-    protected abstract static class PrimExternalCallNode extends AbstractPrimitiveNode {
-        @Child private CreateEagerArgumentsNode createEagerArgumentsNode;
-
-        protected PrimExternalCallNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
-            final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.namedFor(method);
-            return replace(primitiveNode).executeWithArguments(frame, getCreateEagerArgumentsNode().executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
-        }
-
-        @Specialization
-        protected final Object doExternalCall(final VirtualFrame frame) {
-            return replace(method.image.primitiveNodeFactory.namedFor(method)).executePrimitive(frame);
-        }
-
-        @Override
-        public int getNumArguments() {
-            return 0;
-        }
-
-        private CreateEagerArgumentsNode getCreateEagerArgumentsNode() {
-            if (createEagerArgumentsNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                createEagerArgumentsNode = insert(CreateEagerArgumentsNode.create());
-            }
-            return createEagerArgumentsNode;
-        }
-    }
+    /** primitiveExternalCall (#117) handled specially in {@link PrimitiveNodeFactory}. */
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 118)
@@ -1052,11 +991,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
-    public abstract static class PrimQuickReturnReceiverVariableNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    public abstract static class PrimLoadInstVarNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         private final long variableIndex;
 
-        protected PrimQuickReturnReceiverVariableNode(final CompiledMethodObject method, final long variableIndex) {
+        protected PrimLoadInstVarNode(final CompiledMethodObject method, final long variableIndex) {
             super(method);
             this.variableIndex = variableIndex;
         }

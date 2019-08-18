@@ -50,13 +50,15 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArrayStreamPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.BlockClosurePrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ContextPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
 
 public final class PrimitiveNodeFactory {
+    private static final int PRIMITIVE_EXTERNAL_CALL_INDEX = 117;
+    private static final int PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX = 264;
+    private static final int PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX = 520;
     private static final int MAX_PRIMITIVE_INDEX = 575;
     @CompilationFinal(dimensions = 1) private static final byte[] NULL_MODULE_NAME = NullPlugin.class.getSimpleName().getBytes();
 
@@ -112,8 +114,10 @@ public final class PrimitiveNodeFactory {
     public AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final int primitiveIndex) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         assert primitiveIndex >= 0 : "Unexpected negative primitiveIndex";
-        if (264 <= primitiveIndex && primitiveIndex <= 520) {
-            return ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory.create(method, primitiveIndex - 264, new AbstractArgumentNode[]{new ArgumentNode(0)});
+        if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
+            return namedFor(method);
+        } else if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
+            return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(method, primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX, new AbstractArgumentNode[]{new ArgumentNode(0)});
         } else if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable[primitiveIndex - 1];
             if (nodeFactory != null) {
@@ -126,7 +130,7 @@ public final class PrimitiveNodeFactory {
     public AbstractPrimitiveNode namedFor(final CompiledMethodObject method) {
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
         if (values[1] == NilObject.SINGLETON) {
-            return PrimitiveFailedNode.create(method);
+            return null;
         } else if (values[0] == NilObject.SINGLETON) {
             final NativeObject functionName = (NativeObject) values[1];
             return forName(method, NULL_MODULE_NAME, functionName.getByteStorage());
@@ -146,7 +150,7 @@ public final class PrimitiveNodeFactory {
                 return createInstance(method, nodeFactory);
             }
         }
-        return PrimitiveFailedNode.create(method);
+        return null;
     }
 
     public String[] getPluginNames() {
