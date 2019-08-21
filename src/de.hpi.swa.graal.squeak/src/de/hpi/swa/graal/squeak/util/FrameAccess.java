@@ -274,19 +274,25 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newClosureArguments(final BlockClosureObject closure, final Object senderOrMarker, final Object[] objects) {
-        final int numObjects = objects.length;
+    public static Object[] newClosureArguments(final BlockClosureObject closure, final Object senderOrMarker, final Object[] closureArguments) {
+        final int numClosureArguments = closureArguments.length;
+        final Object[] arguments = newClosureArgumentsTemplate(closure, senderOrMarker, numClosureArguments);
+        System.arraycopy(closureArguments, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal(), numClosureArguments);
+        return arguments;
+    }
+
+    /* Template because closure arguments still need to be filled in. */
+    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final Object senderOrMarker, final int numArgs) {
         final Object[] copied = closure.getCopied();
         final int numCopied = copied.length;
-        assert closure.getCompiledBlock().getNumArgs() == numObjects : "number of required and provided block arguments do not match";
-        final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numObjects + numCopied];
+        assert closure.getCompiledBlock().getNumArgs() == numArgs : "number of required and provided block arguments do not match";
+        final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs + numCopied];
         arguments[ArgumentIndicies.METHOD.ordinal()] = closure.getCompiledBlock().getMethod();
         // Sender is thisContext (or marker)
         arguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = senderOrMarker;
         arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
         arguments[ArgumentIndicies.RECEIVER.ordinal()] = closure.getReceiver();
-        System.arraycopy(objects, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal(), numObjects);
-        System.arraycopy(copied, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal() + numObjects, numCopied);
+        System.arraycopy(copied, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs, numCopied);
         return arguments;
     }
 
