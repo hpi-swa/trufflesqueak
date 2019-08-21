@@ -476,8 +476,8 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return getSqueakClass() == other.getSqueakClass();
     }
 
-    public boolean sameSign(final long other) {
-        return isPositive() && other >= 0 || isNegative() && other < 0;
+    public boolean differentSign(final long other) {
+        return isNegative() ^ other < 0;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)

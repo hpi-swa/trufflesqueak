@@ -11,8 +11,8 @@ import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 @ExportLibrary(InteropLibrary.class)
 public final class FloatObject extends AbstractSqueakObjectWithHash {
     public static final int PRECISION = 53;
-    public static final int EMIN = -1022;
-    public static final int EMAX = 1023;
+    public static final int EMIN = Double.MIN_EXPONENT;
+    public static final int EMAX = Double.MAX_EXPONENT;
     public static final int WORD_LENGTH = 2;
 
     private double doubleValue;

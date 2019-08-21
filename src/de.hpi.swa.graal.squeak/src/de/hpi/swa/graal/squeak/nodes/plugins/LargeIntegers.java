@@ -125,22 +125,22 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "sameSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = "!differentSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
         protected static final Object doLongPositive(final long lhs, final long rhs) {
             return Math.addExact(lhs, rhs);
         }
 
-        @Specialization(guards = "sameSign(lhs, rhs)")
+        @Specialization(guards = "!differentSign(lhs, rhs)")
         protected final Object doLongPositiveWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.add(method.image, lhs, rhs);
         }
 
-        @Specialization(guards = "!sameSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = "differentSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
         protected static final Object doLongNegative(final long lhs, final long rhs) {
             return Math.subtractExact(lhs, rhs);
         }
 
-        @Specialization(guards = "!sameSign(lhs, rhs)")
+        @Specialization(guards = "differentSign(lhs, rhs)")
         protected final Object doLongNegativeWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.subtract(method.image, lhs, rhs);
         }
@@ -155,22 +155,22 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return lhs.subtract(rhs);
         }
 
-        @Specialization(guards = "rhs.sameSign(lhs)")
+        @Specialization(guards = "!rhs.differentSign(lhs)")
         protected static final Object doLongLargeIntegerPositive(final long lhs, final LargeIntegerObject rhs) {
             return rhs.add(lhs);
         }
 
-        @Specialization(guards = "!rhs.sameSign(lhs)")
+        @Specialization(guards = "rhs.differentSign(lhs)")
         protected static final Object doLongLargeIntegerNegative(final long lhs, final LargeIntegerObject rhs) {
             return LargeIntegerObject.subtract(lhs, rhs);
         }
 
-        @Specialization(guards = "lhs.sameSign(rhs)")
+        @Specialization(guards = "!lhs.differentSign(rhs)")
         protected static final Object doLargeIntegerLongPositive(final LargeIntegerObject lhs, final long rhs) {
             return lhs.add(rhs);
         }
 
-        @Specialization(guards = "!lhs.sameSign(rhs)")
+        @Specialization(guards = "lhs.differentSign(rhs)")
         protected static final Object doLargeIntegerLongNegative(final LargeIntegerObject lhs, final long rhs) {
             return lhs.subtract(rhs);
         }
@@ -183,22 +183,22 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "sameSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = "!differentSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
         protected static final Object doLongPositive(final long lhs, final long rhs) {
             return Math.subtractExact(lhs, rhs);
         }
 
-        @Specialization(guards = "sameSign(lhs, rhs)")
+        @Specialization(guards = "!differentSign(lhs, rhs)")
         protected final Object doLongPositiveWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.subtract(method.image, lhs, rhs);
         }
 
-        @Specialization(guards = "!sameSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
+        @Specialization(guards = "differentSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
         protected static final Object doLongNegative(final long lhs, final long rhs) {
             return Math.addExact(lhs, rhs);
         }
 
-        @Specialization(guards = "!sameSign(lhs, rhs)")
+        @Specialization(guards = "differentSign(lhs, rhs)")
         protected final Object doLongNegativeWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.add(method.image, lhs, rhs);
         }
@@ -213,22 +213,22 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return lhs.add(rhs);
         }
 
-        @Specialization(guards = "rhs.sameSign(lhs)")
+        @Specialization(guards = "!rhs.differentSign(lhs)")
         protected static final Object doLongLargeIntegerPositive(final long lhs, final LargeIntegerObject rhs) {
             return LargeIntegerObject.subtract(lhs, rhs);
         }
 
-        @Specialization(guards = "!rhs.sameSign(lhs)")
+        @Specialization(guards = "rhs.differentSign(lhs)")
         protected static final Object doLongLargeIntegerNegative(final long lhs, final LargeIntegerObject rhs) {
             return rhs.add(lhs);
         }
 
-        @Specialization(guards = "lhs.sameSign(rhs)")
+        @Specialization(guards = "!lhs.differentSign(rhs)")
         protected static final Object doLargeIntegerLongPositive(final LargeIntegerObject lhs, final long rhs) {
             return lhs.subtract(rhs);
         }
 
-        @Specialization(guards = "!lhs.sameSign(rhs)")
+        @Specialization(guards = "lhs.differentSign(rhs)")
         protected static final Object doLargeIntegerLongNegative(final LargeIntegerObject lhs, final long rhs) {
             return lhs.add(rhs);
         }

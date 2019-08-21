@@ -1227,8 +1227,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return value - 1 <= FloatObject.EMAX && h - Math.log(Long.lowestOneBit(abs)) / Math.log(2) < FloatObject.PRECISION;
         }
 
-        protected static final boolean sameSign(final long lhs, final long rhs) {
-            return lhs >= 0 && rhs >= 0 || lhs < 0 && rhs < 0;
+        protected static final boolean differentSign(final long lhs, final long rhs) {
+            return lhs < 0 ^ rhs < 0;
         }
     }
 
