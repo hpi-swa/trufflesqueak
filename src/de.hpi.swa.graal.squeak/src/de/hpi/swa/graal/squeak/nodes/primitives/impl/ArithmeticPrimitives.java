@@ -270,9 +270,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return LargeIntegerObject.multiply(method.image, lhs, rhs);
         }
 
-        @Specialization(guards = {"lhs != 0", "!isPowerOfTwo(lhs)", "!rhs.fitsIntoLong()"})
-        protected final LargeIntegerObject doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return asLargeInteger(lhs).multiplyNoReduce(rhs);
+        @Specialization
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+            return rhs.multiply(lhs);
         }
 
         @Specialization
