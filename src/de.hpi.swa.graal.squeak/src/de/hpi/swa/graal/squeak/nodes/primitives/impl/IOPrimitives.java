@@ -333,8 +333,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 105)
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
-        @Child private SqueakObjectInstSizeNode instSizeNode;
-        @Child private SqueakObjectSizeNode sizeNode;
 
         protected PrimStringReplaceNode(final CompiledMethodObject method) {
             super(method);
@@ -382,31 +380,31 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"rcvr.isByteType()", "repl.isByteType()", "inBounds(rcvr, start, stop, repl, replStart)"})
+        @Specialization(guards = {"rcvr.isByteType()", "repl.isByteType()", "inBounds(rcvr.instsize(), rcvr.getByteLength(), start, stop, repl.instsize(), repl.getByteLength(), replStart)"})
         protected static final NativeObject doNativeBytes(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             System.arraycopy(repl.getByteStorage(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
             return rcvr;
         }
 
-        @Specialization(guards = {"rcvr.isShortType()", "repl.isShortType()", "inBounds(rcvr, start, stop, repl, replStart)"})
+        @Specialization(guards = {"rcvr.isShortType()", "repl.isShortType()", "inBounds(rcvr.instsize(), rcvr.getShortLength(), start, stop, repl.instsize(), repl.getShortLength(), replStart)"})
         protected static final NativeObject doNativeShorts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             System.arraycopy(repl.getShortStorage(), (int) replStart - 1, rcvr.getShortStorage(), (int) start - 1, (int) (1 + stop - start));
             return rcvr;
         }
 
-        @Specialization(guards = {"rcvr.isIntType()", "repl.isIntType()", "inBounds(rcvr, start, stop, repl, replStart)"})
+        @Specialization(guards = {"rcvr.isIntType()", "repl.isIntType()", "inBounds(rcvr.instsize(), rcvr.getIntLength(), start, stop, repl.instsize(), repl.getIntLength(), replStart)"})
         protected static final NativeObject doNativeInts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             System.arraycopy(repl.getIntStorage(), (int) replStart - 1, rcvr.getIntStorage(), (int) start - 1, (int) (1 + stop - start));
             return rcvr;
         }
 
-        @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()", "inBounds(rcvr, start, stop, repl, replStart)"})
+        @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()", "inBounds(rcvr.instsize(), rcvr.getLongLength(), start, stop, repl.instsize(), repl.getLongLength(), replStart)"})
         protected static final NativeObject doNativeLongs(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
             return rcvr;
         }
 
-        @Specialization(guards = {"rcvr.isByteType()", "inBounds(rcvr, start, stop, repl, replStart)"})
+        @Specialization(guards = {"rcvr.isByteType()", "inBounds(rcvr.instsize(), rcvr.getByteLength(), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected static final NativeObject doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             System.arraycopy(repl.getBytes(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
             return rcvr;
@@ -456,8 +454,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"!rcvr.hasSameStorageType(repl)", "inBounds(rcvr, start, stop, repl, replStart)"})
+        @Specialization(guards = {"!rcvr.hasSameStorageType(repl)", "inBounds(rcvr.instsize(), sizeNode.execute(rcvr), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)"}, limit = "1")
         protected static final ArrayObject doArraysWithDifferenStorageTypes(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Shared("arrayReadNode") @Cached final ArrayObjectReadNode readNode,
                         @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
             final long repOff = replStart - start;
@@ -467,8 +466,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
+        @Specialization(guards = {"inBounds(rcvr.instsize(), sizeNode.execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"}, limit = "1")
         protected static final ArrayObject doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
+                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -477,8 +477,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
+        @Specialization(guards = {"inBounds(rcvr.instsize(), sizeNode.execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"}, limit = "1")
         protected static final ArrayObject doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
+                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Shared("weakPointersReadNode") @Cached final WeakPointersObjectReadNode readNode,
                         @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
             final long repOff = replStart - start;
@@ -537,8 +538,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)", limit = "1")
         protected static final WeakPointersObject doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Shared("arrayReadNode") @Cached final ArrayObjectReadNode readNode,
                         @Shared("weakPointersWriteNode") @Cached final WeakPointersObjectWriteNode writeNode) {
             final long repOff = replStart - start;
@@ -567,8 +569,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!inBounds(rcvr, start, stop, repl, replStart)")
-        protected static final AbstractSqueakObject doBadIndex(final AbstractSqueakObject rcvr, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
+        @Specialization(guards = "!inBounds(instSizeNode.execute(rcvr), sizeNode.execute(rcvr), start, stop, instSizeNode.execute(repl), sizeNode.execute(repl), replStart)", limit = "1")
+        protected static final AbstractSqueakObject doBadIndex(final AbstractSqueakObject rcvr, final long start, final long stop, final AbstractSqueakObject repl, final long replStart,
+                        @Cached final SqueakObjectInstSizeNode instSizeNode,
+                        @Cached final SqueakObjectSizeNode sizeNode) {
             throw PrimitiveFailed.BAD_INDEX;
         }
 
@@ -576,31 +580,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return start >= 1 && start - 1 <= stop && stop + rcvrInstSize <= rcvrSize && replStart >= 1 && stop - start + replStart + replInstSize <= replSize;
         }
 
-        protected final boolean inBounds(final AbstractSqueakObject array, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
-            return start >= 1 && start - 1 <= stop && stop + getInstSizeNode().execute(array) <= getSizeNode().execute(array) &&
-                            replStart >= 1 && stop - start + replStart + getInstSizeNode().execute(repl) <= getSizeNode().execute(repl);
-        }
-
         protected static final boolean inBoundsEntirely(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize,
                         final long replStart) {
             // Specialization for Integer>>copy:to:
             return start == 1 && replStart == 1 && stop == replSize + replInstSize && stop == rcvrSize + rcvrInstSize;
-        }
-
-        private SqueakObjectInstSizeNode getInstSizeNode() {
-            if (instSizeNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                instSizeNode = insert(SqueakObjectInstSizeNode.create());
-            }
-            return instSizeNode;
-        }
-
-        protected SqueakObjectSizeNode getSizeNode() {
-            if (sizeNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                sizeNode = insert(SqueakObjectSizeNode.create());
-            }
-            return sizeNode;
         }
     }
 
