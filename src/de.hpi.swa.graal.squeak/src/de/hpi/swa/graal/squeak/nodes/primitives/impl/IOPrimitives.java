@@ -333,6 +333,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 105)
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
+        @Child private ArrayObjectSizeNode arraySizeNode;
 
         protected PrimStringReplaceNode(final CompiledMethodObject method) {
             super(method);
@@ -454,9 +455,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"!rcvr.hasSameStorageType(repl)", "inBounds(rcvr.instsize(), sizeNode.execute(rcvr), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)"}, limit = "1")
+        @Specialization(guards = {"!rcvr.hasSameStorageType(repl)",
+                        "inBounds(rcvr.instsize(), getArrayObjectSizeNode().execute(rcvr), start, stop, repl.instsize(), getArrayObjectSizeNode().execute(repl), replStart)"})
         protected static final ArrayObject doArraysWithDifferenStorageTypes(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Shared("arrayReadNode") @Cached final ArrayObjectReadNode readNode,
                         @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
             final long repOff = replStart - start;
@@ -466,9 +467,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"inBounds(rcvr.instsize(), sizeNode.execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"}, limit = "1")
+        @Specialization(guards = {"inBounds(rcvr.instsize(), getArrayObjectSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected static final ArrayObject doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
-                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -477,9 +477,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"inBounds(rcvr.instsize(), sizeNode.execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"}, limit = "1")
+        @Specialization(guards = {"inBounds(rcvr.instsize(), getArrayObjectSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
         protected static final ArrayObject doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
-                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Shared("weakPointersReadNode") @Cached final WeakPointersObjectReadNode readNode,
                         @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
             final long repOff = replStart - start;
@@ -538,9 +537,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)", limit = "1")
+        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), getArrayObjectSizeNode().execute(repl), replStart)")
         protected static final WeakPointersObject doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                        @SuppressWarnings("unused") @Shared("arraySizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                         @Shared("arrayReadNode") @Cached final ArrayObjectReadNode readNode,
                         @Shared("weakPointersWriteNode") @Cached final WeakPointersObjectWriteNode writeNode) {
             final long repOff = replStart - start;
@@ -584,6 +582,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         final long replStart) {
             // Specialization for Integer>>copy:to:
             return start == 1 && replStart == 1 && stop == replSize + replInstSize && stop == rcvrSize + rcvrInstSize;
+        }
+
+        /* TODO: Used @Cached when https://github.com/oracle/graal/issues/1207 is fixed. */
+        protected final ArrayObjectSizeNode getArrayObjectSizeNode() {
+            if (arraySizeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                arraySizeNode = insert(ArrayObjectSizeNode.create());
+            }
+            return arraySizeNode;
         }
     }
 
