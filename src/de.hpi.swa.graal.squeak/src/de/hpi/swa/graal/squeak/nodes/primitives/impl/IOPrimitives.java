@@ -115,7 +115,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"!isAOT()", "method.image.hasDisplay()"})
         protected final PointersObject doGetNext(final PointersObject eventSensor, final ArrayObject targetArray,
                         @Cached("createIdentityProfile()") final ValueProfile displayProfile) {
-            targetArray.setStorage(displayProfile.profile(method.image.getDisplay()).getNextEvent());
+            final long[] event = displayProfile.profile(method.image.getDisplay()).getNextEvent();
+            if (event != null) { // No need to touch targetArray in case of no event.
+                targetArray.setStorage(event);
+            }
             return eventSensor;
         }
 
@@ -128,7 +131,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!method.image.hasDisplay()")
         protected static final PointersObject doGetNextHeadless(final PointersObject eventSensor, @SuppressWarnings("unused") final ArrayObject targetArray) {
-            targetArray.setStorage(SqueakIOConstants.newNullEvent());
+            // No need to touch targetArray.
             return eventSensor;
         }
     }

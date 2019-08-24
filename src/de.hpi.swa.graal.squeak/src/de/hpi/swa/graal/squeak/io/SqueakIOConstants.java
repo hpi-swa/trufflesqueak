@@ -163,9 +163,4 @@ public final class SqueakIOConstants {
 
     private SqueakIOConstants() {
     }
-
-    public static long[] newNullEvent() {
-        return new long[]{EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE,
-                        EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE, EVENT_TYPE.NONE};
-    }
 }

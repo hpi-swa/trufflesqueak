@@ -330,12 +330,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     @Override
     public long[] getNextEvent() {
-        final long[] nextEvent = deferredEvents.pollFirst();
-        if (nextEvent == null) {
-            return SqueakIOConstants.newNullEvent();
-        } else {
-            return nextEvent;
-        }
+        return deferredEvents.pollFirst();
     }
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6) {

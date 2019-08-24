@@ -34,7 +34,6 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplayInterface;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEY;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD_EVENT;
@@ -200,8 +199,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
 
     @Override
     public long[] getNextEvent() {
-        final long[] nextEvent = deferredEvents.pollFirst();
-        return nextEvent != null ? nextEvent : SqueakIOConstants.newNullEvent();
+        return deferredEvents.pollFirst();
     }
 
     @Override
