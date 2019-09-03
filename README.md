@@ -55,16 +55,17 @@ Proceedings of [the Workshop on Implementation, Compilation, Optimization of
 Object-Oriented Languages, Programs and Systems (ICOOOLPS) 2018][icooolps18],
 co-located with [the European Conference on Object-oriented Programming
 (ECOOP)][ecoop], Amsterdam, Netherlands, July 17, 2018, ACM DL.  
-   [![doi][icooolps18_doi]][icooolps18_paper] [![Preprint][preprint]][icooolps18_pdf]
+   [![doi][icooolps18_doi]][icooolps18_paper] [![bibtex][bibtex]][icooolps18_bibtex] [![Preprint][preprint]][icooolps18_pdf]
 - Fabio Niephaus, Tim Felgentreff, Tobias Pape, and Robert Hirschfeld.
 *Efficient Implementation of Smalltalk Activation Records in Language
 Implementation Frameworks*. [Workshop on Modern Language Runtimes, Ecosystems,
 and VMs (MoreVMs) 2019][morevms19], co-located with [the International Conference
 on the Art, Science, and Engineering of Programming
 (‹Programming›)][programming19], Genoa, Italy, April 2, 2019.  
-   [![Preprint][preprint]][morevms19_pdf]
+   [![doi][morevms19_doi]][morevms19_paper] [![bibtex][bibtex]][morevms19_bibtex] [![Preprint][preprint]][morevms19_pdf]
 
 
+[bibtex]: https://img.shields.io/badge/bibtex-download-blue.svg
 [codacy]: https://app.codacy.com/app/fniephaus/graalsqueak/dashboard
 [codacy_coverage]: https://img.shields.io/codacy/coverage/9748bfe3726b48c8973e3808549f6d05.svg
 [codacy_grade]: https://img.shields.io/codacy/grade/9748bfe3726b48c8973e3808549f6d05.svg
@@ -78,12 +79,16 @@ on the Art, Science, and Engineering of Programming
 [graalvm]: http://www.graalvm.org/
 [graalvm_download]: http://www.graalvm.org/downloads/
 [icooolps18]: https://2018.ecoop.org/event/icooolps-2018-papers-graalsqueak-a-fast-smalltalk-bytecode-interpreter-written-in-an-ast-interpreter-framework
+[icooolps18_bibtex]: https://dl.acm.org/downformats.cfm?id=3242948&parent_id=3242947&expformat=bibtex
 [icooolps18_doi]: https://img.shields.io/badge/doi-10.1145/3242947.3242948-blue.svg
 [icooolps18_paper]: https://doi.org/10.1145/3242947.3242948
 [icooolps18_pdf]: https://fniephaus.com/2018/icooolps18-graalsqueak.pdf
 [issues]: ../../issues/new
 [master]: ../../tree/master
 [morevms19]: https://2019.programming-conference.org/track/MoreVMs-2019
+[morevms19_bibtex]: https://dl.acm.org/downformats.cfm?id=3328440&parent_id=3328433&expformat=bibtex
+[morevms19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3328440-blue.svg
+[morevms19_paper]: https://doi.org/10.1145/3328433.3328440
 [morevms19_pdf]: https://fniephaus.com/2019/morevms19-efficient-activation-records.pdf
 [mx]: https://github.com/graalvm/mx
 [preprint]: https://img.shields.io/badge/preprint-download-blue.svg
