@@ -4,7 +4,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
+import de.hpi.swa.graal.squeak.exceptions.Returns;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -13,6 +15,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -84,13 +87,27 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
         writeNode.execute(obj, index, value);
     }
 
-    @Specialization(guards = {"index == 0", "value >= 0", "value <= INTEGER_MAX"})
-    protected static final void doFloatHigh(final FloatObject obj, @SuppressWarnings("unused") final long index, final long value) {
-        obj.setHigh(value);
+    @Specialization
+    protected static final void doFloat(final FloatObject obj, final long index, final long value,
+                    @Cached final BranchProfile indexZeroProfile,
+                    @Cached final BranchProfile indexOneProfile,
+                    @Cached final BranchProfile outOfBoundsProfile) {
+        assert 0 <= value && value <= NativeObject.INTEGER_MAX : "`value` out of range";
+        if (index == 0) {
+            indexZeroProfile.enter();
+            obj.setHigh(value);
+        } else if (index == 1) {
+            indexOneProfile.enter();
+            obj.setLow(value);
+        } else {
+            outOfBoundsProfile.enter();
+            throw Returns.OUT_OF_BOUNDS;
+        }
     }
 
-    @Specialization(guards = {"index == 1", "value >= 0", "value <= INTEGER_MAX"})
-    protected static final void doFloatLow(final FloatObject obj, @SuppressWarnings("unused") final long index, final long value) {
-        obj.setLow(value);
+    @SuppressWarnings("unused")
+    @Specialization
+    protected static final void doNil(final NilObject obj, final long index, final long value) {
+        throw NilObject.NOT_INDEXABLE;
     }
 }

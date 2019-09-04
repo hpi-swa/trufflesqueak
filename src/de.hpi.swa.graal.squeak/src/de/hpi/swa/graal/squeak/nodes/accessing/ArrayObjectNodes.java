@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
+import de.hpi.swa.graal.squeak.exceptions.Returns;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
@@ -36,8 +37,12 @@ public final class ArrayObjectNodes {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"obj.isEmptyType()"})
-        protected static final NilObject doEmptyArray(final ArrayObject obj, final long index) {
-            assert 0 <= index && index < obj.getEmptyLength();
+        protected static final NilObject doEmptyArray(final ArrayObject obj, final long index,
+                        @Cached final BranchProfile outOfBoundsProfile) {
+            if (index < 0 || obj.getEmptyLength() <= index) {
+                outOfBoundsProfile.enter();
+                throw Returns.OUT_OF_BOUNDS;
+            }
             return NilObject.SINGLETON;
         }
 
