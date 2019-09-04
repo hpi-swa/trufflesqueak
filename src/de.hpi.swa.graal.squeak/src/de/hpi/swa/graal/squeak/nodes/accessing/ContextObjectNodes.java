@@ -5,6 +5,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -29,14 +30,11 @@ public final class ContextObjectNodes {
             return context.getSender();
         }
 
-        @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.getInstructionPointer() >= 0"})
-        protected static final long doInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getInstructionPointer(); // Must return a long.
-        }
-
-        @Specialization(guards = {"index == INSTRUCTION_POINTER", "context.getInstructionPointer() < 0"})
-        protected static final NilObject doInstructionPointerTerminated(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return NilObject.SINGLETON;
+        @Specialization(guards = {"index == INSTRUCTION_POINTER"})
+        protected static final Object doInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index,
+                        @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+            final long pc = context.getInstructionPointer(); // Must be a long.
+            return nilProfile.profile(pc < 0) ? NilObject.SINGLETON : pc;
         }
 
         @Specialization(guards = "index == STACKPOINTER")
@@ -49,14 +47,10 @@ public final class ContextObjectNodes {
             return context.getMethod();
         }
 
-        @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.getClosure() != null"})
-        protected static final BlockClosureObject doClosure(final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return context.getClosure();
-        }
-
-        @Specialization(guards = {"index == CLOSURE_OR_NIL", "context.getClosure() == null"})
-        protected static final NilObject doClosureNil(@SuppressWarnings("unused") final ContextObject context, @SuppressWarnings("unused") final long index) {
-            return NilObject.SINGLETON;
+        @Specialization(guards = {"index == CLOSURE_OR_NIL"})
+        protected static final Object doClosure(final ContextObject context, @SuppressWarnings("unused") final long index,
+                        @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+            return NilObject.nullToNil(context.getClosure(), nilProfile);
         }
 
         @Specialization(guards = "index == RECEIVER")
