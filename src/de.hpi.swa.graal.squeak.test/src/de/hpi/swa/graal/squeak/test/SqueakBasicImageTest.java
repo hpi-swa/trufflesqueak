@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import de.hpi.swa.graal.squeak.model.BooleanObject;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
@@ -88,5 +89,24 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
         assertTrue(resultString.contains("bytecodes/sec"));
         assertTrue(resultString.contains("sends/sec"));
         image.getOutput().println("tinyBenchmarks: " + resultString);
+    }
+
+    @Test
+    public void test11InteropJavaStringConversion() {
+        /* Java Strings to Smalltalk ByteString/WideString */
+        final String[] values = new String[]{"65" /* $A */, "16r1f43b" /* Bear Emoji */};
+        for (final String value : values) {
+            final String javaString = String.format("((Java type: 'java.lang.String') new: ((Java type: 'java.lang.Character') toChars: %s))", value);
+            final String smalltalkString = String.format("(String with: (Character value: %s))", value);
+            assertEquals(BooleanObject.TRUE, evaluate(String.format("%s = %s", javaString, smalltalkString)));
+        }
+
+        /* Smalltalk ByteString to Java */
+        final String byteString = context.eval(SqueakLanguageConfig.ID, "String with: $A").asString();
+        assertEquals("A", byteString);
+
+        /* Smalltalk WideString to Java */
+        final String wideString = context.eval(SqueakLanguageConfig.ID, "String with: (Character value: 16r1f43b)").asString();
+        assertEquals(new String(Character.toChars(0x1f43b)), wideString);
     }
 }

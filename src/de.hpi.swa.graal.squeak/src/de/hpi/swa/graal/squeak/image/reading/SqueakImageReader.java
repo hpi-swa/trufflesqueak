@@ -341,7 +341,7 @@ public final class SqueakImageReader {
         setPrebuiltObject(SPECIAL_OBJECT.SCHEDULER_ASSOCIATION, image.schedulerAssociation);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_BITMAP, image.bitmapClass);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_SMALLINTEGER, image.smallIntegerClass);
-        setPrebuiltObject(SPECIAL_OBJECT.CLASS_STRING, image.stringClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_STRING, image.byteStringClass);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_ARRAY, image.arrayClass);
         setPrebuiltObject(SPECIAL_OBJECT.SMALLTALK_DICTIONARY, image.smalltalk);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_FLOAT, image.floatClass);

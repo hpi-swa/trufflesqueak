@@ -18,6 +18,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.graal.squeak.SqueakImage;
@@ -26,6 +27,7 @@ import de.hpi.swa.graal.squeak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.interop.InteropMap;
+import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.io.SqueakDisplayInterface;
@@ -72,7 +74,7 @@ public final class SqueakImageContext {
     public final PointersObject schedulerAssociation = new PointersObject(this);
     public final ClassObject bitmapClass = new ClassObject(this);
     public final ClassObject smallIntegerClass = new ClassObject(this);
-    public final ClassObject stringClass = new ClassObject(this);
+    public final ClassObject byteStringClass = new ClassObject(this);
     public final ClassObject arrayClass = new ClassObject(this);
     public final PointersObject smalltalk = new PointersObject(this);
     public final ClassObject floatClass = new ClassObject(this);
@@ -134,6 +136,7 @@ public final class SqueakImageContext {
     @CompilationFinal private ClassObject compilerClass = null;
     @CompilationFinal private ClassObject parserClass = null;
     @CompilationFinal private PointersObject scheduler = null;
+    @CompilationFinal private ClassObject wideStringClass = null;
 
     /* Plugins */
     public final B2D b2d = new B2D(this);
@@ -311,6 +314,17 @@ public final class SqueakImageContext {
         smallFloatClass = classObject;
     }
 
+    public ClassObject getWideStringClass() {
+        if (wideStringClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            // TODO: find a better way to find wideStringClass or do this on image side instead?
+            final CompiledMethodObject method = (CompiledMethodObject) LookupMethodByStringNode.getUncached().executeLookup(byteArrayClass, "asWideString");
+            final PointersObject assoc = (PointersObject) method.getLiteral(1);
+            wideStringClass = (ClassObject) assoc.at0(ASSOCIATION.VALUE);
+        }
+        return wideStringClass;
+    }
+
     public void initializePrimitives() {
         primitiveNodeFactory.initialize(this);
     }
@@ -451,7 +465,15 @@ public final class SqueakImageContext {
     }
 
     public NativeObject asByteString(final String value) {
-        return NativeObject.newNativeBytes(this, stringClass, ArrayConversionUtils.stringToBytes(value));
+        return NativeObject.newNativeBytes(this, byteStringClass, ArrayConversionUtils.stringToBytes(value));
+    }
+
+    public NativeObject asWideString(final String value) {
+        return NativeObject.newNativeInts(this, getWideStringClass(), ArrayConversionUtils.stringToCodePointsArray(value));
+    }
+
+    public NativeObject asString(final String value, final ConditionProfile wideStringProfile) {
+        return wideStringProfile.profile(NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
     }
 
     public LargeIntegerObject asLargeInteger(final BigInteger i) {

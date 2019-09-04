@@ -201,7 +201,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     /** ByteString. */
     public boolean isStringClass() {
-        return this == image.stringClass;
+        return this == image.byteStringClass;
     }
 
     /** ByteSymbol. */
@@ -211,7 +211,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     /** WideString. */
     public boolean isWideStringClass() {
-        return getSuperclassOrNull() == image.stringClass.getSuperclassOrNull();
+        return this == image.getWideStringClass();
     }
 
     /**

@@ -252,4 +252,9 @@ public final class ArrayConversionUtils {
     public static byte[] stringToBytes(final String value) {
         return value.getBytes();
     }
+
+    @TruffleBoundary
+    public static int[] stringToCodePointsArray(final String value) {
+        return value.codePoints().toArray();
+    }
 }

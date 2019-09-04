@@ -15,6 +15,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -227,8 +228,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return ArrayConversionUtils.bytesToString(getByteStorage());
     }
 
+    @TruffleBoundary
     public String asStringFromWideString() {
-        return ArrayConversionUtils.bytesToString(ArrayConversionUtils.bytesFromInts(getIntStorage()));
+        final int[] ints = getIntStorage();
+        return new String(ints, 0, ints.length);
     }
 
     @TruffleBoundary
@@ -324,14 +327,25 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @ExportMessage
-    public String asString(@Cached("createBinaryProfile()") final ConditionProfile byteStringOrSymbolProfile) throws UnsupportedMessageException {
+    public String asString(@Cached("createBinaryProfile()") final ConditionProfile byteStringOrSymbolProfile,
+                    @Cached final BranchProfile errorProfile) throws UnsupportedMessageException {
         final ClassObject squeakClass = getSqueakClass();
         if (byteStringOrSymbolProfile.profile(squeakClass.isStringClass() || squeakClass.isSymbolClass())) {
             return asStringUnsafe();
         } else if (squeakClass.isWideStringClass()) {
             return asStringFromWideString();
         } else {
+            errorProfile.enter();
             throw UnsupportedMessageException.create();
         }
+    }
+
+    public static boolean needsWideString(final String s) {
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) > 255) {
+                return true;
+            }
+        }
+        return false;
     }
 }

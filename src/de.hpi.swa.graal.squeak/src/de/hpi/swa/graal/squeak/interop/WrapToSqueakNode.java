@@ -1,9 +1,11 @@
 package de.hpi.swa.graal.squeak.interop;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -70,8 +72,9 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final NativeObject doString(final String value,
+                    @Cached("createBinaryProfile()") final ConditionProfile wideStringProfile,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.asByteString(value);
+        return image.asString(value, wideStringProfile);
     }
 
     @Specialization
