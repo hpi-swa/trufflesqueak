@@ -7,6 +7,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -14,6 +15,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -33,6 +35,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
@@ -334,223 +337,47 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 105)
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
-        @Child private ArrayObjectSizeNode arraySizeNode;
-
         protected PrimStringReplaceNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected static final LargeIntegerObject doEntireLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
-            rcvr.replaceInternalValue(repl);
+        @Specialization
+        protected static final NativeObject doNative(final NativeObject rcvr, final long start, final long stop, final Object repl, final long replStart,
+                        @Cached final NativeObjectReplaceNode replaceNode) {
+            replaceNode.execute(rcvr, start, stop, repl, replStart);
             return rcvr;
         }
 
-        @Specialization(guards = {"!inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)",
-                        "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
-            rcvr.setBytes(repl, (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+        @Specialization
+        protected static final ArrayObject doArray(final ArrayObject rcvr, final long start, final long stop, final Object repl, final long replStart,
+                        @Cached final ArrayObjectReplaceNode replaceNode) {
+            replaceNode.execute(rcvr, start, stop, repl, replStart);
             return rcvr;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected static final LargeIntegerObject doLargeIntegerFloatEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
-            rcvr.setBytes(repl.getBytes());
+        @Specialization
+        protected static final LargeIntegerObject doLarge(final LargeIntegerObject rcvr, final long start, final long stop, final Object repl, final long replStart,
+                        @Cached final LargeIntegerObjectReplaceNode replaceNode) {
+            replaceNode.execute(rcvr, start, stop, repl, replStart);
             return rcvr;
         }
 
-        @Specialization(guards = {"inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)",
-                        "!inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected static final LargeIntegerObject doLargeIntegerFloat(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
-            System.arraycopy(repl.getBytes(), (int) replStart - 1, rcvr.getBytes(), (int) start - 1, (int) (1 + stop - start));
+        @Specialization
+        protected static final PointersObject doPointers(final PointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
+                        @Cached final PointersObjectReplaceNode replaceNode) {
+            replaceNode.execute(rcvr, start, stop, repl, replStart);
             return rcvr;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"repl.isByteType()", "inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart)"})
-        protected static final LargeIntegerObject doLargeIntegerNativeEntirely(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-            rcvr.setBytes(repl.getByteStorage());
-            return rcvr;
-        }
-
-        @Specialization(guards = {"repl.isByteType()", "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart)",
-                        "!inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart)"})
-        protected static final LargeIntegerObject doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-            rcvr.setBytes(repl.getByteStorage(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isByteType()", "repl.isByteType()", "inBounds(rcvr.instsize(), rcvr.getByteLength(), start, stop, repl.instsize(), repl.getByteLength(), replStart)"})
-        protected static final NativeObject doNativeBytes(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-            System.arraycopy(repl.getByteStorage(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isShortType()", "repl.isShortType()", "inBounds(rcvr.instsize(), rcvr.getShortLength(), start, stop, repl.instsize(), repl.getShortLength(), replStart)"})
-        protected static final NativeObject doNativeShorts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-            System.arraycopy(repl.getShortStorage(), (int) replStart - 1, rcvr.getShortStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isIntType()", "repl.isIntType()", "inBounds(rcvr.instsize(), rcvr.getIntLength(), start, stop, repl.instsize(), repl.getIntLength(), replStart)"})
-        protected static final NativeObject doNativeInts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-            System.arraycopy(repl.getIntStorage(), (int) replStart - 1, rcvr.getIntStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()", "inBounds(rcvr.instsize(), rcvr.getLongLength(), start, stop, repl.instsize(), repl.getLongLength(), replStart)"})
-        protected static final NativeObject doNativeLongs(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-            System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isByteType()", "inBounds(rcvr.instsize(), rcvr.getByteLength(), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected static final NativeObject doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
-            System.arraycopy(repl.getBytes(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"rcvr.isEmptyType()", "repl.isEmptyType()", "inBounds(rcvr.instsize(), rcvr.getEmptyLength(), start, stop, repl.instsize(), repl.getEmptyLength(), replStart)"})
-        protected static final ArrayObject doEmptyArrays(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            return rcvr; // Nothing to do.
-        }
-
-        @Specialization(guards = {"rcvr.isBooleanType()", "repl.isBooleanType()",
-                        "inBounds(rcvr.instsize(), rcvr.getBooleanLength(), start, stop, repl.instsize(), repl.getBooleanLength(), replStart)"})
-        protected static final ArrayObject doArraysOfBooleans(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            System.arraycopy(repl.getBooleanStorage(), (int) replStart - 1, rcvr.getBooleanStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isCharType()", "repl.isCharType()", "inBounds(rcvr.instsize(), rcvr.getCharLength(), start, stop, repl.instsize(), repl.getCharLength(), replStart)"})
-        protected static final ArrayObject doArraysOfChars(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            System.arraycopy(repl.getCharStorage(), (int) replStart - 1, rcvr.getCharStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()", "inBounds(rcvr.instsize(), rcvr.getLongLength(), start, stop, repl.instsize(), repl.getLongLength(), replStart)"})
-        protected static final ArrayObject doArraysOfLongs(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isDoubleType()", "repl.isDoubleType()", "inBounds(rcvr.instsize(), rcvr.getDoubleLength(), start, stop, repl.instsize(), repl.getDoubleLength(), replStart)"})
-        protected static final ArrayObject doArraysOfDoubles(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            System.arraycopy(repl.getDoubleStorage(), (int) replStart - 1, rcvr.getDoubleStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isNativeObjectType()", "repl.isNativeObjectType()",
-                        "inBounds(rcvr.instsize(), rcvr.getNativeObjectLength(), start, stop, repl.instsize(), repl.getNativeObjectLength(), replStart)"})
-        protected static final ArrayObject doArraysOfNatives(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            System.arraycopy(repl.getNativeObjectStorage(), (int) replStart - 1, rcvr.getNativeObjectStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isObjectType()", "repl.isObjectType()", "inBounds(rcvr.instsize(), rcvr.getObjectLength(), start, stop, repl.instsize(), repl.getObjectLength(), replStart)"})
-        protected static final ArrayObject doArraysOfObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            System.arraycopy(repl.getObjectStorage(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"!rcvr.hasSameStorageType(repl)",
-                        "inBounds(rcvr.instsize(), getArrayObjectSizeNode().execute(rcvr), start, stop, repl.instsize(), getArrayObjectSizeNode().execute(repl), replStart)"})
-        protected static final ArrayObject doArraysWithDifferenStorageTypes(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                        @Shared("arrayReadNode") @Cached final ArrayObjectReadNode readNode,
-                        @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
-            final long repOff = replStart - start;
-            for (int i = (int) (start - 1); i < stop; i++) {
-                writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization(guards = {"inBounds(rcvr.instsize(), getArrayObjectSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected static final ArrayObject doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
-                        @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
-            final int repOff = (int) (replStart - start);
-            for (int i = (int) (start - 1); i < stop; i++) {
-                writeNode.execute(rcvr, i, repl.at0(repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization(guards = {"inBounds(rcvr.instsize(), getArrayObjectSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected static final ArrayObject doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
-                        @Shared("weakPointersReadNode") @Cached final WeakPointersObjectReadNode readNode,
-                        @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
-            final long repOff = replStart - start;
-            for (int i = (int) (start - 1); i < stop; i++) {
-                writeNode.execute(rcvr, i, readNode.executeRead(repl, repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isObjectType()", "inBounds(rcvr.instsize(), rcvr.getObjectLength(), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected static final ArrayObject doArrayOfObjectsPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
-            System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = {"rcvr.isObjectType()", "inBounds(rcvr.instsize(), rcvr.getObjectLength(), start, stop, repl.instsize(), repl.size(), replStart)"})
-        protected static final ArrayObject doArrayOfObjectsWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
-                        @Shared("weakPointersReadNode") @Cached final WeakPointersObjectReadNode readNode) {
-            final long repOff = replStart - start;
-            final Object[] rcvrValues = rcvr.getObjectStorage();
-            for (int i = (int) (start - 1); i < stop; i++) {
-                rcvrValues[i] = readNode.executeRead(repl, repOff + i);
-            }
+        @Specialization
+        protected static final WeakPointersObject doWeakPointers(final WeakPointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
+                        @Cached final WeakPointersObjectReplaceNode replaceNode) {
+            replaceNode.execute(rcvr, start, stop, repl, replStart);
             return rcvr;
         }
 
         @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-        protected static final PointersObject doPointers(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
-            System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-        protected static final PointersObject doPointersWeakPointers(final PointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
-                        @Shared("weakPointersReadNode") @Cached final WeakPointersObjectReadNode readNode) {
-            final long repOff = replStart - start;
-            for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.atput0(i, readNode.executeRead(repl, repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-        protected static final WeakPointersObject doWeakPointers(final WeakPointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
-            System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
-            return rcvr;
-        }
-
-        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-        protected static final WeakPointersObject doWeakPointersPointers(final WeakPointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
-                        @Shared("weakPointersWriteNode") @Cached final WeakPointersObjectWriteNode writeNode) {
-            final int repOff = (int) (replStart - start);
-            for (int i = (int) (start - 1); i < stop; i++) {
-                writeNode.execute(rcvr, i, repl.at0(repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), getArrayObjectSizeNode().execute(repl), replStart)")
-        protected static final WeakPointersObject doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                        @Shared("arrayReadNode") @Cached final ArrayObjectReadNode readNode,
-                        @Shared("weakPointersWriteNode") @Cached final WeakPointersObjectWriteNode writeNode) {
-            final long repOff = replStart - start;
-            for (int i = (int) (start - 1); i < stop; i++) {
-                writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-        protected static final CompiledBlockObject doBlock(final CompiledBlockObject rcvr, final long start, final long stop, final CompiledBlockObject repl, final long replStart) {
+        protected static final CompiledMethodObject doMethod(final CompiledMethodObject rcvr, final long start, final long stop, final CompiledMethodObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
@@ -559,7 +386,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-        protected static final CompiledMethodObject doMethod(final CompiledMethodObject rcvr, final long start, final long stop, final CompiledMethodObject repl, final long replStart) {
+        protected static final CompiledBlockObject doBlock(final CompiledBlockObject rcvr, final long start, final long stop, final CompiledBlockObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
@@ -575,23 +402,225 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             throw PrimitiveFailed.BAD_INDEX;
         }
 
-        protected static final boolean inBounds(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize, final long replStart) {
-            return start >= 1 && start - 1 <= stop && stop + rcvrInstSize <= rcvrSize && replStart >= 1 && stop - start + replStart + replInstSize <= replSize;
-        }
+        protected abstract static class ArrayObjectReplaceNode extends AbstractNode {
+            @Child private ArrayObjectSizeNode sizeNode;
 
-        protected static final boolean inBoundsEntirely(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize,
-                        final long replStart) {
-            // Specialization for Integer>>copy:to:
-            return start == 1 && replStart == 1 && stop == replSize + replInstSize && stop == rcvrSize + rcvrInstSize;
-        }
+            protected abstract void execute(ArrayObject rcvr, long start, long stop, Object repl, long replStart);
 
-        /* TODO: Used @Cached when https://github.com/oracle/graal/issues/1207 is fixed. */
-        protected final ArrayObjectSizeNode getArrayObjectSizeNode() {
-            if (arraySizeNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                arraySizeNode = insert(ArrayObjectSizeNode.create());
+            @SuppressWarnings("unused")
+            @Specialization(guards = {"rcvr.isEmptyType()", "repl.isEmptyType()", "inBounds(rcvr.instsize(), rcvr.getEmptyLength(), start, stop, repl.instsize(), repl.getEmptyLength(), replStart)"})
+            protected static final void doEmptyArrays(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+                // Nothing to do.
             }
-            return arraySizeNode;
+
+            @Specialization(guards = {"rcvr.isBooleanType()", "repl.isBooleanType()", "inBounds(rcvr.getBooleanLength(), start, stop, repl.getBooleanLength(), replStart)"})
+            protected static final void doArraysOfBooleans(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+                System.arraycopy(repl.getBooleanStorage(), (int) replStart - 1, rcvr.getBooleanStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"rcvr.isCharType()", "repl.isCharType()", "inBounds(rcvr.getCharLength(), start, stop, repl.getCharLength(), replStart)"})
+            protected static final void doArraysOfChars(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+                System.arraycopy(repl.getCharStorage(), (int) replStart - 1, rcvr.getCharStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()", "inBounds(rcvr.getLongLength(), start, stop, repl.getLongLength(), replStart)"})
+            protected static final void doArraysOfLongs(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+                System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"rcvr.isDoubleType()", "repl.isDoubleType()", "inBounds(rcvr.getDoubleLength(), start, stop, repl.getDoubleLength(), replStart)"})
+            protected static final void doArraysOfDoubles(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+                System.arraycopy(repl.getDoubleStorage(), (int) replStart - 1, rcvr.getDoubleStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"rcvr.isNativeObjectType()", "repl.isNativeObjectType()", "inBounds(rcvr.getNativeObjectLength(), start, stop, repl.getNativeObjectLength(), replStart)"})
+            protected static final void doArraysOfNatives(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+                System.arraycopy(repl.getNativeObjectStorage(), (int) replStart - 1, rcvr.getNativeObjectStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"rcvr.isObjectType()", "repl.isObjectType()", "inBounds(rcvr.getObjectLength(), start, stop, repl.getObjectLength(), replStart)"})
+            protected static final void doArraysOfObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+                System.arraycopy(repl.getObjectStorage(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"!rcvr.hasSameStorageType(repl)", "inBounds(getSizeNode().execute(rcvr), start, stop, getSizeNode().execute(repl), replStart)"})
+            protected static final void doArraysWithDifferenStorageTypes(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @Cached final ArrayObjectReadNode readNode,
+                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
+                final long repOff = replStart - start;
+                for (int i = (int) (start - 1); i < stop; i++) {
+                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                }
+            }
+
+            @Specialization(guards = {"inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
+            protected static final void doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
+                            @Cached("createBinaryProfile()") final ConditionProfile isObjectTypeProfile,
+                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
+                if (isObjectTypeProfile.profile(rcvr.isObjectType())) {
+                    System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
+                } else {
+                    final int repOff = (int) (replStart - start);
+                    for (int i = (int) (start - 1); i < stop; i++) {
+                        writeNode.execute(rcvr, i, repl.at0(repOff + i));
+                    }
+                }
+            }
+
+            @Specialization(guards = {"inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
+            protected static final void doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
+                            @Cached final WeakPointersObjectReadNode readNode,
+                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
+                final long repOff = replStart - start;
+                for (int i = (int) (start - 1); i < stop; i++) {
+                    writeNode.execute(rcvr, i, readNode.executeRead(repl, repOff + i));
+                }
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            protected static final void doFail(final ArrayObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+
+            protected final ArrayObjectSizeNode getSizeNode() {
+                if (sizeNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    sizeNode = insert(ArrayObjectSizeNode.create());
+                }
+                return sizeNode;
+            }
+        }
+
+        protected abstract static class LargeIntegerObjectReplaceNode extends AbstractNode {
+            protected abstract void execute(LargeIntegerObject rcvr, long start, long stop, Object repl, long replStart);
+
+            @Specialization(guards = {"inBounds(rcvr.size(), start, stop, repl.size(), replStart)"})
+            protected static final void doLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
+                            @Cached("createBinaryProfile()") final ConditionProfile fitsEntirelyProfile) {
+                if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
+                    rcvr.replaceInternalValue(repl);
+                } else {
+                    rcvr.setBytes(repl, (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                }
+            }
+
+            @Specialization(guards = {"inBounds(rcvr.size(), start, stop, repl.size(), replStart)"})
+            protected static final void doLargeIntegerFloat(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart,
+                            @Cached("createBinaryProfile()") final ConditionProfile fitsEntirelyProfile) {
+                if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
+                    rcvr.setBytes(repl.getBytes());
+                } else {
+                    System.arraycopy(repl.getBytes(), (int) replStart - 1, rcvr.getBytes(), (int) start - 1, (int) (1 + stop - start));
+                }
+            }
+
+            @Specialization(guards = {"repl.isByteType()", "inBounds(rcvr.size(), start, stop, repl.getByteLength(), replStart)"})
+            protected static final void doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+                            @Cached("createBinaryProfile()") final ConditionProfile fitsEntirelyProfile) {
+                if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart))) {
+                    rcvr.setBytes(repl.getByteStorage());
+                } else {
+                    rcvr.setBytes(repl.getByteStorage(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                }
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            protected static final void doFail(final LargeIntegerObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+
+            /* For specializing Integer>>copy:to:. */
+            private static boolean inBoundsEntirely(final int rcvrInstSize, final int rcvrSize, final long start, final long stop, final int replInstSize, final int replSize, final long replStart) {
+                return start == 1 && replStart == 1 && stop == replSize + replInstSize && stop == rcvrSize + rcvrInstSize;
+            }
+        }
+
+        protected abstract static class NativeObjectReplaceNode extends AbstractNode {
+            protected abstract void execute(NativeObject rcvr, long start, long stop, Object repl, long replStart);
+
+            @Specialization(guards = {"rcvr.isByteType()", "repl.isByteType()", "inBounds(rcvr.getByteLength(), start, stop, repl.getByteLength(), replStart)"})
+            protected static final void doNativeBytes(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+                System.arraycopy(repl.getByteStorage(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"rcvr.isShortType()", "repl.isShortType()", "inBounds(rcvr.getShortLength(), start, stop, repl.getShortLength(), replStart)"})
+            protected static final void doNativeShorts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+                System.arraycopy(repl.getShortStorage(), (int) replStart - 1, rcvr.getShortStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"rcvr.isIntType()", "repl.isIntType()", "inBounds(rcvr.getIntLength(), start, stop, repl.getIntLength(), replStart)"})
+            protected static final void doNativeInts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+                System.arraycopy(repl.getIntStorage(), (int) replStart - 1, rcvr.getIntStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()", "inBounds(rcvr.getLongLength(), start, stop, repl.getLongLength(), replStart)"})
+            protected static final void doNativeLongs(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+                System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = {"rcvr.isByteType()", "inBounds(rcvr.getByteLength(), start, stop, repl.size(), replStart)"})
+            protected static final void doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
+                System.arraycopy(repl.getBytes(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            protected static final void doFail(final NativeObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
+
+        protected abstract static class PointersObjectReplaceNode extends AbstractNode {
+            protected abstract void execute(PointersObject rcvr, long start, long stop, Object repl, long replStart);
+
+            @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
+            protected static final void doPointers(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
+                System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)", limit = "1")
+            protected static final void doPointersArray(final PointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
+                            @Cached final ArrayObjectReadNode readNode) {
+                final long repOff = replStart - start;
+                for (int i = (int) (start - 1); i < stop; i++) {
+                    rcvr.atput0(i, readNode.execute(repl, repOff + i));
+                }
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            protected static final void doFail(final PointersObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
+
+        protected abstract static class WeakPointersObjectReplaceNode extends AbstractNode {
+            protected abstract void execute(WeakPointersObject rcvr, long start, long stop, Object repl, long replStart);
+
+            @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
+            protected static final void doWeakPointers(final WeakPointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
+                System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
+            }
+
+            @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)", limit = "1")
+            protected static final void doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
+                            @Cached final ArrayObjectReadNode readNode,
+                            @Cached final WeakPointersObjectWriteNode writeNode) {
+                final long repOff = replStart - start;
+                for (int i = (int) (start - 1); i < stop; i++) {
+                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                }
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            protected static final void doFail(final WeakPointersObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
         }
     }
 
