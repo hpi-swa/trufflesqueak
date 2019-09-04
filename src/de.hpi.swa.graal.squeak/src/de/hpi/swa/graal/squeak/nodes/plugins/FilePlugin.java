@@ -16,12 +16,15 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -411,7 +414,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"target.isByteType()", "inBounds(startIndex, longCount, target.getByteLength())"})
         protected final Object doReadBytes(@SuppressWarnings("unused") final Object receiver, final long fileDescriptor, final NativeObject target,
-                        final long startIndex, final long longCount) {
+                        final long startIndex, final long longCount,
+                        @Exclusive @Cached final BranchProfile errorProfile) {
             final int count = (int) longCount;
             final ByteBuffer dst = allocate(count);
             try {
@@ -421,13 +425,15 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
             } catch (final IOException e) {
+                errorProfile.enter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
 
         @Specialization(guards = {"target.isIntType()", "inBounds(startIndex, longCount, target.getIntLength())"})
         protected final Object doReadInts(@SuppressWarnings("unused") final Object receiver, final long fileDescriptor, final NativeObject target,
-                        final long startIndex, final long longCount) {
+                        final long startIndex, final long longCount,
+                        @Exclusive @Cached final BranchProfile errorProfile) {
             final int count = (int) longCount;
             final ByteBuffer dst = allocate(count * ArrayConversionUtils.INTEGER_BYTE_SIZE);
             try {
@@ -443,6 +449,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 return Math.max(readInts, 0L); // `read` can be `-1`, Squeak expects zero.
             } catch (final IOException e) {
+                errorProfile.enter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
