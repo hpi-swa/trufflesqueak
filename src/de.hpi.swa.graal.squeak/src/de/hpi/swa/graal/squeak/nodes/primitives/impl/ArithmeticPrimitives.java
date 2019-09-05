@@ -13,6 +13,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -21,6 +22,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -198,15 +200,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) == 0);
         }
 
-        @Specialization(guards = "isAnExactFloat(lhs)")
-        protected static final boolean doLongExactDouble(final long lhs, final double rhs) {
-            return BooleanObject.wrap(lhs == rhs);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!isAnExactFloat(lhs)")
-        protected static final boolean doLongNotExactDouble(final long lhs, final double rhs) {
-            return BooleanObject.FALSE;
+        @Specialization
+        protected static final boolean doLongExactDouble(final long lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isAnExactFloatProfile) {
+            if (isAnExactFloatProfile.profile(isAnExactFloat(lhs))) {
+                return BooleanObject.wrap(lhs == rhs);
+            } else {
+                return BooleanObject.FALSE;
+            }
         }
 
         /** Quick return `false` if b is not a Number or Complex. */
@@ -234,15 +235,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) != 0);
         }
 
-        @Specialization(guards = "isAnExactFloat(lhs)")
-        protected static final boolean doLongExactDouble(final long lhs, final double rhs) {
-            return BooleanObject.wrap(lhs != rhs);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!isAnExactFloat(lhs)")
-        protected static final boolean doLongNotExactDouble(final long lhs, final double rhs) {
-            return BooleanObject.TRUE;
+        @Specialization
+        protected static final boolean doLongDouble(final long lhs, final double rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile isAnExactFloatProfile) {
+            if (isAnExactFloatProfile.profile(isAnExactFloat(lhs))) {
+                return BooleanObject.wrap(lhs != rhs);
+            } else {
+                return BooleanObject.TRUE;
+            }
         }
 
         /** Quick return `true` if b is not a Number or Complex. */
@@ -289,15 +289,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"rhs != 0", "isIntegralWhenDividedBy(lhs, rhs)", "!isOverflowDivision(lhs, rhs)"})
-        public static final long doLong(final long lhs, final long rhs) {
-            return lhs / rhs;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "isOverflowDivision(lhs, rhs)")
-        protected final LargeIntegerObject doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(method.image);
+        @Specialization(guards = {"rhs != 0", "isIntegralWhenDividedBy(lhs, rhs)"})
+        public final Object doLong(final long lhs, final long rhs,
+                        @Cached final BranchProfile isOverflowDivisionProfile) {
+            if (SqueakGuards.isOverflowDivision(lhs, rhs)) {
+                isOverflowDivisionProfile.enter();
+                return LargeIntegerObject.createLongMinOverflowResult(method.image);
+            } else {
+                return lhs / rhs;
+            }
         }
 
         @Specialization(guards = {"!isZero(rhs)"})
@@ -332,15 +332,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
-        protected static final long doLong(final long lhs, final long rhs) {
-            return Math.floorDiv(lhs, rhs);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "isOverflowDivision(lhs, rhs)")
-        protected final LargeIntegerObject doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(method.image);
+        @Specialization(guards = {"rhs != 0"})
+        protected final Object doLong(final long lhs, final long rhs,
+                        @Cached final BranchProfile isOverflowDivisionProfile) {
+            if (SqueakGuards.isOverflowDivision(lhs, rhs)) {
+                isOverflowDivisionProfile.enter();
+                return LargeIntegerObject.createLongMinOverflowResult(method.image);
+            } else {
+                return Math.floorDiv(lhs, rhs);
+            }
         }
 
         @Specialization(guards = {"!rhs.isZero()"})
@@ -356,29 +356,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"rhs != 0", "!isOverflowDivision(lhs, rhs)"})
-        public static final long doLong(final long lhs, final long rhs) {
-            return lhs / rhs;
+        @Specialization(guards = {"rhs != 0"})
+        public final Object doLong(final long lhs, final long rhs,
+                        @Cached final BranchProfile isOverflowDivisionProfile) {
+            if (SqueakGuards.isOverflowDivision(lhs, rhs)) {
+                isOverflowDivisionProfile.enter();
+                return LargeIntegerObject.createLongMinOverflowResult(method.image);
+            } else {
+                return lhs / rhs;
+            }
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = "isOverflowDivision(lhs, rhs)")
-        protected final LargeIntegerObject doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(method.image);
-        }
-
-        @Specialization(guards = {"!rhs.isZero()", "rhs.fitsIntoLong()", "!isOverflowDivision(lhs, rhs.longValue())"})
-        protected static final long doLongLargeIntegerAsLong(final long lhs, final LargeIntegerObject rhs) {
-            return doLong(lhs, rhs.longValue());
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"rhs.fitsIntoLong()", "isOverflowDivision(lhs, rhs.longValue())"})
-        protected final LargeIntegerObject doLongLargeIntegerWithOverflow(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.createLongMinOverflowResult(method.image);
-        }
-
-        @Specialization(guards = {"!rhs.isZero()", "!rhs.fitsIntoLong()"})
+        @Specialization(guards = {"!rhs.isZero()"})
         protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
             return LargeIntegerObject.divide(lhs, rhs);
         }
@@ -396,13 +385,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver & arg;
         }
 
-        @Specialization(guards = {"arg.fitsIntoLong() || receiver >= 0"})
-        protected static final long doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
-            return receiver & arg.longValue();
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final Object doLongLargeQuick(final long receiver, final LargeIntegerObject arg,
+                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile) {
+            if (positiveProfile.profile(receiver >= 0)) {
+                return receiver & arg.longValue();
+            } else {
+                return receiver & arg.longValueExact();
+            }
         }
 
-        @Specialization(guards = {"!arg.fitsIntoLong()", "receiver < 0"})
-        protected static final Object doLongLargeNegative(final long receiver, final LargeIntegerObject arg) {
+        @Specialization(replaces = "doLongLargeQuick")
+        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
             return arg.and(receiver);
         }
     }
@@ -419,14 +413,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver | arg;
         }
 
-        @Specialization(guards = {"arg.fitsIntoLong()"})
-        protected static final long doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
-            return doLong(receiver, arg.longValue());
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final long doLongLargeQuick(final long receiver, final LargeIntegerObject arg) {
+            return receiver | arg.longValueExact();
         }
 
-        @Specialization(guards = {"!arg.fitsIntoLong()"})
-        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return asLargeInteger(receiver).or(arg);
+        @Specialization(replaces = "doLongLargeQuick")
+        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+            return arg.or(receiver);
         }
     }
 
@@ -442,14 +436,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver ^ arg;
         }
 
-        @Specialization(guards = {"arg.fitsIntoLong()"})
-        protected static final long doLongLargeAsLong(final long receiver, final LargeIntegerObject arg) {
-            return doLong(receiver, arg.longValue());
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final long doLongLargeQuick(final long receiver, final LargeIntegerObject arg) {
+            return receiver ^ arg.longValueExact();
         }
 
-        @Specialization(guards = {"!arg.fitsIntoLong()"})
-        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
-            return asLargeInteger(receiver).xor(arg);
+        @Specialization(replaces = "doLongLargeQuick")
+        protected static final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+            return arg.xor(receiver);
         }
     }
 
@@ -460,37 +454,32 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"arg >= 0", "!isLShiftLongOverflow(receiver, arg)"})
-        protected static final long doLong(final long receiver, final long arg) {
-            return receiver << arg;
-        }
-
-        @Specialization(guards = {"arg >= 0", "isLShiftLongOverflow(receiver, arg)"})
-        protected final Object doLongLargeInteger(final long receiver, final long arg) {
-            return LargeIntegerObject.shiftLeft(method.image, receiver, (int) arg);
-        }
-
-        @Specialization(guards = {"arg < 0", "isArgInLongSizeRange(arg)"})
-        protected static final long doLongNegativeLong(final long receiver, final long arg) {
-            // The result of a right shift can only become smaller than the receiver and 0 or -1 at
-            // minimum, so no BigInteger needed here
-            return receiver >> -arg;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"arg < 0", "!isArgInLongSizeRange(arg)"})
-        protected static final long doLongNegative(final long receiver, final long arg) {
-            return receiver >= 0 ? 0L : -1L;
-        }
-
-        protected static final boolean isLShiftLongOverflow(final long receiver, final long arg) {
-            // -1 needed, because we do not want to shift a positive long into negative long (most
-            // significant bit indicates positive/negative)
-            return Long.numberOfLeadingZeros(receiver) - 1 < arg;
-        }
-
-        protected static final boolean isArgInLongSizeRange(final long value) {
-            return -Long.SIZE < value;
+        @Specialization
+        protected final Object doLong(final long receiver, final long arg,
+                        @Cached("createBinaryProfile()") final ConditionProfile isPositiveProfile,
+                        @Cached("createBinaryProfile()") final ConditionProfile isLShiftLongOverflowProfile,
+                        @Cached("createBinaryProfile()") final ConditionProfile isArgInLongSizeRangeProfile) {
+            if (isPositiveProfile.profile(arg >= 0)) {
+                if (isLShiftLongOverflowProfile.profile(Long.numberOfLeadingZeros(receiver) - 1 < arg)) {
+                    /*
+                     * -1 in check needed, because we do not want to shift a positive long into
+                     * negative long (most significant bit indicates positive/negative).
+                     */
+                    return LargeIntegerObject.shiftLeft(method.image, receiver, (int) arg);
+                } else {
+                    return receiver << arg;
+                }
+            } else {
+                if (isArgInLongSizeRangeProfile.profile(-Long.SIZE < arg)) {
+                    /*
+                     * The result of a right shift can only become smaller than the receiver and 0
+                     * or -1 at minimum, so no BigInteger needed here.
+                     */
+                    return receiver >> -arg;
+                } else {
+                    return receiver >= 0 ? 0L : -1L;
+                }
+            }
         }
     }
 
@@ -532,14 +521,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "rhs == 0")
-        protected static final Object doLargeIntegerLongWithZero(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
-            return lhs;
-        }
-
         @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.add(rhs);
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
+                        @Cached final BranchProfile zeroProfile,
+                        @Cached final BranchProfile nonZeroProfile) {
+            if (rhs == 0) {
+                zeroProfile.enter();
+                return lhs;
+            } else {
+                nonZeroProfile.enter();
+                return lhs.add(rhs);
+            }
         }
 
         @Specialization
@@ -555,14 +547,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"rhs == 0"})
-        protected static final LargeIntegerObject doLargeIntegerLongWithZero(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
-            return lhs;
-        }
-
         @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.subtract(rhs);
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
+                        @Cached final BranchProfile zeroProfile,
+                        @Cached final BranchProfile nonZeroProfile) {
+            if (rhs == 0) {
+                zeroProfile.enter();
+                return lhs;
+            } else {
+                nonZeroProfile.enter();
+                return lhs.subtract(rhs);
+            }
         }
 
         @Specialization
@@ -700,15 +695,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"lhs.isZero() || rhs == 0"})
-        protected static final long doLongLargeIntegerWithZero(final LargeIntegerObject lhs, final long rhs) {
-            return 0L;
-        }
-
         @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.multiply(rhs);
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
+                        @Cached final BranchProfile zeroProfile,
+                        @Cached final BranchProfile nonZeroProfile) {
+            if (rhs == 0 || lhs.isZero()) {
+                zeroProfile.enter();
+                return 0L;
+            } else {
+                nonZeroProfile.enter();
+                return lhs.multiply(rhs);
+            }
         }
 
         @Specialization
@@ -798,16 +795,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "index == 1")
-        protected static final long doDoubleHigh(final double receiver, @SuppressWarnings("unused") final long index) {
+        @Specialization
+        protected static final long doDouble(final double receiver, final long index,
+                        @Cached final BranchProfile highProfile,
+                        @Cached final BranchProfile lowProfile,
+                        @Cached final BranchProfile errorProfile) {
             final long bits = Double.doubleToRawLongBits(receiver);
-            return Integer.toUnsignedLong((int) (bits >> 32));
-        }
-
-        @Specialization(guards = "index == 2")
-        protected static final long doDoubleLow(final double receiver, @SuppressWarnings("unused") final long index) {
-            final long bits = Double.doubleToRawLongBits(receiver);
-            return Integer.toUnsignedLong((int) bits);
+            if (index == 1) {
+                highProfile.enter();
+                return Integer.toUnsignedLong((int) (bits >> 32));
+            } else if (index == 2) {
+                lowProfile.enter();
+                return Integer.toUnsignedLong((int) bits);
+            } else {
+                errorProfile.enter();
+                throw PrimitiveFailed.BAD_INDEX;
+            }
         }
     }
 
@@ -818,15 +821,21 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "index == 1")
-        protected static final long doFloatHigh(final FloatObject receiver, @SuppressWarnings("unused") final long index, final long value) {
-            receiver.setHigh(value);
-            return value;
-        }
-
-        @Specialization(guards = "index == 2")
-        protected static final long doFloatLow(final FloatObject receiver, @SuppressWarnings("unused") final long index, final long value) {
-            receiver.setLow(value);
+        @Specialization
+        protected static final long doFloatHigh(final FloatObject receiver, final long index, final long value,
+                        @Cached final BranchProfile highProfile,
+                        @Cached final BranchProfile lowProfile,
+                        @Cached final BranchProfile errorProfile) {
+            if (index == 1) {
+                highProfile.enter();
+                receiver.setHigh(value);
+            } else if (index == 2) {
+                lowProfile.enter();
+                receiver.setLow(value);
+            } else {
+                errorProfile.enter();
+                throw PrimitiveFailed.BAD_INDEX;
+            }
             return value;
         }
     }
