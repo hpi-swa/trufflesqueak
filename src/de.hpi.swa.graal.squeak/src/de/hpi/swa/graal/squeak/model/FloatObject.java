@@ -106,6 +106,10 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         return Double.isNaN(doubleValue);
     }
 
+    public boolean isPositive() {
+        return doubleValue >= 0;
+    }
+
     @Override
     public int instsize() {
         return 0;

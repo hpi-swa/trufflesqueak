@@ -7,11 +7,16 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.FloatObjectNodesFactory.AsFloatObjectIfNessaryNodeGen;
 
 public final class FloatObjectNodes {
     @GenerateUncached
     @ImportStatic(Double.class)
     public abstract static class AsFloatObjectIfNessaryNode extends Node {
+
+        public static AsFloatObjectIfNessaryNode create() {
+            return AsFloatObjectIfNessaryNodeGen.create();
+        }
 
         public abstract Object execute(double value);
 
