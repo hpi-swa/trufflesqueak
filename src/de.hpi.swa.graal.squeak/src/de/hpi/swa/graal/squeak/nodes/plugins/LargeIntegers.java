@@ -3,10 +3,12 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -125,54 +127,54 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "!differentSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
-        protected static final Object doLongPositive(final long lhs, final long rhs) {
-            return Math.addExact(lhs, rhs);
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final long doLong(final long lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
+                return Math.subtractExact(lhs, rhs);
+            } else {
+                return Math.addExact(lhs, rhs);
+            }
         }
 
-        @Specialization(guards = "!differentSign(lhs, rhs)")
-        protected final Object doLongPositiveWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.add(method.image, lhs, rhs);
+        @Specialization(replaces = "doLong")
+        protected final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
+                return LargeIntegerObject.subtract(method.image, lhs, rhs);
+            } else {
+                return LargeIntegerObject.add(method.image, lhs, rhs);
+            }
         }
 
-        @Specialization(guards = "differentSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
-        protected static final Object doLongNegative(final long lhs, final long rhs) {
-            return Math.subtractExact(lhs, rhs);
+        @Specialization
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(lhs.sameSign(rhs))) {
+                return lhs.add(rhs);
+            } else {
+                return lhs.subtract(rhs);
+            }
         }
 
-        @Specialization(guards = "differentSign(lhs, rhs)")
-        protected final Object doLongNegativeWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.subtract(method.image, lhs, rhs);
+        @Specialization
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(rhs.differentSign(lhs))) {
+                return LargeIntegerObject.subtract(lhs, rhs);
+            } else {
+                return rhs.add(lhs);
+            }
         }
 
-        @Specialization(guards = "lhs.sameSign(rhs)")
-        protected static final Object doLargeIntegerPositive(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.add(rhs);
-        }
-
-        @Specialization(guards = "!lhs.sameSign(rhs)")
-        protected static final Object doLargeIntegerNegative(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.subtract(rhs);
-        }
-
-        @Specialization(guards = "!rhs.differentSign(lhs)")
-        protected static final Object doLongLargeIntegerPositive(final long lhs, final LargeIntegerObject rhs) {
-            return rhs.add(lhs);
-        }
-
-        @Specialization(guards = "rhs.differentSign(lhs)")
-        protected static final Object doLongLargeIntegerNegative(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.subtract(lhs, rhs);
-        }
-
-        @Specialization(guards = "!lhs.differentSign(rhs)")
-        protected static final Object doLargeIntegerLongPositive(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.add(rhs);
-        }
-
-        @Specialization(guards = "lhs.differentSign(rhs)")
-        protected static final Object doLargeIntegerLongNegative(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.subtract(rhs);
+        @Specialization
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(lhs.differentSign(rhs))) {
+                return lhs.subtract(rhs);
+            } else {
+                return lhs.add(rhs);
+            }
         }
     }
 
@@ -183,54 +185,54 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "!differentSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
-        protected static final Object doLongPositive(final long lhs, final long rhs) {
-            return Math.subtractExact(lhs, rhs);
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final long doLong(final long lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
+                return Math.addExact(lhs, rhs);
+            } else {
+                return Math.subtractExact(lhs, rhs);
+            }
         }
 
-        @Specialization(guards = "!differentSign(lhs, rhs)")
-        protected final Object doLongPositiveWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.subtract(method.image, lhs, rhs);
+        @Specialization(replaces = "doLong")
+        protected final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(differentSign(lhs, rhs))) {
+                return LargeIntegerObject.add(method.image, lhs, rhs);
+            } else {
+                return LargeIntegerObject.subtract(method.image, lhs, rhs);
+            }
         }
 
-        @Specialization(guards = "differentSign(lhs, rhs)", rewriteOn = ArithmeticException.class)
-        protected static final Object doLongNegative(final long lhs, final long rhs) {
-            return Math.addExact(lhs, rhs);
+        @Specialization
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile sameSignProfile) {
+            if (sameSignProfile.profile(lhs.sameSign(rhs))) {
+                return lhs.subtract(rhs);
+            } else {
+                return lhs.add(rhs);
+            }
         }
 
-        @Specialization(guards = "differentSign(lhs, rhs)")
-        protected final Object doLongNegativeWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.add(method.image, lhs, rhs);
+        @Specialization
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(rhs.differentSign(lhs))) {
+                return rhs.add(lhs);
+            } else {
+                return LargeIntegerObject.subtract(lhs, rhs);
+            }
         }
 
-        @Specialization(guards = "lhs.sameSign(rhs)")
-        protected static final Object doLargeIntegerPositive(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.subtract(rhs);
-        }
-
-        @Specialization(guards = "!lhs.sameSign(rhs)")
-        protected static final Object doLargeIntegerNegative(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.add(rhs);
-        }
-
-        @Specialization(guards = "!rhs.differentSign(lhs)")
-        protected static final Object doLongLargeIntegerPositive(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.subtract(lhs, rhs);
-        }
-
-        @Specialization(guards = "rhs.differentSign(lhs)")
-        protected static final Object doLongLargeIntegerNegative(final long lhs, final LargeIntegerObject rhs) {
-            return rhs.add(lhs);
-        }
-
-        @Specialization(guards = "!lhs.differentSign(rhs)")
-        protected static final Object doLargeIntegerLongPositive(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.subtract(rhs);
-        }
-
-        @Specialization(guards = "lhs.differentSign(rhs)")
-        protected static final Object doLargeIntegerLongNegative(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.add(rhs);
+        @Specialization
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+            if (differentSignProfile.profile(lhs.differentSign(rhs))) {
+                return lhs.add(rhs);
+            } else {
+                return lhs.subtract(rhs);
+            }
         }
     }
 
@@ -246,39 +248,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return Math.multiplyExact(lhs, rhs);
         }
 
-        @Specialization
+        @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.multiply(method.image, lhs, rhs);
         }
 
         @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+        protected static final LargeIntegerObject doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
             return rhs.multiply(lhs);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"rhs == 0"})
-        protected static final long doLargeIntegerLongZero(final LargeIntegerObject lhs, final long rhs) {
-            return 0L;
-        }
-
-        @Specialization(guards = {"rhs != 0", "lhs.fitsIntoLong()"})
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return lhs.multiply(rhs);
-        }
-
-        @Specialization(guards = {"rhs != 0", "!lhs.fitsIntoLong()"})
-        protected final LargeIntegerObject doLargeIntegerLongNoReduce(final LargeIntegerObject lhs, final long rhs) {
-            return doLargeIntegerNoReduce(lhs, asLargeInteger(rhs));
-        }
-
-        @Specialization(guards = {"!lhs.fitsIntoLong() || !rhs.fitsIntoLong()", "!lhs.isZero()", "!rhs.isZero()"})
-        protected static final LargeIntegerObject doLargeIntegerNoReduce(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return lhs.multiplyNoReduce(rhs);
-        }
-
-        @Specialization(guards = {"lhs.fitsIntoLong()", "rhs.fitsIntoLong()"})
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+        @Specialization
+        protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
             return lhs.multiply(rhs);
         }
 
@@ -305,24 +286,24 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return receiver.and(arg);
         }
 
-        @Specialization(guards = "receiver >= 0")
-        protected static final Object doLong(final long receiver, final LargeIntegerObject arg) {
-            return receiver & arg.longValue();
+        @Specialization
+        protected static final Object doLong(final long receiver, final LargeIntegerObject arg,
+                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile) {
+            if (positiveProfile.profile(receiver >= 0)) {
+                return receiver & arg.longValue();
+            } else {
+                return arg.and(receiver);
+            }
         }
 
-        @Specialization(guards = "receiver < 0")
-        protected static final Object doLongNegative(final long receiver, final LargeIntegerObject arg) {
-            return arg.and(receiver);
-        }
-
-        @Specialization(guards = "arg >= 0")
-        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
-            return receiver.longValue() & arg;
-        }
-
-        @Specialization(guards = "arg < 0")
-        protected static final Object doLargeIntegerNegative(final LargeIntegerObject receiver, final long arg) {
-            return receiver.and(arg);
+        @Specialization
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long arg,
+                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile) {
+            if (positiveProfile.profile(arg >= 0)) {
+                return receiver.longValue() & arg;
+            } else {
+                return receiver.and(arg);
+            }
         }
     }
 
@@ -402,57 +383,45 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = "lhs == rhs")
-        protected static final long doLongEqual(final long lhs, final long rhs) {
-            return 0L;
+        @Specialization
+        protected static final long doLong(final long lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile smallerProfile,
+                        @Cached("createBinaryProfile()") final ConditionProfile equalProfile) {
+            if (smallerProfile.profile(lhs < rhs)) {
+                return -1L;
+            } else if (equalProfile.profile(lhs == rhs)) {
+                return 0L;
+            } else {
+                return +1L;
+            }
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = "lhs == rhs || lhs.equals(rhs)")
-        protected static final long doLargeIntegerEqual(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
-            return 0L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"lhs > rhs"})
-        protected static final long doLongGreaterThan(final long lhs, final long rhs) {
-            return 1L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"lhs < rhs"})
-        protected static final long doLongLessThan(final long lhs, final long rhs) {
-            return -1L;
-        }
-
-        @Specialization(guards = {"rhs.fitsIntoLong()"})
-        protected static final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            final long value = rhs.longValue();
-            return value == lhs ? 0L : value < lhs ? -1L : 1L;
-        }
-
-        @Specialization(guards = {"!rhs.fitsIntoLong()"})
-        protected static final long doLongMinValueLargeInteger(@SuppressWarnings("unused") final long lhs, final LargeIntegerObject rhs) {
-            return rhs.isNegative() ? -1L : 1L;
-        }
-
-        @Specialization(guards = {"lhs != rhs", "!lhs.equals(rhs)"})
+        @Specialization
         protected static final long doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
             return lhs.compareTo(rhs);
         }
 
-        @Specialization(guards = {"lhs.fitsIntoLong()"})
-        protected static final long doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            final long value = lhs.longValue();
-            return value == rhs ? 0L : value < rhs ? -1L : 1L;
+        @Specialization
+        protected static final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile fitsIntoLongProfile) {
+            if (fitsIntoLongProfile.profile(rhs.fitsIntoLong())) {
+                final long value = rhs.longValue();
+                return value == lhs ? 0L : value < lhs ? -1L : 1L;
+            } else {
+                return rhs.isNegative() ? -1L : 1L;
+            }
         }
 
-        @Specialization(guards = {"!lhs.fitsIntoLong()"})
-        protected static final long doLargeIntegerLongMinValue(final LargeIntegerObject lhs, @SuppressWarnings("unused") final long rhs) {
-            return lhs.isNegative() ? -1L : 1L;
+        @Specialization
+        protected static final long doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile fitsIntoLongProfile) {
+            if (fitsIntoLongProfile.profile(lhs.fitsIntoLong())) {
+                final long value = lhs.longValue();
+                return value == rhs ? 0L : value < rhs ? -1L : 1L;
+            } else {
+                return lhs.isNegative() ? -1L : 1L;
+            }
         }
-
     }
 
     @GenerateNodeFactory
@@ -537,8 +506,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         /*
          * Optimized version of montgomeryTimesModulo for integer-sized arguments.
          */
-        @Specialization(guards = {"fitsInOneWord(receiver)", "fitsInOneWord(a)", "fitsInOneWord(m)"})
+        @Specialization(rewriteOn = {ArithmeticException.class})
         protected static final long doLongQuick(final long receiver, final long a, final long m, final long mInv) {
+            if (!(fitsInOneWord(receiver) && fitsInOneWord(a) && fitsInOneWord(m))) {
+                throw new ArithmeticException();
+            }
             final long accum3 = receiver * a;
             final long u = accum3 * mInv & 0xFFFFFFFFL;
             final long accum2 = u * m;
@@ -551,11 +523,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return result;
         }
 
-        protected static final boolean fitsInOneWord(final long value) {
+        private static boolean fitsInOneWord(final long value) {
             return value <= NativeObject.INTEGER_MAX;
         }
 
-        @Specialization(guards = {"(!fitsInOneWord(receiver) || !fitsInOneWord(a)) || !fitsInOneWord(m)"})
+        @Specialization(replaces = "doLongQuick")
         protected final Object doLong(final long receiver, final long a, final long m, final long mInv) {
             // TODO: avoid falling back to LargeIntegerObject
             return doLargeInteger(asLargeInteger(receiver), asLargeInteger(a), asLargeInteger(m), mInv);
@@ -597,6 +569,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
             final int[] firstInts = ArrayConversionUtils.intsFromBytesReversedExact(receiver.getBytes());
             final int[] secondInts = ArrayConversionUtils.intsFromBytesReversedExact(a.getBytes());

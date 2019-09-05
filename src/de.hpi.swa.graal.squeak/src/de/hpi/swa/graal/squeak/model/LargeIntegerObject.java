@@ -331,18 +331,13 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public Object multiply(final LargeIntegerObject b) {
-        return reduceIfPossible(integer.multiply(b.integer));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public Object multiply(final long b) {
-        return reduceIfPossible(integer.multiply(BigInteger.valueOf(b)));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public LargeIntegerObject multiplyNoReduce(final LargeIntegerObject b) {
+    public LargeIntegerObject multiply(final LargeIntegerObject b) {
         return new LargeIntegerObject(image, integer.multiply(b.integer));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public LargeIntegerObject multiply(final long b) {
+        return new LargeIntegerObject(image, integer.multiply(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
