@@ -252,19 +252,16 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization(guards = {"inShortRange(value)", "receiver.isIntType()", "isEven(index)"})
-        protected static final long doNativeIntsEven(final NativeObject receiver, final long index, final long value) {
+        @Specialization(guards = {"inShortRange(value)", "receiver.isIntType()"})
+        protected static final long doNativeInts(final NativeObject receiver, final long index, final long value,
+                        @Cached("createBinaryProfile()") final ConditionProfile isEvenProfile) {
             final int wordIndex = (int) ((index - 1) / 2);
             final int[] ints = receiver.getIntStorage();
-            ints[wordIndex] = ints[wordIndex] & 0xffff0000 | (int) value & 0xffff;
-            return value;
-        }
-
-        @Specialization(guards = {"inShortRange(value)", "receiver.isIntType()", "!isEven(index)"})
-        protected static final long doNativeIntsOdd(final NativeObject receiver, final long index, final long value) {
-            final int wordIndex = (int) ((index - 1) / 2);
-            final int[] ints = receiver.getIntStorage();
-            ints[wordIndex] = (int) value << 16 | ints[wordIndex] & 0xffff;
+            if (isEvenProfile.profile((index - 1) % 2 == 0)) {
+                ints[wordIndex] = ints[wordIndex] & 0xffff0000 | (int) value & 0xffff;
+            } else {
+                ints[wordIndex] = (int) value << 16 | ints[wordIndex] & 0xffff;
+            }
             return value;
         }
 
@@ -276,10 +273,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         protected static final boolean inShortRange(final long value) {
             return -0x8000 <= value && value <= 0x8000;
-        }
-
-        protected static final boolean isEven(final long index) {
-            return (index - 1) % 2 == 0;
         }
     }
 
