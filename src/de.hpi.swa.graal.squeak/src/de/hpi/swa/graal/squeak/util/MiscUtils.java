@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.util;
 
+import java.io.File;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.Properties;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class MiscUtils {
     private static final CompilationMXBean COMPILATION_BEAN = ManagementFactory.getCompilationMXBean();
@@ -130,6 +133,12 @@ public final class MiscUtils {
     @TruffleBoundary
     public static String getVMInformation() {
         return String.format("\n%s (%s; %s)\n", System.getProperty("java.vm.name"), System.getProperty("java.vm.version"), System.getProperty("java.vm.info"));
+    }
+
+    @TruffleBoundary
+    public static String getVMPath(final SqueakImageContext image) {
+        final String binaryName = image.os.isWindows() ? "java.exe" : "java";
+        return System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + binaryName;
     }
 
     @TruffleBoundary

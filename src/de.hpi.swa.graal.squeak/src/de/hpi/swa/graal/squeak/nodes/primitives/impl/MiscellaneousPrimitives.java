@@ -400,9 +400,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        @TruffleBoundary
         protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asByteString(System.getProperty("java.home") + File.separatorChar);
+            return method.image.asByteString(MiscUtils.getVMPath(method.image));
         }
     }
 

@@ -3,19 +3,58 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHolder {
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveChdir")
+    protected abstract static class PrimChdirNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        protected PrimChdirNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "pathString.isByteType()")
+        protected final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
+                        @Cached final BranchProfile errorProfile) {
+            try {
+                method.image.env.setCurrentWorkingDirectory(method.image.env.getTruffleFile(pathString.asStringUnsafe()));
+                return NilObject.SINGLETON; // Signals success.
+            } catch (UnsupportedOperationException | IllegalArgumentException | SecurityException e) {
+                errorProfile.enter();
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetCurrentWorkingDirectory")
+    protected abstract static class PrimGetCurrentWorkingDirectoryNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+
+        protected PrimGetCurrentWorkingDirectoryNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final NativeObject doGet(@SuppressWarnings("unused") final Object receiver) {
+            return method.image.asByteString(method.image.env.getCurrentWorkingDirectory().getPath());
+        }
+    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetPid")

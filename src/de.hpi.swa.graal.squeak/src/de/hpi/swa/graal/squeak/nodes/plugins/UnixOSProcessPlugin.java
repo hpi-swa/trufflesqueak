@@ -5,12 +5,12 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.Env;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.sun.security.auth.module.UnixSystem;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -24,8 +24,10 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
+    private static final UnixSystem UNIX_SYSTEM = new UnixSystem();
 
     @Override
     public boolean isEnabled(final SqueakImageContext image) {
@@ -52,15 +54,15 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             super(method);
         }
 
-        @Specialization(guards = "inBounds1(index, method.image.getImageArguments().length)")
-        protected final NativeObject doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
-            return method.image.asByteString(method.image.getImageArguments()[(int) index - 1]);
-        }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        protected static final NilObject doNil(final Object receiver, final Object index) {
-            return NilObject.SINGLETON;
+        @Specialization
+        protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
+            if (index == 1) {
+                return method.image.asByteString(MiscUtils.getVMPath(method.image));
+            } else if (1 < index && index < method.image.getImageArguments().length) {
+                return method.image.asByteString(method.image.getImageArguments()[(int) index - 2]);
+            } else {
+                return NilObject.SINGLETON;
+            }
         }
     }
 
@@ -116,6 +118,20 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetGid")
+    protected abstract static class PrimGetGidNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+
+        protected PrimGetGidNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doGid(@SuppressWarnings("unused") final Object receiver) {
+            return UNIX_SYSTEM.getGid();
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetPPid")
     protected abstract static class PrimGetPPidNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
@@ -126,6 +142,20 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         @Specialization
         protected static final NilObject doAt(@SuppressWarnings("unused") final Object receiver) {
             return NilObject.SINGLETON; // TODO: implement parent pid
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetUid")
+    protected abstract static class PrimGetUidNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+
+        protected PrimGetUidNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doUid(@SuppressWarnings("unused") final Object receiver) {
+            return UNIX_SYSTEM.getUid();
         }
     }
 
