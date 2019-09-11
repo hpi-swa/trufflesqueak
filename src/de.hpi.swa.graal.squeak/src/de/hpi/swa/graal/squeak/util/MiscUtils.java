@@ -157,6 +157,15 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static void sleep(final long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (final InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @TruffleBoundary
     public static String stringValueOf(final char value) {
         return String.valueOf(value);
     }

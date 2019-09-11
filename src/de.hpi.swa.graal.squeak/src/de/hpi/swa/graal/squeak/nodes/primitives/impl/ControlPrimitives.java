@@ -829,9 +829,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long timeMicroseconds,
+        protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final InterruptHandlerNode interruptNode) {
+            MiscUtils.sleep(timeMicroseconds / 1000);
             /* Keep receiver on stack, interrupt handler could trigger. */
             pushNode.executeWrite(frame, receiver);
             /*
