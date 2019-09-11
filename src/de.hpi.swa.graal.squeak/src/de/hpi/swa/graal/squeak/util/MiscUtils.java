@@ -43,6 +43,16 @@ public final class MiscUtils {
         return out;
     }
 
+    /** Ceil version of {@link Math#floorDiv(int, int)}. */
+    public static int ceilDiv(final int x, final int y) {
+        int r = x / y;
+        // if the signs are the same and modulo not zero, round up
+        if ((x ^ y) >= 0 && r * y != x) {
+            r++;
+        }
+        return r;
+    }
+
     @TruffleBoundary
     public static String format(final String format, final Object... args) {
         return String.format(format, args);
