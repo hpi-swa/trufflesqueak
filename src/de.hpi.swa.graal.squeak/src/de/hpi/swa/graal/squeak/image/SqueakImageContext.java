@@ -319,8 +319,13 @@ public final class SqueakImageContext {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // TODO: find a better way to find wideStringClass or do this on image side instead?
             final CompiledMethodObject method = (CompiledMethodObject) LookupMethodByStringNode.getUncached().executeLookup(byteArrayClass, "asWideString");
-            final PointersObject assoc = (PointersObject) method.getLiteral(1);
-            wideStringClass = (ClassObject) assoc.at0(ASSOCIATION.VALUE);
+            if (method != null) {
+                final PointersObject assoc = (PointersObject) method.getLiteral(1);
+                wideStringClass = (ClassObject) assoc.at0(ASSOCIATION.VALUE);
+            } else {
+                /* Image only uses a single String class (e.g. Cuis 5.0). */
+                wideStringClass = byteStringClass;
+            }
         }
         return wideStringClass;
     }
