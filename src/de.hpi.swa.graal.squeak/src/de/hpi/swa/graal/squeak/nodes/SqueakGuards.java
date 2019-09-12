@@ -35,16 +35,6 @@ public final class SqueakGuards {
         return Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE;
     }
 
-    /* For primitiveStringReplace (#105). */
-    public static boolean inBounds(final int arrayLength, final long start, final long stop, final int replLength, final long replStart) {
-        return start >= 1 && start - 1 <= stop && stop <= arrayLength && replStart >= 1 && stop - start + replStart <= replLength;
-    }
-
-    /* For primitiveStringReplace (#105). */
-    public static boolean inBounds(final int arrayInstSize, final int arrayLength, final long start, final long stop, final int replInstSize, final int replLength, final long replStart) {
-        return start >= 1 && start - 1 <= stop && stop + arrayInstSize <= arrayLength && replStart >= 1 && stop - start + replStart + replInstSize <= replLength;
-    }
-
     public static boolean inBounds0(final long index, final int size) {
         return 0 <= index && index < size;
     }

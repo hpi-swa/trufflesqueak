@@ -15,12 +15,12 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -39,8 +39,6 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectInstSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.WeakPointersObjectNodes.WeakPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.WeakPointersObjectNodes.WeakPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -376,8 +374,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-        protected static final CompiledMethodObject doMethod(final CompiledMethodObject rcvr, final long start, final long stop, final CompiledMethodObject repl, final long replStart) {
+        @Specialization
+        protected static final CompiledMethodObject doMethod(final CompiledMethodObject rcvr, final long start, final long stop, final CompiledMethodObject repl, final long replStart,
+                        @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+            if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
+                errorProfile.enter();
+                throw PrimitiveFailed.BAD_INDEX;
+            }
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
@@ -385,31 +388,41 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-        protected static final CompiledBlockObject doBlock(final CompiledBlockObject rcvr, final long start, final long stop, final CompiledBlockObject repl, final long replStart) {
+        @Specialization
+        protected static final CompiledBlockObject doBlock(final CompiledBlockObject rcvr, final long start, final long stop, final CompiledBlockObject repl, final long replStart,
+                        @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+            if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
+                errorProfile.enter();
+                throw PrimitiveFailed.BAD_INDEX;
+            }
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
             }
             return rcvr;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!inBounds(instSizeNode.execute(rcvr), sizeNode.execute(rcvr), start, stop, instSizeNode.execute(repl), sizeNode.execute(repl), replStart)", limit = "1")
-        protected static final AbstractSqueakObject doBadIndex(final AbstractSqueakObject rcvr, final long start, final long stop, final AbstractSqueakObject repl, final long replStart,
-                        @Cached final SqueakObjectInstSizeNode instSizeNode,
-                        @Cached final SqueakObjectSizeNode sizeNode) {
-            throw PrimitiveFailed.BAD_INDEX;
         }
 
         /* (Incomplete) FloatObject specialization used by Cuis 5.0. */
         @SuppressWarnings("unused")
-        @Specialization(guards = {"start == 1", "stop == 2", "replStart == 1", "repl.isIntType()", "repl.getIntLength() == 2"})
-        protected static final FloatObject doFloat(final FloatObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+        @Specialization(guards = {"repl.isIntType()"})
+        protected static final FloatObject doFloat(final FloatObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+                        @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+            if (!(start == 1 && stop == 2 && replStart == 1 && repl.getIntLength() == 2)) {
+                errorProfile.enter();
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
             final int[] ints = repl.getIntStorage();
             rcvr.setHigh(ints[1]);
             rcvr.setLow(ints[0]);
             return rcvr;
+        }
+
+        private static boolean inBounds(final int arrayLength, final long start, final long stop, final int replLength, final long replStart) {
+            return start >= 1 && start - 1 <= stop && stop <= arrayLength && replStart >= 1 && stop - start + replStart <= replLength;
+        }
+
+        private static boolean inBounds(final int arrayInstSize, final int arrayLength, final long start, final long stop, final int replInstSize, final int replLength, final long replStart) {
+            return start >= 1 && start - 1 <= stop && stop + arrayInstSize <= arrayLength && replStart >= 1 && stop - start + replStart + replInstSize <= replLength;
         }
 
         protected abstract static class ArrayObjectReplaceNode extends AbstractNode {
@@ -418,55 +431,106 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected abstract void execute(ArrayObject rcvr, long start, long stop, Object repl, long replStart);
 
             @SuppressWarnings("unused")
-            @Specialization(guards = {"rcvr.isEmptyType()", "repl.isEmptyType()", "inBounds(rcvr.instsize(), rcvr.getEmptyLength(), start, stop, repl.instsize(), repl.getEmptyLength(), replStart)"})
-            protected static final void doEmptyArrays(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+            @Specialization(guards = {"rcvr.isEmptyType()", "repl.isEmptyType()"})
+            protected final void doEmptyArrays(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                if (!inBounds(getSizeNode().execute(rcvr), start, stop, getSizeNode().execute(repl), replStart)) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
                 // Nothing to do.
             }
 
-            @Specialization(guards = {"rcvr.isBooleanType()", "repl.isBooleanType()", "inBounds(rcvr.getBooleanLength(), start, stop, repl.getBooleanLength(), replStart)"})
-            protected static final void doArraysOfBooleans(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-                System.arraycopy(repl.getBooleanStorage(), (int) replStart - 1, rcvr.getBooleanStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isBooleanType()", "repl.isBooleanType()"})
+            protected static final void doArraysOfBooleans(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getBooleanStorage(), (int) replStart - 1, rcvr.getBooleanStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"rcvr.isCharType()", "repl.isCharType()", "inBounds(rcvr.getCharLength(), start, stop, repl.getCharLength(), replStart)"})
-            protected static final void doArraysOfChars(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-                System.arraycopy(repl.getCharStorage(), (int) replStart - 1, rcvr.getCharStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isCharType()", "repl.isCharType()"})
+            protected static final void doArraysOfChars(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getCharStorage(), (int) replStart - 1, rcvr.getCharStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()", "inBounds(rcvr.getLongLength(), start, stop, repl.getLongLength(), replStart)"})
-            protected static final void doArraysOfLongs(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-                System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()"})
+            protected static final void doArraysOfLongs(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"rcvr.isDoubleType()", "repl.isDoubleType()", "inBounds(rcvr.getDoubleLength(), start, stop, repl.getDoubleLength(), replStart)"})
-            protected static final void doArraysOfDoubles(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-                System.arraycopy(repl.getDoubleStorage(), (int) replStart - 1, rcvr.getDoubleStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isDoubleType()", "repl.isDoubleType()"})
+            protected static final void doArraysOfDoubles(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getDoubleStorage(), (int) replStart - 1, rcvr.getDoubleStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"rcvr.isNativeObjectType()", "repl.isNativeObjectType()", "inBounds(rcvr.getNativeObjectLength(), start, stop, repl.getNativeObjectLength(), replStart)"})
-            protected static final void doArraysOfNatives(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-                System.arraycopy(repl.getNativeObjectStorage(), (int) replStart - 1, rcvr.getNativeObjectStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isNativeObjectType()", "repl.isNativeObjectType()"})
+            protected static final void doArraysOfNatives(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getNativeObjectStorage(), (int) replStart - 1, rcvr.getNativeObjectStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"rcvr.isObjectType()", "repl.isObjectType()", "inBounds(rcvr.getObjectLength(), start, stop, repl.getObjectLength(), replStart)"})
-            protected static final void doArraysOfObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-                System.arraycopy(repl.getObjectStorage(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isObjectType()", "repl.isObjectType()"})
+            protected static final void doArraysOfObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getObjectStorage(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"!rcvr.hasSameStorageType(repl)", "inBounds(getSizeNode().execute(rcvr), start, stop, getSizeNode().execute(repl), replStart)"})
-            protected static final void doArraysWithDifferenStorageTypes(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+            @Specialization(guards = {"!rcvr.hasSameStorageType(repl)"})
+            protected final void doArraysWithDifferenStorageTypes(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @Cached final ArrayObjectReadNode readNode,
-                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
+                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                if (!inBounds(getSizeNode().execute(rcvr), start, stop, getSizeNode().execute(repl), replStart)) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
                 final long repOff = replStart - start;
                 for (int i = (int) (start - 1); i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
             }
 
-            @Specialization(guards = {"inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
-            protected static final void doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
+            @Specialization
+            protected final void doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
                             @Cached("createBinaryProfile()") final ConditionProfile isObjectTypeProfile,
-                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
+                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                if (!inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
                 if (isObjectTypeProfile.profile(rcvr.isObjectType())) {
                     System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
                 } else {
@@ -477,10 +541,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             }
 
-            @Specialization(guards = {"inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)"})
-            protected static final void doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
+            @Specialization
+            protected final void doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
                             @Cached final WeakPointersObjectReadNode readNode,
-                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode) {
+                            @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                if (!inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
                 final long repOff = replStart - start;
                 for (int i = (int) (start - 1); i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.executeRead(repl, repOff + i));
@@ -505,33 +574,52 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected abstract static class LargeIntegerObjectReplaceNode extends AbstractNode {
             protected abstract void execute(LargeIntegerObject rcvr, long start, long stop, Object repl, long replStart);
 
-            @Specialization(guards = {"inBounds(rcvr.size(), start, stop, repl.size(), replStart)"})
+            @Specialization
             protected static final void doLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile,
                             @Cached("createBinaryProfile()") final ConditionProfile fitsEntirelyProfile) {
                 if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
                     rcvr.replaceInternalValue(repl);
                 } else {
-                    rcvr.setBytes(repl, (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                    if (inBounds(rcvr.size(), start, stop, repl.size(), replStart)) {
+                        rcvr.setBytes(repl, (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                    } else {
+                        errorProfile.enter();
+                        throw PrimitiveFailed.BAD_INDEX;
+                    }
                 }
             }
 
-            @Specialization(guards = {"inBounds(rcvr.size(), start, stop, repl.size(), replStart)"})
+            @Specialization
             protected static final void doLargeIntegerFloat(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile,
                             @Cached("createBinaryProfile()") final ConditionProfile fitsEntirelyProfile) {
+
                 if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
                     rcvr.setBytes(repl.getBytes());
                 } else {
-                    System.arraycopy(repl.getBytes(), (int) replStart - 1, rcvr.getBytes(), (int) start - 1, (int) (1 + stop - start));
+                    if (inBounds(rcvr.size(), start, stop, repl.size(), replStart)) {
+                        rcvr.setBytes(repl.getBytes(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                    } else {
+                        errorProfile.enter();
+                        throw PrimitiveFailed.BAD_INDEX;
+                    }
                 }
             }
 
-            @Specialization(guards = {"repl.isByteType()", "inBounds(rcvr.size(), start, stop, repl.getByteLength(), replStart)"})
+            @Specialization(guards = {"repl.isByteType()"})
             protected static final void doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile,
                             @Cached("createBinaryProfile()") final ConditionProfile fitsEntirelyProfile) {
                 if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart))) {
                     rcvr.setBytes(repl.getByteStorage());
                 } else {
-                    rcvr.setBytes(repl.getByteStorage(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                    if (inBounds(rcvr.size(), start, stop, repl.getByteLength(), replStart)) {
+                        rcvr.setBytes(repl.getByteStorage(), (int) replStart - 1, (int) start - 1, (int) (1 + stop - start));
+                    } else {
+                        errorProfile.enter();
+                        throw PrimitiveFailed.BAD_INDEX;
+                    }
                 }
             }
 
@@ -550,29 +638,59 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected abstract static class NativeObjectReplaceNode extends AbstractNode {
             protected abstract void execute(NativeObject rcvr, long start, long stop, Object repl, long replStart);
 
-            @Specialization(guards = {"rcvr.isByteType()", "repl.isByteType()", "inBounds(rcvr.getByteLength(), start, stop, repl.getByteLength(), replStart)"})
-            protected static final void doNativeBytes(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-                System.arraycopy(repl.getByteStorage(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isByteType()", "repl.isByteType()"})
+            protected static final void doNativeBytes(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getByteStorage(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"rcvr.isShortType()", "repl.isShortType()", "inBounds(rcvr.getShortLength(), start, stop, repl.getShortLength(), replStart)"})
-            protected static final void doNativeShorts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-                System.arraycopy(repl.getShortStorage(), (int) replStart - 1, rcvr.getShortStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isShortType()", "repl.isShortType()"})
+            protected static final void doNativeShorts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getShortStorage(), (int) replStart - 1, rcvr.getShortStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"rcvr.isIntType()", "repl.isIntType()", "inBounds(rcvr.getIntLength(), start, stop, repl.getIntLength(), replStart)"})
-            protected static final void doNativeInts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-                System.arraycopy(repl.getIntStorage(), (int) replStart - 1, rcvr.getIntStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isIntType()", "repl.isIntType()"})
+            protected static final void doNativeInts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getIntStorage(), (int) replStart - 1, rcvr.getIntStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()", "inBounds(rcvr.getLongLength(), start, stop, repl.getLongLength(), replStart)"})
-            protected static final void doNativeLongs(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-                System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isLongType()", "repl.isLongType()"})
+            protected static final void doNativeLongs(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = {"rcvr.isByteType()", "inBounds(rcvr.getByteLength(), start, stop, repl.size(), replStart)"})
-            protected static final void doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
-                System.arraycopy(repl.getBytes(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization(guards = {"rcvr.isByteType()"})
+            protected static final void doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getBytes(), (int) replStart - 1, rcvr.getByteStorage(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
             @SuppressWarnings("unused")
@@ -585,15 +703,26 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected abstract static class PointersObjectReplaceNode extends AbstractNode {
             protected abstract void execute(PointersObject rcvr, long start, long stop, Object repl, long replStart);
 
-            @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-            protected static final void doPointers(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
-                System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization
+            protected static final void doPointers(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)", limit = "1")
+            @Specialization
             protected static final void doPointersArray(final PointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
-                            @Cached final ArrayObjectReadNode readNode) {
+                            @Cached final ArrayObjectReadNode readNode,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
                 final long repOff = replStart - start;
                 for (int i = (int) (start - 1); i < stop; i++) {
                     rcvr.atput0(i, readNode.execute(repl, repOff + i));
@@ -610,16 +739,27 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected abstract static class WeakPointersObjectReplaceNode extends AbstractNode {
             protected abstract void execute(WeakPointersObject rcvr, long start, long stop, Object repl, long replStart);
 
-            @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)")
-            protected static final void doWeakPointers(final WeakPointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
-                System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
+            @Specialization
+            protected static final void doWeakPointers(final WeakPointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                try {
+                    System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
+                } catch (final IndexOutOfBoundsException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
             }
 
-            @Specialization(guards = "inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)", limit = "1")
+            @Specialization
             protected static final void doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
-                            @Cached final WeakPointersObjectWriteNode writeNode) {
+                            @Cached final WeakPointersObjectWriteNode writeNode,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
                 final long repOff = replStart - start;
                 for (int i = (int) (start - 1); i < stop; i++) {
                     writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
