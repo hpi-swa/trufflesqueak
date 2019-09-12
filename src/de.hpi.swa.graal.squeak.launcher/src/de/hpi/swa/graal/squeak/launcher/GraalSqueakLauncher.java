@@ -24,12 +24,12 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     private static final String OPTION_IMAGE_PATH = SqueakLanguageConfig.ID + ".ImagePath";
     private static final String OPTION_HEADLESS = SqueakLanguageConfig.ID + ".Headless";
-    private static final String OPTION_HEADLESS_FLAG = "--" + OPTION_HEADLESS;
+    private static final String OPTION_TRANSCRIPT_FORWARDING_FLAG = "--enable-transcript-forwarding";
     private static final String POLYGLOT_FLAG = "--polyglot";
     private String[] remainingArguments;
     private String imagePath = "Squeak.image";
     private String sourceCode = null;
-    private boolean isHeadless;
+    private boolean enableTranscriptForwarding = false;
 
     public static void main(final String[] arguments) throws RuntimeException {
         final String[] argumentsForLauncher;
@@ -66,8 +66,9 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 sourceCode = arguments.get(i);
                 arguments.remove(i);
                 i--;
-            } else if (OPTION_HEADLESS_FLAG.equals(arg)) {
-                isHeadless = true;
+            } else if (OPTION_TRANSCRIPT_FORWARDING_FLAG.equals(arg)) {
+                arguments.remove(i);
+                enableTranscriptForwarding = true;
             }
         }
         return unrecognized;
@@ -81,14 +82,13 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     protected int execute(final Context.Builder contextBuilder) {
         contextBuilder.option(OPTION_IMAGE_PATH, imagePath);
         if (sourceCode != null) {
-            isHeadless = true;
             contextBuilder.option(OPTION_HEADLESS, "true");
         }
         contextBuilder.arguments(getLanguageId(), remainingArguments);
         contextBuilder.allowAllAccess(true);
         final SqueakTranscriptForwarder out;
         final SqueakTranscriptForwarder err;
-        if (!isHeadless) {
+        if (enableTranscriptForwarding) {
             out = new SqueakTranscriptForwarder(System.out, true);
             contextBuilder.out(out);
             err = new SqueakTranscriptForwarder(System.err, true);

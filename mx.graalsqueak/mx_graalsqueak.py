@@ -150,6 +150,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='disable interrupt handler',
                         dest='disable_interrupts',
                         action='store_true', default=False)
+    parser.add_argument('-etf', '--enable-transcript-forwarding',
+                        help='Forward stdio to Transcript',
+                        dest='enable_transcript_forwarding',
+                        action='store_true', default=False)
     parser.add_argument(
         '-fc', '--force-compilation',
         help='compile immediately to test Truffle compiler',
@@ -296,6 +300,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--cpusampler')
     if parsed_args.cputracer:
         squeak_arguments.append('--cputracer')
+    if parsed_args.enable_transcript_forwarding:
+        squeak_arguments.append('--enable-transcript-forwarding')
     if parsed_args.inspect:
         squeak_arguments.append('--inspect')
     if parsed_args.trace_interop:
