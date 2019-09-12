@@ -402,6 +402,16 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             throw PrimitiveFailed.BAD_INDEX;
         }
 
+        /* (Incomplete) FloatObject specialization used by Cuis 5.0. */
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"start == 1", "stop == 2", "replStart == 1", "repl.isIntType()", "repl.getIntLength() == 2"})
+        protected static final FloatObject doFloat(final FloatObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+            final int[] ints = repl.getIntStorage();
+            rcvr.setHigh(ints[1]);
+            rcvr.setLow(ints[0]);
+            return rcvr;
+        }
+
         protected abstract static class ArrayObjectReplaceNode extends AbstractNode {
             @Child private ArrayObjectSizeNode sizeNode;
 
