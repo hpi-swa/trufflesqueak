@@ -55,8 +55,8 @@ Smalltalk-based Tooling Platform for Polyglot Programming*. In Proceedings of
 [the International Conference on Managed Programming Languages and Runtimes
 (MPLR) 2019][mplr19], co-located with the Conference on Object-oriented
 Programming, Systems, Languages, and Applications (OOPSLA), 12 pages, Athens,
-Greece, October 21, 2019, ACM DL. (TO APPEAR)  
-[![Preprint][preprint]][mplr19_pdf]
+Greece, October 21, 2019, ACM DL.  
+[![doi][mplr19_doi]][mplr19_paper] [![bibtex][bibtex]][mplr19_bibtex] [![Preprint][preprint]][mplr19_pdf]
 - Fabio Niephaus, Tim Felgentreff, Tobias Pape, and Robert Hirschfeld.
 *Efficient Implementation of Smalltalk Activation Records in Language
 Implementation Frameworks*. In Proceedings of [the Workshop on Modern Language
@@ -110,6 +110,9 @@ Amsterdam, Netherlands, July 17, 2018, ACM DL.
 [morevms19_paper]: https://doi.org/10.1145/3328433.3328440
 [morevms19_pdf]: https://fniephaus.com/2019/morevms19-efficient-activation-records.pdf
 [mplr19]: https://conf.researchr.org/home/mplr-2019
+[mplr19_bibtex]: https://dl.acm.org/downformats.cfm?id=3361024&parent_id=3357390&expformat=bibtex
+[mplr19_doi]: https://img.shields.io/badge/doi-10.1145/3357390.3361024-blue.svg
+[mplr19_paper]: https://doi.org/10.1145/3357390.3361024
 [mplr19_pdf]: https://fniephaus.com/2019/mplr19-graalsqueak.pdf
 [mx]: https://github.com/graalvm/mx
 [preprint]: https://img.shields.io/badge/preprint-download-blue.svg
