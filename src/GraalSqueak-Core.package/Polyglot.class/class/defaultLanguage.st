@@ -1,3 +1,3 @@
 constants
 defaultLanguage
-	^ self languageIdSqueakSmalltalk
+	^ self languageIdSmalltalk

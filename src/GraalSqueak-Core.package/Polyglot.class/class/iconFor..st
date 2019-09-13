@@ -10,5 +10,5 @@ iconFor: aLanguageId
 			self languageIdPython. self iconPython.
 			self languageIdR. self iconR.
 			self languageIdRuby. self iconRuby.
-			self languageIdSqueakSmalltalk. self iconSqueakSmalltalk }
+			self languageIdSmalltalk. self iconSmalltalk }
 		]) at: aLanguageId ifAbsent: [ nil ]

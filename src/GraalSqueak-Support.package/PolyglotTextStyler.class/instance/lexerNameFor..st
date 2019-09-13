@@ -1,7 +1,8 @@
 as yet unclassified
 lexerNameFor: languageID
-	languageID = 'ruby' ifTrue: [ ^ 'Ruby' ].
-	languageID = 'python' ifTrue: [ ^ 'Python' ].
-	languageID = 'r' ifTrue: [ ^ 'R' ].
-	languageID = 'squeaksmalltalk' ifTrue: [ ^ 'Smalltalk' ].
+	languageID = Polyglot languageIdJS ifTrue: [ ^ 'Javascript' ].
+	languageID = Polyglot languageIdRuby ifTrue: [ ^ 'Ruby' ].
+	languageID = Polyglot languageIdPython ifTrue: [ ^ 'Python' ].
+	languageID = Polyglot languageIdR ifTrue: [ ^ 'R' ].
+	languageID = Polyglot languageIdSmalltalk ifTrue: [ ^ 'Smalltalk' ].
 	^ 'Markdown'

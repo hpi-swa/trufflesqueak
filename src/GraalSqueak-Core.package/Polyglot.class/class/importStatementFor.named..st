@@ -8,5 +8,5 @@ importStatementFor: aLanguage named: aName
 			self languageIdPython. [:name | 'import polyglot; {1} = polyglot.import_value("bindings")' format: {name}].
 			self languageIdR. [:name | '{1} <- import("bindings")' format: {name}].
 			self languageIdRuby. [:name | '{1} = Polyglot.import("bindings")' format: {name}].
-			self languageIdSqueakSmalltalk. [:name | '{1} := Polyglot import: ''bindings''.' format: {name}]}
+			self languageIdSmalltalk. [:name | '{1} := Polyglot import: ''bindings''.' format: {name}]}
 		]) at: aLanguage ifAbsent: [self error: 'unsupported language: ', aLanguage]) value: aName
