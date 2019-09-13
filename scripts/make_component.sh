@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
+readonly LANGUAGE_ID="smalltalk"
 readonly GRAALVM_VERSION="19.1.1"
 
 readonly BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 readonly COMPONENT_DIR="component_temp_dir"
 readonly GRAALSQUEAK_DIR="${BASE_DIR}/.."
 readonly GRAALSQUEAK_JAR="${GRAALSQUEAK_DIR}/graalsqueak.jar"
-readonly LANGUAGE_PATH="${COMPONENT_DIR}/jre/languages/squeaksmalltalk"
+readonly LANGUAGE_PATH="${COMPONENT_DIR}/jre/languages/${LANGUAGE_ID}"
 readonly LIB_GRAALVM_PATH="${COMPONENT_DIR}/jre/lib/graalvm"
 readonly MANIFEST="${COMPONENT_DIR}/META-INF/MANIFEST.MF"
 readonly TARGET_JAR="${GRAALSQUEAK_DIR}/graalsqueak-component.jar"
@@ -45,10 +46,10 @@ echo "x-GraalVM-Polyglot-Part: True" >> "${MANIFEST}"
 pushd "${COMPONENT_DIR}" > /dev/null
 jar cfm "${TARGET_JAR}" META-INF/MANIFEST.MF .
 
-echo "bin/graalsqueak = ../jre/languages/squeaksmalltalk/bin/graalsqueak" > META-INF/symlinks
+echo "bin/graalsqueak = ../jre/languages/${LANGUAGE_ID}/bin/graalsqueak" > META-INF/symlinks
 jar uf "${TARGET_JAR}" META-INF/symlinks
 
-echo "jre/languages/squeaksmalltalk/bin/graalsqueak = rwxrwxr-x" > META-INF/permissions
+echo "jre/languages/${LANGUAGE_ID}/bin/graalsqueak = rwxrwxr-x" > META-INF/permissions
 jar uf "${TARGET_JAR}" META-INF/permissions
 popd > /dev/null
 rm -rf "${COMPONENT_DIR}"

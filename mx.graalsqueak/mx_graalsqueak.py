@@ -8,7 +8,7 @@ import mx_sdk
 import mx_unittest
 
 
-LANGUAGE_NAME = 'squeaksmalltalk'
+LANGUAGE_ID = 'smalltalk'
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 BASE_VM_ARGS = [
@@ -291,9 +291,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     squeak_arguments = []
     if parsed_args.disable_interrupts:
         squeak_arguments.append(
-            '--%s.DisableInterruptHandler' % LANGUAGE_NAME)
+            '--%s.DisableInterruptHandler' % LANGUAGE_ID)
     if parsed_args.headless:
-        squeak_arguments.append('--%s.Headless' % LANGUAGE_NAME)
+        squeak_arguments.append('--%s.Headless' % LANGUAGE_ID)
     if parsed_args.code:
         squeak_arguments.extend(['--code', parsed_args.code])
     if parsed_args.cpusampler:
@@ -322,7 +322,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         if len(split) != 2:
             mx.abort('Must be in the format de.hpi.swa.graal...Class=LOGLEVEL')
         squeak_arguments.append(
-            '--log.squeaksmalltalk.%s.level=%s' % (split[0], split[1]))
+            '--log.%s.%s.level=%s' % (LANGUAGE_ID, split[0], split[1]))
     if parsed_args.memtracer:
         squeak_arguments.extend(['--experimental-options', '--memtracer'])
 
@@ -376,9 +376,9 @@ def _run_tck_tests(tasks):
                 unittest_args = BASE_VM_ARGS_TESTING[:]
                 test_image = _get_path_to_test_image()
                 unittest_args.extend([
-                    '-Dtck.language=squeaksmalltalk',
-                    '-Dpolyglot.squeaksmalltalk.Headless=true',
-                    '-Dpolyglot.squeaksmalltalk.ImagePath=%s' % test_image,
+                    '-Dtck.language=%s' % LANGUAGE_ID,
+                    '-Dpolyglot.%s.Headless=true' % LANGUAGE_ID,
+                    '-Dpolyglot.%s.ImagePath=%s' % (LANGUAGE_ID, test_image),
                     'com.oracle.truffle.tck.tests'])
                 mx_unittest.unittest(unittest_args)
 
@@ -420,7 +420,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,
     name='GraalSqueak',
     short_name='sq',
-    dir_name=LANGUAGE_NAME,
+    dir_name=LANGUAGE_ID,
     license_files=[],
     third_party_license_files=[],
     truffle_jars=[
@@ -442,7 +442,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
                 # '--pgo-instrument',  # (uncomment to enable profiling)
                 # '--pgo',  # (uncomment to recompile with profiling info)
             ],
-            language=LANGUAGE_NAME
+            language=LANGUAGE_ID
         )
     ],
 ))
