@@ -700,8 +700,6 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#checkSourceOverlap */
     private void checkSourceOverlap() {
-        final long t;
-
         if (sourceForm == destForm && dy >= sy) {
             if (dy > sy) {
                 /* have to start at bottom */
@@ -717,7 +715,7 @@ public final class BitBlt {
                     /* and fix up masks */
                     dx = dx + bbW - 1;
                     if (nWords > 1) {
-                        t = mask1;
+                        final long t = mask1;
                         mask1 = mask2;
                         mask2 = t;
                     }
@@ -1315,7 +1313,7 @@ public final class BitBlt {
             mask1 = (int) shl(ALL_ONES, 32 - startBits * destDepth);
             mask2 = (int) shr(ALL_ONES, 32 - endBits * destDepth);
         }
-        if (bbW < startBits) {
+        if (bbW <= startBits) {
             mask1 = mask1 & mask2;
             mask2 = 0;
             nWords = 1;
@@ -3433,48 +3431,31 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#sourceSkewAndPointerInit (modified, copied from SqueakJS) */
     private void sourceSkewAndPointerInit() {
-        final long dxLowBits;
-        final long dWid;
-        final long pixPerM1;
-        final long sxLowBits;
-
         assert destPPW == sourcePPW && destMSB == sourceMSB && destDepth == sourceDepth;
-
-        pixPerM1 = destPPW - 1;
-        sxLowBits = sx & pixPerM1;
-        /*
-         * check if need to preload buffer (i.e., two words of source needed for first word of
-         * destination)
-         */
-        dxLowBits = dx & pixPerM1;
-        if (hDir > 0) {
-            /* n Bits stored in 1st word of dest */
-            dWid = Math.min(bbW, destPPW - dxLowBits);
-            preload = sxLowBits + dWid > pixPerM1;
-        } else {
-            dWid = Math.min(bbW, dxLowBits + 1);
-            preload = sxLowBits - dWid + 1 < 0;
-        }
-        if (sourceMSB) {
-            skew = (sxLowBits - dxLowBits) * destDepth;
-        } else {
-            skew = (dxLowBits - sxLowBits) * destDepth;
-        }
+        /* A mask, assuming power of two */
+        final int pixPerM11 = destPPW - 1;
+        final int sxLowBits = sx & pixPerM11;
+        /* how many pixels in first word */
+        final int dxLowBits = dx & pixPerM11;
+        final int startBits1 = hDir > 0 ? sourcePPW - (sx & pixPerM11) : (sx + bbW - 1 & pixPerM11) + 1;
+        final long m1 = destMSB ? ALL_ONES >> 32 - startBits1 * destDepth : ALL_ONES << 32 - startBits1 * destDepth;
+        /* i.e. there are some missing bits */
+        /* calculate right-shift skew from source to dest */
+        preload = bbW > startBits1 && (m1 & mask1) != mask1;
+        /* -32..32 */
+        skew = destDepth * (sourceMSB ? sxLowBits - dxLowBits : dxLowBits - sxLowBits);
         if (preload) {
-            if (skew < 0) {
-                skew += 32;
-            } else {
-                skew -= 32;
-            }
+            skew = skew < 0 ? skew + 32 : skew - 32;
         }
         /* calculate increments from end of 1 line to start of next */
-        sourceIndex = sy * sourcePitch + div(sx, div(32, sourceDepth)) * 4;
+        sourceIndex = sy * sourcePitch + sx / (32 / sourceDepth) * 4;
         sourceDelta = sourcePitch * vDir - 4 * (nWords * hDir);
         if (preload) {
             /* Compensate for extra source word fetched */
             sourceDelta -= 4 * hDir;
         }
         assert !(preload && skew == 0);
+        assert -32 <= skew && skew <= 32; // Modified (image uses 31 instead of 32).
     }
 
     /* BitBltSimulation>>#sourceWord:with: */
