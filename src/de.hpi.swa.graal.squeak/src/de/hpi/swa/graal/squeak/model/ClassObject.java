@@ -8,6 +8,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -82,9 +83,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
+    @TruffleBoundary
     public String getClassName() {
-        CompilerAsserts.neverPartOfCompilation();
-        assert isClass();
         if (isAMetaClass()) {
             final Object classInstance = pointers[METACLASS.THIS_CLASS];
             if (classInstance != NilObject.SINGLETON) {

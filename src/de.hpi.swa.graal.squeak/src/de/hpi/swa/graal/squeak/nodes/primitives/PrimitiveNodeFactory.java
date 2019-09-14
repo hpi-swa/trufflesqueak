@@ -9,6 +9,7 @@ import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -67,6 +68,7 @@ public final class PrimitiveNodeFactory {
 
     private final EconomicMap<String, UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>>> pluginsMap = EconomicMap.create();
 
+    @TruffleBoundary
     public void initialize(final SqueakImageContext image) {
         final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
                         new ArithmeticPrimitives(),

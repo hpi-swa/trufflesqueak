@@ -118,7 +118,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
                 final Source source = newBuilder.build();
-                return image.env.parse(source).call();
+                return image.env.parsePublic(source).call();
             } catch (final RuntimeException e) {
                 throw primitiveFailedCapturing(e);
             }
@@ -166,7 +166,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 if (mimeType) {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
-                return image.env.parse(newBuilder.name(pathString).build()).call();
+                return image.env.parsePublic(newBuilder.name(pathString).build()).call();
             } catch (IOException | RuntimeException e) {
                 throw primitiveFailedCapturing(e);
             }
@@ -195,7 +195,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             final String llvmFile = method.image.imageRelativeFilePathFor(LLVM_FILENAME);
             try {
                 final Source source = generateSourcefromCCode(foreignCode, cFile, llvmFile);
-                final CallTarget foreignCallTarget = method.image.env.parse(source);
+                final CallTarget foreignCallTarget = method.image.env.parsePublic(source);
                 final Object library = foreignCallTarget.call();
                 final Object cFunction = readNode.executeWithArguments(frame, library, memberToCall);
                 final Object result = executeNode.executeWithArguments(frame, cFunction);
@@ -279,9 +279,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver, final NativeObject languageID,
                         @Cached final WrapToSqueakNode wrapNode) {
-            final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
+            final Collection<LanguageInfo> languages = method.image.env.getPublicLanguages().values();
             return wrapNode.executeList(languages.stream().//
-                            filter(l -> !l.isInternal() && l.getId().equals(languageID.asStringUnsafe())).//
+                            filter(l -> l.getId().equals(languageID.asStringUnsafe())).//
                             map(l -> new Object[]{l.getId(), l.getName(), l.getVersion(), l.getDefaultMimeType(), l.getMimeTypes().toArray()}).//
                             findFirst().orElseThrow(() -> PrimitiveFailed.GENERIC_ERROR));
         }
@@ -338,15 +338,28 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsPolyglotAccessAllowed")
-    protected abstract static class PrimIsPolyglotAccessAllowedNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimIsPolyglotAccessAllowedNode(final CompiledMethodObject method) {
+    @SqueakPrimitive(names = "primitiveIsPolyglotBindingsAccessAllowed")
+    protected abstract static class PrimIsPolyglotBindingsAccessAllowedNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimIsPolyglotBindingsAccessAllowedNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final boolean doIsPolyglotAccessAllowed(@SuppressWarnings("unused") final Object receiver) {
-            return BooleanObject.wrap(method.image.env.isPolyglotAccessAllowed());
+        protected final boolean doIsPolyglotBindingsAccessAllowed(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(method.image.env.isPolyglotBindingsAccessAllowed());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsPolyglotEvalAllowed")
+    protected abstract static class PrimIsPolyglotEvalAllowedNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimIsPolyglotEvalAllowedNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(method.image.env.isPolyglotEvalAllowed());
         }
     }
 
@@ -361,8 +374,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final ArrayObject doList(@SuppressWarnings("unused") final Object receiver,
                         @Cached final WrapToSqueakNode wrapNode) {
-            final Collection<LanguageInfo> languages = method.image.env.getLanguages().values();
-            final Object[] result = languages.stream().filter(l -> !l.isInternal()).map(l -> l.getId()).toArray();
+            final Collection<LanguageInfo> languages = method.image.env.getPublicLanguages().values();
+            final Object[] result = languages.stream().map(l -> l.getId()).toArray();
             return wrapNode.executeList(result);
         }
     }
@@ -1200,7 +1213,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @TruffleBoundary
     private static String findLanguageByMimeType(final Env env, final String mimeType) {
-        final Map<String, LanguageInfo> languages = env.getLanguages();
+        final Map<String, LanguageInfo> languages = env.getPublicLanguages();
         for (final String registeredMimeType : languages.keySet()) {
             if (mimeType.equals(registeredMimeType)) {
                 return languages.get(registeredMimeType).getId();

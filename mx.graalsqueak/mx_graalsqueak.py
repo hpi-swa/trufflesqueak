@@ -5,6 +5,7 @@ import shutil
 import mx
 import mx_gate
 import mx_sdk
+import mx_truffle
 import mx_unittest
 
 
@@ -27,6 +28,9 @@ BASE_VM_ARGS_TESTING = [
     # GARBAGE COLLECTOR (optimized for Travis CI)
     '-Xms4G',                   # Initial heap size
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
+
+    # JVMCI
+    '-XX:-UseJVMCIClassLoader',
 ]
 SVM_BINARY = 'graalsqueak-svm'
 SVM_TARGET = os.path.join('bin', SVM_BINARY)
@@ -345,23 +349,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
-    _run_tck_tests(tasks)
-    _run_unit_tests(tasks)
-
-
-def _run_unit_tests(tasks):
     supports_coverage = os.environ.get('JDK') == 'openjdk8'  # see .travis.yml
 
-    with mx_gate.Task('GraalSqueak JUnit and SUnit tests',
-                      tasks, tags=['test']) as t:
-        if t:
-            unittest_args = BASE_VM_ARGS_TESTING[:]
-            jacoco_args = mx_gate.get_jacoco_agent_args()
-            if supports_coverage and jacoco_args:
-                unittest_args.extend(jacoco_args)
-            unittest_args.extend([
-                '--suite', 'graalsqueak', '--very-verbose', '--enable-timing'])
-            mx_unittest.unittest(unittest_args)
+    _run_tck_tests(tasks, supports_coverage)
+    _run_unit_tests(tasks, supports_coverage)
 
     if supports_coverage:
         with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
@@ -369,18 +360,47 @@ def _run_unit_tests(tasks):
                 mx.command_function('jacocoreport')(['--format', 'xml', '.'])
 
 
-def _run_tck_tests(tasks):
-    if _compiler:
-        with mx_gate.Task('GraalSqueak TCK tests', tasks, tags=['test']) as t:
-            if t:
-                unittest_args = BASE_VM_ARGS_TESTING[:]
-                test_image = _get_path_to_test_image()
-                unittest_args.extend([
-                    '-Dtck.language=%s' % LANGUAGE_ID,
-                    '-Dpolyglot.%s.Headless=true' % LANGUAGE_ID,
-                    '-Dpolyglot.%s.ImagePath=%s' % (LANGUAGE_ID, test_image),
-                    'com.oracle.truffle.tck.tests'])
-                mx_unittest.unittest(unittest_args)
+def _run_unit_tests(tasks, supports_coverage):
+    with mx_gate.Task('GraalSqueak JUnit and SUnit tests',
+                      tasks, tags=['test']) as t:
+        if t:
+            unittest_args = BASE_VM_ARGS_TESTING[:]
+            if supports_coverage:
+                unittest_args.extend(_get_jacoco_agent_args())
+            unittest_args.extend([
+                '--suite', 'graalsqueak', '--very-verbose', '--enable-timing'])
+
+            # Ensure Truffle TCK disabled (workaround needed since GraalVM 19.2.0)
+            mx_unittest._config_participants.remove(
+                mx_truffle._unittest_config_participant_tck)
+
+            mx_unittest.unittest(unittest_args)
+
+
+def _run_tck_tests(tasks, supports_coverage):
+    with mx_gate.Task('GraalSqueak TCK tests', tasks, tags=['test']) as t:
+        if t:
+            unittest_args = BASE_VM_ARGS_TESTING[:]
+            if supports_coverage:
+                unittest_args.extend(_get_jacoco_agent_args())
+            test_image = _get_path_to_test_image()
+            unittest_args.extend([
+                '-Dtck.language=%s' % LANGUAGE_ID,
+                '-Dpolyglot.%s.Headless=true' % LANGUAGE_ID,
+                '-Dpolyglot.%s.ImagePath=%s' % (LANGUAGE_ID, test_image),
+                'com.oracle.truffle.tck.tests'])
+            mx_unittest.unittest(unittest_args)
+
+
+def _get_jacoco_agent_args():
+    # Modified version of mx_gate.get_jacoco_agent_args()
+    agentOptions = {
+        'append': 'true',
+        'includes': '%s.*' % PACKAGE_NAME,
+        'destfile': mx_gate.JACOCO_EXEC,
+    }
+    return ['-javaagent:' + mx_gate.get_jacoco_agent_path(True) + '=' +
+            ','.join([k + '=' + v for k, v in agentOptions.items()])]
 
 
 def _get_path_to_test_image():
@@ -419,7 +439,7 @@ def _get_svm_binary_from_graalvm():
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,
     name='GraalSqueak',
-    short_name='sq',
+    short_name='st',
     dir_name=LANGUAGE_ID,
     license_files=[],
     third_party_license_files=[],

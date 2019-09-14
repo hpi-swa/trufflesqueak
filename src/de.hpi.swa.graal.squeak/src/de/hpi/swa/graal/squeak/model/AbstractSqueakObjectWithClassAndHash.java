@@ -49,17 +49,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     public final String getSqueakClassName() {
-        if (isClass()) {
+        if (this instanceof ClassObject) {
             return getClassName() + " class";
         } else {
             return getSqueakClass().getClassName();
         }
-    }
-
-    public final boolean isClass() {
-        assert !(this instanceof ClassObject) || getSqueakClass().isMetaClass() || getSqueakClass().getSqueakClass().isMetaClass();
-        CompilerAsserts.neverPartOfCompilation();
-        return this instanceof ClassObject;
     }
 
     public final boolean isMetaClass() {
