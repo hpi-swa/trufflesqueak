@@ -9,6 +9,7 @@ import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
@@ -131,11 +132,13 @@ public final class SendBytecodes {
     }
 
     protected static final class LookupSuperClassNode extends AbstractLookupClassNode {
+        private ConditionProfile hasSuperclassProfile = ConditionProfile.createBinaryProfile();
+
         @Override
         protected ClassObject executeLookup(final VirtualFrame frame, final Object receiver) {
             final ClassObject methodClass = FrameAccess.getMethod(frame).getMethodClass();
             final ClassObject superclass = methodClass.getSuperclassOrNull();
-            return superclass == null ? methodClass : superclass;
+            return hasSuperclassProfile.profile(superclass == null) ? methodClass : superclass;
         }
     }
 
