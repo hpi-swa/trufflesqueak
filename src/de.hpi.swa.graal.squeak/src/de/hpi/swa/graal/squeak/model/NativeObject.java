@@ -146,17 +146,17 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void convertToIntsStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ArrayConversionUtils.intsFromBytes(bytes));
+        setStorage(ArrayConversionUtils.intsFromBytesReversed(bytes));
     }
 
     public void convertToLongsStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ArrayConversionUtils.longsFromBytes(bytes));
+        setStorage(ArrayConversionUtils.longsFromBytesReversed(bytes));
     }
 
     public void convertToShortsStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ArrayConversionUtils.shortsFromBytes(bytes));
+        setStorage(ArrayConversionUtils.shortsFromBytesReversed(bytes));
     }
 
     public int getByteLength() {

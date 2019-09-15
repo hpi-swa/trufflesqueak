@@ -571,9 +571,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
-            final int[] firstInts = ArrayConversionUtils.intsFromBytesReversedExact(receiver.getBytes());
-            final int[] secondInts = ArrayConversionUtils.intsFromBytesReversedExact(a.getBytes());
-            final int[] thirdInts = ArrayConversionUtils.intsFromBytesReversedExact(m.getBytes());
+            final int[] firstInts = ArrayConversionUtils.intsFromBytesExact(receiver.getBytes());
+            final int[] secondInts = ArrayConversionUtils.intsFromBytesExact(a.getBytes());
+            final int[] thirdInts = ArrayConversionUtils.intsFromBytesExact(m.getBytes());
             return montgomeryTimesModulo(firstInts, secondInts, thirdInts, mInv);
         }
 
@@ -641,7 +641,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                     accum = 0 - (accum >> 63);
                 }
             }
-            final byte[] resultBytes = ArrayConversionUtils.bytesFromIntsReversed(result);
+            final byte[] resultBytes = ArrayConversionUtils.bytesFromInts(result);
             return new LargeIntegerObject(method.image, method.image.largePositiveIntegerClass, resultBytes).reduceIfPossible(); // normalize
         }
 

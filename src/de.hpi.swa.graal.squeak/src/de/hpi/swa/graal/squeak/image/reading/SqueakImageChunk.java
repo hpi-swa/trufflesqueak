@@ -20,6 +20,7 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageChunk {
     private static final long SMALLFLOAT_MASK = 896L << 52 + 1;
@@ -236,25 +237,22 @@ public final class SqueakImageChunk {
     }
 
     public short[] getShorts() {
-        return ArrayConversionUtils.shortsFromBytesReversed(data);
+        return ArrayConversionUtils.shortsFromBytes(data);
     }
 
     public int[] getInts() {
-        return ArrayConversionUtils.intsFromBytesReversed(data);
+        return ArrayConversionUtils.intsFromBytes(data);
     }
 
     public long[] getWords() {
         if (words == null) {
             if (reader.is64bit) {
-                words = ArrayConversionUtils.longsFromBytesReversed(data);
+                words = ArrayConversionUtils.longsFromBytes(data);
             } else {
                 final int size = data.length / ArrayConversionUtils.INTEGER_BYTE_SIZE;
                 words = new long[size];
                 for (int i = 0; i < size; i++) {
-                    words[i] = (data[i * 4 + 3] & 0xFF) << 24 |
-                                    (data[i * 4 + 2] & 0xFF) << 16 |
-                                    (data[i * 4 + 1] & 0xFF) << 8 |
-                                    data[i * 4 + 0] & 0xFF;
+                    words[i] = UnsafeUtils.getInt(data, i);
                 }
             }
         }
@@ -262,7 +260,7 @@ public final class SqueakImageChunk {
     }
 
     public long[] getLongs() {
-        return ArrayConversionUtils.longsFromBytesReversed(data);
+        return ArrayConversionUtils.longsFromBytes(data);
     }
 
     public int getPadding() {

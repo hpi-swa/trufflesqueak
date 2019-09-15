@@ -185,16 +185,16 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testFloatDecoding() {
-        SqueakImageChunk chunk = newFloatChunk(ArrayConversionUtils.bytesFromIntsReversed(new int[]{0, 1072693248}));
+        SqueakImageChunk chunk = newFloatChunk(ArrayConversionUtils.bytesFromInts(new int[]{0, 1072693248}));
         assertEquals(1.0, (double) chunk.asObject(), 0);
 
-        chunk = newFloatChunk(ArrayConversionUtils.bytesFromIntsReversed(new int[]{(int) 2482401462L, 1065322751}));
+        chunk = newFloatChunk(ArrayConversionUtils.bytesFromInts(new int[]{(int) 2482401462L, 1065322751}));
         assertEquals(0.007699011184197404, (double) chunk.asObject(), 0);
 
-        chunk = newFloatChunk(ArrayConversionUtils.bytesFromIntsReversed(new int[]{876402988, 1075010976}));
+        chunk = newFloatChunk(ArrayConversionUtils.bytesFromInts(new int[]{876402988, 1075010976}));
         assertEquals(4.841431442464721, (double) chunk.asObject(), 0);
 
-        chunk = newFloatChunk(ArrayConversionUtils.bytesFromIntsReversed(new int[]{0, (int) 4294443008L}));
+        chunk = newFloatChunk(ArrayConversionUtils.bytesFromInts(new int[]{0, (int) 4294443008L}));
         final Object nan = chunk.asObject();
         assertTrue(nan instanceof FloatObject && ((FloatObject) nan).isNaN());
     }

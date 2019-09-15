@@ -211,17 +211,17 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = "obj.isShortType()")
         protected static final byte[] doNativeShorts(final NativeObject obj) {
-            return ArrayConversionUtils.bytesFromShortsReversed(obj.getShortStorage());
+            return ArrayConversionUtils.bytesFromShorts(obj.getShortStorage());
         }
 
         @Specialization(guards = "obj.isIntType()")
         protected static final byte[] doNativeInts(final NativeObject obj) {
-            return ArrayConversionUtils.bytesFromIntsReversed(obj.getIntStorage());
+            return ArrayConversionUtils.bytesFromInts(obj.getIntStorage());
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final byte[] doNativeLongs(final NativeObject obj) {
-            return ArrayConversionUtils.bytesFromLongsReversed(obj.getLongStorage());
+            return ArrayConversionUtils.bytesFromLongs(obj.getLongStorage());
         }
     }
 }

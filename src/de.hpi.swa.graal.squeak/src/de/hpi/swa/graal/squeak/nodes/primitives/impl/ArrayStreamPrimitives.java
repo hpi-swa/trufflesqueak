@@ -13,7 +13,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -29,6 +28,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -184,54 +184,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             super(method);
         }
 
-        @Specialization(guards = {"receiver.isByteType()", "inBounds0(largerOffset(index), receiver.getByteLength())"})
-        protected static final long doNativeBytes(final NativeObject receiver, final long index) {
-            final int offset = minusOneAndDouble(index);
-            final byte[] bytes = receiver.getByteStorage();
-            final int byte0 = (byte) Byte.toUnsignedLong(bytes[offset]);
-            int byte1 = (int) Byte.toUnsignedLong(bytes[offset + 1]) << 8;
-            if ((byte1 & 0x8000) != 0) {
-                byte1 = 0xffff0000 | byte1;
-            }
-            return byte1 | byte0;
-        }
-
-        @Specialization(guards = {"receiver.isShortType()", "inBounds1(index, receiver.getShortLength())"})
-        protected static final long doNativeShorts(final NativeObject receiver, final long index) {
-            return Short.toUnsignedLong(receiver.getShortStorage()[(int) index]);
-        }
-
-        @Specialization(guards = {"receiver.isIntType()", "inBounds0(minusOneAndCutInHalf(index), receiver.getIntLength())"})
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength(), 2)"})
         protected static final long doNativeInts(final NativeObject receiver, final long index) {
-            final int word = receiver.getIntStorage()[minusOneAndCutInHalf(index)];
-            int shortValue;
-            if ((index - 1) % 2 == 0) {
-                shortValue = word & 0xffff;
-            } else {
-                shortValue = word >> 16 & 0xffff;
-            }
-            if ((shortValue & 0x8000) != 0) {
-                shortValue = 0xffff0000 | shortValue;
-            }
-            return shortValue;
-        }
-
-        protected static final int minusOneAndDouble(final long index) {
-            return (int) ((index - 1) * 2);
-        }
-
-        protected static final int largerOffset(final long index) {
-            return minusOneAndDouble(index) + 1;
-        }
-
-        protected static final int minusOneAndCutInHalf(final long index) {
-            return ((int) index - 1) / 2;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "receiver.isLongType()")
-        protected static final long doNativeLongs(final NativeObject receiver, final long index) {
-            throw SqueakException.create("Not yet implemented: shortAtPut0"); // TODO: implement
+            return Short.toUnsignedLong(UnsafeUtils.getShort(receiver.getIntStorage(), index - 1));
         }
     }
 
@@ -243,38 +198,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             super(method);
         }
 
-        @Specialization(guards = {"inShortRange(value)", "receiver.isByteType()"})
-        protected static final long doNativeBytes(final NativeObject receiver, final long index, final long value) {
-            final int offset = (int) ((index - 1) * 2);
-            final byte[] bytes = receiver.getByteStorage();
-            bytes[offset] = (byte) value;
-            bytes[offset + 1] = (byte) (value >> 8);
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength(), 2)", "inShortRange(value)"})
+        protected static final long doNativeInts(final NativeObject receiver, final long index, final long value) {
+            UnsafeUtils.putShort(receiver.getIntStorage(), index - 1, (short) value);
             return value;
-        }
-
-        @Specialization(guards = {"inShortRange(value)", "receiver.isShortType()"})
-        protected static final long doNativeShorts(final NativeObject receiver, final long index, final long value) {
-            receiver.getShortStorage()[(int) index] = (short) value;
-            return value;
-        }
-
-        @Specialization(guards = {"inShortRange(value)", "receiver.isIntType()"})
-        protected static final long doNativeInts(final NativeObject receiver, final long index, final long value,
-                        @Cached("createBinaryProfile()") final ConditionProfile isEvenProfile) {
-            final int wordIndex = (int) ((index - 1) / 2);
-            final int[] ints = receiver.getIntStorage();
-            if (isEvenProfile.profile((index - 1) % 2 == 0)) {
-                ints[wordIndex] = ints[wordIndex] & 0xffff0000 | (int) value & 0xffff;
-            } else {
-                ints[wordIndex] = (int) value << 16 | ints[wordIndex] & 0xffff;
-            }
-            return value;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"inShortRange(value)", "receiver.isLongType()"})
-        protected static final long doNativeLongs(final NativeObject receiver, final long index, final long value) {
-            throw SqueakException.create("Not yet implemented: shortAtPut0"); // TODO: implement
         }
 
         protected static final boolean inShortRange(final long value) {

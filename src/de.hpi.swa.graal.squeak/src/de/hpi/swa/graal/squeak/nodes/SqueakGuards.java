@@ -43,6 +43,10 @@ public final class SqueakGuards {
         return 0 < index && index <= size;
     }
 
+    public static boolean inBounds1(final long index, final int size, final int scale) {
+        return 0 < index && (index - 1) / scale < size;
+    }
+
     public static boolean isAbstractSqueakObject(final Object object) {
         return object instanceof AbstractSqueakObject;
     }

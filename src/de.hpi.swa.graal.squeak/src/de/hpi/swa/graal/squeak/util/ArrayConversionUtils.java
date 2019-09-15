@@ -11,12 +11,7 @@ public final class ArrayConversionUtils {
         final int intsLength = ints.length;
         final byte[] bytes = new byte[intsLength * INTEGER_BYTE_SIZE];
         for (int i = 0; i < intsLength; i++) {
-            final int offset = i * INTEGER_BYTE_SIZE;
-            final int intValue = ints[i];
-            bytes[offset] = (byte) (intValue >> 24);
-            bytes[offset + 1] = (byte) (intValue >> 16);
-            bytes[offset + 2] = (byte) (intValue >> 8);
-            bytes[offset + 3] = (byte) intValue;
+            UnsafeUtils.putInt(bytes, i, ints[i]);
         }
         return bytes;
     }
@@ -25,12 +20,7 @@ public final class ArrayConversionUtils {
         final int intsLength = ints.length;
         final byte[] bytes = new byte[intsLength * INTEGER_BYTE_SIZE];
         for (int i = 0; i < intsLength; i++) {
-            final int offset = i * INTEGER_BYTE_SIZE;
-            final int intValue = ints[i];
-            bytes[offset + 3] = (byte) (intValue >> 24);
-            bytes[offset + 2] = (byte) (intValue >> 16);
-            bytes[offset + 1] = (byte) (intValue >> 8);
-            bytes[offset] = (byte) intValue;
+            UnsafeUtils.putIntReversed(bytes, i, ints[i]);
         }
         return bytes;
     }
@@ -39,16 +29,7 @@ public final class ArrayConversionUtils {
         final int longsLength = longs.length;
         final byte[] bytes = new byte[longsLength * LONG_BYTE_SIZE];
         for (int i = 0; i < longsLength; i++) {
-            final int offset = i * LONG_BYTE_SIZE;
-            final long longValue = longs[i];
-            bytes[offset] = (byte) (longValue >> 56);
-            bytes[offset + 1] = (byte) (longValue >> 48);
-            bytes[offset + 2] = (byte) (longValue >> 40);
-            bytes[offset + 3] = (byte) (longValue >> 32);
-            bytes[offset + 4] = (byte) (longValue >> 24);
-            bytes[offset + 5] = (byte) (longValue >> 16);
-            bytes[offset + 6] = (byte) (longValue >> 8);
-            bytes[offset + 7] = (byte) longValue;
+            UnsafeUtils.putLong(bytes, i, longs[i]);
         }
         return bytes;
     }
@@ -57,16 +38,7 @@ public final class ArrayConversionUtils {
         final int longsLength = longs.length;
         final byte[] bytes = new byte[longsLength * LONG_BYTE_SIZE];
         for (int i = 0; i < longsLength; i++) {
-            final int offset = i * LONG_BYTE_SIZE;
-            final long longValue = longs[i];
-            bytes[offset + 7] = (byte) (longValue >> 56);
-            bytes[offset + 6] = (byte) (longValue >> 48);
-            bytes[offset + 5] = (byte) (longValue >> 40);
-            bytes[offset + 4] = (byte) (longValue >> 32);
-            bytes[offset + 3] = (byte) (longValue >> 24);
-            bytes[offset + 2] = (byte) (longValue >> 16);
-            bytes[offset + 1] = (byte) (longValue >> 8);
-            bytes[offset + 0] = (byte) longValue;
+            UnsafeUtils.putLongReversed(bytes, i, longs[i]);
         }
         return bytes;
     }
@@ -75,10 +47,7 @@ public final class ArrayConversionUtils {
         final int shortLength = shorts.length;
         final byte[] bytes = new byte[shortLength * SHORT_BYTE_SIZE];
         for (int i = 0; i < shortLength; i++) {
-            final int offset = i * SHORT_BYTE_SIZE;
-            final short shortValue = shorts[i];
-            bytes[offset] = (byte) (shortValue >> 8);
-            bytes[offset + 1] = (byte) shortValue;
+            UnsafeUtils.putShort(bytes, i, shorts[i]);
         }
         return bytes;
     }
@@ -87,10 +56,7 @@ public final class ArrayConversionUtils {
         final int shortLength = shorts.length;
         final byte[] bytes = new byte[shortLength * SHORT_BYTE_SIZE];
         for (int i = 0; i < shortLength; i++) {
-            final int offset = i * SHORT_BYTE_SIZE;
-            final short shortValue = shorts[i];
-            bytes[offset + 1] = (byte) (shortValue >> 8);
-            bytes[offset] = (byte) shortValue;
+            UnsafeUtils.putShortReversed(bytes, i, shorts[i]);
         }
         return bytes;
     }
@@ -121,30 +87,30 @@ public final class ArrayConversionUtils {
     public static int[] intsFromBytes(final byte[] bytes) {
         final int size = bytes.length / INTEGER_BYTE_SIZE;
         final int[] ints = new int[size];
-        for (int i = 0; i < ints.length; i++) {
-            final int offset = i * 4;
-            ints[i] = (bytes[offset + 0] & 0xFF) << 24 | (bytes[offset + 1] & 0xFF) << 16 | (bytes[offset + 2] & 0xFF) << 8 | bytes[offset + 3] & 0xFF;
+        for (int i = 0; i < size; i++) {
+            ints[i] = UnsafeUtils.getInt(bytes, i);
         }
         return ints;
     }
 
     public static int[] intsFromBytesExact(final byte[] bytes) {
         final int byteSize = bytes.length;
+        final int intSize = byteSize / INTEGER_BYTE_SIZE;
         final int size = Math.floorDiv(byteSize + 3, INTEGER_BYTE_SIZE);
         final int[] ints = new int[size];
-        for (int i = 0; i < size; i++) {
-            final int offset = i * 4;
+        for (int i = 0; i < intSize; i++) {
+            ints[i] = UnsafeUtils.getInt(bytes, i);
+        }
+        for (int i = intSize; i < size; i++) {
+            final int offset = i * INTEGER_BYTE_SIZE;
             if (offset < byteSize) {
-                ints[i] |= (bytes[offset] & 0xFF) << 24;
+                ints[i] |= bytes[offset + 0] & 0xFF;
             }
             if (offset + 1 < byteSize) {
-                ints[i] |= (bytes[offset + 1] & 0xFF) << 16;
+                ints[i] |= (bytes[offset + 1] & 0xFF) << 8;
             }
             if (offset + 2 < byteSize) {
-                ints[i] |= (bytes[offset + 2] & 0xFF) << 8;
-            }
-            if (offset + 3 < byteSize) {
-                ints[i] |= bytes[offset + 3] & 0xFF;
+                ints[i] |= (bytes[offset + 2] & 0xFF) << 16;
             }
         }
         return ints;
@@ -153,30 +119,30 @@ public final class ArrayConversionUtils {
     public static int[] intsFromBytesReversed(final byte[] bytes) {
         final int size = bytes.length / INTEGER_BYTE_SIZE;
         final int[] ints = new int[size];
-        for (int i = 0; i < size; i++) {
-            final int offset = i * 4;
-            ints[i] = (bytes[offset + 3] & 0xFF) << 24 | (bytes[offset + 2] & 0xFF) << 16 | (bytes[offset + 1] & 0xFF) << 8 | bytes[offset + 0] & 0xFF;
+        for (int i = 0; i < ints.length; i++) {
+            ints[i] = UnsafeUtils.getIntReversed(bytes, i);
         }
         return ints;
     }
 
     public static int[] intsFromBytesReversedExact(final byte[] bytes) {
         final int byteSize = bytes.length;
+        final int intSize = byteSize / INTEGER_BYTE_SIZE;
         final int size = Math.floorDiv(byteSize + 3, INTEGER_BYTE_SIZE);
         final int[] ints = new int[size];
-        for (int i = 0; i < size; i++) {
-            final int offset = i * 4;
-            if (offset + 3 < byteSize) {
-                ints[i] |= (bytes[offset + 3] & 0xFF) << 24;
-            }
-            if (offset + 2 < byteSize) {
-                ints[i] |= (bytes[offset + 2] & 0xFF) << 16;
+        for (int i = 0; i < intSize; i++) {
+            ints[i] = UnsafeUtils.getIntReversed(bytes, i);
+        }
+        for (int i = intSize; i < size; i++) {
+            final int offset = i * INTEGER_BYTE_SIZE;
+            if (offset < byteSize) {
+                ints[i] |= (bytes[offset] & 0xFF) << 24;
             }
             if (offset + 1 < byteSize) {
-                ints[i] |= (bytes[offset + 1] & 0xFF) << 8;
+                ints[i] |= (bytes[offset + 1] & 0xFF) << 16;
             }
-            if (offset < byteSize) {
-                ints[i] |= bytes[offset + 0] & 0xFF;
+            if (offset + 2 < byteSize) {
+                ints[i] |= (bytes[offset + 2] & 0xFF) << 8;
             }
         }
         return ints;
@@ -191,10 +157,6 @@ public final class ArrayConversionUtils {
         return longs;
     }
 
-    public static int largeIntegerByteSizeForLong(final long longValue) {
-        return LONG_BYTE_SIZE - Long.numberOfLeadingZeros(longValue) / LONG_BYTE_SIZE;
-    }
-
     public static byte[] largeIntegerBytesFromLong(final long longValue) {
         assert longValue != Long.MIN_VALUE : "Cannot convert long to byte[] (Math.abs(Long.MIN_VALUE) overflows).";
         final long longValuePositive = Math.abs(longValue);
@@ -206,13 +168,15 @@ public final class ArrayConversionUtils {
         return bytes;
     }
 
+    public static int largeIntegerByteSizeForLong(final long longValue) {
+        return LONG_BYTE_SIZE - Long.numberOfLeadingZeros(longValue) / LONG_BYTE_SIZE;
+    }
+
     public static long[] longsFromBytes(final byte[] bytes) {
         final int size = bytes.length / LONG_BYTE_SIZE;
         final long[] longs = new long[size];
         for (int i = 0; i < size; i++) {
-            final int offset = i * 8;
-            longs[i] = (long) (bytes[offset] & 0xFF) << 56 | (long) (bytes[offset + 1] & 0xFF) << 48 | (long) (bytes[offset + 2] & 0xFF) << 40 | (long) (bytes[offset + 3] & 0xFF) << 32 |
-                            (long) (bytes[offset + 4] & 0xFF) << 24 | (long) (bytes[offset + 5] & 0xFF) << 16 | (long) (bytes[offset + 6] & 0xFF) << 8 | bytes[offset + 7] & 0xFF;
+            longs[i] = UnsafeUtils.getLong(bytes, i);
         }
         return longs;
     }
@@ -221,9 +185,7 @@ public final class ArrayConversionUtils {
         final int size = bytes.length / LONG_BYTE_SIZE;
         final long[] longs = new long[size];
         for (int i = 0; i < size; i++) {
-            final int offset = i * 8;
-            longs[i] = (long) (bytes[offset + 7] & 0xFF) << 56 | (long) (bytes[offset + 6] & 0xFF) << 48 | (long) (bytes[offset + 5] & 0xFF) << 40 | (long) (bytes[offset + 4] & 0xFF) << 32 |
-                            (long) (bytes[offset + 3] & 0xFF) << 24 | (long) (bytes[offset + 2] & 0xFF) << 16 | (long) (bytes[offset + 1] & 0xFF) << 8 | bytes[offset + 0] & 0xFF;
+            longs[i] = UnsafeUtils.getLongReversed(bytes, i);
         }
         return longs;
     }
@@ -232,8 +194,7 @@ public final class ArrayConversionUtils {
         final int size = bytes.length / SHORT_BYTE_SIZE;
         final short[] shorts = new short[size];
         for (int i = 0; i < shorts.length; i++) {
-            final int offset = i * 2;
-            shorts[i] = (short) ((bytes[offset] & 0xFF) << 8 | bytes[offset + 1] & 0xFF);
+            shorts[i] = UnsafeUtils.getShort(bytes, i);
         }
         return shorts;
     }
@@ -242,8 +203,7 @@ public final class ArrayConversionUtils {
         final int size = bytes.length / SHORT_BYTE_SIZE;
         final short[] shorts = new short[size];
         for (int i = 0; i < shorts.length; i++) {
-            final int offset = i * 2;
-            shorts[i] = (short) ((bytes[offset + 1] & 0xFF) << 8 | bytes[offset] & 0xFF);
+            shorts[i] = UnsafeUtils.getShortReversed(bytes, i);
         }
         return shorts;
     }

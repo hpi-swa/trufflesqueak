@@ -597,7 +597,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final long doWriteInt(@SuppressWarnings("unused") final Object receiver, final long fileDescriptor, final NativeObject content, final long startIndex,
                         final long count) {
-            return fileWriteFromAt(fileDescriptor, count, ArrayConversionUtils.bytesFromInts(content.getIntStorage()), startIndex, 4);
+            return fileWriteFromAt(fileDescriptor, count, ArrayConversionUtils.bytesFromIntsReversed(content.getIntStorage()), startIndex, 4);
         }
 
         @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)", "inBounds(startIndex, count, content.size())"})

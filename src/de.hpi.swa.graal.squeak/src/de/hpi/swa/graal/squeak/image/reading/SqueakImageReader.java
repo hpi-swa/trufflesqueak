@@ -21,6 +21,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
     private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
@@ -126,32 +127,21 @@ public final class SqueakImageReader {
         final byte[] bytes = new byte[2];
         readBytes(bytes, 2);
         position += 2;
-        return (short) ((bytes[1] & 0xFF) << 8 |
-                        bytes[0] & 0xFF);
+        return UnsafeUtils.getShort(bytes, 0);
     }
 
     private int nextInt() {
         final byte[] bytes = new byte[4];
         readBytes(bytes, 4);
         position += 4;
-        return (bytes[3] & 0xFF) << 24 |
-                        (bytes[2] & 0xFF) << 16 |
-                        (bytes[1] & 0xFF) << 8 |
-                        bytes[0] & 0xFF;
+        return UnsafeUtils.getInt(bytes, 0);
     }
 
     private long nextLong() {
         final byte[] bytes = new byte[8];
         readBytes(bytes, 8);
         position += 8;
-        return (long) (bytes[7] & 0xFF) << 56 |
-                        (long) (bytes[6] & 0xFF) << 48 |
-                        (long) (bytes[5] & 0xFF) << 40 |
-                        (long) (bytes[4] & 0xFF) << 32 |
-                        (bytes[3] & 0xFF) << 24 |
-                        (bytes[2] & 0xFF) << 16 |
-                        (bytes[1] & 0xFF) << 8 |
-                        bytes[0] & 0xFF;
+        return UnsafeUtils.getLong(bytes, 0);
     }
 
     @TruffleBoundary

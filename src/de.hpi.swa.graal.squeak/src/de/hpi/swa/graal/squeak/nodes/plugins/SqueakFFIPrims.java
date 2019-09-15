@@ -18,6 +18,8 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
+import sun.misc.Unsafe;
 
 public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
@@ -37,9 +39,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "!isSigned"})
         protected static final long doAt2Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] bytes = byteArray.getByteStorage();
-            return bytes[byteOffset] & 0xffL | (bytes[byteOffset + 1] & 0xffL) << 8;
+            return Short.toUnsignedLong(UnsafeUtils.UNSAFE.getShort(byteArray.getByteStorage(), Unsafe.ARRAY_BYTE_BASE_OFFSET + (byteOffsetLong - 1) * Unsafe.ARRAY_BYTE_INDEX_SCALE));
         }
 
         @SuppressWarnings("unused")
@@ -51,10 +51,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned"})
         protected static final long doAt4Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] bytes = byteArray.getByteStorage();
-            return bytes[byteOffset] & 0xffL | (bytes[byteOffset + 1] & 0xffL) << 8 |
-                            (bytes[byteOffset + 2] & 0xffL) << 16 | (bytes[byteOffset + 3] & 0xffL) << 24;
+            return Integer.toUnsignedLong(UnsafeUtils.UNSAFE.getInt(byteArray.getByteStorage(), Unsafe.ARRAY_BYTE_BASE_OFFSET + (byteOffsetLong - 1) * Unsafe.ARRAY_BYTE_INDEX_SCALE));
         }
 
         @SuppressWarnings("unused")
@@ -98,10 +95,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "!isSigned", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_2)"})
         protected static final Object doAtPut2Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] bytes = byteArray.getByteStorage();
-            bytes[byteOffset] = (byte) value;
-            bytes[byteOffset + 1] = (byte) (value >> 8);
+            UnsafeUtils.UNSAFE.putShort(byteArray.getByteStorage(), Unsafe.ARRAY_BYTE_BASE_OFFSET + (byteOffsetLong - 1) * Unsafe.ARRAY_BYTE_INDEX_SCALE, (short) value);
             return value;
         }
 
@@ -114,12 +108,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned", "inUnsignedBounds(value, MAX_VALUE_UNSIGNED_4)"})
         protected static final Object doAtPut4Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] bytes = byteArray.getByteStorage();
-            bytes[byteOffset] = (byte) value;
-            bytes[byteOffset + 1] = (byte) (value >> 8);
-            bytes[byteOffset + 2] = (byte) (value >> 16);
-            bytes[byteOffset + 3] = (byte) (value >> 24);
+            UnsafeUtils.UNSAFE.putInt(byteArray.getByteStorage(), Unsafe.ARRAY_BYTE_BASE_OFFSET + (byteOffsetLong - 1) * Unsafe.ARRAY_BYTE_INDEX_SCALE, (int) value);
             return value;
         }
 
@@ -153,16 +142,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned", "inUnsignedBounds(asLargeInteger(value))"})
         protected static final Object doAtPut8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] bytes = byteArray.getByteStorage();
-            bytes[byteOffset] = (byte) value;
-            bytes[byteOffset + 1] = (byte) (value >> 8);
-            bytes[byteOffset + 2] = (byte) (value >> 16);
-            bytes[byteOffset + 3] = (byte) (value >> 24);
-            bytes[byteOffset + 4] = (byte) (value >> 32);
-            bytes[byteOffset + 5] = (byte) (value >> 40);
-            bytes[byteOffset + 6] = (byte) (value >> 48);
-            bytes[byteOffset + 7] = (byte) (value >> 56);
+            UnsafeUtils.UNSAFE.putLong(byteArray.getByteStorage(), Unsafe.ARRAY_BYTE_BASE_OFFSET + (byteOffsetLong - 1) * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
             return value;
         }
 
