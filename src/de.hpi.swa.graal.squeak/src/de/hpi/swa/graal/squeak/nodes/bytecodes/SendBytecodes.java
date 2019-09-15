@@ -132,7 +132,7 @@ public final class SendBytecodes {
     }
 
     protected static final class LookupSuperClassNode extends AbstractLookupClassNode {
-        private ConditionProfile hasSuperclassProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile hasSuperclassProfile = ConditionProfile.createBinaryProfile();
 
         @Override
         protected ClassObject executeLookup(final VirtualFrame frame, final Object receiver) {
