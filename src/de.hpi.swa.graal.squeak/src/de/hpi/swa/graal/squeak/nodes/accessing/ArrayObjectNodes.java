@@ -1,10 +1,12 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -42,16 +44,19 @@ public final class ArrayObjectNodes {
             if (index < 0 || obj.getEmptyLength() <= index) {
                 outOfBoundsProfile.enter();
                 throw Returns.OUT_OF_BOUNDS;
+            } else {
+                return NilObject.SINGLETON;
             }
-            return NilObject.SINGLETON;
         }
 
         @Specialization(guards = "obj.isBooleanType()")
-        protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index) {
+        protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index,
+                        @Cached("createBinaryProfile()") final ConditionProfile falseProfile,
+                        @Cached("createBinaryProfile()") final ConditionProfile trueProfile) {
             final byte value = obj.getBooleanStorage()[(int) index];
-            if (value == ArrayObject.BOOLEAN_FALSE_TAG) {
+            if (falseProfile.profile(value == ArrayObject.BOOLEAN_FALSE_TAG)) {
                 return BooleanObject.FALSE;
-            } else if (value == ArrayObject.BOOLEAN_TRUE_TAG) {
+            } else if (trueProfile.profile(value == ArrayObject.BOOLEAN_TRUE_TAG)) {
                 return BooleanObject.TRUE;
             } else {
                 assert value == ArrayObject.BOOLEAN_NIL_TAG;
@@ -60,26 +65,30 @@ public final class ArrayObjectNodes {
         }
 
         @Specialization(guards = "obj.isCharType()")
-        protected static final Object doArrayOfChars(final ArrayObject obj, final long index) {
+        protected static final Object doArrayOfChars(final ArrayObject obj, final long index,
+                        @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
             final char value = obj.getCharStorage()[(int) index];
-            return value == ArrayObject.CHAR_NIL_TAG ? NilObject.SINGLETON : value;
+            return nilProfile.profile(value == ArrayObject.CHAR_NIL_TAG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final Object doArrayOfLongs(final ArrayObject obj, final long index) {
+        protected static final Object doArrayOfLongs(final ArrayObject obj, final long index,
+                        @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
             final long value = obj.getLongStorage()[(int) index];
-            return value == ArrayObject.LONG_NIL_TAG ? NilObject.SINGLETON : value;
+            return nilProfile.profile(value == ArrayObject.LONG_NIL_TAG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isDoubleType()")
-        protected static final Object doArrayOfDoubles(final ArrayObject obj, final long index) {
+        protected static final Object doArrayOfDoubles(final ArrayObject obj, final long index,
+                        @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
             final double value = obj.getDoubleStorage()[(int) index];
-            return Double.doubleToRawLongBits(value) == ArrayObject.DOUBLE_NIL_TAG_LONG ? NilObject.SINGLETON : value;
+            return nilProfile.profile(Double.doubleToRawLongBits(value) == ArrayObject.DOUBLE_NIL_TAG_LONG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final AbstractSqueakObject doArrayOfNativeObjects(final ArrayObject obj, final long index) {
-            return NilObject.nullToNil(obj.getNativeObjectStorage()[(int) index]);
+        protected static final AbstractSqueakObject doArrayOfNativeObjects(final ArrayObject obj, final long index,
+                        @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+            return NilObject.nullToNil(obj.getNativeObjectStorage()[(int) index], nilProfile);
         }
 
         @Specialization(guards = "obj.isObjectType()")
