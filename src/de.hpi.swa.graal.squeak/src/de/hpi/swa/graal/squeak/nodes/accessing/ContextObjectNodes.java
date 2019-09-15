@@ -63,8 +63,9 @@ public final class ContextObjectNodes {
         protected static final Object doTempCached(final ContextObject context, final long index,
                         @Cached("context") final ContextObject cachedContext,
                         @Cached("index") final long cachedIndex,
-                        @Cached("createReadNode(cachedContext, cachedIndex)") final FrameSlotReadNode readNode) {
-            return NilObject.nullToNil(readNode.executeRead(cachedContext.getTruffleFrame()));
+                        @Cached("createReadNode(cachedContext, cachedIndex)") final FrameSlotReadNode readNode,
+                        @Cached("createBinaryProfile()") final ConditionProfile isNullProfile) {
+            return NilObject.nullToNil(readNode.executeRead(cachedContext.getTruffleFrame()), isNullProfile);
         }
 
         protected static final FrameSlotReadNode createReadNode(final ContextObject context, final long index) {

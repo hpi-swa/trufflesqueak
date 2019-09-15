@@ -25,6 +25,10 @@ public final class NilObject extends AbstractSqueakObject {
         return object == null ? SINGLETON : object;
     }
 
+    public static Object nullToNil(final Object object, final ConditionProfile profile) {
+        return profile.profile(object == null) ? SINGLETON : object;
+    }
+
     public static long getSqueakHash() {
         return 1L;
     }

@@ -2,9 +2,11 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import java.lang.ref.WeakReference;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -24,8 +26,9 @@ public final class WeakPointersObjectNodes {
         protected abstract Object execute(Object value);
 
         @Specialization
-        protected static final Object doWeakReference(final WeakReference<?> value) {
-            return NilObject.nullToNil(value.get());
+        protected static final Object doWeakReference(final WeakReference<?> value,
+                        @Cached("createBinaryProfile()") final ConditionProfile isNullProfile) {
+            return NilObject.nullToNil(value.get(), isNullProfile);
         }
 
         @Fallback
