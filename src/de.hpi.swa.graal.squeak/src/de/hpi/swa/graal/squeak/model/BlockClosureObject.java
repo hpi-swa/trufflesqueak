@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -33,14 +34,15 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
-    public BlockClosureObject(final CompiledBlockObject compiledBlock, final int numArgs, final Object receiver, final Object[] copied, final ContextObject outerContext) {
+    public BlockClosureObject(final CompiledBlockObject myBlock, final int numArgs, final Object receiver, final Object[] copied, final ContextObject outerContext) {
         super();
-        block = compiledBlock;
+        CompilerAsserts.partialEvaluationConstant(myBlock); // ensure startPC is constant
+        block = myBlock;
         this.outerContext = outerContext;
         this.receiver = receiver;
         this.copied = copied;
+        startPC = block.getInitialPC();
         this.numArgs = numArgs;
-        /* startPC does not need to be initialized, it's often not needed for a block activation. */
     }
 
     private BlockClosureObject(final BlockClosureObject original) {

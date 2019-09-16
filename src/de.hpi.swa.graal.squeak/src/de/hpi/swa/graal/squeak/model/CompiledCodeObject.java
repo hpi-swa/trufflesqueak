@@ -362,11 +362,21 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithImage {
         return (numArgs & 0x0F) << 24 | (numTemps & 0x3F) << 18 | numLiterals & 0x7FFF | (needsLargeFrame ? 0x20000 : 0) | (hasPrimitive ? 0x10000 : 0);
     }
 
-    public CompiledBlockObject[] getInnerBlocks() {
-        return innerBlocks;
+    public CompiledBlockObject findBlock(final CompiledMethodObject method, final int numClosureArgs, final int numCopied, final int successorIndex, final int blockSize) {
+        if (innerBlocks != null) {
+            // TODO: Avoid instanceof checks (same code in CompiledBlockObject).
+            final int additionalOffset = this instanceof CompiledBlockObject ? ((CompiledBlockObject) this).getOffset() : 0;
+            final int offset = additionalOffset + successorIndex;
+            for (final CompiledBlockObject innerBlock : innerBlocks) {
+                if (innerBlock.getOffset() == offset) {
+                    return innerBlock;
+                }
+            }
+        }
+        return addInnerBlock(CompiledBlockObject.create(this, method, numClosureArgs, numCopied, successorIndex, blockSize));
     }
 
-    public CompiledBlockObject addInnerBlock(final CompiledBlockObject innerBlock) {
+    private CompiledBlockObject addInnerBlock(final CompiledBlockObject innerBlock) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (innerBlocks == null) {
             innerBlocks = new CompiledBlockObject[]{innerBlock};

@@ -1,6 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -8,7 +10,6 @@ import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -69,6 +70,7 @@ public final class PushBytecodes {
         private final int blockSize;
         private final int numArgs;
         private final int numCopied;
+        @CompilationFinal private CompiledBlockObject cachedBlock;
 
         @Child private FrameStackPopNNode popNNode;
         @Child protected FrameStackPushNode pushNode;
@@ -98,19 +100,12 @@ public final class PushBytecodes {
             return new PushClosureNode(code, index, numBytecodes, i, j, k);
         }
 
-        @ExplodeLoop
         private CompiledBlockObject getBlock(final VirtualFrame frame) {
-            if (code.getInnerBlocks() != null) {
-                // TODO: Avoid instanceof checks (same code in CompiledBlockObject).
-                final int additionalOffset = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getOffset() : 0;
-                final int offset = additionalOffset + getSuccessorIndex();
-                for (final CompiledBlockObject innerBlock : code.getInnerBlocks()) {
-                    if (innerBlock.getOffset() == offset) {
-                        return innerBlock;
-                    }
-                }
+            if (cachedBlock == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cachedBlock = code.findBlock(FrameAccess.getMethod(frame), numArgs, numCopied, getSuccessorIndex(), blockSize);
             }
-            return code.addInnerBlock(CompiledBlockObject.create(code, FrameAccess.getMethod(frame), numArgs, numCopied, getSuccessorIndex(), blockSize));
+            return cachedBlock;
         }
 
         public int getBockSize() {
