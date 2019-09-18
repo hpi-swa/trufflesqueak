@@ -12,8 +12,8 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.DICTIONARY;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.DICTIONARY;
 
 @ExportLibrary(InteropLibrary.class)
 public final class InteropMap implements TruffleObject {

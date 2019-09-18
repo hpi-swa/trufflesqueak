@@ -43,10 +43,10 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.model.VariablePointersObject;
+import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
@@ -63,6 +63,7 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -279,12 +280,17 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final boolean doPointers(final PointersObject receiver, final Object thang) {
-            return BooleanObject.wrap(ArrayUtils.contains(receiver.getPointers(), thang));
+            return BooleanObject.wrap(receiver.layoutValuesPointTo(thang));
         }
 
         @Specialization
-        protected static final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
-            return BooleanObject.wrap(ArrayUtils.contains(receiver.getPointers(), thang));
+        protected static final boolean doPointers(final VariablePointersObject receiver, final Object thang) {
+            return BooleanObject.wrap(receiver.pointsTo(thang));
+        }
+
+        @Specialization
+        protected static final boolean doWeakPointers(final WeakVariablePointersObject receiver, final Object thang) {
+            return BooleanObject.wrap(receiver.pointsTo(thang));
         }
     }
 
@@ -582,10 +588,23 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method);
         }
 
-        @Specialization(guards = {"!isContextObject(receiver)", "receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
-        protected static final AbstractPointersObject doCopyAbstractPointers(final AbstractPointersObject receiver, final AbstractPointersObject anotherObject) {
-            final Object[] destStorage = receiver.getPointers();
-            System.arraycopy(anotherObject.getPointers(), 0, destStorage, 0, destStorage.length);
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        protected static final AbstractPointersObject doCopyAbstractPointers(final PointersObject receiver, final PointersObject anotherObject) {
+            receiver.copyLayoutValuesFrom(anotherObject);
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        protected static final AbstractPointersObject doCopyAbstractPointers(final VariablePointersObject receiver, final VariablePointersObject anotherObject) {
+            receiver.copyLayoutValuesFrom(anotherObject);
+            System.arraycopy(anotherObject.variablePart, 0, receiver.variablePart, 0, anotherObject.variablePart.length);
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        protected static final AbstractPointersObject doCopyAbstractPointers(final WeakVariablePointersObject receiver, final WeakVariablePointersObject anotherObject) {
+            receiver.copyLayoutValuesFrom(anotherObject);
+            System.arraycopy(anotherObject.variablePart, 0, receiver.variablePart, 0, anotherObject.variablePart.length);
             return receiver;
         }
 
@@ -622,7 +641,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
-                        "!isNativeObject(receiver)", "!isPointersObject(receiver)", "!isContextObject(receiver)",
+                        "!isNativeObject(receiver)", "!isAbstractPointersObject(receiver)", "!isContextObject(receiver)",
                         "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"}, limit = "1")
         protected static final AbstractSqueakObject doCopy(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash anotherObject,
                         @Cached final SqueakObjectSizeNode sizeNode,

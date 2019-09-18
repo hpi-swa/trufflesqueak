@@ -11,7 +11,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;

@@ -14,8 +14,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
-import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.VariablePointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -52,7 +52,7 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
         final byte[] selectorBytes = MiscUtils.toBytes(selector);
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
-            final PointersObject methodDict = lookupClass.getMethodDict();
+            final VariablePointersObject methodDict = lookupClass.getMethodDict();
             for (int i = METHOD_DICT.NAMES; i < methodDict.size(); i++) {
                 final Object methodSelector = methodDict.at0(i);
                 if (methodSelector instanceof NativeObject && Arrays.equals(selectorBytes, ((NativeObject) methodSelector).getByteStorage())) {

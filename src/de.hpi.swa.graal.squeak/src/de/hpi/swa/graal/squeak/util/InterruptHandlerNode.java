@@ -11,7 +11,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
 public abstract class InterruptHandlerNode extends Node {

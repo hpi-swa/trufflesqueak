@@ -10,16 +10,18 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 
 public final class YieldProcessNode extends AbstractNodeWithCode {
     @Child private LinkProcessToListNode linkProcessToListNode;
     @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
     @Child private ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.create();
+    @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
 
     private YieldProcessNode(final CompiledCodeObject code) {
         super(code);
@@ -30,11 +32,11 @@ public final class YieldProcessNode extends AbstractNodeWithCode {
     }
 
     public void executeYield(final VirtualFrame frame, final PointersObject scheduler) {
-        final PointersObject activeProcess = code.image.getActiveProcess();
-        final long priority = (long) activeProcess.at0(PROCESS.PRIORITY);
-        final ArrayObject processLists = (ArrayObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final PointersObject activeProcess = code.image.getActiveProcess(pointersReadNode);
+        final long priority = pointersReadNode.executeLong(activeProcess, PROCESS.PRIORITY);
+        final ArrayObject processLists = pointersReadNode.executeArray(scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject processList = (PointersObject) arrayReadNode.execute(processLists, priority - 1);
-        if (!processList.isEmptyList()) {
+        if (!processList.isEmptyList(pointersReadNode)) {
             getLinkProcessToListNode().executeLink(activeProcess, processList);
             getWakeHighestPriorityNode().executeWake(frame);
         }

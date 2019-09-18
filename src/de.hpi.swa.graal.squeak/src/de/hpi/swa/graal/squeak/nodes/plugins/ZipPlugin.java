@@ -109,8 +109,8 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"method.image.zip.writeStreamHasCorrectSize(receiver)", "distTree.size()>= 2", "litTree.size() >= 2", "litStream.size() >= 3", "distStream.size() >= 3"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final long doZipSendBlock(final PointersObject receiver, final PointersObject litStream, final PointersObject distStream, final PointersObject litTree,
-                        final PointersObject distTree) {
+        protected final long doZipSendBlock(final PointersObject receiver, final PointersObject litStream, final PointersObject distStream,
+                        final PointersObject litTree, final PointersObject distTree) {
             return method.image.zip.primitiveZipSendBlock(receiver, litStream, distStream, litTree, distTree);
         }
     }

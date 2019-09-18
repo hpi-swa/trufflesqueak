@@ -5,13 +5,16 @@
  */
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
+
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
 public final class PointersObject extends AbstractPointersObject {
 
@@ -23,50 +26,54 @@ public final class PointersObject extends AbstractPointersObject {
         super(image, hash, klass);
     }
 
-    public PointersObject(final SqueakImageContext image, final ClassObject sqClass, final Object[] pointers) {
-        super(image, sqClass);
-        setPointersUnsafe(pointers);
-    }
-
-    public PointersObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        this(image, classObject, ArrayUtils.withAll(size, NilObject.SINGLETON));
+    public PointersObject(final SqueakImageContext image, final ClassObject classObject) {
+        super(image, classObject);
     }
 
     private PointersObject(final PointersObject original) {
         super(original);
     }
 
+    public static PointersObject create(final AbstractPointersObjectWriteNode writeNode, final ClassObject squeakClass, final Object... pointers) {
+        final PointersObject object = new PointersObject(squeakClass.image, squeakClass);
+        for (int i = 0; i < pointers.length; i++) {
+            writeNode.execute(object, i, pointers[i]);
+        }
+        return object;
+    }
+
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        setPointers(chunk.getPointers());
+        final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
+        final Object[] pointersObject = chunk.getPointers();
+        initializeLayoutAndExtensionsUnsafe();
+        for (int i = 0; i < pointersObject.length; i++) {
+            writeNode.execute(this, i, pointersObject[i]);
+        }
+        assert size() == pointersObject.length;
     }
 
-    public Object at0(final int i) {
-        return getPointer(i);
+    public Object at0Slow(final int index) {
+        CompilerAsserts.neverPartOfCompilation();
+        return AbstractPointersObjectReadNode.getUncached().execute(this, index);
     }
 
-    public void atput0(final long i, final Object obj) {
-        assert obj != null : "Unexpected `null` value";
-        setPointer((int) i, obj);
+    public void atput0Slow(final int index, final Object value) {
+        CompilerAsserts.neverPartOfCompilation();
+        AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
     }
 
-    public void atputNil0(final long i) {
-        setPointer((int) i, NilObject.SINGLETON);
+    @Override
+    public int size() {
+        return instsize();
     }
 
-    public void become(final PointersObject other) {
-        becomeOtherClass(other);
-        final Object[] otherPointers = other.getPointers();
-        other.setPointers(getPointers());
-        setPointers(otherPointers);
+    public boolean isActiveProcess(final AbstractPointersObjectReadNode readNode) {
+        return this == image.getActiveProcess(readNode);
     }
 
-    public boolean isActiveProcess() {
-        return this == image.getActiveProcess();
-    }
-
-    public boolean isEmptyList() {
-        return at0(LINKED_LIST.FIRST_LINK) == NilObject.SINGLETON;
+    public boolean isEmptyList(final AbstractPointersObjectReadNode readNode) {
+        return readNode.execute(this, LINKED_LIST.FIRST_LINK) == NilObject.SINGLETON;
     }
 
     public boolean isDisplay() {
@@ -77,17 +84,17 @@ public final class PointersObject extends AbstractPointersObject {
         return getSqueakClass() == image.pointClass;
     }
 
-    public PointersObject removeFirstLinkOfList() {
+    public PointersObject removeFirstLinkOfList(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode) {
         // Remove the first process from the given linked list.
-        final PointersObject first = (PointersObject) at0(LINKED_LIST.FIRST_LINK);
-        final Object last = at0(LINKED_LIST.LAST_LINK);
+        final PointersObject first = readNode.executePointers(this, LINKED_LIST.FIRST_LINK);
+        final Object last = readNode.execute(this, LINKED_LIST.LAST_LINK);
         if (first == last) {
-            atput0(LINKED_LIST.FIRST_LINK, NilObject.SINGLETON);
-            atput0(LINKED_LIST.LAST_LINK, NilObject.SINGLETON);
+            writeNode.executeNil(this, LINKED_LIST.FIRST_LINK);
+            writeNode.executeNil(this, LINKED_LIST.LAST_LINK);
         } else {
-            atput0(LINKED_LIST.FIRST_LINK, first.at0(PROCESS.NEXT_LINK));
+            writeNode.execute(this, LINKED_LIST.FIRST_LINK, readNode.execute(first, PROCESS.NEXT_LINK));
         }
-        first.atput0(PROCESS.NEXT_LINK, NilObject.SINGLETON);
+        writeNode.executeNil(first, PROCESS.NEXT_LINK);
         return first;
     }
 
@@ -96,8 +103,6 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public void traceObjects(final ObjectTracer tracer) {
-        for (final Object pointer : getPointers()) {
-            tracer.addIfUnmarked(pointer);
-        }
+        super.traceLayoutObjects(tracer);
     }
 }

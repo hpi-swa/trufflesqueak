@@ -10,7 +10,7 @@ import org.junit.BeforeClass;
 
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 
 public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSqueakTestCase {
 

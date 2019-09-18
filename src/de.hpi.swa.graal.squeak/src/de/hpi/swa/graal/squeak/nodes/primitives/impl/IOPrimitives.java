@@ -34,18 +34,20 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.CHARACTER_SCANNER;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.model.VariablePointersObject;
+import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CHARACTER_SCANNER;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.WeakVariablePointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.WeakVariablePointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.WeakPointersObjectNodes.WeakPointersObjectReadNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.WeakPointersObjectNodes.WeakPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -56,6 +58,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.NotProvided;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -216,7 +219,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             final int[] words = validateAndExtractWords(receiver);
             final int depth = extractDepth(receiver);
             if (depth == 1) {
-                final int[] mask = ((NativeObject) maskObject.at0(FORM.BITS)).getIntStorage();
+                final int[] mask = ((NativeObject) maskObject.at0Slow(FORM.BITS)).getIntStorage();
                 method.image.getDisplay().setCursor(words, mask, 2);
             } else {
                 method.image.getDisplay().setCursor(words, null, depth);
@@ -235,9 +238,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private int[] validateAndExtractWords(final PointersObject receiver) {
-            final int[] words = ((NativeObject) receiver.at0(FORM.BITS)).getIntStorage();
-            final long width = (long) receiver.at0(FORM.WIDTH);
-            final long height = (long) receiver.at0(FORM.HEIGHT);
+            final int[] words = ((NativeObject) receiver.at0Slow(FORM.BITS)).getIntStorage();
+            final long width = (long) receiver.at0Slow(FORM.WIDTH);
+            final long height = (long) receiver.at0Slow(FORM.HEIGHT);
             if (width != SqueakIOConstants.CURSOR_WIDTH || height != SqueakIOConstants.CURSOR_HEIGHT) {
                 CompilerDirectives.transferToInterpreter();
                 method.image.printToStdErr("Unexpected cursor width:", width, "or height:", height, ". Proceeding with cropped cursor...");
@@ -247,7 +250,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private static int extractDepth(final PointersObject receiver) {
-            return (int) (long) receiver.at0(FORM.DEPTH);
+            return (int) (long) receiver.at0Slow(FORM.DEPTH);
         }
     }
 
@@ -278,63 +281,65 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         private static final long END_OF_RUN = 257 - 1;
         private static final long CROSSED_X = 258 - 1;
 
-        @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
-        @Child protected ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
+        @Child private ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.create();
+        @Child protected ArrayObjectSizeNode arraySizeNode = ArrayObjectSizeNode.create();
+        @Child protected AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
+        @Child private AbstractPointersObjectWriteNode pointersWriteNode = AbstractPointersObjectWriteNode.create();
 
         protected PrimScanCharactersNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"startIndex > 0", "stopIndex > 0", "sourceString.isByteType()", "stopIndex <= sourceString.getByteLength()", "receiver.size() >= 4",
-                        "sizeNode.execute(stops) >= 258", "hasCorrectSlots(receiver)"})
+                        "arraySizeNode.execute(stops) >= 258", "hasCorrectSlots(receiver)"})
         protected final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final NativeObject sourceString, final long rightX,
                         final ArrayObject stops, final long kernData) {
-            final ArrayObject scanXTable = (ArrayObject) receiver.at0(CHARACTER_SCANNER.XTABLE);
-            final ArrayObject scanMap = (ArrayObject) receiver.at0(CHARACTER_SCANNER.MAP);
+            final ArrayObject scanXTable = pointersReadNode.executeArray(receiver, CHARACTER_SCANNER.XTABLE);
+            final ArrayObject scanMap = pointersReadNode.executeArray(receiver, CHARACTER_SCANNER.MAP);
             final byte[] sourceBytes = sourceString.getByteStorage();
 
-            final int maxGlyph = sizeNode.execute(scanXTable) - 2;
-            long scanDestX = (long) receiver.at0(CHARACTER_SCANNER.DEST_X);
+            final int maxGlyph = arraySizeNode.execute(scanXTable) - 2;
+            long scanDestX = pointersReadNode.executeLong(receiver, CHARACTER_SCANNER.DEST_X);
             long scanLastIndex = startIndex;
             while (scanLastIndex <= stopIndex) {
                 final long ascii = UnsafeUtils.getByte(sourceBytes, scanLastIndex - 1) & 0xFF;
-                final Object stopReason = readNode.execute(stops, ascii);
+                final Object stopReason = arrayReadNode.execute(stops, ascii);
                 if (stopReason != NilObject.SINGLETON) {
                     storeStateInReceiver(receiver, scanDestX, scanLastIndex);
                     return stopReason;
                 }
-                if (ascii < 0 || sizeNode.execute(scanMap) <= ascii) {
+                if (ascii < 0 || arraySizeNode.execute(scanMap) <= ascii) {
                     throw PrimitiveFailed.andTransferToInterpreter();
                 }
-                final long glyphIndex = (long) readNode.execute(scanMap, ascii);
+                final long glyphIndex = (long) arrayReadNode.execute(scanMap, ascii);
                 if (glyphIndex < 0 || glyphIndex > maxGlyph) {
                     throw PrimitiveFailed.andTransferToInterpreter();
                 }
                 final long sourceX1;
                 final long sourceX2;
-                sourceX1 = (long) readNode.execute(scanXTable, glyphIndex);
-                sourceX2 = (long) readNode.execute(scanXTable, glyphIndex + 1);
+                sourceX1 = (long) arrayReadNode.execute(scanXTable, glyphIndex);
+                sourceX2 = (long) arrayReadNode.execute(scanXTable, glyphIndex + 1);
                 final long nextDestX = scanDestX + sourceX2 - sourceX1;
                 if (nextDestX > rightX) {
                     storeStateInReceiver(receiver, scanDestX, scanLastIndex);
-                    return readNode.execute(stops, CROSSED_X);
+                    return arrayReadNode.execute(stops, CROSSED_X);
                 }
                 scanDestX = nextDestX + kernData;
                 scanLastIndex++;
             }
             storeStateInReceiver(receiver, scanDestX, stopIndex);
-            return readNode.execute(stops, END_OF_RUN);
+            return arrayReadNode.execute(stops, END_OF_RUN);
         }
 
-        private static void storeStateInReceiver(final PointersObject receiver, final long scanDestX, final long scanLastIndex) {
-            receiver.atput0(CHARACTER_SCANNER.DEST_X, scanDestX);
-            receiver.atput0(CHARACTER_SCANNER.LAST_INDEX, scanLastIndex);
+        private void storeStateInReceiver(final PointersObject receiver, final long scanDestX, final long scanLastIndex) {
+            pointersWriteNode.execute(receiver, CHARACTER_SCANNER.DEST_X, scanDestX);
+            pointersWriteNode.execute(receiver, CHARACTER_SCANNER.LAST_INDEX, scanLastIndex);
         }
 
         protected final boolean hasCorrectSlots(final PointersObject receiver) {
-            final Object scanMap = receiver.at0(CHARACTER_SCANNER.MAP);
-            return receiver.at0(CHARACTER_SCANNER.DEST_X) instanceof Long && receiver.at0(CHARACTER_SCANNER.XTABLE) instanceof ArrayObject &&
-                            scanMap instanceof ArrayObject && sizeNode.execute((ArrayObject) scanMap) == 256;
+            final Object scanMap = pointersReadNode.execute(receiver, CHARACTER_SCANNER.MAP);
+            return pointersReadNode.execute(receiver, CHARACTER_SCANNER.DEST_X) instanceof Long && pointersReadNode.execute(receiver, CHARACTER_SCANNER.XTABLE) instanceof ArrayObject &&
+                            scanMap instanceof ArrayObject && arraySizeNode.execute((ArrayObject) scanMap) == 256;
         }
     }
 
@@ -368,13 +373,20 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final PointersObject doPointers(final PointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
+                        @Cached final PointersNonVariableObjectReplaceNode replaceNode) {
+            replaceNode.execute(rcvr, start, stop, repl, replStart);
+            return rcvr;
+        }
+
+        @Specialization
+        protected static final VariablePointersObject doPointers(final VariablePointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
                         @Cached final PointersObjectReplaceNode replaceNode) {
             replaceNode.execute(rcvr, start, stop, repl, replStart);
             return rcvr;
         }
 
         @Specialization
-        protected static final WeakPointersObject doWeakPointers(final WeakPointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
+        protected static final WeakVariablePointersObject doWeakPointers(final WeakVariablePointersObject rcvr, final long start, final long stop, final Object repl, final long replStart,
                         @Cached final WeakPointersObjectReplaceNode replaceNode) {
             replaceNode.execute(rcvr, start, stop, repl, replStart);
             return rcvr;
@@ -529,36 +541,31 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
 
             @Specialization
-            protected final void doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
-                            @Cached("createBinaryProfile()") final ConditionProfile isObjectTypeProfile,
+            protected final void doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
                             @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 if (!inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
-                if (isObjectTypeProfile.profile(rcvr.isObjectType())) {
-                    System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getObjectStorage(), (int) start - 1, (int) (1 + stop - start));
-                } else {
-                    final int repOff = (int) (replStart - start);
-                    for (int i = (int) (start - 1); i < stop; i++) {
-                        writeNode.execute(rcvr, i, repl.at0(repOff + i));
-                    }
+                final int repOff = (int) (replStart - start);
+                for (int i = (int) (start - 1); i < stop; i++) {
+                    writeNode.execute(rcvr, i, repl.at0(repOff + i));
                 }
             }
 
             @Specialization
-            protected final void doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
-                            @Cached final WeakPointersObjectReadNode readNode,
+            protected final void doArrayObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakVariablePointersObject repl, final long replStart,
+                            @Cached final WeakVariablePointersObjectReadNode readNode,
                             @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 if (!inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
                 }
-                final long repOff = replStart - start;
+                final int repOff = (int) (replStart - start);
                 for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, readNode.executeRead(repl, repOff + i));
+                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
             }
 
@@ -706,22 +713,67 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected abstract static class PointersObjectReplaceNode extends AbstractNode {
+        protected abstract static class PointersNonVariableObjectReplaceNode extends AbstractNode {
             protected abstract void execute(PointersObject rcvr, long start, long stop, Object repl, long replStart);
 
             @Specialization
-            protected static final void doPointers(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart,
+            protected static final void doPointers(final PointersObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
+                            @Cached final AbstractPointersObjectReadNode readNode,
+                            @Cached final AbstractPointersObjectWriteNode writeNode,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
-                try {
-                    System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
-                } catch (final IndexOutOfBoundsException e) {
+                if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
+                }
+                final int repOff = (int) (replStart - start);
+                for (int i = (int) (start - 1); i < stop; i++) {
+                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
             }
 
             @Specialization
             protected static final void doPointersArray(final PointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+                            @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
+                            @Cached final ArrayObjectReadNode readNode,
+                            @Cached final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
+                final long repOff = replStart - start;
+                for (int i = (int) (start - 1); i < stop; i++) {
+                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                }
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            protected static final void doFail(final PointersObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
+
+        protected abstract static class PointersObjectReplaceNode extends AbstractNode {
+            protected abstract void execute(VariablePointersObject rcvr, long start, long stop, Object repl, long replStart);
+
+            @Specialization
+            protected static final void doPointers(final VariablePointersObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
+                            @Cached final AbstractPointersObjectReadNode readNode,
+                            @Cached final AbstractPointersObjectWriteNode writeNode,
+                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
+                if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.BAD_INDEX;
+                }
+                final int repOff = (int) (replStart - start);
+                for (int i = (int) (start - 1); i < stop; i++) {
+                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
+                }
+            }
+
+            @Specialization
+            protected static final void doPointersArray(final VariablePointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
@@ -737,30 +789,34 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @SuppressWarnings("unused")
             @Fallback
-            protected static final void doFail(final PointersObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
+            protected static final void doFail(final VariablePointersObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
 
         protected abstract static class WeakPointersObjectReplaceNode extends AbstractNode {
-            protected abstract void execute(WeakPointersObject rcvr, long start, long stop, Object repl, long replStart);
+            protected abstract void execute(WeakVariablePointersObject rcvr, long start, long stop, Object repl, long replStart);
 
             @Specialization
-            protected static final void doWeakPointers(final WeakPointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart,
+            protected static final void doWeakPointers(final WeakVariablePointersObject rcvr, final long start, final long stop, final WeakVariablePointersObject repl, final long replStart,
+                            @Cached final WeakVariablePointersObjectReadNode readNode,
+                            @Cached final WeakVariablePointersObjectWriteNode writeNode,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
-                try {
-                    System.arraycopy(repl.getPointers(), (int) replStart - 1, rcvr.getPointers(), (int) start - 1, (int) (1 + stop - start));
-                } catch (final IndexOutOfBoundsException e) {
+                if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
+                }
+                final int repOff = (int) (replStart - start);
+                for (int i = (int) (start - 1); i < stop; i++) {
+                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
             }
 
             @Specialization
-            protected static final void doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
+            protected static final void doWeakPointersArray(final WeakVariablePointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
-                            @Cached final WeakPointersObjectWriteNode writeNode,
+                            @Cached final WeakVariablePointersObjectWriteNode writeNode,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)) {
                     errorProfile.enter();
@@ -774,7 +830,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @SuppressWarnings("unused")
             @Fallback
-            protected static final void doFail(final WeakPointersObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
+            protected static final void doFail(final WeakVariablePointersObject rcvr, final long start, final long stop, final Object repl, final long replStart) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
@@ -789,13 +845,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"hasVisibleDisplay(receiver)"})
-        protected final PointersObject doSize(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asPoint(method.image.getDisplay().getWindowSize());
+        protected final PointersObject doSize(@SuppressWarnings("unused") final Object receiver,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+            return method.image.asPoint(writeNode, method.image.getDisplay().getWindowSize());
         }
 
         @Specialization(guards = "!hasVisibleDisplay(receiver)")
-        protected final PointersObject doSizeHeadless(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asPoint(method.image.flags.getLastWindowSize());
+        protected final PointersObject doSizeHeadless(@SuppressWarnings("unused") final Object receiver,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+            return method.image.asPoint(writeNode, method.image.flags.getLastWindowSize());
         }
 
         // guard helper to work around code generation issue.

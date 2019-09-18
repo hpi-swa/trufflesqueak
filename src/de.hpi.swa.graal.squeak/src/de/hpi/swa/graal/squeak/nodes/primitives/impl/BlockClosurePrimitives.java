@@ -17,7 +17,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.DispatchBlockNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -31,6 +30,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimiti
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimRelinquishProcessorNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
