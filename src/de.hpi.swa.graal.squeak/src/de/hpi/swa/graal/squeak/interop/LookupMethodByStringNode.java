@@ -11,13 +11,13 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
-import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.VariablePointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
@@ -38,26 +38,31 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
     protected static final Object doCached(final ClassObject classObject, final String selector,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("selector") final String cachedSelector,
-                    @Cached("doUncached(cachedClass, cachedSelector)") final Object cachedMethod) {
+                    @Cached("doUncachedSlow(cachedClass, cachedSelector)") final Object cachedMethod) {
         return cachedMethod;
     }
 
-    protected static final Object doUncached(final ClassObject classObject, final String selector) {
-        return doUncached(classObject, selector, ArrayObjectReadNode.getUncached());
+    protected static final Object doUncachedSlow(final ClassObject classObject, final String selector) {
+        return doUncached(classObject, selector, AbstractPointersObjectReadNode.getUncached(), ArrayObjectReadNode.getUncached());
     }
 
     @Specialization(replaces = "doCached")
     protected static final Object doUncached(final ClassObject classObject, final String selector,
-                    @Cached final ArrayObjectReadNode readNode) {
+                    /**
+                     * An AbstractPointersObjectReadNode is sufficient for accessing `values`
+                     * instance variable here.
+                     */
+                    @Cached final AbstractPointersObjectReadNode pointersReadValuesNode,
+                    @Cached final ArrayObjectReadNode arrayReadNode) {
         final byte[] selectorBytes = MiscUtils.toBytes(selector);
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
-            final PointersObject methodDict = lookupClass.getMethodDict();
-            for (int i = METHOD_DICT.NAMES; i < methodDict.size(); i++) {
-                final Object methodSelector = methodDict.at0(i);
+            final VariablePointersObject methodDict = lookupClass.getMethodDict();
+            final Object[] methodDictVariablePart = methodDict.getVariablePart();
+            for (int i = 0; i < methodDictVariablePart.length; i++) {
+                final Object methodSelector = methodDictVariablePart[i];
                 if (methodSelector instanceof NativeObject && Arrays.equals(selectorBytes, ((NativeObject) methodSelector).getByteStorage())) {
-                    final ArrayObject values = (ArrayObject) methodDict.at0(METHOD_DICT.VALUES);
-                    return readNode.execute(values, i - METHOD_DICT.NAMES);
+                    return arrayReadNode.execute(pointersReadValuesNode.executeArray(methodDict, METHOD_DICT.VALUES), i);
                 }
             }
             lookupClass = lookupClass.getSuperclassOrNull();

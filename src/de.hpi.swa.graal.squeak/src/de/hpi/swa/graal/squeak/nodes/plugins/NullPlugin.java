@@ -16,14 +16,15 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
@@ -40,9 +41,10 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "objectWithTwoSlots.size() == 2")
-        protected static final PointersObject doUTC(@SuppressWarnings("unused") final Object receiver, final PointersObject objectWithTwoSlots) {
-            objectWithTwoSlots.atput0(0, getUTCMicroseconds());
-            objectWithTwoSlots.atput0(1, getOffsetFromGTMInSeconds());
+        protected static final PointersObject doUTC(@SuppressWarnings("unused") final Object receiver, final PointersObject objectWithTwoSlots,
+                        @Cached final AbstractPointersObjectWriteNode writeNode) {
+            writeNode.execute(objectWithTwoSlots, 0, getUTCMicroseconds());
+            writeNode.execute(objectWithTwoSlots, 1, getOffsetFromGTMInSeconds());
             return objectWithTwoSlots;
         }
 

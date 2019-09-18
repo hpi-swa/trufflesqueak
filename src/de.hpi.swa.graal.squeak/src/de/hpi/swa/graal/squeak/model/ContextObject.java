@@ -22,10 +22,12 @@ import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -528,17 +530,16 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return arguments;
     }
 
-    public void transferTo(final PointersObject newProcess) {
+    public void transferTo(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode, final PointersObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
         final PointersObject scheduler = newProcess.image.getScheduler();
-        // assert newProcess != image.getActiveProcess() : "trying to switch to already active
-        // process";
-        final PointersObject currentProcess = newProcess.image.getActiveProcess(); // overwritten in
-                                                                                   // next line.
-        scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        currentProcess.atput0(PROCESS.SUSPENDED_CONTEXT, this);
-        final ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
-        newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
+        assert newProcess != newProcess.image.getActiveProcess(readNode) : "trying to switch to already active process";
+        // overwritten in next line.
+        final PointersObject currentProcess = newProcess.image.getActiveProcess(readNode);
+        writeNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
+        writeNode.execute(currentProcess, PROCESS.SUSPENDED_CONTEXT, this);
+        final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+        writeNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
             throw ProcessSwitch.create(newActiveContext);
         } else {

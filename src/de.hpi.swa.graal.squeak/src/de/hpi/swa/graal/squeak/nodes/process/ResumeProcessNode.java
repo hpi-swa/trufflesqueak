@@ -6,17 +6,19 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
 public abstract class ResumeProcessNode extends AbstractNodeWithCode {
+    @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
     @Child private PutToSleepNode putToSleepNode;
 
     protected ResumeProcessNode(final CompiledCodeObject code) {
@@ -32,17 +34,18 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
 
     @Specialization(guards = "hasHigherPriority(newProcess)")
     protected final void doTransferTo(final VirtualFrame frame, final PointersObject newProcess,
+                    @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                     @Cached("create(code)") final GetOrCreateContextNode contextNode) {
-        putToSleepNode.executePutToSleep(code.image.getActiveProcess());
-        contextNode.executeGet(frame).transferTo(newProcess);
+        putToSleepNode.executePutToSleep(code.image.getActiveProcess(pointersReadNode));
+        contextNode.executeGet(frame).transferTo(pointersReadNode, pointersWriteNode, newProcess);
     }
 
-    @Fallback
+    @Specialization(guards = "!hasHigherPriority(newProcess)")
     protected final void doSleep(final PointersObject newProcess) {
         putToSleepNode.executePutToSleep(newProcess);
     }
 
     protected final boolean hasHigherPriority(final PointersObject newProcess) {
-        return (long) newProcess.at0(PROCESS.PRIORITY) > (long) code.image.getActiveProcess().at0(PROCESS.PRIORITY);
+        return pointersReadNode.executeLong(newProcess, PROCESS.PRIORITY) > pointersReadNode.executeLong(code.image.getActiveProcess(pointersReadNode), PROCESS.PRIORITY);
     }
 }

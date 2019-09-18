@@ -28,12 +28,12 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS_DESCRIPTION;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.METACLASS;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
-import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 /*
@@ -48,11 +48,13 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private boolean instancesAreClasses = false;
 
     private ClassObject superclass;
-    @CompilationFinal private PointersObject methodDict;
+    @CompilationFinal private VariablePointersObject methodDict;
     @CompilationFinal private long format = -1;
     private ArrayObject instanceVariables;
     private PointersObject organization;
     private Object[] pointers;
+
+    private ObjectLayout layout;
 
     public ClassObject(final SqueakImageContext image) {
         super(image);
@@ -86,6 +88,19 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
         this(image, classObject, ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON));
         // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
+    }
+
+    public ObjectLayout getLayout() {
+        if (layout == null) {
+            CompilerDirectives.transferToInterpreter();
+            layout = new ObjectLayout(this, getBasicInstanceSize());
+        }
+        return layout;
+    }
+
+    public void updateLayout(final ObjectLayout newLayout) {
+        assert layout == null || !layout.isValid() : "Old layout not invalidated";
+        layout = newLayout;
     }
 
     @Override
@@ -229,7 +244,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (methodDict == null) {
             final Object[] chunkPointers = chunk.getPointers();
             superclass = chunkPointers[CLASS_DESCRIPTION.SUPERCLASS] == NilObject.SINGLETON ? null : (ClassObject) chunkPointers[CLASS_DESCRIPTION.SUPERCLASS];
-            methodDict = (PointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
+            methodDict = (VariablePointersObject) chunkPointers[CLASS_DESCRIPTION.METHOD_DICT];
             format = (long) chunkPointers[CLASS_DESCRIPTION.FORMAT];
             instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
             organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
@@ -294,7 +309,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return superclass;
     }
 
-    public PointersObject getMethodDict() {
+    public VariablePointersObject getMethodDict() {
         return methodDict;
     }
 
@@ -351,7 +366,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         this.superclass = superclass;
     }
 
-    public void setMethodDict(final PointersObject methodDict) {
+    public void setMethodDict(final VariablePointersObject methodDict) {
         methodDictStable.invalidate();
         this.methodDict = methodDict;
     }
@@ -361,9 +376,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         final List<String> methodNames = new ArrayList<>();
         ClassObject lookupClass = this;
         while (lookupClass != null) {
-            final PointersObject methodDictObject = lookupClass.getMethodDict();
-            for (int i = METHOD_DICT.NAMES; i < methodDictObject.size(); i++) {
-                final Object methodSelector = methodDictObject.at0(i);
+            final VariablePointersObject methodDictObject = lookupClass.getMethodDict();
+            final Object[] methodDictVariablePart = methodDictObject.getVariablePart();
+            for (int i = 0; i < methodDictVariablePart.length; i++) {
+                final Object methodSelector = methodDictVariablePart[i];
                 if (methodSelector instanceof NativeObject) {
                     methodNames.add(((NativeObject) methodSelector).asStringUnsafe().replace(':', '_'));
                 }
@@ -413,7 +429,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         }
 
         final ClassObject otherSuperclass = other.superclass;
-        final PointersObject otherMethodDict = other.methodDict;
+        final VariablePointersObject otherMethodDict = other.methodDict;
         final long otherFormat = other.format;
         final ArrayObject otherInstanceVariables = other.instanceVariables;
         final PointersObject otherOrganization = other.organization;
@@ -509,7 +525,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @ExportMessage
     protected Object instantiate(final Object[] arguments,
                     @CachedLibrary(limit = "2") final InteropLibrary functions,
-                    @Cached(value = "create(this.image)", allowUncached = true) final NewObjectNode newObjectNode)
+                    @Cached(value = "create(this.image)", allowUncached = true) final SqueakObjectNewNode newObjectNode)
                     throws UnsupportedTypeException, ArityException {
         final int numArguments = arguments.length;
         switch (numArguments) {

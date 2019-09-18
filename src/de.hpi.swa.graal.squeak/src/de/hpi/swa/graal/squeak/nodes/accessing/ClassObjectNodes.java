@@ -15,6 +15,7 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ClassObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ClassObjectWriteNodeGen;
@@ -39,14 +40,14 @@ public final class ClassObjectNodes {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isMethodDictIndex(index)", "squeakClass == cachedSqueakClass"}, assumptions = {"cachedSqueakClass.getMethodDictStable()"}, limit = "CACHE_LIMIT")
-        protected static final PointersObject doClassMethodDictConstant(final ClassObject squeakClass, final long index,
+        protected static final VariablePointersObject doClassMethodDictConstant(final ClassObject squeakClass, final long index,
                         @Cached("squeakClass") final ClassObject cachedSqueakClass,
-                        @Cached("cachedSqueakClass.getMethodDict()") final PointersObject cachedMethodDict) {
+                        @Cached("cachedSqueakClass.getMethodDict()") final VariablePointersObject cachedMethodDict) {
             return cachedMethodDict;
         }
 
         @Specialization(guards = {"isMethodDictIndex(index)"}, replaces = "doClassMethodDictConstant")
-        protected static final PointersObject doClassMethodDict(final ClassObject obj, @SuppressWarnings("unused") final long index) {
+        protected static final VariablePointersObject doClassMethodDict(final ClassObject obj, @SuppressWarnings("unused") final long index) {
             return obj.getMethodDict();
         }
 
@@ -100,7 +101,7 @@ public final class ClassObjectNodes {
         }
 
         @Specialization(guards = "isMethodDictIndex(index)")
-        protected static final void doClassMethodDict(final ClassObject obj, @SuppressWarnings("unused") final long index, final PointersObject value) {
+        protected static final void doClassMethodDict(final ClassObject obj, @SuppressWarnings("unused") final long index, final VariablePointersObject value) {
             obj.setMethodDict(value);
         }
 

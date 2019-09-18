@@ -7,6 +7,7 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.TruffleOptions;
 
+import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -21,8 +22,8 @@ import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class SqueakGuards {
 
@@ -149,8 +150,12 @@ public final class SqueakGuards {
         return a == Long.MIN_VALUE && b == -1;
     }
 
-    public static boolean isPointersObject(final Object obj) {
-        return obj instanceof PointersObject;
+    public static boolean isAbstractPointersObject(final Object object) {
+        return object instanceof AbstractPointersObject;
+    }
+
+    public static boolean isPointersObject(final Object object) {
+        return object instanceof PointersObject;
     }
 
     public static boolean isPowerOfTwo(final long value) {

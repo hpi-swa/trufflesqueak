@@ -44,8 +44,8 @@ import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEY;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD_EVENT;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
 
 final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak + SubstrateVM + SDL2";
@@ -141,18 +141,18 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
 
     @Override
     public void open(final PointersObject sqDisplay) {
-        bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
+        bitmap = (NativeObject) sqDisplay.instVarAt0Slow(FORM.BITS);
         if (!bitmap.isIntType()) {
             throw SqueakException.create("Display bitmap expected to be a words object");
         }
 
-        final int depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
+        final int depth = (int) (long) sqDisplay.instVarAt0Slow(FORM.DEPTH);
         if (depth != 32) {
             throw SqueakException.create("Expected 32bit display");
         }
         if (window.isNull()) {
-            width = (int) (long) sqDisplay.at0(FORM.WIDTH);
-            height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
+            width = (int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH);
+            height = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
             try (CCharPointerHolder title = CTypeConversion.toCString(DEFAULT_WINDOW_TITLE)) {
                 window = SDL.createWindow(
                                 title.get(),
@@ -170,7 +170,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
             fullDamage();
             getNextEvent(); // Poll and drop fix events for faster window initialization.
         } else {
-            resizeTo((int) (long) sqDisplay.at0(FORM.WIDTH), (int) (long) sqDisplay.at0(FORM.HEIGHT));
+            resizeTo((int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH), (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT));
         }
     }
 

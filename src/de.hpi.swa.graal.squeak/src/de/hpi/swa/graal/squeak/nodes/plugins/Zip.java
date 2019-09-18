@@ -595,7 +595,8 @@ public final class Zip {
     }
 
     /* DeflatePlugin>>#primitiveZipSendBlock */
-    public long primitiveZipSendBlock(final PointersObject rcvr, final PointersObject litStream, final PointersObject distStream, final PointersObject litTree, final PointersObject distTree) {
+    public long primitiveZipSendBlock(final PointersObject rcvr, final PointersObject litStream, final PointersObject distStream,
+                    final PointersObject litTree, final PointersObject distTree) {
         /* DeflatePlugin>>#loadZipEncoderFrom: */
         zipCollection = fetchBytePointerOfObject(rcvr, 0);
         zipCollectionSize = zipCollection.length;
@@ -616,7 +617,8 @@ public final class Zip {
      */
 
     /* DeflatePlugin>>#sendBlock:with:with:with: */
-    private int sendBlockwithwithwith(final PointersObject literalStream, final PointersObject distanceStream, final PointersObject litTree, final PointersObject distTree) {
+    private int sendBlockwithwithwith(final PointersObject literalStream, final PointersObject distanceStream, final PointersObject litTree,
+                    final PointersObject distTree) {
         int code;
         int dist;
         final int[] distArray;
@@ -894,7 +896,7 @@ public final class Zip {
      */
 
     private static Object fetchPointerofObject(final int index, final PointersObject pointersOop) {
-        return pointersOop.getPointer(index);
+        return pointersOop.instVarAt0Slow(index);
     }
 
     private static byte[] fetchBytePointerOfObject(final PointersObject rcvr, final int index) {
@@ -931,7 +933,7 @@ public final class Zip {
     }
 
     private static void storeIntegerofObjectwithValue(final int i, final PointersObject streamOop, final long value) {
-        streamOop.atput0(i, value);
+        streamOop.instVarAtPut0Slow(i, value);
     }
 
     private static boolean isWords(final Object object) {

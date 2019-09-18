@@ -7,7 +7,6 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -17,7 +16,8 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.model.VariablePointersObject;
+import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 
 public abstract class SqueakObjectBecomeNode extends AbstractNode {
@@ -82,10 +82,16 @@ public abstract class SqueakObjectBecomeNode extends AbstractNode {
         return true;
     }
 
+    @Specialization(guards = {"left != right"})
+    protected static final boolean doVariablePointers(final VariablePointersObject left, final VariablePointersObject right) {
+        left.become(right);
+        return true;
+    }
+
     @SuppressWarnings("unused")
     @Specialization(guards = {"left != right"})
-    protected static final boolean doWeakPointers(final WeakPointersObject left, final WeakPointersObject right) {
-        // TODO: implement or remove?
-        throw SqueakException.create("become not implemented for WeakPointersObjects");
+    protected static final boolean doWeakPointers(final WeakVariablePointersObject left, final WeakVariablePointersObject right) {
+        left.become(right);
+        return true;
     }
 }
