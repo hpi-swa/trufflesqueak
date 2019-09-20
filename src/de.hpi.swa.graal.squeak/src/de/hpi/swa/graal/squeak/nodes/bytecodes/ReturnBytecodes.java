@@ -34,10 +34,10 @@ public final class ReturnBytecodes {
         }
 
         public final Object executeReturn(final VirtualFrame frame) {
-            return executeReturnSpecialized(frame, FrameAccess.getClosure(frame));
+            return executeReturnSpecialized(frame, FrameAccess.getClosureObject(frame));
         }
 
-        protected abstract Object executeReturnSpecialized(VirtualFrame frame, BlockClosureObject closure);
+        protected abstract Object executeReturnSpecialized(VirtualFrame frame, Object closure);
 
         @SuppressWarnings("unused")
         protected Object getReturnValue(final VirtualFrame frame) {
@@ -52,12 +52,12 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"closure == null", "!hasModifiedSender(frame)"})
-        protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final BlockClosureObject closure) {
+        protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closure) {
             return getReturnValue(frame);
         }
 
         @Specialization(guards = {"closure == null", "hasModifiedSender(frame)"})
-        protected final Object doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final BlockClosureObject closure) {
+        protected final Object doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closure) {
             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
             throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getSender(frame));
         }
@@ -128,17 +128,17 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"!hasModifiedSender(frame)"})
-        protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final BlockClosureObject closureOrNull) {
+        protected final Object doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closureOrNull) {
             return getReturnValue(frame);
         }
 
         @Specialization(guards = {"closureOrNull == null", "hasModifiedSender(frame)"})
-        protected final Object doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final BlockClosureObject closureOrNull) {
+        protected final Object doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closureOrNull) {
             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
             throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getSender(frame));
         }
 
-        @Specialization(guards = {"closureOrNull != null", "hasModifiedSender(frame)"})
+        @Specialization(guards = {"hasModifiedSender(frame)"})
         protected final Object doNonLocalReturnClosure(final VirtualFrame frame, final BlockClosureObject closureOrNull) {
             throw new NonLocalReturn(getReturnValue(frame), closureOrNull.getHomeContext().getFrameSender());
         }
