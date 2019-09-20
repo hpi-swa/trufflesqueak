@@ -204,19 +204,19 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean isByteType() {
-        return storage.getClass() == byte[].class;
+        return storage instanceof byte[];
     }
 
     public boolean isIntType() {
-        return storage.getClass() == int[].class;
+        return storage instanceof int[];
     }
 
     public boolean isLongType() {
-        return storage.getClass() == long[].class;
+        return storage instanceof long[];
     }
 
     public boolean isShortType() {
-        return storage.getClass() == short[].class;
+        return storage instanceof short[];
     }
 
     public void setStorage(final Object storage) {

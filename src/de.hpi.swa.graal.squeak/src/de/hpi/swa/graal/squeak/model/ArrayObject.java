@@ -178,15 +178,15 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean isBooleanType() {
-        return storage.getClass() == byte[].class;
+        return storage instanceof byte[];
     }
 
     public boolean isCharType() {
-        return storage.getClass() == char[].class;
+        return storage instanceof char[];
     }
 
     public boolean isDoubleType() {
-        return storage.getClass() == double[].class;
+        return storage instanceof double[];
     }
 
     public boolean isEmptyType() {
@@ -194,15 +194,15 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean isLongType() {
-        return storage.getClass() == long[].class;
+        return storage instanceof long[];
     }
 
     public boolean isNativeObjectType() {
-        return storage.getClass() == NativeObject[].class;
+        return storage instanceof NativeObject[];
     }
 
     public boolean isObjectType() {
-        return storage.getClass() == Object[].class;
+        return storage instanceof Object[];
     }
 
     public boolean isTraceable() {

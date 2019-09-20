@@ -453,7 +453,7 @@ public final class SqueakImageReader {
     private void fillInContextObjects() {
         for (final SqueakImageChunk chunk : chunktable.values()) {
             final Object chunkObject = chunk.asObject();
-            if (chunkObject.getClass() == ContextObject.class) {
+            if (chunkObject instanceof ContextObject) {
                 final ContextObject contextObject = (ContextObject) chunkObject;
                 assert !contextObject.hasTruffleFrame();
                 contextObject.fillinContext(chunk);

@@ -245,7 +245,7 @@ public final class FrameAccess {
 
     public static boolean isGraalSqueakFrame(final Frame frame) {
         final Object[] arguments = frame.getArguments();
-        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()].getClass() == CompiledMethodObject.class;
+        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()] instanceof CompiledMethodObject;
     }
 
     public static Object[] newWith(final CompiledMethodObject method, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
