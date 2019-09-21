@@ -202,7 +202,8 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean isObjectType() {
-        return storage instanceof Object[];
+        // Cannot use instanceof here (NativeObject[] inherits from Object[]).
+        return storage.getClass() == Object[].class;
     }
 
     public boolean isTraceable() {
