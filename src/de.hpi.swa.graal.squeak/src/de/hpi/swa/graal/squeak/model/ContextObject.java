@@ -20,6 +20,7 @@ import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -589,5 +590,17 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             }
         }
         return false;
+    }
+
+    public void traceObjects(final ObjectTracer tracer) {
+        if (hasTruffleFrame()) {
+            tracer.addIfUnmarked(getFrameSender());
+            tracer.addIfUnmarked(getMethod());
+            tracer.addIfUnmarked(getClosure());
+            tracer.addIfUnmarked(getReceiver());
+            for (int i = 0; i < getBlockOrMethod().getNumStackSlots(); i++) {
+                tracer.addIfUnmarked(atTemp(i));
+            }
+        }
     }
 }

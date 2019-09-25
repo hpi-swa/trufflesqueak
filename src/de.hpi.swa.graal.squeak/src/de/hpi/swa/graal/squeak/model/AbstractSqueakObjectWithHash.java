@@ -10,6 +10,7 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
     private static final int PINNED_BIT_MASK = 1 << PINNED_BIT_SHIFT;
 
     private long squeakHash;
+    private boolean markingFlag;
 
     // For special/well-known objects only.
     protected AbstractSqueakObjectWithHash() {
@@ -63,5 +64,25 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
 
     public final void unsetPinned() {
         setSqueakHash(getSqueakHash() & ~PINNED_BIT_MASK);
+    }
+
+    public final boolean getMarkingFlag() {
+        return markingFlag;
+    }
+
+    public final boolean isMarked(final boolean currentMarkingFlag) {
+        return markingFlag == currentMarkingFlag;
+    }
+
+    /**
+     * @return <tt>false</tt> if already marked, <tt>true</tt> otherwise
+     */
+    public final boolean tryToMark(final boolean currentMarkingFlag) {
+        if (markingFlag == currentMarkingFlag) {
+            return false;
+        } else {
+            markingFlag = currentMarkingFlag;
+            return true;
+        }
     }
 }

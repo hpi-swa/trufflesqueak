@@ -1,8 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
-import java.util.AbstractCollection;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -33,9 +32,9 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
+import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectTraceableToObjectArrayNode;
@@ -46,7 +45,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
-import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -376,42 +374,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 78)
-    protected abstract static class PrimNextInstanceNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private ObjectGraphNode objectGraphNode;
-
-        protected PrimNextInstanceNode(final CompiledMethodObject method) {
-            super(method);
-            objectGraphNode = ObjectGraphNode.create(method.image);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final NilObject doNil(final NilObject nil) {
-            return nil;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "sqObject.getSqueakClass().isImmediateClassType()")
-        protected static final NilObject doImmediateObjects(final AbstractSqueakObjectWithClassAndHash sqObject) {
-            return NilObject.SINGLETON;
-        }
-
-        @Specialization(guards = {"!sqObject.getSqueakClass().isNilClass()", "!sqObject.getSqueakClass().isImmediateClassType()"})
-        protected final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash sqObject) {
-            final AbstractCollection<AbstractSqueakObject> instances = objectGraphNode.executeAllInstancesOf(sqObject.getSqueakClass());
-            boolean foundMyself = false;
-            for (final AbstractSqueakObject instance : instances) {
-                if (instance == sqObject) {
-                    foundMyself = true;
-                } else if (foundMyself) {
-                    return instance;
-                }
-            }
-            return NilObject.SINGLETON;
-        }
-    }
+    /* primitiveNextInstance (#78) deprecated in favor of primitiveAllInstances (#177). */
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 79)
@@ -534,9 +497,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final Set<AbstractSqueakObject> allInstances) {
+        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final Collection<AbstractSqueakObjectWithHash> allInstances) {
             boolean foundMyself = false;
-            for (final AbstractSqueakObject instance : allInstances) {
+            for (final AbstractSqueakObjectWithHash instance : allInstances) {
                 if (instance == receiver) {
                     foundMyself = true;
                 } else if (foundMyself) {

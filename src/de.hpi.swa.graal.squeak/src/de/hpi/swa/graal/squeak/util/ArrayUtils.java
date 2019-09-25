@@ -9,6 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 
 public final class ArrayUtils {
     @CompilationFinal(dimensions = 1) public static final Object[] EMPTY_ARRAY = new Object[0];
@@ -118,7 +119,7 @@ public final class ArrayUtils {
     }
 
     @TruffleBoundary
-    public static Object[] toArray(final AbstractCollection<AbstractSqueakObject> list) {
+    public static Object[] toArray(final AbstractCollection<AbstractSqueakObjectWithHash> list) {
         return list.toArray(new Object[list.size()]);
     }
 

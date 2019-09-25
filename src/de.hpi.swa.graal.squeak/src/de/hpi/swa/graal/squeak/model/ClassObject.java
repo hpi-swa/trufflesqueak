@@ -28,6 +28,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
+import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 /*
@@ -478,6 +479,16 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean isSmallIntegerClass() {
         return this == image.smallIntegerClass;
+    }
+
+    public void traceObjects(final ObjectTracer tracer) {
+        tracer.addIfUnmarked(getSuperclass());
+        tracer.addIfUnmarked(getMethodDict());
+        tracer.addIfUnmarked(getInstanceVariables());
+        tracer.addIfUnmarked(getOrganization());
+        for (final Object value : getOtherPointers()) {
+            tracer.addIfUnmarked(value);
+        }
     }
 
     /*

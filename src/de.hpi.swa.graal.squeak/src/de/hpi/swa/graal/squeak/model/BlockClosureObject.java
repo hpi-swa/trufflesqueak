@@ -17,6 +17,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
+import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -208,6 +209,14 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
 
     public BlockClosureObject shallowCopy() {
         return new BlockClosureObject(this);
+    }
+
+    public void traceObjects(final ObjectTracer tracer) {
+        tracer.addIfUnmarked(getReceiver());
+        tracer.addIfUnmarked(getOuterContext());
+        for (final Object value : getCopied()) {
+            tracer.addIfUnmarked(value);
+        }
     }
 
     /*

@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ADDITIONAL_METHOD_STATE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
+import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 
 @ExportLibrary(InteropLibrary.class)
 public final class CompiledMethodObject extends CompiledCodeObject {
@@ -153,6 +154,12 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     @Override
     public int size() {
         return getBytecodeOffset() + bytes.length;
+    }
+
+    public void traceObjects(final ObjectTracer tracer) {
+        for (final Object literal : getLiterals()) {
+            tracer.addIfUnmarked(literal);
+        }
     }
 
     /*

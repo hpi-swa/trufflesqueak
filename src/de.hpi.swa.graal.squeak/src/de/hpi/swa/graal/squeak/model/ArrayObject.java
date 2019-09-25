@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
+import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
@@ -324,6 +325,14 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
             objects[i] = toObjectFromNativeObject(natives[i]);
         }
         storage = objects;
+    }
+
+    public void traceObjects(final ObjectTracer tracer) {
+        if (isObjectType()) {
+            for (final Object value : getObjectStorage()) {
+                tracer.addIfUnmarked(value);
+            }
+        }
     }
 
     /*

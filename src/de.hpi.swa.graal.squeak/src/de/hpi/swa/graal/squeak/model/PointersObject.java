@@ -5,6 +5,7 @@ import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PointersObject extends AbstractPointersObject {
@@ -88,5 +89,11 @@ public final class PointersObject extends AbstractPointersObject {
 
     public PointersObject shallowCopy() {
         return new PointersObject(this);
+    }
+
+    public void traceObjects(final ObjectTracer tracer) {
+        for (final Object pointer : getPointers()) {
+            tracer.addIfUnmarked(pointer);
+        }
     }
 }
