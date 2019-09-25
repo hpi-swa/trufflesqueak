@@ -43,8 +43,13 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         this.storage = storage;
     }
 
-    public ArrayObject(final SqueakImageContext img, final long hash, final ClassObject klass) {
-        super(img, hash, klass);
+    public ArrayObject(final SqueakImageContext image, final long hash, final ClassObject squeakClass) {
+        super(image, hash, squeakClass);
+    }
+
+    private ArrayObject(final ArrayObject original, final Object storageCopy) {
+        super(original);
+        storage = storageCopy;
     }
 
     public static ArrayObject createEmptyStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
@@ -176,6 +181,10 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public int size() {
         throw SqueakException.create("Use ArrayObjectSizeNode");
+    }
+
+    public ArrayObject shallowCopy(final Object storageCopy) {
+        return new ArrayObject(this, storageCopy);
     }
 
     public boolean isBooleanType() {

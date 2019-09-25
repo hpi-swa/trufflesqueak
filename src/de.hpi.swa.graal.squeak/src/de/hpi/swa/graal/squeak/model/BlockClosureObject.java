@@ -30,13 +30,13 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal(dimensions = 0) private Object[] copied;
 
-    public BlockClosureObject(final long hash) {
-        super(hash);
+    public BlockClosureObject(final SqueakImageContext image, final long hash) {
+        super(image, hash);
         copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
-    public BlockClosureObject(final CompiledBlockObject myBlock, final int numArgs, final Object receiver, final Object[] copied, final ContextObject outerContext) {
-        super();
+    public BlockClosureObject(final SqueakImageContext image, final CompiledBlockObject myBlock, final int numArgs, final Object receiver, final Object[] copied, final ContextObject outerContext) {
+        super(image);
         CompilerAsserts.partialEvaluationConstant(myBlock); // ensure startPC is constant
         block = myBlock;
         this.outerContext = outerContext;
@@ -47,7 +47,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
-        super();
+        super(original);
         block = original.block;
         outerContext = original.outerContext;
         receiver = original.receiver;
@@ -57,7 +57,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     @Override
-    public ClassObject getSqueakClass(final SqueakImageContext image) {
+    public ClassObject getSqueakClass() {
         return image.blockClosureClass;
     }
 

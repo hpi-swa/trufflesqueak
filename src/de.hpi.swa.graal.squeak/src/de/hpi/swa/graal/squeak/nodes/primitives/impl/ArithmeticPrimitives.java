@@ -57,7 +57,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doLongDouble(final long lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs + rhs);
         }
     }
@@ -86,7 +86,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doLongDouble(final long lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs - rhs);
         }
     }
@@ -277,7 +277,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doLongDouble(final long lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs * rhs);
         }
     }
@@ -302,7 +302,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isZero(rhs)"})
         protected static final Object doLongDouble(final long lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs / rhs);
         }
     }
@@ -862,7 +862,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doDouble(final double lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs + rhs);
         }
     }
@@ -876,7 +876,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doDouble(final double lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs - rhs);
         }
     }
@@ -968,7 +968,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doDouble(final double lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs * rhs);
         }
     }
@@ -982,7 +982,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!isZero(rhs)"})
         protected static final Object doDouble(final double lhs, final double rhs,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs / rhs);
         }
     }
@@ -1104,7 +1104,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         private AsFloatObjectIfNessaryNode getAsFloatObjectIfNessaryNode() {
             if (asFloatNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                asFloatNode = insert(AsFloatObjectIfNessaryNode.create());
+                asFloatNode = insert(AsFloatObjectIfNessaryNode.create(method.image));
             }
             return asFloatNode;
         }
@@ -1139,13 +1139,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doFloat(final FloatObject receiver,
+        protected final Object doFloat(final FloatObject receiver,
                         @Cached final BranchProfile notFiniteProfile) {
             if (receiver.isFinite()) {
                 return Math.sin(receiver.getValue());
             } else {
                 notFiniteProfile.enter();
-                return FloatObject.valueOf(Double.NaN);
+                return FloatObject.valueOf(method.image, Double.NaN);
             }
         }
     }
@@ -1199,7 +1199,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doFloat(final FloatObject receiver,
                         @Cached final BranchProfile isNotFiniteProfile,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             if (receiver.isFinite()) {
                 return boxNode.execute(Math.exp(receiver.getValue()));
             } else {
@@ -1341,7 +1341,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         private AsFloatObjectIfNessaryNode getAsFloatObjectIfNessaryNode() {
             if (asFloatNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                asFloatNode = insert(AsFloatObjectIfNessaryNode.create());
+                asFloatNode = insert(AsFloatObjectIfNessaryNode.create(method.image));
             }
             return asFloatNode;
         }
@@ -1413,7 +1413,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doDouble(final double receiver,
-                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+                        @Cached("create(method.image)") final AsFloatObjectIfNessaryNode boxNode) {
             assert Double.isFinite(receiver);
             return boxNode.execute(Math.exp(receiver));
         }

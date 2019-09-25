@@ -20,8 +20,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
     }
 
     private WeakPointersObject(final WeakPointersObject original) {
-        super(original.image, original.getSqueakClass());
-        setPointersUnsafe(original.getPointers().clone());
+        super(original);
     }
 
     @Override

@@ -1,21 +1,24 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.FloatObjectNodesFactory.AsFloatObjectIfNessaryNodeGen;
 
 public final class FloatObjectNodes {
-    @GenerateUncached
     @ImportStatic(Double.class)
-    public abstract static class AsFloatObjectIfNessaryNode extends Node {
+    public abstract static class AsFloatObjectIfNessaryNode extends AbstractNodeWithImage {
 
-        public static AsFloatObjectIfNessaryNode create() {
-            return AsFloatObjectIfNessaryNodeGen.create();
+        protected AsFloatObjectIfNessaryNode(final SqueakImageContext image) {
+            super(image);
+        }
+
+        public static AsFloatObjectIfNessaryNode create(final SqueakImageContext image) {
+            return AsFloatObjectIfNessaryNodeGen.create(image);
         }
 
         public abstract Object execute(double value);
@@ -26,8 +29,8 @@ public final class FloatObjectNodes {
         }
 
         @Fallback
-        protected static final FloatObject doNaNOrInfinite(final double value) {
-            return new FloatObject(value);
+        protected final FloatObject doNaNOrInfinite(final double value) {
+            return new FloatObject(image, value);
         }
     }
 }

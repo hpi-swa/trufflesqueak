@@ -73,15 +73,15 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
     }
 
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isMethodContextClass()"})
-    protected static final ContextObject doContext(final ClassObject classObject, final int extraSize) {
+    protected final ContextObject doContext(final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() == CONTEXT.INST_SIZE;
-        return ContextObject.create(CONTEXT.INST_SIZE + extraSize);
+        return ContextObject.create(image, CONTEXT.INST_SIZE + extraSize);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isBlockClosureClass()"})
-    protected static final BlockClosureObject doBlockClosure(final ClassObject classObject, final int extraSize) {
-        return new BlockClosureObject(extraSize);
+    protected final BlockClosureObject doBlockClosure(final ClassObject classObject, final int extraSize) {
+        return new BlockClosureObject(image, extraSize);
     }
 
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!classObject.isMethodContextClass()", "!classObject.isBlockClosureClass()"})
@@ -106,9 +106,9 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
     }
 
     @Specialization(guards = {"classObject.isWords()", "classObject.isFloatClass()"})
-    protected static final FloatObject doFloat(final ClassObject classObject, final int extraSize) {
+    protected final FloatObject doFloat(final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() + extraSize == 2;
-        return new FloatObject();
+        return new FloatObject(image);
     }
 
     @Specialization(guards = {"classObject.isWords()", "!classObject.isFloatClass()"})

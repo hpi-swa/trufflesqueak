@@ -110,6 +110,7 @@ public final class SqueakImageContext {
     public final SqueakContextOptions options;
 
     /* System */
+    private boolean currentMarkingFlag;
     @CompilationFinal private SqueakDisplayInterface display;
     public final InterruptHandlerState interrupt;
     public final PrimitiveNodeFactory primitiveNodeFactory = new PrimitiveNodeFactory();
@@ -244,10 +245,10 @@ public final class SqueakImageContext {
 
         final AbstractSqueakObjectWithClassAndHash parser = (AbstractSqueakObjectWithClassAndHash) parserClass.send("new");
         final AbstractSqueakObjectWithClassAndHash methodNode = (AbstractSqueakObjectWithClassAndHash) parser.send(
-                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, new BlockClosureObject(0));
+                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, new BlockClosureObject(this, 0));
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
-        final ContextObject doItContext = ContextObject.create(doItMethod.getSqueakContextSize());
+        final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
         doItContext.atput0(CONTEXT.METHOD, doItMethod);
         doItContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) doItMethod.getInitialPC());
         doItContext.atput0(CONTEXT.RECEIVER, nilClass);
@@ -271,6 +272,14 @@ public final class SqueakImageContext {
 
     public SqueakLanguage getLanguage() {
         return language;
+    }
+
+    public boolean getCurrentMarkingFlag() {
+        return currentMarkingFlag;
+    }
+
+    public boolean toggleCurrentMarkingFlag() {
+        return currentMarkingFlag = !currentMarkingFlag;
     }
 
     public NativeObject getDebugErrorSelector() {

@@ -48,7 +48,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
                 seen.add(currentObject);
-                pending.tracePointers(currentObject, currentObject.getSqueakClass(image));
+                pending.tracePointers(currentObject);
             }
         }
         lastSeenObjects = seen.size();
@@ -63,24 +63,22 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
                 pointersBecomeNode.execute(currentObject, fromPointers, toPointers, copyHash);
-                pending.tracePointers(currentObject, currentObject.getSqueakClass(image));
+                pending.tracePointers(currentObject);
             }
         }
     }
 
     @TruffleBoundary
     public Object[] executeAllInstancesOf(final ClassObject classObj) {
-        assert classObj != image.nilClass;
         final ArrayDeque<AbstractSqueakObjectWithHash> result = new ArrayDeque<>();
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
-                final ClassObject squeakClass = currentObject.getSqueakClass(image);
-                if (classObj == squeakClass) {
+                if (classObj == currentObject.getSqueakClass()) {
                     result.add(currentObject);
                 }
-                pending.tracePointers(currentObject, squeakClass);
+                pending.tracePointers(currentObject);
             }
         }
         return result.toArray();
@@ -88,16 +86,14 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
 
     @TruffleBoundary
     public AbstractSqueakObject executeSomeInstanceOf(final ClassObject classObj) {
-        assert classObj != image.nilClass;
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
-                final ClassObject squeakClass = currentObject.getSqueakClass(image);
-                if (classObj == squeakClass) {
+                if (classObj == currentObject.getSqueakClass()) {
                     return currentObject;
                 }
-                pending.tracePointers(currentObject, squeakClass);
+                pending.tracePointers(currentObject);
             }
         }
         return NilObject.SINGLETON;
@@ -112,7 +108,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
 
         private ObjectTracer(final SqueakImageContext image) {
             // Flip the marking flag
-            currentMarkingFlag = !image.specialObjectsArray.getMarkingFlag();
+            currentMarkingFlag = image.toggleCurrentMarkingFlag();
             // Add roots
             addIfUnmarked(image.specialObjectsArray);
             addObjectsFromTruffleFrames();
@@ -129,12 +125,8 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                     addIfUnmarked(argument);
                 }
                 final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
-
                 final FrameDescriptor frameDescriptor = blockOrMethod.getFrameDescriptor();
-                final ContextObject context = FrameAccess.getContext(current, blockOrMethod);
-                if (context != null) {
-                    addIfUnmarked(context);
-                }
+                addIfUnmarked(FrameAccess.getContext(current, blockOrMethod));
                 final FrameSlot[] stackSlots = blockOrMethod.getStackSlotsUnsafe();
                 for (final FrameSlot slot : stackSlots) {
                     if (slot == null) {
@@ -171,8 +163,8 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
             return deque.pollFirst();
         }
 
-        private void tracePointers(final AbstractSqueakObjectWithHash object, final ClassObject squeakClass) {
-            addIfUnmarked(squeakClass);
+        private void tracePointers(final AbstractSqueakObjectWithHash object) {
+            addIfUnmarked(object.getSqueakClass());
             if (object instanceof ClassObject) {
                 ((ClassObject) object).traceObjects(this);
             } else if (object instanceof BlockClosureObject) {

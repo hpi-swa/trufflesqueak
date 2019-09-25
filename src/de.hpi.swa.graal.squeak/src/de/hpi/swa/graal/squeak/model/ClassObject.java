@@ -62,7 +62,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     private ClassObject(final ClassObject original, final ArrayObject copiedInstanceVariablesOrNull) {
-        this(original.image, original.getSqueakClass(), original.pointers.clone());
+        super(original);
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
         methodDict = original.methodDict.shallowCopy();

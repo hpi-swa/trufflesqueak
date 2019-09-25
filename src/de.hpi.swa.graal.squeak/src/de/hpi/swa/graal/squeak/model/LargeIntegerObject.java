@@ -52,7 +52,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private LargeIntegerObject(final LargeIntegerObject original) {
-        super(original.image, original.getSqueakClass());
+        super(original);
         exposedSize = original.exposedSize;
         integer = original.integer;
     }

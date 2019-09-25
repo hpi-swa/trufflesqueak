@@ -53,6 +53,11 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         this.storage = storage;
     }
 
+    private NativeObject(final NativeObject original, final Object storageCopy) {
+        super(original);
+        storage = storageCopy;
+    }
+
     public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
         return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getBytes());
     }
@@ -137,6 +142,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         final Object otherStorage = other.storage;
         other.setStorage(storage);
         setStorage(otherStorage);
+    }
+
+    public NativeObject shallowCopy(final Object storageCopy) {
+        return new NativeObject(this, storageCopy);
     }
 
     public void convertToBytesStorage(final byte[] bytes) {

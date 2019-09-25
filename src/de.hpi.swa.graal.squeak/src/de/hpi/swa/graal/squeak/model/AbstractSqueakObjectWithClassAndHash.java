@@ -8,7 +8,7 @@ import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObjectWithImage {
+public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObjectWithHash {
     private ClassObject squeakClass;
 
     // For special/well-known objects only.
@@ -33,6 +33,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakClass = klass;
     }
 
+    public AbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash original) {
+        super(original);
+        squeakClass = original.squeakClass;
+    }
+
     public final void becomeOtherClass(final AbstractSqueakObjectWithClassAndHash other) {
         final ClassObject otherSqClass = other.squeakClass;
         other.setSqueakClass(squeakClass);
@@ -40,10 +45,6 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     @Override
-    public final ClassObject getSqueakClass(final SqueakImageContext ignored) {
-        return squeakClass;
-    }
-
     public final ClassObject getSqueakClass() {
         return squeakClass;
     }

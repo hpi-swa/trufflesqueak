@@ -20,6 +20,11 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         super(image, hash, sqClass);
     }
 
+    public AbstractPointersObject(final AbstractPointersObject original) {
+        super(original);
+        pointers = original.getPointers().clone();
+    }
+
     public final Object getPointer(final int index) {
         return pointers[index];
     }

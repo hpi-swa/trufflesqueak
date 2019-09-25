@@ -17,22 +17,22 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
 
     private double doubleValue;
 
-    public FloatObject() {
-        super();
+    public FloatObject(final SqueakImageContext image) {
+        super(image);
     }
 
     private FloatObject(final FloatObject original) {
-        super();
+        super(original);
         doubleValue = original.doubleValue;
     }
 
-    public FloatObject(final double doubleValue) {
-        super();
+    public FloatObject(final SqueakImageContext image, final double doubleValue) {
+        super(image);
         this.doubleValue = doubleValue;
     }
 
     @Override
-    public ClassObject getSqueakClass(final SqueakImageContext image) {
+    public ClassObject getSqueakClass() {
         return image.floatClass;
     }
 
@@ -41,18 +41,14 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         // Nothing to do.
     }
 
-    public static Object boxIfNecessary(final double value) {
-        return Double.isFinite(value) ? value : new FloatObject(value);
+    public static FloatObject valueOf(final SqueakImageContext image, final double value) {
+        return new FloatObject(image, value);
     }
 
-    public static FloatObject valueOf(final double value) {
-        return new FloatObject(value);
-    }
-
-    public static Object newFromChunkWords(final int[] ints) {
+    public static Object newFromChunkWords(final SqueakImageContext image, final int[] ints) {
         assert ints.length == 2 : "Unexpected number of int values for double conversion";
         final double value = Double.longBitsToDouble(Integer.toUnsignedLong(ints[1]) << 32 | Integer.toUnsignedLong(ints[0]));
-        return boxIfNecessary(value);
+        return Double.isFinite(value) ? value : new FloatObject(image, value);
     }
 
     public long getHigh() {

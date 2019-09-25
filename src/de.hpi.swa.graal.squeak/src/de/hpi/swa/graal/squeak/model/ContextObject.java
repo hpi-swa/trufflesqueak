@@ -32,19 +32,19 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     private boolean hasModifiedSender = false;
     private boolean escaped = false;
 
-    private ContextObject(final long hash) {
-        super(hash);
+    private ContextObject(final SqueakImageContext image, final long hash) {
+        super(image, hash);
         truffleFrame = null;
     }
 
-    private ContextObject(final int size) {
-        super();
+    private ContextObject(final SqueakImageContext image, final int size) {
+        super(image);
         truffleFrame = null;
         this.size = size;
     }
 
-    private ContextObject(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        super();
+    private ContextObject(final SqueakImageContext image, final Frame frame, final CompiledCodeObject blockOrMethod) {
+        super(image);
         assert FrameAccess.getSender(frame) != null;
         assert FrameAccess.getContext(frame, blockOrMethod) == null;
         truffleFrame = frame.materialize();
@@ -53,7 +53,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     private ContextObject(final ContextObject original) {
-        super();
+        super(original);
         final CompiledCodeObject code = FrameAccess.getBlockOrMethod(original.truffleFrame);
         hasModifiedSender = original.hasModifiedSender();
         escaped = original.escaped;
@@ -78,12 +78,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
     }
 
-    public static ContextObject create(final int size) {
-        return new ContextObject(size);
+    public static ContextObject create(final SqueakImageContext image, final int size) {
+        return new ContextObject(image, size);
     }
 
-    public static ContextObject createWithHash(final long hash) {
-        return new ContextObject(hash);
+    public static ContextObject createWithHash(final SqueakImageContext image, final long hash) {
+        return new ContextObject(image, hash);
     }
 
     public static ContextObject create(final FrameInstance frameInstance) {
@@ -92,11 +92,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public static ContextObject create(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        return new ContextObject(frame, blockOrMethod);
+        return new ContextObject(blockOrMethod.image, frame, blockOrMethod);
     }
 
     @Override
-    public ClassObject getSqueakClass(final SqueakImageContext image) {
+    public ClassObject getSqueakClass() {
         return image.methodContextClass;
     }
 

@@ -28,8 +28,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     private PointersObject(final PointersObject original) {
-        super(original.image, original.getSqueakClass());
-        setPointersUnsafe(original.getPointers().clone());
+        super(original);
     }
 
     @Override

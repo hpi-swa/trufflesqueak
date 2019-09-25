@@ -9,23 +9,34 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
     private static final int PINNED_BIT_SHIFT = 30;
     private static final int PINNED_BIT_MASK = 1 << PINNED_BIT_SHIFT;
 
+    public final SqueakImageContext image;
     private long squeakHash;
     private boolean markingFlag;
 
     // For special/well-known objects only.
-    protected AbstractSqueakObjectWithHash() {
+    protected AbstractSqueakObjectWithHash(final SqueakImageContext image) {
+        this.image = image;
+        squeakHash = HASH_UNINITIALIZED;
+        markingFlag = image.getCurrentMarkingFlag();
+    }
+
+    protected AbstractSqueakObjectWithHash(final SqueakImageContext image, final long hash) {
+        this.image = image;
+        // TODO: Generate new hash if `0`. This might have something to do with compact classes?
+        squeakHash = hash != 0 ? hash : HASH_UNINITIALIZED;
+        markingFlag = image.getCurrentMarkingFlag();
+    }
+
+    protected AbstractSqueakObjectWithHash(final AbstractSqueakObjectWithHash original) {
+        image = original.image;
+        markingFlag = original.markingFlag;
         squeakHash = HASH_UNINITIALIZED;
     }
 
-    protected AbstractSqueakObjectWithHash(final long hash) {
-        // TODO: Generate new hash if `0`. This might have something to do with compact classes?
-        squeakHash = hash != 0 ? hash : HASH_UNINITIALIZED;
-    }
+    public abstract ClassObject getSqueakClass();
 
-    public abstract ClassObject getSqueakClass(SqueakImageContext image);
-
-    public final boolean needsSqueakClass(final SqueakImageContext image) {
-        return getSqueakClass(image) == null;
+    public final boolean needsSqueakClass() {
+        return getSqueakClass() == null;
     }
 
     public void setSqueakClass(@SuppressWarnings("unused") final ClassObject classObject) {

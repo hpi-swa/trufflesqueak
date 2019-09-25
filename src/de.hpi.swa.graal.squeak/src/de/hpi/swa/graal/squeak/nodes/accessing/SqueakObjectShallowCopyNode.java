@@ -19,6 +19,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectShallowCopyNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectShallowCopyNode;
 
 public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage {
 
@@ -93,24 +94,10 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage 
         return receiver.shallowCopy();
     }
 
-    @Specialization(guards = "receiver.isByteType()")
-    protected static final NativeObject doNativeBytes(final NativeObject receiver) {
-        return NativeObject.newNativeBytes(receiver.image, receiver.getSqueakClass(), receiver.getByteStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isShortType()")
-    protected static final NativeObject doNativeShorts(final NativeObject receiver) {
-        return NativeObject.newNativeShorts(receiver.image, receiver.getSqueakClass(), receiver.getShortStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isIntType()")
-    protected static final NativeObject doNativeInts(final NativeObject receiver) {
-        return NativeObject.newNativeInts(receiver.image, receiver.getSqueakClass(), receiver.getIntStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isLongType()")
-    protected static final NativeObject doNativeLongs(final NativeObject receiver) {
-        return NativeObject.newNativeLongs(receiver.image, receiver.getSqueakClass(), receiver.getLongStorage().clone());
+    @Specialization
+    protected static final NativeObject doNative(final NativeObject receiver,
+                    @Cached final NativeObjectShallowCopyNode copyNode) {
+        return copyNode.execute(receiver);
     }
 
     @Specialization(guards = "!receiver.hasInstanceVariables()")

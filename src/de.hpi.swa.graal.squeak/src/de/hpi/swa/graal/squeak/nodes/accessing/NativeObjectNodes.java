@@ -224,4 +224,30 @@ public final class NativeObjectNodes {
             return ArrayConversionUtils.bytesFromLongs(obj.getLongStorage());
         }
     }
+
+    @GenerateUncached
+    public abstract static class NativeObjectShallowCopyNode extends AbstractNode {
+
+        public abstract NativeObject execute(NativeObject obj);
+
+        @Specialization(guards = "obj.isByteType()")
+        protected static final NativeObject doNativeBytes(final NativeObject obj) {
+            return obj.shallowCopy(obj.getByteStorage().clone());
+        }
+
+        @Specialization(guards = "obj.isShortType()")
+        protected static final NativeObject doNativeShorts(final NativeObject obj) {
+            return obj.shallowCopy(obj.getShortStorage().clone());
+        }
+
+        @Specialization(guards = "obj.isIntType()")
+        protected static final NativeObject doNativeInts(final NativeObject obj) {
+            return obj.shallowCopy(obj.getIntStorage().clone());
+        }
+
+        @Specialization(guards = "obj.isLongType()")
+        protected static final NativeObject doNativeLongs(final NativeObject obj) {
+            return obj.shallowCopy(obj.getLongStorage().clone());
+        }
+    }
 }

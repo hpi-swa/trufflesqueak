@@ -14,7 +14,7 @@ public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     private EmptyObject(final EmptyObject original) {
-        super(original.image, original.getSqueakClass());
+        super(original);
     }
 
     @Override

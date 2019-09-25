@@ -105,37 +105,37 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isEmptyType()")
         protected static final ArrayObject doEmptyArray(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getEmptyStorage());
+            return obj.shallowCopy(obj.getEmptyStorage());
         }
 
         @Specialization(guards = "obj.isBooleanType()")
         protected static final ArrayObject doArrayOfBooleans(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getBooleanStorage().clone());
+            return obj.shallowCopy(obj.getBooleanStorage().clone());
         }
 
         @Specialization(guards = "obj.isCharType()")
         protected static final ArrayObject doArrayOfChars(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getCharStorage().clone());
+            return obj.shallowCopy(obj.getCharStorage().clone());
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final ArrayObject doArrayOfLongs(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getLongStorage().clone());
+            return obj.shallowCopy(obj.getLongStorage().clone());
         }
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final ArrayObject doArrayOfDoubles(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getDoubleStorage().clone());
+            return obj.shallowCopy(obj.getDoubleStorage().clone());
         }
 
         @Specialization(guards = "obj.isNativeObjectType()")
         protected static final ArrayObject doArrayOfNatives(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getNativeObjectStorage().clone());
+            return obj.shallowCopy(obj.getNativeObjectStorage().clone());
         }
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final ArrayObject doArrayOfObjects(final ArrayObject obj) {
-            return ArrayObject.createWithStorage(obj.image, obj.getSqueakClass(), obj.getObjectStorage().clone());
+            return obj.shallowCopy(obj.getObjectStorage().clone());
         }
     }
 

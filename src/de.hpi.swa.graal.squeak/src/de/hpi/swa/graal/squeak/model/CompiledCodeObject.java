@@ -31,7 +31,7 @@ import de.hpi.swa.graal.squeak.util.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @ExportLibrary(InteropLibrary.class)
-public abstract class CompiledCodeObject extends AbstractSqueakObjectWithImage {
+public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal(dimensions = 1) private static final int[] HEADER_SPLIT_PATTERN = new int[]{15, 1, 1, 1, 6, 4, 2, 1};
 
     public enum SLOT_IDENTIFIER {
@@ -80,7 +80,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithImage {
     }
 
     protected CompiledCodeObject(final CompiledCodeObject original) {
-        super(original.image);
+        super(original);
         numCopiedValues = original.numCopiedValues;
         frameDescriptor = original.frameDescriptor;
         thisMarkerSlot = original.thisMarkerSlot;
@@ -213,7 +213,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithImage {
     }
 
     @Override
-    public ClassObject getSqueakClass(final SqueakImageContext ignored) {
+    public ClassObject getSqueakClass() {
         return image.compiledMethodClass;
     }
 
