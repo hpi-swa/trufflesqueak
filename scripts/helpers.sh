@@ -4,7 +4,6 @@ readonly DEFAULT_GIT_TAG="0.9.0"
 readonly IMAGE32_NAME="GraalSqueakTestImage-18699-32bit.zip"
 readonly IMAGE64_NAME="GraalSqueakTestImage-18699-64bit.zip"
 readonly GITHUB_SLUG="hpi-swa-lab/graalsqueak"
-readonly MX_GIT="https://github.com/graalvm/mx.git"
 
 
 if [[ -z "${BASE_DIRECTORY}" ]]; then
@@ -12,35 +11,6 @@ if [[ -z "${BASE_DIRECTORY}" ]]; then
   echo "This file is intended to be included in other scripts!" 1>&2
   exit
 fi
-readonly MX_PATH="${BASE_DIRECTORY}/../mx"
-
-locate_mx() {
-  local mx_exec="mx"
-
-  if [[ ! $(which "${mx_exec}" 2> /dev/null) ]]; then
-    if [[ ! -d "${MX_PATH}" ]]; then
-      read -p "mx not found. Would you like to clone it now? (y/N): " user_input
-      if [[ "${user_input}" = "y" ]]; then
-        pushd "${BASE_DIRECTORY}" > /dev/null
-        git clone "${MX_GIT}" "${MX_PATH}"
-        popd > /dev/null
-      else
-        exit 1
-      fi
-    fi
-    mx_exec="${MX_PATH}/${mx_exec}"
-  fi
-  echo "${mx_exec}"
-}
-
-get_mx_parameters() {
-  local mx_parameters=""
-
-  if [[ "$@" == *"-v "* ]]; then  # enable mx's verbose mode, too.
-    mx_parameters+="-v"
-  fi
-  echo "${mx_parameters}"
-}
 
 get_assert_id() {
   local filename=$1
