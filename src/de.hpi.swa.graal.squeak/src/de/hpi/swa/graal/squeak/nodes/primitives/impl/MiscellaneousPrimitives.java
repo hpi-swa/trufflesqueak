@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+ *
+ * Licensed under the MIT License.
+ */
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.io.File;

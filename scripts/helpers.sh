@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+#
+# Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+#
+# Licensed under the MIT License.
+#
 
 readonly DEFAULT_GIT_TAG="0.9.0"
 readonly IMAGE32_NAME="GraalSqueakTestImage-18699-32bit.zip"
