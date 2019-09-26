@@ -34,6 +34,7 @@ BASE_VM_ARGS_TESTING = [
 ]
 SVM_BINARY = 'graalsqueak-svm'
 SVM_TARGET = os.path.join('bin', SVM_BINARY)
+SVM_TARGET_DIR = os.path.join(BASE_DIR, 'bin')
 
 _suite = mx.suite('graalsqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
@@ -421,6 +422,8 @@ def _squeak_svm(args):
          '%s.image' % SVM_BINARY],
         nonZeroIsFatal=True
     )
+    if not os.path.isdir(SVM_TARGET_DIR):
+        os.mkdir(SVM_TARGET_DIR)
     shutil.copy(_get_svm_binary_from_graalvm(), _get_svm_binary())
     print 'GraalSqueak binary now available at "%s".' % _get_svm_binary()
 
