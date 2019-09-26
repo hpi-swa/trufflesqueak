@@ -5,23 +5,43 @@ A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 
 ## Getting Started
 
-1. Clone or download GraalSqueak.
-2. Download the latest [GraalVM][graalvm_download] for your platform.
-3. Ensure your `JAVA_HOME` environment variable is unset or set it to your
-   GraalVM's home directory.
-4. Run [`bin/graalsqueak`][graalsqueak] to build and start GraalSqueak with
-   [mx] on the GraalVM.
-5. Open a recent [Squeak/Smalltalk image][squeak_downloads] (Squeak-5.2 or later).
+1. Find the [latest GraalSqueak release][graalsqueak_latest] and identify the
+   supported version of GraalVM.
+2. Download the corresponding [GraalVM][graalvm_download] for your platform.
+3. Install the pre-compiled GraalSqueak component attached to the release with
+   the GraalVM Updater:
 
-To list all available options, run `bin/graalsqueak -h`.
+```bash
+$GRAALVM_HOME/bin/gu install \
+  -u https://github.com/hpi-swa-lab/graalsqueak/releases/download/X.Y.Z/graalsqueak-component-X.Y.Z.jar
+```
+
+4. You should now be able to open a recent
+   [Squeak/Smalltalk image][squeak_downloads] (Squeak-5.2 or later):
+
+```bash
+$GRAALVM_HOME/bin/graalsqueak path/to/a/squeaksmalltalk.image
+```
 
 
 ## Development
 
-Active development is done on the [`dev` branch][dev] and new code is merged to
-[`master`][master] when stable.
+Active development is done on the [`dev` branch][dev], which is merged to
+[`master`][master] for new releases.
 Therefore, please open pull requests against [`dev`][dev] if you like to
 contribute a bugfix or a new feature.
+
+
+### Building from Source
+
+The [mx] tool is required to build GraalSqueak.
+Running `mx build` in GraalSqueak's root directory checks out all dependencies
+and builds all JAR files for running and testing GraalSqueak.
+It can also be used to run GraalSqueak via the `mx squeak` command.
+As an example, `mx --dy /compiler squeak path/to/a/squeaksmalltalk.image` opens
+the image and enables the Graal compiler.
+Run `mx squeak --help` and `mx --help` to list all command-line flags you can
+run GraalSqueak with.
 
 
 ### Setting Up A New Development Environment
@@ -35,10 +55,7 @@ It is recommended to use [Eclipse][eclipse_downloads] with the
    already cloned into the parent directory of your GraalSqueak checkout during
    the build process.
 3. Import all projects from GraalSqueak's root directory.
-4. Launch [`GraalSqueakLauncher`][graalsqueak_launcher] to start GraalSqueak.
-
-Run `mx --help` and `mx squeak --help` to list all commands that may help you
-develop GraalSqueak.
+4. Run [`GraalSqueakLauncher`][graalsqueak_launcher] to start GraalSqueak.
 
 
 ## Contributing
@@ -93,8 +110,8 @@ Amsterdam, Netherlands, July 17, 2018, ACM DL.
 [eclipse_cs]: http://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
 [graal]: https://github.com/oracle/graal
-[graalsqueak]: bin/graalsqueak
 [graalsqueak_launcher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/GraalSqueakLauncher.java
+[graalsqueak_latest]: https://github.com/hpi-swa-lab/graalsqueak/releases/latest
 [graalvm]: http://www.graalvm.org/
 [graalvm_download]: http://www.graalvm.org/downloads/
 [icooolps18]: https://2018.ecoop.org/event/icooolps-2018-papers-graalsqueak-a-fast-smalltalk-bytecode-interpreter-written-in-an-ast-interpreter-framework
@@ -116,7 +133,6 @@ Amsterdam, Netherlands, July 17, 2018, ACM DL.
 [mplr19_pdf]: https://fniephaus.com/2019/mplr19-graalsqueak.pdf
 [mx]: https://github.com/graalvm/mx
 [preprint]: https://img.shields.io/badge/preprint-download-blue.svg
-[programming19]: https://2019.programming-conference.org/
 [pull_request]: ../../compare/dev...
 [px19]: https://2019.programming-conference.org/track/px-2019-papers
 [px19_bibtex]: https://dl.acm.org/downformats.cfm?id=3328434&parent_id=3328433&expformat=bibtex
@@ -127,4 +143,3 @@ Amsterdam, Netherlands, July 17, 2018, ACM DL.
 [squeak_downloads]: https://squeak.org/downloads/
 [travis]: https://travis-ci.com/hpi-swa-lab/graalsqueak
 [travis_badge]: https://travis-ci.com/hpi-swa-lab/graalsqueak.svg?token=7fqzGEv22MQpvpU7RhK5&branch=master
-[vmmaker]: http://source.squeak.org/VMMaker/
