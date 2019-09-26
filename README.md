@@ -102,6 +102,11 @@ Amsterdam, Netherlands, July 17, 2018, ACM DL.
 [![doi][icooolps18_doi]][icooolps18_paper] [![bibtex][bibtex]][icooolps18_bibtex] [![Preprint][preprint]][icooolps18_pdf]
 
 
+## License
+
+GraalSqueak is released under the [MIT license][graalsqueak_license].
+
+
 [bibtex]: https://img.shields.io/badge/bibtex-download-blue.svg
 [codacy]: https://app.codacy.com/app/fniephaus/graalsqueak/dashboard
 [codacy_coverage]: https://img.shields.io/codacy/coverage/9748bfe3726b48c8973e3808549f6d05.svg
@@ -110,8 +115,9 @@ Amsterdam, Netherlands, July 17, 2018, ACM DL.
 [eclipse_cs]: http://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
 [graal]: https://github.com/oracle/graal
-[graalsqueak_launcher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/GraalSqueakLauncher.java
 [graalsqueak_latest]: https://github.com/hpi-swa-lab/graalsqueak/releases/latest
+[graalsqueak_launcher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/GraalSqueakLauncher.java
+[graalsqueak_license]: LICENSE
 [graalvm]: http://www.graalvm.org/
 [graalvm_download]: http://www.graalvm.org/downloads/
 [icooolps18]: https://2018.ecoop.org/event/icooolps-2018-papers-graalsqueak-a-fast-smalltalk-bytecode-interpreter-written-in-an-ast-interpreter-framework
