@@ -8,7 +8,7 @@
 set -e
 
 readonly LANGUAGE_ID="smalltalk"
-readonly GRAALVM_VERSION="19.1.1"
+readonly GRAALVM_VERSION="19.2.0.1"
 
 readonly BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 readonly COMPONENT_DIR="component_temp_dir"

@@ -5,7 +5,7 @@
 # Licensed under the MIT License.
 #
 
-readonly DEFAULT_GIT_TAG="0.9.0"
+readonly DEFAULT_GIT_TAG="1.0.0-rc1"
 readonly IMAGE32_NAME="GraalSqueakTestImage-18699-32bit.zip"
 readonly IMAGE64_NAME="GraalSqueakTestImage-18699-64bit.zip"
 readonly GITHUB_SLUG="hpi-swa-lab/graalsqueak"
