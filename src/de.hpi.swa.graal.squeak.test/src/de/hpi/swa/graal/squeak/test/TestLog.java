@@ -136,11 +136,9 @@ public final class TestLog {
         }
 
         private static synchronized void end() {
-            if (expectedSelectors.get() > 0) {
-                if (expectedSelectors.decrementAndGet() == 0) {
-                    Travis.get().end();
-                    printAndClearFailures();
-                }
+            if (expectedSelectors.get() > 0 && expectedSelectors.decrementAndGet() == 0) {
+                Travis.get().end();
+                printAndClearFailures();
             }
         }
 

@@ -37,7 +37,7 @@ mkdir -p "${LANGUAGE_PATH}" "${LANGUAGE_PATH}/bin" "${LIB_GRAALVM_PATH}"
 cp "${GRAALSQUEAK_DIR}/graalsqueak.jar" \
 	"${GRAALSQUEAK_DIR}/graalsqueak-shared.jar" \
     "${LANGUAGE_PATH}"
-cp "${BASE_DIR}/template.graalsqueak.sh" "${LANGUAGE_PATH}/bin/graalsqueak"
+cp "${BASE_DIR}/${TEMPLATE_LAUNCHER}" "${LANGUAGE_PATH}/bin/graalsqueak"
 cp "${GRAALSQUEAK_DIR}/graalsqueak-launcher.jar" "$LIB_GRAALVM_PATH"
 
 mkdir -p "${COMPONENT_DIR}/META-INF"
