@@ -13,7 +13,7 @@ A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 
 ```bash
 $GRAALVM_HOME/bin/gu install \
-  -u https://github.com/hpi-swa-lab/graalsqueak/releases/download/X.Y.Z/graalsqueak-component-X.Y.Z.jar
+  -u https://github.com/hpi-swa/graalsqueak/releases/download/X.Y.Z/graalsqueak-component-X.Y.Z.jar
 ```
 
 4. You should now be able to open a recent
@@ -115,7 +115,7 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [eclipse_cs]: http://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
 [graal]: https://github.com/oracle/graal
-[graalsqueak_latest]: https://github.com/hpi-swa-lab/graalsqueak/releases/latest
+[graalsqueak_latest]: https://github.com/hpi-swa/graalsqueak/releases/latest
 [graalsqueak_launcher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/GraalSqueakLauncher.java
 [graalsqueak_license]: LICENSE
 [graalvm]: http://www.graalvm.org/
@@ -147,5 +147,5 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [px19_pdf]: https://fniephaus.com/2019/px19-polyglot-notebooks.pdf
 [squeak]: https://squeak.org
 [squeak_downloads]: https://squeak.org/downloads/
-[travis]: https://travis-ci.com/hpi-swa-lab/graalsqueak
-[travis_badge]: https://travis-ci.com/hpi-swa-lab/graalsqueak.svg?token=7fqzGEv22MQpvpU7RhK5&branch=master
+[travis]: https://travis-ci.org/hpi-swa/graalsqueak
+[travis_badge]: https://travis-ci.org/hpi-swa/graalsqueak.svg

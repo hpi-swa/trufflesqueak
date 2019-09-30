@@ -16,7 +16,7 @@ suite = {
     "version": "19.2.0.1",
     "release": False,
     "groupId": "de.hpi.swa.graal.squeak",
-    "url": "https://github.com/hpi-swa-lab/graalsqueak/",
+    "url": "https://github.com/hpi-swa/graalsqueak/",
 
     "developer": {
         "name": "Fabio Niephaus and contributors",
@@ -26,9 +26,9 @@ suite = {
     },
 
     "scm": {
-        "url": "https://github.com/hpi-swa-lab/graalsqueak/",
-        "read": "https://github.com/hpi-swa-lab/graalsqueak.git",
-        "write": "git@github.com:hpi-swa-lab/graalsqueak.git",
+        "url": "https://github.com/hpi-swa/graalsqueak/",
+        "read": "https://github.com/hpi-swa/graalsqueak.git",
+        "write": "git@github.com:hpi-swa/graalsqueak.git",
     },
 
     # ==========================================================================
