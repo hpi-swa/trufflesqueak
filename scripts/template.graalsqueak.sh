@@ -7,7 +7,7 @@
 
 set -e
 
-readonly VERSION="19.1.1"
+readonly VERSION="19.2.0.1"
 
 readonly MAIN_CLASS="de.hpi.swa.graal.squeak.launcher.GraalSqueakLauncher"
 readonly SCRIPT_HOME="$(cd "$(dirname "$0")" && pwd -P)"
