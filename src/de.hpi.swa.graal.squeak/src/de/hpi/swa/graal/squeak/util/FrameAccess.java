@@ -219,27 +219,19 @@ public final class FrameAccess {
         assert frame.getFrameDescriptor().getSlots().contains(frameSlot);
         final FrameSlotKind frameSlotKind = frameDescriptor.getFrameSlotKind(frameSlot);
         final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
-        if (value instanceof Boolean) {
-            if (isIllegal || frameSlotKind == FrameSlotKind.Boolean) {
-                frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Boolean);
-                frame.setBoolean(frameSlot, (boolean) value);
-                return;
-            }
-        } else if (value instanceof Long) {
-            if (isIllegal || frameSlotKind == FrameSlotKind.Long) {
-                frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Long);
-                frame.setLong(frameSlot, (long) value);
-                return;
-            }
-        } else if (value instanceof Double) {
-            if (isIllegal || frameSlotKind == FrameSlotKind.Double) {
-                frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Double);
-                frame.setDouble(frameSlot, (double) value);
-                return;
-            }
+        if (value instanceof Boolean && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
+            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Boolean);
+            frame.setBoolean(frameSlot, (boolean) value);
+        } else if (value instanceof Long && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
+            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Long);
+            frame.setLong(frameSlot, (long) value);
+        } else if (value instanceof Double && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
+            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Double);
+            frame.setDouble(frameSlot, (double) value);
+        } else {
+            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Object);
+            frame.setObject(frameSlot, value);
         }
-        frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Object);
-        frame.setObject(frameSlot, value);
     }
 
     public static void terminate(final Frame frame, final CompiledCodeObject blockOrMethod) {
