@@ -37,8 +37,8 @@ ensure_test_image_32bit() {
 
   download_assert "${IMAGE32_NAME}"
   unzip "${IMAGE32_NAME}"
-  mv *.image test-32bit.image
-  mv *.changes test-32bit.changes
+  mv ./*.image test-32bit.image
+  mv ./*.changes test-32bit.changes
 
   popd > /dev/null
 }
@@ -55,8 +55,8 @@ ensure_test_image_64bit() {
 
   download_assert "${IMAGE64_NAME}"
   unzip "${IMAGE64_NAME}"
-  mv *.image test-64bit.image
-  mv *.changes test-64bit.changes
+  mv ./*.image test-64bit.image
+  mv ./*.changes test-64bit.changes
 
   popd > /dev/null
 }
