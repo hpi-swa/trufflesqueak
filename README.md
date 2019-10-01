@@ -1,4 +1,4 @@
-# GraalSqueak [![Build Status][travis_badge]][travis] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy]
+# GraalSqueak [![Latest Release][graalsqueak_latest_badge]][graalsqueak_latest] [![Build Status][travis_badge]][travis] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy]  [![License][graalsqueak_license_badge]][graalsqueak_license]
 
 A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 
@@ -106,18 +106,19 @@ Amsterdam, Netherlands, July 17, 2018, ACM DL.
 
 GraalSqueak is released under the [MIT license][graalsqueak_license].
 
-
 [bibtex]: https://img.shields.io/badge/bibtex-download-blue.svg
 [codacy]: https://app.codacy.com/app/fniephaus/graalsqueak/dashboard
-[codacy_coverage]: https://img.shields.io/codacy/coverage/9748bfe3726b48c8973e3808549f6d05.svg
-[codacy_grade]: https://img.shields.io/codacy/grade/9748bfe3726b48c8973e3808549f6d05.svg
+[codacy_coverage]: https://img.shields.io/codacy/coverage/104b3300600346789d604fd269219efe.svg
+[codacy_grade]: https://img.shields.io/codacy/grade/104b3300600346789d604fd269219efe.svg
 [dev]: ../../tree/dev
 [eclipse_cs]: http://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
 [graal]: https://github.com/oracle/graal
 [graalsqueak_latest]: https://github.com/hpi-swa/graalsqueak/releases/latest
+[graalsqueak_latest_badge]: https://img.shields.io/github/v/release/hpi-swa/graalsqueak
 [graalsqueak_launcher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/GraalSqueakLauncher.java
 [graalsqueak_license]: LICENSE
+[graalsqueak_license_badge]: https://img.shields.io/github/license/hpi-swa/graalsqueak
 [graalvm]: http://www.graalvm.org/
 [graalvm_download]: http://www.graalvm.org/downloads/
 [icooolps18]: https://2018.ecoop.org/event/icooolps-2018-papers-graalsqueak-a-fast-smalltalk-bytecode-interpreter-written-in-an-ast-interpreter-framework
