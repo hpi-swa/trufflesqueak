@@ -29,7 +29,6 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
-    private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
     public static final long IMAGE_32BIT_VERSION = 6521;
     public static final long IMAGE_64BIT_VERSION = 68021;
     private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
@@ -212,7 +211,7 @@ public final class SqueakImageReader {
         while (position < segmentEnd) {
             while (position < segmentEnd - 16) {
                 final SqueakImageChunk chunk = readObject();
-                if (chunk.classid != FREE_OBJECT_CLASS_INDEX_PUN) {
+                if (chunk.classIndex != FREE_OBJECT_CLASS_INDEX_PUN) {
                     putChunk(chunk);
                 }
             }
@@ -254,38 +253,34 @@ public final class SqueakImageReader {
         int pos = position;
         assert pos % 8 == 0 : "every object must be 64-bit aligned: " + pos % 8;
         long headerWord = nextLong();
-        // 22 2 5 3 22 2 8
-        // classid _ format _ hash _ size
-        int[] splitHeader = MiscUtils.bitSplitter(headerWord, CHUNK_HEADER_BIT_PATTERN);
-        int size = splitHeader[6];
+        int size = ObjectHeaderDecoder.getNumSlots(headerWord);
         if (size == OVERFLOW_SLOTS) {
             size = (int) (headerWord & ~SLOTS_MASK);
             pos = position;
             headerWord = nextLong();
-            splitHeader = MiscUtils.bitSplitter(headerWord, CHUNK_HEADER_BIT_PATTERN);
-            assert splitHeader[6] == OVERFLOW_SLOTS : "Objects with long header must have 255 in slot count";
+            assert ObjectHeaderDecoder.getNumSlots(headerWord) == OVERFLOW_SLOTS : "Objects with long header must have 255 in slot count";
         }
-        final int classid = splitHeader[0];
-        final int format = splitHeader[2];
-        final int hash = splitHeader[4];
+        final int classIndex = ObjectHeaderDecoder.getClassIndex(headerWord);
+        final int format = ObjectHeaderDecoder.getFormat(headerWord);
+        final int hash = ObjectHeaderDecoder.getHash(headerWord);
         assert size >= 0 : "Negative object size";
         assert 0 <= format && format <= 31 : "Unexpected format";
-        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextBytes(size * wordSize), format, classid, hash, pos);
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextBytes(size * wordSize), format, classIndex, hash, pos);
         final int wordsFor = wordsFor(size);
         if (wordsFor > size * wordSize) {
             skipBytes(wordsFor - size * wordSize); // skip trailing alignment words
         }
-        assert format != 0 || classid == 0 || size == 0 : "Empty objects must not have slots";
-        assert checkAddressIntegrity(classid, format, chunk);
+        assert format != 0 || classIndex == 0 || size == 0 : "Empty objects must not have slots";
+        assert checkAddressIntegrity(classIndex, format, chunk);
         return chunk;
     }
 
-    private boolean checkAddressIntegrity(final int classid, final int format, final SqueakImageChunk chunk) {
+    private boolean checkAddressIntegrity(final int classIndex, final int format, final SqueakImageChunk chunk) {
         if (is64bit) {
             return true; // FIXME: temporarily disabled for 64bit.
         }
         boolean result = true;
-        if (format < 10 && classid != FREE_OBJECT_CLASS_INDEX_PUN) {
+        if (format < 10 && classIndex != FREE_OBJECT_CLASS_INDEX_PUN) {
             for (final long slot : chunk.getWords()) {
                 result &= slot % 16 != 0 || slot >= oldBaseAddress;
             }
@@ -481,5 +476,36 @@ public final class SqueakImageReader {
 
     public SqueakImageChunk getChunk(final long ptr) {
         return chunktable.get(ptr);
+    }
+
+    /**
+     * Object Header Specification (see SpurMemoryManager).
+     *
+     * <pre>
+     *  MSB:  | 8: numSlots       | (on a byte boundary)
+     *        | 2 bits            |   (msb,lsb = {isMarked,?})
+     *        | 22: identityHash  | (on a word boundary)
+     *        | 3 bits            |   (msb <-> lsb = {isGrey,isPinned,isRemembered}
+     *        | 5: format         | (on a byte boundary)
+     *        | 2 bits            |   (msb,lsb = {isImmutable,?})
+     *        | 22: classIndex    | (on a word boundary) : LSB
+     * </pre>
+     */
+    private static final class ObjectHeaderDecoder {
+        private static int getClassIndex(final long headerWord) {
+            return MiscUtils.bitSplit(headerWord, 0, 22);
+        }
+
+        private static int getFormat(final long headerWord) {
+            return MiscUtils.bitSplit(headerWord, 24, 5);
+        }
+
+        private static int getHash(final long headerWord) {
+            return MiscUtils.bitSplit(headerWord, 32, 22);
+        }
+
+        private static int getNumSlots(final long headerWord) {
+            return MiscUtils.bitSplit(headerWord, 56, 8);
+        }
     }
 }

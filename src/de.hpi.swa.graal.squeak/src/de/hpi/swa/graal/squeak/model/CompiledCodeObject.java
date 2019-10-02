@@ -245,21 +245,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     protected final void decodeHeader() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final int header = getHeader();
-        final int[] splitHeader = MiscUtils.bitSplitter(header, HEADER_SPLIT_PATTERN);
-        numLiterals = splitHeader[0];
-        hasPrimitive = splitHeader[2] == 1;
-        needsLargeFrame = splitHeader[3] == 1;
-        numTemps = splitHeader[4];
-        numArgs = splitHeader[5];
-        /** Jit without counters - reserved for methods that have been optimized by Sista. */
-        // isOptimized = splitHeader[1] == 1;
-        /**
-         * reserved for an access modifier (00-unused, 01-private, 10-protected, 11-public),
-         * although accessors for bit 29 exist (see #flag).
-         */
-        // accessModifier = splitHeader[6];
-        /** selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag). */
-        // altInstructionSet = splitHeader[7] == 1;
+        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
+        hasPrimitive = CompiledCodeHeaderDecoder.getHasPrimitive(header);
+        needsLargeFrame = CompiledCodeHeaderDecoder.getNeedsLargeFrame(header);
+        numTemps = CompiledCodeHeaderDecoder.getNumTemps(header);
+        numArgs = CompiledCodeHeaderDecoder.getNumArguments(header);
         ensureCorrectNumberOfStackSlots();
     }
 
@@ -431,6 +421,42 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
             literals[(int) index] = wrapNode.executeWrap(value);
         } else {
             throw InvalidArrayIndexException.create(index);
+        }
+    }
+
+    /**
+     * CompiledCode Header Specification.
+     *
+     * <pre>
+     *   (index 0)      15 bits:   number of literals (#numLiterals)
+     *   (index 15)      1 bit:    jit without counters - reserved for methods that have been optimized by Sista
+     *   (index 16)      1 bit:    has primitive
+     *   (index 17)      1 bit:    whether a large frame size is needed (#frameSize => either SmallFrame or LargeFrame)
+     *   (index 18)      6 bits:   number of temporary variables (#numTemps)
+     *   (index 24)      4 bits:   number of arguments to the method (#numArgs)
+     *   (index 28)      2 bits:   reserved for an access modifier (00-unused, 01-private, 10-protected, 11-public), although accessors for bit 29 exist (see #flag).
+     *   sign bit:       1 bit:    selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag)
+     * </pre>
+     */
+    private static final class CompiledCodeHeaderDecoder {
+        private static int getNumLiterals(final long headerWord) {
+            return MiscUtils.bitSplit(headerWord, 0, 15);
+        }
+
+        private static boolean getHasPrimitive(final long headerWord) {
+            return (headerWord & 1 << 16) != 0;
+        }
+
+        private static boolean getNeedsLargeFrame(final long headerWord) {
+            return (headerWord & 1 << 17) != 0;
+        }
+
+        private static int getNumTemps(final long headerWord) {
+            return MiscUtils.bitSplit(headerWord, 18, 6);
+        }
+
+        private static int getNumArguments(final long headerWord) {
+            return MiscUtils.bitSplit(headerWord, 24, 4);
         }
     }
 }

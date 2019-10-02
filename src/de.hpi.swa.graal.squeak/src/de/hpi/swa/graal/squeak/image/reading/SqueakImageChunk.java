@@ -34,7 +34,7 @@ public final class SqueakImageChunk {
     private ClassObject sqClass;
     private Object[] pointers;
 
-    protected final int classid;
+    protected final int classIndex;
     protected final int pos;
 
     public final SqueakImageContext image;
@@ -48,13 +48,13 @@ public final class SqueakImageChunk {
                     final SqueakImageContext image,
                     final byte[] data,
                     final int format,
-                    final int classid,
+                    final int classIndex,
                     final int hash,
                     final int pos) {
         this.reader = reader;
         this.image = image;
         this.format = format;
-        this.classid = classid;
+        this.classIndex = classIndex;
         this.hash = hash;
         this.pos = pos;
         this.data = Arrays.copyOf(data, data.length - getPadding());
@@ -144,8 +144,8 @@ public final class SqueakImageChunk {
     }
 
     public SqueakImageChunk getClassChunk() {
-        final int majorIdx = majorClassIndexOf(classid);
-        final int minorIdx = minorClassIndexOf(classid);
+        final int majorIdx = majorClassIndexOf(classIndex);
+        final int minorIdx = minorClassIndexOf(classIndex);
         final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.getWords()[majorIdx]);
         final SqueakImageChunk classChunk = reader.getChunk(classTablePage.getWords()[minorIdx]);
         assert classChunk != null : "Unable to find class chunk.";
