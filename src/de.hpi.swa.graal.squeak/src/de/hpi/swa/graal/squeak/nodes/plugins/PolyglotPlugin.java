@@ -38,7 +38,6 @@ import com.oracle.truffle.api.source.Source.SourceBuilder;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.ConvertToSqueakNode;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
@@ -295,7 +294,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetLastError")
     protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected static Exception lastError = SqueakException.create("");
+        protected static Exception lastError = new Exception("No exception");
 
         protected PrimGetLastErrorNode(final CompiledMethodObject method) {
             super(method);
