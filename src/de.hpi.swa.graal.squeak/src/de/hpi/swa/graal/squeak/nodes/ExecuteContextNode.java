@@ -37,10 +37,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
@@ -55,6 +52,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
+    private static final int LOCAL_RETURN_PC = -1;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
@@ -183,7 +181,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         }
         int backJumpCounter = 0;
         Object returnValue = null;
-        bytecode_loop: while (true) {
+        bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof ConditionalJumpNode) {
@@ -210,18 +208,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 }
                 pc = successor;
                 continue bytecode_loop;
-            } else if (node instanceof ReturnConstantNodeGen) {
-                returnValue = ((ReturnConstantNodeGen) node).executeReturn(frame);
-                break bytecode_loop;
-            } else if (node instanceof ReturnReceiverNodeGen) {
-                returnValue = ((ReturnReceiverNodeGen) node).executeReturn(frame);
-                break bytecode_loop;
-            } else if (node instanceof ReturnTopFromBlockNodeGen) {
-                returnValue = ((ReturnTopFromBlockNodeGen) node).executeReturn(frame);
-                break bytecode_loop;
-            } else if (node instanceof ReturnTopFromMethodNodeGen) {
-                returnValue = ((ReturnTopFromMethodNodeGen) node).executeReturn(frame);
-                break bytecode_loop;
+            } else if (node instanceof AbstractReturnNode) {
+                returnValue = ((AbstractReturnNode) node).executeReturn(frame);
+                pc = LOCAL_RETURN_PC;
+                continue bytecode_loop;
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
                 pushClosureNode.executePush(frame);
@@ -258,7 +248,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         assert initialPC > 0 : "Trying to resume a fresh/terminated/illegal context";
         int pc = (int) initialPC;
         Object returnValue = null;
-        bytecode_loop_slow: while (true) {
+        bytecode_loop_slow: while (pc != LOCAL_RETURN_PC) {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
@@ -272,18 +262,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             } else if (node instanceof UnconditionalJumpNode) {
                 pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
                 continue bytecode_loop_slow;
-            } else if (node instanceof ReturnConstantNodeGen) {
-                returnValue = ((ReturnConstantNodeGen) node).executeReturn(frame);
-                break bytecode_loop_slow;
-            } else if (node instanceof ReturnReceiverNodeGen) {
-                returnValue = ((ReturnReceiverNodeGen) node).executeReturn(frame);
-                break bytecode_loop_slow;
-            } else if (node instanceof ReturnTopFromBlockNodeGen) {
-                returnValue = ((ReturnTopFromBlockNodeGen) node).executeReturn(frame);
-                break bytecode_loop_slow;
-            } else if (node instanceof ReturnTopFromMethodNodeGen) {
-                returnValue = ((ReturnTopFromMethodNodeGen) node).executeReturn(frame);
-                break bytecode_loop_slow;
+            } else if (node instanceof AbstractReturnNode) {
+                returnValue = ((AbstractReturnNode) node).executeReturn(frame);
+                pc = LOCAL_RETURN_PC;
+                continue bytecode_loop_slow;
             } else if (node instanceof PushClosureNode) {
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
                 pushClosureNode.executePush(frame);
