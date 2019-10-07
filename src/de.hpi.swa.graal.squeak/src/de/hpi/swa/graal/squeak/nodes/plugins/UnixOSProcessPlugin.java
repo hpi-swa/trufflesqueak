@@ -18,7 +18,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.sun.security.auth.module.UnixSystem;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -33,11 +32,6 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     private static final UnixSystem UNIX_SYSTEM = new UnixSystem();
-
-    @Override
-    public boolean isEnabled(final SqueakImageContext image) {
-        return image.os.isLinux() || image.os.isMacOS();
-    }
 
     @TruffleBoundary
     private static String systemGetEnv(final Env env, final String key) {

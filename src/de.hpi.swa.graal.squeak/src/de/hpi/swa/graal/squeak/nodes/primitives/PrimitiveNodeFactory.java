@@ -110,10 +110,9 @@ public final class PrimitiveNodeFactory {
                         new SoundCodecPrims(),
                         new SqueakFFIPrims(),
                         new SqueakSSL(),
-                        new UnixOSProcessPlugin(),
                         new UUIDPlugin(),
-                        new Win32OSProcessPlugin(),
-                        new ZipPlugin()};
+                        new ZipPlugin(),
+                        image.os.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
         fillPrimitiveTable(plugins);
         fillPluginMap(image, plugins);
     }
