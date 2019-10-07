@@ -75,6 +75,11 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return className + ">>" + selector;
     }
 
+    @Override
+    public CompiledMethodObject getMethod() {
+        return this;
+    }
+
     public NativeObject getCompiledInSelector() {
         /**
          *

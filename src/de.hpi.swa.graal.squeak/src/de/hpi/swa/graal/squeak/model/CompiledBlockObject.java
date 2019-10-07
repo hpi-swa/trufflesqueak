@@ -56,6 +56,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         return "[] in " + getMethod().toString();
     }
 
+    @Override
     public CompiledMethodObject getMethod() {
         return (CompiledMethodObject) literals[literals.length - 1];
     }

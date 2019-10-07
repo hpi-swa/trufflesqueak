@@ -353,6 +353,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         return bytes;
     }
 
+    public abstract CompiledMethodObject getMethod();
+
     public static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
         return (numArgs & 0x0F) << 24 | (numTemps & 0x3F) << 18 | numLiterals & 0x7FFF | (needsLargeFrame ? 0x20000 : 0) | (hasPrimitive ? 0x10000 : 0);
     }

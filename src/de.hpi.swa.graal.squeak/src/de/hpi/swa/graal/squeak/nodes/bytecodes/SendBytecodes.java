@@ -20,6 +20,7 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
@@ -28,7 +29,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
@@ -68,7 +68,7 @@ public final class SendBytecodes {
             final Object result;
             try {
                 final Object[] rcvrAndArgs = popNNode.execute(frame);
-                final ClassObject rcvrClass = lookupClassNode.executeLookup(frame, rcvrAndArgs[0]);
+                final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
                 final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
                 result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs);
                 assert result != null : "Result of a message send should not be null";
@@ -123,7 +123,7 @@ public final class SendBytecodes {
     }
 
     protected abstract static class AbstractLookupClassNode extends AbstractNode {
-        protected abstract ClassObject executeLookup(VirtualFrame frame, Object receiver);
+        protected abstract ClassObject executeLookup(Object receiver);
     }
 
     @NodeInfo(cost = NodeCost.NONE)
@@ -131,17 +131,22 @@ public final class SendBytecodes {
         @Child private SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
 
         @Override
-        protected ClassObject executeLookup(final VirtualFrame frame, final Object receiver) {
+        protected ClassObject executeLookup(final Object receiver) {
             return lookupClassNode.executeLookup(receiver);
         }
     }
 
     protected static final class LookupSuperClassNode extends AbstractLookupClassNode {
         private final ConditionProfile hasSuperclassProfile = ConditionProfile.createBinaryProfile();
+        private final CompiledMethodObject method;
+
+        protected LookupSuperClassNode(final CompiledCodeObject code) {
+            method = code.getMethod();
+        }
 
         @Override
-        protected ClassObject executeLookup(final VirtualFrame frame, final Object receiver) {
-            final ClassObject methodClass = FrameAccess.getMethod(frame).getMethodClass();
+        protected ClassObject executeLookup(final Object receiver) {
+            final ClassObject methodClass = method.getMethodClass();
             final ClassObject superclass = methodClass.getSuperclassOrNull();
             return hasSuperclassProfile.profile(superclass == null) ? methodClass : superclass;
         }
@@ -195,7 +200,7 @@ public final class SendBytecodes {
         }
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
-            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs, new LookupSuperClassNode());
+            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs, new LookupSuperClassNode(code));
         }
 
         @Override
