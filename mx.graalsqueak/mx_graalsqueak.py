@@ -372,7 +372,9 @@ def _add_copyright_checks(tasks):
     with mx_gate.Task('Check Copyrights',
                       tasks, tags=[mx_gate.Tags.style]) as t:
         if t:
-            mx.checkcopyrights(['--primary'])
+            if mx.checkcopyrights(['--primary']) != 0:
+                t.abort('Copyright errors found. Please run "mx '
+                        'checkcopyrights --primary -- --fix" to fix them.')
 
 
 def _add_unit_tests(tasks, supports_coverage):
