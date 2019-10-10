@@ -358,16 +358,24 @@ def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
     supports_coverage = os.environ.get('JDK') == 'openjdk8'  # see .travis.yml
 
-    _run_tck_tests(tasks, supports_coverage)
-    _run_unit_tests(tasks, supports_coverage)
+    _add_copyright_checks(tasks)
+    _add_tck_tests(tasks, supports_coverage)
+    _add_unit_tests(tasks, supports_coverage)
 
     if supports_coverage:
-        with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
+        with mx_gate.Task('Report Code Coverage', tasks, tags=['test']) as t:
             if t:
                 mx.command_function('jacocoreport')(['--format', 'xml', '.'])
 
 
-def _run_unit_tests(tasks, supports_coverage):
+def _add_copyright_checks(tasks):
+    with mx_gate.Task('Check Copyrights',
+                      tasks, tags=[mx_gate.Tags.style]) as t:
+        if t:
+            mx.checkcopyrights(['--primary'])
+
+
+def _add_unit_tests(tasks, supports_coverage):
     with mx_gate.Task('GraalSqueak JUnit and SUnit tests',
                       tasks, tags=['test']) as t:
         if t:
@@ -384,7 +392,7 @@ def _run_unit_tests(tasks, supports_coverage):
             mx_unittest.unittest(unittest_args)
 
 
-def _run_tck_tests(tasks, supports_coverage):
+def _add_tck_tests(tasks, supports_coverage):
     with mx_gate.Task('GraalSqueak TCK tests', tasks, tags=['test']) as t:
         if t:
             unittest_args = BASE_VM_ARGS_TESTING[:]
