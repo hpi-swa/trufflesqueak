@@ -13,7 +13,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 @ExportLibrary(InteropLibrary.class)
 public final class NilObject extends AbstractSqueakObject {
     public static final NilObject SINGLETON = new NilObject();
-    public static final IndexOutOfBoundsException NOT_INDEXABLE = new IndexOutOfBoundsException("Nil is not indexable");
 
     private NilObject() {
     }

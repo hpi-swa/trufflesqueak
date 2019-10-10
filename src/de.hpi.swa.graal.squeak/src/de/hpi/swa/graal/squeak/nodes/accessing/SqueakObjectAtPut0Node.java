@@ -11,7 +11,6 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-import de.hpi.swa.graal.squeak.exceptions.Returns;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -20,7 +19,6 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -95,24 +93,15 @@ public abstract class SqueakObjectAtPut0Node extends AbstractNode {
     @Specialization
     protected static final void doFloat(final FloatObject obj, final long index, final long value,
                     @Cached final BranchProfile indexZeroProfile,
-                    @Cached final BranchProfile indexOneProfile,
-                    @Cached final BranchProfile outOfBoundsProfile) {
+                    @Cached final BranchProfile indexOneProfile) {
         assert 0 <= value && value <= NativeObject.INTEGER_MAX : "`value` out of range";
         if (index == 0) {
             indexZeroProfile.enter();
             obj.setHigh(value);
-        } else if (index == 1) {
+        } else {
+            assert index == 1 : "Unexpected index: " + index;
             indexOneProfile.enter();
             obj.setLow(value);
-        } else {
-            outOfBoundsProfile.enter();
-            throw Returns.OUT_OF_BOUNDS;
         }
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected static final void doNil(final NilObject obj, final long index, final long value) {
-        throw NilObject.NOT_INDEXABLE;
     }
 }

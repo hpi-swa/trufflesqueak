@@ -11,8 +11,6 @@ import com.oracle.truffle.api.nodes.ControlFlowException;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public final class Returns {
-    public static final IndexOutOfBoundsException OUT_OF_BOUNDS = new IndexOutOfBoundsException("Subscript is out of bounds");
-
     private abstract static class AbstractReturn extends ControlFlowException {
         private static final long serialVersionUID = 1L;
         protected final Object returnValue;
