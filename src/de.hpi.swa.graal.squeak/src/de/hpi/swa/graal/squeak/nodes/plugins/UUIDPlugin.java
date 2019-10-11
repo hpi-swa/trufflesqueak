@@ -18,6 +18,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -38,8 +39,10 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doUUID(final NativeObject receiver) {
             final byte[] bytes = receiver.getByteStorage();
             ArrayUtils.fillRandomly(bytes);
-            bytes[6] = (byte) (bytes[6] & 0x0F | 0x40); // Version 4
-            bytes[8] = (byte) (bytes[8] & 0x3F | 0x80); // Fixed 8..b value
+            // Version 4
+            UnsafeUtils.putByte(bytes, 6, (byte) (UnsafeUtils.getByte(bytes, 6) & 0x0F | 0x40));
+            // Fixed 8..b value
+            UnsafeUtils.putByte(bytes, 8, (byte) (UnsafeUtils.getByte(bytes, 8) & 0x3F | 0x80));
             return receiver;
         }
     }
