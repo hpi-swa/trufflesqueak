@@ -27,6 +27,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPr
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -53,8 +54,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final int len2 = string2.length;
             final int min = Math.min(len1, len2);
             for (int i = 0; i < min; i++) {
-                final byte c1 = order[string1[i] & 0xff];
-                final byte c2 = order[string2[i] & 0xff];
+                final byte c1 = UnsafeUtils.getByte(order, UnsafeUtils.getByte(string1, i) & 0xff);
+                final byte c2 = UnsafeUtils.getByte(order, UnsafeUtils.getByte(string2, i) & 0xff);
                 if (c1 != c2) {
                     return (c1 & 0xff) < (c2 & 0xff) ? 1L : 3L;
                 }
@@ -299,15 +300,11 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] inclusionMapBytes = inclusionMap.getByteStorage();
             final int stringSize = stringBytes.length;
-            int index = (int) start - 1;
-            while (index < stringSize && inclusionMapBytes[stringBytes[index] & 0xff] == 0) {
+            long index = start - 1;
+            while (index < stringSize && UnsafeUtils.getByte(inclusionMapBytes, UnsafeUtils.getByte(stringBytes, index) & 0xff) == 0) {
                 index++;
             }
-            if (index >= stringSize) {
-                return 0L;
-            } else {
-                return index + 1;
-            }
+            return index >= stringSize ? 0L : index + 1;
         }
 
         @SuppressWarnings("unused")
@@ -442,7 +439,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             int hash = (int) (initialHash & 0x0fffffff);
             final int length = bytes.length;
             for (int i = 0; i < length; i++) {
-                hash = (hash + (bytes[i] & 0xff)) * 0x19660D % TWO_LEFT_SHIFTED_BY_28;
+                hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * 0x19660D % TWO_LEFT_SHIFTED_BY_28;
             }
             return hash & 0x0fffffffL;
         }
@@ -461,7 +458,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] tableBytes = table.getByteStorage();
             for (int i = (int) start - 1; i < stop; i++) {
-                stringBytes[i] = tableBytes[stringBytes[i] & 0xff];
+                stringBytes[i] = UnsafeUtils.getByte(tableBytes, UnsafeUtils.getByte(stringBytes, i) & 0xff);
             }
             return receiver;
         }
@@ -472,7 +469,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] stringBytes = string.getByteStorage();
             final int[] tableBytes = table.getIntStorage();
             for (int i = (int) start - 1; i < stop; i++) {
-                stringBytes[i] = (byte) tableBytes[stringBytes[i] & 0xff];
+                stringBytes[i] = (byte) UnsafeUtils.getInt(tableBytes, UnsafeUtils.getByte(stringBytes, i) & 0xff);
             }
             return receiver;
         }
