@@ -32,7 +32,6 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -378,8 +377,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         ClassObject lookupClass = this;
         while (lookupClass != null) {
             final VariablePointersObject methodDictObject = lookupClass.getMethodDict();
-            for (int i = METHOD_DICT.NAMES; i < methodDictObject.size(); i++) {
-                final Object methodSelector = methodDictObject.at0Slow(i);
+            final Object[] methodDictVariablePart = methodDictObject.getVariablePart();
+            for (int i = 0; i < methodDictVariablePart.length; i++) {
+                final Object methodSelector = methodDictVariablePart[i];
                 if (methodSelector instanceof NativeObject) {
                     methodNames.add(((NativeObject) methodSelector).asStringUnsafe().replace(':', '_'));
                 }

@@ -53,14 +53,15 @@ public final class PointersObject extends AbstractPointersObject {
         assert size() == pointersObject.length;
     }
 
-    public Object at0Slow(final int index) {
+    public Object instVarAt0Unsafe(final int index) {
         CompilerAsserts.neverPartOfCompilation();
-        return AbstractPointersObjectReadNode.getUncached().execute(this, index);
+        assert index < instsize() && getLayout().isValid() : "Invalid unsafe instVar access";
+        return getLayout().getLocation(index).read(this);
     }
 
-    public void atput0Slow(final int index, final Object value) {
+    public void instVarAtPut0Unsafe(final int index, final Object value) {
         CompilerAsserts.neverPartOfCompilation();
-        AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
+        getLayout().getLocation(index).write(this, value);
     }
 
     @Override

@@ -205,6 +205,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 101)
     protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         protected PrimBeCursorNode(final CompiledMethodObject method) {
             super(method);
@@ -221,7 +222,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             final int[] words = validateAndExtractWords(receiver);
             final int depth = extractDepth(receiver);
             if (depth == 1) {
-                final int[] mask = ((NativeObject) maskObject.at0Slow(FORM.BITS)).getIntStorage();
+                final int[] mask = readNode.executeNative(maskObject, FORM.BITS).getIntStorage();
                 method.image.getDisplay().setCursor(words, mask, 2);
             } else {
                 method.image.getDisplay().setCursor(words, null, depth);
@@ -240,9 +241,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private int[] validateAndExtractWords(final PointersObject receiver) {
-            final int[] words = ((NativeObject) receiver.at0Slow(FORM.BITS)).getIntStorage();
-            final long width = (long) receiver.at0Slow(FORM.WIDTH);
-            final long height = (long) receiver.at0Slow(FORM.HEIGHT);
+            final int[] words = readNode.executeNative(receiver, FORM.BITS).getIntStorage();
+            final long width = readNode.executeLong(receiver, FORM.WIDTH);
+            final long height = readNode.executeLong(receiver, FORM.HEIGHT);
             if (width != SqueakIOConstants.CURSOR_WIDTH || height != SqueakIOConstants.CURSOR_HEIGHT) {
                 CompilerDirectives.transferToInterpreter();
                 method.image.printToStdErr("Unexpected cursor width:", width, "or height:", height, ". Proceeding with cropped cursor...");
@@ -251,8 +252,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return words;
         }
 
-        private static int extractDepth(final PointersObject receiver) {
-            return (int) (long) receiver.at0Slow(FORM.DEPTH);
+        private int extractDepth(final PointersObject receiver) {
+            return (int) readNode.executeLong(receiver, FORM.DEPTH);
         }
     }
 

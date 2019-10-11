@@ -145,13 +145,13 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
         private void setSqDisplay(final PointersObject sqDisplay) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final NativeObject bitmap = (NativeObject) sqDisplay.at0Slow(FORM.BITS);
+            final NativeObject bitmap = (NativeObject) sqDisplay.instVarAt0Unsafe(FORM.BITS);
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            final int width = (int) (long) sqDisplay.at0Slow(FORM.WIDTH);
-            final int height = (int) (long) sqDisplay.at0Slow(FORM.HEIGHT);
-            assert (long) sqDisplay.at0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
+            final int width = (int) (long) sqDisplay.instVarAt0Unsafe(FORM.WIDTH);
+            final int height = (int) (long) sqDisplay.instVarAt0Unsafe(FORM.HEIGHT);
+            assert (long) sqDisplay.instVarAt0Unsafe(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
                 bufferedImage = newBufferedImage(bitmap, width, height);
                 repaint();

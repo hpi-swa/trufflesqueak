@@ -7,13 +7,13 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.VariablePointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -84,6 +84,12 @@ public final class VariablePointersObject extends AbstractPointersObject {
         return layoutValuesPointTo(thang) || ArrayUtils.contains(variablePart, thang);
     }
 
+    public Object instVarAt0Unsafe(final int index) {
+        CompilerAsserts.neverPartOfCompilation();
+        assert index < instsize() && getLayout().isValid() : "Invalid unsafe instVar access";
+        return getLayout().getLocation(index).read(this);
+    }
+
     public Object[] getVariablePart() {
         return variablePart;
     }
@@ -94,10 +100,6 @@ public final class VariablePointersObject extends AbstractPointersObject {
 
     public void putIntoVariablePart(final int index, final Object value) {
         variablePart[index] = value;
-    }
-
-    public Object at0Slow(final int index) {
-        return VariablePointersObjectReadNode.getUncached().execute(this, index);
     }
 
     public VariablePointersObject shallowCopy() {

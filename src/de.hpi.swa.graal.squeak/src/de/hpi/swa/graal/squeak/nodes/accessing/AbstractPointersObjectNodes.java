@@ -19,6 +19,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
@@ -31,7 +32,6 @@ import de.hpi.swa.graal.squeak.model.layout.SlotLocation.WriteLocationNode;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectWriteNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.VariablePointersObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.VariablePointersObjectWriteNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.WeakVariablePointersObjectWriteNodeGen;
 
@@ -56,6 +56,8 @@ public class AbstractPointersObjectNodes {
         public abstract long executeLong(AbstractPointersObject obj, int index);
 
         public abstract ArrayObject executeArray(AbstractPointersObject obj, int index);
+
+        public abstract NativeObject executeNative(AbstractPointersObject obj, int index);
 
         public abstract PointersObject executePointers(AbstractPointersObject obj, int index);
 
@@ -159,10 +161,6 @@ public class AbstractPointersObjectNodes {
     @NodeInfo(cost = NodeCost.NONE)
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class VariablePointersObjectReadNode extends Node {
-
-        public static VariablePointersObjectReadNode getUncached() {
-            return VariablePointersObjectReadNodeGen.getUncached();
-        }
 
         public abstract Object execute(VariablePointersObject object, int index);
 

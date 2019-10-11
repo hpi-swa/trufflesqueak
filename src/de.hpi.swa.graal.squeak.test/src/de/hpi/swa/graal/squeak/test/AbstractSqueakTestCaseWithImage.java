@@ -62,13 +62,13 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static void patchImageForTesting() {
         image.interrupt.start();
-        final ArrayObject lists = (ArrayObject) image.getScheduler().at0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Unsafe(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
-        final Object firstLink = priority10List.at0Slow(LINKED_LIST.FIRST_LINK);
-        final Object lastLink = priority10List.at0Slow(LINKED_LIST.LAST_LINK);
+        final Object firstLink = priority10List.instVarAt0Unsafe(LINKED_LIST.FIRST_LINK);
+        final Object lastLink = priority10List.instVarAt0Unsafe(LINKED_LIST.LAST_LINK);
         assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
         idleProcess = (PointersObject) firstLink;
-        assert idleProcess.at0Slow(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
+        assert idleProcess.instVarAt0Unsafe(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
         image.getOutput().println("Increasing default timeout...");
         patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ " + SQUEAK_TIMEOUT_SECONDS);
         if (!runsOnMXGate()) {
@@ -131,25 +131,25 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static void ensureCleanImageState() {
         image.interrupt.reset();
         if (idleProcess != null) {
-            if (idleProcess.at0Slow(PROCESS.NEXT_LINK) != NilObject.SINGLETON) {
+            if (idleProcess.instVarAt0Unsafe(PROCESS.NEXT_LINK) != NilObject.SINGLETON) {
                 image.printToStdErr("Resetting dirty idle process...");
-                idleProcess.atput0Slow(PROCESS.NEXT_LINK, NilObject.SINGLETON);
+                idleProcess.instVarAtPut0Unsafe(PROCESS.NEXT_LINK, NilObject.SINGLETON);
             }
             resetProcessLists();
         }
     }
 
     private static void resetProcessLists() {
-        final Object[] lists = ((ArrayObject) image.getScheduler().at0Slow(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
+        final Object[] lists = ((ArrayObject) image.getScheduler().instVarAt0Unsafe(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
             final PointersObject linkedList = (PointersObject) lists[i];
-            final Object key = linkedList.at0Slow(LINKED_LIST.FIRST_LINK);
-            final Object value = linkedList.at0Slow(LINKED_LIST.LAST_LINK);
+            final Object key = linkedList.instVarAt0Unsafe(LINKED_LIST.FIRST_LINK);
+            final Object value = linkedList.instVarAt0Unsafe(LINKED_LIST.LAST_LINK);
             final Object expectedValue = i == PRIORITY_10_LIST_INDEX ? idleProcess : NilObject.SINGLETON;
             if (key != expectedValue || value != expectedValue) {
                 image.printToStdErr(String.format("Removing inconsistent entry (%s->%s) from scheduler list #%s...", key, value, i + 1));
-                linkedList.atput0Slow(LINKED_LIST.FIRST_LINK, expectedValue);
-                linkedList.atput0Slow(LINKED_LIST.LAST_LINK, expectedValue);
+                linkedList.instVarAtPut0Unsafe(LINKED_LIST.FIRST_LINK, expectedValue);
+                linkedList.instVarAtPut0Unsafe(LINKED_LIST.LAST_LINK, expectedValue);
             }
         }
     }

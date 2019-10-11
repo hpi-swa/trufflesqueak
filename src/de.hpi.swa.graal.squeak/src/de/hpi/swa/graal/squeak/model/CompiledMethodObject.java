@@ -102,7 +102,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         } else if (penultimateLiteral instanceof VariablePointersObject) {
             final VariablePointersObject penultimateLiteralAsPointer = (VariablePointersObject) penultimateLiteral;
             assert penultimateLiteralAsPointer.size() >= ADDITIONAL_METHOD_STATE.SELECTOR;
-            return (NativeObject) penultimateLiteralAsPointer.at0Slow(ADDITIONAL_METHOD_STATE.SELECTOR);
+            return (NativeObject) penultimateLiteralAsPointer.instVarAt0Unsafe(ADDITIONAL_METHOD_STATE.SELECTOR);
         } else {
             return null;
         }

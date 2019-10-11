@@ -728,7 +728,7 @@ public final class JPEGReader {
      */
 
     private static Object fetchPointerofObject(final int index, final PointersObject pointersOop) {
-        return pointersOop.at0Slow(index);
+        return pointersOop.instVarAt0Unsafe(index);
     }
 
     private int fetchIntegerofObject(final int index, final PointersObject arrayOop) {
@@ -742,7 +742,7 @@ public final class JPEGReader {
     }
 
     private static void storeIntegerofObjectwithValue(final int i, final PointersObject streamOop, final long value) {
-        streamOop.atput0Slow(i, value);
+        streamOop.instVarAtPut0Unsafe(i, value);
     }
 
     private static boolean isBytes(final Object object) {

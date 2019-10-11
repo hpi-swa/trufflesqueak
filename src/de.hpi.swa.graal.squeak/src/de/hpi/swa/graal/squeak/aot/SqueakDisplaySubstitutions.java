@@ -141,18 +141,18 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
 
     @Override
     public void open(final PointersObject sqDisplay) {
-        bitmap = (NativeObject) sqDisplay.at0Slow(FORM.BITS);
+        bitmap = (NativeObject) sqDisplay.instVarAt0Unsafe(FORM.BITS);
         if (!bitmap.isIntType()) {
             throw SqueakException.create("Display bitmap expected to be a words object");
         }
 
-        final int depth = (int) (long) sqDisplay.at0Slow(FORM.DEPTH);
+        final int depth = (int) (long) sqDisplay.instVarAt0Unsafe(FORM.DEPTH);
         if (depth != 32) {
             throw SqueakException.create("Expected 32bit display");
         }
         if (window.isNull()) {
-            width = (int) (long) sqDisplay.at0Slow(FORM.WIDTH);
-            height = (int) (long) sqDisplay.at0Slow(FORM.HEIGHT);
+            width = (int) (long) sqDisplay.instVarAt0Unsafe(FORM.WIDTH);
+            height = (int) (long) sqDisplay.instVarAt0Unsafe(FORM.HEIGHT);
             try (CCharPointerHolder title = CTypeConversion.toCString(DEFAULT_WINDOW_TITLE)) {
                 window = SDL.createWindow(
                                 title.get(),
@@ -170,7 +170,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
             fullDamage();
             getNextEvent(); // Poll and drop fix events for faster window initialization.
         } else {
-            resizeTo((int) (long) sqDisplay.at0Slow(FORM.WIDTH), (int) (long) sqDisplay.at0Slow(FORM.HEIGHT));
+            resizeTo((int) (long) sqDisplay.instVarAt0Unsafe(FORM.WIDTH), (int) (long) sqDisplay.instVarAt0Unsafe(FORM.HEIGHT));
         }
     }
 
