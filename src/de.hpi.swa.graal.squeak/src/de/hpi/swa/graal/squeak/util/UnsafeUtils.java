@@ -12,7 +12,7 @@ import sun.misc.Unsafe;
 
 public final class UnsafeUtils {
 
-    public static final Unsafe UNSAFE = initUnsafe();
+    private static final Unsafe UNSAFE = initUnsafe();
 
     private static final long ARRAY_NATIVE_OBJECT_BASE_OFFSET;
     private static final long ARRAY_NATIVE_OBJECT_INDEX_SCALE;
@@ -48,6 +48,11 @@ public final class UnsafeUtils {
     public static int getInt(final Object storage, final long index) {
         assert storage instanceof int[] && 0 <= index && index < ((int[]) storage).length;
         return UNSAFE.getInt(storage, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_INT_INDEX_SCALE);
+    }
+
+    public static int getIntFromBytes(final byte[] bytes, final long index) {
+        assert 0 <= index && index <= bytes.length;
+        return UNSAFE.getInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static int getIntReversed(final byte[] bytes, final long index) {
@@ -91,6 +96,11 @@ public final class UnsafeUtils {
     public static short getShort(final Object storage, final long index) {
         assert storage instanceof short[] && 0 <= index && index < ((short[]) storage).length;
         return UNSAFE.getShort(storage, Unsafe.ARRAY_SHORT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE);
+    }
+
+    public static short getShortFromBytes(final byte[] bytes, final long index) {
+        assert 0 <= index && index <= bytes.length;
+        return UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static short getShortReversed(final byte[] bytes, final long index) {
@@ -138,6 +148,11 @@ public final class UnsafeUtils {
         UNSAFE.putInt(storage, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
     }
 
+    public static void putIntIntoBytes(final byte[] bytes, final long index, final int value) {
+        assert 0 <= index && index <= bytes.length;
+        UNSAFE.putInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
+    }
+
     public static void putIntReversed(final byte[] bytes, final long index, final int value) {
         putInt(bytes, index, Integer.reverseBytes(value));
     }
@@ -150,6 +165,11 @@ public final class UnsafeUtils {
     public static void putLong(final Object storage, final long index, final long value) {
         assert storage instanceof long[] && 0 <= index && index < ((long[]) storage).length;
         UNSAFE.putLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    }
+
+    public static void putLongIntoBytes(final byte[] bytes, final long index, final long value) {
+        assert 0 <= index && index <= bytes.length;
+        UNSAFE.putLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putLongReversed(final byte[] bytes, final long i, final long value) {
@@ -179,6 +199,11 @@ public final class UnsafeUtils {
     public static void putShort(final Object storage, final long index, final short value) {
         assert storage instanceof short[] && 0 <= index && index < ((short[]) storage).length;
         UNSAFE.putShort(storage, Unsafe.ARRAY_SHORT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE, value);
+    }
+
+    public static void putShortIntoBytes(final byte[] bytes, final long index, final short value) {
+        assert 0 <= index && index <= bytes.length;
+        UNSAFE.putShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putShortReversed(final byte[] bytes, final long index, final short value) {
