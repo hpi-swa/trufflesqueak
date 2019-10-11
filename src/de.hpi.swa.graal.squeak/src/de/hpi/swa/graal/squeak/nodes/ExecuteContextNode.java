@@ -48,7 +48,6 @@ import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 @GenerateWrapper
 public class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
-    private static final int NO_PRIMITIVE_FAILURE_CODE = -1;
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
@@ -96,6 +95,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             if (enableStackDepthProtection && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
                 throw ProcessSwitch.createWithBoundary(getGetOrCreateContextNode().executeGet(frame));
             }
+            frameInitializationNode.executeInitialize(frame);
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
@@ -153,38 +153,27 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private Object startBytecode(final VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         int pc = 0;
-        int reasonCode = NO_PRIMITIVE_FAILURE_CODE;
-        if (code.hasPrimitive()) {
-            final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) fetchNextBytecodeNode(0);
-            if (callPrimitiveNode.primitiveNode != null) {
-                try {
-                    return callPrimitiveNode.primitiveNode.executePrimitive(frame);
-                } catch (final PrimitiveFailed e) {
-                    reasonCode = e.getReasonCode();
-                    LOG.log(Level.FINE, () -> callPrimitiveNode.primitiveNode +
-                                    " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
-                    /** continue with fallback code. */
-                }
-            }
-            pc = callPrimitiveNode.getSuccessorIndex();
-            assert pc == CallPrimitiveNode.NUM_BYTECODES;
-        }
-        if (frameInitializationNode != null) {
-            /*
-             * Initialize frame iff not resuming an existing context and after a potential primitive
-             * has failed.
-             */
-            frameInitializationNode.executeInitialize(frame);
-            if (reasonCode != NO_PRIMITIVE_FAILURE_CODE) {
-                getHandlePrimitiveFailedNode().executeHandle(frame, reasonCode);
-            }
-        }
         int backJumpCounter = 0;
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
-            if (node instanceof ConditionalJumpNode) {
+            if (node instanceof CallPrimitiveNode) {
+                final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) fetchNextBytecodeNode(0);
+                if (callPrimitiveNode.primitiveNode != null) {
+                    try {
+                        return callPrimitiveNode.primitiveNode.executePrimitive(frame);
+                    } catch (final PrimitiveFailed e) {
+                        getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
+                        LOG.log(Level.FINE, () -> callPrimitiveNode.primitiveNode +
+                                        " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
+                        /* continue with fallback code. */
+                    }
+                }
+                pc = callPrimitiveNode.getSuccessorIndex();
+                assert pc == CallPrimitiveNode.NUM_BYTECODES;
+                continue;
+            } else if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                 if (jumpNode.executeCondition(frame)) {
                     final int successor = jumpNode.getJumpSuccessorIndex();
