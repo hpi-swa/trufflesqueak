@@ -52,7 +52,7 @@ public final class ArrayObjectNodes {
         protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index,
                         @Cached("createBinaryProfile()") final ConditionProfile falseProfile,
                         @Cached("createBinaryProfile()") final ConditionProfile trueProfile) {
-            final byte value = obj.getBooleanStorage()[(int) index];
+            final byte value = obj.getByte(index);
             if (falseProfile.profile(value == ArrayObject.BOOLEAN_FALSE_TAG)) {
                 return BooleanObject.FALSE;
             } else if (trueProfile.profile(value == ArrayObject.BOOLEAN_TRUE_TAG)) {
@@ -66,34 +66,34 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isCharType()")
         protected static final Object doArrayOfChars(final ArrayObject obj, final long index,
                         @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
-            final char value = obj.getCharStorage()[(int) index];
+            final char value = obj.getChar(index);
             return nilProfile.profile(value == ArrayObject.CHAR_NIL_TAG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final Object doArrayOfLongs(final ArrayObject obj, final long index,
                         @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
-            final long value = obj.getLongStorage()[(int) index];
+            final long value = obj.getLong(index);
             return nilProfile.profile(value == ArrayObject.LONG_NIL_TAG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final Object doArrayOfDoubles(final ArrayObject obj, final long index,
                         @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
-            final double value = obj.getDoubleStorage()[(int) index];
+            final double value = obj.getDouble(index);
             return nilProfile.profile(Double.doubleToRawLongBits(value) == ArrayObject.DOUBLE_NIL_TAG_LONG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isNativeObjectType()")
         protected static final AbstractSqueakObject doArrayOfNativeObjects(final ArrayObject obj, final long index,
                         @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
-            return NilObject.nullToNil(obj.getNativeObjectStorage()[(int) index], nilProfile);
+            return NilObject.nullToNil(obj.getNativeObject(index), nilProfile);
         }
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object doArrayOfObjects(final ArrayObject obj, final long index) {
-            assert obj.getObjectStorage()[(int) index] != null : "Unexpected `null` value";
-            return obj.getObjectStorage()[(int) index];
+            assert obj.getObject(index) != null : "Unexpected `null` value";
+            return obj.getObject(index);
         }
     }
 
@@ -370,12 +370,12 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isBooleanType()")
         protected static final void doArrayOfBooleans(final ArrayObject obj, final long index, final boolean value) {
-            obj.getBooleanStorage()[(int) index] = value ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG;
+            obj.setByte(index, value ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG);
         }
 
         @Specialization(guards = "obj.isBooleanType()")
         protected static final void doArrayOfBooleans(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.getBooleanStorage()[(int) index] = ArrayObject.BOOLEAN_NIL_TAG;
+            obj.setByte(index, ArrayObject.BOOLEAN_NIL_TAG);
         }
 
         @Specialization(guards = {"obj.isBooleanType()", "!isBoolean(value)", "!isNil(value)"})
@@ -386,7 +386,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isCharType()", "!isCharNilTag(value)"})
         protected static final void doArrayOfChars(final ArrayObject obj, final long index, final char value) {
-            obj.getCharStorage()[(int) index] = value;
+            obj.setChar(index, value);
         }
 
         @Specialization(guards = {"obj.isCharType()", "isCharNilTag(value)"})
@@ -398,7 +398,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isCharType()")
         protected static final void doArrayOfChars(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.getCharStorage()[(int) index] = ArrayObject.CHAR_NIL_TAG;
+            obj.setChar(index, ArrayObject.CHAR_NIL_TAG);
         }
 
         @Specialization(guards = {"obj.isCharType()", "!isCharacter(value)", "!isNil(value)"})
@@ -409,7 +409,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isLongType()", "!isLongNilTag(value)"})
         protected static final void doArrayOfLongs(final ArrayObject obj, final long index, final long value) {
-            obj.getLongStorage()[(int) index] = value;
+            obj.setLong(index, value);
         }
 
         @Specialization(guards = {"obj.isLongType()", "isLongNilTag(value)"})
@@ -421,7 +421,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isLongType()")
         protected static final void doArrayOfLongs(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.getLongStorage()[(int) index] = ArrayObject.LONG_NIL_TAG;
+            obj.setLong(index, ArrayObject.LONG_NIL_TAG);
         }
 
         @Specialization(guards = {"obj.isLongType()", "!isLong(value)", "!isNil(value)"})
@@ -432,7 +432,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isDoubleType()", "!isDoubleNilTag(value)"})
         protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, final double value) {
-            obj.getDoubleStorage()[(int) index] = value;
+            obj.setDouble(index, value);
         }
 
         @Specialization(guards = {"obj.isDoubleType()", "isDoubleNilTag(value)"})
@@ -444,7 +444,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.getDoubleStorage()[(int) index] = ArrayObject.DOUBLE_NIL_TAG;
+            obj.setDouble(index, ArrayObject.DOUBLE_NIL_TAG);
         }
 
         @Specialization(guards = {"obj.isDoubleType()", "!isDouble(value)", "!isNil(value)"})
@@ -455,12 +455,12 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isNativeObjectType()")
         protected static final void doArrayOfNativeObjects(final ArrayObject obj, final long index, final NativeObject value) {
-            obj.getNativeObjectStorage()[(int) index] = value;
+            obj.setNativeObject(index, value);
         }
 
         @Specialization(guards = "obj.isNativeObjectType()")
         protected static final void doArrayOfNativeObjects(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.getNativeObjectStorage()[(int) index] = ArrayObject.NATIVE_OBJECT_NIL_TAG;
+            obj.setNativeObject(index, ArrayObject.NATIVE_OBJECT_NIL_TAG);
         }
 
         @Specialization(guards = {"obj.isNativeObjectType()", "!isNativeObject(value)", "!isNil(value)"})
@@ -471,7 +471,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isObjectType()")
         protected static final void doArrayOfObjects(final ArrayObject obj, final long index, final Object value) {
-            obj.getObjectStorage()[(int) index] = value;
+            obj.setObject(index, value);
         }
     }
 }

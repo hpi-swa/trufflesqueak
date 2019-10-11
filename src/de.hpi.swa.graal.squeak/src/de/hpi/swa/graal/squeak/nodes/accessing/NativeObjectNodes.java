@@ -36,23 +36,23 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = "obj.isByteType()")
         protected static final long doNativeBytes(final NativeObject obj, final long index) {
-            return Byte.toUnsignedLong(obj.getByteStorage()[(int) index]);
+            return Byte.toUnsignedLong(obj.getByte(index));
         }
 
         @Specialization(guards = "obj.isShortType()")
         protected static final long doNativeShorts(final NativeObject obj, final long index) {
-            return Short.toUnsignedLong(obj.getShortStorage()[(int) index]);
+            return Short.toUnsignedLong(obj.getShort(index));
         }
 
         @Specialization(guards = "obj.isIntType()")
         protected static final long doNativeInts(final NativeObject obj, final long index) {
-            return Integer.toUnsignedLong(obj.getIntStorage()[(int) index]);
+            return Integer.toUnsignedLong(obj.getInt(index));
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final Object doNativeLongs(final NativeObject obj, final long index,
                         @Cached("createBinaryProfile()") final ConditionProfile positiveValueProfile) {
-            final long value = obj.getLongStorage()[(int) index];
+            final long value = obj.getLong(index);
             if (positiveValueProfile.profile(0 <= value)) {
                 return value;
             } else {
@@ -73,22 +73,22 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = {"obj.isByteType()", "value >= 0", "value <= BYTE_MAX"})
         protected static final void doNativeBytes(final NativeObject obj, final long index, final long value) {
-            obj.getByteStorage()[(int) index] = (byte) value;
+            obj.setByte(index, (byte) value);
         }
 
         @Specialization(guards = {"obj.isShortType()", "value >= 0", "value <= SHORT_MAX"})
         protected static final void doNativeShorts(final NativeObject obj, final long index, final long value) {
-            obj.getShortStorage()[(int) index] = (short) value;
+            obj.setShort(index, (short) value);
         }
 
         @Specialization(guards = {"obj.isIntType()", "value >= 0", "value <= INTEGER_MAX"})
         protected static final void doNativeInts(final NativeObject obj, final long index, final long value) {
-            obj.getIntStorage()[(int) index] = (int) value;
+            obj.setInt(index, (int) value);
         }
 
         @Specialization(guards = {"obj.isLongType()", "value >= 0"})
         protected static final void doNativeLongs(final NativeObject obj, final long index, final long value) {
-            obj.getLongStorage()[(int) index] = value;
+            obj.setLong(index, value);
         }
 
         protected static final boolean inByteRange(final char value) {

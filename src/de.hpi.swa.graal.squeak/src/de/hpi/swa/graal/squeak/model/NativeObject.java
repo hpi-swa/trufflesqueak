@@ -32,6 +32,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectRea
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
@@ -173,6 +174,16 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         setStorage(ArrayConversionUtils.shortsFromBytesReversed(bytes));
     }
 
+    public byte getByte(final long index) {
+        assert isByteType();
+        return UnsafeUtils.getByte(storage, index);
+    }
+
+    public void setByte(final long index, final byte value) {
+        assert isByteType();
+        UnsafeUtils.putByte(storage, index, value);
+    }
+
     public int getByteLength() {
         return getByteStorage().length;
     }
@@ -180,6 +191,16 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public byte[] getByteStorage() {
         assert isByteType();
         return (byte[]) storage;
+    }
+
+    public int getInt(final long index) {
+        assert isIntType();
+        return UnsafeUtils.getInt(storage, index);
+    }
+
+    public void setInt(final long index, final int value) {
+        assert isIntType();
+        UnsafeUtils.putInt(storage, index, value);
     }
 
     public int getIntLength() {
@@ -191,6 +212,16 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return (int[]) storage;
     }
 
+    public long getLong(final long index) {
+        assert isLongType();
+        return UnsafeUtils.getLong(storage, index);
+    }
+
+    public void setLong(final long index, final long value) {
+        assert isLongType();
+        UnsafeUtils.putLong(storage, index, value);
+    }
+
     public int getLongLength() {
         return getLongStorage().length;
     }
@@ -198,6 +229,16 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public long[] getLongStorage() {
         assert isLongType();
         return (long[]) storage;
+    }
+
+    public short getShort(final long index) {
+        assert isShortType();
+        return UnsafeUtils.getShort(storage, index);
+    }
+
+    public void setShort(final long index, final short value) {
+        assert isShortType();
+        UnsafeUtils.putShort(storage, index, value);
     }
 
     public int getShortLength() {

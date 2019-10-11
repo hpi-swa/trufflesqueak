@@ -26,6 +26,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeN
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
@@ -114,6 +115,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         setStorage(otherStorage);
     }
 
+    public byte getByte(final long index) {
+        assert isBooleanType();
+        return UnsafeUtils.getByte(storage, index);
+    }
+
+    public void setByte(final long index, final byte value) {
+        assert isBooleanType();
+        UnsafeUtils.putByte(storage, index, value);
+    }
+
     public int getBooleanLength() {
         return getBooleanStorage().length;
     }
@@ -123,6 +134,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return (byte[]) storage;
     }
 
+    public char getChar(final long index) {
+        assert isCharType();
+        return UnsafeUtils.getChar(storage, index);
+    }
+
+    public void setChar(final long index, final char value) {
+        assert isCharType();
+        UnsafeUtils.putChar(storage, index, value);
+    }
+
     public int getCharLength() {
         return getCharStorage().length;
     }
@@ -130,6 +151,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public char[] getCharStorage() {
         assert isCharType();
         return (char[]) storage;
+    }
+
+    public double getDouble(final long index) {
+        assert isDoubleType();
+        return UnsafeUtils.getDouble(storage, index);
+    }
+
+    public void setDouble(final long index, final double value) {
+        assert isDoubleType();
+        UnsafeUtils.putDouble(storage, index, value);
     }
 
     public int getDoubleLength() {
@@ -150,6 +181,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return (int) storage;
     }
 
+    public long getLong(final long index) {
+        assert isLongType();
+        return UnsafeUtils.getLong(storage, index);
+    }
+
+    public void setLong(final long index, final long value) {
+        assert isLongType();
+        UnsafeUtils.putLong(storage, index, value);
+    }
+
     public int getLongLength() {
         return getLongStorage().length;
     }
@@ -159,6 +200,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return (long[]) storage;
     }
 
+    public NativeObject getNativeObject(final long index) {
+        assert isNativeObjectType();
+        return UnsafeUtils.getNativeObject(storage, index);
+    }
+
+    public void setNativeObject(final long index, final NativeObject value) {
+        assert isNativeObjectType();
+        UnsafeUtils.putNativeObject(storage, index, value);
+    }
+
     public int getNativeObjectLength() {
         return getNativeObjectStorage().length;
     }
@@ -166,6 +217,16 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public NativeObject[] getNativeObjectStorage() {
         assert isNativeObjectType();
         return (NativeObject[]) storage;
+    }
+
+    public Object getObject(final long index) {
+        assert isObjectType();
+        return UnsafeUtils.getObject(storage, index);
+    }
+
+    public void setObject(final long index, final Object value) {
+        assert isObjectType();
+        UnsafeUtils.putObject(storage, index, value);
     }
 
     public int getObjectLength() {

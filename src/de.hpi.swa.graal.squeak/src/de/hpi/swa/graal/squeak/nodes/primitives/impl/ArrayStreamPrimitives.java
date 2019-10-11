@@ -150,13 +150,13 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())"})
         protected static final char doNativeObjectBytes(final NativeObject obj, final long index) {
-            return (char) (obj.getByteStorage()[(int) index - 1] & 0xFF);
+            return (char) (obj.getByte(index - 1) & 0xFF);
         }
 
         @Specialization(guards = {"obj.isIntType()", "inBounds1(index, obj.getIntLength())"})
         protected static final Object doNativeObjectInts(final NativeObject obj, final long index,
                         @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
-            return CharacterObject.valueOf(obj.getIntStorage()[(int) index - 1], isFiniteProfile);
+            return CharacterObject.valueOf(obj.getInt(index - 1), isFiniteProfile);
         }
     }
 
@@ -170,19 +170,19 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())", "inByteRange(value)"})
         protected static final char doNativeObjectBytes(final NativeObject obj, final long index, final char value) {
-            obj.getByteStorage()[(int) index - 1] = (byte) value;
+            obj.setByte(index - 1, (byte) value);
             return value;
         }
 
         @Specialization(guards = {"obj.isIntType()", "inBounds1(index, obj.getIntLength())"})
         protected static final char doNativeObjectInts(final NativeObject obj, final long index, final char value) {
-            obj.getIntStorage()[(int) index - 1] = value;
+            obj.setInt(index - 1, value);
             return value;
         }
 
         @Specialization(guards = {"obj.isIntType()", "inBounds1(index, obj.getIntLength())"})
         protected static final CharacterObject doNativeObjectInts(final NativeObject obj, final long index, final CharacterObject value) {
-            obj.getIntStorage()[(int) index - 1] = (int) value.getValue();
+            obj.setInt(index - 1, (int) value.getValue());
             return value;
         }
 
