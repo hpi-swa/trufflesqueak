@@ -64,6 +64,16 @@ public final class PointersObject extends AbstractPointersObject {
         getLayout().getLocation(index).write(this, value);
     }
 
+    public Object at0Slow(final int index) {
+        CompilerAsserts.neverPartOfCompilation("Should only be used for testing");
+        return AbstractPointersObjectReadNode.getUncached().execute(this, index);
+    }
+
+    public void atput0Slow(final int index, final Object value) {
+        CompilerAsserts.neverPartOfCompilation("Should only be used for testing");
+        AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
+    }
+
     @Override
     public int size() {
         return instsize();
