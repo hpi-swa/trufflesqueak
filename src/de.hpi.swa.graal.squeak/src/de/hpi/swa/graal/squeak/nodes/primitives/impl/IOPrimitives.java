@@ -56,6 +56,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -296,7 +297,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             long scanDestX = (long) receiver.at0(CHARACTER_SCANNER.DEST_X);
             long scanLastIndex = startIndex;
             while (scanLastIndex <= stopIndex) {
-                final long ascii = sourceBytes[(int) (scanLastIndex - 1)] & 0xFF;
+                final long ascii = UnsafeUtils.getByte(sourceBytes, scanLastIndex - 1) & 0xFF;
                 final Object stopReason = readNode.execute(stops, ascii);
                 if (stopReason != NilObject.SINGLETON) {
                     storeStateInReceiver(receiver, scanDestX, scanLastIndex);

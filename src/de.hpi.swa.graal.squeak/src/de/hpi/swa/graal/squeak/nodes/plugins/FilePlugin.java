@@ -426,7 +426,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 final long read = readFrom(fileDescriptor, dst);
                 for (int index = 0; index < read; index++) {
-                    target.getByteStorage()[(int) (startIndex - 1 + index)] = getFrom(dst, index);
+                    target.setByte(startIndex - 1 + index, getFrom(dst, index));
                 }
                 return Math.max(read, 0L); // `read` can be `-1`, Squeak expects zero.
             } catch (final IOException e) {

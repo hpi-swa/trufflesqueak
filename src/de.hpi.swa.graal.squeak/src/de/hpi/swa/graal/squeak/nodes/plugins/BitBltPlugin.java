@@ -50,9 +50,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doCopy(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
             method.image.bitblt.resetSuccessFlag();
-            return method.image.bitblt.primitiveCopyBits(receiver, -1); // Not provided
-                                                                        // represented by
-                                                                        // `-1` here.
+            // Not provided represented by `-1L` factor.
+            return method.image.bitblt.primitiveCopyBits(receiver, -1L);
         }
 
         @Specialization
