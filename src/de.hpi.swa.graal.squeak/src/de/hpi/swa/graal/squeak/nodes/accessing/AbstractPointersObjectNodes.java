@@ -31,6 +31,7 @@ import de.hpi.swa.graal.squeak.model.layout.SlotLocation.WriteLocationNode;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectWriteNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.VariablePointersObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.VariablePointersObjectWriteNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.WeakVariablePointersObjectWriteNodeGen;
 
@@ -159,7 +160,13 @@ public class AbstractPointersObjectNodes {
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class VariablePointersObjectReadNode extends Node {
 
+        public static VariablePointersObjectReadNode getUncached() {
+            return VariablePointersObjectReadNodeGen.getUncached();
+        }
+
         public abstract Object execute(VariablePointersObject object, int index);
+
+        public abstract ArrayObject executeArray(VariablePointersObject object, int index);
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex < cachedLayout.getInstSize()"}, limit = "CACHE_LIMIT")
         protected static final Object doReadCached(final VariablePointersObject object, @SuppressWarnings("unused") final int index,

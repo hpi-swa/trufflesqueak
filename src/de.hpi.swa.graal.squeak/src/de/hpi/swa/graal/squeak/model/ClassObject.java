@@ -379,7 +379,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         while (lookupClass != null) {
             final VariablePointersObject methodDictObject = lookupClass.getMethodDict();
             for (int i = METHOD_DICT.NAMES; i < methodDictObject.size(); i++) {
-                final Object methodSelector = methodDictObject.at0(i);
+                final Object methodSelector = methodDictObject.at0Slow(i);
                 if (methodSelector instanceof NativeObject) {
                     methodNames.add(((NativeObject) methodSelector).asStringUnsafe().replace(':', '_'));
                 }

@@ -13,11 +13,12 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.VariablePointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class VariablePointersObject extends AbstractPointersObject {
-    @CompilationFinal(dimensions = 0) public Object[] variablePart;
+    @CompilationFinal(dimensions = 0) private Object[] variablePart;
 
     public VariablePointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
@@ -83,6 +84,10 @@ public final class VariablePointersObject extends AbstractPointersObject {
         return layoutValuesPointTo(thang) || ArrayUtils.contains(variablePart, thang);
     }
 
+    public Object[] getVariablePart() {
+        return variablePart;
+    }
+
     public Object getFromVariablePart(final int index) {
         return variablePart[index];
     }
@@ -91,33 +96,8 @@ public final class VariablePointersObject extends AbstractPointersObject {
         variablePart[index] = value;
     }
 
-    public Object at0(final int i) {
-        final int instsize = instsize();
-        if (i < instsize) {
-            if (!getLayout().isValid()) {
-                updateLayout();
-            }
-            return getLayout().getLocation(i).read(this);
-        } else {
-            return variablePart[i - instsize];
-        }
-    }
-
-    public void atput0(final int i, final Object value) {
-        assert value != null : "Unexpected `null` value";
-        final int instsize = instsize();
-        if (i < instsize) {
-            if (!getLayout().getLocation(i).canStore(value)) {
-                updateLayout(i, value);
-            }
-            getLayout().getLocation(i).writeMustSucceed(this, value);
-        } else {
-            variablePart[i - instsize] = value;
-        }
-    }
-
-    public void atputNil0(final int i) {
-        atput0(i, NilObject.SINGLETON);
+    public Object at0Slow(final int index) {
+        return VariablePointersObjectReadNode.getUncached().execute(this, index);
     }
 
     public VariablePointersObject shallowCopy() {

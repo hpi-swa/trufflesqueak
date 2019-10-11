@@ -96,7 +96,7 @@ public final class ObjectLayouts {
             if (organization == NilObject.SINGLETON) {
                 return null;
             }
-            final AbstractSqueakObjectWithClassAndHash classComment = (AbstractSqueakObjectWithClassAndHash) ((VariablePointersObject) organization).at0(CLASS_ORGANIZER.CLASS_COMMENT);
+            final AbstractSqueakObjectWithClassAndHash classComment = (AbstractSqueakObjectWithClassAndHash) ((VariablePointersObject) organization).at0Slow(CLASS_ORGANIZER.CLASS_COMMENT);
             final NativeObject string = (NativeObject) classComment.send("string");
             return string.asStringUnsafe();
         }

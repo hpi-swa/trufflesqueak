@@ -18,6 +18,7 @@ import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.VariablePointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
@@ -43,21 +44,23 @@ public abstract class LookupMethodByStringNode extends AbstractNode {
     }
 
     protected static final Object doUncached(final ClassObject classObject, final String selector) {
-        return doUncached(classObject, selector, ArrayObjectReadNode.getUncached());
+        return doUncached(classObject, selector, VariablePointersObjectReadNode.getUncached(), ArrayObjectReadNode.getUncached());
     }
 
     @Specialization(replaces = "doCached")
     protected static final Object doUncached(final ClassObject classObject, final String selector,
-                    @Cached final ArrayObjectReadNode readNode) {
+                    @Cached final VariablePointersObjectReadNode pointersReadValuesNode,
+                    @Cached final ArrayObjectReadNode arrayReadNode) {
         final byte[] selectorBytes = MiscUtils.toBytes(selector);
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
             final VariablePointersObject methodDict = lookupClass.getMethodDict();
-            for (int i = METHOD_DICT.NAMES; i < methodDict.size(); i++) {
-                final Object methodSelector = methodDict.at0(i);
+            final Object[] methodDictVariablePart = methodDict.getVariablePart();
+            for (int i = 0; i < methodDictVariablePart.length; i++) {
+                final Object methodSelector = methodDictVariablePart[i];
                 if (methodSelector instanceof NativeObject && Arrays.equals(selectorBytes, ((NativeObject) methodSelector).getByteStorage())) {
-                    final ArrayObject values = (ArrayObject) methodDict.at0(METHOD_DICT.VALUES);
-                    return readNode.execute(values, i - METHOD_DICT.NAMES);
+                    final ArrayObject values = pointersReadValuesNode.executeArray(methodDict, METHOD_DICT.VALUES);
+                    return arrayReadNode.execute(values, i - METHOD_DICT.NAMES);
                 }
             }
             lookupClass = lookupClass.getSuperclassOrNull();

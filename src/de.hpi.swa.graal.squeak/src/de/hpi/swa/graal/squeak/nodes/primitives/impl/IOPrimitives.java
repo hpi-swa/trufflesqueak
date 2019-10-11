@@ -43,6 +43,8 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.VariablePointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.VariablePointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.WeakVariablePointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.WeakVariablePointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -542,6 +544,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Specialization
             protected final void doArrayObjectPointers(final ArrayObject rcvr, final long start, final long stop, final VariablePointersObject repl, final long replStart,
+                            @Cached final VariablePointersObjectReadNode readNode,
                             @Shared("arrayWriteNode") @Cached final ArrayObjectWriteNode writeNode,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 if (!inBounds(rcvr.instsize(), getSizeNode().execute(rcvr), start, stop, repl.instsize(), repl.size(), replStart)) {
@@ -550,7 +553,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 final int repOff = (int) (replStart - start);
                 for (int i = (int) (start - 1); i < stop; i++) {
-                    writeNode.execute(rcvr, i, repl.at0(repOff + i));
+                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
             }
 
@@ -776,6 +779,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected static final void doPointersArray(final VariablePointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
                             @Cached final ArrayObjectReadNode readNode,
+                            @Cached final VariablePointersObjectWriteNode writeNode,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), sizeNode.execute(repl), replStart)) {
                     errorProfile.enter();
@@ -783,7 +787,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 final long repOff = replStart - start;
                 for (int i = (int) (start - 1); i < stop; i++) {
-                    rcvr.atput0(i, readNode.execute(repl, repOff + i));
+                    writeNode.execute(rcvr, i, readNode.execute(repl, repOff + i));
                 }
             }
 

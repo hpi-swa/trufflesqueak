@@ -4082,7 +4082,7 @@ public final class BitBlt {
     }
 
     private static Object fetchPointerofObject(final int index, final VariablePointersObject object) {
-        return object.at0(index);
+        return object.at0Slow(index);
     }
 
     private static Object fetchPointerofObject(final int index, final PointersObject object) {

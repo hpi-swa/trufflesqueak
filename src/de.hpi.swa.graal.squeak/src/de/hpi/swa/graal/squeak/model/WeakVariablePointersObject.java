@@ -8,7 +8,6 @@ package de.hpi.swa.graal.squeak.model;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -21,7 +20,7 @@ import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class WeakVariablePointersObject extends AbstractPointersObject {
     private static final WeakReference<?> NIL_REFERENCE = new WeakReference<>(NilObject.SINGLETON);
-    @CompilationFinal(dimensions = 0) public WeakReference<?>[] variablePart;
+    @CompilationFinal(dimensions = 0) private WeakReference<?>[] variablePart;
 
     public WeakVariablePointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
@@ -87,6 +86,10 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         }
     }
 
+    public Object[] getVariablePart() {
+        return variablePart;
+    }
+
     public Object getFromVariablePart(final int index) {
         return NilObject.nullToNil(UnsafeUtils.getWeakReference(variablePart, index).get());
     }
@@ -110,12 +113,6 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
             }
         }
         return false;
-    }
-
-    @Override
-    public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return "WeakPointersObject: " + getSqueakClass();
     }
 
     public WeakVariablePointersObject shallowCopy() {
