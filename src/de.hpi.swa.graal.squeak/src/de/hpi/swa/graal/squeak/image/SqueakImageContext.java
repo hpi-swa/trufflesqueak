@@ -177,7 +177,7 @@ public final class SqueakImageContext {
             SqueakImageReader.load(this);
             getOutput().println("Preparing image for headless execution...");
             // Remove active context.
-            getActiveProcessSlow().instVarAtPut0Unsafe(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
+            getActiveProcessSlow().instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
             // Modify StartUpList for headless execution.
             evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
             try {
@@ -232,8 +232,8 @@ public final class SqueakImageContext {
 
     public ExecuteTopLevelContextNode getActiveContextNode() {
         final PointersObject activeProcess = getActiveProcessSlow();
-        final ContextObject activeContext = (ContextObject) activeProcess.instVarAt0Unsafe(PROCESS.SUSPENDED_CONTEXT);
-        activeProcess.instVarAtPut0Unsafe(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
+        final ContextObject activeContext = (ContextObject) activeProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
+        activeProcess.instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
     }
 
@@ -337,7 +337,7 @@ public final class SqueakImageContext {
             final CompiledMethodObject method = (CompiledMethodObject) LookupMethodByStringNode.getUncached().executeLookup(byteArrayClass, "asWideString");
             if (method != null) {
                 final PointersObject assoc = (PointersObject) method.getLiteral(1);
-                wideStringClass = (ClassObject) assoc.instVarAt0Unsafe(ASSOCIATION.VALUE);
+                wideStringClass = (ClassObject) assoc.instVarAt0Slow(ASSOCIATION.VALUE);
             } else {
                 /* Image only uses a single String class (e.g. Cuis 5.0). */
                 wideStringClass = byteStringClass;
@@ -363,7 +363,7 @@ public final class SqueakImageContext {
     public PointersObject getScheduler() {
         if (scheduler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            scheduler = (PointersObject) schedulerAssociation.instVarAt0Unsafe(ASSOCIATION.VALUE);
+            scheduler = (PointersObject) schedulerAssociation.instVarAt0Slow(ASSOCIATION.VALUE);
         }
         return scheduler;
     }
@@ -464,8 +464,8 @@ public final class SqueakImageContext {
     }
 
     public Object getGlobals() {
-        final PointersObject environment = (PointersObject) smalltalk.instVarAt0Unsafe(SMALLTALK_IMAGE.GLOBALS);
-        final PointersObject bindings = (PointersObject) environment.instVarAt0Unsafe(ENVIRONMENT.BINDINGS);
+        final PointersObject environment = (PointersObject) smalltalk.instVarAt0Slow(SMALLTALK_IMAGE.GLOBALS);
+        final PointersObject bindings = (PointersObject) environment.instVarAt0Slow(ENVIRONMENT.BINDINGS);
         return new InteropMap(bindings);
     }
 

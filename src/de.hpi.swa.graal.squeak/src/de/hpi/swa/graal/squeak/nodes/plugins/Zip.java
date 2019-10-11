@@ -896,7 +896,7 @@ public final class Zip {
      */
 
     private static Object fetchPointerofObject(final int index, final PointersObject pointersOop) {
-        return pointersOop.instVarAt0Unsafe(index);
+        return pointersOop.instVarAt0Slow(index);
     }
 
     private static byte[] fetchBytePointerOfObject(final PointersObject rcvr, final int index) {
@@ -933,7 +933,7 @@ public final class Zip {
     }
 
     private static void storeIntegerofObjectwithValue(final int i, final PointersObject streamOop, final long value) {
-        streamOop.instVarAtPut0Unsafe(i, value);
+        streamOop.instVarAtPut0Slow(i, value);
     }
 
     private static boolean isWords(final Object object) {

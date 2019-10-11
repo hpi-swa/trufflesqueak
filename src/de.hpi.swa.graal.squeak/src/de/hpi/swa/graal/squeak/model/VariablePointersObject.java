@@ -7,7 +7,6 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -82,12 +81,6 @@ public final class VariablePointersObject extends AbstractPointersObject {
 
     public boolean pointsTo(final Object thang) {
         return layoutValuesPointTo(thang) || ArrayUtils.contains(variablePart, thang);
-    }
-
-    public Object instVarAt0Unsafe(final int index) {
-        CompilerAsserts.neverPartOfCompilation();
-        assert index < instsize() && getLayout().isValid() : "Invalid unsafe instVar access";
-        return getLayout().getLocation(index).read(this);
     }
 
     public Object[] getVariablePart() {

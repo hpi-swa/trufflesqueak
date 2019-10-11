@@ -4082,11 +4082,11 @@ public final class BitBlt {
     }
 
     private static Object fetchPointerofObject(final int index, final VariablePointersObject object) {
-        return object.instVarAt0Unsafe(index);
+        return object.instVarAt0Slow(index);
     }
 
     private static Object fetchPointerofObject(final int index, final PointersObject object) {
-        return object.instVarAt0Unsafe(index);
+        return object.instVarAt0Slow(index);
     }
 
     private static boolean isBytes(final NativeObject object) {
@@ -4150,7 +4150,7 @@ public final class BitBlt {
     }
 
     private static void storeIntegerofObjectwithValue(final int index, final PointersObject target, final long value) {
-        target.instVarAtPut0Unsafe(index, value);
+        target.instVarAtPut0Slow(index, value);
     }
 
     private long dstLongAt(final long index) {

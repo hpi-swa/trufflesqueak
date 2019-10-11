@@ -7418,7 +7418,7 @@ public final class B2D {
     }
 
     private static void storeValue(final int i, final PointersObject object, final Object value) {
-        object.instVarAtPut0Unsafe(i, value);
+        object.instVarAtPut0Slow(i, value);
     }
 
     private static boolean isPointers(final AbstractSqueakObject object) {
@@ -7438,23 +7438,23 @@ public final class B2D {
     }
 
     private static ArrayObject fetchArrayofObject(final int index, final PointersObject object) {
-        return (ArrayObject) object.instVarAt0Unsafe(index);
+        return (ArrayObject) object.instVarAt0Slow(index);
     }
 
     private static Object fetchObjectofObject(final int index, final PointersObject object) {
-        return object.instVarAt0Unsafe(index);
+        return object.instVarAt0Slow(index);
     }
 
     private static PointersObject fetchPointerofObject(final int index, final PointersObject object) {
-        return (PointersObject) object.instVarAt0Unsafe(index);
+        return (PointersObject) object.instVarAt0Slow(index);
     }
 
     private static NativeObject fetchNativeofObject(final int index, final PointersObject object) {
-        return (NativeObject) object.instVarAt0Unsafe(index);
+        return (NativeObject) object.instVarAt0Slow(index);
     }
 
     private static long fetchIntegerofObject(final int index, final PointersObject object) {
-        return (long) object.instVarAt0Unsafe(index);
+        return (long) object.instVarAt0Slow(index);
     }
 
     private void workbufferAtput(final int index, final float value) {

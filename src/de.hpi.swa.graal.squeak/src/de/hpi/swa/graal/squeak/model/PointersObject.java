@@ -5,8 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.model;
 
-import com.oracle.truffle.api.CompilerAsserts;
-
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
@@ -51,27 +49,6 @@ public final class PointersObject extends AbstractPointersObject {
             writeNode.execute(this, i, pointersObject[i]);
         }
         assert size() == pointersObject.length;
-    }
-
-    public Object instVarAt0Unsafe(final int index) {
-        CompilerAsserts.neverPartOfCompilation();
-        assert index < instsize() && getLayout().isValid() : "Invalid unsafe instVar access";
-        return getLayout().getLocation(index).read(this);
-    }
-
-    public void instVarAtPut0Unsafe(final int index, final Object value) {
-        CompilerAsserts.neverPartOfCompilation();
-        getLayout().getLocation(index).write(this, value);
-    }
-
-    public Object at0Slow(final int index) {
-        CompilerAsserts.neverPartOfCompilation("Should only be used for testing");
-        return AbstractPointersObjectReadNode.getUncached().execute(this, index);
-    }
-
-    public void atput0Slow(final int index, final Object value) {
-        CompilerAsserts.neverPartOfCompilation("Should only be used for testing");
-        AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
     }
 
     @Override

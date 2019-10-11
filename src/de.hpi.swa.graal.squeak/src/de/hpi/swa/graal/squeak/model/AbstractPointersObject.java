@@ -7,13 +7,16 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocation;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
+import de.hpi.swa.graal.squeak.model.layout.SlotLocation;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -234,6 +237,16 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public final int instsize() {
         assert getSqueakClass().getBasicInstanceSize() == getLayout().getInstSize();
         return getLayout().getInstSize();
+    }
+
+    public final Object instVarAt0Slow(final int index) {
+        CompilerAsserts.neverPartOfCompilation();
+        return AbstractPointersObjectReadNode.getUncached().execute(this, index);
+    }
+
+    public final void instVarAtPut0Slow(final int index, final Object value) {
+        CompilerAsserts.neverPartOfCompilation();
+        AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
     }
 
     public final boolean layoutValuesPointTo(final Object thang) {
