@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
+import java.awt.DisplayMode;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -499,51 +501,76 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 } else {
                     return NilObject.SINGLETON;
                 }
+            } else {
+                final String attribute = getSystemAttribute(index);
+                if (attribute == null) {
+                    return NilObject.SINGLETON;
+                } else {
+                    return method.image.asByteString(attribute);
+                }
             }
+        }
+
+        private String getSystemAttribute(final int index) {
             switch (index) {
                 case 1001:  // this platform's operating system 'Mac OS', 'Win32', 'unix', ...
-                    return method.image.asByteString(method.image.os.getSqOSName());
+                    return method.image.os.getSqOSName();
                 case 1002:  // operating system version
                     if (method.image.os.isMacOS()) {
                         /* The image expects things like 1095, so convert 10.10.5 into 1010.5 */
-                        return method.image.asByteString(System.getProperty("os.version").replaceFirst("\\.", ""));
+                        return System.getProperty("os.version").replaceFirst("\\.", "");
+                    } else {
+                        return System.getProperty("os.version");
                     }
-                    return method.image.asByteString(System.getProperty("os.version"));
                 case 1003:  // this platform's processor type
-                    return method.image.asByteString("intel");
+                    return "intel";
                 case 1004:  // vm version
-                    return method.image.asByteString(SqueakLanguageConfig.NAME + " " + SqueakLanguageConfig.VERSION);
+                    return SqueakLanguageConfig.NAME + " " + SqueakLanguageConfig.VERSION;
                 case 1005:  // window system name
-                    return method.image.asByteString("Aqua");
+                    return "Aqua";
                 case 1006:  // vm build id
-                    final String osName = System.getProperty("os.name");
-                    final String osVersion = System.getProperty("os.version");
-                    final String osArch = System.getProperty("os.arch");
                     final String date = new SimpleDateFormat(VM_BUILD_ID_DATE_FORMAT, Locale.US).format(new Date(MiscUtils.getStartTime()));
-                    return method.image.asByteString(String.format("%s %s (%s) built on %s", osName, osVersion, osArch, date));
+                    return String.format("%s %s (%s) built on %s", getOSName(), getOSVersion(), getOSArch(), date);
                 case 1007: // Interpreter class (Cog VM only)
-                    return method.image.asByteString(MiscUtils.getGraalVMInformation());
+                    return MiscUtils.getGraalVMInformation();
                 case 1008: // Cogit class (Cog VM only)
-                    return method.image.asByteString(MiscUtils.getSystemProperties());
+                    return MiscUtils.getSystemProperties();
                 case 1009: // Platform source version
-                    return method.image.asByteString(MiscUtils.getVMInformation());
+                    return MiscUtils.getVMInformation();
                 case 1201: // max filename length (Mac OS only)
                     if (method.image.os.isMacOS()) {
-                        return method.image.asByteString("255");
+                        return "255";
                     }
                     break;
                 case 1202: // file last error (Mac OS only)
                     if (method.image.os.isMacOS()) {
-                        return method.image.asByteString("0");
+                        return "0";
                     }
                     break;
-                // case 10001: // hardware details (Win32 only)
-                // case 10002: // operating system details (Win32 only)
-                // case 10003: // graphics hardware details (Win32 only)
+                case 10001: // hardware details (Win32 only)
+                    return "Hardware information: not supported";
+                case 10002: // operating system details (Win32 only)
+                    return String.format("Operating System: %s (%s, %s)", getOSName(), getOSVersion(), getOSArch());
+                case 10003: // graphics hardware details (Win32 only)
+                    final DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+                    return String.format("Display Information: \n" +
+                                    "\tPrimary monitor resolution: %d x %d\n", dm.getWidth(), dm.getHeight());
                 default:
-                    return NilObject.SINGLETON;
+                    return null;
             }
-            return NilObject.SINGLETON;
+            return null;
+        }
+
+        private static String getOSName() {
+            return System.getProperty("os.name");
+        }
+
+        private static String getOSVersion() {
+            return System.getProperty("os.version");
+        }
+
+        private static String getOSArch() {
+            return System.getProperty("os.arch");
         }
     }
 
