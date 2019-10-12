@@ -43,6 +43,7 @@ public final class SendBytecodes {
         @Child private FrameStackPopNNode popNNode;
         @Child private FrameStackPushNode pushNode;
 
+        private final ConditionProfile noResultProfile = ConditionProfile.createBinaryProfile();
         private final BranchProfile nlrProfile = BranchProfile.create();
         private final BranchProfile nvrProfile = BranchProfile.create();
 
@@ -72,7 +73,7 @@ public final class SendBytecodes {
                 final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
                 result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs);
                 assert result != null : "Result of a message send should not be null";
-                if (result != NO_RESULT) {
+                if (noResultProfile.profile(result != NO_RESULT)) {
                     getPushNode().execute(frame, result);
                 }
             } catch (final NonLocalReturn nlr) {
