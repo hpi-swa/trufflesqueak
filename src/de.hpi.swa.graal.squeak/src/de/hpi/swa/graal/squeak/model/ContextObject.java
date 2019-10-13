@@ -48,13 +48,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         this.size = size;
     }
 
-    private ContextObject(final SqueakImageContext image, final Frame frame, final CompiledCodeObject blockOrMethod) {
+    private ContextObject(final SqueakImageContext image, final MaterializedFrame truffleFrame, final int size) {
         super(image);
-        assert FrameAccess.getSender(frame) != null;
-        assert FrameAccess.getContext(frame, blockOrMethod) == null;
-        truffleFrame = frame.materialize();
-        FrameAccess.setContext(truffleFrame, blockOrMethod, this);
-        size = blockOrMethod.getSqueakContextSize();
+        assert FrameAccess.getSender(truffleFrame) != null;
+        assert FrameAccess.getContext(truffleFrame) == null;
+        assert FrameAccess.getBlockOrMethod(truffleFrame).getSqueakContextSize() == size;
+        this.truffleFrame = truffleFrame;
+        this.size = size;
     }
 
     private ContextObject(final ContextObject original) {
@@ -93,11 +93,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public static ContextObject create(final FrameInstance frameInstance) {
         final Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-        return create(frame, FrameAccess.getBlockOrMethod(frame));
+        return create(frame.materialize(), FrameAccess.getBlockOrMethod(frame));
     }
 
-    public static ContextObject create(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        return new ContextObject(blockOrMethod.image, frame, blockOrMethod);
+    public static ContextObject create(final MaterializedFrame frame, final CompiledCodeObject blockOrMethod) {
+        final ContextObject context = new ContextObject(blockOrMethod.image, frame, blockOrMethod.getSqueakContextSize());
+        FrameAccess.setContext(frame, blockOrMethod, context);
+        return context;
     }
 
     @Override
