@@ -149,4 +149,4 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [squeak]: https://squeak.org
 [squeak_downloads]: https://squeak.org/downloads/
 [travis]: https://travis-ci.org/hpi-swa/graalsqueak
-[travis_badge]: https://travis-ci.org/hpi-swa/graalsqueak.svg
+[travis_badge]: https://travis-ci.org/hpi-swa/graalsqueak.svg?branch=master
