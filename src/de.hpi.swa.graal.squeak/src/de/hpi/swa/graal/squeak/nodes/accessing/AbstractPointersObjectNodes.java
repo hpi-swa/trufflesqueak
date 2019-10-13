@@ -27,8 +27,8 @@ import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
 import de.hpi.swa.graal.squeak.model.layout.SlotLocation;
 import de.hpi.swa.graal.squeak.model.layout.SlotLocation.IllegalWriteException;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocation.ReadLocationNode;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocation.WriteLocationNode;
+import de.hpi.swa.graal.squeak.model.layout.SlotLocation.ReadSlotLocationNode;
+import de.hpi.swa.graal.squeak.model.layout.SlotLocation.WriteSlotLocationNode;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectWriteNodeGen;
@@ -68,13 +68,13 @@ public class AbstractPointersObjectNodes {
                         @Cached("index") final int cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached("cachedLayout.getLocation(index)") final SlotLocation cachedLocation,
-                        @Cached final ReadLocationNode readNode) {
+                        @Cached final ReadSlotLocationNode readNode) {
             return readNode.execute(cachedLocation, object);
         }
 
         @Specialization(guards = "object.getLayout().isValid()", replaces = {"doReadCached"})
         protected static final Object doReadUncached(final AbstractPointersObject object, final int index,
-                        @Cached final ReadLocationNode readNode) {
+                        @Cached final ReadSlotLocationNode readNode) {
             return readNode.execute(object.getLayout().getLocation(index), object);
         }
 
@@ -82,7 +82,7 @@ public class AbstractPointersObjectNodes {
         protected static final Object doUpdateLayoutAndRead(final AbstractPointersObject object, final int index) {
             CompilerDirectives.transferToInterpreter();
             object.updateLayout();
-            return doReadUncached(object, index, ReadLocationNode.getUncached());
+            return doReadUncached(object, index, ReadSlotLocationNode.getUncached());
         }
     }
 
@@ -113,7 +113,7 @@ public class AbstractPointersObjectNodes {
                         @Cached("index") final int cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached("cachedLayout.getLocation(index)") final SlotLocation cachedLocation,
-                        @Cached final WriteLocationNode writeNode) {
+                        @Cached final WriteSlotLocationNode writeNode) {
             try {
                 writeNode.execute(cachedLocation, object, value);
             } catch (final IllegalWriteException e) {
@@ -139,7 +139,7 @@ public class AbstractPointersObjectNodes {
 
         @Specialization(guards = "object.getLayout().isValid()", replaces = {"doWriteCached", "doWriteCachedUninitialized"})
         protected static final void doWriteUncached(final AbstractPointersObject object, final int index, final Object value,
-                        @Cached final WriteLocationNode writeNode) {
+                        @Cached final WriteSlotLocationNode writeNode) {
             try {
                 writeNode.execute(object.getLayout().getLocation(index), object, value);
             } catch (final IllegalWriteException e) {
@@ -153,7 +153,7 @@ public class AbstractPointersObjectNodes {
         protected static final void doUpdateLayoutAndWrite(final AbstractPointersObject object, final int index, final Object value) {
             CompilerDirectives.transferToInterpreter();
             object.updateLayout();
-            doWriteUncached(object, index, value, WriteLocationNode.getUncached());
+            doWriteUncached(object, index, value, WriteSlotLocationNode.getUncached());
         }
     }
 

@@ -22,8 +22,8 @@ import com.oracle.truffle.api.profiles.IntValueProfile;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocationFactory.ReadLocationNodeGen;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocationFactory.WriteLocationNodeGen;
+import de.hpi.swa.graal.squeak.model.layout.SlotLocationFactory.ReadSlotLocationNodeGen;
+import de.hpi.swa.graal.squeak.model.layout.SlotLocationFactory.WriteSlotLocationNodeGen;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
@@ -139,11 +139,11 @@ public abstract class SlotLocation {
 
     @GenerateUncached
     @NodeInfo(cost = NodeCost.NONE)
-    public abstract static class ReadLocationNode extends Node {
+    public abstract static class ReadSlotLocationNode extends Node {
         public abstract Object execute(SlotLocation location, AbstractPointersObject object);
 
-        public static ReadLocationNode getUncached() {
-            return ReadLocationNodeGen.getUncached();
+        public static ReadSlotLocationNode getUncached() {
+            return ReadSlotLocationNodeGen.getUncached();
         }
 
         @Specialization
@@ -159,11 +159,11 @@ public abstract class SlotLocation {
     }
 
     @GenerateUncached
-    public abstract static class WriteLocationNode extends Node {
+    public abstract static class WriteSlotLocationNode extends Node {
         public abstract void execute(SlotLocation location, AbstractPointersObject object, Object value);
 
-        public static WriteLocationNode getUncached() {
-            return WriteLocationNodeGen.getUncached();
+        public static WriteSlotLocationNode getUncached() {
+            return WriteSlotLocationNodeGen.getUncached();
         }
 
         @Specialization
