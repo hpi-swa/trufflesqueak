@@ -74,6 +74,8 @@ Smalltalk-based Tooling Platform for Polyglot Programming*. In Proceedings of
 Programming, Systems, Languages, and Applications (OOPSLA), 12 pages, Athens,
 Greece, October 21, 2019, ACM DL.  
 [![doi][mplr19_doi]][mplr19_paper] [![bibtex][bibtex]][mplr19_bibtex] [![Preprint][preprint]][mplr19_pdf]
+- Fabio Niephaus. [*HPI Polyglot Programming Seminar*][pp19_post]. In the
+[GraalVM Blog][graalvm_blog], October 11, 2019.
 - Fabio Niephaus, Tim Felgentreff, Tobias Pape, and Robert Hirschfeld.
 *Efficient Implementation of Smalltalk Activation Records in Language
 Implementation Frameworks*. In Proceedings of [the Workshop on Modern Language
@@ -120,6 +122,7 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [graalsqueak_license]: LICENSE
 [graalsqueak_license_badge]: https://img.shields.io/github/license/hpi-swa/graalsqueak
 [graalvm]: http://www.graalvm.org/
+[graalvm_blog]: https://medium.com/graalvm
 [graalvm_download]: http://www.graalvm.org/downloads/
 [icooolps18]: https://2018.ecoop.org/event/icooolps-2018-papers-graalsqueak-a-fast-smalltalk-bytecode-interpreter-written-in-an-ast-interpreter-framework
 [icooolps18_bibtex]: https://dl.acm.org/downformats.cfm?id=3242948&parent_id=3242947&expformat=bibtex
@@ -139,6 +142,7 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [mplr19_paper]: https://doi.org/10.1145/3357390.3361024
 [mplr19_pdf]: https://fniephaus.com/2019/mplr19-graalsqueak.pdf
 [mx]: https://github.com/graalvm/mx
+[pp19_post]: https://medium.com/p/3fd06ffa59d2/
 [preprint]: https://img.shields.io/badge/preprint-download-blue.svg
 [pull_request]: ../../compare/dev...
 [px19]: https://2019.programming-conference.org/track/px-2019-papers
