@@ -614,7 +614,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "isStdioFileDescriptor(fileDescriptor)")
         protected static final long doSizeStdio(final Object receiver, final long fileDescriptor) {
-            throw PrimitiveFailed.GENERIC_ERROR;
+            return 0L;
         }
     }
 
