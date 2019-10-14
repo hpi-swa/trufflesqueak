@@ -19,6 +19,7 @@ readonly LIB_GRAALVM_PATH="${COMPONENT_DIR}/jre/lib/graalvm"
 readonly MANIFEST="${COMPONENT_DIR}/META-INF/MANIFEST.MF"
 readonly TARGET_JAR="${GRAALSQUEAK_DIR}/graalsqueak-component.jar"
 readonly TEMPLATE_LAUNCHER="template.graalsqueak.sh"
+readonly TEMPLATE_WIN_LAUNCHER="template.graalsqueak.cmd"
 
 if [[ -d "${COMPONENT_DIR}" ]]; then
     read -p "'${COMPONENT_DIR}' already exists. Do you want to remove it? (y/N): " user_input
@@ -38,6 +39,7 @@ cp "${GRAALSQUEAK_DIR}/graalsqueak.jar" \
 	"${GRAALSQUEAK_DIR}/graalsqueak-shared.jar" \
     "${LANGUAGE_PATH}"
 cp "${BASE_DIR}/${TEMPLATE_LAUNCHER}" "${LANGUAGE_PATH}/bin/graalsqueak"
+cp "${BASE_DIR}/${TEMPLATE_WIN_LAUNCHER}" "${LANGUAGE_PATH}/bin/graalsqueak.cmd"
 cp "${GRAALSQUEAK_DIR}/graalsqueak-launcher.jar" "$LIB_GRAALVM_PATH"
 
 mkdir -p "${COMPONENT_DIR}/META-INF"
