@@ -60,7 +60,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         List<String> unrecognized = arguments;
         for (int i = 0; i < arguments.size(); i++) {
             final String arg = arguments.get(i);
-            if (Files.exists(Paths.get(arg))) {
+            if (fileExists(arg)) {
                 unrecognized = arguments.subList(0, i);
                 imagePath = Paths.get(arg).toAbsolutePath().toString();
                 final List<String> remainingArgumentsList = arguments.subList(i + 1, arguments.size());
@@ -161,6 +161,14 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     @Override
     protected void collectArguments(final Set<String> options) {
         options.addAll(Arrays.asList("-c", "--code"));
+    }
+
+    private static boolean fileExists(final String path) {
+        try {
+            return Files.exists(Paths.get(path));
+        } catch (final Exception e) {
+            return false;
+        }
     }
 
     private static void println(final String string, final Object... arguments) {
