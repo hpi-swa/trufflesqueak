@@ -9,7 +9,7 @@ setlocal enabledelayedexpansion
 set _VERSION=19.2.0.1
 
 set _MAIN_CLASS=de.hpi.swa.graal.squeak.launcher.GraalSqueakLauncher
-for %%f in ("%~dp0..\..\..\..") do set _ROOT_DIR=%%~f
+for %%f in ("%~dp0..\..\..\..") do set "_ROOT_DIR=%%~f"
 set "_LIB_DIR=%_ROOT_DIR%\jre\lib"
 
 :: #######################################################################
@@ -53,6 +53,6 @@ for %%i in ("%*") do (
         set _PROGRAM_ARGS=!_PROGRAM_ARGS! !__OPT!
     )
 )
-%_JAVACMD% %_JAVA_ARGS% -Xbootclasspath/a:%_BOOT_PATH% -cp %_LAUNCHER_PATH% %_MAIN_CLASS% %_PROGRAM_ARGS%
+"%_JAVACMD%" %_JAVA_ARGS% -Xbootclasspath/a:%_BOOT_PATH% -cp %_LAUNCHER_PATH% %_MAIN_CLASS% %_PROGRAM_ARGS%
 exit /b %ERRORLEVEL%
 endlocal
