@@ -231,7 +231,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             // Method is unknown, use dummy frame instead
             final int guessedArgumentSize = size > CONTEXT.LARGE_FRAMESIZE ? size - CONTEXT.LARGE_FRAMESIZE : size - CONTEXT.SMALL_FRAMESIZE;
             final Object[] dummyArguments = FrameAccess.newDummyWith(null, NilObject.SINGLETON, null, new Object[guessedArgumentSize]);
-            truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments);
+            truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, image.dummyMethod.getFrameDescriptor());
+            FrameAccess.setInstructionPointer(truffleFrame, image.dummyMethod, 0);
+            FrameAccess.setStackPointer(truffleFrame, image.dummyMethod, 0);
         }
         return truffleFrame;
     }
@@ -249,13 +251,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                 assert dummyArguments.length >= expectedArgumentSize : "Unexpected argument size, maybe dummy frame had wrong size?";
                 FrameAccess.assertReceiverNotNull(truffleFrame);
                 frameArguments = truffleFrame.getArguments();
-                if (truffleFrame.getFrameDescriptor().getSize() > 0) {
-                    instructionPointer = FrameAccess.getInstructionPointer(truffleFrame, method);
-                    stackPointer = FrameAccess.getStackPointer(truffleFrame, method);
-                } else { // Frame slots unknown, so initialize PC and SP.
-                    instructionPointer = 0;
-                    stackPointer = 0;
-                }
+                assert truffleFrame.getFrameDescriptor().getSize() > 0;
+                instructionPointer = FrameAccess.getInstructionPointer(truffleFrame, method);
+                stackPointer = FrameAccess.getStackPointer(truffleFrame, method);
             } else {
                 // Receiver plus arguments.
                 final Object[] squeakArguments = new Object[1 + method.getNumArgsAndCopied()];

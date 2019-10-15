@@ -42,6 +42,7 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -109,6 +110,8 @@ public final class SqueakImageContext {
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
+
+    public final CompiledMethodObject dummyMethod = new CompiledMethodObject(this, null, new Object[]{CompiledCodeObject.makeHeader(1, 0, 0, false, true)});
 
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
