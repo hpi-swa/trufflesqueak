@@ -92,6 +92,14 @@ International Conference on the Art, Science, and Engineering of Programming
 Science, and Engineering of Programming (‹Programming›), 3 pages, Genova, Italy,
 April 1, 2019, ACM DL.  
 [![doi][morevms19_doi]][morevms19_paper] [![bibtex][bibtex]][morevms19_bibtex] [![Preprint][preprint]][morevms19_pdf]
+- Tobias Pape, Tim Felgentreff, Fabio Niephaus, and Robert Hirschfeld. *Let them
+fail: towards VM built-in behavior that falls back to the program*. In
+Proceedings of [the Salon des Refusés (SDR) 2019 Workshop][sdr19], companion
+volume to International Conference on the Art, Science, and Engineering of
+Programming (‹Programming›), co-located with the International Conference on the
+Art, Science, and Engineering of Programming (‹Programming›), 7 pages, Genova,
+Italy, April 1, 2019, ACM DL.  
+[![doi][sdr19_doi]][sdr19_paper] [![bibtex][bibtex]][sdr19_bibtex] [![Preprint][preprint]][sdr19_pdf]
 - Fabio Niephaus, Eva Krebs, Christian Flach, Jens Lincke, and Robert Hirschfeld.
 *PolyJuS: A Squeak/Smalltalk-based Polyglot Notebook System for the GraalVM*. In
 Proceedings of [the Programming Experience 2019 (PX/19) Workshop][px19],
@@ -162,6 +170,11 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [px19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3328434-blue.svg
 [px19_paper]: https://doi.org/10.1145/3328433.3328434
 [px19_pdf]: https://fniephaus.com/2019/px19-polyglot-notebooks.pdf
+[sdr19]: https://2019.programming-conference.org/track/sdr-2019-papers
+[sdr19_bibtex]: https://dl.acm.org/downformats.cfm?id=3338056&parent_id=3328433&expformat=bibtex
+[sdr19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3338056-blue.svg
+[sdr19_paper]: https://doi.org/10.1145/3328433.3338056
+[sdr19_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/PapeFelgentreffNiephausHirschfeld_2019_LetThemFailTowardsVmBuiltInBehaviorThatFallsBackToTheProgram_AcmDL.pdf
 [squeak]: https://squeak.org
 [squeak_downloads]: https://squeak.org/downloads/
 [travis]: https://travis-ci.org/hpi-swa/graalsqueak
