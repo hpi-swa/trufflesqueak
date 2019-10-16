@@ -74,6 +74,13 @@ Smalltalk-based Tooling Platform for Polyglot Programming*. In Proceedings of
 Programming, Systems, Languages, and Applications (OOPSLA), 12 pages, Athens,
 Greece, October 21, 2019, ACM DL.  
 [![doi][mplr19_doi]][mplr19_paper] [![bibtex][bibtex]][mplr19_bibtex] [![Preprint][preprint]][mplr19_pdf]
+- Daniel Stolpe, Tim Felgentreff, Christian Humer, Fabio Niephaus, and Robert
+Hirschfeld. *Language-independent Development Environment Support for Dynamic
+Runtimes*. In Proceedings of [the Dynamic Languages Symposium (DLS)
+2019][dls19], co-located with the Conference on Object-oriented Programming,
+Systems, Languages, and Applications (OOPSLA), 11 pages, Athens, Greece,
+October 20, 2019, ACM DL.  
+[![doi][dls19_doi]][dls19_paper] [![bibtex][bibtex]][dls19_bibtex] [![Preprint][preprint]][dls19_pdf]
 - Fabio Niephaus. [*HPI Polyglot Programming Seminar*][pp19_post]. In the
 [GraalVM Blog][graalvm_blog], October 11, 2019.
 - Fabio Niephaus, Tim Felgentreff, Tobias Pape, and Robert Hirschfeld.
@@ -113,6 +120,11 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [codacy_coverage]: https://img.shields.io/codacy/coverage/104b3300600346789d604fd269219efe.svg
 [codacy_grade]: https://img.shields.io/codacy/grade/104b3300600346789d604fd269219efe.svg
 [dev]: ../../tree/dev
+[dls19]: https://conf.researchr.org/home/dls-2019
+[dls19_bibtex]: https://dl.acm.org/downformats.cfm?id=3359746&parent_id=3359619&expformat=bibtex
+[dls19_doi]: https://img.shields.io/badge/doi-10.1145/3359619.3359746-blue.svg
+[dls19_paper]: https://doi.org/10.1145/3359619.3359746
+[dls19_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/StolpeFelgentreffHumerNiephausHirschfeld_2019_LanguageIndependentDevelopmentEnvironmentSupportForDynamicRuntimes_AcmDL.pdf
 [eclipse_cs]: http://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
 [graal]: https://github.com/oracle/graal
