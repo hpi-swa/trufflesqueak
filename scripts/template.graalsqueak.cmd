@@ -6,7 +6,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set _VERSION=19.2.0.1
+set _VERSION=19.2.1
 
 set _MAIN_CLASS=de.hpi.swa.graal.squeak.launcher.GraalSqueakLauncher
 for %%f in ("%~dp0..\..\..\..") do set "_ROOT_DIR=%%~f"
