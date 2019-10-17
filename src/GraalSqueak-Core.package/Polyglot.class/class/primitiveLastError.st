@@ -1,6 +1,6 @@
 primitives
 primitiveLastError
 	<primitive: 'primitiveGetLastError' module: 'PolyglotPlugin'>
-	self primitiveIsPolyglotEvalAllowed ifFalse: [
-		self error: 'Polyglot API is not available' ].
-	self primitiveFailed
+	self primitiveIsPolyglotEvalAllowed
+		ifTrue: [ self primitiveFailed ]
+		ifFalse: [ self error: 'Polyglot API is not available' ]

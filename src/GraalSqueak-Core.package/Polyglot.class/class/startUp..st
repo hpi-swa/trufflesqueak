@@ -1,3 +1,4 @@
 system startup
 startUp: resuming
-	Polyglot export: 'bindings' value: Polyglot bindings
+	self primitiveIsPolyglotBindingsAccessAllowed
+		ifTrue: [ self export: 'bindings' value: Polyglot bindings ]

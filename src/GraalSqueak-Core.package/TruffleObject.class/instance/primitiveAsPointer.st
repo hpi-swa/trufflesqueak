@@ -1,4 +1,6 @@
 primitives
 primitiveAsPointer
 	<primitive: 'primitiveAsPointer' module: 'PolyglotPlugin'>
-	Polyglot signalPolyglotError
+	self primitiveIsPointer
+		ifFalse: [ self error: 'Object cannot be converted to a pointer' ]
+		ifTrue: [ self error: 'Unexpected error' ]
