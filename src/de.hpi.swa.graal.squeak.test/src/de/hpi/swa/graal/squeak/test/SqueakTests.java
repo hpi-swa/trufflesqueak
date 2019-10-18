@@ -36,6 +36,7 @@ public final class SqueakTests {
         NOT_TERMINATING("Not Terminating"),
         PASSING("Passing"),
         PASSING_64BIT("Passing only on 64-bit"),
+        PASSING_WITH_NFI("Passing with NFI"),
         SLOWLY_FAILING("Failing and slow"),
         SLOWLY_PASSING("Passing, but slow");
 

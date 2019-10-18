@@ -363,6 +363,11 @@ public final class SqueakImageContext {
         return truffleObjectClass != null;
     }
 
+    public boolean supportsNFI() {
+        CompilerAsserts.neverPartOfCompilation();
+        return env.getInternalLanguages().containsKey("nfi");
+    }
+
     public PointersObject getScheduler() {
         if (scheduler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
