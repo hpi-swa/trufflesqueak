@@ -5,23 +5,32 @@
  */
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
+import java.io.IOException;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -36,6 +45,25 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
+    protected abstract static class AbstractFilePrimitiveNode extends AbstractPrimitiveNode {
+
+        protected AbstractFilePrimitiveNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @TruffleBoundary
+        private static long decodePermissions(final Set<PosixFilePermission> permissions, final PosixFilePermission read, final PosixFilePermission write, final PosixFilePermission execute) {
+            return (permissions.contains(read) ? 4 : 0) | (permissions.contains(write) ? 2 : 0) | (permissions.contains(execute) ? 1 : 0);
+        }
+
+        protected final ArrayObject getProtectionMask(final Set<PosixFilePermission> permissions) {
+            final long owner = decodePermissions(permissions, PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE);
+            final long group = decodePermissions(permissions, PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE);
+            final long others = decodePermissions(permissions, PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE, PosixFilePermission.OTHERS_EXECUTE);
+            return method.image.asArrayOfLongs(0L, owner, group, others);
+        }
+    }
+
     protected abstract static class AbstractKillPrimitiveNode extends AbstractSysCallPrimitiveNode {
 
         protected AbstractKillPrimitiveNode(final CompiledMethodObject method) {
@@ -140,6 +168,86 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 return method.image.asByteString(value);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveErrorMessageAt")
+    protected abstract static class PrimErrorMessageAtNode extends AbstractSysCallPrimitiveNode implements BinaryPrimitive {
+
+        protected PrimErrorMessageAtNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "supportsNFI")
+        protected final NativeObject doErrorMessageAt(@SuppressWarnings("unused") final Object receiver, final long index,
+                        @CachedLibrary("getSysCallObject()") final InteropLibrary lib,
+                        @CachedLibrary(limit = "1") final InteropLibrary resultLib) {
+            try {
+                return method.image.asByteString(resultLib.asString(lib.execute(sysCallObject, (int) index)));
+            } catch (final UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+
+        @Override
+        protected final String getFunctionName() {
+            return "strerror";
+        }
+
+        @Override
+        protected final String getFunctionSignature() {
+            return "(SINT32):STRING";
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFileProtectionMask")
+    protected abstract static class PrimFileProtectionMaskNode extends AbstractFilePrimitiveNode implements BinaryPrimitive {
+
+        protected PrimFileProtectionMaskNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "pathString.isByteType()")
+        protected final ArrayObject doFileProtectionMask(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
+                        @Cached final BranchProfile errorProfile) {
+            try {
+                final TruffleFile file = method.image.env.getTruffleFile(pathString.asStringUnsafe());
+                return getProtectionMask(file.getPosixPermissions());
+            } catch (final IOException | UnsupportedOperationException | SecurityException e) {
+                errorProfile.enter();
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveFileStat")
+    protected abstract static class PrimFileStatNode extends AbstractFilePrimitiveNode implements BinaryPrimitive {
+
+        protected PrimFileStatNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @TruffleBoundary
+        private static long decodePermissions(final Set<PosixFilePermission> permissions, final PosixFilePermission read, final PosixFilePermission write, final PosixFilePermission execute) {
+            return (permissions.contains(read) ? 4 : 0) | (permissions.contains(write) ? 2 : 0) | (permissions.contains(execute) ? 1 : 0);
+        }
+
+        @Specialization(guards = "pathString.isByteType()")
+        protected final ArrayObject doFileStat(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
+                        @Cached final BranchProfile errorProfile) {
+            try {
+                final TruffleFile file = method.image.env.getTruffleFile(pathString.asStringUnsafe());
+                final long uid = file.getOwner().hashCode();
+                final long gid = file.getGroup().hashCode();
+                final ArrayObject mask = getProtectionMask(file.getPosixPermissions());
+                return method.image.asArrayOfObjects(uid, gid, mask);
+            } catch (final IOException | UnsupportedOperationException | SecurityException e) {
+                errorProfile.enter();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
     }
@@ -349,6 +457,26 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         @Override
         protected final String getFunctionName() {
             return "getuid";
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveRealpath")
+    protected abstract static class PrimRealpathNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        protected PrimRealpathNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "pathString.isByteType()")
+        protected final NativeObject doRealpath(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
+                        @Cached final BranchProfile errorProfile) {
+            try {
+                return method.image.asByteString(method.image.env.getTruffleFile(pathString.asStringUnsafe()).getCanonicalFile().getPath());
+            } catch (final IOException e) {
+                errorProfile.enter();
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
         }
     }
 
