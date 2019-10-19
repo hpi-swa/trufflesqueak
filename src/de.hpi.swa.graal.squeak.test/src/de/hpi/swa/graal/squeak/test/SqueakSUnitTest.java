@@ -128,14 +128,11 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
                 break;
 
             case PASSING_64BIT:
-                if (image.flags.is64bit()) {
-                    if (result.reason != null) {
-                        throw result.reason;
-                    }
-                    assertTrue(result.message, result.passed);
-                } else {
-                    assertFalse(result.message, result.passed);
-                }
+                checkPassingIf(image.flags.is64bit(), result);
+                break;
+
+            case PASSING_WITH_NFI:
+                checkPassingIf(image.supportsNFI(), result);
                 break;
 
             case FAILING: // falls through
@@ -159,6 +156,17 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
             default:
                 throw new IllegalArgumentException(test.type.toString());
+        }
+    }
+
+    private static void checkPassingIf(final boolean check, final TestResult result) throws Throwable {
+        if (check) {
+            if (result.reason != null) {
+                throw result.reason;
+            }
+            assertTrue(result.message, result.passed);
+        } else {
+            assertFalse(result.message, result.passed);
         }
     }
 }

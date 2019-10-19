@@ -117,8 +117,9 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ClassObject doMethod(final CompiledMethodObject value) {
-        return value.image.compiledMethodClass;
+    protected static final ClassObject doMethod(@SuppressWarnings("unused") final CompiledMethodObject value,
+                    @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return image.compiledMethodClass;
     }
 
     @Specialization
