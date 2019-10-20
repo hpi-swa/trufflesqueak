@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.util;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -16,13 +17,35 @@ public final class UnsafeUtils {
 
     private static final long ARRAY_NATIVE_OBJECT_BASE_OFFSET;
     private static final long ARRAY_NATIVE_OBJECT_INDEX_SCALE;
+    private static final long ARRAY_WEAK_REFERENCE_BASE_OFFSET;
+    private static final long ARRAY_WEAK_REFERENCE_INDEX_SCALE;
 
     static {
         ARRAY_NATIVE_OBJECT_BASE_OFFSET = UNSAFE.arrayBaseOffset(NativeObject[].class);
         ARRAY_NATIVE_OBJECT_INDEX_SCALE = UNSAFE.arrayIndexScale(NativeObject[].class);
+        ARRAY_WEAK_REFERENCE_BASE_OFFSET = UNSAFE.arrayBaseOffset(WeakReference[].class);
+        ARRAY_WEAK_REFERENCE_INDEX_SCALE = UNSAFE.arrayIndexScale(WeakReference[].class);
     }
 
     private UnsafeUtils() {
+    }
+
+    public static long getAddress(final Class<?> javaClass, final String fieldName) {
+        try {
+            return UNSAFE.objectFieldOffset(javaClass.getField(fieldName));
+        } catch (NoSuchFieldException | SecurityException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    public static boolean getBoolAt(final Object object, final long address) {
+        return UNSAFE.getBoolean(object, address);
+    }
+
+    public static boolean getBoolFromLongs(final long[] array, final long index) {
+        assert 0 <= index && index < array.length;
+        return UNSAFE.getBoolean(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
     }
 
     public static byte getByte(final Object storage, final long index) {
@@ -35,9 +58,27 @@ public final class UnsafeUtils {
         return UNSAFE.getChar(storage, Unsafe.ARRAY_CHAR_BASE_OFFSET + index * Unsafe.ARRAY_CHAR_INDEX_SCALE);
     }
 
+    public static char getCharAt(final Object object, final long address) {
+        return UNSAFE.getChar(object, address);
+    }
+
+    public static char getCharFromLongs(final long[] array, final long index) {
+        assert 0 <= index && index < array.length;
+        return UNSAFE.getChar(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
+    }
+
     public static double getDouble(final Object storage, final long index) {
         assert storage instanceof double[] && 0 <= index && index < ((double[]) storage).length;
         return UNSAFE.getDouble(storage, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+    }
+
+    public static double getDoubleAt(final Object object, final long address) {
+        return UNSAFE.getDouble(object, address);
+    }
+
+    public static double getDoubleFromLongs(final long[] array, final long index) {
+        assert 0 <= index && index < array.length;
+        return UNSAFE.getDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
     }
 
     public static int getInt(final byte[] bytes, final long index) {
@@ -48,6 +89,10 @@ public final class UnsafeUtils {
     public static int getInt(final Object storage, final long index) {
         assert storage instanceof int[] && 0 <= index && index < ((int[]) storage).length;
         return UNSAFE.getInt(storage, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_INT_INDEX_SCALE);
+    }
+
+    public static int getIntAt(final Object object, final long address) {
+        return UNSAFE.getInt(object, address);
     }
 
     public static int getIntFromBytes(final byte[] bytes, final long index) {
@@ -61,12 +106,16 @@ public final class UnsafeUtils {
 
     public static long getLong(final byte[] bytes, final long index) {
         assert 0 <= index && index * ArrayConversionUtils.LONG_BYTE_SIZE < bytes.length;
-        return UnsafeUtils.UNSAFE.getLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.LONG_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        return UNSAFE.getLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.LONG_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static long getLong(final Object storage, final long index) {
         assert storage instanceof long[] && 0 <= index && index < ((long[]) storage).length;
         return UNSAFE.getLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
+    }
+
+    public static long getLongAt(final Object object, final long address) {
+        return UNSAFE.getLong(object, address);
     }
 
     public static long getLongReversed(final byte[] bytes, final long index) {
@@ -83,9 +132,13 @@ public final class UnsafeUtils {
         return UNSAFE.getObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE);
     }
 
+    public static Object getObjectAt(final Object object, final long address) {
+        return UNSAFE.getObject(object, address);
+    }
+
     public static short getShort(final byte[] bytes, final long index) {
         assert 0 <= index && index * ArrayConversionUtils.SHORT_BYTE_SIZE < bytes.length;
-        return UnsafeUtils.UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.SHORT_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        return UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.SHORT_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static short getShort(final int[] ints, final long index) {
@@ -107,7 +160,12 @@ public final class UnsafeUtils {
         return Short.reverseBytes(getShort(bytes, index));
     }
 
-    private static Unsafe initUnsafe() {
+    public static WeakReference<?> getWeakReference(final WeakReference<?>[] storage, final long index) {
+        assert 0 <= index && index < storage.length;
+        return (WeakReference<?>) UNSAFE.getObject(storage, ARRAY_WEAK_REFERENCE_BASE_OFFSET + index * ARRAY_WEAK_REFERENCE_INDEX_SCALE);
+    }
+
+    public static Unsafe initUnsafe() {
         try {
             // Fast path when we are trusted.
             return Unsafe.getUnsafe();
@@ -123,6 +181,15 @@ public final class UnsafeUtils {
         }
     }
 
+    public static void putBoolAt(final Object object, final long address, final boolean value) {
+        UNSAFE.putBoolean(object, address, value);
+    }
+
+    public static void putBoolIntoLongs(final long[] array, final long index, final boolean value) {
+        assert 0 <= index && index < array.length;
+        UNSAFE.putBoolean(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    }
+
     public static void putByte(final Object storage, final long index, final byte value) {
         assert storage instanceof byte[] && 0 <= index && index < ((byte[]) storage).length;
         UNSAFE.putByte(storage, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
@@ -133,19 +200,44 @@ public final class UnsafeUtils {
         UNSAFE.putChar(storage, Unsafe.ARRAY_CHAR_BASE_OFFSET + index * Unsafe.ARRAY_CHAR_INDEX_SCALE, value);
     }
 
+    public static void putCharAt(final Object object, final long address, final char value) {
+        UNSAFE.putChar(object, address, value);
+    }
+
+    public static void putCharIntoLongs(final long[] array, final long index, final char value) {
+        assert 0 <= index && index < array.length;
+        UNSAFE.putChar(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    }
+
+    public static double putDouble(final long[] array, final long index) {
+        return UNSAFE.getDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
+    }
+
     public static void putDouble(final Object storage, final long index, final double value) {
         assert storage instanceof double[] && 0 <= index && index < ((double[]) storage).length;
         UNSAFE.putDouble(storage, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
     }
 
+    public static void putDoubleAt(final Object object, final long address, final double value) {
+        UNSAFE.putDouble(object, address, value);
+    }
+
+    public static void putDoubleIntoLongs(final long[] array, final long index, final double value) {
+        UNSAFE.putDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    }
+
     public static void putInt(final byte[] bytes, final long index, final int value) {
         assert 0 <= index && index * ArrayConversionUtils.SHORT_BYTE_SIZE < bytes.length;
-        UnsafeUtils.UNSAFE.putInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.INTEGER_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
+        UNSAFE.putInt(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.INTEGER_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putInt(final Object storage, final long index, final int value) {
         assert storage instanceof int[] && 0 <= index && index < ((int[]) storage).length;
         UNSAFE.putInt(storage, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
+    }
+
+    public static void putIntAt(final Object object, final long address, final int value) {
+        UNSAFE.putInt(object, address, value);
     }
 
     public static void putIntIntoBytes(final byte[] bytes, final long index, final int value) {
@@ -159,12 +251,16 @@ public final class UnsafeUtils {
 
     public static void putLong(final byte[] bytes, final long index, final long value) {
         assert 0 <= index && index * ArrayConversionUtils.INTEGER_BYTE_SIZE < bytes.length;
-        UnsafeUtils.UNSAFE.putLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.LONG_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
+        UNSAFE.putLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * ArrayConversionUtils.LONG_BYTE_SIZE * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
     public static void putLong(final Object storage, final long index, final long value) {
         assert storage instanceof long[] && 0 <= index && index < ((long[]) storage).length;
         UNSAFE.putLong(storage, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    }
+
+    public static void putLongAt(final Object object, final long address, final long value) {
+        UNSAFE.putLong(object, address, value);
     }
 
     public static void putLongIntoBytes(final byte[] bytes, final long index, final long value) {
@@ -184,6 +280,10 @@ public final class UnsafeUtils {
     public static void putObject(final Object storage, final long index, final Object value) {
         assert storage.getClass() == Object[].class && 0 <= index && index < ((Object[]) storage).length;
         UNSAFE.putObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE, value);
+    }
+
+    public static void putObjectAt(final Object storage, final long address, final Object value) {
+        UNSAFE.putObject(storage, address, value);
     }
 
     public static void putShort(final byte[] bytes, final long index, final short value) {
@@ -208,5 +308,10 @@ public final class UnsafeUtils {
 
     public static void putShortReversed(final byte[] bytes, final long index, final short value) {
         putShort(bytes, index, Short.reverseBytes(value));
+    }
+
+    public static void putWeakReference(final WeakReference<?>[] storage, final long index, final WeakReference<?> value) {
+        assert 0 <= index && index < storage.length;
+        UNSAFE.putObject(storage, ARRAY_WEAK_REFERENCE_BASE_OFFSET + index * ARRAY_WEAK_REFERENCE_INDEX_SCALE, value);
     }
 }

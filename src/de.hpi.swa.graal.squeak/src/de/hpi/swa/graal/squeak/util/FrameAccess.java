@@ -18,6 +18,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -305,7 +306,7 @@ public final class FrameAccess {
     }
 
     @TruffleBoundary
-    public static Frame findFrameForMarker(final FrameMarker frameMarker) {
+    public static MaterializedFrame findFrameForMarker(final FrameMarker frameMarker) {
         CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
         LOG.fine("Iterating frames to find a marker...");
         final Frame frame = Truffle.getRuntime().iterateFrames(frameInstance -> {
@@ -322,7 +323,7 @@ public final class FrameAccess {
         if (frame == null) {
             throw SqueakException.create("Could not find frame for:", frameMarker);
         } else {
-            return frame;
+            return frame.materialize();
         }
     }
 }

@@ -24,10 +24,10 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 
@@ -62,13 +62,13 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static void patchImageForTesting() {
         image.interrupt.start();
-        final ArrayObject lists = (ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
-        final Object firstLink = priority10List.at0(LINKED_LIST.FIRST_LINK);
-        final Object lastLink = priority10List.at0(LINKED_LIST.LAST_LINK);
+        final Object firstLink = priority10List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
+        final Object lastLink = priority10List.instVarAt0Slow(LINKED_LIST.LAST_LINK);
         assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
         idleProcess = (PointersObject) firstLink;
-        assert idleProcess.at0(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
+        assert idleProcess.instVarAt0Slow(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
         image.getOutput().println("Increasing default timeout...");
         patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ " + SQUEAK_TIMEOUT_SECONDS);
         if (!runsOnMXGate()) {
@@ -131,25 +131,25 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static void ensureCleanImageState() {
         image.interrupt.reset();
         if (idleProcess != null) {
-            if (idleProcess.at0(PROCESS.NEXT_LINK) != NilObject.SINGLETON) {
+            if (idleProcess.instVarAt0Slow(PROCESS.NEXT_LINK) != NilObject.SINGLETON) {
                 image.printToStdErr("Resetting dirty idle process...");
-                idleProcess.atput0(PROCESS.NEXT_LINK, NilObject.SINGLETON);
+                idleProcess.instVarAtPut0Slow(PROCESS.NEXT_LINK, NilObject.SINGLETON);
             }
             resetProcessLists();
         }
     }
 
     private static void resetProcessLists() {
-        final Object[] lists = ((ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
+        final Object[] lists = ((ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
             final PointersObject linkedList = (PointersObject) lists[i];
-            final Object key = linkedList.at0(LINKED_LIST.FIRST_LINK);
-            final Object value = linkedList.at0(LINKED_LIST.LAST_LINK);
+            final Object key = linkedList.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
+            final Object value = linkedList.instVarAt0Slow(LINKED_LIST.LAST_LINK);
             final Object expectedValue = i == PRIORITY_10_LIST_INDEX ? idleProcess : NilObject.SINGLETON;
             if (key != expectedValue || value != expectedValue) {
                 image.printToStdErr(String.format("Removing inconsistent entry (%s->%s) from scheduler list #%s...", key, value, i + 1));
-                linkedList.atput0(LINKED_LIST.FIRST_LINK, expectedValue);
-                linkedList.atput0(LINKED_LIST.LAST_LINK, expectedValue);
+                linkedList.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, expectedValue);
+                linkedList.instVarAtPut0Slow(LINKED_LIST.LAST_LINK, expectedValue);
             }
         }
     }

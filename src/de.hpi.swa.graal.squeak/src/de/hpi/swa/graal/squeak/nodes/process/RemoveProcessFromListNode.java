@@ -10,38 +10,41 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
 public abstract class RemoveProcessFromListNode extends AbstractNode {
+    @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
+    @Child private AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
 
     public final void executeRemove(final PointersObject process, final PointersObject list) {
-        final Object first = list.at0(LINKED_LIST.FIRST_LINK);
-        final Object last = list.at0(LINKED_LIST.LAST_LINK);
+        final Object first = readNode.execute(list, LINKED_LIST.FIRST_LINK);
+        final Object last = readNode.execute(list, LINKED_LIST.LAST_LINK);
         executeRemove(process, list, first, last);
-        process.atputNil0(PROCESS.NEXT_LINK);
+        writeNode.executeNil(process, PROCESS.NEXT_LINK);
     }
 
     protected abstract void executeRemove(PointersObject process, PointersObject list, Object first, Object last);
 
     @Specialization(guards = "process == first")
-    protected static final void doRemoveEqual(final PointersObject process, final PointersObject list, @SuppressWarnings("unused") final PointersObject first,
-                    final AbstractSqueakObject last) {
-        final Object next = process.at0(PROCESS.NEXT_LINK);
-        list.atput0(LINKED_LIST.FIRST_LINK, next);
+    protected final void doRemoveEqual(final PointersObject process, final PointersObject list, @SuppressWarnings("unused") final PointersObject first, final AbstractSqueakObject last) {
+        final Object next = readNode.execute(process, PROCESS.NEXT_LINK);
+        writeNode.execute(list, LINKED_LIST.FIRST_LINK, next);
         if (process == last) {
-            list.atputNil0(LINKED_LIST.LAST_LINK);
+            writeNode.executeNil(list, LINKED_LIST.LAST_LINK);
         }
     }
 
     @Specialization(guards = "process != first")
-    protected static final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final PointersObject first, final AbstractSqueakObject last) {
+    protected final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final PointersObject first, final AbstractSqueakObject last) {
         PointersObject temp = first;
         Object next;
         while (true) {
-            next = temp.at0(PROCESS.NEXT_LINK);
+            next = readNode.execute(temp, PROCESS.NEXT_LINK);
             if (next == process) {
                 break;
             } else if (next == NilObject.SINGLETON) {
@@ -50,10 +53,10 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
                 temp = (PointersObject) next;
             }
         }
-        next = process.at0(PROCESS.NEXT_LINK);
-        temp.atput0(PROCESS.NEXT_LINK, next);
+        next = readNode.execute(process, PROCESS.NEXT_LINK);
+        writeNode.execute(temp, PROCESS.NEXT_LINK, next);
         if (process == last) {
-            list.atput0(LINKED_LIST.LAST_LINK, temp);
+            writeNode.execute(list, LINKED_LIST.LAST_LINK, temp);
         }
     }
 

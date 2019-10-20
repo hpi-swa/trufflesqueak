@@ -27,7 +27,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected final ContextObject doCreate(final VirtualFrame frame) {
-        return ContextObject.create(frame, code);
+        return ContextObject.create(frame.materialize(), code);
     }
 
     @Fallback

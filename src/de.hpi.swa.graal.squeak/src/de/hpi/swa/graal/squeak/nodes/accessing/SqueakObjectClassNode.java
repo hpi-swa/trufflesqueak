@@ -26,7 +26,8 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.model.VariablePointersObject;
+import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 
 @GenerateUncached
@@ -84,7 +85,12 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ClassObject doWeakPointers(final WeakPointersObject value) {
+    protected static final ClassObject doVariablePointers(final VariablePointersObject value) {
+        return value.getSqueakClass();
+    }
+
+    @Specialization
+    protected static final ClassObject doWeakPointers(final WeakVariablePointersObject value) {
         return value.getSqueakClass();
     }
 
@@ -94,8 +100,9 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ClassObject doClosure(final BlockClosureObject value) {
-        return value.getSqueakClass();
+    protected static final ClassObject doClosure(@SuppressWarnings("unused") final BlockClosureObject value,
+                    @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return image.blockClosureClass;
     }
 
     @Specialization
@@ -110,13 +117,15 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ClassObject doMethod(final CompiledMethodObject value) {
-        return value.image.compiledMethodClass;
+    protected static final ClassObject doMethod(@SuppressWarnings("unused") final CompiledMethodObject value,
+                    @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return image.compiledMethodClass;
     }
 
     @Specialization
-    protected static final ClassObject doContext(final ContextObject value) {
-        return value.getSqueakClass();
+    protected static final ClassObject doContext(@SuppressWarnings("unused") final ContextObject value,
+                    @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return image.methodContextClass;
     }
 
     @Specialization
@@ -125,8 +134,9 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final ClassObject doFloat(final FloatObject value) {
-        return value.getSqueakClass();
+    protected static final ClassObject doFloat(@SuppressWarnings("unused") final FloatObject value,
+                    @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return image.floatClass;
     }
 
     @Specialization

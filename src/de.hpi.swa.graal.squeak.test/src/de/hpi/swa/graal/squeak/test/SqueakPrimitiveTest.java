@@ -17,9 +17,9 @@ import org.junit.Test;
 
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
@@ -31,21 +31,20 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testPrimReplaceFromTo() {
-        final PointersObject rcvr = new PointersObject(image, image.arrayClass,
-                        new Object[]{NilObject.SINGLETON, BooleanObject.FALSE, BooleanObject.TRUE, image.characterClass, image.metaClass,
-                                        image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
-                                        image.specialObjectsArray});
-        assertSame(NilObject.SINGLETON, rcvr.at0(0));
+        final ArrayObject rcvr = image.asArrayOfObjects(NilObject.SINGLETON, BooleanObject.FALSE, BooleanObject.TRUE, image.characterClass, image.metaClass,
+                        image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
+                        image.specialObjectsArray);
+        assertSame(NilObject.SINGLETON, rcvr.getObject(0));
         for (int i = 1; i < 8; i++) {
-            assertNotSame(NilObject.SINGLETON, rcvr.at0(i));
+            assertNotSame(NilObject.SINGLETON, rcvr.getObject(i));
         }
-        final Object result = runQuinaryPrimitive(105, rcvr, 1L, 6L, new PointersObject(image, image.nilClass, 10), 1L);
+        final Object result = runQuinaryPrimitive(105, rcvr, 1L, 6L, ArrayObject.createEmptyStrategy(image, image.arrayClass, 10), 1L);
         assertSame(result, rcvr);
         for (int i = 0; i < 6; i++) {
-            assertSame(NilObject.SINGLETON, rcvr.at0(i));
+            assertSame(NilObject.SINGLETON, rcvr.getObject(i));
         }
         for (int i = 7; i < 8; i++) {
-            assertNotSame(NilObject.SINGLETON, rcvr.at0(i));
+            assertNotSame(NilObject.SINGLETON, rcvr.getObject(i));
         }
     }
 

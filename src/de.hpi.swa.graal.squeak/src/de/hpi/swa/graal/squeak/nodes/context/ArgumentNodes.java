@@ -7,9 +7,9 @@ package de.hpi.swa.graal.squeak.nodes.context;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class ArgumentNodes {
     public abstract static class AbstractArgumentNode extends AbstractNode {

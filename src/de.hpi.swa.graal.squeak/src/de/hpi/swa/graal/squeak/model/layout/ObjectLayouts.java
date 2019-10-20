@@ -3,11 +3,20 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.model;
+package de.hpi.swa.graal.squeak.model.layout;
 
 import java.util.HashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 
 public final class ObjectLayouts {
 
@@ -87,7 +96,7 @@ public final class ObjectLayouts {
             if (organization == NilObject.SINGLETON) {
                 return null;
             }
-            final AbstractSqueakObjectWithClassAndHash classComment = (AbstractSqueakObjectWithClassAndHash) ((PointersObject) organization).at0(CLASS_ORGANIZER.CLASS_COMMENT);
+            final AbstractSqueakObjectWithClassAndHash classComment = (AbstractSqueakObjectWithClassAndHash) ((VariablePointersObject) organization).instVarAt0Slow(CLASS_ORGANIZER.CLASS_COMMENT);
             final NativeObject string = (NativeObject) classComment.send("string");
             return string.asStringUnsafe();
         }
@@ -118,12 +127,12 @@ public final class ObjectLayouts {
 
     public static final class DICTIONARY {
         public static HashMap<String, Object> toJavaMap(final PointersObject dictionary) {
-            final ArrayObject classBindings = (ArrayObject) dictionary.at0(HASHED_COLLECTION.ARRAY);
+            final ArrayObject classBindings = (ArrayObject) dictionary.instVarAt0Slow(HASHED_COLLECTION.ARRAY);
             final HashMap<String, Object> keyValues = new HashMap<>();
             for (final Object classBinding : classBindings.getObjectStorage()) {
                 if (classBinding != NilObject.SINGLETON) {
                     final PointersObject classBindingPointer = (PointersObject) classBinding;
-                    keyValues.put(((NativeObject) classBindingPointer.at0(CLASS_BINDING.KEY)).asStringUnsafe(), classBindingPointer.at0(CLASS_BINDING.VALUE));
+                    keyValues.put(((NativeObject) classBindingPointer.instVarAt0Slow(CLASS_BINDING.KEY)).asStringUnsafe(), classBindingPointer.instVarAt0Slow(CLASS_BINDING.VALUE));
                 }
             }
             return keyValues;

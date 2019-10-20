@@ -7,7 +7,6 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -21,7 +20,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -40,14 +39,15 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
-    public BlockClosureObject(final SqueakImageContext image, final CompiledBlockObject myBlock, final int numArgs, final Object receiver, final Object[] copied, final ContextObject outerContext) {
+    public BlockClosureObject(final SqueakImageContext image, final CompiledBlockObject block, final int startPC, final int numArgs, final Object receiver, final Object[] copied,
+                    final ContextObject outerContext) {
         super(image);
-        CompilerAsserts.partialEvaluationConstant(myBlock); // ensure startPC is constant
-        block = myBlock;
+        assert block.getInitialPC() == startPC;
+        this.block = block;
         this.outerContext = outerContext;
         this.receiver = receiver;
         this.copied = copied;
-        startPC = block.getInitialPC();
+        this.startPC = startPC;
         this.numArgs = numArgs;
     }
 

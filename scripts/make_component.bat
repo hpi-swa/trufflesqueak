@@ -17,7 +17,7 @@ if not %ERRORLEVEL%==0 (
 set _JAR_CMD=jar.exe
 
 set _LANGUAGE_ID=smalltalk
-set _GRAALVM_VERSION=19.2.0.1
+set _GRAALVM_VERSION=19.2.1
 
 for %%f in ("%~dp0") do set "_BASE_DIR=%%~f"
 set "_COMPONENT_DIR=%TEMP%\component_temp_dir"

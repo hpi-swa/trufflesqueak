@@ -12,7 +12,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.BlockClosureObjectNodesFactory.BlockClosureObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.BlockClosureObjectNodesFactory.BlockClosureObjectWriteNodeGen;

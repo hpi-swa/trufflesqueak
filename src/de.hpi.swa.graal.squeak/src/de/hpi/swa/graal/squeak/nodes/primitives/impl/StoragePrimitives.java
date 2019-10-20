@@ -37,8 +37,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -47,6 +45,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectHashNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
@@ -61,6 +60,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimiti
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -199,11 +199,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 70)
     protected abstract static class PrimNewNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected static final int NEW_CACHE_SIZE = 3;
-        @Child private NewObjectNode newNode;
+        @Child private SqueakObjectNewNode newNode;
 
         protected PrimNewNode(final CompiledMethodObject method) {
             super(method);
-            newNode = NewObjectNode.create(method.image);
+            newNode = SqueakObjectNewNode.create(method.image);
         }
 
         @SuppressWarnings("unused")
@@ -235,11 +235,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 71)
     protected abstract static class PrimNewWithArgNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
         protected static final int NEW_CACHE_SIZE = 3;
-        @Child private NewObjectNode newNode;
+        @Child private SqueakObjectNewNode newNode;
 
         protected PrimNewWithArgNode(final CompiledMethodObject method) {
             super(method);
-            newNode = NewObjectNode.create(method.image);
+            newNode = SqueakObjectNewNode.create(method.image);
         }
 
         @SuppressWarnings("unused")

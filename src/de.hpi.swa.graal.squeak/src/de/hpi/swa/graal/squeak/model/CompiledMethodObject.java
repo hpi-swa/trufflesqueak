@@ -15,10 +15,12 @@ import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.ADDITIONAL_METHOD_STATE;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS_BINDING;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ADDITIONAL_METHOD_STATE;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
 @ExportLibrary(InteropLibrary.class)
 public final class CompiledMethodObject extends CompiledCodeObject {
@@ -97,10 +99,10 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         final Object penultimateLiteral = literals[literals.length - 2];
         if (penultimateLiteral instanceof NativeObject) {
             return (NativeObject) penultimateLiteral;
-        } else if (penultimateLiteral instanceof PointersObject) {
-            final PointersObject penultimateLiteralAsPointer = (PointersObject) penultimateLiteral;
+        } else if (penultimateLiteral instanceof VariablePointersObject) {
+            final VariablePointersObject penultimateLiteralAsPointer = (VariablePointersObject) penultimateLiteral;
             assert penultimateLiteralAsPointer.size() >= ADDITIONAL_METHOD_STATE.SELECTOR;
-            return (NativeObject) penultimateLiteralAsPointer.at0(ADDITIONAL_METHOD_STATE.SELECTOR);
+            return (NativeObject) penultimateLiteralAsPointer.instVarAt0Slow(ADDITIONAL_METHOD_STATE.SELECTOR);
         } else {
             return null;
         }
@@ -120,18 +122,22 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return (PointersObject) literals[literals.length - 1];
     }
 
-    public boolean hasMethodClass() {
-        return getMethodClassAssociation().at0(CLASS_BINDING.VALUE) != NilObject.SINGLETON;
+    public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {
+        return readNode.execute(getMethodClassAssociation(), CLASS_BINDING.VALUE) != NilObject.SINGLETON;
     }
 
     /** CompiledMethod>>#methodClass. */
     public ClassObject getMethodClass() {
-        return (ClassObject) getMethodClassAssociation().at0(CLASS_BINDING.VALUE);
+        return getMethodClass(AbstractPointersObjectReadNode.getUncached());
+    }
+
+    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
+        return (ClassObject) readNode.execute(getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
 
     /** CompiledMethod>>#methodClass:. */
-    public void setMethodClass(final ClassObject newClass) {
-        getMethodClassAssociation().atput0(CLASS_BINDING.VALUE, newClass);
+    public void setMethodClass(final AbstractPointersObjectWriteNode writeNode, final ClassObject newClass) {
+        writeNode.execute(getMethodClassAssociation(), CLASS_BINDING.VALUE, newClass);
     }
 
     public void setHeader(final long header) {

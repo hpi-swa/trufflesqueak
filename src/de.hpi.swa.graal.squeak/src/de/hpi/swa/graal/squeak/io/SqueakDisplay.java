@@ -55,8 +55,8 @@ import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.WINDOW;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.nodes.plugins.DropPlugin;
 
 public final class SqueakDisplay implements SqueakDisplayInterface {
@@ -145,13 +145,13 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
         private void setSqDisplay(final PointersObject sqDisplay) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final NativeObject bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
+            final NativeObject bitmap = (NativeObject) sqDisplay.instVarAt0Slow(FORM.BITS);
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            final int width = (int) (long) sqDisplay.at0(FORM.WIDTH);
-            final int height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
-            assert (long) sqDisplay.at0(FORM.DEPTH) == 32 : "Unsupported display depth";
+            final int width = (int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH);
+            final int height = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
+            assert (long) sqDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
                 bufferedImage = newBufferedImage(bitmap, width, height);
                 repaint();

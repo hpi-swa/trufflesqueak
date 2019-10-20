@@ -47,7 +47,7 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
     }
 
     @Fallback
-    public static final boolean doObject(final Object a, final Object b) {
+    protected static final boolean doObject(final Object a, final Object b) {
         return BooleanObject.wrap(a == b);
     }
 }

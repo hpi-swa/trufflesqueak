@@ -22,10 +22,12 @@ import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -48,13 +50,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         this.size = size;
     }
 
-    private ContextObject(final SqueakImageContext image, final Frame frame, final CompiledCodeObject blockOrMethod) {
+    private ContextObject(final SqueakImageContext image, final MaterializedFrame truffleFrame, final int size) {
         super(image);
-        assert FrameAccess.getSender(frame) != null;
-        assert FrameAccess.getContext(frame, blockOrMethod) == null;
-        truffleFrame = frame.materialize();
-        FrameAccess.setContext(truffleFrame, blockOrMethod, this);
-        size = blockOrMethod.getSqueakContextSize();
+        assert FrameAccess.getSender(truffleFrame) != null;
+        assert FrameAccess.getContext(truffleFrame) == null;
+        assert FrameAccess.getBlockOrMethod(truffleFrame).getSqueakContextSize() == size;
+        this.truffleFrame = truffleFrame;
+        this.size = size;
     }
 
     private ContextObject(final ContextObject original) {
@@ -93,11 +95,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     public static ContextObject create(final FrameInstance frameInstance) {
         final Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-        return create(frame, FrameAccess.getBlockOrMethod(frame));
+        return create(frame.materialize(), FrameAccess.getBlockOrMethod(frame));
     }
 
-    public static ContextObject create(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        return new ContextObject(blockOrMethod.image, frame, blockOrMethod);
+    public static ContextObject create(final MaterializedFrame frame, final CompiledCodeObject blockOrMethod) {
+        final ContextObject context = new ContextObject(blockOrMethod.image, frame, blockOrMethod.getSqueakContextSize());
+        FrameAccess.setContext(frame, blockOrMethod, context);
+        return context;
     }
 
     @Override
@@ -227,7 +231,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             // Method is unknown, use dummy frame instead
             final int guessedArgumentSize = size > CONTEXT.LARGE_FRAMESIZE ? size - CONTEXT.LARGE_FRAMESIZE : size - CONTEXT.SMALL_FRAMESIZE;
             final Object[] dummyArguments = FrameAccess.newDummyWith(null, NilObject.SINGLETON, null, new Object[guessedArgumentSize]);
-            truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments);
+            truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, image.dummyMethod.getFrameDescriptor());
+            FrameAccess.setInstructionPointer(truffleFrame, image.dummyMethod, 0);
+            FrameAccess.setStackPointer(truffleFrame, image.dummyMethod, 0);
         }
         return truffleFrame;
     }
@@ -245,13 +251,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                 assert dummyArguments.length >= expectedArgumentSize : "Unexpected argument size, maybe dummy frame had wrong size?";
                 FrameAccess.assertReceiverNotNull(truffleFrame);
                 frameArguments = truffleFrame.getArguments();
-                if (truffleFrame.getFrameDescriptor().getSize() > 0) {
-                    instructionPointer = FrameAccess.getInstructionPointer(truffleFrame, method);
-                    stackPointer = FrameAccess.getStackPointer(truffleFrame, method);
-                } else { // Frame slots unknown, so initialize PC and SP.
-                    instructionPointer = 0;
-                    stackPointer = 0;
-                }
+                assert truffleFrame.getFrameDescriptor().getSize() > 0;
+                instructionPointer = FrameAccess.getInstructionPointer(truffleFrame, method);
+                stackPointer = FrameAccess.getStackPointer(truffleFrame, method);
             } else {
                 // Receiver plus arguments.
                 final Object[] squeakArguments = new Object[1 + method.getNumArgsAndCopied()];
@@ -526,17 +528,16 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return arguments;
     }
 
-    public void transferTo(final PointersObject newProcess) {
+    public void transferTo(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode, final PointersObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
         final PointersObject scheduler = newProcess.image.getScheduler();
-        // assert newProcess != image.getActiveProcess() : "trying to switch to already active
-        // process";
-        final PointersObject currentProcess = newProcess.image.getActiveProcess(); // overwritten in
-                                                                                   // next line.
-        scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        currentProcess.atput0(PROCESS.SUSPENDED_CONTEXT, this);
-        final ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
-        newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
+        assert newProcess != newProcess.image.getActiveProcess(readNode) : "trying to switch to already active process";
+        // overwritten in next line.
+        final PointersObject currentProcess = newProcess.image.getActiveProcess(readNode);
+        writeNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
+        writeNode.execute(currentProcess, PROCESS.SUSPENDED_CONTEXT, this);
+        final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+        writeNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
             throw ProcessSwitch.create(newActiveContext);
         } else {

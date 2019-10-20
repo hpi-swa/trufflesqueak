@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
+import java.awt.DisplayMode;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -17,6 +19,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -24,6 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
@@ -41,13 +45,14 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.model.VariablePointersObject;
+import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -61,6 +66,7 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -276,13 +282,24 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected static final boolean doPointers(final PointersObject receiver, final Object thang) {
-            return BooleanObject.wrap(ArrayUtils.contains(receiver.getPointers(), thang));
+        protected static final boolean doPointers(final PointersObject receiver, final Object thang,
+                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode,
+                        @Shared("isPrimitiveProfile") @Cached("createBinaryProfile()") final ConditionProfile isPrimitiveProfile) {
+            return BooleanObject.wrap(receiver.pointsTo(identityNode, isPrimitiveProfile, thang));
         }
 
         @Specialization
-        protected static final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
-            return BooleanObject.wrap(ArrayUtils.contains(receiver.getPointers(), thang));
+        protected static final boolean doVariablePointers(final VariablePointersObject receiver, final Object thang,
+                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode,
+                        @Shared("isPrimitiveProfile") @Cached("createBinaryProfile()") final ConditionProfile isPrimitiveProfile) {
+            return BooleanObject.wrap(receiver.pointsTo(identityNode, isPrimitiveProfile, thang));
+        }
+
+        @Specialization
+        protected static final boolean doWeakPointers(final WeakVariablePointersObject receiver, final Object thang,
+                        @Shared("identityNode") @Cached final SqueakObjectIdentityNode identityNode,
+                        @Shared("isPrimitiveProfile") @Cached("createBinaryProfile()") final ConditionProfile isPrimitiveProfile) {
+            return BooleanObject.wrap(receiver.pointsTo(identityNode, isPrimitiveProfile, thang));
         }
     }
 
@@ -499,51 +516,76 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 } else {
                     return NilObject.SINGLETON;
                 }
+            } else {
+                final String attribute = getSystemAttribute(index);
+                if (attribute == null) {
+                    return NilObject.SINGLETON;
+                } else {
+                    return method.image.asByteString(attribute);
+                }
             }
+        }
+
+        private String getSystemAttribute(final int index) {
             switch (index) {
                 case 1001:  // this platform's operating system 'Mac OS', 'Win32', 'unix', ...
-                    return method.image.asByteString(method.image.os.getSqOSName());
+                    return method.image.os.getSqOSName();
                 case 1002:  // operating system version
                     if (method.image.os.isMacOS()) {
                         /* The image expects things like 1095, so convert 10.10.5 into 1010.5 */
-                        return method.image.asByteString(System.getProperty("os.version").replaceFirst("\\.", ""));
+                        return System.getProperty("os.version").replaceFirst("\\.", "");
+                    } else {
+                        return System.getProperty("os.version");
                     }
-                    return method.image.asByteString(System.getProperty("os.version"));
                 case 1003:  // this platform's processor type
-                    return method.image.asByteString("intel");
+                    return "intel";
                 case 1004:  // vm version
-                    return method.image.asByteString(SqueakLanguageConfig.NAME + " " + SqueakLanguageConfig.VERSION);
+                    return SqueakLanguageConfig.NAME + " " + SqueakLanguageConfig.VERSION;
                 case 1005:  // window system name
-                    return method.image.asByteString("Aqua");
+                    return "Aqua";
                 case 1006:  // vm build id
-                    final String osName = System.getProperty("os.name");
-                    final String osVersion = System.getProperty("os.version");
-                    final String osArch = System.getProperty("os.arch");
                     final String date = new SimpleDateFormat(VM_BUILD_ID_DATE_FORMAT, Locale.US).format(new Date(MiscUtils.getStartTime()));
-                    return method.image.asByteString(String.format("%s %s (%s) built on %s", osName, osVersion, osArch, date));
+                    return String.format("%s %s (%s) built on %s", getOSName(), getOSVersion(), getOSArch(), date);
                 case 1007: // Interpreter class (Cog VM only)
-                    return method.image.asByteString(MiscUtils.getGraalVMInformation());
+                    return MiscUtils.getGraalVMInformation();
                 case 1008: // Cogit class (Cog VM only)
-                    return method.image.asByteString(MiscUtils.getSystemProperties());
+                    return MiscUtils.getSystemProperties();
                 case 1009: // Platform source version
-                    return method.image.asByteString(MiscUtils.getVMInformation());
+                    return MiscUtils.getVMInformation();
                 case 1201: // max filename length (Mac OS only)
                     if (method.image.os.isMacOS()) {
-                        return method.image.asByteString("255");
+                        return "255";
                     }
                     break;
                 case 1202: // file last error (Mac OS only)
                     if (method.image.os.isMacOS()) {
-                        return method.image.asByteString("0");
+                        return "0";
                     }
                     break;
-                // case 10001: // hardware details (Win32 only)
-                // case 10002: // operating system details (Win32 only)
-                // case 10003: // graphics hardware details (Win32 only)
+                case 10001: // hardware details (Win32 only)
+                    return "Hardware information: not supported";
+                case 10002: // operating system details (Win32 only)
+                    return String.format("Operating System: %s (%s, %s)", getOSName(), getOSVersion(), getOSArch());
+                case 10003: // graphics hardware details (Win32 only)
+                    final DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+                    return String.format("Display Information: \n" +
+                                    "\tPrimary monitor resolution: %d x %d\n", dm.getWidth(), dm.getHeight());
                 default:
-                    return NilObject.SINGLETON;
+                    return null;
             }
-            return NilObject.SINGLETON;
+            return null;
+        }
+
+        private static String getOSName() {
+            return System.getProperty("os.name");
+        }
+
+        private static String getOSVersion() {
+            return System.getProperty("os.version");
+        }
+
+        private static String getOSArch() {
+            return System.getProperty("os.arch");
         }
     }
 
@@ -555,10 +597,23 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method);
         }
 
-        @Specialization(guards = {"!isContextObject(receiver)", "receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
-        protected static final AbstractPointersObject doCopyAbstractPointers(final AbstractPointersObject receiver, final AbstractPointersObject anotherObject) {
-            final Object[] destStorage = receiver.getPointers();
-            System.arraycopy(anotherObject.getPointers(), 0, destStorage, 0, destStorage.length);
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        protected static final AbstractPointersObject doCopyAbstractPointers(final PointersObject receiver, final PointersObject anotherObject) {
+            receiver.copyLayoutValuesFrom(anotherObject);
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        protected static final AbstractPointersObject doCopyAbstractPointers(final VariablePointersObject receiver, final VariablePointersObject anotherObject) {
+            receiver.copyLayoutValuesFrom(anotherObject);
+            System.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        protected static final AbstractPointersObject doCopyAbstractPointers(final WeakVariablePointersObject receiver, final WeakVariablePointersObject anotherObject) {
+            receiver.copyLayoutValuesFrom(anotherObject);
+            System.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
             return receiver;
         }
 
@@ -595,7 +650,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
-                        "!isNativeObject(receiver)", "!isPointersObject(receiver)", "!isContextObject(receiver)",
+                        "!isNativeObject(receiver)", "!isAbstractPointersObject(receiver)", "!isContextObject(receiver)",
                         "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"}, limit = "1")
         protected static final AbstractSqueakObject doCopy(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash anotherObject,
                         @Cached final SqueakObjectSizeNode sizeNode,
