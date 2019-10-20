@@ -22,7 +22,7 @@ aliases:
       export JAVA_HOME=${TRAVIS_BUILD_DIR}/../openjdk1.8.0_${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}
   - &use-graalvm
     |
-      GRAAL_VM_VERSION=19.2.0.1
+      GRAAL_VM_VERSION=19.2.1
       GRAAL_VM_TARBALL=graalvm-ce-linux-amd64-${GRAAL_VM_VERSION}.tar.gz
       pushd ~/ > /dev/null
       curl -sSL --retry 3 -o ${GRAAL_VM_TARBALL} https://github.com/oracle/graal/releases/download/vm-${GRAAL_VM_VERSION}/${GRAAL_VM_TARBALL}
