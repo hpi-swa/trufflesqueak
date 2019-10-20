@@ -42,3 +42,4 @@ images
 graalsqueak*.zip
 graalsqueak*.jar
 graalsqueak-svm
+*.pyc
