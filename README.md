@@ -16,11 +16,10 @@ $GRAALVM_HOME/bin/gu install \
   -u https://github.com/hpi-swa/graalsqueak/releases/download/X.Y.Z/graalsqueak-component-X.Y.Z.jar
 ```
 
-4. You should now be able to open a recent
-   [Squeak/Smalltalk image][squeak_downloads] (Squeak-5.2 or later):
+4. You should now be able to open the GraalSqueak image attached to the release:
 
 ```bash
-$GRAALVM_HOME/bin/graalsqueak path/to/a/squeaksmalltalk.image
+$GRAALVM_HOME/bin/graalsqueak path/to/a/GraalSqueak-X.Y.Z.image
 ```
 
 
