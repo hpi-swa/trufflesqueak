@@ -55,6 +55,7 @@ pushd "${COMPONENT_DIR}" > /dev/null
 jar cfm "${TARGET_JAR}" META-INF/MANIFEST.MF .
 
 echo "bin/graalsqueak = ../jre/languages/${LANGUAGE_ID}/bin/graalsqueak" > META-INF/symlinks
+echo "bin/graalsqueak.cmd = ../jre/languages/${LANGUAGE_ID}/bin/graalsqueak.cmd" >> META-INF/symlinks
 jar uf "${TARGET_JAR}" META-INF/symlinks
 
 echo "jre/languages/${LANGUAGE_ID}/bin/graalsqueak = rwxrwxr-x" > META-INF/permissions
