@@ -41,9 +41,11 @@ public final class MiscellaneousBytecodes {
             primitiveIndex = byte1 + (byte2 << 8);
             primitiveNode = method.image.primitiveNodeFactory.forIndex(method, primitiveIndex);
             assert method.hasPrimitive();
+            assert index == 0;
         }
 
         public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int byte1, final int byte2) {
+            assert byte2 < 128;
             return new CallPrimitiveNode(code, index, byte1, byte2);
         }
 
