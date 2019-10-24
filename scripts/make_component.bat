@@ -68,8 +68,8 @@ if not %ERRORLEVEL%==0 (
     set _EXITCODE=1
     goto end
 )
-echo bin\graalsqueak = ..\jre\languages\%_LANGUAGE_ID%\bin\graalsqueak> META-INF\symlinks
-echo bin\graalsqueak.cmd = ..\jre\languages\%_LANGUAGE_ID%\bin\graalsqueak.cmd>> META-INF\symlinks
+echo bin/graalsqueak = ../jre/bin/graalsqueak> META-INF\symlinks
+echo jre/bin/graalsqueak = ../languages/%_LANGUAGE_ID%/bin/graalsqueak>> META-INF\symlinks
 "%_JAR_CMD%" uf "%_TARGET_JAR%" META-INF\symlinks
 if not %ERRORLEVEL%==0 (
     popd
