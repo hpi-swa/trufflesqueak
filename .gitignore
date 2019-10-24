@@ -19,10 +19,12 @@ build.xml
 .idea
 *.iml
 
+# Python
+*.pyc
+
 # mx
 /.mx
 /mx.graalsqueak/.pydevproject
-/mx.graalsqueak/*.pyc
 /mx.graalsqueak/env
 /mx.graalsqueak/eclipse-launches
 /mxbuild
