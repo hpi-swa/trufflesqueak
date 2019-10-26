@@ -21,6 +21,7 @@ import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -379,8 +380,8 @@ public final class SqueakImageReader {
                     final SqueakImageChunk metaClass = getChunk(potentialClassPtr);
                     if (metaClass != null && metaClass.getSqClass() == image.metaClass) {
                         final long[] data = metaClass.getWords();
+                        assert data.length == METACLASS.INST_SIZE;
                         final SqueakImageChunk classInstance = getChunk(data[data.length - 1]);
-                        assert data.length == 6;
                         final ClassObject metaClassObject = metaClass.asClassObject(image.metaClass);
                         metaClassObject.setInstancesAreClasses();
                         classInstance.asClassObject(metaClassObject);

@@ -27,7 +27,7 @@ import de.hpi.swa.graal.squeak.util.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
-    private static final String ALL_BYTECODES_EXPECTED_RESULT = String.join("\n", "1 <0F> pushRcvr: 15",
+    private static final String ALL_BYTECODES_EXPECTED_RESULT = String.join("\n", "1 <8B 1F 00> callPrimitive: 31",
                     "2 <1F> pushTemp: 15",
                     "3 <20> pushConstant: someSelector",
                     "4 <5F> pushLit: 31",
@@ -63,7 +63,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                     "34 <88> dup",
                     "35 <89> pushThisContext:",
                     "36 <8A 1F> push: (Array new: 31)",
-                    "37 <8B 1F 00> callPrimitive: 31",
+                    "37 <0F> pushRcvr: 15",
                     "38 <8C 1F 38> pushTemp: 31 inVectorAt: 56",
                     "39 <8D 1F 38> storeIntoTemp: 31 inVectorAt: 56",
                     "40 <8E 1F 38> popIntoTemp: 31 inVectorAt: 56",
@@ -157,7 +157,8 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
     public void testSourceAllBytecodes() {
         final Object[] literals = new Object[]{17235971L, image.asByteString("someSelector"), image.asByteString("someOtherSelector"), 63};
         final CompiledCodeObject code = makeMethod(literals,
-                        15, 31, 32, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
+                        139, 31, 0,
+                        31, 32, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
                         117, 118, 119, 120, 121, 122, 123, 124, 126, 127,
                         128, 31,
                         129, 31,
@@ -170,7 +171,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                         136,
                         137,
                         138, 31,
-                        139, 31, 0,
+                        15,
                         140, 31, CONTEXT.LARGE_FRAMESIZE,
                         141, 31, CONTEXT.LARGE_FRAMESIZE,
                         142, 31, CONTEXT.LARGE_FRAMESIZE,

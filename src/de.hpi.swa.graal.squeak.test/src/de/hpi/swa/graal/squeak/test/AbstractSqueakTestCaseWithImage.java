@@ -45,12 +45,14 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         loadImageContext(imagePath);
         image.getOutput().println("Test image loaded from " + imagePath + "...");
         patchImageForTesting();
+        nilClassBinding = (PointersObject) evaluate("nil class binding");
     }
 
     @AfterClass
     public static void cleanUp() {
         idleProcess = null;
         destroyImageContext();
+        nilClassBinding = null;
     }
 
     private static void reloadImage(final TestRequest request) {

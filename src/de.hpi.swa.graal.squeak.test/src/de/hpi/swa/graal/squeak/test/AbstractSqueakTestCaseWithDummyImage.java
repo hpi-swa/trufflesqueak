@@ -10,6 +10,10 @@ import org.junit.BeforeClass;
 
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 
 public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSqueakTestCase {
@@ -20,12 +24,62 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         final Object[] dummySpecialObjects = new Object[100];
         dummySpecialObjects[SPECIAL_OBJECT.SPECIAL_SELECTORS] = createDummySpecialSelectors();
         image.specialObjectsArray.setStorage(dummySpecialObjects);
-        final Object[] pointers = new Object[]{
-                        null, null, 100L, null, null, null}; // sets instanceSize to 100
-        final SqueakImageChunk fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
+
+        Object[] pointers = new Object[]{
+                        null, null, 0L, null, null, null, image.asByteString("Metaclass"), null, null, null, null};
+        SqueakImageChunk fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
+        image.metaClass.fillin(fakeChunk);
+        final ClassObject metaClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
+        metaClassClass.setInstancesAreClasses();
+        image.metaClass.setSqueakClass(metaClassClass);
+        metaClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, image.metaClass);
+
+        pointers = new Object[]{null, null, 100L, null, null,
+                        null, image.asByteString("CompiledMethod"), null, null, null, null}; // sets
+        // instanceSize
+        // to 100
+        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
         image.compiledMethodClass.fillin(fakeChunk);
-        image.nilClass.setFormat(0);
-        image.arrayClass.setFormat(0);
+        final ClassObject compiledMethodClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
+        compiledMethodClassClass.setInstancesAreClasses();
+        image.compiledMethodClass.setSqueakClass(compiledMethodClassClass);
+        compiledMethodClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, image.compiledMethodClass);
+
+        pointers = new Object[]{
+                        null, null, 0L, null, null, null, image.asByteString("UndefinedObject"), null, null, null, null};
+        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
+        image.nilClass.fillin(fakeChunk);
+        final ClassObject nilClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
+        nilClassClass.setInstancesAreClasses();
+        image.nilClass.setSqueakClass(nilClassClass);
+        nilClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, image.nilClass);
+
+        pointers = new Object[]{
+                        null, null, 0L, null, null, null, image.asByteString("Array"), null, null, null, null};
+        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
+        image.arrayClass.fillin(fakeChunk);
+        final ClassObject arrayClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
+        arrayClassClass.setInstancesAreClasses();
+        image.arrayClass.setSqueakClass(arrayClassClass);
+        arrayClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, image.arrayClass);
+
+        image.specialObjectsArray.setSqueakClass(image.arrayClass);
+        ((ArrayObject) dummySpecialObjects[SPECIAL_OBJECT.SPECIAL_SELECTORS]).setSqueakClass(image.arrayClass);
+
+        final ClassObject bindingClass = new ClassObject(image);
+        pointers = new Object[]{
+                        null, null, 2L, null, null, null, image.asByteString("ClassBinding"), null, null, null, null};
+        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
+        bindingClass.fillin(fakeChunk);
+        final ClassObject bindingClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
+        bindingClassClass.setInstancesAreClasses();
+        bindingClass.setSqueakClass(bindingClassClass);
+        bindingClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, bindingClass);
+        nilClassBinding = new PointersObject(image, bindingClass);
+        pointers = new Object[]{image.asByteString("UndefinedObject"), image.nilClass};
+        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
+        nilClassBinding.fillin(fakeChunk);
+
         image.initializePrimitives();
     }
 
