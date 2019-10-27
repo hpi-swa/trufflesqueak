@@ -793,7 +793,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "semaphore.getSqueakClass().isSemaphoreClass()")
         protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long usecsUTC) {
-            final long msTime = MiscUtils.toJavaMicrosecondsLocal(usecsUTC) / 1000;
+            final long msTime = MiscUtils.toJavaMicrosecondsUTC(usecsUTC) / 1000;
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
