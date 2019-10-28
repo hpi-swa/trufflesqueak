@@ -25,7 +25,7 @@ public interface SqueakDisplayInterface {
 
     boolean isVisible();
 
-    void setCursor(int[] cursorWords, int[] mask, int depth);
+    void setCursor(int[] cursorWords, int[] mask, int width, int height, int depth);
 
     long[] getNextEvent();
 

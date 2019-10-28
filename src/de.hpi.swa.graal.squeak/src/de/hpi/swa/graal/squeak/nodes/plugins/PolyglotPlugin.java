@@ -1161,16 +1161,16 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"value.isByteType()"})
-        protected final boolean doAddToHostClassPath(@SuppressWarnings("unused") final Object receiver, final NativeObject value,
+        protected final Object doAddToHostClassPath(final Object receiver, final NativeObject value,
                         @Cached final BranchProfile errorProfile) {
             final String path = value.asStringUnsafe();
             try {
                 method.image.env.addToHostClassPath(method.image.env.getTruffleFile(path));
+                return receiver;
             } catch (final SecurityException e) {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
             }
-            return BooleanObject.TRUE;
         }
     }
 

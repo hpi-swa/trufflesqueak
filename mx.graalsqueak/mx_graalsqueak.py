@@ -4,6 +4,8 @@
 # Licensed under the MIT License.
 #
 
+from __future__ import print_function
+
 import os
 import argparse
 import shutil
@@ -93,7 +95,7 @@ def _graal_vm_args(args):
         ]
 
     if args.igv:
-        print 'Sending Graal dumps to igv...'
+        print('Sending Graal dumps to igv...')
         graal_args += [
             '-Dgraal.TruffleBackgroundCompilation=false',
             # Use `Truffle:2` for graphs between each compiler phase
@@ -441,7 +443,7 @@ def _squeak_svm(args):
     if not os.path.isdir(SVM_TARGET_DIR):
         os.mkdir(SVM_TARGET_DIR)
     shutil.copy(_get_svm_binary_from_graalvm(), _get_svm_binary())
-    print 'GraalSqueak binary now available at "%s".' % _get_svm_binary()
+    print('GraalSqueak binary now available at "%s".' % _get_svm_binary())
 
 
 def _get_svm_binary():
