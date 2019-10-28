@@ -51,6 +51,7 @@ copy /y "%_GRAALSQUEAK_DIR%\graalsqueak-shared.jar" "%_LANGUAGE_PATH%" 1>NUL
 copy /y "%_BASE_DIR%\%_TEMPLATE_LAUNCHER%" "%_LANGUAGE_PATH%\bin\graalsqueak" 1>NUL
 copy /y "%_BASE_DIR%\%_TEMPLATE_WIN_LAUNCHER%" "%_LANGUAGE_PATH%\bin\graalsqueak.cmd" 1>NUL
 copy /y "%_GRAALSQUEAK_DIR%\graalsqueak-launcher.jar" "%_LIB_GRAALVM_PATH%" 1>NUL
+copy /y "%_GRAALSQUEAK_DIR%\LICENSE" "%_COMPONENT_DIR%\LICENSE_GRAALSQUEAK.txt" 1>NUL
 
 mkdir "%_COMPONENT_DIR%\META-INF"
 
@@ -68,8 +69,8 @@ if not %ERRORLEVEL%==0 (
     set _EXITCODE=1
     goto end
 )
-echo bin\graalsqueak = ..\jre\languages\%_LANGUAGE_ID%\bin\graalsqueak> META-INF\symlinks
-echo bin\graalsqueak.cmd = ..\jre\languages\%_LANGUAGE_ID%\bin\graalsqueak.cmd>> META-INF\symlinks
+echo bin/graalsqueak = ../jre/bin/graalsqueak> META-INF\symlinks
+echo jre/bin/graalsqueak = ../languages/%_LANGUAGE_ID%/bin/graalsqueak>> META-INF\symlinks
 "%_JAR_CMD%" uf "%_TARGET_JAR%" META-INF\symlinks
 if not %ERRORLEVEL%==0 (
     popd
