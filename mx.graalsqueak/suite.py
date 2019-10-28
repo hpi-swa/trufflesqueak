@@ -13,7 +13,7 @@ suite = {
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
-    "version": "1.0.0-rc4",
+    "version": "1.0.0-rc5",
     "release": False,
     "groupId": "de.hpi.swa.graal.squeak",
     "url": "https://github.com/hpi-swa/graalsqueak/",
