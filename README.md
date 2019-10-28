@@ -25,12 +25,20 @@ $GRAALVM_HOME/bin/graalsqueak path/to/a/GraalSqueak-X.Y.Z.image
 ```
 
 
+## Documentation
+
+Documentation is available in [`docs`](docs).
+
+Please feel free to open a [pull request][pull_request] if you'd like to
+contribute.
+
+
 ## Development
 
 Active development is done on the [`dev` branch][dev], which is merged to
 [`master`][master] for new releases.
-Therefore, please open pull requests against [`dev`][dev] if you like to
-contribute a bugfix or a new feature.
+Therefore, please open pull requests against [`dev`][pull_request_dev] if you
+like to contribute a bugfix, documentation, or a new feature.
 
 
 ### Building from Source
@@ -166,7 +174,8 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [mx]: https://github.com/graalvm/mx
 [pp19_post]: https://medium.com/p/3fd06ffa59d2/
 [preprint]: https://img.shields.io/badge/preprint-download-blue.svg
-[pull_request]: ../../compare/dev...
+[pull_request]: https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request
+[pull_request_dev]: ../../compare/dev...
 [px19]: https://2019.programming-conference.org/track/px-2019-papers
 [px19_bibtex]: https://dl.acm.org/downformats.cfm?id=3328434&parent_id=3328433&expformat=bibtex
 [px19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3328434-blue.svg
