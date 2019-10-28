@@ -14,6 +14,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -28,7 +29,6 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
@@ -357,8 +357,26 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @ExportMessage
-    protected Object readArrayElement(final long index, @Cached final NativeObjectReadNode readNode) {
-        return readNode.execute(this, index);
+    public abstract static class ReadArrayElement {
+        @Specialization(guards = "obj.isByteType()")
+        protected static final byte doNativeBytes(final NativeObject obj, final long index) {
+            return obj.getByte(index);
+        }
+
+        @Specialization(guards = "obj.isShortType()")
+        protected static final short doNativeShorts(final NativeObject obj, final long index) {
+            return obj.getShort(index);
+        }
+
+        @Specialization(guards = "obj.isIntType()")
+        protected static final int doNativeInts(final NativeObject obj, final long index) {
+            return obj.getInt(index);
+        }
+
+        @Specialization(guards = "obj.isLongType()")
+        protected static final long doNativeLongs(final NativeObject obj, final long index) {
+            return obj.getLong(index);
+        }
     }
 
     @ExportMessage

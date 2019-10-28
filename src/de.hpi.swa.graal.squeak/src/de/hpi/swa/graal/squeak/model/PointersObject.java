@@ -9,6 +9,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
@@ -86,6 +87,22 @@ public final class PointersObject extends AbstractPointersObject {
 
     public boolean isPoint() {
         return getSqueakClass() == image.pointClass;
+    }
+
+    public int[] getFormBits(final AbstractPointersObjectReadNode readNode) {
+        return readNode.executeNative(this, FORM.BITS).getIntStorage();
+    }
+
+    public int getFormDepth(final AbstractPointersObjectReadNode readNode) {
+        return (int) readNode.executeLong(this, FORM.DEPTH);
+    }
+
+    public int getFormHeight(final AbstractPointersObjectReadNode readNode) {
+        return (int) readNode.executeLong(this, FORM.HEIGHT);
+    }
+
+    public int getFormWidth(final AbstractPointersObjectReadNode readNode) {
+        return (int) readNode.executeLong(this, FORM.WIDTH);
     }
 
     public PointersObject removeFirstLinkOfList(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode) {

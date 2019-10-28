@@ -5,7 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -213,19 +212,20 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "method.image.hasDisplay()")
         protected final PointersObject doCursor(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided mask) {
-            method.image.getDisplay().setCursor(validateAndExtractWords(receiver), null, extractDepth(receiver));
+            method.image.getDisplay().setCursor(receiver.getFormBits(readNode), null, receiver.getFormWidth(readNode), receiver.getFormHeight(readNode), receiver.getFormDepth(readNode));
             return receiver;
         }
 
         @Specialization(guards = "method.image.hasDisplay()")
-        protected final PointersObject doCursor(final PointersObject receiver, final PointersObject maskObject) {
-            final int[] words = validateAndExtractWords(receiver);
-            final int depth = extractDepth(receiver);
-            if (depth == 1) {
+        protected final PointersObject doCursor(final PointersObject receiver, final PointersObject maskObject,
+                        @Cached("createBinaryProfile()") final ConditionProfile depthProfile) {
+            final int[] words = receiver.getFormBits(readNode);
+            final int depth = receiver.getFormDepth(readNode);
+            if (depthProfile.profile(depth == 1)) {
                 final int[] mask = readNode.executeNative(maskObject, FORM.BITS).getIntStorage();
-                method.image.getDisplay().setCursor(words, mask, 2);
+                method.image.getDisplay().setCursor(words, mask, receiver.getFormWidth(readNode), receiver.getFormHeight(readNode), 2);
             } else {
-                method.image.getDisplay().setCursor(words, null, depth);
+                method.image.getDisplay().setCursor(words, null, receiver.getFormWidth(readNode), receiver.getFormHeight(readNode), depth);
             }
             return receiver;
         }
@@ -238,22 +238,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "!method.image.hasDisplay()")
         protected static final PointersObject doCursorHeadless(final PointersObject receiver, @SuppressWarnings("unused") final PointersObject maskObject) {
             return receiver;
-        }
-
-        private int[] validateAndExtractWords(final PointersObject receiver) {
-            final int[] words = readNode.executeNative(receiver, FORM.BITS).getIntStorage();
-            final long width = readNode.executeLong(receiver, FORM.WIDTH);
-            final long height = readNode.executeLong(receiver, FORM.HEIGHT);
-            if (width != SqueakIOConstants.CURSOR_WIDTH || height != SqueakIOConstants.CURSOR_HEIGHT) {
-                CompilerDirectives.transferToInterpreter();
-                method.image.printToStdErr("Unexpected cursor width:", width, "or height:", height, ". Proceeding with cropped cursor...");
-                return Arrays.copyOf(words, SqueakIOConstants.CURSOR_WIDTH * SqueakIOConstants.CURSOR_HEIGHT);
-            }
-            return words;
-        }
-
-        private int extractDepth(final PointersObject receiver) {
-            return (int) readNode.executeLong(receiver, FORM.DEPTH);
         }
     }
 
