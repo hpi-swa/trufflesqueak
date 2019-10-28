@@ -8,13 +8,8 @@ setlocal enabledelayedexpansion
 
 set _EXITCODE=0
 
-where /q jar.exe
-if not %ERRORLEVEL%==0 (
-    echo Could not find executable jar.exe 1>&2
-    set _EXITCODE=1
-    goto end
-)
-set _JAR_CMD=jar.exe
+call :env
+if not %_EXITCODE%==0 goto end
 
 set _LANGUAGE_ID=smalltalk
 set _GRAALVM_VERSION=19.2.1
@@ -26,6 +21,7 @@ set "_GRAALSQUEAK_JAR=%_GRAALSQUEAK_DIR%\graalsqueak.jar"
 set "_LANGUAGE_PATH=%_COMPONENT_DIR%\jre\languages\%_LANGUAGE_ID%"
 set "_LIB_GRAALVM_PATH=%_COMPONENT_DIR%\jre\lib\graalvm"
 set "_MANIFEST=%_COMPONENT_DIR%\META-INF\MANIFEST.MF"
+set "_RELEASE_FILE=%_LANGUAGE_PATH%\release"
 set "_TARGET_JAR=%_GRAALSQUEAK_DIR%\graalsqueak-component.jar"
 set _TEMPLATE_LAUNCHER=template.graalsqueak.sh
 set _TEMPLATE_WIN_LAUNCHER=template.graalsqueak.cmd
@@ -60,6 +56,18 @@ echo Bundle-Version: %_GRAALVM_VERSION%>> "%_MANIFEST%"
 echo Bundle-RequireCapability: org.graalvm; filter:="(&(graalvm_version=%_GRAALVM_VERSION%)(os_arch=amd64))">> "%_MANIFEST%"
 echo x-GraalVM-Polyglot-Part: True>> "%_MANIFEST%"
 
+for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse HEAD`) do set _HASH=%%i
+for /f "usebackq" %%i in (`%_GIT_CMD% branch --show-current`) do set _BRANCH_NAME=%%i
+for /f "usebackq delims=" %%i in (`%_GIT_CMD% config user.name`) do set _COMMITTER_NAME=%%i
+for /f "usebackq" %%i in (`%_GIT_CMD% config user.email`) do set _COMMITTER_EMAIL=%%i
+
+echo OS_NAME=windows> "%_RELEASE_FILE%"
+echo OS_ARCH=amd64>> "%_RELEASE_FILE%"
+echo SOURCE="%_BRANCH_NAME%:%_HASH%">> "%_RELEASE_FILE%"
+echo COMMIT_INFO={"%_BRANCH_NAME%": {"commit.committer": "%_COMMITTER_NAME% %_COMMITTER_EMAIL%", "commit.rev": "%_HASH%"}}>> "%_RELEASE_FILE%"
+echo GRAALVM_VERSION=%_GRAALVM_VERSION%>> "%_RELEASE_FILE%"
+rem echo component_catalog=...>> "%_RELEASE_FILE%"
+
 pushd "%_COMPONENT_DIR%"
 "%_JAR_CMD%" cfm "%_TARGET_JAR%" META-INF\MANIFEST.MF .
 if not %ERRORLEVEL%==0 (
@@ -68,8 +76,8 @@ if not %ERRORLEVEL%==0 (
     set _EXITCODE=1
     goto end
 )
-echo bin\graalsqueak = ..\jre\languages\%_LANGUAGE_ID%\bin\graalsqueak> META-INF\symlinks
-echo bin\graalsqueak.cmd = ..\jre\languages\%_LANGUAGE_ID%\bin\graalsqueak.cmd>> META-INF\symlinks
+echo bin/graalsqueak = ../jre/bin/graalsqueak> META-INF\symlinks
+echo jre/bin/graalsqueak = ../languages/%_LANGUAGE_ID%/bin/graalsqueak>> META-INF\symlinks
 "%_JAR_CMD%" uf "%_TARGET_JAR%" META-INF\symlinks
 if not %ERRORLEVEL%==0 (
     popd
@@ -89,6 +97,32 @@ popd
 rmdir /s /q "%_COMPONENT_DIR%"
 
 echo SUCCESS^^! The component is located at '%_TARGET_JAR%'.
+goto end
+
+:: ###########################################################################
+:: ## Subroutines
+
+rem output parameter(s): _GIT_CMD, _JAR_CMD
+:env
+where /q git.exe
+if not %ERRORLEVEL%==0 (
+    echo Could not find executable git.exe 1>&2
+    set _EXITCODE=1
+    goto :eof
+)
+set _GIT_CMD=git.exe
+
+where /q jar.exe
+if not %ERRORLEVEL%==0 (
+    echo Could not find executable jar.exe 1>&2
+    set _EXITCODE=1
+    goto :eof
+)
+set _JAR_CMD=jar.exe
+goto :eof
+
+:: ###########################################################################
+:: ## Cleanups
 
 :end
 exit /b %_EXITCODE%
