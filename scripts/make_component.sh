@@ -53,28 +53,28 @@ echo "Bundle-RequireCapability: org.graalvm; filter:=\"(&(graalvm_version=${GRAA
 echo "x-GraalVM-Polyglot-Part: True" >> "${MANIFEST}"
 
 ## see https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/bash/travis_setup_env.bash
-case $(uname | tr '[:upper:]' '[:lower:]') in
-linux*)
-    OS_NAME=linux
-    ;;
-darwin*)
-    OS_NAME=macos
-    ;;
-*)
-    OS_NAME=undefined
-    ;;
+case $(uname -s) in
+    "Linux")
+        OS_NAME=linux
+        ;;
+    "Darwin")
+        OS_NAME=macos
+        ;;
+    *)
+        OS_NAME=undefined
+        ;;
 esac
 readonly OS_NAME
 readonly OS_ARCH="$(uname -m)"
-readonly HASH="$(git rev-parse HEAD)"
-readonly BRANCH_NAME="$(git branch --show-current)"
-readonly COMMITTER_NAME="$(git config user.name)"
-readonly COMMITTER_EMAIL="$(git config user.email)"
+readonly GIT_HASH="$(git rev-parse HEAD)"
+readonly GIT_BRANCH_NAME="$(git rev-parse --abbrev-ref HEAD)"
+readonly GIT_COMMITTER_NAME="$(git config user.name)"
+readonly GIT_COMMITTER_EMAIL="$(git config user.email)"
 
 echo "OS_NAME=${OS_NAME}" > "${RELEASE_FILE}"
 echo "OS_ARCH=${OS_ARCH}" >> "${RELEASE_FILE}"
-echo "SOURCE=\"${BRANCH_NAME}:${HASH}\"" >> "${RELEASE_FILE}"
-echo "COMMIT_INFO={\"${BRANCH_NAME}\": {\"commit.committer\": \"${COMMITTER_NAME} <${COMMITTER_EMAIL}>\", \"commit.rev\": \"${HASH}\"}}" >> "${RELEASE_FILE}"
+echo "SOURCE=\"${GIT_BRANCH_NAME}:${GIT_HASH}\"" >> "${RELEASE_FILE}"
+echo "COMMIT_INFO={\"${GIT_BRANCH_NAME}\": {\"commit.committer\": \"${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>\", \"commit.rev\": \"${GIT_HASH}\"}}" >> "${RELEASE_FILE}"
 echo "GRAALVM_VERSION=${GRAALVM_VERSION}" >> "${RELEASE_FILE}"
 ## echo "component_catalog=..." >> "${RELEASE_FILE}"
 
