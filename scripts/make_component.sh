@@ -17,6 +17,7 @@ readonly GRAALSQUEAK_JAR="${GRAALSQUEAK_DIR}/graalsqueak.jar"
 readonly LANGUAGE_PATH="${COMPONENT_DIR}/jre/languages/${LANGUAGE_ID}"
 readonly LIB_GRAALVM_PATH="${COMPONENT_DIR}/jre/lib/graalvm"
 readonly MANIFEST="${COMPONENT_DIR}/META-INF/MANIFEST.MF"
+readonly RELEASE_FILE="${LANGUAGE_PATH}/release"
 readonly TARGET_JAR="${GRAALSQUEAK_DIR}/graalsqueak-component.jar"
 readonly TEMPLATE_LAUNCHER="template.graalsqueak.sh"
 readonly TEMPLATE_WIN_LAUNCHER="template.graalsqueak.cmd"
@@ -51,6 +52,31 @@ echo "Bundle-Symbolic-Name: de.hpi.swa.graal.squeak" >> "${MANIFEST}"
 echo "Bundle-Version: ${GRAALVM_VERSION}" >> "${MANIFEST}"
 echo "Bundle-RequireCapability: org.graalvm; filter:=\"(&(graalvm_version=${GRAALVM_VERSION})(os_arch=amd64))\"" >> "${MANIFEST}"
 echo "x-GraalVM-Polyglot-Part: True" >> "${MANIFEST}"
+
+case $(uname -s) in
+    "Linux")
+        OS_NAME=linux
+        ;;
+    "Darwin")
+        OS_NAME=macos
+        ;;
+    *)
+        OS_NAME=undefined
+        ;;
+esac
+readonly OS_NAME
+readonly OS_ARCH="$(uname -m)"
+readonly GIT_HASH="$(git rev-parse HEAD)"
+readonly GIT_BRANCH_NAME="$(git rev-parse --abbrev-ref HEAD)"
+readonly GIT_COMMITTER_NAME="$(git config user.name)"
+readonly GIT_COMMITTER_EMAIL="$(git config user.email)"
+
+echo "OS_NAME=${OS_NAME}" > "${RELEASE_FILE}"
+echo "OS_ARCH=${OS_ARCH}" >> "${RELEASE_FILE}"
+echo "SOURCE=\"${GIT_BRANCH_NAME}:${GIT_HASH}\"" >> "${RELEASE_FILE}"
+echo "COMMIT_INFO={\"${GIT_BRANCH_NAME}\": {\"commit.committer\": \"${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>\", \"commit.rev\": \"${GIT_HASH}\"}}" >> "${RELEASE_FILE}"
+echo "GRAALVM_VERSION=${GRAALVM_VERSION}" >> "${RELEASE_FILE}"
+## echo "component_catalog=..." >> "${RELEASE_FILE}"
 
 pushd "${COMPONENT_DIR}" > /dev/null
 jar cfm "${TARGET_JAR}" META-INF/MANIFEST.MF .
