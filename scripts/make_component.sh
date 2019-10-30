@@ -52,7 +52,6 @@ echo "Bundle-Version: ${GRAALVM_VERSION}" >> "${MANIFEST}"
 echo "Bundle-RequireCapability: org.graalvm; filter:=\"(&(graalvm_version=${GRAALVM_VERSION})(os_arch=amd64))\"" >> "${MANIFEST}"
 echo "x-GraalVM-Polyglot-Part: True" >> "${MANIFEST}"
 
-## see https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/bash/travis_setup_env.bash
 case $(uname -s) in
     "Linux")
         OS_NAME=linux
