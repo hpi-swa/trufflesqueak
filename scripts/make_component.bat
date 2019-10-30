@@ -56,15 +56,15 @@ echo Bundle-Version: %_GRAALVM_VERSION%>> "%_MANIFEST%"
 echo Bundle-RequireCapability: org.graalvm; filter:="(&(graalvm_version=%_GRAALVM_VERSION%)(os_arch=amd64))">> "%_MANIFEST%"
 echo x-GraalVM-Polyglot-Part: True>> "%_MANIFEST%"
 
-for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse HEAD`) do set _HASH=%%i
-for /f "usebackq" %%i in (`%_GIT_CMD% branch --show-current`) do set _BRANCH_NAME=%%i
-for /f "usebackq delims=" %%i in (`%_GIT_CMD% config user.name`) do set _COMMITTER_NAME=%%i
-for /f "usebackq" %%i in (`%_GIT_CMD% config user.email`) do set _COMMITTER_EMAIL=%%i
+for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse HEAD`) do set _GIT_HASH=%%i
+for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse --abbrev-ref HEAD`) do set _GIT_BRANCH_NAME=%%i
+for /f "usebackq delims=" %%i in (`%_GIT_CMD% config user.name`) do set _GIT_COMMITTER_NAME=%%i
+for /f "usebackq" %%i in (`%_GIT_CMD% config user.email`) do set _GIT_COMMITTER_EMAIL=%%i
 
 echo OS_NAME=windows> "%_RELEASE_FILE%"
 echo OS_ARCH=amd64>> "%_RELEASE_FILE%"
-echo SOURCE="%_BRANCH_NAME%:%_HASH%">> "%_RELEASE_FILE%"
-echo COMMIT_INFO={"%_BRANCH_NAME%": {"commit.committer": "%_COMMITTER_NAME% %_COMMITTER_EMAIL%", "commit.rev": "%_HASH%"}}>> "%_RELEASE_FILE%"
+echo SOURCE="%_GIT_BRANCH_NAME%:%_GIT_HASH%">> "%_RELEASE_FILE%"
+echo COMMIT_INFO={"%_BRANCH_NAME%": {"commit.committer": "%_GIT_COMMITTER_NAME% %_GIT_COMMITTER_EMAIL%", "commit.rev": "%_GIT_HASH%"}}>> "%_RELEASE_FILE%"
 echo GRAALVM_VERSION=%_GRAALVM_VERSION%>> "%_RELEASE_FILE%"
 rem echo component_catalog=...>> "%_RELEASE_FILE%"
 
