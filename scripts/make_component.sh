@@ -41,6 +41,7 @@ cp "${GRAALSQUEAK_DIR}/graalsqueak.jar" \
 cp "${BASE_DIR}/${TEMPLATE_LAUNCHER}" "${LANGUAGE_PATH}/bin/graalsqueak"
 cp "${BASE_DIR}/${TEMPLATE_WIN_LAUNCHER}" "${LANGUAGE_PATH}/bin/graalsqueak.cmd"
 cp "${GRAALSQUEAK_DIR}/graalsqueak-launcher.jar" "$LIB_GRAALVM_PATH"
+cp "${GRAALSQUEAK_DIR}/LICENSE" "${COMPONENT_DIR}/LICENSE_GRAALSQUEAK.txt"
 
 mkdir -p "${COMPONENT_DIR}/META-INF"
 
