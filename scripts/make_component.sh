@@ -42,6 +42,7 @@ cp "${GRAALSQUEAK_DIR}/graalsqueak.jar" \
 cp "${BASE_DIR}/${TEMPLATE_LAUNCHER}" "${LANGUAGE_PATH}/bin/graalsqueak"
 cp "${BASE_DIR}/${TEMPLATE_WIN_LAUNCHER}" "${LANGUAGE_PATH}/bin/graalsqueak.cmd"
 cp "${GRAALSQUEAK_DIR}/graalsqueak-launcher.jar" "$LIB_GRAALVM_PATH"
+cp "${GRAALSQUEAK_DIR}/LICENSE" "${COMPONENT_DIR}/LICENSE_GRAALSQUEAK.txt"
 
 mkdir -p "${COMPONENT_DIR}/META-INF"
 
@@ -81,7 +82,7 @@ pushd "${COMPONENT_DIR}" > /dev/null
 jar cfm "${TARGET_JAR}" META-INF/MANIFEST.MF .
 
 echo "bin/graalsqueak = ../jre/bin/graalsqueak" > META-INF/symlinks
-echo "jre/bin/graalsqueak = ../languages/${LANGUAGE_ID}/bin/graalsqueak" >> META-INF\symlinks
+echo "jre/bin/graalsqueak = ../languages/${LANGUAGE_ID}/bin/graalsqueak" >> META-INF/symlinks
 jar uf "${TARGET_JAR}" META-INF/symlinks
 
 echo "jre/languages/${LANGUAGE_ID}/bin/graalsqueak = rwxrwxr-x" > META-INF/permissions
