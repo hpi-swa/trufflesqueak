@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -25,6 +26,7 @@ import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectNewNode;
 
 public abstract class SqueakObjectNewNode extends AbstractNodeWithImage {
 
@@ -71,13 +73,10 @@ public abstract class SqueakObjectNewNode extends AbstractNodeWithImage {
     }
 
     @Specialization(guards = "classObject.isIndexableWithNoInstVars()")
-    protected final ArrayObject doIndexedPointers(final ClassObject classObject, final int extraSize) {
+    protected static final ArrayObject doIndexedPointers(final ClassObject classObject, final int extraSize,
+                    @Cached("create(image)") final ArrayObjectNewNode newNode) {
         assert classObject.getBasicInstanceSize() == 0;
-        if (ArrayObject.ENABLE_STORAGE_STRATEGIES) {
-            return ArrayObject.createEmptyStrategy(image, classObject, extraSize);
-        } else {
-            return ArrayObject.createObjectStrategy(image, classObject, extraSize);
-        }
+        return newNode.execute(classObject, extraSize);
     }
 
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isMethodContextClass()"})

@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -19,12 +20,12 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectNewNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushReceiverNodeGen;
@@ -247,12 +248,9 @@ public final class PushBytecodes {
         }
 
         @Specialization(guards = {"popNNode == null"})
-        protected final void doPushNewArray(final VirtualFrame frame) {
-            /**
-             * Pushing an ArrayObject with object strategy. Contents likely to be mixed values and
-             * therefore unlikely to benefit from storage strategy.
-             */
-            pushNode.execute(frame, ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize));
+        protected final void doPushNewArray(final VirtualFrame frame,
+                        @Cached("create(code.image)") final ArrayObjectNewNode newNode) {
+            pushNode.execute(frame, newNode.execute(code.image.arrayClass, arraySize));
         }
 
         @Override

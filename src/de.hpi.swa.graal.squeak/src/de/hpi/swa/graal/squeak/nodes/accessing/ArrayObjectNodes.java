@@ -5,6 +5,9 @@
  */
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import java.util.Arrays;
+
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -13,12 +16,17 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject.ArrayStrategy;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectNewNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayCopyNodeGen;
@@ -94,6 +102,71 @@ public final class ArrayObjectNodes {
         protected static final Object doArrayOfObjects(final ArrayObject obj, final long index) {
             assert obj.getObject(index) != null : "Unexpected `null` value";
             return obj.getObject(index);
+        }
+    }
+
+    @ImportStatic(ArrayStrategy.class)
+    public abstract static class ArrayObjectNewNode extends AbstractNodeWithImage {
+        /* Writes to do not need to invalidate node. */
+        @CompilationFinal public ArrayStrategy strategy = ArrayStrategy.EMPTY;
+
+        protected ArrayObjectNewNode(final SqueakImageContext image) {
+            super(image);
+        }
+
+        public static ArrayObjectNewNode create(final SqueakImageContext image) {
+            return ArrayObjectNewNodeGen.create(image);
+        }
+
+        public abstract ArrayObject execute(ClassObject classObject, int size);
+
+        @Specialization(guards = "matches(EMPTY, classObject)")
+        protected final ArrayObject doEmpty(final ClassObject classObject, final int size) {
+            return ArrayObject.createWithStorage(image, classObject, size, this);
+        }
+
+        @Specialization(guards = "matches(BOOLEAN, classObject)", replaces = "doEmpty")
+        protected final ArrayObject doBoolean(final ClassObject classObject, final int size) {
+            assert ArrayObject.BOOLEAN_NIL_TAG == 0;
+            return ArrayObject.createWithStorage(image, classObject, new byte[size], this);
+        }
+
+        @Specialization(guards = "matches(CHAR, classObject)", replaces = "doEmpty")
+        protected final ArrayObject doChar(final ClassObject classObject, final int size) {
+            final char[] chars = new char[size];
+            Arrays.fill(chars, ArrayObject.CHAR_NIL_TAG);
+            return ArrayObject.createWithStorage(image, classObject, chars, this);
+        }
+
+        @Specialization(guards = "matches(LONG, classObject)", replaces = "doEmpty")
+        protected final ArrayObject doLong(final ClassObject classObject, final int size) {
+            final long[] longs = new long[size];
+            Arrays.fill(longs, ArrayObject.LONG_NIL_TAG);
+            return ArrayObject.createWithStorage(image, classObject, longs, this);
+        }
+
+        @Specialization(guards = "matches(DOUBLE, classObject)", replaces = "doEmpty")
+        protected final ArrayObject doDouble(final ClassObject classObject, final int size) {
+            final double[] doubles = new double[size];
+            Arrays.fill(doubles, ArrayObject.DOUBLE_NIL_TAG);
+            return ArrayObject.createWithStorage(image, classObject, doubles, this);
+        }
+
+        @Specialization(guards = "matches(NATIVE_OBJECT, classObject)", replaces = "doEmpty")
+        protected final ArrayObject doNativeObject(final ClassObject classObject, final int size) {
+            assert ArrayObject.NATIVE_OBJECT_NIL_TAG == null;
+            return ArrayObject.createWithStorage(image, classObject, new NativeObject[size], this);
+        }
+
+        @Specialization(guards = "matches(OBJECT, classObject)", replaces = {"doEmpty", "doBoolean", "doChar", "doLong", "doDouble", "doNativeObject"})
+        protected final ArrayObject doGeneric(final ClassObject classObject, final int size) {
+            final Object[] objects = new Object[size];
+            Arrays.fill(objects, NilObject.SINGLETON);
+            return ArrayObject.createWithStorage(image, classObject, objects);
+        }
+
+        protected boolean matches(final ArrayStrategy otherStrategy, @SuppressWarnings("unused") final ClassObject classObject) {
+            return strategy == otherStrategy;
         }
     }
 

@@ -7,6 +7,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
@@ -21,6 +22,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectNewNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
@@ -41,38 +43,61 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public static final boolean ENABLE_STORAGE_STRATEGIES = true;
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ArrayObject.class);
 
+    public enum ArrayStrategy {
+        EMPTY,
+        BOOLEAN,
+        CHAR,
+        LONG,
+        DOUBLE,
+        NATIVE_OBJECT,
+        OBJECT
+    }
+
     private Object storage;
+    private final ArrayObjectNewNode newNode;
 
     public ArrayObject(final SqueakImageContext image) {
         super(image); // for special ArrayObjects only
+        newNode = null;
     }
 
     private ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
         super(image, classObject);
         this.storage = storage;
+        newNode = null;
+    }
+
+    private ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage, final ArrayObjectNewNode newNode) {
+        super(image, classObject);
+        this.storage = storage;
+        this.newNode = newNode;
     }
 
     public ArrayObject(final SqueakImageContext image, final long hash, final ClassObject squeakClass) {
         super(image, hash, squeakClass);
+        newNode = null;
     }
 
     private ArrayObject(final ArrayObject original, final Object storageCopy) {
         super(original);
         storage = storageCopy;
+        newNode = null;
     }
 
     public static ArrayObject createEmptyStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
         return new ArrayObject(image, classObject, size);
     }
 
-    public static ArrayObject createObjectStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        final Object[] objects = new Object[size];
-        Arrays.fill(objects, NilObject.SINGLETON);
-        return new ArrayObject(image, classObject, objects);
-    }
-
     public static ArrayObject createWithStorage(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
         return new ArrayObject(image, classObject, storage);
+    }
+
+    public static ArrayObject createWithStorage(final SqueakImageContext image, final ClassObject classObject, final Object storage, final ArrayObjectNewNode newNode) {
+        if (CompilerDirectives.inInterpreter()) {
+            return new ArrayObject(image, classObject, storage, newNode);
+        } else {
+            return new ArrayObject(image, classObject, storage);
+        }
     }
 
     public static boolean isCharNilTag(final char value) {
@@ -324,7 +349,14 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return isNativeObjectNilTag(value) ? NilObject.SINGLETON : value;
     }
 
+    public void report(final ArrayStrategy newStrategy) {
+        if (CompilerDirectives.inInterpreter() && newNode != null && newStrategy.ordinal() > newNode.strategy.ordinal()) {
+            newNode.strategy = newStrategy;
+        }
+    }
+
     public void transitionFromBooleansToObjects() {
+        report(ArrayStrategy.OBJECT);
         LOG.finer("transition from Booleans to Objects");
         final byte[] booleans = getBooleanStorage();
         final Object[] objects = new Object[booleans.length];
@@ -335,6 +367,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromCharsToObjects() {
+        report(ArrayStrategy.OBJECT);
         LOG.finer("transition from Chars to Objects");
         final char[] chars = getCharStorage();
         final Object[] objects = new Object[chars.length];
@@ -345,6 +378,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromDoublesToObjects() {
+        report(ArrayStrategy.OBJECT);
         LOG.finer("transition from Doubles to Objects");
         final double[] doubles = getDoubleStorage();
         final Object[] objects = new Object[doubles.length];
@@ -355,37 +389,44 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromEmptyToBooleans() {
+        report(ArrayStrategy.BOOLEAN);
         // Zero-initialized, no need to fill with BOOLEAN_NIL_TAG.
         storage = new byte[getEmptyStorage()];
     }
 
     public void transitionFromEmptyToChars() {
+        report(ArrayStrategy.CHAR);
         final char[] chars = new char[getEmptyStorage()];
         Arrays.fill(chars, CHAR_NIL_TAG);
         storage = chars;
     }
 
     public void transitionFromEmptyToDoubles() {
+        report(ArrayStrategy.DOUBLE);
         final double[] doubles = new double[getEmptyStorage()];
         Arrays.fill(doubles, DOUBLE_NIL_TAG);
         storage = doubles;
     }
 
     public void transitionFromEmptyToLongs() {
+        report(ArrayStrategy.LONG);
         final long[] longs = new long[getEmptyStorage()];
         Arrays.fill(longs, LONG_NIL_TAG);
         storage = longs;
     }
 
     public void transitionFromEmptyToNatives() {
+        report(ArrayStrategy.NATIVE_OBJECT);
         storage = new NativeObject[getEmptyStorage()];
     }
 
     public void transitionFromEmptyToObjects() {
+        report(ArrayStrategy.OBJECT);
         storage = ArrayUtils.withAll(getEmptyLength(), NilObject.SINGLETON);
     }
 
     public void transitionFromLongsToObjects() {
+        report(ArrayStrategy.OBJECT);
         LOG.finer("transition from Longs to Objects");
         final long[] longs = getLongStorage();
         final Object[] objects = new Object[longs.length];
@@ -396,6 +437,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromNativesToObjects() {
+        report(ArrayStrategy.OBJECT);
         LOG.finer("transition from NativeObjects to Objects");
         final NativeObject[] natives = getNativeObjectStorage();
         final Object[] objects = new Object[natives.length];
