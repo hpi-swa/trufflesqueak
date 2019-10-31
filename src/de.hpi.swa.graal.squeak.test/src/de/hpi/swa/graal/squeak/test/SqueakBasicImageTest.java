@@ -8,6 +8,10 @@ package de.hpi.swa.graal.squeak.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -113,5 +117,16 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
         /* Smalltalk WideString to Java */
         final String wideString = context.eval(SqueakLanguageConfig.ID, "String with: (Character value: 16r1f43b)").asString();
         assertEquals(new String(Character.toChars(0x1f43b)), wideString);
+    }
+
+    @Test
+    public void test12InteropJavaMiscellaneous() {
+        // Issue #78
+        final InetAddress inetAddress = context.eval(SqueakLanguageConfig.ID, "(Java type: 'java.net.InetAddress') getByAddress: #[192 168 0 1]").asHostObject();
+        try {
+            assertEquals(InetAddress.getByAddress(new byte[]{(byte) 192, (byte) 168, 0, 1}), inetAddress);
+        } catch (final UnknownHostException e) {
+            fail(e.toString());
+        }
     }
 }

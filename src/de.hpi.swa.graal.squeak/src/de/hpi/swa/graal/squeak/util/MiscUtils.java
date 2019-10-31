@@ -173,8 +173,8 @@ public final class MiscUtils {
         System.gc();
     }
 
-    public static long toJavaMicrosecondsLocal(final long microseconds) {
-        return microseconds - EPOCH_DELTA_MICROSECONDS - TIME_ZONE_OFFSET_MICROSECONDS;
+    public static long toJavaMicrosecondsUTC(final long microseconds) {
+        return microseconds - EPOCH_DELTA_MICROSECONDS;
     }
 
     public static long toSqueakMicrosecondsLocal(final long microseconds) {

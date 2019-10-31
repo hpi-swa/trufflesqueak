@@ -65,6 +65,15 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
     @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = new int[]{0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
+    private static final DirectColorModel COLOR_MODEL_32BIT = new DirectColorModel(
+                    ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                    32,
+                    0x00ff0000,  // Red
+                    0x0000ff00,  // Green
+                    0x000000ff,  // Blue
+                    0xff000000,  // Alpha
+                    true,        // Alpha Premultiplied
+                    DataBuffer.TYPE_INT);
 
     public final SqueakImageContext image;
     private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
@@ -153,27 +162,18 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             final int height = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
             assert (long) sqDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
-                bufferedImage = newBufferedImage(bitmap, width, height);
+                bufferedImage = new32BitBufferedImage(bitmap.getIntStorage(), width, height);
                 repaint();
             }
         }
+    }
 
-        /* Wraps bitmap in a BufferedImage for efficient drawing. */
-        private BufferedImage newBufferedImage(final NativeObject bitmap, final int width, final int height) {
-            final DataBufferInt db = new DataBufferInt(bitmap.getIntStorage(), bitmap.getIntLength());
-            final DirectColorModel colorModel = new DirectColorModel(
-                            ColorSpace.getInstance(ColorSpace.CS_sRGB),
-                            32,
-                            0x00ff0000,  // Red
-                            0x0000ff00,  // Green
-                            0x000000ff,  // Blue
-                            0xff000000,  // Alpha
-                            true,        // Alpha Premultiplied
-                            DataBuffer.TYPE_INT);
-            final SampleModel sm = colorModel.createCompatibleSampleModel(width, height);
-            final WritableRaster raster = Raster.createWritableRaster(sm, db, new Point(0, 0));
-            return new BufferedImage(colorModel, raster, true, null);
-        }
+    /* Wraps bitmap in a BufferedImage for efficient drawing. */
+    private static BufferedImage new32BitBufferedImage(final int[] words, final int width, final int height) {
+        final DataBufferInt db = new DataBufferInt(words, words.length);
+        final SampleModel sm = COLOR_MODEL_32BIT.createCompatibleSampleModel(width, height);
+        final WritableRaster raster = Raster.createWritableRaster(sm, db, new Point(0, 0));
+        return new BufferedImage(COLOR_MODEL_32BIT, raster, true, null);
     }
 
     @Override
@@ -271,8 +271,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     @Override
     @TruffleBoundary
-    public void setCursor(final int[] cursorWords, final int[] mask, final int depth) {
-        final Dimension bestCursorSize = TOOLKIT.getBestCursorSize(SqueakIOConstants.CURSOR_WIDTH, SqueakIOConstants.CURSOR_HEIGHT);
+    public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth) {
+        final Dimension bestCursorSize = TOOLKIT.getBestCursorSize(width, height);
         final Cursor cursor;
         if (bestCursorSize.width == 0 || bestCursorSize.height == 0) {
             cursor = Cursor.getDefaultCursor();
@@ -301,12 +301,17 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             } else {
                 ints = cursorWords;
             }
-            final BufferedImage bufferedImage = new BufferedImage(SqueakIOConstants.CURSOR_WIDTH, SqueakIOConstants.CURSOR_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-            for (int y = 0; y < SqueakIOConstants.CURSOR_HEIGHT; y++) {
-                final int word = ints[y];
-                for (int x = 0; x < SqueakIOConstants.CURSOR_WIDTH; x++) {
-                    final int colorIndex = word >> (SqueakIOConstants.CURSOR_WIDTH - 1 - x) * 2 & 3;
-                    bufferedImage.setRGB(x, y, CURSOR_COLORS[colorIndex]);
+            final BufferedImage bufferedImage;
+            if (depth == 32) {
+                bufferedImage = new32BitBufferedImage(cursorWords, width, height);
+            } else {
+                bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                for (int y = 0; y < height; y++) {
+                    final int word = ints[y];
+                    for (int x = 0; x < width; x++) {
+                        final int colorIndex = word >> (width - 1 - x) * 2 & 3;
+                        bufferedImage.setRGB(x, y, CURSOR_COLORS[colorIndex]);
+                    }
                 }
             }
             cursor = TOOLKIT.createCustomCursor(bufferedImage, new Point(0, 0), "GraalSqueak Cursor");

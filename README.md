@@ -7,7 +7,9 @@ A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 
 1. Find the [latest GraalSqueak release][graalsqueak_latest] and identify the
    supported version of GraalVM.
-2. Download the corresponding [GraalVM][graalvm_download] for your platform.
+2. Download the corresponding [GraalVM][graalvm_download] for your platform (if
+   you are on Windows, please follow [these instructions][graalsqueak_windows]
+   instead).
 3. Install the pre-compiled GraalSqueak component attached to the release with
    the GraalVM Updater:
 
@@ -16,20 +18,27 @@ $GRAALVM_HOME/bin/gu install \
   -u https://github.com/hpi-swa/graalsqueak/releases/download/X.Y.Z/graalsqueak-component-X.Y.Z.jar
 ```
 
-4. You should now be able to open a recent
-   [Squeak/Smalltalk image][squeak_downloads] (Squeak-5.2 or later):
+4. You should now be able to open the GraalSqueak image attached to the release:
 
 ```bash
-$GRAALVM_HOME/bin/graalsqueak path/to/a/squeaksmalltalk.image
+$GRAALVM_HOME/bin/graalsqueak path/to/a/GraalSqueak-X.Y.Z.image
 ```
+
+
+## Documentation
+
+Documentation is available in [`docs`](docs).
+
+Please feel free to open a [pull request][pull_request] if you'd like to
+contribute.
 
 
 ## Development
 
 Active development is done on the [`dev` branch][dev], which is merged to
 [`master`][master] for new releases.
-Therefore, please open pull requests against [`dev`][dev] if you like to
-contribute a bugfix or a new feature.
+Therefore, please open pull requests against [`dev`][pull_request_dev] if you
+like to contribute a bugfix, documentation, or a new feature.
 
 
 ### Building from Source
@@ -141,6 +150,7 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [graalsqueak_launcher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/GraalSqueakLauncher.java
 [graalsqueak_license]: LICENSE
 [graalsqueak_license_badge]: https://img.shields.io/github/license/hpi-swa/graalsqueak
+[graalsqueak_windows]: https://github.com/michelou/graalsqueak-examples
 [graalvm]: http://www.graalvm.org/
 [graalvm_blog]: https://medium.com/graalvm
 [graalvm_download]: http://www.graalvm.org/downloads/
@@ -164,7 +174,8 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [mx]: https://github.com/graalvm/mx
 [pp19_post]: https://medium.com/p/3fd06ffa59d2/
 [preprint]: https://img.shields.io/badge/preprint-download-blue.svg
-[pull_request]: ../../compare/dev...
+[pull_request]: https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request
+[pull_request_dev]: ../../compare/dev...
 [px19]: https://2019.programming-conference.org/track/px-2019-papers
 [px19_bibtex]: https://dl.acm.org/downformats.cfm?id=3328434&parent_id=3328433&expformat=bibtex
 [px19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3328434-blue.svg

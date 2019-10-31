@@ -66,7 +66,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
         String selector = "unknownSelector";
-        final ClassObject methodClass = getMethodClass();
+        final ClassObject methodClass = getMethodClassSlow();
         if (methodClass != null) {
             className = methodClass.getClassName();
         }
@@ -126,11 +126,12 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return readNode.execute(getMethodClassAssociation(), CLASS_BINDING.VALUE) != NilObject.SINGLETON;
     }
 
-    /** CompiledMethod>>#methodClass. */
-    public ClassObject getMethodClass() {
+    public ClassObject getMethodClassSlow() {
+        CompilerAsserts.neverPartOfCompilation();
         return getMethodClass(AbstractPointersObjectReadNode.getUncached());
     }
 
+    /** CompiledMethod>>#methodClass. */
     public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
         return (ClassObject) readNode.execute(getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
