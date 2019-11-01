@@ -1031,8 +1031,13 @@ public final class BitBlt {
                 }
                 if (nWords > 1) {
                     destMask = mask2;
-                    /* pick up next word */
-                    thisWord = srcLongAt(sourceIndex);
+                    if (((skew < 0 ? skewMask >> -skew : skewMask << skew) & mask2) == 0) {
+                        /* we don't need more bits, they will all come from prevWord */
+                        thisWord = 0;
+                    } else {
+                        assert sourceIndex < endOfSource;
+                        thisWord = srcLongAt(sourceIndex);
+                    }
                     sourceIndex += hInc;
                     /* 32-bit rotate */
                     skewWord = shift(prevWord & notSkewMask, unskew) | shift(thisWord & skewMask, skew);
@@ -1087,8 +1092,13 @@ public final class BitBlt {
                 }
                 if (nWords > 1) {
                     destMask = mask2;
-                    /* pick up next word */
-                    thisWord = srcLongAt(sourceIndex);
+                    if (((skew < 0 ? skewMask >> -skew : skewMask << skew) & mask2) == 0) {
+                        /* we don't need more bits, they will all come from prevWord */
+                        thisWord = 0;
+                    } else {
+                        assert sourceIndex < endOfSource;
+                        thisWord = srcLongAt(sourceIndex);
+                    }
                     sourceIndex += hInc;
                     /* 32-bit rotate */
                     skewWord = (unskew < 0 ? (prevWord & notSkewMask) >>> -unskew : (prevWord & notSkewMask) << unskew) |
