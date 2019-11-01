@@ -6,7 +6,9 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -15,12 +17,15 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class ResumeContextNode extends Node {
     @Child private ExecuteContextNode executeContextNode;
+    @Child private SendSelectorNode cannotReturnNode;
 
     protected ResumeContextNode(final CompiledCodeObject code) {
         executeContextNode = ExecuteContextNode.create(code, true);
@@ -39,6 +44,20 @@ public abstract class ResumeContextNode extends Node {
     protected final Object doResumeInMiddle(final ContextObject context) {
         final long initialPC = context.getInstructionPointerForBytecodeLoop();
         return executeContextNode.executeResumeInMiddle(context.getTruffleFrame(), initialPC);
+    }
+
+    @Fallback
+    protected final boolean doCannotReturn(final ContextObject context) {
+        getCannotReturnNode().executeSend(context.getTruffleFrame(), new Object[]{context, NilObject.SINGLETON});
+        throw SqueakException.create("Should not be reached");
+    }
+
+    private SendSelectorNode getCannotReturnNode() {
+        if (cannotReturnNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            cannotReturnNode = insert(SendSelectorNode.create(executeContextNode.code, executeContextNode.code.image.cannotReturn));
+        }
+        return cannotReturnNode;
     }
 
     @NodeInfo(cost = NodeCost.NONE)

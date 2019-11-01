@@ -93,6 +93,7 @@ public final class SqueakImageContext {
     public final ClassObject compiledMethodClass = new ClassObject(this);
     public final ClassObject semaphoreClass = new ClassObject(this);
     public final ClassObject characterClass = new ClassObject(this);
+    public final NativeObject cannotReturn = new NativeObject(this);
     public final NativeObject doesNotUnderstand = new NativeObject(this);
     public final NativeObject mustBeBooleanSelector = new NativeObject(this);
     public final ClassObject byteArrayClass = new ClassObject(this);
@@ -572,8 +573,8 @@ public final class SqueakImageContext {
             getError().println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, method, argumentsString, marker, context, lastSender[0]));
             return null;
         });
-        getError().println("== Squeak frames ================================================================");
         if (lastSender[0] instanceof ContextObject) {
+            getError().println("== Squeak frames ================================================================");
             ((ContextObject) lastSender[0]).printSqStackTrace();
         }
     }
