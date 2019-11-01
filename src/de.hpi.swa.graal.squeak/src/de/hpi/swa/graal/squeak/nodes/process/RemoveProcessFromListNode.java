@@ -32,10 +32,12 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
 
     @Specialization(guards = "process == first")
     protected final void doRemoveEqual(final PointersObject process, final PointersObject list, @SuppressWarnings("unused") final PointersObject first, final AbstractSqueakObject last) {
-        final Object next = readNode.execute(process, PROCESS.NEXT_LINK);
-        writeNode.execute(list, LINKED_LIST.FIRST_LINK, next);
         if (process == last) {
             writeNode.executeNil(list, LINKED_LIST.LAST_LINK);
+            writeNode.executeNil(list, LINKED_LIST.FIRST_LINK);
+        } else {
+            final Object next = readNode.execute(process, PROCESS.NEXT_LINK);
+            writeNode.execute(list, LINKED_LIST.FIRST_LINK, next);
         }
     }
 
