@@ -9,7 +9,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
@@ -32,7 +34,7 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
 
     public abstract void executeResume(VirtualFrame frame, PointersObject newProcess);
 
-    @Specialization(guards = "hasHigherPriority(newProcess)")
+    @Specialization(guards = {"hasHigherPriority(newProcess)", "hasSuspendedContext(newProcess)"})
     protected final void doTransferTo(final VirtualFrame frame, final PointersObject newProcess,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                     @Cached("create(code)") final GetOrCreateContextNode contextNode) {
@@ -40,12 +42,21 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
         contextNode.executeGet(frame).transferTo(pointersReadNode, pointersWriteNode, newProcess);
     }
 
-    @Specialization(guards = "!hasHigherPriority(newProcess)")
+    @Specialization(guards = {"!hasHigherPriority(newProcess)", "hasSuspendedContext(newProcess)"})
     protected final void doSleep(final PointersObject newProcess) {
         putToSleepNode.executePutToSleep(newProcess);
     }
 
+    @Specialization(guards = "!hasSuspendedContext(newProcess)")
+    protected final void doFail(@SuppressWarnings("unused") final PointersObject newProcess) {
+        throw PrimitiveFailed.GENERIC_ERROR;
+    }
+
     protected final boolean hasHigherPriority(final PointersObject newProcess) {
         return pointersReadNode.executeLong(newProcess, PROCESS.PRIORITY) > pointersReadNode.executeLong(code.image.getActiveProcess(pointersReadNode), PROCESS.PRIORITY);
+    }
+
+    protected final boolean hasSuspendedContext(final PointersObject newProcess) {
+        return pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT) instanceof ContextObject;
     }
 }
