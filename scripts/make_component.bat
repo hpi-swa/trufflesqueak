@@ -65,7 +65,7 @@ for /f "usebackq" %%i in (`%_GIT_CMD% config user.email`) do set _GIT_COMMITTER_
 echo OS_NAME=windows> "%_RELEASE_FILE%"
 echo OS_ARCH=amd64>> "%_RELEASE_FILE%"
 echo SOURCE="%_GIT_BRANCH_NAME%:%_GIT_HASH%">> "%_RELEASE_FILE%"
-echo COMMIT_INFO={"%_GIT_BRANCH_NAME%": {"commit.committer": "%_GIT_COMMITTER_NAME% %_GIT_COMMITTER_EMAIL%", "commit.rev": "%_GIT_HASH%"}}>> "%_RELEASE_FILE%"
+echo COMMIT_INFO={"%_GIT_BRANCH_NAME%": {"commit.committer": "%_GIT_COMMITTER_NAME% <%_GIT_COMMITTER_EMAIL%>", "commit.rev": "%_GIT_HASH%"}}>> "%_RELEASE_FILE%"
 echo GRAALVM_VERSION=%_GRAALVM_VERSION%>> "%_RELEASE_FILE%"
 rem echo component_catalog=...>> "%_RELEASE_FILE%"
 
