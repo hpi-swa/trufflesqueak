@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
@@ -33,7 +34,13 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
     protected final Object handleModifiedSender(final VirtualFrame frame, final NonLocalReturn nlr) {
         aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
         final ContextObject newSender = FrameAccess.getSenderContext(frame); // sender has changed
-        final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
+        final Object targetContextOrMarker = nlr.getTargetContextOrMarker();
+        final ContextObject target;
+        if (targetContextOrMarker instanceof FrameMarker) {
+            target = ((FrameMarker) targetContextOrMarker).getMaterializedContext();
+        } else {
+            target = (ContextObject) targetContextOrMarker;
+        }
         FrameAccess.terminate(frame, code);
         throw new NonVirtualReturn(nlr.getReturnValue(), target, newSender);
     }
