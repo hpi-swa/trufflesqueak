@@ -55,8 +55,9 @@ public abstract class AbstractSqueakTestCase {
         bytes[intbytes.length] = 0; // Set flagByte = 0 for no method trailer.
         if (literals.length == 0 || literals[literals.length - 1] != nilClassBinding) {
             return makeMethod(bytes, ArrayUtils.copyWithLast(literals, nilClassBinding));
-        } else
+        } else {
             return makeMethod(bytes, literals);
+        }
     }
 
     protected static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
