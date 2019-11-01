@@ -43,11 +43,6 @@ public abstract class AbstractSqueakTestCase {
     protected static SqueakImageContext image;
     protected static PointersObject nilClassBinding;
 
-    protected CompiledCodeObject makeMethod(final byte[] bytes) {
-        // Always add three literals...
-        return makeMethod(bytes, new Object[]{68419598L, null, null});
-    }
-
     protected static CompiledMethodObject makeMethod(final byte[] bytes, final Object[] literals) {
         return new CompiledMethodObject(image, bytes, literals);
     }
@@ -58,7 +53,10 @@ public abstract class AbstractSqueakTestCase {
             bytes[i] = (byte) intbytes[i];
         }
         bytes[intbytes.length] = 0; // Set flagByte = 0 for no method trailer.
-        return makeMethod(bytes, literals);
+        if (literals.length == 0 || literals[literals.length - 1] != nilClassBinding) {
+            return makeMethod(bytes, ArrayUtils.copyWithLast(literals, nilClassBinding));
+        } else
+            return makeMethod(bytes, literals);
     }
 
     protected static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
