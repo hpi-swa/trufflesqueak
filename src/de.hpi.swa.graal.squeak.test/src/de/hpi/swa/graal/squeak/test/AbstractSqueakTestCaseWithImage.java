@@ -33,8 +33,9 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadN
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2;
-    private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
+    private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 5;
     private static final int PRIORITY_10_LIST_INDEX = 9;
+    private static final int USER_PRIORITY_LIST_INDEX = 39;
     private static final String PASSED_VALUE = "passed";
 
     private static PointersObject idleProcess;
@@ -45,14 +46,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         loadImageContext(imagePath);
         image.getOutput().println("Test image loaded from " + imagePath + "...");
         patchImageForTesting();
-        nilClassBinding = (PointersObject) evaluate("nil class binding");
     }
 
     @AfterClass
     public static void cleanUp() {
         idleProcess = null;
         destroyImageContext();
-        nilClassBinding = null;
     }
 
     private static void reloadImage(final TestRequest request) {
@@ -77,6 +76,22 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             // Patch TestCase>>#performTest, so errors are printed to stderr for debugging purposes.
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
+        createProcessForTesting(lists);
+    }
+
+    private static void createProcessForTesting(final ArrayObject lists) {
+        final PointersObject newProcess = new PointersObject(image, image.processClass);
+        newProcess.instVarAtPut0Slow(PROCESS.PRIORITY, USER_PRIORITY_LIST_INDEX + 1);
+
+        final PointersObject priority40List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, USER_PRIORITY_LIST_INDEX);
+        final Object firstLink = priority40List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
+        priority40List.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, newProcess);
+        if (firstLink == NilObject.SINGLETON) {
+            priority40List.instVarAtPut0Slow(LINKED_LIST.LAST_LINK, newProcess);
+        } else {
+            newProcess.instVarAtPut0Slow(PROCESS.NEXT_LINK, firstLink);
+        }
+        newProcess.instVarAtPut0Slow(PROCESS.LIST, priority40List);
     }
 
     private static boolean runsOnMXGate() {
