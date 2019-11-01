@@ -108,7 +108,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     public final Source getSource() {
         if (source == null) {
-            String contents, toString;
+            String contents;
+            String toString;
             try {
                 contents = CompiledCodeObjectPrinter.getString(this);
                 toString = toString();

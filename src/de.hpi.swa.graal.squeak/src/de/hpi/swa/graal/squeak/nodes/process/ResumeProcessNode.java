@@ -48,7 +48,7 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = "!hasSuspendedContext(newProcess)")
-    protected final void doFail(@SuppressWarnings("unused") final PointersObject newProcess) {
+    protected final static void doFail(@SuppressWarnings("unused") final PointersObject newProcess) {
         throw PrimitiveFailed.GENERIC_ERROR;
     }
 
