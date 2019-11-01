@@ -11,7 +11,9 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
@@ -41,16 +43,18 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
         final ArrayObject schedLists = pointersReadNode.executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
-        long p = arraySizeNode.execute(schedLists) - 1;  // index of last indexable field
-        PointersObject processList;
-        do {
-            if (p < 0) {
-                errorProfile.enter();
-                throw SqueakException.create("scheduler could not find a runnable process");
+        for (long p = arraySizeNode.execute(schedLists) - 1; p >= 0; p--) {
+            final PointersObject processList = (PointersObject) arrayReadNode.execute(schedLists, p);
+            while (!processList.isEmptyList(pointersReadNode)) {
+                final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
+                final Object newContext = pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+                if (newContext instanceof ContextObject) {
+                    contextNode.executeGet(frame).transferTo(pointersReadNode, pointersWriteNode, newProcess);
+                    throw SqueakException.create("Should not be reached");
+                }
             }
-            processList = (PointersObject) arrayReadNode.execute(schedLists, p--);
-        } while (processList.isEmptyList(pointersReadNode));
-        final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
-        contextNode.executeGet(frame).transferTo(pointersReadNode, pointersWriteNode, newProcess);
+        }
+        errorProfile.enter();
+        throw SqueakException.create("scheduler could not find a runnable process");
     }
 }
