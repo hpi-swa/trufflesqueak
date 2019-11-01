@@ -68,13 +68,13 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
 
         @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
 
-        public ExecutePrimitiveContextNode(final CompiledCodeObject code, final boolean resume) {
+        ExecutePrimitiveContextNode(final CompiledCodeObject code, final boolean resume) {
             super(code, resume);
             assert !resume || code.isUnwindMarked() || code instanceof CompiledMethodObject && ((CompiledMethodObject) code).isExceptionHandlerMarked();
         }
 
         @Override
-        public final Object executeFresh(final VirtualFrame frame) {
+        public Object executeFresh(final VirtualFrame frame) {
             super.initialize(frame);
             final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) fetchNextBytecodeNode(0);
             if (callPrimitiveNode.primitiveNode != null) {
@@ -92,12 +92,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         }
 
         @Override
-        protected final void initialize(final VirtualFrame frame) {
+        protected void initialize(final VirtualFrame frame) {
             // avoid re-initializing in fallback code
         }
 
         @Override
-        protected final int startBytecodeIndex() {
+        protected int startBytecodeIndex() {
             return CallPrimitiveNode.NUM_BYTECODES;
         }
 
@@ -344,7 +344,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 return null;
             }
             final Source source = code.getSource();
-            section = source.createSection(1, 1, source.getLength());
+            if (source.getCharacters().equals(CompiledCodeObject.SOURCE_UNAVAILABLE)) {
+                section = source.createUnavailableSection();
+            } else {
+                section = source.createSection(1, 1, source.getLength());
+            }
         }
         return section;
     }
