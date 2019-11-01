@@ -565,6 +565,24 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
     }
 
+    public void printSqMaterializedStackTrace() {
+        ContextObject current = this;
+        while (current != null) {
+            final CompiledCodeObject code = current.getBlockOrMethod();
+            final Object[] rcvrAndArgs = current.getReceiverAndNArguments(code.getNumArgsAndCopied());
+            code.image.getOutput().println(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
+            final Object sender = current.getFrameSender();
+            if (sender == NilObject.SINGLETON) {
+                break;
+            } else if (sender instanceof FrameMarker) {
+                code.image.getOutput().println(sender);
+                break;
+            } else {
+                current = (ContextObject) sender;
+            }
+        }
+    }
+
     public MaterializedFrame getTruffleFrame() {
         return truffleFrame;
     }
@@ -583,7 +601,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     // The context represents primitive call which needs to be skipped when unwinding call stack.
     public boolean isPrimitiveContext() {
-        return !hasClosure() && getMethod().hasPrimitive() && getInstructionPointerForBytecodeLoop() <= CallPrimitiveNode.NUM_BYTECODES;
+        return !hasClosure() && getMethod().hasPrimitive() &&
+                        !getMethod().isUnwindMarked() && !getMethod().isExceptionHandlerMarked() &&
+                        getInstructionPointerForBytecodeLoop() <= CallPrimitiveNode.NUM_BYTECODES;
     }
 
     public boolean pointsTo(final Object thang) {
