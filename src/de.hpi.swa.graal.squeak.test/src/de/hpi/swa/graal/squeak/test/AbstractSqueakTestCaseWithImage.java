@@ -76,14 +76,14 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             // Patch TestCase>>#performTest, so errors are printed to stderr for debugging purposes.
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
-        createProcessForTesting(lists);
     }
 
-    private static void createProcessForTesting(final ArrayObject lists) {
+    private static void createProcessForTesting() {
         final PointersObject newProcess = new PointersObject(image, image.processClass);
         newProcess.instVarAtPut0Slow(PROCESS.PRIORITY, USER_PRIORITY_LIST_INDEX + 1);
 
-        final PointersObject priority40List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, USER_PRIORITY_LIST_INDEX);
+        final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final PointersObject priority40List = (PointersObject) lists.getObjectStorage()[USER_PRIORITY_LIST_INDEX];
         final Object firstLink = priority40List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
         priority40List.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, newProcess);
         if (firstLink == NilObject.SINGLETON) {
@@ -154,6 +154,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             }
             resetProcessLists();
         }
+        createProcessForTesting();
     }
 
     private static void resetProcessLists() {
