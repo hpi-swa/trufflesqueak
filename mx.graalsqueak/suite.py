@@ -68,7 +68,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "graalsqueak:GRAALSQUEAK_SHARED",
+                "GRAALSQUEAK_SHARED",
                 "BOUNCY_CASTLE_CRYPTO_LIB",
                 "truffle:TRUFFLE_API",
             ],
@@ -82,7 +82,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "graalsqueak:GRAALSQUEAK_SHARED",
+                "GRAALSQUEAK_SHARED",
                 "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
                 "truffle:TRUFFLE_API",
@@ -104,7 +104,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "graalsqueak:GRAALSQUEAK_SHARED",
+                "GRAALSQUEAK_SHARED",
                 "sdk:POLYGLOT_TCK",
                 "mx:JUNIT"
             ],
