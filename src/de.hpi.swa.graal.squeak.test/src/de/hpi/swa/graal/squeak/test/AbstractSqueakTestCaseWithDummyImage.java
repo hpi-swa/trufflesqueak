@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.test;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
@@ -16,6 +17,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
 
     @BeforeClass
     public static void setUpSqueakImageContext() {
+        SqueakImageContext.initializeBeforeLoadingImage();
         loadImageContext("fake.image");
         final Object[] dummySpecialObjects = new Object[100];
         dummySpecialObjects[SPECIAL_OBJECT.SPECIAL_SELECTORS] = createDummySpecialSelectors();
@@ -26,7 +28,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         image.compiledMethodClass.fillin(fakeChunk);
         image.nilClass.setFormat(0);
         image.arrayClass.setFormat(0);
-        image.initializePrimitives();
+        image.initializeAfterLoadingImage();
     }
 
     private static ArrayObject createDummySpecialSelectors() {

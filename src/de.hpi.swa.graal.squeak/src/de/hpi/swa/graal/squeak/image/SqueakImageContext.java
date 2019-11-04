@@ -57,6 +57,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SMALLTALK_IMAGE;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.model.layout.SlotLocation;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
@@ -348,7 +349,11 @@ public final class SqueakImageContext {
         return wideStringClass;
     }
 
-    public void initializePrimitives() {
+    public static void initializeBeforeLoadingImage() {
+        SlotLocation.initialize();
+    }
+
+    public void initializeAfterLoadingImage() {
         primitiveNodeFactory.initialize(this);
     }
 

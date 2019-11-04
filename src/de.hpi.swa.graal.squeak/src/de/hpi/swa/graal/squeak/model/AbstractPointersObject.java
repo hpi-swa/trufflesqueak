@@ -22,8 +22,21 @@ import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.Abstr
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public abstract class AbstractPointersObject extends AbstractSqueakObjectWithClassAndHash {
+    /*
+     * Field addresses for Unsafe access. `static final` allows SubstrateVM to intercept and
+     * recalculate addresses before native image generation.
+     */
+    public static final long PRIMITIVE_USED_MAP_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitiveUsedMap");
+    public static final long PRIMITIVE_0_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitive0");
+    public static final long PRIMITIVE_1_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitive1");
+    public static final long PRIMITIVE_2_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitive2");
+    public static final long OBJECT_0_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object0");
+    public static final long OBJECT_1_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object1");
+    public static final long OBJECT_2_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object2");
+
     private ObjectLayout layout;
 
     public int primitiveUsedMap;
