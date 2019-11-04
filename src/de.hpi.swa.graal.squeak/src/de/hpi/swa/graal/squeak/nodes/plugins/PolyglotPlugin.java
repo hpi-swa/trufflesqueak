@@ -836,7 +836,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @CachedLibrary("receiver") final InteropLibrary lib,
                         @Cached final BranchProfile errorProfile) {
             try {
-                lib.writeArrayElement(receiver, index, value);
+                lib.writeArrayElement(receiver, index - 1, value);
                 return value;
             } catch (UnsupportedTypeException | UnsupportedMessageException | InvalidArrayIndexException e) {
                 errorProfile.enter();
