@@ -1175,6 +1175,19 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsHostLookupAllowed")
+    protected abstract static class PrimIsHostLookupAllowedNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimIsHostLookupAllowedNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(method.image.env.isHostLookupAllowed());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveLookupHostSymbol")
     protected abstract static class PrimLookupHostSymbolNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimLookupHostSymbolNode(final CompiledMethodObject method) {
