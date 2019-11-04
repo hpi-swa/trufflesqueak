@@ -92,9 +92,12 @@ jobs:
     - env: JDK="graalvm" GATE="build,test" ARCH="64bit"
       <<: *graalvm-test-setup
     - env: SUBSTRATE_VM=true
+      before_script: scripts/download-test-image.sh
       script:
-        - mx squeak-svm
-        - bin/graalsqueak-svm --version:graalvm
+        - "mx squeak-svm"
+        - "bin/graalsqueak-svm --version:graalvm"
+        - "bin/graalsqueak-svm --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\" images/test-64bit.image"
+        - "bin/graalsqueak-svm --code \"1 tinyBenchmarks\" images/test-64bit.image"
       language: c
       addons:
         apt:
