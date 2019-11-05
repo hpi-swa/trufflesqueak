@@ -147,10 +147,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         for (int i = 0; i < instSize; i++) {
             final SlotLocation oldLocation = oldLayout.getLocation(i);
             final SlotLocation newLocation = newLayout.getLocation(i);
-            if (oldLocation != newLocation) {
-                if (oldLocation.isSet(this)) {
-                    changes[i] = oldLocation.read(this);
-                }
+            if (oldLocation != newLocation && oldLocation.isSet(this)) {
+                changes[i] = oldLocation.read(this);
             }
         }
         if (oldLayout.getNumPrimitiveExtension() != newLayout.getNumPrimitiveExtension()) {
@@ -184,16 +182,14 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         for (int i = 0; i < instSize; i++) {
             final SlotLocation oldLocation = oldLayout.getLocation(i);
             final SlotLocation newLocation = newLayout.getLocation(i);
-            if (oldLocation != newLocation) {
-                if (changes[i] != null) {
-                    final Object change = changes[i];
-                    if (newLocation.canStore(change)) {
-                        newLocation.writeMustSucceed(this, change);
-                    } else {
-                        theLayout = newLayout.evolveLocation(getSqueakClass(), i, change);
-                        // TODO: is it possible that extensions need to be resized again?
-                        theLayout.getLocation(i).writeMustSucceed(this, change);
-                    }
+            if (oldLocation != newLocation && changes[i] != null) {
+                final Object change = changes[i];
+                if (newLocation.canStore(change)) {
+                    newLocation.writeMustSucceed(this, change);
+                } else {
+                    theLayout = newLayout.evolveLocation(getSqueakClass(), i, change);
+                    // TODO: is it possible that extensions need to be resized again?
+                    theLayout.getLocation(i).writeMustSucceed(this, change);
                 }
             }
         }

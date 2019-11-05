@@ -748,7 +748,6 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetSid")
     protected abstract static class PrimSetSidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitive {
-        @CompilationFinal private Object getuidObject;
 
         protected PrimSetSidNode(final CompiledMethodObject method) {
             super(method);
