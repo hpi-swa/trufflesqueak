@@ -42,10 +42,6 @@ public final class SqueakGuards {
         return Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE;
     }
 
-    public static boolean inBounds0(final long index, final int size) {
-        return 0 <= index && index < size;
-    }
-
     public static boolean inBounds1(final long index, final int size) {
         return 0 < index && index <= size;
     }

@@ -60,10 +60,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         super(image);
     }
 
-    public ClassObject(final SqueakImageContext image, final int hash) {
-        super(image, hash);
-    }
-
     public ClassObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
         super(image, hash, squeakClass);
     }

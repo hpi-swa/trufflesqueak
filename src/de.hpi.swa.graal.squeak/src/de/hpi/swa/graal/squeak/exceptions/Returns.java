@@ -45,10 +45,6 @@ public final class Returns {
         }
     }
 
-    public static final class NonVirtualContextModification extends Exception {
-        private static final long serialVersionUID = 1L;
-    }
-
     public static final class NonVirtualReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
         private final ContextObject targetContext;

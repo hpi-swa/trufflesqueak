@@ -29,10 +29,8 @@ public final class MiscUtils {
     // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
     public static final long EPOCH_DELTA_SECONDS = (69L * 365 + 17) * 24 * 3600;
     public static final long EPOCH_DELTA_MICROSECONDS = EPOCH_DELTA_SECONDS * 1000 * 1000;
-    public static final long SEC_TO_USEC = 1000 * 1000;
     public static final long TIME_ZONE_OFFSET_MICROSECONDS = (Calendar.getInstance().get(Calendar.ZONE_OFFSET) + Calendar.getInstance().get(Calendar.DST_OFFSET)) * 1000L;
     public static final long TIME_ZONE_OFFSET_SECONDS = TIME_ZONE_OFFSET_MICROSECONDS / 1000 / 1000;
-    public static final long USEC_TO_NANO = 1000;
 
     private MiscUtils() {
     }
