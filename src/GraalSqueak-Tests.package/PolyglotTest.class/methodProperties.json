@@ -1,0 +1,13 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"expectedFailures" : "fn 10/28/2019 19:13",
+		"testLanguageInfo" : "fn 10/28/2019 19:14",
+		"testPolyglotAccess" : "fn 10/28/2019 19:17",
+		"testPolyglotBindings" : "fn 11/4/2019 01:17",
+		"testPolyglotEval" : "fn 11/6/2019 11:54",
+		"testTruffleObjectArray" : "fn 11/6/2019 13:58",
+		"testTruffleObjectBasic" : "fn 11/6/2019 13:57",
+		"testTruffleObjectExecutable" : "fn 11/6/2019 13:58",
+		"testTruffleObjectJSObject" : "fn 11/6/2019 13:58" } }

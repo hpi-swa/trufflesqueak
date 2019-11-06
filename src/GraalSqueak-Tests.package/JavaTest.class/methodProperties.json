@@ -1,0 +1,9 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"expectedFailures" : "fn 11/4/2019 00:16",
+		"testJavaAddToHostClassPath" : "fn 11/6/2019 12:10",
+		"testJavaArray" : "fn 11/4/2019 00:13",
+		"testJavaBasic" : "fn 11/6/2019 12:16",
+		"testJavaString" : "fn 11/4/2019 00:10" } }
