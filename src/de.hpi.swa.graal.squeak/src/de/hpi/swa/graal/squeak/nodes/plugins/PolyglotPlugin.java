@@ -39,6 +39,7 @@ import com.oracle.truffle.api.source.Source.SourceBuilder;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.ConvertToSqueakNode;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
@@ -237,13 +238,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"lib.isPointer(receiver)"}, limit = "2")
         protected static final long doAsPointer(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
                 return lib.asPointer(receiver);
             } catch (final UnsupportedMessageException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -263,9 +262,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final BranchProfile errorProfile) {
             try {
                 return wrapNode.executeWrap(lib.execute(receiver, getObjectArrayNode.execute(argumentArray)));
-            } catch (UnsupportedTypeException | ArityException | RuntimeException | UnsupportedMessageException e) {
+            } catch (UnsupportedTypeException | ArityException | RuntimeException e) {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -424,9 +425,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final BranchProfile errorProfile) {
             try {
                 return wrapNode.executeWrap(lib.invokeMember(receiver, member.asStringUnsafe(), getObjectArrayNode.execute(argumentArray)));
-            } catch (UnsupportedTypeException | ArityException | RuntimeException | UnknownIdentifierException | UnsupportedMessageException e) {
+            } catch (UnsupportedTypeException | ArityException | RuntimeException | UnknownIdentifierException e) {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -456,13 +459,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "lib.isBoolean(receiver)", limit = "2")
         protected static final boolean doAsBoolean(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
                 return BooleanObject.wrap(lib.asBoolean(receiver));
             } catch (final UnsupportedMessageException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -492,13 +493,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "lib.isString(receiver)", limit = "2")
         protected final NativeObject doAsString(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
                 return method.image.asByteString(lib.asString(receiver));
             } catch (final UnsupportedMessageException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -528,13 +527,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"lib.fitsInLong(receiver)"}, limit = "2")
         protected static final long doAsLong(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
                 return lib.asLong(receiver);
             } catch (final UnsupportedMessageException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -564,13 +561,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"lib.fitsInDouble(receiver)"}, limit = "2")
         protected static final double doAsDouble(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
                 return lib.asDouble(receiver);
             } catch (final UnsupportedMessageException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -621,9 +616,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final BranchProfile errorProfile) {
             try {
                 return wrapNode.executeWrap(lib.instantiate(receiver, getObjectArrayNode.execute(argumentArray)));
-            } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+            } catch (UnsupportedTypeException | ArityException e) {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -672,13 +669,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "lib.hasArrayElements(receiver)", limit = "2")
         protected static final long doGetArraySize(final Object receiver,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
                 return lib.getArraySize(receiver);
             } catch (final UnsupportedMessageException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -796,9 +791,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final BranchProfile errorProfile) {
             try {
                 return wrapNode.executeWrap(lib.readArrayElement(receiver, index - 1));
-            } catch (InvalidArrayIndexException | UnsupportedMessageException e) {
+            } catch (final InvalidArrayIndexException e) {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -817,9 +814,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 lib.removeArrayElement(receiver, index - 1);
                 return receiver;
-            } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
+            } catch (final InvalidArrayIndexException e) {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -838,9 +837,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 lib.writeArrayElement(receiver, index - 1, value);
                 return value;
-            } catch (UnsupportedTypeException | UnsupportedMessageException | InvalidArrayIndexException e) {
+            } catch (UnsupportedTypeException | InvalidArrayIndexException e) {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -860,8 +861,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected final ArrayObject doGetMembers(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary lib,
                         @CachedLibrary(limit = "2") final InteropLibrary membersLib,
-                        @CachedLibrary(limit = "2") final InteropLibrary memberNameLib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary(limit = "2") final InteropLibrary memberNameLib) {
             try {
                 final Object members = lib.getMembers(receiver, true);
                 final int size = (int) membersLib.getArraySize(members);
@@ -872,8 +872,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 return method.image.asArrayOfNativeObjects(byteStrings);
             } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -888,13 +887,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"lib.hasMembers(receiver)"}, limit = "2")
         protected static final Object doGetMembers(final Object receiver,
                         @CachedLibrary("receiver") final InteropLibrary lib,
-                        @CachedLibrary(limit = "2") final InteropLibrary sizeLib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary(limit = "2") final InteropLibrary sizeLib) {
             try {
                 return sizeLib.getArraySize(lib.getMembers(receiver, true));
             } catch (final UnsupportedMessageException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -1069,9 +1066,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final BranchProfile errorProfile) {
             try {
                 return wrapNode.executeWrap(lib.invokeMember(receiver, member.asStringUnsafe(), getObjectArrayNode.execute(argumentArray)));
-            } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+            } catch (UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -1087,13 +1086,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         "!lib.hasMemberReadSideEffects(receiver, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doReadMember(final Object receiver, final NativeObject member,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             try {
                 return wrapNode.executeWrap(lib.readMember(receiver, member.asStringUnsafe()));
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
 
@@ -1115,15 +1112,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"member.isByteType()", "lib.isMemberRemovable(receiver, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doRemove(final Object receiver, final NativeObject member,
-                        @CachedLibrary("receiver") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("receiver") final InteropLibrary lib) {
             final String identifier = member.asStringUnsafe();
             try {
                 lib.removeMember(receiver, identifier);
                 return receiver;
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw SqueakException.illegalState(e);
             }
         }
     }
@@ -1142,9 +1137,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 lib.writeMember(receiver, member.asStringUnsafe(), value);
                 return value;
-            } catch (UnsupportedTypeException | UnknownIdentifierException | UnsupportedMessageException e) {
+            } catch (final UnsupportedTypeException e) {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
+            } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
             }
         }
     }
