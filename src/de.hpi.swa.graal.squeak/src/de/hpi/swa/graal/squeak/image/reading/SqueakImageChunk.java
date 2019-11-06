@@ -26,7 +26,6 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
-import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageChunk {
     private static final long SMALLFLOAT_MASK = 896L << 52 + 1;
@@ -188,44 +187,27 @@ public final class SqueakImageChunk {
     }
 
     private Object decodePointer(final long ptr) {
-        if (reader.is64bit) {
-            switch ((int) (ptr & 7)) {
-                case 0:
-                    final SqueakImageChunk chunk = reader.getChunk(ptr);
-                    if (chunk == null) {
-                        logBogusPointer(ptr);
-                        return ptr >>> 3;
-                    } else {
-                        return chunk.asObject();
-                    }
-                case 1: // SmallInteger
-                    return ptr >> 3;
-                case 2: // Character
-                    return CharacterObject.valueOf((int) (ptr >> 3));
-                case 4: // SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:)
-                    long valueWithoutTag = ptr >>> 3;
-                    if (valueWithoutTag > 1) {
-                        valueWithoutTag += SMALLFLOAT_MASK;
-                    }
-                    return Double.longBitsToDouble(Long.rotateRight(valueWithoutTag, 1));
-                default:
-                    throw SqueakException.create("Unexpected pointer");
-            }
-        } else {
-            if ((ptr & 3) == 0) {
+        switch ((int) (ptr & 7)) {
+            case 0:
                 final SqueakImageChunk chunk = reader.getChunk(ptr);
                 if (chunk == null) {
                     logBogusPointer(ptr);
-                    return ptr >> 1;
+                    return ptr >>> 3;
                 } else {
                     return chunk.asObject();
                 }
-            } else if ((ptr & 1) == 1) {
-                return ptr >> 1;
-            } else {
-                assert (ptr & 3) == 2;
-                return CharacterObject.valueOf((int) (ptr >> 2));
-            }
+            case 1: // SmallInteger
+                return ptr >> 3;
+            case 2: // Character
+                return CharacterObject.valueOf((int) (ptr >> 3));
+            case 4: // SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:)
+                long valueWithoutTag = ptr >>> 3;
+                if (valueWithoutTag > 1) {
+                    valueWithoutTag += SMALLFLOAT_MASK;
+                }
+                return Double.longBitsToDouble(Long.rotateRight(valueWithoutTag, 1));
+            default:
+                throw SqueakException.create("Unexpected pointer");
         }
     }
 
@@ -252,15 +234,7 @@ public final class SqueakImageChunk {
 
     public long[] getWords() {
         if (words == null) {
-            if (reader.is64bit) {
-                words = ArrayConversionUtils.longsFromBytes(data);
-            } else {
-                final int size = data.length / ArrayConversionUtils.INTEGER_BYTE_SIZE;
-                words = new long[size];
-                for (int i = 0; i < size; i++) {
-                    words[i] = UnsafeUtils.getInt(data, i);
-                }
-            }
+            words = ArrayConversionUtils.longsFromBytes(data);
         }
         return words;
     }
@@ -270,32 +244,18 @@ public final class SqueakImageChunk {
     }
 
     public int getPadding() {
-        if (image.flags.is64bit()) {
-            if (16 <= format && format <= 31) {
-                return format & 7;
-            } else if (format == 11) {
-                // 32-bit words with 1 word padding
-                return 4;
-            } else if (12 <= format && format <= 15) {
-                // 16-bit words with 2, 4, or 6 bytes padding
-                return format & 3;
-            } else if (10 <= format) {
-                return format & 1;
-            } else {
-                return 0;
-            }
+        if (16 <= format && format <= 31) {
+            return format & 7;
+        } else if (format == 11) {
+            // 32-bit words with 1 word padding
+            return 4;
+        } else if (12 <= format && format <= 15) {
+            // 16-bit words with 2, 4, or 6 bytes padding
+            return format & 3;
+        } else if (10 <= format) {
+            return format & 1;
         } else {
-            if (16 <= format && format <= 31) {
-                return format & 3;
-            } else if (format == 11) {
-                // 32-bit words with 1 word padding
-                return 4;
-            } else if (12 <= format && format <= 15) {
-                // 16-bit words with 2, 4, or 6 bytes padding
-                return (format & 3) * 2;
-            } else {
-                return 0;
-            }
+            return 0;
         }
     }
 

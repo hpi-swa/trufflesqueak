@@ -15,6 +15,7 @@ import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
@@ -29,15 +30,12 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
-    public static final long IMAGE_32BIT_VERSION = 6521;
     public static final long IMAGE_64BIT_VERSION = 68021;
     private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
     private static final long SLOTS_MASK = 0xFF << 56;
     private static final long OVERFLOW_SLOTS = 255;
     private static final int HIDDEN_ROOTS_CHUNK_INDEX = 4;
 
-    protected boolean is64bit = false;
-    private int wordSize = 4;
     protected SqueakImageChunk hiddenRootsChunk;
 
     private final BufferedInputStream stream;
@@ -114,11 +112,7 @@ public final class SqueakImageReader {
     }
 
     private long nextWord() {
-        if (is64bit) {
-            return nextLong();
-        } else {
-            return nextInt();
-        }
+        return nextLong();
     }
 
     private byte[] nextBytes(final int count) {
@@ -159,14 +153,9 @@ public final class SqueakImageReader {
     }
 
     private void readVersion() {
-        final long version = nextWord();
-        assert version == IMAGE_32BIT_VERSION || version == IMAGE_64BIT_VERSION : "Image not supported: " + version;
-        if (version == IMAGE_64BIT_VERSION) {
-            // nextWord(); // magic2
-            wordSize = 8;
-            is64bit = true;
-        } else {
-            wordSize = 4;
+        final long version = nextInt();
+        if (version != IMAGE_64BIT_VERSION) {
+            throw SqueakAbortException.create(String.format("Image format %s not supported. Please supply a 64bit Spur image (format %s).", version, IMAGE_64BIT_VERSION));
         }
     }
 
@@ -184,11 +173,11 @@ public final class SqueakImageReader {
     private void readSpurHeader() {
         nextShort(); // numStackPages
         nextShort(); // cogCodeSize
-        assert position == (is64bit ? 64 : 40) : "Wrong position";
+        assert position == 64 : "Wrong position";
         nextInt(); // edenBytes
         maxExternalSemaphoreTableSize = nextShort();
         nextShort(); // unused, realign to word boundary
-        assert position == (is64bit ? 72 : 48) : "Wrong position";
+        assert position == 72 : "Wrong position";
         firstSegmentSize = nextWord();
         nextWord(); // freeOldSpace
     }
@@ -197,7 +186,7 @@ public final class SqueakImageReader {
         readVersion();
         readBaseHeader();
         readSpurHeader();
-        image.flags.initialize(is64bit, headerFlags, lastWindowSizeWord, maxExternalSemaphoreTableSize);
+        image.flags.initialize(headerFlags, lastWindowSizeWord, maxExternalSemaphoreTableSize);
         skipToBody();
     }
 
@@ -229,7 +218,7 @@ public final class SqueakImageReader {
                 break;
             }
             segmentEnd += nextSegmentSize;
-            currentAddressSwizzle += bridgeSpan * wordSize;
+            currentAddressSwizzle += bridgeSpan * SqueakImageFlags.WORD_SIZE;
         }
         closeStream();
     }
@@ -266,37 +255,31 @@ public final class SqueakImageReader {
         final int hash = ObjectHeaderDecoder.getHash(headerWord);
         assert size >= 0 : "Negative object size";
         assert 0 <= format && format <= 31 : "Unexpected format";
-        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextBytes(size * wordSize), format, classIndex, hash, pos);
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextBytes(size * SqueakImageFlags.WORD_SIZE), format, classIndex, hash, pos);
         final int wordsFor = wordsFor(size);
-        if (wordsFor > size * wordSize) {
-            skipBytes(wordsFor - size * wordSize); // skip trailing alignment words
+        if (wordsFor > size * SqueakImageFlags.WORD_SIZE) {
+            skipBytes(wordsFor - size * SqueakImageFlags.WORD_SIZE); // skip trailing alignment
+                                                                     // words
         }
         assert format != 0 || classIndex == 0 || size == 0 : "Empty objects must not have slots";
         assert checkAddressIntegrity(classIndex, format, chunk);
         return chunk;
     }
 
-    private boolean checkAddressIntegrity(final int classIndex, final int format, final SqueakImageChunk chunk) {
-        if (is64bit) {
-            return true; // FIXME: temporarily disabled for 64bit.
-        }
-        boolean result = true;
-        if (format < 10 && classIndex != FREE_OBJECT_CLASS_INDEX_PUN) {
-            for (final long slot : chunk.getWords()) {
-                result &= slot % 16 != 0 || slot >= oldBaseAddress;
-            }
-        }
-        return result;
+    @SuppressWarnings("unused")
+    private static boolean checkAddressIntegrity(final int classIndex, final int format, final SqueakImageChunk chunk) {
+        // boolean result = true;
+        // if (format < 10 && classIndex != FREE_OBJECT_CLASS_INDEX_PUN) {
+        // for (final long slot : chunk.getWords()) {
+        // result &= slot % 16 != 0 || slot >= oldBaseAddress;
+        // }
+        // }
+        return true; // FIXME: temporarily disabled (used to work for 32bit).
     }
 
-    private int wordsFor(final int size) {
-        if (is64bit) {
-            // see Spur64BitMemoryManager>>smallObjectBytesForSlots:
-            return size < 1 ? 8 : size * wordSize;
-        } else {
-            // see Spur32BitMemoryManager>>smallObjectBytesForSlots:
-            return size <= 1 ? 8 : (size + (size & 1)) * wordSize;
-        }
+    private static int wordsFor(final int size) {
+        // see Spur64BitMemoryManager>>smallObjectBytesForSlots:
+        return size < 1 ? 8 : size * SqueakImageFlags.WORD_SIZE;
     }
 
     private SqueakImageChunk specialObjectChunk(final int idx) {
@@ -466,12 +449,8 @@ public final class SqueakImageReader {
         final ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.getUncached();
         assert arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_INTEGER) == image.smallIntegerClass;
         assert arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.CHARACTER) == image.characterClass;
-        if (image.flags.is64bit()) {
-            final Object smallFloatClassOrNil = arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_FLOAT);
-            image.setSmallFloat((ClassObject) smallFloatClassOrNil);
-        } else {
-            assert image.smallFloatClass != null : "smallFloatClass was not found when filling in objects of a 32bit image.";
-        }
+        final Object smallFloatClassOrNil = arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_FLOAT);
+        image.setSmallFloat((ClassObject) smallFloatClassOrNil);
     }
 
     public SqueakImageChunk getChunk(final long ptr) {
