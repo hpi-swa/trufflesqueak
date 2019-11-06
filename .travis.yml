@@ -87,9 +87,9 @@ jobs:
         - *download-eclipse
         - *download-ecj
       <<: *configure-python-for-pylint
-    - env: JDK="openjdk8" GATE="build,test" ARCH="64bit"
+    - env: JDK="openjdk8" GATE="build,test"
       <<: *openjdk8-jvmci-test-setup
-    - env: JDK="graalvm" GATE="build,test" ARCH="64bit"
+    - env: JDK="graalvm" GATE="build,test"
       <<: *graalvm-test-setup
     - env: SUBSTRATE_VM=true
       before_script: scripts/download-test-image.sh
@@ -104,8 +104,4 @@ jobs:
           packages:
             - libsdl2-dev
       install: *use-openjdk8-jvmci
-    - env: JDK="openjdk8" GATE="build,test" ARCH="32bit"
-      <<: *openjdk8-jvmci-test-setup
-    - env: JDK="graalvm" GATE="build,test" ARCH="32bit"
-      <<: *graalvm-test-setup
   fast_finish: true
