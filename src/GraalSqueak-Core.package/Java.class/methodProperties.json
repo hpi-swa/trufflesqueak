@@ -2,6 +2,7 @@
 	"class" : {
 		"addToClassPath:" : "fn 5/3/2019 14:11",
 		"primitiveAddToHostClassPath:" : "fn 5/3/2019 14:10",
+		"primitiveIsHostLookupAllowed" : "fn 11/4/2019 00:01",
 		"primitiveLookupHostSymbol:" : "fn 5/3/2019 14:09",
 		"type:" : "fn 5/9/2019 17:59" },
 	"instance" : {
