@@ -350,8 +350,8 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void report(final ArrayStrategy newStrategy) {
-        if (CompilerDirectives.inInterpreter() && newNode != null && newStrategy.ordinal() > newNode.strategy.ordinal()) {
-            newNode.strategy = newStrategy;
+        if (CompilerDirectives.inInterpreter() && newNode != null && newStrategy.ordinal() > newNode.getStrategy().ordinal()) {
+            newNode.updateStrategy(newStrategy);
         }
     }
 

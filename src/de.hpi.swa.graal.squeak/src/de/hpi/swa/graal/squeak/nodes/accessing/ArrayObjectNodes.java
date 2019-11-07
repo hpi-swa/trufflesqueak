@@ -7,11 +7,13 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -105,10 +107,11 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @ReportPolymorphism
     @ImportStatic(ArrayStrategy.class)
     public abstract static class ArrayObjectNewNode extends AbstractNodeWithImage {
         /* Writes to do not need to invalidate node. */
-        @CompilationFinal public ArrayStrategy strategy = ArrayStrategy.EMPTY;
+        @CompilationFinal protected ArrayStrategy strategy = ArrayStrategy.EMPTY;
 
         protected ArrayObjectNewNode(final SqueakImageContext image) {
             super(image);
@@ -116,6 +119,15 @@ public final class ArrayObjectNodes {
 
         public static ArrayObjectNewNode create(final SqueakImageContext image) {
             return ArrayObjectNewNodeGen.create(image);
+        }
+
+        public final ArrayStrategy getStrategy() {
+            return strategy;
+        }
+
+        public final void updateStrategy(final ArrayStrategy newStrategy) {
+            CompilerAsserts.neverPartOfCompilation();
+            strategy = newStrategy;
         }
 
         public abstract ArrayObject execute(ClassObject classObject, int size);
@@ -127,7 +139,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "matches(BOOLEAN, classObject)", replaces = "doEmpty")
         protected final ArrayObject doBoolean(final ClassObject classObject, final int size) {
-            assert ArrayObject.BOOLEAN_NIL_TAG == 0;
+            // assert ArrayObject.BOOLEAN_NIL_TAG == 0;
             return ArrayObject.createWithStorage(image, classObject, new byte[size], this);
         }
 
