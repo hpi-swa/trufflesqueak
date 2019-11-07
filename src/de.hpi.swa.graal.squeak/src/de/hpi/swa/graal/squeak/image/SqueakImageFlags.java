@@ -12,6 +12,7 @@ import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class SqueakImageFlags {
+    public static final int IMAGE_FORMAT = 68021;
     public static final int WORD_SIZE = ArrayConversionUtils.LONG_BYTE_SIZE;
     @CompilationFinal private int fullScreenFlag = 0;
     @CompilationFinal private int imageFloatsBigEndian;

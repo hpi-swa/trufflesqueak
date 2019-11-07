@@ -30,7 +30,6 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
-    public static final long IMAGE_64BIT_VERSION = 68021;
     private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
     private static final long SLOTS_MASK = 0xFF << 56;
     private static final long OVERFLOW_SLOTS = 255;
@@ -154,8 +153,9 @@ public final class SqueakImageReader {
 
     private void readVersion() {
         final long version = nextInt();
-        if (version != IMAGE_64BIT_VERSION) {
-            throw SqueakAbortException.create(String.format("Image format %s not supported. Please supply a 64bit Spur image (format %s).", version, IMAGE_64BIT_VERSION));
+        // nextWord(); // magic2
+        if (version != SqueakImageFlags.IMAGE_FORMAT) {
+            throw SqueakAbortException.create(MiscUtils.format("Image format %s not supported. Please supply a 64bit Spur image (format %s).", version, SqueakImageFlags.IMAGE_FORMAT));
         }
     }
 
