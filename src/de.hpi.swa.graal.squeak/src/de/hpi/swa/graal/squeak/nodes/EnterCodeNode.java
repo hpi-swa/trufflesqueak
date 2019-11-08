@@ -6,6 +6,8 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -17,6 +19,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 @NodeInfo(cost = NodeCost.NONE)
 public final class EnterCodeNode extends RootNode {
     private final CompiledCodeObject code;
+    @CompilationFinal public boolean isSplit = false;
 
     @Child private ExecuteContextNode executeContextNode;
 
@@ -53,5 +56,17 @@ public final class EnterCodeNode extends RootNode {
     @Override
     public boolean isCloningAllowed() {
         return true;
+    }
+
+    @Override
+    protected boolean isCloneUninitializedSupported() {
+        return true;
+    }
+
+    @Override
+    protected RootNode cloneUninitialized() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        isSplit = true;
+        return (RootNode) deepCopy();
     }
 }

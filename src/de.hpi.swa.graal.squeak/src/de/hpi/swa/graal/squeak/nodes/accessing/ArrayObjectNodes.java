@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -28,6 +29,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectNewNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
@@ -177,8 +179,20 @@ public final class ArrayObjectNodes {
             return ArrayObject.createWithStorage(image, classObject, objects);
         }
 
+        @Specialization
+        protected final ArrayObject doNotInlined(final ClassObject classObject, final int size) {
+            return ArrayObject.createEmptyStrategy(image, classObject, size);
+        }
+
         protected boolean matches(final ArrayStrategy otherStrategy, @SuppressWarnings("unused") final ClassObject classObject) {
-            return strategy == otherStrategy;
+            if (CompilerDirectives.inCompilationRoot() || !(getRootNode() instanceof EnterCodeNode) || ((EnterCodeNode) getRootNode()).isSplit) {
+                // if (CompilerDirectives.inCompiledCode()) {
+                // image.printToStdOut("compiled!");
+                // }
+                return strategy == otherStrategy;
+            } else {
+                return false;
+            }
         }
     }
 
