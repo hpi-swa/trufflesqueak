@@ -153,6 +153,16 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static long runtimeMaxMemory() {
+        return Runtime.getRuntime().maxMemory();
+    }
+
+    @TruffleBoundary
+    public static long runtimeTotalMemory() {
+        return Runtime.getRuntime().totalMemory();
+    }
+
+    @TruffleBoundary
     public static void sleep(final long millis) {
         try {
             Thread.sleep(millis);
@@ -171,6 +181,11 @@ public final class MiscUtils {
         System.gc();
     }
 
+    @TruffleBoundary
+    public static byte[] toBytes(final String value) {
+        return value.getBytes();
+    }
+
     public static long toJavaMicrosecondsUTC(final long microseconds) {
         return microseconds - EPOCH_DELTA_MICROSECONDS;
     }
@@ -185,11 +200,6 @@ public final class MiscUtils {
 
     public static long toSqueakSecondsLocal(final long seconds) {
         return seconds + EPOCH_DELTA_SECONDS + TIME_ZONE_OFFSET_SECONDS;
-    }
-
-    @TruffleBoundary
-    public static byte[] toBytes(final String value) {
-        return value.getBytes();
     }
 
     @TruffleBoundary

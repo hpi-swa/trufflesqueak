@@ -853,7 +853,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             switch (index) {
                 case 1: return 1L; // end (v3)/size(Spur) of old-space (0-based, read-only)
                 case 2: return 1L; // end (v3)/size(Spur) of young/new-space (read-only)
-                case 3: return  Runtime.getRuntime().totalMemory(); // end (v3)/size(Spur) of heap (read-only)
+                case 3: return MiscUtils.runtimeTotalMemory(); // end (v3)/size(Spur) of heap (read-only)
                 case 4: return NilObject.SINGLETON; // nil (was allocationCount (read-only))
                 case 5: return NilObject.SINGLETON; // nil (was allocations between GCs (read-write)
                 case 6: return 0L; // survivor count tenuring threshold (read-write)
@@ -896,7 +896,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 50: case 51: return NilObject.SINGLETON; // nil; reserved for VM parameters that persist in the image (such as eden above)
                 case 52: return 65536L; // root table capacity
                 case 53: return 2L; // number of segments (Spur only; otherwise nil)
-                case 54: return Runtime.getRuntime().freeMemory(); // total size of free old space (Spur only, otherwise nil)
+                case 54: return MiscUtils.runtimeFreeMemory(); // total size of free old space (Spur only, otherwise nil)
                 case 55: return 0L; // ratio of growth and image size at or above which a GC will be performed post scavenge
                 case 56: return NilObject.SINGLETON; // number of process switches since startup (read-only)
                 case 57: return 0L; // number of ioProcessEvents calls since startup (read-only)
@@ -910,7 +910,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 65: return 0L; // whether the VM supports a certain feature, MULTIPLE_BYTECODE_SETS is bit 0, IMMTABILITY is bit 1
                 case 66: return 4096L; // the byte size of a stack page
                 case 67:
-                    final long maxMemory = Runtime.getRuntime().maxMemory();
+                    final long maxMemory = MiscUtils.runtimeMaxMemory();
                     return maxMemory == Long.MAX_VALUE ? 0L : maxMemory; // the max allowed size of old space (Spur only; nil otherwise; 0 implies no limit except that of the underlying platform)
                 case 68: return 12L; // the average number of live stack pages when scanned by GC (at scavenge/gc/become et al)
                 case 69: return 16L; // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become et al)
