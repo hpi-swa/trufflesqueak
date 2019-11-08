@@ -17,9 +17,11 @@ aliases:
       JVMCI_VERSION="jvmci-19.2-b02"
       JDK8_UPDATE_VERSION="222"
       JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
-      curl -sSL --retry 3 -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/openjdk-8u${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}-linux-amd64.tar.gz
+      OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
+      JAVA_HOME_SUFFIX="" && [[ "${OS_NAME}" = "darwin" ]]  && JAVA_HOME_SUFFIX="/Contents/Home"
+      curl -sSL --retry 3 -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/openjdk-8u${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}-${OS_NAME}-amd64.tar.gz
       tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${JDK_TAR}
-      export JAVA_HOME=${TRAVIS_BUILD_DIR}/../openjdk1.8.0_${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}
+      export JAVA_HOME=${TRAVIS_BUILD_DIR}/../openjdk1.8.0_${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}${JAVA_HOME_SUFFIX}
   - &use-graalvm
     |
       GRAAL_VM_VERSION=19.2.1
@@ -70,6 +72,26 @@ aliases:
   - &jdk11-test-setup # set up oraclejdk11 and download image
     jdk: oraclejdk11
     before_script: scripts/download-test-image.sh
+  - &build-native-image-and-component
+      env: NATIVE_IMAGE_AND_COMPONENT=true
+      language: c
+      install: *use-openjdk8-jvmci
+      before_script: scripts/download-test-image.sh
+      script:
+        - mx squeak-svm
+        - bin/graalsqueak-svm --version:graalvm
+        - "bin/graalsqueak-svm --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\" images/test-64bit.image"
+        - bin/graalsqueak-svm --code "1 tinyBenchmarks" images/test-64bit.image
+        - scripts/make_component.sh
+      deploy:
+        provider: releases
+        api_key:
+          secure: $GITHUB_TOKEN
+        file_glob: true
+        file: graalsqueak-installable*.jar
+        skip_cleanup: true
+        on:
+          tags: true
 
 before_install: *clone-mx
 
@@ -78,31 +100,26 @@ script: mx gate ${MX_OPTS} --strict-mode --tags ${GATE}
 jobs:
   include:
     - env: JDK="openjdk8" GATE="style,fullbuild"
-      script: 
-        - mx gate --strict-mode --tags ${GATE}
-        - scripts/make_component.sh
+      script: mx gate --strict-mode --tags ${GATE}
       install:
         - *use-openjdk8-jvmci
         - *install-pylint
         - *download-eclipse
         - *download-ecj
       <<: *configure-python-for-pylint
-    - env: JDK="openjdk8" GATE="build,test" ARCH="64bit"
+    - env: JDK="openjdk8" GATE="build,test"
       <<: *openjdk8-jvmci-test-setup
-    - env: JDK="graalvm" GATE="build,test" ARCH="64bit"
+    - env: JDK="graalvm" GATE="build,test"
       <<: *graalvm-test-setup
-    - env: SUBSTRATE_VM=true
-      script:
-        - mx squeak-svm
-        - bin/graalsqueak-svm --version:graalvm
-      language: c
-      addons:
+    - addons:
         apt:
           packages:
             - libsdl2-dev
-      install: *use-openjdk8-jvmci
-    - env: JDK="openjdk8" GATE="build,test" ARCH="32bit"
-      <<: *openjdk8-jvmci-test-setup
-    - env: JDK="graalvm" GATE="build,test" ARCH="32bit"
-      <<: *graalvm-test-setup
+      <<: *build-native-image-and-component
+    - os: osx
+      osx_image: xcode11.2 # Use macOS Mojave
+      before_install:
+        - *clone-mx
+        - HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
+      <<: *build-native-image-and-component
   fast_finish: true

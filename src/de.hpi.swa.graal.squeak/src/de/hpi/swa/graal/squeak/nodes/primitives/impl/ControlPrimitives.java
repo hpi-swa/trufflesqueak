@@ -212,7 +212,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 86)
     protected abstract static class PrimWaitNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
+        @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
 
         protected PrimWaitNode(final CompiledMethodObject method) {
             super(method);

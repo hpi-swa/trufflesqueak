@@ -8,7 +8,6 @@ package de.hpi.swa.graal.squeak.image;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.ref.ReferenceQueue;
-import java.math.BigInteger;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,7 +44,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -57,6 +55,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SMALLTALK_IMAGE;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.model.layout.SlotLocation;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
@@ -348,7 +347,11 @@ public final class SqueakImageContext {
         return wideStringClass;
     }
 
-    public void initializePrimitives() {
+    public static void initializeBeforeLoadingImage() {
+        SlotLocation.initialize();
+    }
+
+    public void initializeAfterLoadingImage() {
         primitiveNodeFactory.initialize(this);
     }
 
@@ -506,10 +509,6 @@ public final class SqueakImageContext {
 
     public NativeObject asString(final String value, final ConditionProfile wideStringProfile) {
         return wideStringProfile.profile(NativeObject.needsWideString(value)) ? asWideString(value) : asByteString(value);
-    }
-
-    public LargeIntegerObject asLargeInteger(final BigInteger i) {
-        return new LargeIntegerObject(this, i);
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {

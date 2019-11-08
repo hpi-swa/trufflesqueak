@@ -5,7 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -200,11 +199,6 @@ public final class NativeObjectNodes {
 
         public static NativeGetBytesNode create() {
             return NativeGetBytesNodeGen.create();
-        }
-
-        @TruffleBoundary
-        public final String executeAsString(final NativeObject obj) {
-            return new String(execute(obj));
         }
 
         public abstract byte[] execute(NativeObject obj);

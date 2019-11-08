@@ -12,8 +12,8 @@ import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class SqueakImageFlags {
-    @CompilationFinal private boolean is64bit;
-    @CompilationFinal private int wordSize;
+    public static final int IMAGE_FORMAT = 68021;
+    public static final int WORD_SIZE = ArrayConversionUtils.LONG_BYTE_SIZE;
     @CompilationFinal private int fullScreenFlag = 0;
     @CompilationFinal private int imageFloatsBigEndian;
     @CompilationFinal private boolean flagInterpretedMethods;
@@ -22,10 +22,8 @@ public final class SqueakImageFlags {
     @CompilationFinal private DisplayPoint lastWindowSize;
     @CompilationFinal private int maxExternalSemaphoreTableSize;
 
-    public void initialize(final boolean is64bitImage, final int headerFlags, final int lastWindowSizeWord, final int lastMaxExternalSemaphoreTableSize) {
+    public void initialize(final int headerFlags, final int lastWindowSizeWord, final int lastMaxExternalSemaphoreTableSize) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        is64bit = is64bitImage;
-        wordSize = is64bitImage ? ArrayConversionUtils.LONG_BYTE_SIZE : ArrayConversionUtils.INTEGER_BYTE_SIZE;
         fullScreenFlag = headerFlags & 1;
         imageFloatsBigEndian = (headerFlags & 2) == 0 ? 1 : 0;
         flagInterpretedMethods = (headerFlags & 8) != 0;
@@ -33,14 +31,6 @@ public final class SqueakImageFlags {
         newFinalization = (headerFlags & 64) != 0;
         lastWindowSize = new DisplayPoint(lastWindowSizeWord >> 16 & 0xffff, lastWindowSizeWord & 0xffff);
         maxExternalSemaphoreTableSize = lastMaxExternalSemaphoreTableSize;
-    }
-
-    public boolean is64bit() {
-        return is64bit;
-    }
-
-    public int wordSize() {
-        return wordSize;
     }
 
     public int getFullScreenFlag() {

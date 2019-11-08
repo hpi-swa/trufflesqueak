@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         for (int i = 0; i < arguments.size(); i++) {
             final String arg = arguments.get(i);
             if (fileExists(arg)) {
-                unrecognized = arguments.subList(0, i);
+                unrecognized = new ArrayList<>(arguments.subList(0, i));
                 imagePath = Paths.get(arg).toAbsolutePath().toString();
                 final List<String> remainingArgumentsList = arguments.subList(i + 1, arguments.size());
                 remainingArguments = remainingArgumentsList.toArray(new String[remainingArgumentsList.size()]);

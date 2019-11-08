@@ -17,11 +17,6 @@ public final class DisplayPoint {
         height = h;
     }
 
-    public DisplayPoint(final double w, final double h) {
-        width = (int) w;
-        height = (int) h;
-    }
-
     public int getWidth() {
         return width;
     }

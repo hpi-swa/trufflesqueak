@@ -20,10 +20,6 @@ public abstract class AbstractInstrumentableBytecodeNode extends AbstractBytecod
         this(original.code, original.index, original.numBytecodes);
     }
 
-    public AbstractInstrumentableBytecodeNode(final CompiledCodeObject code, final int index) {
-        this(code, index, 1);
-    }
-
     public AbstractInstrumentableBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
         super(code, index, numBytecodes);
     }
