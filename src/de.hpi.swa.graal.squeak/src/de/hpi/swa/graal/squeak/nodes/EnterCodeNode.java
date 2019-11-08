@@ -6,7 +6,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -65,8 +64,8 @@ public final class EnterCodeNode extends RootNode {
 
     @Override
     protected RootNode cloneUninitialized() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        isSplit = true;
-        return (RootNode) deepCopy();
+        final EnterCodeNode copy = (EnterCodeNode) deepCopy();
+        copy.isSplit = true;
+        return copy;
     }
 }
