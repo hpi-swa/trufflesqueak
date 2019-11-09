@@ -206,10 +206,14 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             if (".".equals(fileName)) {
                 file = asTruffleFile(pathName);
             } else {
-                file = asTruffleFile(pathName + method.image.env.getFileNameSeparator() + fileName);
+                if (method.image.os.isWindows() && pathName.isEmpty() && fileName.endsWith(":")) {
+                    file = asTruffleFile(fileName + "\\");
+                } else {
+                    file = asTruffleFile(pathName + method.image.env.getFileNameSeparator() + fileName);
+                }
             }
             if (file.exists()) {
-                return newFileEntry(method.image, file);
+                return newFileEntry(method.image, file, fileName);
             } else {
                 return NilObject.SINGLETON;
             }
