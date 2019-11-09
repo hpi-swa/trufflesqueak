@@ -181,7 +181,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     }
 
     @Override
-    public void setCursor(final int[] cursorWords, final int[] mask, final int depth) {
+    public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth) {
         if (window.isNull()) {
             return;
         }

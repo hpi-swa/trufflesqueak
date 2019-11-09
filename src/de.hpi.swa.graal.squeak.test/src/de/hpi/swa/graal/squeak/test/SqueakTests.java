@@ -35,7 +35,6 @@ public final class SqueakTests {
         IGNORED("Ignored"), // unable to run (e.g., OOM, ...)
         NOT_TERMINATING("Not Terminating"),
         PASSING("Passing"),
-        PASSING_64BIT("Passing only on 64-bit"),
         PASSING_WITH_NFI("Passing with NFI"),
         SLOWLY_FAILING("Failing and slow"),
         SLOWLY_PASSING("Passing, but slow");

@@ -7,6 +7,8 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
+
 public final class CompiledBlockObject extends CompiledCodeObject {
     private final int offset;
 
@@ -44,8 +46,8 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         if (index < getBytecodeOffset() - getOffset()) {
-            assert index % image.flags.wordSize() == 0;
-            return literals[index / image.flags.wordSize()];
+            assert index % SqueakImageFlags.WORD_SIZE == 0;
+            return literals[index / SqueakImageFlags.WORD_SIZE];
         } else {
             return getMethod().at0(longIndex);
         }

@@ -14,6 +14,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ADDITIONAL_METHOD_STATE;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_BINDING;
@@ -52,8 +53,8 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         if (index < getBytecodeOffset()) {
-            assert index % image.flags.wordSize() == 0;
-            return literals[index / image.flags.wordSize()];
+            assert index % SqueakImageFlags.WORD_SIZE == 0;
+            return literals[index / SqueakImageFlags.WORD_SIZE];
         } else {
             final int realIndex = index - getBytecodeOffset();
             assert realIndex >= 0;
@@ -66,7 +67,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
         String selector = "unknownSelector";
-        final ClassObject methodClass = getMethodClass();
+        final ClassObject methodClass = getMethodClassSlow();
         if (methodClass != null) {
             className = methodClass.getClassName();
         }
@@ -126,11 +127,12 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return readNode.execute(getMethodClassAssociation(), CLASS_BINDING.VALUE) != NilObject.SINGLETON;
     }
 
-    /** CompiledMethod>>#methodClass. */
-    public ClassObject getMethodClass() {
+    public ClassObject getMethodClassSlow() {
+        CompilerAsserts.neverPartOfCompilation();
         return getMethodClass(AbstractPointersObjectReadNode.getUncached());
     }
 
+    /** CompiledMethod>>#methodClass. */
     public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
         return (ClassObject) readNode.execute(getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }

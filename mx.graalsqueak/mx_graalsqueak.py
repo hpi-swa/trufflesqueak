@@ -462,7 +462,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     name='GraalSqueak',
     short_name='st',
     dir_name=LANGUAGE_ID,
-    license_files=[],
+    license_files=['LICENSE_GRAALSQUEAK.txt'],
     third_party_license_files=[],
     truffle_jars=[
         'graalsqueak:GRAALSQUEAK',

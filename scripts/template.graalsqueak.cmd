@@ -37,7 +37,7 @@ set "_JAVACMD=%_ROOT_DIR%\jre\bin\java.exe"
 set _PROGRAM_ARGS=--polyglot
 set _JAVA_ARGS=-Xss64M -XX:OldSize=256M -XX:NewSize=1G -XX:MetaspaceSize=32M
 
-for %%i in ("%*") do (
+for %%i in (%*) do (
     set "__OPT=%%~i"
     if /i "!__OPT!"=="" (
         rem ignore empty option
@@ -50,7 +50,7 @@ for %%i in ("%*") do (
     ) else if /i "!__OPT:~0,2!"=="-J" (
         set _JAVA_ARGS=!_JAVA_ARGS! !__OPT:~2!
     ) else (
-        set _PROGRAM_ARGS=!_PROGRAM_ARGS! !__OPT!
+        set _PROGRAM_ARGS=!_PROGRAM_ARGS! "!__OPT!"
     )
 )
 "%_JAVACMD%" %_JAVA_ARGS% -Xbootclasspath/a:%_BOOT_PATH% -cp %_LAUNCHER_PATH% %_MAIN_CLASS% %_PROGRAM_ARGS%

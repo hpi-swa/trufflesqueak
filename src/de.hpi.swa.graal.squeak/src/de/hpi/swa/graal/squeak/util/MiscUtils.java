@@ -29,10 +29,8 @@ public final class MiscUtils {
     // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
     public static final long EPOCH_DELTA_SECONDS = (69L * 365 + 17) * 24 * 3600;
     public static final long EPOCH_DELTA_MICROSECONDS = EPOCH_DELTA_SECONDS * 1000 * 1000;
-    public static final long SEC_TO_USEC = 1000 * 1000;
     public static final long TIME_ZONE_OFFSET_MICROSECONDS = (Calendar.getInstance().get(Calendar.ZONE_OFFSET) + Calendar.getInstance().get(Calendar.DST_OFFSET)) * 1000L;
     public static final long TIME_ZONE_OFFSET_SECONDS = TIME_ZONE_OFFSET_MICROSECONDS / 1000 / 1000;
-    public static final long USEC_TO_NANO = 1000;
 
     private MiscUtils() {
     }
@@ -155,6 +153,16 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static long runtimeMaxMemory() {
+        return Runtime.getRuntime().maxMemory();
+    }
+
+    @TruffleBoundary
+    public static long runtimeTotalMemory() {
+        return Runtime.getRuntime().totalMemory();
+    }
+
+    @TruffleBoundary
     public static void sleep(final long millis) {
         try {
             Thread.sleep(millis);
@@ -173,8 +181,13 @@ public final class MiscUtils {
         System.gc();
     }
 
-    public static long toJavaMicrosecondsLocal(final long microseconds) {
-        return microseconds - EPOCH_DELTA_MICROSECONDS - TIME_ZONE_OFFSET_MICROSECONDS;
+    @TruffleBoundary
+    public static byte[] toBytes(final String value) {
+        return value.getBytes();
+    }
+
+    public static long toJavaMicrosecondsUTC(final long microseconds) {
+        return microseconds - EPOCH_DELTA_MICROSECONDS;
     }
 
     public static long toSqueakMicrosecondsLocal(final long microseconds) {
@@ -187,11 +200,6 @@ public final class MiscUtils {
 
     public static long toSqueakSecondsLocal(final long seconds) {
         return seconds + EPOCH_DELTA_SECONDS + TIME_ZONE_OFFSET_SECONDS;
-    }
-
-    @TruffleBoundary
-    public static byte[] toBytes(final String value) {
-        return value.getBytes();
     }
 
     @TruffleBoundary

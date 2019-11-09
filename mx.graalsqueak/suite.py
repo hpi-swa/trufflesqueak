@@ -13,7 +13,7 @@ suite = {
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
-    "version": "1.0.0-rc4",
+    "version": "1.0.0-rc5",
     "release": False,
     "groupId": "de.hpi.swa.graal.squeak",
     "url": "https://github.com/hpi-swa/graalsqueak/",
@@ -68,7 +68,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "graalsqueak:GRAALSQUEAK_SHARED",
+                "GRAALSQUEAK_SHARED",
                 "BOUNCY_CASTLE_CRYPTO_LIB",
                 "truffle:TRUFFLE_API",
             ],
@@ -82,7 +82,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "graalsqueak:GRAALSQUEAK_SHARED",
+                "GRAALSQUEAK_SHARED",
                 "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
                 "truffle:TRUFFLE_API",
@@ -104,7 +104,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "graalsqueak:GRAALSQUEAK_SHARED",
+                "GRAALSQUEAK_SHARED",
                 "sdk:POLYGLOT_TCK",
                 "mx:JUNIT"
             ],

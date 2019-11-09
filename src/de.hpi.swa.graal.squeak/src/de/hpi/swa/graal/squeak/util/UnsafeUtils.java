@@ -209,10 +209,6 @@ public final class UnsafeUtils {
         UNSAFE.putChar(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
     }
 
-    public static double putDouble(final long[] array, final long index) {
-        return UNSAFE.getDouble(array, Unsafe.ARRAY_LONG_BASE_OFFSET + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
-    }
-
     public static void putDouble(final Object storage, final long index, final double value) {
         assert storage instanceof double[] && 0 <= index && index < ((double[]) storage).length;
         UNSAFE.putDouble(storage, Unsafe.ARRAY_DOUBLE_BASE_OFFSET + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);

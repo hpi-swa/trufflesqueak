@@ -8,12 +8,10 @@ package de.hpi.swa.graal.squeak.util;
 import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 
 public final class ArrayUtils {
@@ -141,11 +139,6 @@ public final class ArrayUtils {
 
     @TruffleBoundary
     public static Object[] toArray(final AbstractCollection<AbstractSqueakObjectWithHash> list) {
-        return list.toArray(new Object[list.size()]);
-    }
-
-    @TruffleBoundary
-    public static Object[] toArray(final Set<AbstractSqueakObject> list) {
         return list.toArray(new Object[list.size()]);
     }
 

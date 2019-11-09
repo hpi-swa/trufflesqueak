@@ -26,6 +26,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
@@ -236,14 +237,14 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final long[] words = chunk.getWords();
         // header is a tagged small integer
-        final long header = words[0] >> (image.flags.is64bit() ? 3 : 1);
+        final long header = words[0] >> 3;
         final int numberOfLiterals = (int) (header & 0x7fff);
         final Object[] ptrs = chunk.getPointers(numberOfLiterals + 1);
         assert literals == null;
         literals = ptrs;
         decodeHeader();
         assert bytes == null;
-        bytes = chunk.getBytes(ptrs.length * image.flags.wordSize());
+        bytes = chunk.getBytes(ptrs.length * SqueakImageFlags.WORD_SIZE);
         assert innerBlocks == null : "Should not have any inner blocks yet";
     }
 
@@ -295,7 +296,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     }
 
     public final int getBytecodeOffset() {
-        return (1 + numLiterals) * image.flags.wordSize(); // header plus numLiterals
+        return (1 + numLiterals) * SqueakImageFlags.WORD_SIZE; // header plus numLiterals
     }
 
     public final void atput0(final long longIndex, final Object obj) {
@@ -303,8 +304,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         assert index >= 0;
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (index < getBytecodeOffset()) {
-            assert index % image.flags.wordSize() == 0;
-            setLiteral(index / image.flags.wordSize(), obj);
+            assert index % SqueakImageFlags.WORD_SIZE == 0;
+            setLiteral(index / SqueakImageFlags.WORD_SIZE, obj);
         } else {
             final int realIndex = index - getBytecodeOffset();
             assert realIndex < bytes.length;

@@ -23,10 +23,6 @@ public final class InteropMap implements TruffleObject {
         map = DICTIONARY.toJavaMap(squeakDictionary);
     }
 
-    public InteropMap(final Map<String, Object> map) {
-        this.map = map;
-    }
-
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean hasMembers() {

@@ -32,8 +32,6 @@ public abstract class SlotLocation {
     public static final int NUM_PRIMITIVE_EXTENSION_LOCATIONS = Integer.SIZE - NUM_PRIMITIVE_INLINE_LOCATIONS;
     public static final int NUM_OBJECT_INLINE_LOCATIONS = 3;
 
-    private static final long PRIMITIVE_USED_MAP_ADDRESS;
-
     @CompilationFinal(dimensions = 1) private static final long[] PRIMITIVE_ADDRESSES = new long[NUM_PRIMITIVE_INLINE_LOCATIONS];
     @CompilationFinal(dimensions = 1) private static final long[] OBJECT_ADDRESSES = new long[NUM_OBJECT_INLINE_LOCATIONS];
 
@@ -44,11 +42,21 @@ public abstract class SlotLocation {
     public static final SlotLocation[] DOUBLE_LOCATIONS = new SlotLocation[NUM_PRIMITIVE_INLINE_LOCATIONS + NUM_PRIMITIVE_EXTENSION_LOCATIONS];
     public static final EconomicMap<Integer, SlotLocation> OBJECT_LOCATIONS = EconomicMap.create();
 
-    static {
-        PRIMITIVE_USED_MAP_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitiveUsedMap");
+    /**
+     * Initializes slot locations. Slot locations use Unsafe to read inline fields of
+     * {@link AbstractPointersObject}. Delaying their initialization allows SubstrateVM to intercept
+     * Unsafe access in order to recalculate field offsets/addresses.
+     */
+    public static void initialize() {
+        if (PRIMITIVE_ADDRESSES[0] != 0) {
+            return; /* Already initialized */
+        }
+
+        PRIMITIVE_ADDRESSES[0] = AbstractPointersObject.PRIMITIVE_0_ADDRESS;
+        PRIMITIVE_ADDRESSES[1] = AbstractPointersObject.PRIMITIVE_1_ADDRESS;
+        PRIMITIVE_ADDRESSES[2] = AbstractPointersObject.PRIMITIVE_2_ADDRESS;
 
         for (int i = 0; i < NUM_PRIMITIVE_INLINE_LOCATIONS; i++) {
-            PRIMITIVE_ADDRESSES[i] = UnsafeUtils.getAddress(AbstractPointersObject.class, "primitive" + i);
             BOOL_LOCATIONS[i] = new BoolInlineSlotLocation(i);
             CHAR_LOCATIONS[i] = new CharInlineSlotLocation(i);
             LONG_LOCATIONS[i] = new LongInlineSlotLocation(i);
@@ -62,8 +70,10 @@ public abstract class SlotLocation {
             DOUBLE_LOCATIONS[i] = new DoubleExtensionSlotLocation(i);
         }
 
+        OBJECT_ADDRESSES[0] = AbstractPointersObject.OBJECT_0_ADDRESS;
+        OBJECT_ADDRESSES[1] = AbstractPointersObject.OBJECT_1_ADDRESS;
+        OBJECT_ADDRESSES[2] = AbstractPointersObject.OBJECT_2_ADDRESS;
         for (int i = 0; i < NUM_OBJECT_INLINE_LOCATIONS; i++) {
-            OBJECT_ADDRESSES[i] = UnsafeUtils.getAddress(AbstractPointersObject.class, "object" + i);
             OBJECT_LOCATIONS.put(i, new ObjectInlineSlotLocation(i));
         }
     }
@@ -285,11 +295,11 @@ public abstract class SlotLocation {
     }
 
     private static int getPrimitiveUsedMap(final AbstractPointersObject object) {
-        return UnsafeUtils.getIntAt(object, PRIMITIVE_USED_MAP_ADDRESS);
+        return UnsafeUtils.getIntAt(object, AbstractPointersObject.PRIMITIVE_USED_MAP_ADDRESS);
     }
 
     private static void putPrimitiveUsedMap(final AbstractPointersObject object, final int value) {
-        UnsafeUtils.putIntAt(object, PRIMITIVE_USED_MAP_ADDRESS, value);
+        UnsafeUtils.putIntAt(object, AbstractPointersObject.PRIMITIVE_USED_MAP_ADDRESS, value);
     }
 
     private static final class BoolInlineSlotLocation extends BoolLocation {
