@@ -6,25 +6,29 @@
 package de.hpi.swa.graal.squeak.util;
 
 import java.util.ArrayDeque;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class InterruptHandlerState {
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ControlPrimitives.class);
     private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
 
     private final SqueakImageContext image;
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
     private boolean isActive = true;
@@ -42,12 +46,16 @@ public final class InterruptHandlerState {
 
     @CompilationFinal private PointersObject interruptSemaphore;
     private PointersObject timerSemaphore;
+    private ScheduledFuture<?> interruptChecks;
+
+    private int count;
 
     private InterruptHandlerState(final SqueakImageContext image) {
         this.image = image;
         if (image.options.disableInterruptHandler) {
             image.printToStdOut("Interrupt handler disabled...");
         }
+        executor.setRemoveOnCancelPolicy(true);
     }
 
     public static InterruptHandlerState create(final SqueakImageContext image) {
@@ -71,7 +79,7 @@ public final class InterruptHandlerState {
         } else {
             assert timerSema == NilObject.SINGLETON;
         }
-        executor.scheduleWithFixedDelay(() -> shouldTrigger = true,
+        interruptChecks = executor.scheduleWithFixedDelay(() -> shouldTrigger = true,
                         INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 
@@ -85,7 +93,11 @@ public final class InterruptHandlerState {
     }
 
     public void setNextWakeupTick(final long msTime) {
+        LOG.fine(() -> (nextWakeupTick != 0
+                        ? (msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick
+                        : msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0") + " after " + count + " checks");
         nextWakeupTick = msTime;
+        count = 0;
     }
 
     public long getNextWakeupTick() {
@@ -113,7 +125,15 @@ public final class InterruptHandlerState {
     }
 
     protected boolean nextWakeUpTickTrigger() {
-        return nextWakeupTick != 0 && System.currentTimeMillis() >= nextWakeupTick;
+        if (nextWakeupTick != 0) {
+            final long time = System.currentTimeMillis();
+            count++;
+            if (time >= nextWakeupTick) {
+                LOG.fine(() -> "Reached nextWakeupTick: " + nextWakeupTick + " after " + count + " checks");
+                return true;
+            }
+        }
+        return false;
     }
 
     public void setPendingFinalizations(final boolean value) {
@@ -175,8 +195,12 @@ public final class InterruptHandlerState {
         CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
         isActive = true;
         nextWakeupTick = 0;
+        count = 0;
+        if (interruptChecks != null) {
+            interruptChecks.cancel(true);
+        }
         interruptPending = false;
         pendingFinalizationSignals = false;
-        assert semaphoresToSignal.isEmpty();
+        semaphoresToSignal.clear();
     }
 }
