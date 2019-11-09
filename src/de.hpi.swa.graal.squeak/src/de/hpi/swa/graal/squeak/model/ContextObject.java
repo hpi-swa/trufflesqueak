@@ -19,6 +19,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
@@ -324,7 +325,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final Object value = FrameAccess.getSender(truffleFrame);
         if (value instanceof FrameMarker) {
             getBlockOrMethod().getDoesNotNeedSenderAssumption().invalidate("Sender requested");
-            return ((FrameMarker) value).getMaterializedContext();
+            try {
+                return ((FrameMarker) value).getMaterializedContext();
+            } catch (final SqueakException e) {
+                return NilObject.SINGLETON;
+            }
         } else {
             return (AbstractSqueakObject) value;
         }
@@ -565,17 +570,19 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
     }
 
-    public void printSqMaterializedStackTrace() {
+    public void printSqMaterializedStackTraceOn(final StringBuilder b) {
         ContextObject current = this;
         while (current != null) {
             final CompiledCodeObject code = current.getBlockOrMethod();
             final Object[] rcvrAndArgs = current.getReceiverAndNArguments(code.getNumArgsAndCopied());
-            code.image.getOutput().println(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
+            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
+            b.append('\n');
             final Object sender = current.getFrameSender();
             if (sender == NilObject.SINGLETON) {
                 break;
             } else if (sender instanceof FrameMarker) {
-                code.image.getOutput().println(sender);
+                b.append(sender);
+                b.append('\n');
                 break;
             } else {
                 current = (ContextObject) sender;
