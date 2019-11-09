@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.test;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -20,67 +21,42 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
 
     @BeforeClass
     public static void setUpSqueakImageContext() {
+        SqueakImageContext.initializeBeforeLoadingImage();
         loadImageContext("fake.image");
         final Object[] dummySpecialObjects = new Object[100];
-        dummySpecialObjects[SPECIAL_OBJECT.SPECIAL_SELECTORS] = createDummySpecialSelectors();
+        final ArrayObject dummySpecialSelectors = createDummySpecialSelectors();
+        dummySpecialObjects[SPECIAL_OBJECT.SPECIAL_SELECTORS] = dummySpecialSelectors;
         image.specialObjectsArray.setStorage(dummySpecialObjects);
-
-        Object[] pointers = new Object[]{
-                        null, null, 0L, null, null, null, image.asByteString("Metaclass"), null, null, null, null};
-        SqueakImageChunk fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
-        image.metaClass.fillin(fakeChunk);
-        final ClassObject metaClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
-        metaClassClass.setInstancesAreClasses();
-        image.metaClass.setSqueakClass(metaClassClass);
-        metaClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, image.metaClass);
-
-        pointers = new Object[]{null, null, 100L, null, null,
-                        null, image.asByteString("CompiledMethod"), null, null, null, null}; // sets
-        // instanceSize
-        // to 100
-        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
-        image.compiledMethodClass.fillin(fakeChunk);
-        final ClassObject compiledMethodClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
-        compiledMethodClassClass.setInstancesAreClasses();
-        image.compiledMethodClass.setSqueakClass(compiledMethodClassClass);
-        compiledMethodClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, image.compiledMethodClass);
-
-        pointers = new Object[]{
-                        null, null, 0L, null, null, null, image.asByteString("UndefinedObject"), null, null, null, null};
-        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
-        image.nilClass.fillin(fakeChunk);
-        final ClassObject nilClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
-        nilClassClass.setInstancesAreClasses();
-        image.nilClass.setSqueakClass(nilClassClass);
-        nilClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, image.nilClass);
-
-        pointers = new Object[]{
-                        null, null, 0L, null, null, null, image.asByteString("Array"), null, null, null, null};
-        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
-        image.arrayClass.fillin(fakeChunk);
-        final ClassObject arrayClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
-        arrayClassClass.setInstancesAreClasses();
-        image.arrayClass.setSqueakClass(arrayClassClass);
-        arrayClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, image.arrayClass);
-
         image.specialObjectsArray.setSqueakClass(image.arrayClass);
-        ((ArrayObject) dummySpecialObjects[SPECIAL_OBJECT.SPECIAL_SELECTORS]).setSqueakClass(image.arrayClass);
+        dummySpecialSelectors.setSqueakClass(image.arrayClass);
 
-        final ClassObject bindingClass = new ClassObject(image);
-        pointers = new Object[]{
-                        null, null, 2L, null, null, null, image.asByteString("ClassBinding"), null, null, null, null};
-        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
-        bindingClass.fillin(fakeChunk);
-        final ClassObject bindingClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
-        bindingClassClass.setInstancesAreClasses();
-        bindingClass.setSqueakClass(bindingClassClass);
-        bindingClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, bindingClass);
+        setupMeta(image.metaClass, new Object[]{
+                        null, null, 0L, null, null, null, image.asByteString("Metaclass"), null, null, null, null});
+        setupMeta(image.compiledMethodClass, new Object[]{null, null, 100L,  // sets instanceSize to
+                                                                             // 100
+                        null, null, null, image.asByteString("CompiledMethod"), null, null, null, null});
+        setupMeta(image.nilClass, new Object[]{
+                        null, null, 0L, null, null, null, image.asByteString("UndefinedObject"), null, null, null, null});
+        setupMeta(image.arrayClass, new Object[]{
+                        null, null, 0L, null, null, null, image.asByteString("Array"), null, null, null, null});
+
+        final ClassObject bindingClass = setupMeta(new ClassObject(image), new Object[]{
+                        null, null, 2L, null, null, null, image.asByteString("ClassBinding"), null, null, null, null});
         nilClassBinding = new PointersObject(image, bindingClass);
-        pointers = new Object[]{image.asByteString("UndefinedObject"), image.nilClass};
-        fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
-        nilClassBinding.fillin(fakeChunk);
+        nilClassBinding.fillin(SqueakImageChunk.createDummyChunk(image, new Object[]{
+                        image.asByteString("UndefinedObject"), image.nilClass}));
 
-        image.initializePrimitives();
+        image.initializeAfterLoadingImage();
+    }
+
+    private static ClassObject setupMeta(final ClassObject aClass, final Object[] pointers) {
+        final SqueakImageChunk fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
+        aClass.fillin(fakeChunk);
+        final ClassObject aClassClass = new ClassObject(image, image.metaClass, METACLASS.INST_SIZE);
+        aClassClass.setInstancesAreClasses();
+        aClass.setSqueakClass(aClassClass);
+        aClassClass.setOtherPointer(CLASS_DESCRIPTION.SIZE + 0, aClass);
+        return aClass;
     }
 
     private static ArrayObject createDummySpecialSelectors() {
