@@ -35,6 +35,10 @@ public abstract class LinkProcessToListNode extends AbstractNode {
     protected void doLinkEmptyList(final PointersObject process, final PointersObject list) {
         // Add the given process to the given linked list and set the backpointer
         // of process to its new list.
+        if (!list.getSqueakClass().isSemaphoreClass()) {
+            final long priority = readNode.executeLong(process, PROCESS.PRIORITY);
+            assert priority != 80L : "Cannot put to sleep timing process";
+        }
         writeNode.execute(list, LINKED_LIST.FIRST_LINK, process);
         writeNode.execute(list, LINKED_LIST.LAST_LINK, process);
         writeNode.execute(process, PROCESS.LIST, list);

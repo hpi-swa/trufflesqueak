@@ -18,6 +18,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -76,18 +77,21 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     private abstract static class AbstractSignalAtPrimitiveNode extends AbstractPrimitiveNode {
+        private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ControlPrimitives.class);
 
         protected AbstractSignalAtPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
         protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
+            LOG.fine(() -> "Setting the timer semaphore to @" + semaphore.hashCode() + " to be signalled in " + msTime + "ms");
             method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
             method.image.interrupt.setTimerSemaphore(semaphore);
             method.image.interrupt.setNextWakeupTick(msTime);
         }
 
         protected final void resetTimerSemaphore() {
+            LOG.fine(() -> "Resetting the timer semaphore");
             method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, NilObject.SINGLETON);
             method.image.interrupt.setTimerSemaphore(null);
             method.image.interrupt.setNextWakeupTick(0);
@@ -793,7 +797,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "semaphore.getSqueakClass().isSemaphoreClass()")
         protected final Object doSignal(final Object receiver, final PointersObject semaphore, final long usecsUTC) {
-            final long msTime = MiscUtils.toJavaMicrosecondsLocal(usecsUTC) / 1000;
+            final long msTime = MiscUtils.toJavaMicrosecondsUTC(usecsUTC) / 1000;
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }

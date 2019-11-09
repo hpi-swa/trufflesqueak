@@ -5,8 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
-import java.util.logging.Level;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
@@ -82,7 +80,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     return callPrimitiveNode.primitiveNode.executePrimitive(frame);
                 } catch (final PrimitiveFailed e) {
                     getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                    LOG.log(Level.FINE, () -> callPrimitiveNode.primitiveNode +
+                    LOG.finer(() -> callPrimitiveNode.primitiveNode +
                                     " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
                     /* continue with fallback code. */
                 }
