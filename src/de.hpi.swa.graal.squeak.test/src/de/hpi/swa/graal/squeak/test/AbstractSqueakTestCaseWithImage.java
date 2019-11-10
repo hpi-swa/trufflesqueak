@@ -51,7 +51,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         final String imagePath = getPathToTestImage();
         loadImageContext(imagePath);
         image.getOutput().println("Test image loaded from " + imagePath + "...");
-        LOG.fine(() -> image.currentState());
         patchImageForTesting();
         isClear = true;
     }
@@ -203,7 +202,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (activePriority == USER_PRIORITY_LIST_INDEX + 1) {
             return;
         }
-        LOG.severe(() -> "STARTING ACTIVE PROCESS PRIORITY WAS: " + activePriority + image.currentState());
+        LOG.severe(() -> "STARTING ACTIVE PROCESS @" + activeProcess.hashCode() + " PRIORITY WAS: " + activePriority + image.currentState());
         final PointersObject newProcess = new PointersObject(image, image.processClass);
         newProcess.instVarAtPut0Slow(PROCESS.PRIORITY, Long.valueOf(USER_PRIORITY_LIST_INDEX + 1));
         image.getScheduler().instVarAtPut0Slow(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
@@ -216,7 +215,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
             final Object firstLink = priority10List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
             final Object lastLink = priority10List.instVarAt0Slow(LINKED_LIST.LAST_LINK);
-            assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
+            assert firstLink instanceof PointersObject && firstLink == lastLink &&
+                            ((PointersObject) firstLink).instVarAt0Slow(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Unexpected idleProcess state";
             idleProcess = (PointersObject) firstLink;
             LOG.fine(() -> image.currentState());
             return;
@@ -238,9 +238,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         try {
             return runWithTimeout(request, () -> {
                 isClear = false;
+                LOG.fine(() -> "\nRunning test " + request.testCase + ">>" + request.testSelector);
                 context.enter();
                 try {
-                    LOG.fine(() -> "\nRunning test " + request.testCase + ">>" + request.testSelector + image.currentState());
                     return extractFailuresAndErrorsFromTestResult(request);
                 } finally {
                     context.leave();
