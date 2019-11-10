@@ -18,6 +18,7 @@ import java.util.Properties;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakInterrupt;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class MiscUtils {
@@ -167,7 +168,8 @@ public final class MiscUtils {
         try {
             Thread.sleep(millis);
         } catch (final InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new SqueakInterrupt();
         }
     }
 

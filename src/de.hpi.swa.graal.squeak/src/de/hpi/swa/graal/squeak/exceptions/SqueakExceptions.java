@@ -174,6 +174,23 @@ public final class SqueakExceptions {
         }
     }
 
+    public static final class SqueakInterrupt extends RuntimeException implements TruffleException {
+        private static final long serialVersionUID = 1L;
+
+        public SqueakInterrupt() {
+        }
+
+        @Override
+        public Node getLocation() {
+            return null;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return true;
+        }
+    }
+
     private SqueakExceptions() {
     }
 }
