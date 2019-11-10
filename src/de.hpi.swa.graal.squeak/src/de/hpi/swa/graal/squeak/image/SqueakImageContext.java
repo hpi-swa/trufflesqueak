@@ -620,8 +620,9 @@ public final class SqueakImageContext {
             b.append(" with ");
             b.append(((PointersObject) semaphoreOrNil).instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS));
             b.append(" excess signals");
-            if (!printLinkedList(b, "", (PointersObject) semaphoreOrNil))
+            if (!printLinkedList(b, "", (PointersObject) semaphoreOrNil)) {
                 b.append(" and no processes\n");
+            }
         } else {
             if (printIfNil) {
                 b.append(label);

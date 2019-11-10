@@ -225,10 +225,15 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     protected static void patchMethod(final String className, final String selector, final String body) {
         image.getOutput().println("Patching " + className + ">>#" + selector + "...");
-        final Object patchResult = image.evaluate(String.join(" ",
-                        className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
-                        "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
-        assertNotEquals(NilObject.SINGLETON, patchResult);
+        context.enter();
+        try {
+            final Object patchResult = image.evaluate(String.join(" ",
+                            className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
+                            "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
+            assertNotEquals(NilObject.SINGLETON, patchResult);
+        } finally {
+            context.leave();
+        }
     }
 
     protected static TestResult runTestCase(final TestRequest request) {
