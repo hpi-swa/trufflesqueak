@@ -254,7 +254,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             });
         } finally {
             if (!isClear) {
-                LOG.severe("The context has not been left, we have to close it");
+                image.printToStdErr("The worker thread has not finished running, we have to close it");
                 if (!request.reloadImageOnException) {
                     // regardless of what the request says, we need to clean up.
                     cleanUp();
@@ -296,18 +296,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         try {
             return CompletableFuture.supplyAsync(action).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (final TimeoutException e) {
-            LOG.severe(() -> "Java timeout occurred in test " +
-                            request.testCase + ">>" + request.testSelector + image.currentState());
             reloadImage(request);
             return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
         } catch (final InterruptedException e) {
-            LOG.fine(() -> "Interrupted execution in test " +
-                            request.testCase + ">>" + request.testSelector + image.currentState());
             Thread.currentThread().interrupt();
             return TestResult.fromException("interrupted", e);
         } catch (final ExecutionException e) {
-            LOG.severe(() -> "Execution exception " + e.getCause() + " occurred in test " +
-                            request.testCase + ">>" + request.testSelector + image.currentState());
             reloadImage(request);
             return TestResult.fromException("failed with an error", e.getCause());
         }
