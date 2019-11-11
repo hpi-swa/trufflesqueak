@@ -75,7 +75,7 @@ import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.graal.squeak.nodes.process.YieldProcessNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
+import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.NotProvided;
 
@@ -856,15 +856,19 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 230)
     protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        private static InterruptHandlerState istate;
 
         public PrimRelinquishProcessorNode(final CompiledMethodObject method) {
             super(method);
+            if (istate == null) {
+                istate = method.image.interrupt;
+            }
         }
 
         @Specialization
         protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final StackPushForPrimitivesNode pushNode,
-                        @Cached("create(method)") final InterruptHandlerNode interruptNode) {
+                        @Cached("create(method)") final SignalSemaphoreNode signalSemaporeNode) {
             MiscUtils.sleep(timeMicroseconds / 1000);
             /* Keep receiver on stack, interrupt handler could trigger. */
             pushNode.executeWrite(frame, receiver);
@@ -873,7 +877,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * idleProcess gets stuck. Checking whether the interrupt handler `shouldTrigger()`
              * decreases performance for some reason, forcing interrupt check instead.
              */
-            interruptNode.executeTrigger(frame);
+            istate.executeTrigger(frame, signalSemaporeNode);
             return AbstractSendNode.NO_RESULT;
         }
     }

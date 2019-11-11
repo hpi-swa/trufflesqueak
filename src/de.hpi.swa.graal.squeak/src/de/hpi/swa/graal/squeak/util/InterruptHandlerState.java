@@ -15,12 +15,15 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives;
+import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class InterruptHandlerState {
@@ -35,6 +38,7 @@ public final class InterruptHandlerState {
     protected long nextWakeupTick = 0;
     protected boolean interruptPending = false;
     private boolean pendingFinalizationSignals = false;
+    private Object[] specialObjects;
 
     /**
      * `shouldTrigger` is set to `true` by a dedicated thread. To guarantee atomicity, it would be
@@ -67,13 +71,14 @@ public final class InterruptHandlerState {
         if (image.options.disableInterruptHandler) {
             return;
         }
-        final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
+        specialObjects = image.specialObjectsArray.getObjectStorage();
+        final Object interruptSema = specialObjects[SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE];
         if (interruptSema instanceof PointersObject) {
             setInterruptSemaphore((PointersObject) interruptSema);
         } else {
             assert interruptSema == NilObject.SINGLETON;
         }
-        final Object timerSema = image.getSpecialObject(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
+        final Object timerSema = specialObjects[SPECIAL_OBJECT.THE_TIMER_SEMAPHORE];
         if (timerSema instanceof PointersObject) {
             setTimerSemaphore((PointersObject) timerSema);
         } else {
@@ -202,5 +207,35 @@ public final class InterruptHandlerState {
         interruptPending = false;
         pendingFinalizationSignals = false;
         semaphoresToSignal.clear();
+    }
+
+    public void executeTrigger(final VirtualFrame frame, final SignalSemaphoreNode signalSemaporeNode) {
+        if (interruptPending()) {
+            interruptPending = false; // reset interrupt flag
+            LOG.fine(() -> "Signalling interrupt semaphore @" + getInterruptSemaphore().hashCode() + " in interrupt handler");
+            signalSemaporeNode.executeSignal(frame, getInterruptSemaphore());
+        }
+        if (nextWakeUpTickTrigger()) {
+            nextWakeupTick = 0; // reset timer interrupt
+            LOG.fine(() -> "Signalling timer semaphore @" + getTimerSemaphore().hashCode() + " in interrupt handler");
+            signalSemaporeNode.executeSignal(frame, getTimerSemaphore());
+        }
+        if (pendingFinalizationSignals()) { // signal any pending finalizations
+            setPendingFinalizations(false);
+            LOG.fine(() -> "Signalling finalizations semaphore @" + specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE].hashCode() + " in interrupt handler");
+            signalSemaporeNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
+        }
+        if (!semaphoresToSignal.isEmpty()) {
+            final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
+            if (!externalObjects.isEmptyType()) {
+                final Object[] semaphores = externalObjects.getObjectStorage();
+                Integer semaIndex;
+                while ((semaIndex = nextSemaphoreToSignal()) != null) {
+                    final Object semaphore = semaphores[semaIndex - 1];
+                    LOG.fine(() -> "Signalling external semaphore @" + semaphore.hashCode() + " in interrupt handler");
+                    signalSemaporeNode.executeSignal(frame, semaphore);
+                }
+            }
+        }
     }
 }
