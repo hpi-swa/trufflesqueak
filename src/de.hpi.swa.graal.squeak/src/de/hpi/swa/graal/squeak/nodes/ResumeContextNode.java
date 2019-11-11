@@ -24,11 +24,11 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class ResumeContextNode extends Node {
-    @Child private ExecuteContextNode executeContextNode;
+    @Child private AbstractExecuteContextNode executeContextNode;
     @Child private SendSelectorNode cannotReturnNode;
 
     protected ResumeContextNode(final CompiledCodeObject code) {
-        executeContextNode = ExecuteContextNode.create(code, true);
+        executeContextNode = AbstractExecuteContextNode.create(code, true);
     }
 
     protected abstract Object executeResume(ContextObject context);

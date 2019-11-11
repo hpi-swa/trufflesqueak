@@ -18,12 +18,12 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 public final class EnterCodeNode extends RootNode {
     private final CompiledCodeObject code;
 
-    @Child private ExecuteContextNode executeContextNode;
+    @Child private AbstractExecuteContextNode executeContextNode;
 
     protected EnterCodeNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
-        executeContextNode = ExecuteContextNode.create(code, false);
+        executeContextNode = AbstractExecuteContextNode.create(code, false);
     }
 
     protected EnterCodeNode(final EnterCodeNode codeNode) {
