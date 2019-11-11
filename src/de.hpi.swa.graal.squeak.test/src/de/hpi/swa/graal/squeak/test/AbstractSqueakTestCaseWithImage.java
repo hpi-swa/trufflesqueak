@@ -166,15 +166,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         resetList(NilObject.SINGLETON, interruptSema, "Interrupt semaphore");
         // The timer semaphore is taken care of in ensureTimerLoop, since the delays need to be
         // reset as well
+        final ArrayObject oldExternalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
+        image.evaluate("[ ExternalObjectTable current " +
+                        "            initializeCaches;" +
+                        "            externalObjectsArray: (Smalltalk specialObjectsArray at: 39 put: (Array new: 20)) ] value");
         final ArrayObject externalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
-        if (externalObjects.isEmptyType()) {
-            return;
-        }
-        final Object[] semaphores = externalObjects.getObjectStorage();
-        for (int i = 0; i < semaphores.length; i++) {
-            resetList(NilObject.SINGLETON, semaphores[i], "External semaphore #" + (i + 1));
-            semaphores[i] = NilObject.SINGLETON;
-        }
+        assert oldExternalObjects.getSqueakHash() != externalObjects.getSqueakHash();
     }
 
     private static void resetList(final Object newValue, final Object listOrNil, final String linkedListName) {
