@@ -60,10 +60,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         super(image);
     }
 
-    public ClassObject(final SqueakImageContext image, final int hash) {
-        super(image, hash);
-    }
-
     public ClassObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
         super(image, hash, squeakClass);
     }
@@ -255,8 +251,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                     image.setCompilerClass(this);
                 } else if (image.getParserClass() == null && "Parser".equals(className)) {
                     image.setParserClass(this);
-                } else if (!image.flags.is64bit() && image.smallFloatClass == null && "SmallFloat64".equals(className)) {
-                    image.setSmallFloat(this);
                 }
             }
         }

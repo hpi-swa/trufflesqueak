@@ -13,6 +13,10 @@ if not %_EXITCODE%==0 goto end
 
 set _LANGUAGE_ID=smalltalk
 set _GRAALVM_VERSION=19.2.1
+set _OS_NAME=windows
+set _OS_NAME_FOR_GU=%_OS_NAME%
+set _OS_ARCH_FOR_GU=amd64
+for /f "usebackq" %%i in (`"%_GIT_CMD%" describe --tags`) do set _GIT_DESCRIPTION=%%i
 
 for %%f in ("%~dp0") do set "_BASE_DIR=%%~f"
 set "_COMPONENT_DIR=%TEMP%\component_temp_dir"
@@ -22,7 +26,7 @@ set "_LANGUAGE_PATH=%_COMPONENT_DIR%\jre\languages\%_LANGUAGE_ID%"
 set "_LIB_GRAALVM_PATH=%_COMPONENT_DIR%\jre\lib\graalvm"
 set "_MANIFEST=%_COMPONENT_DIR%\META-INF\MANIFEST.MF"
 set "_RELEASE_FILE=%_LANGUAGE_PATH%\release"
-set "_TARGET_JAR=%_GRAALSQUEAK_DIR%\graalsqueak-component.jar"
+set "_TARGET_JAR=%_GRAALSQUEAK_DIR%\graalsqueak-installable-%_OS_NAME%-%_OS_ARCH_FOR_GU%-%_GIT_DESCRIPTION%-for-GraalVM-%_GRAALVM_VERSION%.jar"
 set _TEMPLATE_LAUNCHER=template.graalsqueak.sh
 set _TEMPLATE_WIN_LAUNCHER=template.graalsqueak.cmd
 
@@ -54,7 +58,7 @@ mkdir "%_COMPONENT_DIR%\META-INF"
 echo Bundle-Name: GraalSqueak> "%_MANIFEST%"
 echo Bundle-Symbolic-Name: de.hpi.swa.graal.squeak>> "%_MANIFEST%"
 echo Bundle-Version: %_GRAALVM_VERSION%>> "%_MANIFEST%"
-echo Bundle-RequireCapability: org.graalvm; filter:="(&(graalvm_version=%_GRAALVM_VERSION%)(os_arch=amd64))">> "%_MANIFEST%"
+echo Bundle-RequireCapability: org.graalvm; filter:="(&(graalvm_version=%_GRAALVM_VERSION%)(os_name=%_OS_NAME_FOR_GU%)(os_arch=%_OS_ARCH_FOR_GU%))">> "%_MANIFEST%"
 echo x-GraalVM-Polyglot-Part: True>> "%_MANIFEST%"
 
 for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse HEAD`) do set _GIT_HASH=%%i
@@ -62,8 +66,8 @@ for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse --abbrev-ref HEAD`) do set _GIT_
 for /f "usebackq delims=" %%i in (`%_GIT_CMD% config user.name`) do set _GIT_COMMITTER_NAME=%%i
 for /f "usebackq" %%i in (`%_GIT_CMD% config user.email`) do set _GIT_COMMITTER_EMAIL=%%i
 
-echo OS_NAME=windows> "%_RELEASE_FILE%"
-echo OS_ARCH=amd64>> "%_RELEASE_FILE%"
+echo OS_NAME=%_OS_NAME_FOR_GU%> "%_RELEASE_FILE%"
+echo OS_ARCH=%_OS_ARCH_FOR_GU%>> "%_RELEASE_FILE%"
 echo SOURCE="%_GIT_BRANCH_NAME%:%_GIT_HASH%">> "%_RELEASE_FILE%"
 echo COMMIT_INFO={"%_GIT_BRANCH_NAME%": {"commit.committer": "%_GIT_COMMITTER_NAME% <%_GIT_COMMITTER_EMAIL%>", "commit.rev": "%_GIT_HASH%"}}>> "%_RELEASE_FILE%"
 echo GRAALVM_VERSION=%_GRAALVM_VERSION%>> "%_RELEASE_FILE%"

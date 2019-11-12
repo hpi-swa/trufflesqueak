@@ -31,7 +31,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageReader;
+import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
@@ -853,7 +853,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             switch (index) {
                 case 1: return 1L; // end (v3)/size(Spur) of old-space (0-based, read-only)
                 case 2: return 1L; // end (v3)/size(Spur) of young/new-space (read-only)
-                case 3: return 1L; // end (v3)/size(Spur) of heap (read-only)
+                case 3: return MiscUtils.runtimeTotalMemory(); // end (v3)/size(Spur) of heap (read-only)
                 case 4: return NilObject.SINGLETON; // nil (was allocationCount (read-only))
                 case 5: return NilObject.SINGLETON; // nil (was allocations between GCs (read-write)
                 case 6: return 0L; // survivor count tenuring threshold (read-write)
@@ -863,7 +863,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 10: return 1L; // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
                 case 11: return 1L; // tenures of surving objects since startup (read-only)
                 case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: return 0L; // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
-                case 20: return 0L; // utc microseconds at VM start-up (actually at time initialization, which precedes image load).
+                case 20: return MiscUtils.toSqueakMicrosecondsUTC(method.image.startUpMillis * 1000L); // utc microseconds at VM start-up (actually at time initialization, which precedes image load).
                 case 21: return 0L; // root table size (read-only)
                 case 22: return 0L; // root table overflows since startup (read-only)
                 case 23: return 0L; // bytes of extra memory to reserve for VM buffers, plugins, etc (stored in image file header).
@@ -884,7 +884,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 38: return 0L; // milliseconds taken by current IGC (read-only)
                 case 39: return MiscUtils.getObjectPendingFinalizationCount(); // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
                 case 40: return 8L; // BytesPerOop for this image
-                case 41: return SqueakImageReader.IMAGE_64BIT_VERSION; // imageFormatVersion for the VM
+                case 41: return (long) SqueakImageFlags.IMAGE_FORMAT; // imageFormatVersion for the VM
                 case 42: return 50L; // number of stack pages in use (see SmalltalkImage>>isRunningCog)
                 case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
                 case 44: return 0L; // size of eden, in bytes
@@ -896,7 +896,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 50: case 51: return NilObject.SINGLETON; // nil; reserved for VM parameters that persist in the image (such as eden above)
                 case 52: return 65536L; // root table capacity
                 case 53: return 2L; // number of segments (Spur only; otherwise nil)
-                case 54: return 1L; // total size of free old space (Spur only, otherwise nil)
+                case 54: return MiscUtils.runtimeFreeMemory(); // total size of free old space (Spur only, otherwise nil)
                 case 55: return 0L; // ratio of growth and image size at or above which a GC will be performed post scavenge
                 case 56: return NilObject.SINGLETON; // number of process switches since startup (read-only)
                 case 57: return 0L; // number of ioProcessEvents calls since startup (read-only)
@@ -909,7 +909,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 64: return 0L; // the number of methods that currently have jitted machine-code
                 case 65: return 0L; // whether the VM supports a certain feature, MULTIPLE_BYTECODE_SETS is bit 0, IMMTABILITY is bit 1
                 case 66: return 4096L; // the byte size of a stack page
-                case 67: return 0L; // the max allowed size of old space (Spur only; nil otherwise; 0 implies no limit except that of the underlying platform)
+                case 67:
+                    final long maxMemory = MiscUtils.runtimeMaxMemory();
+                    return maxMemory == Long.MAX_VALUE ? 0L : maxMemory; // the max allowed size of old space (Spur only; nil otherwise; 0 implies no limit except that of the underlying platform)
                 case 68: return 12L; // the average number of live stack pages when scanned by GC (at scavenge/gc/become et al)
                 case 69: return 16L; // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become et al)
                 case 70: return 1L; // the vmProxyMajorVersion (the interpreterProxy VM_MAJOR_VERSION)

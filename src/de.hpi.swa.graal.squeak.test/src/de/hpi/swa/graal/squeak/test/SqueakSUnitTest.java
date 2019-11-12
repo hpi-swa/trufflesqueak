@@ -127,10 +127,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
                 assertTrue(result.message, result.passed);
                 break;
 
-            case PASSING_64BIT:
-                checkPassingIf(image.flags.is64bit(), result);
-                break;
-
             case PASSING_WITH_NFI:
                 checkPassingIf(image.supportsNFI(), result);
                 break;
