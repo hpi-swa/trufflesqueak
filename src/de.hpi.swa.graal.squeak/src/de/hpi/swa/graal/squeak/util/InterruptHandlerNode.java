@@ -5,20 +5,25 @@
  */
 package de.hpi.swa.graal.squeak.util;
 
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
-public abstract class InterruptHandlerNode extends Node {
-    protected final Object[] specialObjects;
+public final class InterruptHandlerNode extends Node {
+    @Child private SignalSemaphoreNode signalSemaporeNode;
+
+    private final Object[] specialObjects;
     private final InterruptHandlerState istate;
 
-    @Child private SignalSemaphoreNode signalSemaporeNode;
+    private final BranchProfile interruptPendingProfile = BranchProfile.create();
+    private final BranchProfile nextWakeupTickProfile = BranchProfile.create();
+    private final BranchProfile pendingFinalizationSignalsProfile = BranchProfile.create();
+    private final BranchProfile hasSemaphoresToSignalProfile = BranchProfile.create();
 
     protected InterruptHandlerNode(final CompiledCodeObject code) {
         specialObjects = code.image.specialObjectsArray.getObjectStorage();
@@ -27,47 +32,35 @@ public abstract class InterruptHandlerNode extends Node {
     }
 
     public static InterruptHandlerNode create(final CompiledCodeObject code) {
-        return InterruptHandlerNodeGen.create(code);
+        return new InterruptHandlerNode(code);
     }
 
-    public abstract void executeTrigger(VirtualFrame frame);
-
-    protected final boolean externalObjectsIsEmpty() {
-        return ((ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY]).isEmptyType();
-    }
-
-    @Specialization(guards = {"!externalObjectsIsEmpty()"})
-    protected final void doFullCheck(final VirtualFrame frame) {
-        performChecks(frame);
-        checkSemaphoresToSignal(frame);
-    }
-
-    @Specialization(guards = {"externalObjectsIsEmpty()"})
-    protected final void doCheck(final VirtualFrame frame) {
-        performChecks(frame);
-    }
-
-    private void performChecks(final VirtualFrame frame) {
+    public void executeTrigger(final VirtualFrame frame) {
         if (istate.interruptPending()) {
+            interruptPendingProfile.enter();
             istate.interruptPending = false; // reset interrupt flag
             signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
         }
         if (istate.nextWakeUpTickTrigger()) {
+            nextWakeupTickProfile.enter();
             istate.nextWakeupTick = 0; // reset timer interrupt
             signalSemaporeNode.executeSignal(frame, istate.getTimerSemaphore());
         }
         if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
+            pendingFinalizationSignalsProfile.enter();
             istate.setPendingFinalizations(false);
             signalSemaporeNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
         }
-    }
-
-    private void checkSemaphoresToSignal(final VirtualFrame frame) {
-        final Object[] semaphores = ((ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY]).getObjectStorage();
-        Integer semaIndex;
-        while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
-            final Object semaphore = semaphores[semaIndex - 1];
-            signalSemaporeNode.executeSignal(frame, semaphore);
+        if (istate.hasSemaphoresToSignal()) {
+            hasSemaphoresToSignalProfile.enter();
+            final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
+            if (!externalObjects.isEmptyType()) { // signal external semaphores
+                final Object[] semaphores = externalObjects.getObjectStorage();
+                Integer semaIndex;
+                while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
+                    signalSemaporeNode.executeSignal(frame, semaphores[semaIndex - 1]);
+                }
+            }
         }
     }
 }

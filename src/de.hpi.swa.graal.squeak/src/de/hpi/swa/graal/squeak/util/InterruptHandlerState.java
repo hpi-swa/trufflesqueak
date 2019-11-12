@@ -124,6 +124,10 @@ public final class InterruptHandlerState {
         return pendingFinalizationSignals;
     }
 
+    protected boolean hasSemaphoresToSignal() {
+        return !semaphoresToSignal.isEmpty();
+    }
+
     protected Integer nextSemaphoreToSignal() {
         return semaphoresToSignal.pollFirst();
     }
