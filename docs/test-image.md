@@ -56,6 +56,7 @@ Utilities authorInitials: 'GraalSqueak'.
 (Smalltalk at: #ThisOSProcess) class compile: 'startUp: resuming "disable #startUp:"'.
 
 TruffleObject ensureInitialized.
+(Smalltalk at: #StackInterpreter) initializePrimitiveTable.
 
 "Disable performance killers"
 World setAsBackground: Color black lighter.
