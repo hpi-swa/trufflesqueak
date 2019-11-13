@@ -1,3 +1,3 @@
 system primitives
 instVarNamed: aName put: aValue
-	^ self primitiveWriteMember: aName value: aValue
+	^ Interop writeMember: self member: aName value: aValue

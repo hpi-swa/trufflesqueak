@@ -1,4 +1,4 @@
 accessing
 basicAt: index
-	self primitiveIsString ifTrue: [ ^ self primitiveAsString at: index ].
-	^ self primitiveReadArrayElement: index
+	(Interop isString: self) ifTrue: [ ^ (Interop asString: self) at: index ].
+	^ Interop readArrayElement: self index: index

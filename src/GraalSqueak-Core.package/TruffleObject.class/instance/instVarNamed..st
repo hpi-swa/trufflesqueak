@@ -1,3 +1,3 @@
 system primitives
 instVarNamed: aName
-	^ self primitiveReadMember: aName
+	^ Interop readMember: self member: aName

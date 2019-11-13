@@ -1,0 +1,14 @@
+{
+	"category" : "GraalSqueak-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "fn 11/13/2019 10:23",
+	"instvars" : [
+		 ],
+	"name" : "Interop",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

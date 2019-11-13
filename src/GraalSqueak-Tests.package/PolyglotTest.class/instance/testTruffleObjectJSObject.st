@@ -3,38 +3,39 @@ testTruffleObjectJSObject
 	| jsObject |
 	jsObject := (Polyglot eval: Polyglot languageIdJS string: 'new Object({a: "Foo"})').
 	
-	self deny: jsObject primitiveIsBoolean.
-	self should: [ jsObject primitiveAsBoolean ] raise: Error.
-	self deny: jsObject primitiveIsNull.
-	self deny: jsObject primitiveIsString.
-	self should: [ jsObject primitiveAsString ] raise: Error.
-	self deny: jsObject primitiveIsPointer.
-	self should: [ jsObject primitiveAsPointer ] raise: Error.
-	self deny: jsObject primitiveFitsInLong.
-	self should: [ jsObject primitiveAsLong ] raise: Error.
-	self deny: jsObject primitiveFitsInDouble.
-	self should: [ jsObject primitiveAsDouble ] raise: Error.
-	self deny: jsObject primitiveHasArrayElements.
+	self deny: (Interop isBoolean: jsObject).
+	self should: [ Interop asBoolean: jsObject ] raise: Error.
+	self deny: (Interop isNull: jsObject).
+	self deny: (Interop isString: jsObject).
+	self should: [ Interop asString: jsObject ] raise: Error.
+	self deny: (Interop isPointer: jsObject).
+	self should: [ Interop asPointer: jsObject ] raise: Error.
+	self deny: (Interop fitsInLong: jsObject).
+	self should: [ Interop asLong: jsObject ] raise: Error.
+	self deny: (Interop fitsInDouble: jsObject).
+	self should: [ Interop asDouble: jsObject ] raise: Error.
+	self deny: (Interop hasArrayElements: jsObject).
 	
-	self assert: 1 equals: jsObject primitiveGetMemberSize.
-	self assert: jsObject primitiveGetMemberSize equals: jsObject primitiveGetMembers size.
-	self assert: (jsObject primitiveGetMembers includes: 'a').
+	self assert: 1 equals: (Interop getMemberSize: jsObject).
+	self assert: (Interop getMemberSize: jsObject)
+		equals: (Interop getMembers: jsObject) size.
+	self assert: ((Interop getMembers: jsObject) includes: 'a').
 
-	self assert: jsObject primitiveHasMembers.
-	self assert: (jsObject primitiveIsMemberExisting: 'a').
-	self deny: (jsObject primitiveIsMemberInsertable: 'a').
-	self deny: (jsObject primitiveIsMemberInternal: 'a').
-	self deny: (jsObject primitiveIsMemberInvocable: 'a').
-	self assert: (jsObject primitiveIsMemberModifiable: 'a').
-	self assert: (jsObject primitiveIsMemberReadable: 'a').
-	self assert: (jsObject primitiveIsMemberRemovable: 'a').
-	self assert: (jsObject primitiveIsMemberWritable: 'a').
-	self assert: 'Foo' equals: (jsObject primitiveReadMember: 'a').
+	self assert: (Interop hasMembers: jsObject).
+	self assert: (Interop isMemberExisting: jsObject member: 'a').
+	self deny: (Interop isMemberInsertable: jsObject member: 'a').
+	self deny: (Interop isMemberInternal: jsObject member: 'a').
+	self deny: (Interop isMemberInvocable: jsObject member: 'a').
+	self assert: (Interop isMemberModifiable: jsObject member: 'a').
+	self assert: (Interop isMemberReadable: jsObject member: 'a').
+	self assert: (Interop isMemberRemovable: jsObject member: 'a').
+	self assert: (Interop isMemberWritable: jsObject member: 'a').
+	self assert: 'Foo' equals: (Interop readMember: jsObject member: 'a').
 	
-	self deny: (jsObject primitiveIsMemberExisting: 'b').
-	self assert: (jsObject primitiveIsMemberInsertable: 'b').
-	self assert: Smalltalk equals: (jsObject primitiveWriteMember: 'b' value: Smalltalk).
-	self assert: (jsObject primitiveGetMembers includes: 'b').
-	self assert: Smalltalk equals: (jsObject primitiveReadMember: 'b').
-	self assert: jsObject equals: (jsObject primitiveRemoveMember: 'b').
-	self deny: (jsObject primitiveIsMemberExisting: 'b')
+	self deny: (Interop isMemberExisting: jsObject member: 'b').
+	self assert: (Interop isMemberInsertable: jsObject member: 'b').
+	self assert: Smalltalk equals: (Interop writeMember: jsObject member: 'b' value: Smalltalk).
+	self assert: ((Interop getMembers: jsObject) includes: 'b').
+	self assert: Smalltalk equals: (Interop readMember: jsObject member: 'b').
+	self assert: jsObject equals: (Interop removeMember: jsObject member: 'b').
+	self deny: (Interop isMemberExisting: jsObject member: 'b')

@@ -1,5 +1,5 @@
 accessing
 at: identifier put: value
 	^ identifier isInteger
-		ifTrue: [ self primitiveWriteArrayElement: identifier value: value ]
-		ifFalse: [ self primitiveWriteMember: identifier value: value ]
+		ifTrue: [ Interop writeArrayElement: self index: identifier value: value ]
+		ifFalse: [ Interop writeMember: self member: identifier value: value ]

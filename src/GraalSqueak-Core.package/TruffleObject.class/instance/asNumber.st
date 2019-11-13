@@ -1,5 +1,5 @@
 converting
 asNumber
-	self primitiveFitsInLong ifTrue: [ ^ self primitiveAsLong ].
-	self primitiveFitsInDouble ifTrue: [ ^ self primitiveAsDouble ].
+	(Interop fitsInLong: self) ifTrue: [ ^ Interop asLong: self ].
+	(Interop fitsInDouble: self) ifTrue: [ ^ Interop asDouble: self ].
 	self error: 'Unable to interpret foreign value as number'

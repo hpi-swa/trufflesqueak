@@ -1,5 +1,5 @@
 accessing
 at: identifier
 	^ identifier isInteger
-		ifTrue: [ self primitiveReadArrayElement: identifier ]
-		ifFalse: [ self primitiveReadMember: identifier ]
+		ifTrue: [ Interop readArrayElement: self index: identifier ]
+		ifFalse: [ Interop readMember: self member: identifier ]

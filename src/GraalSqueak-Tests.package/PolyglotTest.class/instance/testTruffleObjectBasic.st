@@ -1,6 +1,7 @@
 testing
 testTruffleObjectBasic
-	self assert: (Polyglot eval: Polyglot languageIdJS string: 'null') primitiveIsNull.
+	self assert: (Interop isNull: (Polyglot eval: Polyglot languageIdJS string: 'null')).
 	
-	self assert: (Polyglot eval: 'js' string: 'Object') primitiveIsInstantiable.
-	self assert: 0 equals: ((Polyglot eval: 'js' string: 'Object') primitiveInstantiate: #()) primitiveGetMemberSize
+	self assert: (Interop isInstantiable: (Polyglot eval: 'js' string: 'Object')).
+	self assert: 0 equals: (Interop getMemberSize:
+		(Interop instantiate: (Polyglot eval: 'js' string: 'Object') with: #()))

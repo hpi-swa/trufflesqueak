@@ -2,7 +2,7 @@ overrides
 fieldList
 	"Answer the base field list plus an abbreviated list of indices."
 
-	object primitiveHasArrayElements ifFalse: [^ self baseFieldList].
+	(Interop hasArrayElements: object) ifFalse: [^ self baseFieldList].
 	^ self baseFieldList ,
 		(object basicSize <= (self i1 + self i2)
 			ifTrue: [(1 to: object basicSize)

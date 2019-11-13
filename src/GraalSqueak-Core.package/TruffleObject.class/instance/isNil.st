@@ -1,3 +1,3 @@
 testing
 isNil
-	^ self primitiveIsNull
+	^ Interop isNull: self

@@ -1,3 +1,3 @@
 controlling
 and: alternativeBlock
-	^ self primitiveAsBoolean and: alternativeBlock
+	^ (Interop asBoolean: self) and: alternativeBlock

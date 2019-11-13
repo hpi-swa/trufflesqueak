@@ -1,13 +1,13 @@
 dispatching
-_dispatch: identifier arguments: arguments ifFail: failBlock
+_dispatch: member arguments: arguments ifFail: failBlock
 	| result |
-	(identifier = 'new' and: [ self primitiveIsInstantiable ])
-		ifTrue: [ ^ self primitiveInstantiate: arguments ].
-	(self primitiveIsMemberReadable: identifier)
+	(member = 'new' and: [ Interop isInstantiable: self ])
+		ifTrue: [ ^ Interop instantiate: self with: arguments ].
+	(Interop isMemberReadable: self member: member)
 		ifFalse: [ ^ failBlock value ].
-	(self primitiveIsMemberInvocable: identifier)
-		ifTrue: [ ^ self primitiveInvoke: identifier arguments: arguments ].
-	result := self primitiveReadMember: identifier.
-	^ (result isTruffleObject and: [ result primitiveIsExecutable ])
-		ifTrue: [ result primitiveExecuteWithArguments: arguments ]
+	(Interop isMemberInvocable: self member: member)
+		ifTrue: [ ^ Interop invokeMember: self member: member arguments: arguments ].
+	result := Interop readMember: self member: member.
+	^ (result isTruffleObject and: [ Interop isExecutable: result ])
+		ifTrue: [ Interop execute: result with: arguments ]
 		ifFalse: [ result ]

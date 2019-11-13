@@ -1,7 +1,7 @@
 converting
 asSmalltalk
-	self primitiveIsBoolean ifTrue: [ ^ self primitiveAsBoolean ].
-	self primitiveIsString ifTrue: [ ^ self primitiveAsString ].
-	self primitiveFitsInLong ifTrue: [ ^ self primitiveAsLong ].
-	self primitiveFitsInDouble ifTrue: [ ^ self primitiveAsDouble ].
+	(Interop isBoolean: self) ifTrue: [ ^ Interop asBoolean: self ].
+	(Interop isString: self) ifTrue: [ ^ Interop asString: self ].
+	(Interop fitsInLong: self) ifTrue: [ ^ Interop asLong: self ].
+	(Interop fitsInDouble: self) ifTrue: [ ^ Interop asDouble: self ].
 	self error: 'Unable to convert to Smalltalk object'

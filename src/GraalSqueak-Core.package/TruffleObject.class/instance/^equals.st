@@ -1,7 +1,7 @@
 comparing
 = anObject
-	self primitiveIsBoolean ifTrue: [ ^ self primitiveAsBoolean = anObject ].
-	self primitiveFitsInLong ifTrue: [ ^ self primitiveAsLong = anObject ].
-	self primitiveFitsInDouble ifTrue: [ ^ self primitiveAsDouble = anObject ].
-	self primitiveIsString ifTrue: [ ^ self primitiveAsString = anObject ].
+	(Interop isBoolean: self) ifTrue: [ ^ (Interop asBoolean: self) = anObject ].
+	(Interop fitsInLong: self) ifTrue: [ ^ (Interop asLong: self) = anObject ].
+	(Interop fitsInDouble: self) ifTrue: [ ^ (Interop asDouble: self) = anObject ].
+	(Interop isString: self) ifTrue: [ ^ (Interop asString: self) = anObject ].
 	^ super = anObject

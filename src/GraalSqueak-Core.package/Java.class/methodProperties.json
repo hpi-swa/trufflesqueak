@@ -1,6 +1,6 @@
 {
 	"class" : {
-		"addToClassPath:" : "fn 5/3/2019 14:11",
+		"addToHostClassPath:" : "fn 11/11/2019 22:15",
 		"primitiveAddToHostClassPath:" : "fn 5/3/2019 14:10",
 		"primitiveIsHostLookupAllowed" : "fn 11/4/2019 00:01",
 		"primitiveLookupHostSymbol:" : "fn 5/3/2019 14:09",

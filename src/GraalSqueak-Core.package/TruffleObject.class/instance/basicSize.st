@@ -1,4 +1,4 @@
 accessing
 basicSize
-	self primitiveIsString ifTrue: [ ^ self primitiveAsString basicSize ].
-	^ self primitiveGetArraySize
+	(Interop isString: self) ifTrue: [ ^ (Interop asString: self) basicSize ].
+	^ Interop getArraySize: self

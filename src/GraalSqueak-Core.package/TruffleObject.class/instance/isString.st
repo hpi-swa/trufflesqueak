@@ -1,3 +1,3 @@
 overrides
 isString
-	^ self primitiveIsString
+	^ Interop isString: self

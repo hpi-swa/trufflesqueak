@@ -1,5 +1,5 @@
 class behavior
 allInstVarNamesEverywhere
-	^ self primitiveHasMembers
-		ifTrue: [ self primitiveGetMembers sorted ]
+	^ (Interop hasMembers: self)
+		ifTrue: [ (Interop getMembers: self) sorted ]
 		ifFalse: [ #() ]

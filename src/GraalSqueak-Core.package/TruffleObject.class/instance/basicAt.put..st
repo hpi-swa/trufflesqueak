@@ -1,4 +1,4 @@
 accessing
 basicAt: index put: value
-	self primitiveIsString ifTrue: [ self error: 'Not supported' ].
-	^ self primitiveWriteArrayElement: index value: value
+	(Interop isString: self) ifTrue: [ self error: 'Not supported' ].
+	^ Interop writeArrayElement: self index: index value: value

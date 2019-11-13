@@ -1,17 +1,19 @@
 printing
 printOnTitle
 	| arraySize memberSize properties |
-	self primitiveIsNull ifTrue: [ ^ 'ForeignNil' ].
-	self primitiveIsString ifTrue: [ ^ 'ForeignString[', self asString ,']' ].
-	self primitiveFitsInLong ifTrue: [ ^ 'ForeignInteger' ].
-	self primitiveFitsInDouble ifTrue: [ ^ 'ForeignFloat' ].
+	(Interop isNull: self) ifTrue: [ ^ 'ForeignNil' ].
+	(Interop isString: self) ifTrue: [ ^ 'ForeignString[', self asString ,']' ].
+	(Interop fitsInLong: self) ifTrue: [ ^ 'ForeignInteger' ].
+	(Interop fitsInDouble: self) ifTrue: [ ^ 'ForeignFloat' ].
 	properties := OrderedCollection new.
-	arraySize := self primitiveHasArrayElements ifTrue: [self primitiveGetArraySize ] ifFalse: [ 0 ].
-	memberSize := self primitiveHasMembers ifTrue: [ self primitiveGetMemberSize ] ifFalse: [ 0 ].
+	arraySize := (Interop hasArrayElements: self)
+		ifTrue: [ Interop getArraySize: self ] ifFalse: [ 0 ].
+	memberSize := (Interop hasMembers: self)
+		ifTrue: [ Interop getMemberSize: self ] ifFalse: [ 0 ].
 	arraySize > 0 ifTrue: [ properties add: 'arraySize=', arraySize ].
 	memberSize > 0 ifTrue: [ properties add: 'memberSize=', memberSize ].
-	self primitiveIsInstantiable ifTrue: [ properties add: 'instantiable' ].
-	self primitiveIsExecutable ifTrue: [ properties add: 'executable' ].
+	(Interop isInstantiable: self) ifTrue: [ properties add: 'instantiable' ].
+	(Interop isExecutable: self) ifTrue: [ properties add: 'executable' ].
 	^ properties
 		ifEmpty: [ 'ForeignObject' ]
 		ifNotEmpty: [ 'ForeignObject[', (properties joinSeparatedBy: ','), ']' ]

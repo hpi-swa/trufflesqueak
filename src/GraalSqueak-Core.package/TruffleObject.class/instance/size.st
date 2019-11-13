@@ -1,6 +1,5 @@
 accessing
 size
-	<primitive: 'primitiveGetArraySize' module: 'PolyglotPlugin'>
-	self primitiveIsString ifTrue: [ ^ self primitiveAsString basicSize ].
-	self primitiveHasArrayElements ifFalse: [ self errorNotIndexable ].
-	^ 0
+	(Interop hasArrayElements: self) ifTrue: [ ^ Interop getArraySize: self ].
+	(Interop isString: self) ifTrue: [ ^ (Interop asString: self) basicSize ].
+	self errorNotIndexable

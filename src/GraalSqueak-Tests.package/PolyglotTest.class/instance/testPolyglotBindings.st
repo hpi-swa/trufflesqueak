@@ -8,5 +8,5 @@ testPolyglotBindings
 	self assert: Smalltalk equals: (Polyglot import: 'SmalltalkDict').
 	self assert: Smalltalk equals: (Polyglot bindings at: 'SmalltalkDict').
 	
-	Polyglot bindings primitiveRemoveMember: 'SmalltalkDict'.
+	Interop removeMember: Polyglot bindings member: 'SmalltalkDict'.
 	self should: [ Polyglot bindings at: 'SmalltalkDict' ] raise: Error.
