@@ -6,7 +6,7 @@
 #
 
 readonly DEFAULT_GIT_TAG="1.0.0-rc5"
-readonly IMAGE64_NAME="GraalSqueakTestImage-19143-64bit.zip"
+readonly IMAGE64_NAME="GraalSqueakTestImage-19149-64bit.zip"
 readonly GITHUB_SLUG="hpi-swa/graalsqueak"
 
 
