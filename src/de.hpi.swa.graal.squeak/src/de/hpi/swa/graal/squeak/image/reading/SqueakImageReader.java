@@ -330,6 +330,7 @@ public final class SqueakImageReader {
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_SEMAPHORE, image.semaphoreClass);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_CHARACTER, image.characterClass);
         setPrebuiltObject(SPECIAL_OBJECT.SELECTOR_DOES_NOT_UNDERSTAND, image.doesNotUnderstand);
+        setPrebuiltObject(SPECIAL_OBJECT.SELECTOR_CANNOT_RETURN, image.cannotReturn);
         setPrebuiltObject(SPECIAL_OBJECT.SELECTOR_MUST_BE_BOOLEAN, image.mustBeBooleanSelector);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_BYTE_ARRAY, image.byteArrayClass);
         setPrebuiltObject(SPECIAL_OBJECT.CLASS_PROCESS, image.processClass);

@@ -57,6 +57,9 @@ Utilities authorInitials: 'GraalSqueak'.
 
 TruffleObject ensureInitialized.
 
+"The DecompilerTests use this in MethodNode>>printPrimitiveOn:"
+(Smalltalk at: #StackInterpreter) initializePrimitiveTable.
+
 "Disable performance killers"
 World setAsBackground: Color black lighter.
 Morph useSoftDropShadow: false.

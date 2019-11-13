@@ -23,6 +23,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
@@ -256,7 +257,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doResume(final VirtualFrame frame, final PointersObject receiver,
+                        @Cached final AbstractPointersObjectReadNode readNode,
+                        @Cached final BranchProfile errorProfile,
                         @Cached final StackPushForPrimitivesNode pushNode) {
+            if (!(readNode.execute(receiver, PROCESS.SUSPENDED_CONTEXT) instanceof ContextObject)) {
+                errorProfile.enter();
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
             // keep receiver on stack before resuming other process
             pushNode.executeWrite(frame, receiver);
             resumeProcessNode.executeResume(frame, receiver);

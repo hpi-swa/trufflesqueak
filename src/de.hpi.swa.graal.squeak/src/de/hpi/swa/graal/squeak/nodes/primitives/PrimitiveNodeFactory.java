@@ -174,7 +174,7 @@ public final class PrimitiveNodeFactory {
             argumentNodes[i] = AbstractArgumentNode.create(i, method.getNumArgs());
         }
         final AbstractPrimitiveNode primitiveNode = nodeFactory.createNode(method, argumentNodes);
-        assert primitiveArity == primitiveNode.getNumArguments() : "Arities do not match.";
+        assert primitiveArity == primitiveNode.getNumArguments() : "Arities do not match in " + primitiveNode;
         return primitiveNode;
     }
 
