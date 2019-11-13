@@ -96,7 +96,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static String getPathToTestImage() {
-        final String imagePath64bit = getPathToTestImage("test-64bit.1.image");
+        final String imagePath64bit = getPathToTestImage("test-64bit.image");
         if (imagePath64bit != null) {
             return imagePath64bit;
         }
