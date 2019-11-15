@@ -21,11 +21,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import de.hpi.swa.graal.squeak.util.OSDetector;
+
 public final class SqueakTests {
 
     protected static final Pattern TEST_CASE = Pattern.compile("(\\w+)>>(\\w+)");
     private static final Pattern TEST_CASE_LINE = Pattern.compile("^" + TEST_CASE.pattern());
     private static final String FILENAME = "tests.properties";
+    private static final String TEST_TYPE_PREFIX_LINUX = "LINUX_";
+    private static final String TEST_TYPE_PREFIX_MACOS = "MACOS_";
+    private static final String TEST_TYPE_PREFIX_WINDOWS = "WINDOWS_";
+    private static final OSDetector os = new OSDetector();
 
     public enum TestType {
         BROKEN_IN_SQUEAK("Broken in Squeak"),
@@ -134,7 +140,28 @@ public final class SqueakTests {
     }
 
     private static TestType parseType(final String type) {
-        return TestType.valueOf(type.toUpperCase());
+        final String[] parts = type.split(",");
+        if (parts.length == 1) {
+            return TestType.valueOf(type.toUpperCase());
+        } else {
+            final String prefix;
+            if (os.isLinux()) {
+                prefix = TEST_TYPE_PREFIX_LINUX;
+            } else if (os.isMacOS()) {
+                prefix = TEST_TYPE_PREFIX_MACOS;
+            } else if (os.isWindows()) {
+                prefix = TEST_TYPE_PREFIX_WINDOWS;
+            } else {
+                throw new IllegalArgumentException("OS not supported");
+            }
+            for (final String part : parts) {
+                final String partUpperCase = part.toUpperCase();
+                if (partUpperCase.startsWith(prefix)) {
+                    return TestType.valueOf(partUpperCase.substring(prefix.length()));
+                }
+            }
+            throw new IllegalArgumentException("Unable to find type for " + prefix);
+        }
     }
 
     private static Properties loadProperties() {

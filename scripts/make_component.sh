@@ -9,10 +9,15 @@ set -e
 
 readonly LANGUAGE_ID="smalltalk"
 readonly GRAALVM_VERSION="19.2.1"
-readonly OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
 case "${OS_NAME}" in
     "darwin")
         OS_NAME_FOR_GU=macos
+        ;;
+    "msys"*|"cygwin"*|"mingw"*)
+        OS_NAME="windows"
+        OS_NAME_FOR_GU="${OS_NAME}"
         ;;
     *)
         OS_NAME_FOR_GU="${OS_NAME}"
@@ -20,7 +25,9 @@ case "${OS_NAME}" in
 esac
 readonly OS_NAME_FOR_GU
 readonly OS_ARCH_FOR_GU="amd64"
-readonly GIT_DESCRIPTION=$(git describe --tags)
+readonly GIT_DESCRIBE=$(git describe --tags)
+readonly GIT_SHORT_COMMIT=$(git log -1 --format="%h")
+readonly GIT_DESCRIPTION="${GIT_DESCRIBE:-${GIT_SHORT_COMMIT}}"
 
 readonly BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 readonly COMPONENT_DIR="component_temp_dir"

@@ -26,25 +26,28 @@ aliases:
       JDK8_UPDATE_VERSION="222"
       JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
       OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
-      JAVA_HOME_SUFFIX="" && [[ "${OS_NAME}" = "darwin" ]]  && JAVA_HOME_SUFFIX="/Contents/Home"
+      [[ "${OS_NAME}" == msys* || "${OS_NAME}" == cygwin* || "${OS_NAME}" == mingw* ]] && OS_NAME="windows"
+      JAVA_HOME_SUFFIX="" && [[ "${OS_NAME}" == "darwin" ]] && JAVA_HOME_SUFFIX="/Contents/Home"
       curl -sSL --retry 3 -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/openjdk-8u${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}-${OS_NAME}-amd64.tar.gz
       tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${JDK_TAR}
-      export JAVA_HOME=${TRAVIS_BUILD_DIR}/../openjdk1.8.0_${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}${JAVA_HOME_SUFFIX}
+      export JVMCI_HOME=${TRAVIS_BUILD_DIR}/../openjdk1.8.0_${JDK8_UPDATE_VERSION}-${JVMCI_VERSION}${JAVA_HOME_SUFFIX}
+      export PATH=${PATH}:${JVMCI_HOME}/bin
+      export JAVA_HOME=${JVMCI_HOME}
   - &use-graalvm
     |
-      GRAAL_VM_VERSION=19.2.1
-      GRAAL_VM_TARBALL=graalvm-ce-linux-amd64-${GRAAL_VM_VERSION}.tar.gz
+      GRAALVM_VERSION=19.2.1
+      OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
+      [[ "${OS_NAME}" == msys* || "${OS_NAME}" == cygwin* || "${OS_NAME}" == mingw* ]] && OS_NAME="windows"
+      JAVA_HOME_SUFFIX="" && [[ "${OS_NAME}" == "darwin" ]]  && JAVA_HOME_SUFFIX="/Contents/Home"
+      GRAALVM_FILE_SUFFIX=".tar.gz" && [[ "${OS_NAME}" == "windows" ]]  && GRAALVM_FILE_SUFFIX=".zip"
+      GRAALVM_FILE="graalvm-ce-${OS_NAME}-amd64-${GRAALVM_VERSION}${GRAALVM_FILE_SUFFIX}"
       pushd ~/ > /dev/null
-      curl -sSL --retry 3 -o ${GRAAL_VM_TARBALL} https://github.com/oracle/graal/releases/download/vm-${GRAAL_VM_VERSION}/${GRAAL_VM_TARBALL}
-      tar -xzf ${GRAAL_VM_TARBALL}
-      export JAVA_HOME=$(pwd)/graalvm-ce-${GRAAL_VM_VERSION}
+      curl -sSL --retry 3 -o ${GRAALVM_FILE} https://github.com/oracle/graal/releases/download/vm-${GRAALVM_VERSION}/${GRAALVM_FILE}
+      if [[ "${OS_NAME}" == "windows" ]]; then unzip -qq ${GRAALVM_FILE}; else tar -xzf ${GRAALVM_FILE}; fi
+      export GRAALVM_HOME="$(pwd)/graalvm-ce-${GRAALVM_VERSION}${JAVA_HOME_SUFFIX}"
+      export JAVA_HOME=${GRAALVM_HOME}
+      export PATH=${PATH}:${GRAALVM_HOME}/bin
       popd > /dev/null
-  - &configure-python-for-pylint
-    addons:
-      apt:
-        packages:
-          - python-pip
-          - python-virtualenv
   - &install-pylint
     |
       virtualenv ~/venv
@@ -64,33 +67,21 @@ aliases:
       export JDT=${MX_PATH}/ecj.jar
       local ecj_tar="ci-dep-ecj-4.5.2.jar"
       ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${ecj_tar}" 0.8.0 "${JDT}"
-  - &openjdk8-jvmci-test-setup # set up jvmci, download image, enable coverage testing
+  - &openjdk8-jvmci-test-setup-with-coverage # set up jvmci, download image, enable coverage testing
     install: *use-openjdk8-jvmci
     before_script:
       - scripts/download-test-image.sh
       - curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
-      - export MX_OPTS="--jacocout coverage"
+      - export MX_GATE_OPTS="--jacocout coverage"
     after_success:
       - bash <(curl -s https://codecov.io/bash)
       - java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
   - &graalvm-test-setup # set up graalvm and download image
-    install: *use-graalvm
+    install:
+      - *use-openjdk8-jvmci # required for native image generation
+      - *use-graalvm
     before_script: scripts/download-test-image.sh
-    script: mx --dy /compiler gate ${MX_OPTS} --strict-mode --tags ${GATE}
-  - &jdk11-test-setup # set up oraclejdk11 and download image
-    jdk: oraclejdk11
-    before_script: scripts/download-test-image.sh
-  - &build-native-image-and-component
-      env: NATIVE_IMAGE_AND_COMPONENT=true
-      language: c
-      install: *use-openjdk8-jvmci
-      before_script: scripts/download-test-image.sh
-      script:
-        - mx squeak-svm
-        - bin/graalsqueak-svm --version:graalvm
-        - "bin/graalsqueak-svm --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\" images/test-64bit.image"
-        - bin/graalsqueak-svm --code "1 tinyBenchmarks" images/test-64bit.image
-        - scripts/make_component.sh
+  - &deploy-component
       deploy:
         provider: releases
         api_key:
@@ -103,31 +94,59 @@ aliases:
 
 before_install: *clone-mx-and-graal
 
-script: mx gate ${MX_OPTS} --strict-mode --tags ${GATE}
+script:
+  - mx gate ${MX_GATE_OPTS} --strict-mode --tags ${GATE}
+  - mx --java-home "${JVMCI_HOME}" squeak-svm
+  - bin/graalsqueak-svm --version:graalvm
+  - "bin/graalsqueak-svm --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\" images/test-64bit.image"
+  - bin/graalsqueak-svm --code "1 tinyBenchmarks" images/test-64bit.image
+  - scripts/make_component.sh
 
 jobs:
   include:
-    - env: JDK="openjdk8" GATE="style,fullbuild"
-      script: mx gate --strict-mode --tags ${GATE}
+    - name: "Checkstyle and Spotbugs"
+      env: JDK="openjdk8" GATE="style,fullbuild"
+      addons:
+        apt:
+          packages: # pylint dependencies
+            - python-pip
+            - python-virtualenv
       install:
         - *use-openjdk8-jvmci
         - *install-pylint
         - *download-eclipse
         - *download-ecj
-      <<: *configure-python-for-pylint
-    - env: JDK="openjdk8" GATE="build,test"
-      <<: *openjdk8-jvmci-test-setup
-    - env: JDK="graalvm" GATE="build,test"
-      <<: *graalvm-test-setup
-    - addons:
+      script: mx gate --strict-mode --tags ${GATE}
+    - name: "Build, test, and deploy on Linux and OpenJDK8 (with coverage testing)"
+      env: JDK="openjdk8" GATE="build,test"
+      addons:
         apt:
           packages:
             - libsdl2-dev
-      <<: *build-native-image-and-component
-    - os: osx
+      <<: *openjdk8-jvmci-test-setup-with-coverage
+      <<: *deploy-component
+    - name: "Build, test, and deploy on macOS and GraalVM"
+      os: osx
       osx_image: xcode11.2 # Use macOS Mojave
+      env: JDK="graalvm" GATE="build,test"
       before_install:
         - *clone-mx-and-graal
         - HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
-      <<: *build-native-image-and-component
+      <<: *graalvm-test-setup
+      <<: *deploy-component
+    - name: "Build, test, and deploy on Windows and OpenJDK8"
+      os: windows
+      language: c
+      env: JDK="graalvm" GATE="build,test"
+      before_install:
+        - choco install --no-progress python
+        - *clone-mx-and-graal
+      install:
+        - *use-openjdk8-jvmci
+      before_script: scripts/download-test-image.sh
+      script:
+        - cmd.exe /C '"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" amd64 &&
+          python ../mx/mx.py gate --strict-mode --tags build,test'
+        - scripts/make_component.sh
+      <<: *deploy-component
   fast_finish: true
