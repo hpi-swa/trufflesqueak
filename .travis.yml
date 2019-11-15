@@ -7,11 +7,19 @@ python:
   - "2.7"
 
 aliases:
-  - &clone-mx
+  - &clone-mx-and-graal # only download required commits to speed up cloning
     |
       export MX_PATH=${TRAVIS_BUILD_DIR}/../mx
       git clone --depth 1 https://github.com/graalvm/mx.git ${MX_PATH}
       export PATH=${PATH}:${MX_PATH}
+      TRUFFLE_COMMIT=$(cd mx.graalsqueak && python -c "from suite import suite; print([s for s in suite['imports']['suites'] if s['name'] == 'truffle'][0]['version'])")
+      mkdir ${TRAVIS_BUILD_DIR}/../graal
+      pushd ${TRAVIS_BUILD_DIR}/../graal > /dev/null
+      git init > /dev/null
+      git remote add origin https://github.com/oracle/graal.git
+      git fetch origin --depth 1 "${TRUFFLE_COMMIT}"
+      git reset --hard FETCH_HEAD
+      popd > /dev/null
   - &use-openjdk8-jvmci
     |
       JVMCI_VERSION="jvmci-19.2-b02"
@@ -93,7 +101,7 @@ aliases:
         on:
           tags: true
 
-before_install: *clone-mx
+before_install: *clone-mx-and-graal
 
 script: mx gate ${MX_OPTS} --strict-mode --tags ${GATE}
 
@@ -119,7 +127,7 @@ jobs:
     - os: osx
       osx_image: xcode11.2 # Use macOS Mojave
       before_install:
-        - *clone-mx
+        - *clone-mx-and-graal
         - HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
       <<: *build-native-image-and-component
   fast_finish: true
