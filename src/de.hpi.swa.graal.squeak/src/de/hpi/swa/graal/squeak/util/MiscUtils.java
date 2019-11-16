@@ -19,7 +19,6 @@ import java.util.Properties;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakInterrupt;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class MiscUtils {
     private static final CompilationMXBean COMPILATION_BEAN = ManagementFactory.getCompilationMXBean();
@@ -143,8 +142,8 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
-    public static String getVMPath(final SqueakImageContext image) {
-        final String binaryName = image.os.isWindows() ? "java.exe" : "java";
+    public static String getVMPath() {
+        final String binaryName = OSDetector.SINGLETON.isWindows() ? "java.exe" : "java";
         return System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + binaryName;
     }
 

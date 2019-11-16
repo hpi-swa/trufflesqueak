@@ -495,3 +495,9 @@ mx.update_commands(_suite, {
 })
 
 mx_gate.add_gate_runner(_suite, _graalsqueak_gate_runner)
+
+if mx.is_windows():
+    # This patch works around "SSL: CERTIFICATE_VERIFY_FAILED" errors (See
+    # https://www.python.org/dev/peps/pep-0476/).
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context

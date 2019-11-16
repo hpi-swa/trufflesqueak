@@ -67,9 +67,8 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
         String selector = "unknownSelector";
-        final ClassObject methodClass = getMethodClassSlow();
-        if (methodClass != null) {
-            className = methodClass.getClassName();
+        if (hasMethodClassSlow()) {
+            className = getMethodClassSlow().getClassName();
         }
         final NativeObject selectorObj = getCompiledInSelector();
         if (selectorObj != null) {
@@ -121,6 +120,11 @@ public final class CompiledMethodObject extends CompiledCodeObject {
          * accessors).
          */
         return (PointersObject) literals[literals.length - 1];
+    }
+
+    public boolean hasMethodClassSlow() {
+        CompilerAsserts.neverPartOfCompilation();
+        return hasMethodClass(AbstractPointersObjectReadNode.getUncached());
     }
 
     public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {

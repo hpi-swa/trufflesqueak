@@ -91,7 +91,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         @Specialization
         protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final long index) {
             if (index == 1) {
-                return method.image.asByteString(MiscUtils.getVMPath(method.image));
+                return method.image.asByteString(MiscUtils.getVMPath());
             } else if (1 < index && index < method.image.getImageArguments().length) {
                 return method.image.asByteString(method.image.getImageArguments()[(int) index - 2]);
             } else {
@@ -518,13 +518,13 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             super(method);
         }
 
-        @Specialization(guards = {"supportsNFI", "method.image.os.isMacOS()"})
+        @Specialization(guards = {"supportsNFI", "isMacOS()"})
         protected final long doSendSigchldToMacOS(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
             return setValue(lib, pid, SIGNALS.SIGCHLD_MACOS);
         }
 
-        @Specialization(guards = {"supportsNFI", "method.image.os.isLinux()"})
+        @Specialization(guards = {"supportsNFI", "isLinux()"})
         protected final long doSendSigchldToUnix(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
             return setValue(lib, pid, SIGNALS.SIGCHLD_UNIX);
@@ -659,13 +659,13 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             super(method);
         }
 
-        @Specialization(guards = {"supportsNFI", "method.image.os.isMacOS()"})
+        @Specialization(guards = {"supportsNFI", "isMacOS()"})
         protected final long doSendSigusr1ToMacOS(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
             return setValue(lib, pid, SIGNALS.SIGUSR1_MACOS);
         }
 
-        @Specialization(guards = {"supportsNFI", "method.image.os.isLinux()"})
+        @Specialization(guards = {"supportsNFI", "isLinux()"})
         protected final long doSendSigusr1ToUnix(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
             return setValue(lib, pid, SIGNALS.SIGUSR1_UNIX);
@@ -680,13 +680,13 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             super(method);
         }
 
-        @Specialization(guards = {"supportsNFI", "method.image.os.isMacOS()"})
+        @Specialization(guards = {"supportsNFI", "isMacOS()"})
         protected final long doSendSigusr2ToMacOS(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
             return setValue(lib, pid, SIGNALS.SIGUSR2_MACOS);
         }
 
-        @Specialization(guards = {"supportsNFI", "method.image.os.isLinux()"})
+        @Specialization(guards = {"supportsNFI", "isLinux()"})
         protected final long doSendSigusr2ToUnix(@SuppressWarnings("unused") final Object receiver, final long pid,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
             return setValue(lib, pid, SIGNALS.SIGUSR2_UNIX);
@@ -773,12 +773,12 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             super(method);
         }
 
-        @Specialization(guards = "method.image.os.isMacOS()")
+        @Specialization(guards = "isMacOS()")
         protected static final long doSigChldNumberMacOS(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGCHLD_MACOS;
         }
 
-        @Specialization(guards = "method.image.os.isLinux()")
+        @Specialization(guards = "isLinux()")
         protected static final long doSigChldNumberUnix(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGCHLD_UNIX;
         }
@@ -876,12 +876,12 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             super(method);
         }
 
-        @Specialization(guards = "method.image.os.isMacOS()")
+        @Specialization(guards = "isMacOS()")
         protected static final long doSigUsr1NumberMacOS(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGUSR1_MACOS;
         }
 
-        @Specialization(guards = "method.image.os.isLinux()")
+        @Specialization(guards = "isLinux()")
         protected static final long doSigUsr1NumberUnix(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGUSR1_UNIX;
         }
@@ -895,12 +895,12 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             super(method);
         }
 
-        @Specialization(guards = "method.image.os.isLinux()")
+        @Specialization(guards = "isLinux()")
         protected static final long doSigUsr2NumberLinux(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGUSR2_UNIX;
         }
 
-        @Specialization(guards = "method.image.os.isMacOS()")
+        @Specialization(guards = "isMacOS()")
         protected static final long doSigUsr2NumberMacOS(@SuppressWarnings("unused") final Object receiver) {
             return SIGNALS.SIGUSR2_MACOS;
         }

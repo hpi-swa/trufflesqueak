@@ -5,7 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.util;
 
-public class OSDetector {
+public final class OSDetector {
+    public static final OSDetector SINGLETON = new OSDetector();
 
     public enum OSType {
         Windows,
@@ -16,7 +17,7 @@ public class OSDetector {
 
     private final OSType currentOS;
 
-    public OSDetector() {
+    private OSDetector() {
         final String os = System.getProperty("os.name", "generic").toLowerCase();
         if (os.indexOf("mac") >= 0 || os.indexOf("darwin") >= 0) {
             currentOS = OSType.MacOS;

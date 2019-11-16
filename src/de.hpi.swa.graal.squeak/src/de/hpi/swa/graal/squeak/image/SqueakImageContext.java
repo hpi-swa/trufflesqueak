@@ -72,7 +72,6 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
-import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class SqueakImageContext {
     /* Special objects */
@@ -139,9 +138,6 @@ public final class SqueakImageContext {
     /* Stack Management */
     public int stackDepth = 0;
     public ContextObject lastSeenContext;
-
-    /* Utilities */
-    public final OSDetector os = new OSDetector();
 
     @CompilationFinal private ClassObject compilerClass = null;
     @CompilationFinal private ClassObject parserClass = null;
