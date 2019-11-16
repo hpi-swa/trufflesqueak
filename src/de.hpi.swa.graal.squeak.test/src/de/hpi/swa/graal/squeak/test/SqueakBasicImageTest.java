@@ -129,4 +129,20 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
             fail(e.toString());
         }
     }
+
+    @Test
+    public void test13CannotReturnAtStart() {
+        assertEquals("bla2", evaluate("| result | \n" +
+                        "[ result := [^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork. \n" +
+                        "Processor yield.\n" +
+                        "result").toString());
+    }
+
+    @Test
+    public void test14CannotReturnInTheMiddle() {
+        assertEquals("bla2", evaluate("| result | \n" +
+                        "[ result := [thisContext yourself. ^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork. \n" +
+                        "Processor yield.\n" +
+                        "result").toString());
+    }
 }

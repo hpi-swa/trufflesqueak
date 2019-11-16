@@ -256,8 +256,8 @@ public final class SqueakImageContext {
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
         doItContext.atput0(CONTEXT.METHOD, doItMethod);
         doItContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) doItMethod.getInitialPC());
-        doItContext.atput0(CONTEXT.RECEIVER, nilClass);
-        doItContext.atput0(CONTEXT.STACKPOINTER, 0L);
+        doItContext.atput0(CONTEXT.RECEIVER, NilObject.SINGLETON);
+        doItContext.atput0(CONTEXT.STACKPOINTER, new Long(doItMethod.getNumTemps()));
         doItContext.atput0(CONTEXT.CLOSURE_OR_NIL, NilObject.SINGLETON);
         doItContext.atput0(CONTEXT.SENDER_OR_NIL, NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(getLanguage(), doItContext, false);

@@ -6,13 +6,21 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
@@ -25,6 +33,21 @@ public final class ReturnBytecodes {
     public abstract static class AbstractReturnNode extends AbstractBytecodeNode {
         protected AbstractReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);
+        }
+
+        protected static final AbstractSqueakObject findOnSenderChain(final ContextObject from, final ContextObject target) {
+            AbstractSqueakObject sender = from.getSender();
+            while (sender instanceof ContextObject) {
+                if (sender == target) {
+                    return sender;
+                }
+                sender = ((ContextObject) sender).getSender();
+            }
+            return NilObject.SINGLETON;
+        }
+
+        protected final boolean hasMaterializedContext(final VirtualFrame frame) {
+            return getContext(frame) != null;
         }
 
         protected final boolean hasModifiedSender(final VirtualFrame frame) {
@@ -50,6 +73,8 @@ public final class ReturnBytecodes {
     }
 
     protected abstract static class AbstractReturnWithSpecializationsNode extends AbstractReturnNode {
+        @Child private GetOrCreateContextNode getOrCreateContextNode;
+        @Child private SendSelectorNode cannotReturnNode;
 
         protected AbstractReturnWithSpecializationsNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -66,10 +91,65 @@ public final class ReturnBytecodes {
             throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getSender(frame));
         }
 
-        @Specialization(guards = {"isCompiledBlockObject(code)"})
-        protected final Object doClosureReturn(final VirtualFrame frame) {
+        @Specialization(guards = {"isCompiledBlockObject(code)", "hasMaterializedContext(frame)"})
+        protected final Object doClosureReturnFromMaterialized(final VirtualFrame frame) {
             // Target is sender of closure's home context.
-            throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getClosure(frame).getHomeContext().getFrameSender());
+            final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+            final ContextObject currentContext = getContext(frame);
+            final boolean homeContextNotOnTheStack = null == findOnSenderChain(currentContext, homeContext);
+            final Object caller = homeContext.getFrameSender();
+            if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                getCannotReturnNode().executeSend(frame, currentContext, getReturnValue(frame));
+                assert false : "Should not reach";
+            }
+            throw new NonLocalReturn(getReturnValue(frame), caller);
+        }
+
+        @Specialization(guards = {"isCompiledBlockObject(code)", "!hasMaterializedContext(frame)"})
+        protected final Object doClosureReturnFromNonMaterialized(final VirtualFrame frame) {
+            // Target is sender of closure's home context.
+            final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+            boolean homeContextNotOnTheStack = false;
+            final Object caller = homeContext.getFrameSender();
+            if (caller != NilObject.SINGLETON) {
+                final Object[] lastSender = new Object[1];
+                homeContextNotOnTheStack = null == Truffle.getRuntime().iterateFrames(frameInstance -> {
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+                    if (!FrameAccess.isGraalSqueakFrame(current)) {
+                        return null; // Foreign frame cannot be homeContext.
+                    }
+                    if (FrameAccess.getContext(current) == homeContext) {
+                        return homeContext;
+                    } else {
+                        lastSender[0] = FrameAccess.getSender(current);
+                        return null;
+                    }
+                });
+                if (homeContextNotOnTheStack && lastSender[0] instanceof ContextObject) {
+                    homeContextNotOnTheStack = null == findOnSenderChain((ContextObject) lastSender[0], homeContext);
+                }
+            }
+            if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), getReturnValue(frame));
+                assert false : "Should not reach";
+            }
+            throw new NonLocalReturn(getReturnValue(frame), caller);
+        }
+
+        private GetOrCreateContextNode getGetOrCreateContextNode() {
+            if (getOrCreateContextNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getOrCreateContextNode = insert(GetOrCreateContextNode.create(code));
+            }
+            return getOrCreateContextNode;
+        }
+
+        private SendSelectorNode getCannotReturnNode() {
+            if (cannotReturnNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cannotReturnNode = insert(SendSelectorNode.create(code, code.image.cannotReturn));
+            }
+            return cannotReturnNode;
         }
     }
 
@@ -121,6 +201,7 @@ public final class ReturnBytecodes {
 
     public abstract static class ReturnTopFromBlockNode extends AbstractReturnNode {
         @Child private FrameStackPopNode popNode;
+        @Child private SendSelectorNode cannotReturnNode;
 
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -144,7 +225,24 @@ public final class ReturnBytecodes {
 
         @Specialization(guards = {"isCompiledBlockObject(code)", "hasModifiedSender(frame)"})
         protected final Object doNonLocalReturnClosure(final VirtualFrame frame) {
-            throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getClosure(frame).getHomeContext().getFrameSender());
+            // Target is sender of closure's home context.
+            final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+            final ContextObject currentContext = FrameAccess.getContext(frame);
+            final boolean homeContextNotOnTheStack = null == findOnSenderChain(currentContext, homeContext);
+            final Object caller = homeContext.getFrameSender();
+            if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                getCannotReturnNode().executeSend(frame, currentContext, getReturnValue(frame));
+                assert false : "Should not reach";
+            }
+            throw new NonLocalReturn(getReturnValue(frame), caller);
+        }
+
+        private SendSelectorNode getCannotReturnNode() {
+            if (cannotReturnNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cannotReturnNode = insert(SendSelectorNode.create(code, code.image.cannotReturn));
+            }
+            return cannotReturnNode;
         }
 
         @Override
