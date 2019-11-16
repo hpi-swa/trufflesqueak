@@ -24,6 +24,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.util.NotProvided;
+import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class SqueakGuards {
 
@@ -48,6 +49,10 @@ public final class SqueakGuards {
 
     public static boolean inBounds1(final long index, final int size, final int scale) {
         return 0 < index && (index - 1) / scale < size;
+    }
+
+    public static boolean isAbstractPointersObject(final Object object) {
+        return object instanceof AbstractPointersObject;
     }
 
     public static boolean isAbstractSqueakObject(final Object object) {
@@ -122,12 +127,20 @@ public final class SqueakGuards {
         return object instanceof LargeIntegerObject;
     }
 
+    public static boolean isLinux() {
+        return OSDetector.SINGLETON.isLinux();
+    }
+
     public static boolean isLong(final Object value) {
         return value instanceof Long;
     }
 
     public static boolean isLongMinValue(final long value) {
         return value == Long.MIN_VALUE;
+    }
+
+    public static boolean isMacOS() {
+        return OSDetector.SINGLETON.isMacOS();
     }
 
     public static boolean isNativeObject(final Object object) {
@@ -144,10 +157,6 @@ public final class SqueakGuards {
 
     public static boolean isOverflowDivision(final long a, final long b) {
         return a == Long.MIN_VALUE && b == -1;
-    }
-
-    public static boolean isAbstractPointersObject(final Object object) {
-        return object instanceof AbstractPointersObject;
     }
 
     public static boolean isPointersObject(final Object object) {

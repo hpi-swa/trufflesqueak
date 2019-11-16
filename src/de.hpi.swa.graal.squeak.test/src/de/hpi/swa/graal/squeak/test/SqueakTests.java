@@ -31,7 +31,6 @@ public final class SqueakTests {
     private static final String TEST_TYPE_PREFIX_LINUX = "LINUX_";
     private static final String TEST_TYPE_PREFIX_MACOS = "MACOS_";
     private static final String TEST_TYPE_PREFIX_WINDOWS = "WINDOWS_";
-    private static final OSDetector os = new OSDetector();
 
     public enum TestType {
         BROKEN_IN_SQUEAK("Broken in Squeak"),
@@ -145,11 +144,11 @@ public final class SqueakTests {
             return TestType.valueOf(type.toUpperCase());
         } else {
             final String prefix;
-            if (os.isLinux()) {
+            if (OSDetector.SINGLETON.isLinux()) {
                 prefix = TEST_TYPE_PREFIX_LINUX;
-            } else if (os.isMacOS()) {
+            } else if (OSDetector.SINGLETON.isMacOS()) {
                 prefix = TEST_TYPE_PREFIX_MACOS;
-            } else if (os.isWindows()) {
+            } else if (OSDetector.SINGLETON.isWindows()) {
                 prefix = TEST_TYPE_PREFIX_WINDOWS;
             } else {
                 throw new IllegalArgumentException("OS not supported");

@@ -60,6 +60,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
+import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class PrimitiveNodeFactory {
     private static final int PRIMITIVE_EXTERNAL_CALL_INDEX = 117;
@@ -112,7 +113,7 @@ public final class PrimitiveNodeFactory {
                         new SqueakSSL(),
                         new UUIDPlugin(),
                         new ZipPlugin(),
-                        image.os.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
+                        OSDetector.SINGLETON.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
         fillPrimitiveTable(plugins);
         fillPluginMap(image, plugins);
     }

@@ -46,6 +46,7 @@ import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.graal.squeak.util.OSDetector;
 
 final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak + SubstrateVM + SDL2";
@@ -226,8 +227,8 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
                 handleKeyboardEvent();
                 long[] later = null;
                 // No TEXTINPUT event for this key will follow, but Squeak needs a KeyStroke anyway.
-                if (!isModifierKey(key) && (image.os.isLinux() && isControlKey(key) ||
-                                !image.os.isLinux() && (isControlKey(key) || (SDL.getModState() & ~SDL.kmodShift()) != 0))) {
+                if (!isModifierKey(key) && (OSDetector.SINGLETON.isLinux() && isControlKey(key) ||
+                                !OSDetector.SINGLETON.isLinux() && (isControlKey(key) || (SDL.getModState() & ~SDL.kmodShift()) != 0))) {
                     later = getNextKeyEvent(KEYBOARD_EVENT.CHAR, time);
                 }
                 fixKeyCodeCase();
@@ -472,7 +473,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
             key = KEY.CTRL;
         } else if (sym == SDL.kLAlt() || sym == SDL.kRAlt()) {
             key = KEY.COMMAND;
-        } else if (image.os.isMacOS() && (sym == SDL.kLGui() || sym == SDL.kRGui())) {
+        } else if (OSDetector.SINGLETON.isMacOS() && (sym == SDL.kLGui() || sym == SDL.kRGui())) {
             key = KEY.COMMAND;
         } else if (sym == SDL.kDelete()) {
             key = KEY.DELETE;
@@ -524,7 +525,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         return btn;
     }
 
-    private long getModifierMask(final int shift) {
+    private static long getModifierMask(final int shift) {
         final int mod = SDL.getModState();
         int modifier = 0;
         if ((mod & SDL.kmodCtrl()) != 0) {
@@ -537,7 +538,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
             modifier |= KEY.SHIFT_BIT;
         }
         if ((mod & SDL.kmodAlt()) != 0) {
-            if (image.os.isMacOS()) {
+            if (OSDetector.SINGLETON.isMacOS()) {
                 modifier |= KEY.COMMAND_BIT;
             } else {
                 modifier |= KEY.OPTION_BIT;

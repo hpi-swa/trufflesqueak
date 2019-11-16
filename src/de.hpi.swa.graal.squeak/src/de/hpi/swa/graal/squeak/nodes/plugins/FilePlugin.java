@@ -53,6 +53,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, FilePlugin.class);
@@ -205,7 +206,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final TruffleFile file;
             if (".".equals(fileName)) {
                 file = asTruffleFile(pathName);
-            } else if (method.image.os.isWindows() && pathName.isEmpty() && fileName.endsWith(":")) {
+            } else if (OSDetector.SINGLETON.isWindows() && pathName.isEmpty() && fileName.endsWith(":")) {
                 file = asTruffleFile(fileName + "\\");
             } else {
                 file = asTruffleFile(pathName + method.image.env.getFileNameSeparator() + fileName);
@@ -229,7 +230,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"longIndex > 0", "nativePathName.isByteType()", "nativePathName.getByteLength() == 0"})
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doLookupEmptyString(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex) {
-            assert method.image.os.isWindows() : "Unexpected empty path on a non-Windows system.";
+            assert OSDetector.SINGLETON.isWindows() : "Unexpected empty path on a non-Windows system.";
             final ArrayList<TruffleFile> fileList = new ArrayList<>();
             // TODO: avoid to use Path and FileSystems here.
             for (final Path path : FileSystems.getDefault().getRootDirectories()) {
@@ -251,7 +252,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doLookup(@SuppressWarnings("unused") final Object receiver, final NativeObject nativePathName, final long longIndex) {
             String pathName = nativePathName.asStringUnsafe();
-            if (method.image.os.isWindows() && !pathName.endsWith("\\")) {
+            if (OSDetector.SINGLETON.isWindows() && !pathName.endsWith("\\")) {
                 pathName += "\\"; // new File("C:") will fail, we need to add a trailing backslash.
             }
             final TruffleFile directory = asTruffleFile(pathName);

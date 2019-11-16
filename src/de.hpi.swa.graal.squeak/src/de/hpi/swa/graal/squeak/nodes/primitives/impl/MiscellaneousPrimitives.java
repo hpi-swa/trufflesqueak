@@ -67,6 +67,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.NotProvided;
+import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -423,7 +424,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asByteString(MiscUtils.getVMPath(method.image));
+            return method.image.asByteString(MiscUtils.getVMPath());
         }
     }
 
@@ -526,12 +527,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             }
         }
 
-        private String getSystemAttribute(final int index) {
+        private static String getSystemAttribute(final int index) {
             switch (index) {
                 case 1001:  // this platform's operating system 'Mac OS', 'Win32', 'unix', ...
-                    return method.image.os.getSqOSName();
+                    return OSDetector.SINGLETON.getSqOSName();
                 case 1002:  // operating system version
-                    if (method.image.os.isMacOS()) {
+                    if (OSDetector.SINGLETON.isMacOS()) {
                         /* The image expects things like 1095, so convert 10.10.5 into 1010.5 */
                         return System.getProperty("os.version").replaceFirst("\\.", "");
                     } else {
@@ -553,12 +554,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1009: // Platform source version
                     return MiscUtils.getVMInformation();
                 case 1201: // max filename length (Mac OS only)
-                    if (method.image.os.isMacOS()) {
+                    if (OSDetector.SINGLETON.isMacOS()) {
                         return "255";
                     }
                     break;
                 case 1202: // file last error (Mac OS only)
-                    if (method.image.os.isMacOS()) {
+                    if (OSDetector.SINGLETON.isMacOS()) {
                         return "0";
                     }
                     break;
