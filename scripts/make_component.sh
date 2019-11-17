@@ -74,13 +74,14 @@ echo "x-GraalVM-Polyglot-Part: True" >> "${MANIFEST}"
 
 readonly GIT_HASH="$(git rev-parse HEAD)"
 readonly GIT_BRANCH_NAME="$(git rev-parse --abbrev-ref HEAD)"
+readonly GIT_UNIX_TIME=$(git log -1 --format="%ct")
 readonly GIT_COMMITTER_NAME="$(git config user.name)"
 readonly GIT_COMMITTER_EMAIL="$(git config user.email)"
 
 echo "OS_NAME=${OS_NAME_FOR_GU}" > "${RELEASE_FILE}"
 echo "OS_ARCH=${OS_ARCH_FOR_GU}" >> "${RELEASE_FILE}"
 echo "SOURCE=\"${GIT_BRANCH_NAME}:${GIT_HASH}\"" >> "${RELEASE_FILE}"
-echo "COMMIT_INFO={\"${GIT_BRANCH_NAME}\": {\"commit.committer\": \"${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>\", \"commit.rev\": \"${GIT_HASH}\"}}" >> "${RELEASE_FILE}"
+echo "COMMIT_INFO={\"${GIT_BRANCH_NAME}\": {\"commit.committer\": \"${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>\", \"commit.committer-ts\": \"${GIT_UNIX_TIME}\", \"commit.rev\": \"${GIT_HASH}\"}}" >> "${RELEASE_FILE}"
 echo "GRAALVM_VERSION=${GRAALVM_VERSION}" >> "${RELEASE_FILE}"
 ## echo "component_catalog=..." >> "${RELEASE_FILE}"
 
