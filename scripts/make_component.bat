@@ -16,7 +16,9 @@ set _GRAALVM_VERSION=19.2.1
 set _OS_NAME=windows
 set _OS_NAME_FOR_GU=%_OS_NAME%
 set _OS_ARCH_FOR_GU=amd64
-for /f "usebackq" %%i in (`"%_GIT_CMD%" describe --tags`) do set _GIT_DESCRIPTION=%%i
+for /f "usebackq" %%i in (`%_GIT_CMD% describe --tags`) do set _GIT_DESCRIPTION=%%i
+for /f "usebackq" %%i in (`%_GIT_CMD% log -1 --format^="%%h"`) do set _GIT_SHORT_COMMIT=%%i
+if not defined _GIT_DESCRIPTION set _GIT_DESCRIPTION=%_GIT_SHORT_COMMIT%
 
 for %%f in ("%~dp0") do set "_BASE_DIR=%%~f"
 set "_COMPONENT_DIR=%TEMP%\component_temp_dir"
@@ -32,10 +34,7 @@ set _TEMPLATE_WIN_LAUNCHER=template.graalsqueak.cmd
 
 if exist "%_COMPONENT_DIR%\" (
     set /p _USER_INPUT='%_COMPONENT_DIR%' already exists. Do you want to remove it? ^(y/N^) 
-    if /i not "!_USER_INPUT!"=="y" (
-        rem we abort script execution
-        goto end
-    )
+    if /i not "!_USER_INPUT!"=="y" goto end
     rmdir /s /q "%_COMPONENT_DIR%"
 )
 
@@ -54,24 +53,32 @@ copy /y "%_GRAALSQUEAK_DIR%\graalsqueak-launcher.jar" "%_LIB_GRAALVM_PATH%" 1>NU
 copy /y "%_GRAALSQUEAK_DIR%\LICENSE" "%_COMPONENT_DIR%\LICENSE_GRAALSQUEAK.txt" 1>NUL
 
 mkdir "%_COMPONENT_DIR%\META-INF"
-
-echo Bundle-Name: GraalSqueak> "%_MANIFEST%"
-echo Bundle-Symbolic-Name: de.hpi.swa.graal.squeak>> "%_MANIFEST%"
-echo Bundle-Version: %_GRAALVM_VERSION%>> "%_MANIFEST%"
-echo Bundle-RequireCapability: org.graalvm; filter:="(&(graalvm_version=%_GRAALVM_VERSION%)(os_name=%_OS_NAME_FOR_GU%)(os_arch=%_OS_ARCH_FOR_GU%))">> "%_MANIFEST%"
-echo x-GraalVM-Polyglot-Part: True>> "%_MANIFEST%"
+call :version_major
+if not %_EXITCODE%==0 goto end
+set _JAVA_VERSION=%_VERSION_MAJOR%
+(
+    rem see https://github.com/oracle/graal/blob/master/sdk/mx.sdk/mx_sdk_vm_impl.py#L1770
+    echo Bundle-Name: GraalSqueak
+    echo Bundle-Symbolic-Name: de.hpi.swa.graal.squeak
+    echo Bundle-Version: %_GRAALVM_VERSION%
+    echo Bundle-RequireCapability: org.graalvm; filter:="(&(graalvm_version=%_GRAALVM_VERSION%)(os_name=%_OS_NAME_FOR_GU%)(os_arch=%_OS_ARCH_FOR_GU%)(java_version=%_JAVA_VERSION%))"
+    echo x-GraalVM-Polyglot-Part: True
+) > "%_MANIFEST%"
 
 for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse HEAD`) do set _GIT_HASH=%%i
 for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse --abbrev-ref HEAD`) do set _GIT_BRANCH_NAME=%%i
+for /f "usebackq" %%i in (`%_GIT_CMD% log -1 --format^="%%ct"`) do set _GIT_UNIX_TIMESTAMP=%%i
 for /f "usebackq delims=" %%i in (`%_GIT_CMD% config user.name`) do set _GIT_COMMITTER_NAME=%%i
 for /f "usebackq" %%i in (`%_GIT_CMD% config user.email`) do set _GIT_COMMITTER_EMAIL=%%i
-
-echo OS_NAME=%_OS_NAME_FOR_GU%> "%_RELEASE_FILE%"
-echo OS_ARCH=%_OS_ARCH_FOR_GU%>> "%_RELEASE_FILE%"
-echo SOURCE="%_GIT_BRANCH_NAME%:%_GIT_HASH%">> "%_RELEASE_FILE%"
-echo COMMIT_INFO={"%_GIT_BRANCH_NAME%": {"commit.committer": "%_GIT_COMMITTER_NAME% <%_GIT_COMMITTER_EMAIL%>", "commit.rev": "%_GIT_HASH%"}}>> "%_RELEASE_FILE%"
-echo GRAALVM_VERSION=%_GRAALVM_VERSION%>> "%_RELEASE_FILE%"
-rem echo component_catalog=...>> "%_RELEASE_FILE%"
+(
+    rem see https://github.com/oracle/graal/blob/master/sdk/mx.sdk/mx_sdk_vm_impl.py#L627
+    echo OS_NAME=%_OS_NAME_FOR_GU%
+    echo OS_ARCH=%_OS_ARCH_FOR_GU%
+    echo SOURCE="%_GIT_BRANCH_NAME%:%_GIT_HASH%"
+    echo COMMIT_INFO={"%_GIT_BRANCH_NAME%": {"commit.committer": "%_GIT_COMMITTER_NAME% <%_GIT_COMMITTER_EMAIL%>", "commit.committer-ts": %_GIT_UNIX_TIMESTAMP%, "commit.rev": "%_GIT_HASH%"}}
+    echo GRAALVM_VERSION=%_GRAALVM_VERSION%
+    rem echo component_catalog=...
+) > "%_RELEASE_FILE%"
 
 pushd "%_COMPONENT_DIR%"
 "%_JAR_CMD%" cfm "%_TARGET_JAR%" META-INF\MANIFEST.MF .
@@ -107,7 +114,7 @@ goto end
 :: ###########################################################################
 :: ## Subroutines
 
-rem output parameter(s): _GIT_CMD, _JAR_CMD
+rem output parameter(s): _GIT_CMD, _JAVA_CMD, _JAR_CMD
 :env
 where /q git.exe
 if not %ERRORLEVEL%==0 (
@@ -117,6 +124,14 @@ if not %ERRORLEVEL%==0 (
 )
 set _GIT_CMD=git.exe
 
+where /q java.exe
+if not %ERRORLEVEL%==0 (
+    echo Could not find executable java.exe 1>&2
+    set _EXITCODE=1
+    goto :eof
+)
+set _JAVA_CMD=java.exe
+
 where /q jar.exe
 if not %ERRORLEVEL%==0 (
     echo Could not find executable jar.exe 1>&2
@@ -124,6 +139,24 @@ if not %ERRORLEVEL%==0 (
     goto :eof
 )
 set _JAR_CMD=jar.exe
+goto :eof
+
+rem output parameter: _VERSION_MAJOR
+rem see http://openjdk.java.net/jeps/223
+rem before Java 9: full = 1.8.0_232, short = 8.0_232, major = 8
+rem since Java 9 : full = 11.0.5, major = 11
+:version_major
+set _VERSION_MAJOR=
+for /f "tokens=1,2,3,*" %%v in ('%_JAVA_CMD% -version 2^>^&1 ^| findstr version') do (
+    set "__VERSION=%%~x"
+    if "!__VERSION:~0,2!"=="1." set __VERSION=!__VERSION:~2!
+    for /f "delims=. tokens=1,2,*" %%i in ("!__VERSION!") do set _VERSION_MAJOR=%%i
+)
+if not defined _VERSION_MAJOR (
+    echo Java major version could not be detected 1>&2
+    set _EXITCODE=1
+    goto :eof
+)
 goto :eof
 
 :: ###########################################################################
