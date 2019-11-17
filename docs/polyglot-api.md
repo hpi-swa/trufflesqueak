@@ -46,13 +46,14 @@ Java type: 'name'.                        "Looks up and returns a Java class obj
 provide further functionality. It is not recommended to rely on them as they may
 change without notice.
 All foreign objects are represented by the
-[`TruffleObject`][truffle_object_class] class, which also exposes additional
-methods that allow direct interaction with the underlying [Truffle API for
+[`TruffleObject`][truffle_object_class] class.
+The [`Interop`][interop_class] class exposes the underlying [Truffle API for
 language interoperability][truffle_interop_library].
 
 *Please note that the Polyglot API may change with newer releases of
 GraalSqueak.*
 
+[interop_class]: https://github.com/hpi-swa/graalsqueak/tree/image/src/GraalSqueak-Core.package/Interop.class
 [polyglot_class]: https://github.com/hpi-swa/graalsqueak/tree/image/src/GraalSqueak-Core.package/Polyglot.class
 [truffle_interop_library]: https://www.graalvm.org/truffle/javadoc/com/oracle/truffle/api/interop/InteropLibrary.html
 [truffle_object_class]: https://github.com/hpi-swa/graalsqueak/tree/image/src/GraalSqueak-Core.package/TruffleObject.class
