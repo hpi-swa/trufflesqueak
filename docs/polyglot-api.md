@@ -40,6 +40,38 @@ Java type: 'name'.                        "Looks up and returns a Java class obj
 (Java type: 'java.lang.System') exit: 0.  "Equivalent to `System.exit(0)`"
 ```
 
+## Interacting with Smalltalk from other languages
+
+Smalltalk images can be opened and accessed from other languages with an
+appropriate polyglot evaluate file request.
+As an example, here is how to interact with an image from Python:
+
+```python
+import polyglot
+image = polyglot.eval(                  # Load an image file
+    language='smalltalk', path='/path/to/graalsqueak.image')
+dir(image)                              # Returns a list of all Smalltalk globals
+image.Compiler                          # Returns the `Compiler` class object
+image.Compiler.evaluate_('1 + 2 * 3')   # Equivalent to `Compiler evaluate: '<string>'`
+image.Array.with_with_(True, None)      # Equivalent to `Array with: true with: nil`
+image()                                 # Opens the image
+```
+
+To be able to evaluate Smalltalk code with a polyglot evaluation request,
+`smalltalk.ImagePath` must be specified.
+The polyglot shell, for example, can be started with the following options:
+```bash
+polyglot --shell --jvm --smalltalk.ImagePath=/path/to/graalsqueak.image
+```
+
+Then, it is possible to directly evaluate Smalltalk code, the provided image
+file will be loaded automatically as part of the first evaluation request.
+Here is an example for evaluating Smalltalk code from Javascript:
+
+```javascript
+Polyglot.eval('smalltalk', '1 + 2 * 3') // Returns `9``
+```
+
 ## Internal API
 
 [`Polyglot`][polyglot_class] exposes additional methods for internal use that
