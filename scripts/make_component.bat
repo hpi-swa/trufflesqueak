@@ -67,7 +67,7 @@ set _JAVA_VERSION=%_VERSION_MAJOR%
 
 for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse HEAD`) do set _GIT_HASH=%%i
 for /f "usebackq" %%i in (`%_GIT_CMD% rev-parse --abbrev-ref HEAD`) do set _GIT_BRANCH_NAME=%%i
-for /f "usebackq" %%i in (`%_GIT_CMD% log -1 --format^="%%ct"`) do set _GIT_UNIX_TIME=%%i
+for /f "usebackq" %%i in (`%_GIT_CMD% log -1 --format^="%%ct"`) do set _GIT_UNIX_TIMESTAMP=%%i
 for /f "usebackq delims=" %%i in (`%_GIT_CMD% config user.name`) do set _GIT_COMMITTER_NAME=%%i
 for /f "usebackq" %%i in (`%_GIT_CMD% config user.email`) do set _GIT_COMMITTER_EMAIL=%%i
 (
@@ -75,7 +75,7 @@ for /f "usebackq" %%i in (`%_GIT_CMD% config user.email`) do set _GIT_COMMITTER_
     echo OS_NAME=%_OS_NAME_FOR_GU%
     echo OS_ARCH=%_OS_ARCH_FOR_GU%
     echo SOURCE="%_GIT_BRANCH_NAME%:%_GIT_HASH%"
-    echo COMMIT_INFO={"%_GIT_BRANCH_NAME%": {"commit.committer": "%_GIT_COMMITTER_NAME% <%_GIT_COMMITTER_EMAIL%>", "commit.committer-ts": "%_GIT_UNIX_TIME%", "commit.rev": "%_GIT_HASH%"}}
+    echo COMMIT_INFO={"%_GIT_BRANCH_NAME%": {"commit.committer": "%_GIT_COMMITTER_NAME% <%_GIT_COMMITTER_EMAIL%>", "commit.committer-ts": %_GIT_UNIX_TIMESTAMP%, "commit.rev": "%_GIT_HASH%"}}
     echo GRAALVM_VERSION=%_GRAALVM_VERSION%
     rem echo component_catalog=...
 ) > "%_RELEASE_FILE%"
