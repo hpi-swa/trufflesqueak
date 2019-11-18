@@ -1,0 +1,5 @@
+DEFAULT_DYNAMIC_IMPORTS=/graalsqueak,/substratevm,/vm
+DISABLE_INSTALLABLES=nfi
+DISABLE_LIBPOLYGLOT=true
+DISABLE_POLYGLOT=true
+EXCLUDE_COMPONENTS=gu,gvm,lg,ni,nic,nil,nju,polynative,rgx,svml

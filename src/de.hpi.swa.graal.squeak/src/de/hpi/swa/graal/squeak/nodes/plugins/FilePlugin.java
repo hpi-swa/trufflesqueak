@@ -85,12 +85,12 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return handle;
         }
 
-        protected final TruffleFile asTruffleFile(final NativeObject obj) {
-            return asTruffleFile(obj.asStringUnsafe());
+        protected final TruffleFile asPublicTruffleFile(final NativeObject obj) {
+            return asPublicTruffleFile(obj.asStringUnsafe());
         }
 
-        protected final TruffleFile asTruffleFile(final String obj) {
-            return method.image.env.getTruffleFile(obj);
+        protected final TruffleFile asPublicTruffleFile(final String obj) {
+            return method.image.env.getPublicTruffleFile(obj);
         }
 
         protected static final boolean inBounds(final long startIndex, final long count, final int slotSize) {
@@ -148,7 +148,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doCreate(final Object receiver, final NativeObject fullPath) {
             try {
-                asTruffleFile(fullPath).createDirectory();
+                asPublicTruffleFile(fullPath).createDirectory();
                 return receiver;
             } catch (IOException | UnsupportedOperationException | SecurityException e) {
                 throw PrimitiveFailed.GENERIC_ERROR;
@@ -168,7 +168,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doDelete(final Object receiver, final NativeObject fullPath) {
             try {
-                asTruffleFile(fullPath).delete();
+                asPublicTruffleFile(fullPath).delete();
                 return receiver;
             } catch (IOException | UnsupportedOperationException | SecurityException e) {
                 throw PrimitiveFailed.GENERIC_ERROR;
@@ -205,11 +205,11 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final String fileName = fName.asStringUnsafe();
             final TruffleFile file;
             if (".".equals(fileName)) {
-                file = asTruffleFile(pathName);
+                file = asPublicTruffleFile(pathName);
             } else if (OSDetector.SINGLETON.isWindows() && pathName.isEmpty() && fileName.endsWith(":")) {
-                file = asTruffleFile(fileName + "\\");
+                file = asPublicTruffleFile(fileName + "\\");
             } else {
-                file = asTruffleFile(pathName + method.image.env.getFileNameSeparator() + fileName);
+                file = asPublicTruffleFile(pathName + method.image.env.getFileNameSeparator() + fileName);
             }
             if (file.exists()) {
                 return newFileEntry(method.image, file, fileName);
@@ -234,7 +234,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final ArrayList<TruffleFile> fileList = new ArrayList<>();
             // TODO: avoid to use Path and FileSystems here.
             for (final Path path : FileSystems.getDefault().getRootDirectories()) {
-                fileList.add(method.image.env.getTruffleFile(path.toUri()));
+                fileList.add(method.image.env.getPublicTruffleFile(path.toUri()));
             }
             final TruffleFile[] files = fileList.toArray(new TruffleFile[fileList.size()]);
             final int index = (int) longIndex - 1;
@@ -255,7 +255,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             if (OSDetector.SINGLETON.isWindows() && !pathName.endsWith("\\")) {
                 pathName += "\\"; // new File("C:") will fail, we need to add a trailing backslash.
             }
-            final TruffleFile directory = asTruffleFile(pathName);
+            final TruffleFile directory = asPublicTruffleFile(pathName);
             if (!directory.isDirectory()) {
                 PrimitiveFailed.andTransferToInterpreter();
             }
@@ -386,7 +386,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "nativeFileName.isByteType()")
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doDelete(final Object receiver, final NativeObject nativeFileName) {
-            final TruffleFile file = asTruffleFile(nativeFileName);
+            final TruffleFile file = asPublicTruffleFile(nativeFileName);
             try {
                 file.delete();
                 return receiver;
@@ -470,7 +470,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "nativeFileName.isByteType()")
         protected final Object doOpen(@SuppressWarnings("unused") final Object receiver, final NativeObject nativeFileName, final Boolean writableFlag) {
-            return createFileHandleOrPrimFail(method.image, asTruffleFile(nativeFileName), writableFlag);
+            return createFileHandleOrPrimFail(method.image, asPublicTruffleFile(nativeFileName), writableFlag);
         }
     }
 
@@ -562,7 +562,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final Object doRename(final Object receiver, final NativeObject oldName, final NativeObject newName) {
             try {
-                asTruffleFile(oldName).move(asTruffleFile(newName));
+                asPublicTruffleFile(oldName).move(asPublicTruffleFile(newName));
             } catch (final IOException e) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }

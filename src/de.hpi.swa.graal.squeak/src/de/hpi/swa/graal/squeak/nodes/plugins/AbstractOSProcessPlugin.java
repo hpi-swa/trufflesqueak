@@ -111,7 +111,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
         protected final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Cached final BranchProfile errorProfile) {
             try {
-                method.image.env.setCurrentWorkingDirectory(method.image.env.getTruffleFile(pathString.asStringUnsafe()));
+                method.image.env.setCurrentWorkingDirectory(method.image.env.getPublicTruffleFile(pathString.asStringUnsafe()));
                 return NilObject.SINGLETON; // Signals success.
             } catch (UnsupportedOperationException | IllegalArgumentException | SecurityException e) {
                 errorProfile.enter();

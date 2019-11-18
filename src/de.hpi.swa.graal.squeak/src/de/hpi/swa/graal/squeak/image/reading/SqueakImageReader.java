@@ -54,7 +54,7 @@ public final class SqueakImageReader {
     private long currentAddressSwizzle;
 
     private SqueakImageReader(final SqueakImageContext image) {
-        final TruffleFile truffleFile = image.env.getTruffleFile(image.getImagePath());
+        final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
         if (!truffleFile.isRegularFile()) {
             if (image.getImagePath().isEmpty()) {
                 throw SqueakAbortException.create(MiscUtils.format("An image must be provided via `%s.ImagePath`.", SqueakLanguageConfig.ID));

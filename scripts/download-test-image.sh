@@ -10,5 +10,5 @@ set -e
 readonly BASE_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../" && pwd)"
 source "${BASE_DIRECTORY}/scripts/helpers.sh"
 
-ensure_test_image_64bit
+ensure_test_image_64bit "${BASE_DIRECTORY}/images"
 echo "Test images should be located at '${BASE_DIRECTORY}/images/test-64bit.image'."
