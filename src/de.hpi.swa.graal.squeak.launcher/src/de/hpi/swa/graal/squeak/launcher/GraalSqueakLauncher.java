@@ -164,6 +164,16 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         options.addAll(Arrays.asList("-c", "--code"));
     }
 
+    @Override
+    protected String[] getDefaultLanguages() {
+        return new String[0]; // Allow all languages (similar to `--polyglot`)
+    }
+
+    @Override
+    protected VMType getDefaultVMType() {
+        return VMType.JVM;
+    }
+
     private static boolean fileExists(final String path) {
         try {
             return Files.exists(Paths.get(path));
