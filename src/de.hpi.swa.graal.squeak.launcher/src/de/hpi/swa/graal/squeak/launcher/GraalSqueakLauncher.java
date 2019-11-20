@@ -28,11 +28,17 @@ import com.oracle.truffle.api.TruffleOptions;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
-    private static final String OPTION_IMAGE_PATH = SqueakLanguageConfig.ID + ".ImagePath";
-    private static final String OPTION_HEADLESS = SqueakLanguageConfig.ID + ".Headless";
-    private static final String OPTION_TRANSCRIPT_FORWARDING_FLAG = "--enable-transcript-forwarding";
+    private static final String OPTION_CODE = "--code";
+    private static final String OPTION_CODE_SHORT = "-c";
+    private static final String OPTION_HEADLESS = "--headless";
+    private static final String OPTION_HELP = "--help";
+    private static final String OPTION_TRANSCRIPT_FORWARDING = "--enable-transcript-forwarding";
     private static final String POLYGLOT_FLAG = "--polyglot";
-    private String[] remainingArguments;
+    private static final String SQUEAK_OPTION_HEADLESS = SqueakLanguageConfig.ID + ".Headless";
+    private static final String SQUEAK_OPTION_IMAGE_PATH = SqueakLanguageConfig.ID + ".ImagePath";
+
+    private boolean headless = false;
+    private String[] imageArguments;
     private String imagePath = "Squeak.image";
     private String sourceCode = null;
     private boolean enableTranscriptForwarding = false;
@@ -43,13 +49,13 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             argumentsForLauncher = arguments;
         } else {
             if (TruffleOptions.AOT) {
-                argumentsForLauncher = new String[]{"--help"};
+                argumentsForLauncher = new String[]{OPTION_HELP};
             } else {
                 final String image = FileChooser.run();
                 if (image != null) {
                     argumentsForLauncher = new String[]{POLYGLOT_FLAG, image};
                 } else {
-                    argumentsForLauncher = new String[]{"--help"};
+                    argumentsForLauncher = new String[]{OPTION_HELP};
                 }
             }
         }
@@ -58,23 +64,23 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected List<String> preprocessArguments(final List<String> arguments, final Map<String, String> polyglotOptions) {
-        List<String> unrecognized = arguments;
+        final List<String> unrecognized = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
             final String arg = arguments.get(i);
             if (fileExists(arg)) {
-                unrecognized = new ArrayList<>(arguments.subList(0, i));
                 imagePath = Paths.get(arg).toAbsolutePath().toString();
-                final List<String> remainingArgumentsList = arguments.subList(i + 1, arguments.size());
-                remainingArguments = remainingArgumentsList.toArray(new String[remainingArgumentsList.size()]);
+                final List<String> remainingArguments = arguments.subList(i + 1, arguments.size());
+                imageArguments = remainingArguments.toArray(new String[remainingArguments.size()]);
                 break;
-            } else if ("-c".equals(arg) || "--code".equals(arg)) {
-                arguments.remove(i);
-                sourceCode = arguments.get(i);
-                arguments.remove(i);
-                i--;
-            } else if (OPTION_TRANSCRIPT_FORWARDING_FLAG.equals(arg)) {
-                arguments.remove(i);
+            } else if (OPTION_CODE.equals(arg) || OPTION_CODE_SHORT.equals(arg)) {
+                sourceCode = arguments.get(++i);
+                headless = true;
+            } else if (OPTION_HEADLESS.equals(arg)) {
+                headless = true;
+            } else if (OPTION_TRANSCRIPT_FORWARDING.equals(arg)) {
                 enableTranscriptForwarding = true;
+            } else {
+                unrecognized.add(arg);
             }
         }
         return unrecognized;
@@ -86,11 +92,9 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     }
 
     protected int execute(final Context.Builder contextBuilder) {
-        contextBuilder.option(OPTION_IMAGE_PATH, imagePath);
-        if (sourceCode != null) {
-            contextBuilder.option(OPTION_HEADLESS, "true");
-        }
-        contextBuilder.arguments(getLanguageId(), remainingArguments);
+        contextBuilder.option(SQUEAK_OPTION_HEADLESS, Boolean.toString(headless));
+        contextBuilder.option(SQUEAK_OPTION_IMAGE_PATH, imagePath);
+        contextBuilder.arguments(getLanguageId(), imageArguments);
         contextBuilder.allowAllAccess(true);
         final SqueakTranscriptForwarder out;
         final SqueakTranscriptForwarder err;
@@ -120,7 +124,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
         } catch (final IllegalArgumentException e) {
-            if (e.getMessage().contains("Could not find option")) {
+            if (e.getMessage().contains("Could not find option with name " + SqueakLanguageConfig.ID)) {
                 final String thisPackageName = getClass().getPackage().getName();
                 final String parentPackageName = thisPackageName.substring(0, thisPackageName.lastIndexOf("."));
                 throw abort(String.format("Failed to load GraalSqueak. Please ensure '%s' is on the Java class path.", parentPackageName));
@@ -153,15 +157,16 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected void printHelp(final OptionCategory maxCategory) {
-        println("usage: graalsqueak <image> [optional arguments]\n");
-        println("optional arguments:");
-        println("  -c CODE, --code CODE");
-        println("                        Smalltalk code to be executed in headless mode");
+        println("Usage: graalsqueak [options] <image file> [image arguments]\n");
+        println("Basic options:");
+        println("  %s \"<code>\", %s \"<code>\"\t\tSmalltalk code to be executed in headless mode", OPTION_CODE_SHORT, OPTION_CODE);
+        println("  %s\t\t\t\tRun in headless mode", OPTION_HEADLESS);
+        println("  %s\tForward stdio to Smalltalk transcript", OPTION_TRANSCRIPT_FORWARDING);
     }
 
     @Override
     protected void collectArguments(final Set<String> options) {
-        options.addAll(Arrays.asList("-c", "--code"));
+        options.addAll(Arrays.asList(OPTION_CODE, OPTION_CODE_SHORT, OPTION_HEADLESS, OPTION_TRANSCRIPT_FORWARDING));
     }
 
     @Override
