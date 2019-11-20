@@ -54,6 +54,15 @@ public final class PointersObject extends AbstractPointersObject {
             writeNode.execute(this, i, pointersObject[i]);
         }
         assert size() == pointersObject.length;
+        if (getSqueakClass() == image.processClass) {
+            collectSuspendedContext();
+        }
+    }
+
+    private void collectSuspendedContext() {
+        final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
+        final ContextObject suspendedContext = (ContextObject) readNode.execute(this, PROCESS.SUSPENDED_CONTEXT);
+        image.suspendedContexts.put(this, suspendedContext);
     }
 
     public void become(final PointersObject other) {

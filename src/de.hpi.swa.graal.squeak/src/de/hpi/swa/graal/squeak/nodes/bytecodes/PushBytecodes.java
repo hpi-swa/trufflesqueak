@@ -55,7 +55,7 @@ public final class PushBytecodes {
 
         public PushActiveContextNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            getContextNode = GetOrCreateContextNode.create(code);
+            getContextNode = GetOrCreateContextNode.create(code, true);
         }
 
         @Override
@@ -89,7 +89,7 @@ public final class PushBytecodes {
             blockSize = j << 8 | k;
             popNNode = FrameStackPopNNode.create(code, numCopied);
             pushNode = FrameStackPushNode.create(code);
-            getOrCreateContextNode = GetOrCreateContextNode.create(code);
+            getOrCreateContextNode = GetOrCreateContextNode.create(code, true);
         }
 
         public PushClosureNode(final PushClosureNode node) {
@@ -99,7 +99,7 @@ public final class PushBytecodes {
             blockSize = node.blockSize;
             popNNode = FrameStackPopNNode.create(code, numCopied);
             pushNode = FrameStackPushNode.create(code);
-            getOrCreateContextNode = GetOrCreateContextNode.create(code);
+            getOrCreateContextNode = GetOrCreateContextNode.create(code, true);
         }
 
         public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
