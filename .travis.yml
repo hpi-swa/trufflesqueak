@@ -97,9 +97,9 @@ before_install: *clone-mx-and-graal
 script:
   - mx gate ${MX_GATE_OPTS} --strict-mode --tags ${GATE}
   - mx --java-home "${JVMCI_HOME}" squeak-svm
-  - bin/graalsqueak-svm --version:graalvm
-  - "bin/graalsqueak-svm --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\" images/test-64bit.image"
-  - bin/graalsqueak-svm --code "1 tinyBenchmarks" images/test-64bit.image
+  - bin/graalsqueak-svm --native --version:graalvm
+  - "bin/graalsqueak-svm --native --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\" images/test-64bit.image"
+  - bin/graalsqueak-svm --native --code "1 tinyBenchmarks" images/test-64bit.image
   - scripts/make_component.sh
 
 jobs:
