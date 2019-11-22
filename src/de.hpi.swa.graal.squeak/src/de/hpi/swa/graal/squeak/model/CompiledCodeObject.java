@@ -38,6 +38,7 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
+    public static final String SOURCE_UNAVAILABLE = "Source unavailable";
 
     public enum SLOT_IDENTIFIER {
         THIS_MARKER,
@@ -107,7 +108,16 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     public final Source getSource() {
         if (source == null) {
-            source = Source.newBuilder(SqueakLanguageConfig.ID, CompiledCodeObjectPrinter.getString(this), toString()).build();
+            String contents;
+            String toString;
+            try {
+                contents = CompiledCodeObjectPrinter.getString(this);
+                toString = toString();
+            } catch (final RuntimeException e) {
+                contents = SOURCE_UNAVAILABLE;
+                toString = "<unavailable>";
+            }
+            source = Source.newBuilder(SqueakLanguageConfig.ID, contents, toString).mimeType("text/plain").build();
         }
         return source;
     }
