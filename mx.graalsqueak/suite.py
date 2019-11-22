@@ -85,7 +85,6 @@ suite = {
                 "GRAALSQUEAK_SHARED",
                 "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
-                "truffle:TRUFFLE_API",
             ],
             "checkstyle": "de.hpi.swa.graal.squeak",
             "jacoco": "include",
@@ -143,15 +142,12 @@ suite = {
                 "truffle:TRUFFLE_API",
             ],
             "exclude": ["mx:JUNIT"],
-            "sourcesPath": "graalsqueak.src.zip",
         },
 
         "GRAALSQUEAK_SHARED": {
             "dependencies": [
                 "de.hpi.swa.graal.squeak.shared",
             ],
-            "path": "graalsqueak-shared.jar",
-            "sourcesPath": "graalsqueak-shared.src.zip",
         },
 
         "GRAALSQUEAK_LAUNCHER": {
@@ -162,10 +158,8 @@ suite = {
             "distDependencies": [
                 "GRAALSQUEAK_SHARED",
                 "sdk:GRAAL_SDK",
-                "truffle:TRUFFLE_API",
                 "sdk:LAUNCHER_COMMON",
             ],
-            "sourcesPath": "graalsqueak-launcher.src.zip",
         },
 
         "GRAALSQUEAK_TCK": {
@@ -175,10 +169,9 @@ suite = {
             ],
             "exclude": ["mx:JUNIT"],
             "distDependencies": [
-                "GRAALSQUEAK_SHARED",
+                "GRAALSQUEAK",  # Work around TCK bug in 19.3 (talk to @eregon)
                 "sdk:POLYGLOT_TCK",
             ],
-            "sourcesPath": "graalsqueak.tck.src.zip",
             "testDistribution": True,
         },
 
@@ -196,14 +189,12 @@ suite = {
 
         "GRAALSQUEAK_TEST": {
             "description": "JUnit and SUnit tests",
-            "path": "graalsqueak_test.jar",
             "javaCompliance": "8+",
             "dependencies": [
                 "de.hpi.swa.graal.squeak.test",
             ],
             "exclude": ["mx:JUNIT"],
             "distDependencies": ["GRAALSQUEAK"],
-            "sourcesPath": "graalsqueak.tests.src.zip",
             "testDistribution": True,
         },
     },

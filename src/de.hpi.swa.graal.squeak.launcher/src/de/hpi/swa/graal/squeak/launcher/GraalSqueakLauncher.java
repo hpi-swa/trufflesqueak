@@ -18,12 +18,10 @@ import java.util.Set;
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
-
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleOptions;
 
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
@@ -48,7 +46,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         if (arguments.length > 1 || arguments.length == 1 && !POLYGLOT_FLAG.equals(arguments[0])) {
             argumentsForLauncher = arguments;
         } else {
-            if (TruffleOptions.AOT) {
+            if (isAOT()) {
                 argumentsForLauncher = new String[]{OPTION_HELP};
             } else {
                 final String image = FileChooser.run();
@@ -194,8 +192,8 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     }
 
     private static String getRuntimeName() {
-        final String vmName = System.getProperty("java.vm.name", "unknown");
-        final String mode = Truffle.getRuntime().getName().equals("Interpreted") ? "interpreted" : "Graal-compiled";
-        return String.format("%s (%s)", vmName, mode);
+        try (Engine engine = Engine.create()) {
+            return engine.getImplementationName();
+        }
     }
 }
