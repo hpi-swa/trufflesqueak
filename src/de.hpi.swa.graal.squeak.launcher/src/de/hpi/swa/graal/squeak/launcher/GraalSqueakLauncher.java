@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.graalvm.launcher.AbstractLanguageLauncher;
+import org.graalvm.nativeimage.ImageInfo;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -46,7 +47,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         if (arguments.length > 1 || arguments.length == 1 && !POLYGLOT_FLAG.equals(arguments[0])) {
             argumentsForLauncher = arguments;
         } else {
-            if (isAOT()) {
+            if (ImageInfo.inImageCode()) {
                 argumentsForLauncher = new String[]{OPTION_HELP};
             } else {
                 final String image = FileChooser.run();
