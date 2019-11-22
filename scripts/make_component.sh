@@ -55,8 +55,8 @@ if [[ ! -f "${GRAALSQUEAK_JAR}" ]]; then
 fi
 
 mkdir -p "${LANGUAGE_PATH}" "${LANGUAGE_PATH}/bin" "${LIB_GRAALVM_PATH}"
-cp "${GRAALSQUEAK_DIR}/graalsqueak.jar" \
-	"${GRAALSQUEAK_DIR}/graalsqueak-shared.jar" \
+cp $(mx --quiet paths GRAALSQUEAK) \
+	$(mx --quiet paths GRAALSQUEAK_SHARED) \
     "${LANGUAGE_PATH}"
 cp "${BASE_DIR}/${TEMPLATE_LAUNCHER}" "${LANGUAGE_PATH}/bin/graalsqueak"
 cp "${BASE_DIR}/${TEMPLATE_WIN_LAUNCHER}" "${LANGUAGE_PATH}/bin/graalsqueak.cmd"

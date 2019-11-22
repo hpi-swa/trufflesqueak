@@ -169,7 +169,7 @@ suite = {
             ],
             "exclude": ["mx:JUNIT"],
             "distDependencies": [
-                "GRAALSQUEAK",  # Work around TCK bug in 19.3 (talk to @eregon)
+                "GRAALSQUEAK_SHARED",
                 "sdk:POLYGLOT_TCK",
             ],
             "testDistribution": True,
