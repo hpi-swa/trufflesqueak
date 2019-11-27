@@ -43,12 +43,9 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
     @Specialization(guards = {"!code.image.isHeadless() || selector.isAllowedInHeadlessMode()", "lookupResult != null"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
-        return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs);
-    }
-
-    @Specialization(guards = {"!code.image.isHeadless() || selector.isAllowedInHeadlessMode()", "lookupResult != null"})
-    protected final Object doDispatchNeedsSender(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
-                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
+        if (selector.isSignalFailure()) {
+            System.out.println("#signalFailure: hashCode is: " + selector.getSqueakHash());
+        }
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs);
     }
 

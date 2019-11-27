@@ -37,6 +37,9 @@ public final class SendSelectorNode extends Node {
     public Object executeSend(final VirtualFrame frame, final Object... receiverAndArguments) {
         final ClassObject rcvrClass = lookupClassNode.executeLookup(receiverAndArguments[0]);
         final CompiledMethodObject method = (CompiledMethodObject) lookupMethodNode.executeLookup(rcvrClass, selector);
+        if (selector.isSignalFailure() && method != null) {
+            System.out.println("#signalFailure: hashCode is: " + selector.getSqueakHash());
+        }
         final Object result = dispatchNode.executeDispatch(frame, method, receiverAndArguments);
         assert result != null : "Result of a message send should not be null";
         return result;

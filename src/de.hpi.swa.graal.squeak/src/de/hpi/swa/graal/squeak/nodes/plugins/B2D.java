@@ -4561,7 +4561,7 @@ public final class B2D {
         loadPointfrom(GW_POINT_2, via);
         loadPointfrom(GW_POINT_3, end);
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
         }
         transformPoints(3);
         nSegments = loadAndSubdivideBezierFromviatoisWide(false);
@@ -4602,16 +4602,16 @@ public final class B2D {
             pointsIsArray = false;
             length = slotSizeOf((NativeObject) points);
             if (!(length == nSegments * 3 || length == nSegments * 6)) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
         } else {
             /* Must be Array of points */
             if (!isArray(points)) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
             length = slotSizeOf((ArrayObject) points);
             if (length != nSegments * 3) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
             pointsIsArray = true;
         }
@@ -4689,7 +4689,7 @@ public final class B2D {
         final boolean pointsShort;
 
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
         }
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
@@ -4838,16 +4838,16 @@ public final class B2D {
             pointsIsArray = false;
             length = slotSizeOf((NativeObject) points);
             if (!(length == nPoints || nPoints * 2 == length)) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
         } else {
             /* Must be Array of points */
             if (!isArray(points)) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
             length = slotSizeOf((ArrayObject) points);
             if (length != nPoints) {
-                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+                PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
             }
             pointsIsArray = true;
         }
@@ -5268,7 +5268,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(GEF_WRONG_FILL);
         }
         if (slotSizeOf(bitsOop) < lastExportedRightXGet() - lastExportedLeftXGet()) {
-            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
         }
         if (failed()) {
             return null;
@@ -5557,7 +5557,7 @@ public final class B2D {
         loadPointfrom(GW_POINT_1, fetchPointerofObject(0, rectOop));
         loadPointfrom(GW_POINT_2, fetchPointerofObject(1, rectOop));
         if (failed()) {
-            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT);
+            PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
         }
         clipMinXPut(point1GetX());
         clipMinYPut(point1GetY());

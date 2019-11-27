@@ -5,8 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
-import java.util.logging.Level;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -80,19 +78,30 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             try {
                 image.lastSeenContext = null;  // Reset materialization mechanism.
                 // doIt: activeContext.printSqStackTrace();
+                StringBuilder b = new StringBuilder("Starting top level stack trace:\n");
+                activeContext.printSqMaterializedStackTraceOn(b);
+                LOG.fine(b.toString());
                 final Object result = callNode.call(activeContext.getCallTarget());
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
-                LOG.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
+                b = new StringBuilder("Local Return on top-level:\n");
+                activeContext.printSqMaterializedStackTraceOn(b);
+                LOG.fine(b.toString());
             } catch (final ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
-                LOG.log(Level.FINE, "Process Switch: {0}", activeContext);
+                final StringBuilder b = new StringBuilder("Process Switch:\n");
+                activeContext.printSqMaterializedStackTraceOn(b);
+                LOG.fine(b.toString());
             } catch (final NonLocalReturn nlr) {
                 final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
                 activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
-                LOG.log(Level.FINE, "Non Local Return on top-level: {0}", activeContext);
+                final StringBuilder b = new StringBuilder("Non Local Return on top-level:\n");
+                activeContext.printSqMaterializedStackTraceOn(b);
+                LOG.fine(b.toString());
             } catch (final NonVirtualReturn nvr) {
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
-                LOG.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
+                final StringBuilder b = new StringBuilder("Non Virtual Return on top-level:\n");
+                activeContext.printSqMaterializedStackTraceOn(b);
+                LOG.fine(b.toString());
             }
             assert image.stackDepth == 0 : "Stack depth should be zero before switching to another context";
         }

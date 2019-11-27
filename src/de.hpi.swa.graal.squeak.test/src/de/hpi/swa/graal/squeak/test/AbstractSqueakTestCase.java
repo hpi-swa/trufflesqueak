@@ -27,7 +27,9 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -39,11 +41,7 @@ public abstract class AbstractSqueakTestCase {
 
     protected static Context context;
     protected static SqueakImageContext image;
-
-    protected CompiledCodeObject makeMethod(final byte[] bytes) {
-        // Always add three literals...
-        return makeMethod(bytes, new Object[]{68419598L, null, null});
-    }
+    protected static PointersObject nilClassBinding;
 
     protected static CompiledMethodObject makeMethod(final byte[] bytes, final Object[] literals) {
         return new CompiledMethodObject(image, bytes, literals);
@@ -55,7 +53,11 @@ public abstract class AbstractSqueakTestCase {
             bytes[i] = (byte) intbytes[i];
         }
         bytes[intbytes.length] = 0; // Set flagByte = 0 for no method trailer.
-        return makeMethod(bytes, literals);
+        if (literals.length == 0 || literals[literals.length - 1] != nilClassBinding) {
+            return makeMethod(bytes, ArrayUtils.copyWithLast(literals, nilClassBinding));
+        } else {
+            return makeMethod(bytes, literals);
+        }
     }
 
     protected static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
@@ -63,14 +65,13 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected CompiledMethodObject makeMethod(final int... intbytes) {
-        return makeMethod(new Object[]{makeHeader(4, 5, 14, false, true)}, intbytes);
+        return makeMethod(new Object[]{makeHeader(0, 5, 14, false, true), nilClassBinding}, intbytes);
     }
 
     protected static Object runMethod(final CompiledMethodObject code, final Object receiver, final Object... arguments) {
-        final VirtualFrame frame = createTestFrame(code);
         Object result = null;
         try {
-            result = createContext(code, receiver, arguments).execute(frame);
+            result = DispatchUneagerlyNode.getUncached().executeDispatch(code, ArrayUtils.copyWithFirst(arguments, receiver), NilObject.SINGLETON);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             fail("broken test");
         }

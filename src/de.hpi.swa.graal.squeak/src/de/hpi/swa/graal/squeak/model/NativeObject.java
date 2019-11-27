@@ -117,10 +117,14 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         if (isByteType()) {
             final byte[] bytes = chunk.getBytes();
             setStorage(bytes);
-            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, bytes)) {
-                image.setDebugErrorSelector(this);
-            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, bytes)) {
-                image.setDebugSyntaxErrorSelector(this);
+            if (getSqueakClass() == image.aboutToReturnSelector.getSqueakClass()) {
+                if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, bytes)) {
+                    image.setDebugErrorSelector(this);
+                } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, bytes)) {
+                    image.setDebugSyntaxErrorSelector(this);
+                } else if (image.getSignalFailureSelector() == null && Arrays.equals(SqueakImageContext.SIGNAL_FAILURE_SELECTOR_NAME, bytes)) {
+                    image.setSignalFailureSelector(this);
+                }
             }
         } else if (isShortType()) {
             setStorage(chunk.getShorts());
@@ -331,6 +335,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean isDoesNotUnderstand() {
         return this == image.doesNotUnderstand;
+    }
+
+    public boolean isSignalFailure() {
+        return this == image.getSignalFailureSelector();
     }
 
     /*

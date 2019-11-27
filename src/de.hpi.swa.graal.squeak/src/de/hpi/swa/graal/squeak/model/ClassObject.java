@@ -100,6 +100,23 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        if (isAMetaClass()) {
+            final Object classInstance = pointers[METACLASS.THIS_CLASS];
+            if (classInstance != NilObject.SINGLETON) {
+                return ((ClassObject) classInstance).getClassNameUnsafe() + " class";
+            } else {
+                return "Unknown metaclass";
+            }
+        } else if (size() >= 11) {
+            return getClassNameUnsafe();
+        } else {
+            return "Unknown behavior";
+        }
+    }
+
+    @Override
     @TruffleBoundary
     public String getClassName() {
         if (isAMetaClass()) {

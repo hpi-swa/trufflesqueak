@@ -5,14 +5,13 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
-import java.util.logging.Level;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -168,7 +167,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         return callPrimitiveNode.primitiveNode.executePrimitive(frame);
                     } catch (final PrimitiveFailed e) {
                         getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                        LOG.log(Level.FINE, () -> "Failed primitive " + callPrimitiveNode.primitiveNode.getClass().getName());
                         /* continue with fallback code. */
                     }
                 }
@@ -209,11 +207,13 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop;
             } else {
+                LOG.finer(() -> "" + node + ", at pc " + node.getIndex());
                 pc = node.getSuccessorIndex();
                 if (node instanceof AbstractSendNode) {
                     FrameAccess.setInstructionPointer(frame, code, pc);
                 }
                 node.executeVoid(frame);
+                LOG.finer(() -> stackFor(frame));
                 continue bytecode_loop;
             }
         }
@@ -222,6 +222,27 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         assert backJumpCounter >= 0;
         LoopNode.reportLoopCount(this, backJumpCounter);
         return returnValue;
+    }
+
+    private String stackFor(final VirtualFrame frame) {
+        final int numStackSlots = code.getNumStackSlots();
+        final StringBuilder b = new StringBuilder("\tStack of frame @");
+        b.append(frame.hashCode());
+        b.append(" (current pointer is ");
+        b.append(FrameAccess.getStackPointer(frame, code));
+        b.append("):\n");
+        for (int i = 0; i < numStackSlots; i++) {
+            final FrameSlot slot = code.getStackSlot(i);
+            final Object value = frame.getValue(slot);
+            if (value != null) {
+                b.append("\t\t");
+                b.append(value);
+                b.append("\n");
+            } else {
+                break; // This and all following slots are not in use.
+            }
+        }
+        return b.toString();
     }
 
     private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {

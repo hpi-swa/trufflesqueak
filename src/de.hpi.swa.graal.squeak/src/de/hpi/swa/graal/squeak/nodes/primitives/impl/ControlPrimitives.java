@@ -81,6 +81,7 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ControlPrimitives.class);
 
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
@@ -205,6 +206,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
+            LOG.fine(() -> "Signalling semaphore @" + receiver.hashCode() + " in primitive 85 signal");
             signalSemaphoreNode.executeSignal(frame, receiver);
             return AbstractSendNode.NO_RESULT;
         }
@@ -225,6 +227,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             final long excessSignals = pointersReadNode.executeLong(receiver, SEMAPHORE.EXCESS_SIGNALS);
+            LOG.fine(() -> "Wait sent to empty semaphore @" + receiver.hashCode() + " with initially " + excessSignals + " excessSignals in primitive 86 wait");
             writeNode.execute(receiver, SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
             return AbstractSendNode.NO_RESULT;
         }
@@ -235,7 +238,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
-            linkProcessToListNode.executeLink(method.image.getActiveProcess(pointersReadNode), receiver);
+            final PointersObject activeProcess = method.image.getActiveProcess(pointersReadNode);
+            linkProcessToListNode.executeLink(activeProcess, receiver);
+            LOG.fine(() -> "Blocking active process @" + activeProcess.hashCode() + " on semaphore @" + receiver.hashCode() + " in primitive 86 wait");
             wakeHighestPriorityNode.executeWake(frame);
             return AbstractSendNode.NO_RESULT;
         }
@@ -266,6 +271,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             // keep receiver on stack before resuming other process
             pushNode.executeWrite(frame, receiver);
+            LOG.fine(() -> "Attempting to resume process @" + receiver.hashCode() + " in primitive 87 Resume");
             resumeProcessNode.executeResume(frame, receiver);
             return AbstractSendNode.NO_RESULT;
         }
@@ -285,6 +291,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, NilObject.SINGLETON);
+            LOG.fine(() -> "Suspending active process @" + receiver.hashCode() + " in primitive 88 suspend");
             wakeHighestPriorityNode.executeWake(frame);
             return AbstractSendNode.NO_RESULT; // result already pushed above
         }
@@ -294,8 +301,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final RemoveProcessFromListNode removeProcessNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             final PointersObject oldList = readNode.executePointers(receiver, PROCESS.LIST);
-            removeProcessNode.executeRemove(receiver, oldList);
             writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
+            LOG.fine(() -> "Suspending non-active process @" + receiver.hashCode() + " in primitive 88 suspend");
+            removeProcessNode.executeRemove(receiver, oldList);
             return oldList;
         }
 
@@ -683,6 +691,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             pushNode.executeWrite(frame, mutex); // keep receiver on stack
             final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode);
             writeNode.execute(mutex, MUTEX.OWNER, owningProcess);
+            LOG.fine(() -> "Attempting to resume process @" + owningProcess.hashCode() + " in primitive 185 ExitCriticalSection");
             resumeProcessNode.executeResume(frame, owningProcess);
             return AbstractSendNode.NO_RESULT;
         }
@@ -716,7 +725,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Shared("linkProcessToListNode") @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, BooleanObject.FALSE);
-            linkProcessToListNode.executeLink(method.image.getActiveProcess(readNode), mutex);
+            final PointersObject activeProcess = method.image.getActiveProcess(readNode);
+            linkProcessToListNode.executeLink(activeProcess, mutex);
+            LOG.fine(() -> "Blocking active process @" + activeProcess.hashCode() + " on mutex in primitive 186 EnterCriticalSection");
             wakeHighestPriorityNode.executeWake(frame);
             return AbstractSendNode.NO_RESULT;
         }
@@ -741,6 +752,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, BooleanObject.FALSE);
             linkProcessToListNode.executeLink(effectiveProcess, mutex);
+            LOG.fine(() -> "Blocking active process @" + effectiveProcess.hashCode() + " on mutex in primitive 186 EnterCriticalSection");
             wakeHighestPriorityNode.executeWake(frame);
             return AbstractSendNode.NO_RESULT;
         }

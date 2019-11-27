@@ -567,6 +567,26 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
     }
 
+    public void printSqMaterializedStackTraceOn(final StringBuilder b) {
+        ContextObject current = this;
+        while (current != null) {
+            final CompiledCodeObject code = current.getBlockOrMethod();
+            final Object[] rcvrAndArgs = current.getReceiverAndNArguments(code.getNumArgsAndCopied());
+            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
+            b.append('\n');
+            final Object sender = current.getFrameSender();
+            if (sender == NilObject.SINGLETON) {
+                break;
+            } else if (sender instanceof FrameMarker) {
+                b.append(sender);
+                b.append('\n');
+                break;
+            } else {
+                current = (ContextObject) sender;
+            }
+        }
+    }
+
     public MaterializedFrame getTruffleFrame() {
         return truffleFrame;
     }
@@ -617,7 +637,10 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void setProcess(final PointersObject process) {
-        assert process != null && (this.process == null || this.process == process);
+        if (this.process == process) {
+            return;
+        }
+        assert process != null && this.process == null;
         this.process = process;
     }
 }

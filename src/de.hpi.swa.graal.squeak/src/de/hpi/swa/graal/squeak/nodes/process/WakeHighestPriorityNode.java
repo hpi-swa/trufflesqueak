@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.process;
 
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
@@ -21,8 +22,12 @@ import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.Abstr
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ControlPrimitives.class);
+
     @Child private ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.create();
     @Child private ArrayObjectSizeNode arraySizeNode = ArrayObjectSizeNode.create();
     @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
@@ -48,13 +53,37 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
             while (!processList.isEmptyList(pointersReadNode)) {
                 final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
                 final Object newContext = pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+                final int priority = (int) (p + 1);
                 if (newContext instanceof ContextObject) {
-                    contextNode.executeGet(frame).transferTo(pointersReadNode, pointersWriteNode, newProcess);
+                    final ContextObject thisContext = contextNode.executeGet(frame);
+                    LOG.fine(() -> logSwitch(newProcess, priority, thisContext, (ContextObject) newContext));
+                    thisContext.transferTo(pointersReadNode, pointersWriteNode, newProcess);
                     throw SqueakException.create("Should not be reached");
+                } else {
+                    LOG.severe(() -> "evicted zombie process from run queue " + priority);
                 }
             }
         }
         errorProfile.enter();
         throw SqueakException.create("scheduler could not find a runnable process");
     }
+
+    private String logSwitch(final PointersObject newProcess, final int priority, final ContextObject thisContext, final ContextObject newContext) {
+        final StringBuilder b = new StringBuilder();
+        b.append("Switching from process @");
+        final PointersObject currentProcess = image.getActiveProcess(pointersReadNode);
+        b.append(currentProcess.hashCode());
+        b.append(" with priority ");
+        b.append(pointersReadNode.execute(currentProcess, PROCESS.PRIORITY));
+        b.append(" and stack\n");
+        thisContext.printSqMaterializedStackTraceOn(b);
+        b.append("\n...to process @");
+        b.append(newProcess.hashCode());
+        b.append(" with priority ");
+        b.append(priority);
+        b.append(" and stack\n");
+        newContext.printSqMaterializedStackTraceOn(b);
+        return b.toString();
+    }
+
 }

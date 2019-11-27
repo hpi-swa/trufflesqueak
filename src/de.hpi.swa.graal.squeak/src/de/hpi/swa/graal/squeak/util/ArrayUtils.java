@@ -79,6 +79,13 @@ public final class ArrayUtils {
         return newObjects;
     }
 
+    public static Object[] copyWithLast(final Object[] objects, final Object last) {
+        final int numObjects = objects.length;
+        final Object[] newObjects = Arrays.copyOf(objects, numObjects + 1);
+        newObjects[numObjects] = last;
+        return newObjects;
+    }
+
     public static boolean equals(final byte[] bytes, final String string) {
         final int bytesLength = bytes.length;
         if (bytesLength == string.length()) {

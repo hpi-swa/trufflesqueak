@@ -10,6 +10,9 @@ import static org.junit.Assert.assertNotEquals;
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -19,6 +22,7 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -28,28 +32,52 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
-    private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2;
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, AbstractSqueakTestCaseWithImage.class);
+    private static final int SQUEAK_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("SQUEAK_TIMEOUT", "2000"));
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
+    private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("IMAGE_LOAD_TIMEOUT", "200"));
     private static final int PRIORITY_10_LIST_INDEX = 9;
+    private static final int USER_PRIORITY_LIST_INDEX = 39;
     private static final String PASSED_VALUE = "passed";
 
     private static PointersObject idleProcess;
+    private static volatile boolean isClear;     // for now we are single-threaded, so the flag can
+                                                 // be static
 
     @BeforeClass
     public static void loadTestImage() {
         final String imagePath = getPathToTestImage();
-        loadImageContext(imagePath);
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+        final Future<?> future = executor.submit(() -> loadImageContext(imagePath));
+        executor.shutdown(); // This does not cancel the already-scheduled task.
+        try {
+            future.get(TEST_IMAGE_LOAD_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Test image load from " + imagePath + " ws interrupted");
+        } catch (final ExecutionException e) {
+            throw new IllegalStateException(e.getCause());
+        } catch (final TimeoutException e) {
+            throw new IllegalStateException("Timed out while trying to load the image from " + imagePath +
+                            ".\nMake sure it is not already loaded by another executable");
+        } finally {
+            future.cancel(true);
+        }
         image.getOutput().println("Test image loaded from " + imagePath + "...");
         patchImageForTesting();
+        isClear = true;
     }
 
     @AfterClass
     public static void cleanUp() {
         idleProcess = null;
+        image.interrupt.reset();
         destroyImageContext();
     }
 
@@ -120,7 +148,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     protected static Object evaluate(final String expression) {
         context.enter();
         try {
-            ensureCleanImageState();
+            LOG.fine(() -> "\nEvaluating " + expression + image.currentState());
             final ExecuteTopLevelContextNode doItContextNode = image.getDoItContextNode(expression);
             return Truffle.getRuntime().createCallTarget(doItContextNode).call();
         } finally {
@@ -129,48 +157,128 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void ensureCleanImageState() {
-        image.interrupt.reset();
         if (idleProcess != null) {
             if (idleProcess.instVarAt0Slow(PROCESS.NEXT_LINK) != NilObject.SINGLETON) {
                 image.printToStdErr("Resetting dirty idle process...");
                 idleProcess.instVarAtPut0Slow(PROCESS.NEXT_LINK, NilObject.SINGLETON);
             }
             resetProcessLists();
+            resetSemaphoreLists();
+            ensureTimerLoop();
+            ensureUserProcessForTesting();
+// LOG.fine(() -> "After ensuring clean image state" + image.currentState());
         }
     }
 
     private static void resetProcessLists() {
         final Object[] lists = ((ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
-            final PointersObject linkedList = (PointersObject) lists[i];
+            final Object expectedValue = i == PRIORITY_10_LIST_INDEX ? idleProcess : NilObject.SINGLETON;
+            resetList(expectedValue, lists[i], "scheduler list #" + (i + 1));
+        }
+    }
+
+    private static void resetSemaphoreLists() {
+        image.interrupt.reset();
+        final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
+        resetList(NilObject.SINGLETON, interruptSema, "Interrupt semaphore");
+        // The timer semaphore is taken care of in ensureTimerLoop, since the delays need to be
+        // reset as well
+        final ArrayObject oldExternalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
+        image.evaluate("[ ExternalObjectTable current " +
+                        "            initializeCaches;" +
+                        "            externalObjectsArray: (Smalltalk specialObjectsArray at: 39 put: (Array new: 20)) ] value");
+        final ArrayObject externalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
+        assert oldExternalObjects.getSqueakHash() != externalObjects.getSqueakHash();
+    }
+
+    private static void resetList(final Object newValue, final Object listOrNil, final String linkedListName) {
+        if (listOrNil instanceof PointersObject) {
+            final PointersObject linkedList = (PointersObject) listOrNil;
             final Object key = linkedList.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
             final Object value = linkedList.instVarAt0Slow(LINKED_LIST.LAST_LINK);
-            final Object expectedValue = i == PRIORITY_10_LIST_INDEX ? idleProcess : NilObject.SINGLETON;
-            if (key != expectedValue || value != expectedValue) {
-                image.printToStdErr(String.format("Removing inconsistent entry (%s->%s) from scheduler list #%s...", key, value, i + 1));
-                linkedList.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, expectedValue);
-                linkedList.instVarAtPut0Slow(LINKED_LIST.LAST_LINK, expectedValue);
+            if (key != newValue || value != newValue) {
+                LOG.severe(String.format("Removing inconsistent entry (%s->%s) from %s...", key, value, linkedListName));
+                linkedList.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, newValue);
+                linkedList.instVarAtPut0Slow(LINKED_LIST.LAST_LINK, newValue);
             }
+        }
+    }
+
+    private static void ensureTimerLoop() {
+        image.evaluate("[(Delay classPool at: #SuspendedDelays ifAbsent: [OrderedCollection new]) removeAll. " +
+                        "Delay classPool at: #ScheduledDelay put: nil; at: #FinishedDelay put: nil; at: #ActiveDelay put: nil. " +
+                        "Delay startTimerEventLoop] value");
+    }
+
+    private static void ensureUserProcessForTesting() {
+        final PointersObject activeProcess = image.getActiveProcessSlow();
+        final long activePriority = (long) activeProcess.instVarAt0Slow(PROCESS.PRIORITY);
+        if (activePriority == USER_PRIORITY_LIST_INDEX + 1) {
+            return;
+        }
+// LOG.severe(() -> "STARTING ACTIVE PROCESS @" + activeProcess.hashCode() + " PRIORITY WAS: " +
+// activePriority + image.currentState());
+        final PointersObject newProcess = new PointersObject(image, image.processClass);
+        newProcess.instVarAtPut0Slow(PROCESS.PRIORITY, Long.valueOf(USER_PRIORITY_LIST_INDEX + 1));
+        image.getScheduler().instVarAtPut0Slow(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
+
+        if (activePriority == PRIORITY_10_LIST_INDEX + 1) {
+            assert activeProcess == idleProcess;
+            LOG.severe(() -> "IDLE PROCESS IS ACTIVE, REINSTALL IT (ProcessorScheduler installIdleProcess)");
+            image.evaluate("ProcessorScheduler installIdleProcess");
+            final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
+            final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
+            final Object firstLink = priority10List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
+            final Object lastLink = priority10List.instVarAt0Slow(LINKED_LIST.LAST_LINK);
+            assert firstLink instanceof PointersObject && firstLink == lastLink &&
+                            ((PointersObject) firstLink).instVarAt0Slow(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Unexpected idleProcess state";
+            idleProcess = (PointersObject) firstLink;
+// LOG.fine(() -> image.currentState());
+            return;
         }
     }
 
     protected static void patchMethod(final String className, final String selector, final String body) {
         image.getOutput().println("Patching " + className + ">>#" + selector + "...");
-        final Object patchResult = evaluate(String.join(" ",
-                        className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
-                        "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
-        assertNotEquals(NilObject.SINGLETON, patchResult);
+        context.enter();
+        try {
+            final Object patchResult = image.evaluate(String.join(" ",
+                            className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
+                            "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
+            assertNotEquals(NilObject.SINGLETON, patchResult);
+        } finally {
+            context.leave();
+        }
     }
 
     protected static TestResult runTestCase(final TestRequest request) {
-        return runWithTimeout(request, () -> {
-            context.enter();
-            try {
-                return extractFailuresAndErrorsFromTestResult(request);
-            } finally {
-                context.leave();
+        ensureCleanImageState();
+        System.out.print("Running testcase " + request.testCase + "." + request.testSelector);
+        if (!isClear) {
+            throw new IllegalStateException("The previous test case has not finished yet");
+        }
+        try {
+            return runWithTimeout(request, () -> {
+                isClear = false;
+                context.enter();
+                try {
+                    return extractFailuresAndErrorsFromTestResult(request);
+                } finally {
+                    context.leave();
+                    isClear = true;
+                }
+            });
+        } finally {
+            if (!isClear) {
+                image.printToStdErr("The worker thread has not finished running, we have to close it");
+                if (!request.reloadImageOnException) {
+                    // regardless of what the request says, we need to clean up.
+                    cleanUp();
+                    loadTestImage();
+                }
             }
-        });
+        }
     }
 
     private static TestResult extractFailuresAndErrorsFromTestResult(final TestRequest request) {
@@ -187,18 +295,19 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             if (shouldPass) {
                 return TestResult.failure(testResult);
             } else {
-                return TestResult.success("expected failure");
+                return TestResult.failure("expected failure in Squeak");
             }
         }
     }
 
     private static String testCommand(final TestRequest request) {
-        return String.format("[[(%s selector: #%s) runCase. '%s'] on: TestFailure do: [:e | e asString ]] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack]",
+        return String.format(
+                        "[[(%s selector: #%s) runCase. '%s'] on: TestFailure do: [:e | | s | s := WriteStream on: (String new: 1500). s nextPutAll: e asString; cr. e signalerContext errorReportOn: s. s contents]] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack]",
                         request.testCase, request.testSelector, PASSED_VALUE);
     }
 
     private static String shouldPassCommand(final TestRequest request) {
-        return String.format("(%s selector: #%s) shouldPass", request.testCase, request.testSelector, PASSED_VALUE);
+        return String.format("[(%s selector: #%s) shouldPass] on: Error do: [:e | false]", request.testCase, request.testSelector, PASSED_VALUE);
     }
 
     private static TestResult runWithTimeout(final TestRequest request, final Supplier<TestResult> action) {
