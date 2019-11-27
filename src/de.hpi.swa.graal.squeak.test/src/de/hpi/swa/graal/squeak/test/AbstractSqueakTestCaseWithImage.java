@@ -217,8 +217,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (activePriority == USER_PRIORITY_LIST_INDEX + 1) {
             return;
         }
-// LOG.severe(() -> "STARTING ACTIVE PROCESS @" + activeProcess.hashCode() + " PRIORITY WAS: " +
-// activePriority + image.currentState());
         final PointersObject newProcess = new PointersObject(image, image.processClass);
         newProcess.instVarAtPut0Slow(PROCESS.PRIORITY, Long.valueOf(USER_PRIORITY_LIST_INDEX + 1));
         image.getScheduler().instVarAtPut0Slow(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
@@ -234,7 +232,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             assert firstLink instanceof PointersObject && firstLink == lastLink &&
                             ((PointersObject) firstLink).instVarAt0Slow(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Unexpected idleProcess state";
             idleProcess = (PointersObject) firstLink;
-// LOG.fine(() -> image.currentState());
             return;
         }
     }
@@ -254,7 +251,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     protected static TestResult runTestCase(final TestRequest request) {
         ensureCleanImageState();
-        System.out.print("Running testcase " + request.testCase + "." + request.testSelector);
+        System.out.println("\nRunning testcase " + request.testCase + "." + request.testSelector);
         if (!isClear) {
             throw new IllegalStateException("The previous test case has not finished yet");
         }
