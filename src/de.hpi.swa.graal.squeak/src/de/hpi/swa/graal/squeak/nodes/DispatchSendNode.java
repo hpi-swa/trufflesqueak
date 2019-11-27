@@ -44,7 +44,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, @SuppressWarnings("unused") final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
         if (selector.isSignalFailure()) {
-            System.out.println("#signalFailure: hashCode is: " + selector.getSqueakHash());
+            System.out.println("#signalFailure: is being sent");
         }
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs);
     }

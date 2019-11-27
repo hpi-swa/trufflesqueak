@@ -38,7 +38,7 @@ public final class SendSelectorNode extends Node {
         final ClassObject rcvrClass = lookupClassNode.executeLookup(receiverAndArguments[0]);
         final CompiledMethodObject method = (CompiledMethodObject) lookupMethodNode.executeLookup(rcvrClass, selector);
         if (selector.isSignalFailure() && method != null) {
-            System.out.println("#signalFailure: hashCode is: " + selector.getSqueakHash());
+            System.out.println("#signalFailure: is being sent");
         }
         final Object result = dispatchNode.executeDispatch(frame, method, receiverAndArguments);
         assert result != null : "Result of a message send should not be null";
