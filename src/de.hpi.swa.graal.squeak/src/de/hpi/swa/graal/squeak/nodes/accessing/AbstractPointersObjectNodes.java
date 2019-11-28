@@ -72,14 +72,10 @@ public class AbstractPointersObjectNodes {
                         @Cached final ReadSlotLocationNode readNode) {
             final Object result = readNode.execute(cachedLocation, object);
             if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                final SlotLocation keyLocation = cachedLayout.getLocation(2);
-                final Object key = keyLocation.read(object);
-                if (key == NilObject.SINGLETON) {
-                    System.out.println("Getting pc value " + result + " in a literal node with key nil");
-                } else if (!(key instanceof NativeObject) || !((NativeObject) key).getSqueakClass().isSymbolClass() || !"closureCreationNode".equals(((NativeObject) key).asStringUnsafe())) {
-                    System.out.println("Getting pc value " + result + " in a literal node with a not nil and non closure creation key");
+                if (result instanceof Long && ((Long) result).longValue() == 1) {
+                    System.out.println("Getting pc value 1 in a literal node");
                 } else {
-                    System.out.println("Getting pc value " + result + " in a literal node with key #closureCreationNode");
+                    System.out.println("Getting pc value " + result + " in a literal node");
                 }
             }
             return result;
@@ -90,14 +86,10 @@ public class AbstractPointersObjectNodes {
                         @Cached final ReadSlotLocationNode readNode) {
             final Object result = readNode.execute(object.getLayout().getLocation(index), object);
             if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                final SlotLocation keyLocation = object.getLayout().getLocation(2);
-                final Object key = keyLocation.read(object);
-                if (key == NilObject.SINGLETON) {
-                    System.out.println("Getting pc value " + result + " in a literal node with key nil");
-                } else if (!(key instanceof NativeObject) || !((NativeObject) key).getSqueakClass().isSymbolClass() || !"closureCreationNode".equals(((NativeObject) key).asStringUnsafe())) {
-                    System.out.println("Getting pc value " + result + " in a literal node with a not nil and non closure creation key");
+                if (result instanceof Long && ((Long) result).longValue() == 1) {
+                    System.out.println("Getting pc value 1 in a literal node");
                 } else {
-                    System.out.println("Getting pc value " + result + " in a literal node with key #closureCreationNode");
+                    System.out.println("Getting pc value " + result + " in a literal node");
                 }
             }
             return result;
@@ -105,18 +97,17 @@ public class AbstractPointersObjectNodes {
 
         @Specialization(guards = "!object.getLayout().isValid()")
         protected static final Object doUpdateLayoutAndRead(final AbstractPointersObject object, final int index) {
+            if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+                System.out.println("Updating layout for reading pc in a literal node");
+            }
             CompilerDirectives.transferToInterpreter();
             object.updateLayout();
             final Object result = doReadUncached(object, index, ReadSlotLocationNode.getUncached());
             if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                final SlotLocation keyLocation = object.getLayout().getLocation(2);
-                final Object key = keyLocation.read(object);
-                if (key == NilObject.SINGLETON) {
-                    System.out.println("Getting pc value " + result + " in a literal node with key nil");
-                } else if (!(key instanceof NativeObject) || !((NativeObject) key).getSqueakClass().isSymbolClass() || !"closureCreationNode".equals(((NativeObject) key).asStringUnsafe())) {
-                    System.out.println("Getting pc value " + result + " in a literal node with a not nil and non closure creation key");
+                if (result instanceof Long && ((Long) result).longValue() == 1) {
+                    System.out.println("Getting pc value 1 in a literal node");
                 } else {
-                    System.out.println("Getting pc value " + result + " in a literal node with key #closureCreationNode");
+                    System.out.println("Getting pc value " + result + " in a literal node");
                 }
             }
             return result;
@@ -142,8 +133,7 @@ public class AbstractPointersObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout",
-                        "!cachedLocation.isUninitialized()", "cachedLocation.canStore(value)"}, //
+        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedLocation.canStore(value)"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "CACHE_LIMIT")
         protected static final void doWriteCached(final AbstractPointersObject object, final int index,
                         final Object value,
@@ -151,16 +141,15 @@ public class AbstractPointersObjectNodes {
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached("cachedLayout.getLocation(index)") final SlotLocation cachedLocation,
                         @Cached final WriteSlotLocationNode writeNode) {
+            if (cachedLocation.isUninitialized()) {
+                return;
+            }
             try {
                 if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                    final SlotLocation keyLocation = cachedLayout.getLocation(2);
-                    final Object key = keyLocation.read(object);
-                    if (key == NilObject.SINGLETON) {
-                        System.out.println("Setting pc to " + value + " in a literal node with key nil");
-                    } else if (!(key instanceof NativeObject) || !((NativeObject) key).getSqueakClass().isSymbolClass() || !"closureCreationNode".equals(((NativeObject) key).asStringUnsafe())) {
-                        System.out.println("Setting pc to " + value + " in a literal node with a not nil and non closure creation key");
+                    if (value instanceof Long && ((Long) value).longValue() == 1) {
+                        System.out.println("Setting pc to 1 in a literal node");
                     } else {
-                        System.out.println("Setting pc to " + value + " in a literal node with key #closureCreationNode");
+                        System.out.println("Setting pc to " + value + " in a literal node");
                     }
                 }
                 writeNode.execute(cachedLocation, object, value);
@@ -170,7 +159,7 @@ public class AbstractPointersObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == oldLayout", "oldLocation.isUninitialized()"}, //
+        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == oldLayout", "!oldLocation.canStore(value)"}, //
                         assumptions = {"oldLayout.getValidAssumption()", "newLayout.getValidAssumption()"}, limit = "CACHE_LIMIT")
         protected static final void doWriteCachedUninitialized(final AbstractPointersObject object, final int index, final Object value,
                         @Cached("index") final int cachedIndex,
@@ -180,14 +169,10 @@ public class AbstractPointersObjectNodes {
                         @Cached("newLayout.getLocation(index)") final SlotLocation newLocation) {
             try {
                 if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                    final SlotLocation keyLocation = newLayout.getLocation(2);
-                    final Object key = keyLocation.read(object);
-                    if (key == NilObject.SINGLETON) {
-                        System.out.println("Setting pc to " + value + " in a literal node with key nil");
-                    } else if (!(key instanceof NativeObject) || !((NativeObject) key).getSqueakClass().isSymbolClass() || !"closureCreationNode".equals(((NativeObject) key).asStringUnsafe())) {
-                        System.out.println("Setting pc to " + value + " in a literal node with a not nil and non closure creation key");
+                    if (value instanceof Long && ((Long) value).longValue() == 1) {
+                        System.out.println("Setting pc to 1 in a literal node");
                     } else {
-                        System.out.println("Setting pc to " + value + " in a literal node with key #closureCreationNode");
+                        System.out.println("Setting pc to " + value + " in a literal node");
                     }
                 }
                 newLocation.write(object, value);
@@ -201,14 +186,10 @@ public class AbstractPointersObjectNodes {
                         @Cached final WriteSlotLocationNode writeNode) {
             try {
                 if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                    final SlotLocation keyLocation = object.getLayout().getLocation(2);
-                    final Object key = keyLocation.read(object);
-                    if (key == NilObject.SINGLETON) {
-                        System.out.println("Setting pc to " + value + " in a literal node with key nil");
-                    } else if (!(key instanceof NativeObject) || !((NativeObject) key).getSqueakClass().isSymbolClass() || !"closureCreationNode".equals(((NativeObject) key).asStringUnsafe())) {
-                        System.out.println("Setting pc to " + value + " in a literal node with a not nil and non closure creation key");
+                    if (value instanceof Long && ((Long) value).longValue() == 1) {
+                        System.out.println("Setting pc to 1 in a literal node");
                     } else {
-                        System.out.println("Setting pc to " + value + " in a literal node with key #closureCreationNode");
+                        System.out.println("Setting pc to " + value + " in a literal node");
                     }
                 }
                 writeNode.execute(object.getLayout().getLocation(index), object, value);
@@ -222,16 +203,19 @@ public class AbstractPointersObjectNodes {
         @Specialization(guards = "!object.getLayout().isValid()")
         protected static final void doUpdateLayoutAndWrite(final AbstractPointersObject object, final int index, final Object value) {
             CompilerDirectives.transferToInterpreter();
+            if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+                if (value instanceof Long && ((Long) value).longValue() == 1) {
+                    System.out.println("Updating layout for setting pc to 1 in a literal node");
+                } else {
+                    System.out.println("Updating layout for setting pc to " + value + " in a literal node");
+                }
+            }
             object.updateLayout();
             if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                final SlotLocation keyLocation = object.getLayout().getLocation(2);
-                final Object key = keyLocation.read(object);
-                if (key == NilObject.SINGLETON) {
-                    System.out.println("Setting pc to " + value + " in a literal node with key nil");
-                } else if (!(key instanceof NativeObject) || !((NativeObject) key).getSqueakClass().isSymbolClass() || !"closureCreationNode".equals(((NativeObject) key).asStringUnsafe())) {
-                    System.out.println("Setting pc to " + value + " in a literal node with a not nil and non closure creation key");
+                if (value instanceof Long && ((Long) value).longValue() == 1) {
+                    System.out.println("Setting pc to 1 in a literal node");
                 } else {
-                    System.out.println("Setting pc to " + value + " in a literal node with key #closureCreationNode");
+                    System.out.println("Setting pc to " + value + " in a literal node");
                 }
             }
             doWriteUncached(object, index, value, WriteSlotLocationNode.getUncached());

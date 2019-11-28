@@ -111,6 +111,9 @@ public abstract class SlotLocation {
 
     public abstract boolean isSet(AbstractPointersObject object);
 
+    public void unSet(@SuppressWarnings("unused") final AbstractPointersObject object) {
+    }
+
     public boolean isUninitialized() {
         return false;
     }
@@ -213,7 +216,7 @@ public abstract class SlotLocation {
 
         @Override
         public boolean canStore(final Object value) {
-            return false;
+            return value == NilObject.SINGLETON;
         }
     }
 
@@ -340,6 +343,11 @@ public abstract class SlotLocation {
         }
 
         @Override
+        public void unSet(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
+        }
+
+        @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
             if (value instanceof Boolean) {
                 putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
@@ -401,6 +409,11 @@ public abstract class SlotLocation {
         @Override
         public boolean isSet(final AbstractPointersObject object) {
             return (getPrimitiveUsedMap(object) & usedMask) != 0;
+        }
+
+        @Override
+        public void unSet(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
         }
 
         @Override
@@ -474,6 +487,11 @@ public abstract class SlotLocation {
         }
 
         @Override
+        public void unSet(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
+        }
+
+        @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
             if (value instanceof Character) {
                 putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
@@ -538,6 +556,11 @@ public abstract class SlotLocation {
         }
 
         @Override
+        public void unSet(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
+        }
+
+        @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
             if (value instanceof Character) {
                 putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
@@ -581,7 +604,15 @@ public abstract class SlotLocation {
         @Override
         public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
-                return UnsafeUtils.getLongAt(object, address);
+                final long value = UnsafeUtils.getLongAt(object, address);
+                if ("LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+                    if (value == 1) {
+                        System.out.println("Getting a field value of 1 in a literal node");
+                    } else {
+                        System.out.println("Getting a field value of " + value + " in a literal node");
+                    }
+                }
+                return value;
             } else {
                 return NilObject.SINGLETON;
             }
@@ -595,7 +626,15 @@ public abstract class SlotLocation {
         public Object read(final AbstractPointersObject object) {
             CompilerAsserts.neverPartOfCompilation();
             if (isSet(object)) {
-                return UnsafeUtils.getLongAt(object, address);
+                final long value = UnsafeUtils.getLongAt(object, address);
+                if ("LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+                    if (value == 1) {
+                        System.out.println("Getting a field value of 1 in a literal node");
+                    } else {
+                        System.out.println("Getting a field value of " + value + " in a literal node");
+                    }
+                }
+                return value;
             } else {
                 return NilObject.SINGLETON;
             }
@@ -604,6 +643,11 @@ public abstract class SlotLocation {
         @Override
         public boolean isSet(final AbstractPointersObject object) {
             return (getPrimitiveUsedMap(object) & usedMask) != 0;
+        }
+
+        @Override
+        public void unSet(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
         }
 
         @Override
@@ -668,6 +712,11 @@ public abstract class SlotLocation {
         @Override
         public boolean isSet(final AbstractPointersObject object) {
             return (getPrimitiveUsedMap(object) & usedMask) != 0;
+        }
+
+        @Override
+        public void unSet(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
         }
 
         @Override
@@ -740,6 +789,11 @@ public abstract class SlotLocation {
         }
 
         @Override
+        public void unSet(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
+        }
+
+        @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
             if (value instanceof Double) {
                 putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
@@ -804,6 +858,11 @@ public abstract class SlotLocation {
         }
 
         @Override
+        public void unSet(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
+        }
+
+        @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
             if (value instanceof Double) {
                 putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
@@ -845,7 +904,15 @@ public abstract class SlotLocation {
         @Override
         public Object read(final AbstractPointersObject object) {
             assert isSet(object);
-            return UnsafeUtils.getObjectAt(object, OBJECT_ADDRESSES[index]);
+            final Object value = UnsafeUtils.getObjectAt(object, OBJECT_ADDRESSES[index]);
+            if ("LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+                if (value instanceof Long && ((Long) value).longValue() == 1) {
+                    System.out.println("Getting a field value of 1 in a literal node");
+                } else {
+                    System.out.println("Getting a field value of " + value + " in a literal node");
+                }
+            }
+            return value;
         }
 
         @Override
@@ -875,7 +942,15 @@ public abstract class SlotLocation {
         @Override
         public Object read(final AbstractPointersObject object) {
             assert isSet(object);
-            return UnsafeUtils.getObject(object.objectExtension, index);
+            final Object value = UnsafeUtils.getObject(object.objectExtension, index);
+            if ("LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+                if (value instanceof Long && ((Long) value).longValue() == 1) {
+                    System.out.println("Getting a field value of 1 in a literal node");
+                } else {
+                    System.out.println("Getting a field value of " + value + " in a literal node");
+                }
+            }
+            return value;
         }
 
         @Override
