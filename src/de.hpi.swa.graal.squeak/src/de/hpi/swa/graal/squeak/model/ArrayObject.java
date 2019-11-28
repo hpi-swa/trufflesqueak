@@ -117,12 +117,12 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public byte getByte(final long index) {
         assert isBooleanType();
-        return UnsafeUtils.getByte(storage, index);
+        return UnsafeUtils.getByte((byte[]) storage, index);
     }
 
     public void setByte(final long index, final byte value) {
         assert isBooleanType();
-        UnsafeUtils.putByte(storage, index, value);
+        UnsafeUtils.putByte((byte[]) storage, index, value);
     }
 
     public int getBooleanLength() {
@@ -136,12 +136,12 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public char getChar(final long index) {
         assert isCharType();
-        return UnsafeUtils.getChar(storage, index);
+        return UnsafeUtils.getChar((char[]) storage, index);
     }
 
     public void setChar(final long index, final char value) {
         assert isCharType();
-        UnsafeUtils.putChar(storage, index, value);
+        UnsafeUtils.putChar((char[]) storage, index, value);
     }
 
     public int getCharLength() {
@@ -155,12 +155,12 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public double getDouble(final long index) {
         assert isDoubleType();
-        return UnsafeUtils.getDouble(storage, index);
+        return UnsafeUtils.getDouble((double[]) storage, index);
     }
 
     public void setDouble(final long index, final double value) {
         assert isDoubleType();
-        UnsafeUtils.putDouble(storage, index, value);
+        UnsafeUtils.putDouble((double[]) storage, index, value);
     }
 
     public int getDoubleLength() {
@@ -183,12 +183,12 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public long getLong(final long index) {
         assert isLongType();
-        return UnsafeUtils.getLong(storage, index);
+        return UnsafeUtils.getLong((long[]) storage, index);
     }
 
     public void setLong(final long index, final long value) {
         assert isLongType();
-        UnsafeUtils.putLong(storage, index, value);
+        UnsafeUtils.putLong((long[]) storage, index, value);
     }
 
     public int getLongLength() {
@@ -202,12 +202,12 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public NativeObject getNativeObject(final long index) {
         assert isNativeObjectType();
-        return UnsafeUtils.getNativeObject(storage, index);
+        return UnsafeUtils.getNativeObject((NativeObject[]) storage, index);
     }
 
     public void setNativeObject(final long index, final NativeObject value) {
         assert isNativeObjectType();
-        UnsafeUtils.putNativeObject(storage, index, value);
+        UnsafeUtils.putNativeObject((NativeObject[]) storage, index, value);
     }
 
     public int getNativeObjectLength() {
@@ -221,12 +221,12 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     public Object getObject(final long index) {
         assert isObjectType();
-        return UnsafeUtils.getObject(storage, index);
+        return UnsafeUtils.getObject((Object[]) storage, index);
     }
 
     public void setObject(final long index, final Object value) {
         assert isObjectType();
-        UnsafeUtils.putObject(storage, index, value);
+        UnsafeUtils.putObject((Object[]) storage, index, value);
     }
 
     public int getObjectLength() {
