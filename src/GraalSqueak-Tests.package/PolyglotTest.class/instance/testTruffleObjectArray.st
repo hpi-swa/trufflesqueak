@@ -1,7 +1,9 @@
 testing
 testTruffleObjectArray
 	| jsArray |
-	jsArray := (Polyglot eval: 'js' string: '[1, 3, 4]').
+	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
+
+	jsArray := (Polyglot eval: Polyglot languageIdJS string: '[1, 3, 4]').
 
 	self assert: (Interop hasArrayElements: jsArray).
 	self assert: 3 equals: (Interop getArraySize: jsArray).
@@ -24,7 +26,7 @@ testTruffleObjectArray
 	"TODO: #removeArrayElement: not working correctly in Graal.js (s)ee https://github.com/graalvm/graaljs/issues/218)."
 	"self assert: jsArray equals: (Interop removeArrayElement: jsArray index: 2)."
 	
-	jsArray := (Polyglot eval: 'js' string: '[1, 2, 3, 4]').
+	jsArray := (Polyglot eval: Polyglot languageIdJS string: '[1, 2, 3, 4]').
 	self assert: 4 equals: jsArray size.
 	1 to: jsArray size do: [ :i |
 		self assert: i equals: (jsArray at: i) ].

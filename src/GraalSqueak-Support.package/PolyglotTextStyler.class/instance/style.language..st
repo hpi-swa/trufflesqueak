@@ -1,6 +1,6 @@
 as yet unclassified
 style: aText language: aLanguageID
-	^ Polyglot supportsRuby
+	^ (Polyglot isPermitted: 'ruby')
 		ifTrue: [ | rubyString |
 			rubyString := self rubyUnbox: aText asString withUnixLineEndings.
 			((self formatter format: ((self lexerFor: aLanguageID) lex: rubyString))

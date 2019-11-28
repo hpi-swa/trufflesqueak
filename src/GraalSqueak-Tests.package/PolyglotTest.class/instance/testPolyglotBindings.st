@@ -1,5 +1,9 @@
 testing
 testPolyglotBindings
+	Polyglot primitiveIsPolyglotBindingsAccessAllowed ifFalse: [
+		self should: [ Polyglot bindings ] raise: Error.
+		^ self ].
+
 	self shouldnt: [ Polyglot bindings at: 'bindings' ] raise: Error.
 	self should: [ Polyglot bindings at: 'SmalltalkDict' ] raise: Error.
 	

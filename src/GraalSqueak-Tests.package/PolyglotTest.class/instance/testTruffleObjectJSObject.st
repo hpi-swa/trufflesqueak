@@ -1,6 +1,8 @@
 testing
 testTruffleObjectJSObject
 	| jsObject |
+	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
+
 	jsObject := (Polyglot eval: Polyglot languageIdJS string: 'new Object({a: "Foo"})').
 	
 	self deny: (Interop isBoolean: jsObject).

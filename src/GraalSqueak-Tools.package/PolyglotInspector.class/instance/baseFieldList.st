@@ -1,7 +1,9 @@
 overrides
 baseFieldList
 	"Answer an Array consisting of 'self'
-	and the instance variable names of the inspected object."
+	and the members of the inspected object."
 
-	^ (Array with: 'self' with: 'all inst vars')
-			, object allInstVarNamesEverywhere
+	^ (Array with: 'self' with: 'all inst vars'),
+		((Interop hasMembers: object)
+			ifTrue: [ (Interop getMembers: object) sorted ]
+			ifFalse: [ #() ])

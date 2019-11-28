@@ -42,7 +42,7 @@
 		"isPointer:" : "fn 11/11/2019 22:01",
 		"isString:" : "fn 11/11/2019 22:02",
 		"readArrayElement:index:" : "fn 11/11/2019 22:02",
-		"readMember:member:" : "fn 11/11/2019 22:02",
+		"readMember:member:" : "fn 11/21/2019 00:27",
 		"removeArrayElement:index:" : "fn 11/11/2019 22:02",
 		"removeMember:member:" : "fn 11/11/2019 22:02",
 		"sArrayElementExisting:index:" : "fn 11/11/2019 22:00",

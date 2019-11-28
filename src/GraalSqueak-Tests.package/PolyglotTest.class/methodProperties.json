@@ -2,12 +2,10 @@
 	"class" : {
 		 },
 	"instance" : {
-		"expectedFailures" : "fn 10/28/2019 19:13",
-		"testLanguageInfo" : "fn 10/28/2019 19:14",
-		"testPolyglotAccess" : "fn 10/28/2019 19:17",
-		"testPolyglotBindings" : "fn 11/11/2019 22:15",
-		"testPolyglotEval" : "fn 11/6/2019 11:54",
-		"testTruffleObjectArray" : "fn 11/11/2019 22:12",
-		"testTruffleObjectBasic" : "fn 11/11/2019 22:12",
-		"testTruffleObjectExecutable" : "fn 11/11/2019 22:08",
-		"testTruffleObjectJSObject" : "fn 11/11/2019 22:05" } }
+		"testLanguageInfo" : "fn 11/28/2019 14:56",
+		"testPolyglotBindings" : "fn 11/28/2019 14:53",
+		"testPolyglotEval" : "fn 11/28/2019 14:56",
+		"testTruffleObjectArray" : "fn 11/28/2019 14:57",
+		"testTruffleObjectBasic" : "fn 11/28/2019 14:57",
+		"testTruffleObjectExecutable" : "fn 11/28/2019 14:57",
+		"testTruffleObjectJSObject" : "fn 11/28/2019 14:57" } }
