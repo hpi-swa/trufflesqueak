@@ -50,6 +50,9 @@ public final class PointersObject extends AbstractPointersObject {
         final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
         final Object[] pointersObject = chunk.getPointers();
         initializeLayoutAndExtensionsUnsafe();
+        if ("LiteralNode".equals(getSqueakClass().getClassNameUnsafe())) {
+            System.out.println("Filling in a literal node");
+        }
         for (int i = 0; i < pointersObject.length; i++) {
             writeNode.execute(this, i, pointersObject[i]);
         }

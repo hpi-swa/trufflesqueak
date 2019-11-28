@@ -207,13 +207,13 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop;
             } else {
-                LOG.finer(() -> "" + node + ", at pc " + node.getIndex());
+                LOG.finer(() -> node.toString() + ", at pc " + node.getIndex());
                 pc = node.getSuccessorIndex();
                 if (node instanceof AbstractSendNode) {
                     FrameAccess.setInstructionPointer(frame, code, pc);
                 }
                 node.executeVoid(frame);
-                LOG.finer(() -> stackFor(frame));
+                LOG.finest(() -> stackFor(frame));
                 continue bytecode_loop;
             }
         }
