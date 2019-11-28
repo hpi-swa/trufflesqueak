@@ -172,12 +172,12 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public byte getByte(final long index) {
         assert isByteType();
-        return UnsafeUtils.getByte(storage, index);
+        return UnsafeUtils.getByte((byte[]) storage, index);
     }
 
     public void setByte(final long index, final byte value) {
         assert isByteType();
-        UnsafeUtils.putByte(storage, index, value);
+        UnsafeUtils.putByte((byte[]) storage, index, value);
     }
 
     public int getByteLength() {
@@ -191,12 +191,12 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public int getInt(final long index) {
         assert isIntType();
-        return UnsafeUtils.getInt(storage, index);
+        return UnsafeUtils.getInt((int[]) storage, index);
     }
 
     public void setInt(final long index, final int value) {
         assert isIntType();
-        UnsafeUtils.putInt(storage, index, value);
+        UnsafeUtils.putInt((int[]) storage, index, value);
     }
 
     public int getIntLength() {
@@ -210,12 +210,12 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public long getLong(final long index) {
         assert isLongType();
-        return UnsafeUtils.getLong(storage, index);
+        return UnsafeUtils.getLong((long[]) storage, index);
     }
 
     public void setLong(final long index, final long value) {
         assert isLongType();
-        UnsafeUtils.putLong(storage, index, value);
+        UnsafeUtils.putLong((long[]) storage, index, value);
     }
 
     public int getLongLength() {
@@ -229,12 +229,12 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public short getShort(final long index) {
         assert isShortType();
-        return UnsafeUtils.getShort(storage, index);
+        return UnsafeUtils.getShort((short[]) storage, index);
     }
 
     public void setShort(final long index, final short value) {
         assert isShortType();
-        UnsafeUtils.putShort(storage, index, value);
+        UnsafeUtils.putShort((short[]) storage, index, value);
     }
 
     public int getShortLength() {
