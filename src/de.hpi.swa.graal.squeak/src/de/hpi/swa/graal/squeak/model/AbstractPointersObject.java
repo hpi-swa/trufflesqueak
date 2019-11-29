@@ -126,13 +126,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     @TruffleBoundary
     public final ObjectLayout updateLayout(final int index, final Object value) {
         assert !layout.getLocation(index).canStore(value);
-// if (index == 1 && "LiteralNode".equals(getSqueakClass().getClassNameUnsafe())) {
-// if (value instanceof Long && ((Long) value).longValue() == 1) {
-// System.out.println("Updating layout for setting pc to 1 in a literal node");
-// } else {
-// System.out.println("Updating layout for setting pc to " + value + " in a literal node");
-// }
-// }
         ObjectLayout latestLayout = getSqueakClass().getLayout();
         if (!latestLayout.getLocation(index).canStore(value)) {
             latestLayout = latestLayout.evolveLocation(getSqueakClass(), index, value);
@@ -146,10 +139,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     private void migrateToLayout(final ObjectLayout newLayout) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert newLayout.isValid() : "Should not migrate to outdated layout";
-// if (primitive0 == 1 && primitive1 == 118 &&
-// "LiteralNode".equals(getSqueakClass().getClassNameUnsafe())) {
-// System.out.println("Migrating layout for literal nodes");
-// }
         ObjectLayout theLayout = newLayout;
         final ObjectLayout oldLayout = layout;
         assert oldLayout.getInstSize() == newLayout.getInstSize();
@@ -159,9 +148,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             final SlotLocation oldLocation = oldLayout.getLocation(i);
             final SlotLocation newLocation = newLayout.getLocation(i);
             if (oldLocation != newLocation && oldLocation.isSet(this)) {
-// if (i == 1 && "LiteralNode".equals(getSqueakClass().getClassNameUnsafe())) {
-// System.out.println("Changed SlotLocation for pc instvar in literal nodes");
-// }
                 changes[i] = oldLocation.read(this);
             }
         }
