@@ -71,13 +71,13 @@ public class AbstractPointersObjectNodes {
                         @Cached("cachedLayout.getLocation(index)") final SlotLocation cachedLocation,
                         @Cached final ReadSlotLocationNode readNode) {
             final Object result = readNode.execute(cachedLocation, object);
-            if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                if (result instanceof Long && ((Long) result).longValue() == 1) {
-                    System.out.println("Getting pc value 1 in a literal node");
-                } else {
-                    System.out.println("Getting pc value " + result + " in a literal node");
-                }
-            }
+// if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+// if (result instanceof Long && ((Long) result).longValue() == 1) {
+// System.out.println("Getting pc value 1 in a literal node");
+// } else {
+// System.out.println("Getting pc value " + result + " in a literal node");
+// }
+// }
             return result;
         }
 
@@ -85,31 +85,31 @@ public class AbstractPointersObjectNodes {
         protected static final Object doReadUncached(final AbstractPointersObject object, final int index,
                         @Cached final ReadSlotLocationNode readNode) {
             final Object result = readNode.execute(object.getLayout().getLocation(index), object);
-            if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                if (result instanceof Long && ((Long) result).longValue() == 1) {
-                    System.out.println("Getting pc value 1 in a literal node");
-                } else {
-                    System.out.println("Getting pc value " + result + " in a literal node");
-                }
-            }
+// if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+// if (result instanceof Long && ((Long) result).longValue() == 1) {
+// System.out.println("Getting pc value 1 in a literal node");
+// } else {
+// System.out.println("Getting pc value " + result + " in a literal node");
+// }
+// }
             return result;
         }
 
         @Specialization(guards = "!object.getLayout().isValid()")
         protected static final Object doUpdateLayoutAndRead(final AbstractPointersObject object, final int index) {
-            if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                System.out.println("Updating layout for reading pc in a literal node");
-            }
+// if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+// System.out.println("Updating layout for reading pc in a literal node");
+// }
             CompilerDirectives.transferToInterpreter();
             object.updateLayout();
             final Object result = doReadUncached(object, index, ReadSlotLocationNode.getUncached());
-            if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                if (result instanceof Long && ((Long) result).longValue() == 1) {
-                    System.out.println("Getting pc value 1 in a literal node");
-                } else {
-                    System.out.println("Getting pc value " + result + " in a literal node");
-                }
-            }
+// if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+// if (result instanceof Long && ((Long) result).longValue() == 1) {
+// System.out.println("Getting pc value 1 in a literal node");
+// } else {
+// System.out.println("Getting pc value " + result + " in a literal node");
+// }
+// }
             return result;
         }
     }
@@ -145,13 +145,13 @@ public class AbstractPointersObjectNodes {
                 return;
             }
             try {
-                if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                    if (value instanceof Long && ((Long) value).longValue() == 1) {
-                        System.out.println("Setting pc to 1 in a literal node");
-                    } else {
-                        System.out.println("Setting pc to " + value + " in a literal node");
-                    }
-                }
+// if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+// if (value instanceof Long && ((Long) value).longValue() == 1) {
+// System.out.println("Setting pc to 1 in a literal node");
+// } else {
+// System.out.println("Setting pc to " + value + " in a literal node");
+// }
+// }
                 writeNode.execute(cachedLocation, object, value);
             } catch (final IllegalWriteException e) {
                 throw SqueakException.illegalState(e);
@@ -168,13 +168,13 @@ public class AbstractPointersObjectNodes {
                         @Cached("object.updateLayout(index, value)") final ObjectLayout newLayout,
                         @Cached("newLayout.getLocation(index)") final SlotLocation newLocation) {
             try {
-                if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                    if (value instanceof Long && ((Long) value).longValue() == 1) {
-                        System.out.println("Setting pc to 1 in a literal node");
-                    } else {
-                        System.out.println("Setting pc to " + value + " in a literal node");
-                    }
-                }
+// if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+// if (value instanceof Long && ((Long) value).longValue() == 1) {
+// System.out.println("Setting pc to 1 in a literal node");
+// } else {
+// System.out.println("Setting pc to " + value + " in a literal node");
+// }
+// }
                 newLocation.write(object, value);
             } catch (final IllegalWriteException e) {
                 throw SqueakException.illegalState(e);
@@ -185,13 +185,13 @@ public class AbstractPointersObjectNodes {
         protected static final void doWriteUncached(final AbstractPointersObject object, final int index, final Object value,
                         @Cached final WriteSlotLocationNode writeNode) {
             try {
-                if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                    if (value instanceof Long && ((Long) value).longValue() == 1) {
-                        System.out.println("Setting pc to 1 in a literal node");
-                    } else {
-                        System.out.println("Setting pc to " + value + " in a literal node");
-                    }
-                }
+// if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+// if (value instanceof Long && ((Long) value).longValue() == 1) {
+// System.out.println("Setting pc to 1 in a literal node");
+// } else {
+// System.out.println("Setting pc to " + value + " in a literal node");
+// }
+// }
                 writeNode.execute(object.getLayout().getLocation(index), object, value);
             } catch (final IllegalWriteException e) {
                 object.updateLayout(index, value);
@@ -203,21 +203,21 @@ public class AbstractPointersObjectNodes {
         @Specialization(guards = "!object.getLayout().isValid()")
         protected static final void doUpdateLayoutAndWrite(final AbstractPointersObject object, final int index, final Object value) {
             CompilerDirectives.transferToInterpreter();
-            if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                if (value instanceof Long && ((Long) value).longValue() == 1) {
-                    System.out.println("Updating layout for setting pc to 1 in a literal node");
-                } else {
-                    System.out.println("Updating layout for setting pc to " + value + " in a literal node");
-                }
-            }
+// if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+// if (value instanceof Long && ((Long) value).longValue() == 1) {
+// System.out.println("Updating layout for setting pc to 1 in a literal node");
+// } else {
+// System.out.println("Updating layout for setting pc to " + value + " in a literal node");
+// }
+// }
             object.updateLayout();
-            if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
-                if (value instanceof Long && ((Long) value).longValue() == 1) {
-                    System.out.println("Setting pc to 1 in a literal node");
-                } else {
-                    System.out.println("Setting pc to " + value + " in a literal node");
-                }
-            }
+// if (index == 1 && "LiteralNode".equals(object.getSqueakClass().getClassNameUnsafe())) {
+// if (value instanceof Long && ((Long) value).longValue() == 1) {
+// System.out.println("Setting pc to 1 in a literal node");
+// } else {
+// System.out.println("Setting pc to " + value + " in a literal node");
+// }
+// }
             doWriteUncached(object, index, value, WriteSlotLocationNode.getUncached());
         }
     }
