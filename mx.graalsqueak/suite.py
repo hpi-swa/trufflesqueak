@@ -14,9 +14,17 @@ suite = {
     "versionConflictResolution": "latest",
 
     "version": "1.0.0-rc5",
+    "graalsqueak:dependencyMap": {
+        "assets": "1.0.0-rc5",
+        "graalvm": "19.3.0",
+        "jdk8Update": "232",
+        "jvmci": "jvmci-19.3-b05",
+        "testImage": "GraalSqueakTestImage-19230-64bit.zip",
+    },
+
     "release": False,
     "groupId": "de.hpi.swa.graal.squeak",
-    "url": "https://github.com/hpi-swa/graalsqueak/",
+    "url": "https://github.com/hpi-swa/graalsqueak",
 
     "developer": {
         "name": "Fabio Niephaus and contributors",

@@ -251,7 +251,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         dest='truffle_expansion_histogram', action='store_true', default=False)
     parser.add_argument(
         '-tib', '--truffle-instrument-boundaries',
-        help='Instrument Truffle boundaries and output profiling information',
+        help='instrument Truffle boundaries and output profiling information',
         dest='truffle_instrument_boundaries', action='store_true',
         default=False)
     parser.add_argument('-v', '--verbose',
