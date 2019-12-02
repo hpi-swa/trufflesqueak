@@ -8,14 +8,13 @@ package de.hpi.swa.graal.squeak.test;
 import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import org.junit.AfterClass;
 import org.junit.Assume;
@@ -39,53 +38,59 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, AbstractSqueakTestCaseWithImage.class);
-    private static final int SQUEAK_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("SQUEAK_TIMEOUT", "2000"));
+    private static final int SQUEAK_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("SQUEAK_TIMEOUT", "2000"));    // generous
+                                                                                                                        // default
+                                                                                                                        // for
+                                                                                                                        // debugging
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
-    private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("IMAGE_LOAD_TIMEOUT", "200"));
+    private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("IMAGE_LOAD_TIMEOUT", "1000"));    // generous
+                                                                                                                                     // default
+                                                                                                                                     // for
+                                                                                                                                     // debugging
     private static final int PRIORITY_10_LIST_INDEX = 9;
     private static final int USER_PRIORITY_LIST_INDEX = 39;
     private static final String PASSED_VALUE = "passed";
 
     private static PointersObject idleProcess;
-    private static volatile boolean isClear;     // for now we are single-threaded, so the flag can
-                                                 // be static
+    private static volatile boolean testWithImageIsActive;     // for now we are single-threaded, so
+                                                               // the flag can be static
+    private static ExecutorService executor;
 
     @BeforeClass
+    public static void setUp() {
+        executor = Executors.newSingleThreadExecutor();
+        loadTestImage();
+        testWithImageIsActive = false;
+    }
+
     public static void loadTestImage() {
         final String imagePath = getPathToTestImage();
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
-        final Future<?> future = executor.submit(() -> loadImageContext(imagePath));
-        executor.shutdown(); // This does not cancel the already-scheduled task.
         try {
-            future.get(TEST_IMAGE_LOAD_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            runWithTimeout(imagePath, value -> loadImageContext(value), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
+            image.getOutput().println("Test image loaded from " + imagePath + "...");
+            patchImageForTesting();
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Test image load from " + imagePath + " ws interrupted");
+            throw new IllegalStateException("Test image load from " + imagePath + " was interrupted");
         } catch (final ExecutionException e) {
             throw new IllegalStateException(e.getCause());
         } catch (final TimeoutException e) {
             throw new IllegalStateException("Timed out while trying to load the image from " + imagePath +
-                            ".\nMake sure it is not already loaded by another executable");
-        } finally {
-            future.cancel(true);
+                            ".\nMake sure the image is not currently loaded by another executable");
         }
-        image.getOutput().println("Test image loaded from " + imagePath + "...");
-        patchImageForTesting();
-        isClear = true;
     }
 
     @AfterClass
     public static void cleanUp() {
+        executor.shutdown();
         idleProcess = null;
         image.interrupt.reset();
         destroyImageContext();
     }
 
-    private static void reloadImage(final TestRequest request) {
-        if (request.reloadImageOnException) {
-            cleanUp();
-            loadTestImage();
-        }
+    private static void reloadImage() {
+        cleanUp();
+        loadTestImage();
     }
 
     private static void patchImageForTesting() {
@@ -166,7 +171,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             resetSemaphoreLists();
             ensureTimerLoop();
             ensureUserProcessForTesting();
-// LOG.fine(() -> "After ensuring clean image state" + image.currentState());
         }
     }
 
@@ -250,30 +254,46 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     protected static TestResult runTestCase(final TestRequest request) {
-        ensureCleanImageState();
-        System.out.println("\nRunning testcase " + request.testCase + "." + request.testSelector);
-        if (!isClear) {
+        if (testWithImageIsActive) {
             throw new IllegalStateException("The previous test case has not finished yet");
         }
+        ensureCleanImageState();
+        System.out.println("\nRunning testcase " + request.testCase + "." + request.testSelector);
         try {
-            return runWithTimeout(request, () -> {
-                isClear = false;
-                context.enter();
-                try {
-                    return extractFailuresAndErrorsFromTestResult(request);
-                } finally {
-                    context.leave();
-                    isClear = true;
-                }
-            });
+            return runWithTimeout(request, value -> extractFailuresAndErrorsFromTestResult(value), TIMEOUT_SECONDS);
+        } catch (final TimeoutException e) {
+            reloadImage();
+            return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Test was interrupted");
+        } catch (final ExecutionException e) {
+            if (request.reloadImageOnException) {
+                reloadImage();
+            }
+            return TestResult.fromException("failed with an error", e.getCause());
+        }
+    }
+
+    protected static <T, R> R runWithTimeout(final T argument, final Function<T, R> function, final int timeout) throws InterruptedException, ExecutionException, TimeoutException {
+        final Future<R> future = executor.submit(() -> {
+            testWithImageIsActive = true;
+            try {
+                return function.apply(argument);
+            } finally {
+                testWithImageIsActive = false;
+            }
+
+        });
+        try {
+            return future.get(timeout, TimeUnit.SECONDS);
         } finally {
-            if (!isClear) {
-                image.printToStdErr("The worker thread has not finished running, we have to close it");
-                if (!request.reloadImageOnException) {
-                    // regardless of what the request says, we need to clean up.
-                    cleanUp();
-                    loadTestImage();
+            future.cancel(true);
+            if (testWithImageIsActive) {
+                if (context != null) {
+                    context.close(true);
                 }
+                testWithImageIsActive = false;
             }
         }
     }
@@ -299,27 +319,13 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static String testCommand(final TestRequest request) {
         return String.format(
-                        "[[(%s selector: #%s) runCase. '%s'] on: TestFailure do: [:e | | s | s := WriteStream on: (String new: 1500). s nextPutAll: e asString; cr. e signalerContext errorReportOn: s. s contents]] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack]",
+                        "[(%s selector: #%s) runCase. '%s'] on: TestFailure, Error do: [:e | | s | s := WriteStream on: (String new: 1500). s nextPutAll: e asString; cr. " +
+                                        "e signalerContext errorReportOn: s. s contents]",
                         request.testCase, request.testSelector, PASSED_VALUE);
     }
 
     private static String shouldPassCommand(final TestRequest request) {
         return String.format("[(%s selector: #%s) shouldPass] on: Error do: [:e | false]", request.testCase, request.testSelector, PASSED_VALUE);
-    }
-
-    private static TestResult runWithTimeout(final TestRequest request, final Supplier<TestResult> action) {
-        try {
-            return CompletableFuture.supplyAsync(action).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        } catch (final TimeoutException e) {
-            reloadImage(request);
-            return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return TestResult.fromException("interrupted", e);
-        } catch (final ExecutionException e) {
-            reloadImage(request);
-            return TestResult.fromException("failed with an error", e.getCause());
-        }
     }
 
     protected static final class TestRequest {

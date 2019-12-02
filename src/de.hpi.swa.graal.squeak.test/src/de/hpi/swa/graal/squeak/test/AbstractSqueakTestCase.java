@@ -17,6 +17,7 @@ import org.junit.ClassRule;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
@@ -128,7 +129,7 @@ public abstract class AbstractSqueakTestCase {
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 
-    protected static void loadImageContext(final String imagePath) {
+    protected static SqueakImage loadImageContext(final String imagePath) {
         assert context == null && image == null;
         final Builder contextBuilder = Context.newBuilder();
         contextBuilder.allowAllAccess(true);
@@ -148,7 +149,7 @@ public abstract class AbstractSqueakTestCase {
             if (Files.exists(Paths.get(imagePath))) {
                 image.ensureLoaded();
             }
-            image.getSqueakImage(); // Pretend image has been loaded.
+            return image.getSqueakImage(); // Pretend image has been loaded.
         } finally {
             context.leave();
         }
