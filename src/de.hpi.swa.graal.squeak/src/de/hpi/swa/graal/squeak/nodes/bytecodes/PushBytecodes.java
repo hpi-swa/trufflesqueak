@@ -24,6 +24,7 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeGen;
@@ -186,44 +187,44 @@ public final class PushBytecodes {
 
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushLiteralConstantNode extends AbstractPushNode {
-        private final int literalIndex;
+        private final Object literal;
 
         public PushLiteralConstantNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             super(code, index, numBytecodes);
-            this.literalIndex = literalIndex;
+            literal = code.getLiteral(literalIndex);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, code.getLiteral(literalIndex));
+            pushNode.execute(frame, literal);
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushConstant: " + code.getLiteral(literalIndex).toString();
+            return "pushConstant: " + literal;
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushLiteralVariableNode extends AbstractPushNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        private final int literalIndex;
+        private final Object literal;
 
         public PushLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             super(code, index, numBytecodes);
-            this.literalIndex = literalIndex;
+            literal = code.getLiteral(literalIndex);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, at0Node.execute(code.getLiteral(literalIndex), 1));
+            pushNode.execute(frame, at0Node.execute(literal, 1));
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushLit: " + literalIndex;
+            return "pushLit: " + ((NativeObject) at0Node.execute(literal, 0)).asStringUnsafe();
         }
     }
 
@@ -282,7 +283,7 @@ public final class PushBytecodes {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
 
-            return "self";
+            return "push: self";
         }
     }
 
