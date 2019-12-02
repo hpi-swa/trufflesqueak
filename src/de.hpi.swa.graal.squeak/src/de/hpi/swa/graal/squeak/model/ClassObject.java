@@ -122,9 +122,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         if (isAMetaClass()) {
             final Object classInstance = pointers[METACLASS.THIS_CLASS];
             if (classInstance != NilObject.SINGLETON) {
-                return "Metaclass (" + ((ClassObject) classInstance).getClassNameUnsafe() + ")";
+                return ((ClassObject) classInstance).getClassNameUnsafe() + " class";
             } else {
-                return "Metaclass (unknown)";
+                return "anUknwonMetaclass";
             }
         } else if (size() >= 11) {
             return getClassNameUnsafe();

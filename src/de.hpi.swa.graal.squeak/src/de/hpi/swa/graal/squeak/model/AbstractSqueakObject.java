@@ -94,6 +94,11 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         }
     }
 
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
+    }
+
     /**
      * Converts an interop identifier to a Smalltalk selector. Most languages do not allow colons in
      * identifiers, so treat underscores as colons as well.

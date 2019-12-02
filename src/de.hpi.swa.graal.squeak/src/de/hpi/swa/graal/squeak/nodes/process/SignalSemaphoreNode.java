@@ -41,7 +41,7 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
                     @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
         final long excessSignals = readNode.executeLong(semaphore, SEMAPHORE.EXCESS_SIGNALS);
-        LOG.fine(() -> "Signalling empty semaphore @" + semaphore.hashCode() + " with initially " + excessSignals + " excessSignals");
+        LOG.fine(() -> "Signalling empty semaphore @" + Integer.toHexString(semaphore.hashCode()) + " with initially " + excessSignals + " excessSignals");
         writeNode.execute(semaphore, SEMAPHORE.EXCESS_SIGNALS, excessSignals + 1);
     }
 
@@ -49,7 +49,7 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
     public final void doSignal(final VirtualFrame frame, final PointersObject semaphore,
                     @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-        LOG.fine(() -> "Attempting to resume process after non-empty semaphore @" + semaphore.hashCode() + " signal");
+        LOG.fine(() -> "Attempting to resume process after non-empty semaphore @" + Integer.toHexString(semaphore.hashCode()) + " signal");
         resumeProcessNode.executeResume(frame, semaphore.removeFirstLinkOfList(readNode, writeNode));
     }
 

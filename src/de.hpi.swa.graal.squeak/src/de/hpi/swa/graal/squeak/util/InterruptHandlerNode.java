@@ -42,19 +42,19 @@ public final class InterruptHandlerNode extends Node {
         if (istate.interruptPending()) {
             interruptPendingProfile.enter();
             istate.interruptPending = false; // reset interrupt flag
-            LOG.fine(() -> "Signalling interrupt semaphore @" + istate.getInterruptSemaphore().hashCode() + " in interrupt handler");
+            LOG.fine(() -> "Signalling interrupt semaphore @" + Integer.toHexString(istate.getInterruptSemaphore().hashCode()) + " in interrupt handler");
             signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
         }
         if (istate.nextWakeUpTickTrigger()) {
             nextWakeupTickProfile.enter();
             istate.nextWakeupTick = 0; // reset timer interrupt
-            LOG.fine(() -> "Signalling timer semaphore @" + istate.getTimerSemaphore().hashCode() + " in interrupt handler");
+            LOG.fine(() -> "Signalling timer semaphore @" + Integer.toHexString(istate.getTimerSemaphore().hashCode()) + " in interrupt handler");
             signalSemaporeNode.executeSignal(frame, istate.getTimerSemaphore());
         }
         if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
             pendingFinalizationSignalsProfile.enter();
             istate.setPendingFinalizations(false);
-            LOG.fine(() -> "Signalling finalizations semaphore @" + specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE].hashCode() + " in interrupt handler");
+            LOG.fine(() -> "Signalling finalizations semaphore @" + Integer.toHexString(specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE].hashCode()) + " in interrupt handler");
             signalSemaporeNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
         }
         if (istate.hasSemaphoresToSignal()) {
@@ -65,7 +65,7 @@ public final class InterruptHandlerNode extends Node {
                 Integer semaIndex;
                 while ((semaIndex = istate.nextSemaphoreToSignal()) != null) {
                     final Object semaphore = semaphores[semaIndex - 1];
-                    LOG.fine(() -> "Signalling external semaphore @" + semaphore.hashCode() + " in interrupt handler");
+                    LOG.fine(() -> "Signalling external semaphore @" + Integer.toHexString(semaphore.hashCode()) + " in interrupt handler");
                     signalSemaporeNode.executeSignal(frame, semaphore);
                 }
             }

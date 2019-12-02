@@ -72,13 +72,13 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
         final StringBuilder b = new StringBuilder();
         b.append("Switching from process @");
         final PointersObject currentProcess = image.getActiveProcess(pointersReadNode);
-        b.append(currentProcess.hashCode());
+        b.append(Integer.toHexString(currentProcess.hashCode()));
         b.append(" with priority ");
         b.append(pointersReadNode.execute(currentProcess, PROCESS.PRIORITY));
         b.append(" and stack\n");
         thisContext.printSqMaterializedStackTraceOn(b);
         b.append("\n...to process @");
-        b.append(newProcess.hashCode());
+        b.append(Integer.toHexString(newProcess.hashCode()));
         b.append(" with priority ");
         b.append(priority);
         b.append(" and stack\n");

@@ -53,13 +53,13 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
     private String logSwitch(final PointersObject newProcess, final PointersObject currentProcess, final ContextObject thisContext) {
         final StringBuilder b = new StringBuilder();
         b.append("Switching from process @");
-        b.append(currentProcess.hashCode());
+        b.append(Integer.toHexString(currentProcess.hashCode()));
         b.append(" with priority ");
         b.append(pointersReadNode.execute(currentProcess, PROCESS.PRIORITY));
         b.append(" and stack\n");
         thisContext.printSqMaterializedStackTraceOn(b);
         b.append("\n...to process @");
-        b.append(newProcess.hashCode());
+        b.append(Integer.toHexString(newProcess.hashCode()));
         b.append(" with priority ");
         b.append(pointersReadNode.execute(newProcess, PROCESS.PRIORITY));
         b.append(" and stack\n");
@@ -77,7 +77,7 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
     private String logNoSwitch(final PointersObject newProcess) {
         final StringBuilder b = new StringBuilder();
         b.append("\nCannot resume process @");
-        b.append(newProcess.hashCode());
+        b.append(Integer.toHexString(newProcess.hashCode()));
         b.append(" with priority ");
         b.append(pointersReadNode.execute(newProcess, PROCESS.PRIORITY));
         b.append(" and stack\n");
@@ -85,7 +85,7 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
         ((ContextObject) newContext).printSqMaterializedStackTraceOn(b);
         b.append("\n...because it hs a lower priority than the currently active process @");
         final PointersObject currentProcess = code.image.getActiveProcess(pointersReadNode);
-        b.append(currentProcess.hashCode());
+        b.append(Integer.toHexString(currentProcess.hashCode()));
         b.append(" with priority ");
         b.append(pointersReadNode.execute(currentProcess, PROCESS.PRIORITY));
         return b.toString();

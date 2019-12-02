@@ -85,7 +85,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
-            LOG.fine(() -> "Setting the timer semaphore to @" + semaphore.hashCode() + " to be signalled in " + msTime + "ms");
+            LOG.fine(() -> "Setting the timer semaphore to @" + Integer.toHexString(semaphore.hashCode()) + " to be signalled in " + msTime + "ms");
             method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
             method.image.interrupt.setTimerSemaphore(semaphore);
             method.image.interrupt.setNextWakeupTick(msTime);
