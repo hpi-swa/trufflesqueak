@@ -762,14 +762,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"lib.isArrayElementReadable(object, to0(index))"}, limit = "2")
         protected static final Object doReadArrayElement(@SuppressWarnings("unused") final Object receiver, final Object object, final long index,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("object") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("object") final InteropLibrary lib) {
             try {
                 return wrapNode.executeWrap(lib.readArrayElement(object, index - 1));
-            } catch (final InvalidArrayIndexException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            } catch (final UnsupportedMessageException e) {
+            } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
                 throw SqueakException.illegalState(e);
             }
         }
@@ -784,15 +780,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"lib.isArrayElementRemovable(object, to0(index))"}, limit = "2")
         protected static final Object doRemoveArrayElement(@SuppressWarnings("unused") final Object receiver, final Object object, final long index,
-                        @CachedLibrary("object") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("object") final InteropLibrary lib) {
             try {
                 lib.removeArrayElement(object, index - 1);
                 return object;
-            } catch (final InvalidArrayIndexException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            } catch (final UnsupportedMessageException e) {
+            } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
                 throw SqueakException.illegalState(e);
             }
         }
