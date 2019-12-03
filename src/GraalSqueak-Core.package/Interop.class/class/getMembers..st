@@ -1,4 +1,6 @@
 primitives
 getMembers: anObject
 	<primitive: 'primitiveGetMembers' module: 'PolyglotPlugin'>
-	Polyglot signalPolyglotError
+	(self hasMembers: anObject)
+		ifFalse: [ self error: 'Object does not have members' ]
+		ifTrue: [ self error: 'Unexpected error' ]

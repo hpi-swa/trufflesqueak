@@ -1,4 +1,6 @@
 primitives
 instantiate: anObject with: anArray
 	<primitive: 'primitiveInstantiate' module: 'PolyglotPlugin'>
-	Polyglot signalPolyglotError
+	(self isInstantiable: anObject)
+		ifFalse: [ self error: 'Object is not instantiable' ]
+		ifTrue: [ Polyglot signalPolyglotError ]

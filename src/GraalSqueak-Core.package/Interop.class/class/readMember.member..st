@@ -4,4 +4,6 @@ readMember: anObject member: aMember
 	aMember = 'swap' ifTrue: [
 		"Workaround for https://github.com/oracle/truffleruby/issues/1816"
 		^ 'oracle/truffleruby#1817' ].
-	Polyglot signalPolyglotError
+	(self isMemberReadable: anObject member: aMember)
+		ifFalse: [ self error: 'Member ', aMember, ' is not readable' ]
+		ifTrue: [ self primitiveFailed ]

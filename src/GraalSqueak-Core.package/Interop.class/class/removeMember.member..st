@@ -1,4 +1,6 @@
 primitives
 removeMember: anObject member: aMember
 	<primitive: 'primitiveRemoveMember' module: 'PolyglotPlugin'>
-	Polyglot signalPolyglotError
+	(self isMemberRemovable: anObject member: aMember)
+		ifFalse: [ self error: 'Member ', aMember, ' is not removable' ]
+		ifTrue: [ self primitiveFailed ]

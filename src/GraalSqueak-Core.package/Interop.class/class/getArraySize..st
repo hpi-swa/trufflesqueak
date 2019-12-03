@@ -1,4 +1,6 @@
 primitives
 getArraySize: anObject
 	<primitive: 'primitiveGetArraySize' module: 'PolyglotPlugin'>
-	^ 0
+	(self hasArrayElements: anObject)
+		ifFalse: [ self error: 'Object does not have array elements' ]
+		ifTrue: [ self error: 'Unexpected error' ]

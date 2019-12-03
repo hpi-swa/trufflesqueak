@@ -1,4 +1,6 @@
 primitives
 removeArrayElement: anObject index: anIndex
 	<primitive: 'primitiveRemoveArrayElement' module: 'PolyglotPlugin'>
-	Polyglot signalPolyglotError
+	(self isArrayElementRemovable: anObject index: anIndex)
+		ifFalse: [ self error: 'Array element is not removable at index #', anIndex ]
+		ifTrue: [ self primitiveFailed ]
