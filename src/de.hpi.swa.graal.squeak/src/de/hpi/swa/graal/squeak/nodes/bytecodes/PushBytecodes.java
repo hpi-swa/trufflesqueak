@@ -224,7 +224,7 @@ public final class PushBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushLit: " + ((NativeObject) at0Node.execute(literal, 0)).asStringUnsafe();
+            return "pushLitVar: " + ((NativeObject) at0Node.execute(literal, 0)).asStringUnsafe();
         }
     }
 
@@ -283,7 +283,7 @@ public final class PushBytecodes {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
 
-            return "push: self";
+            return "self";
         }
     }
 
