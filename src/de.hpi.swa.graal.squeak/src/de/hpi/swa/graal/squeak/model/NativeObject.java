@@ -32,6 +32,7 @@ import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
+import de.hpi.swa.graal.squeak.util.SqueakMessageInterceptor;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
@@ -122,9 +123,8 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
                     image.setDebugErrorSelector(this);
                 } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, bytes)) {
                     image.setDebugSyntaxErrorSelector(this);
-                } else if (image.getSignalFailureSelector() == null && Arrays.equals(SqueakImageContext.SIGNAL_FAILURE_SELECTOR_NAME, bytes)) {
-                    image.setSignalFailureSelector(this);
                 }
+                SqueakMessageInterceptor.notifyLoadedSymbol(this, bytes);
             }
         } else if (isShortType()) {
             setStorage(chunk.getShorts());
@@ -335,10 +335,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean isDoesNotUnderstand() {
         return this == image.doesNotUnderstand;
-    }
-
-    public boolean isSignalFailure() {
-        return this == image.getSignalFailureSelector();
     }
 
     /*

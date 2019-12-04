@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.graal.squeak.util.SqueakMessageInterceptor;
 
 /**
  * Performs a send to receiver with arguments. For use in other node. Selector must resolve to a
@@ -22,11 +23,13 @@ public final class SendSelectorNode extends Node {
     private final NativeObject selector;
 
     @Child private SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
-    @Child private LookupMethodNode lookupMethodNode = LookupMethodNode.create();
+    @Child private AbstractLookupMethodWithSelectorNode lookupMethodNode;
     @Child private DispatchEagerlyNode dispatchNode;
 
     private SendSelectorNode(final CompiledCodeObject code, final NativeObject selector) {
         dispatchNode = DispatchEagerlyNode.create(code);
+        final ClassObject breakpointClass = SqueakMessageInterceptor.classFor(selector);
+        lookupMethodNode = breakpointClass == null ? LookupMethodWithSelectorNode.create(selector) : LookupMethodWithSelectorAndBreakpointNode.create(selector, breakpointClass);
         this.selector = selector;
     }
 
@@ -36,10 +39,7 @@ public final class SendSelectorNode extends Node {
 
     public Object executeSend(final VirtualFrame frame, final Object... receiverAndArguments) {
         final ClassObject rcvrClass = lookupClassNode.executeLookup(receiverAndArguments[0]);
-        final CompiledMethodObject method = (CompiledMethodObject) lookupMethodNode.executeLookup(rcvrClass, selector);
-        if (selector.isSignalFailure() && method != null) {
-            System.out.println("#signalFailure: is being sent");
-        }
+        final CompiledMethodObject method = (CompiledMethodObject) lookupMethodNode.executeLookup(rcvrClass);
         final Object result = dispatchNode.executeDispatch(frame, method, receiverAndArguments);
         assert result != null : "Result of a message send should not be null";
         return result;

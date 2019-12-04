@@ -165,8 +165,6 @@ public final class SqueakImageContext {
     @CompilationFinal private NativeObject debugErrorSelector = null;
     @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes();
     @CompilationFinal private NativeObject debugSyntaxErrorSelector = null;
-    @CompilationFinal(dimensions = 1) public static final byte[] SIGNAL_FAILURE_SELECTOR_NAME = "signalFailure:".getBytes();
-    @CompilationFinal private NativeObject signalFailureSelector = null;
 
     public Map<PointersObject, ContextObject> suspendedContexts = new HashMap<>();
 
@@ -317,15 +315,6 @@ public final class SqueakImageContext {
     public void setDebugSyntaxErrorSelector(final NativeObject debugSyntaxErrorSelector) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.debugSyntaxErrorSelector = debugSyntaxErrorSelector;
-    }
-
-    public NativeObject getSignalFailureSelector() {
-        return signalFailureSelector;
-    }
-
-    public void setSignalFailureSelector(final NativeObject signalFailureSelector) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.signalFailureSelector = signalFailureSelector;
     }
 
     public ClassObject getCompilerClass() {
@@ -599,9 +588,8 @@ public final class SqueakImageContext {
             lastSender[0] = FrameAccess.getSender(current);
             final Object marker = FrameAccess.getMarker(current, method);
             final Object context = FrameAccess.getContext(current, method);
-            final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
             final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
-            getError().println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, method, argumentsString, marker, context, lastSender[0]));
+            getError().println(MiscUtils.format("%s #(%s) [marker: %s, sender: %s]", context, argumentsString, marker, lastSender[0]));
             return null;
         });
         if (lastSender[0] instanceof ContextObject) {
@@ -616,7 +604,7 @@ public final class SqueakImageContext {
         final PointersObject activeProcess = getActiveProcessSlow();
         final long activePriority = (long) activeProcess.instVarAt0Slow(PROCESS.PRIORITY);
         b.append("Active process @");
-        b.append(activeProcess.hashCode());
+        b.append(Integer.toHexString(activeProcess.hashCode()));
         b.append(" priority ");
         b.append(activePriority);
         b.append('\n');
@@ -641,7 +629,7 @@ public final class SqueakImageContext {
     private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
         if (semaphoreOrNil instanceof PointersObject) {
             b.append(label);
-            b.append(semaphoreOrNil.hashCode());
+            b.append(Integer.toHexString(semaphoreOrNil.hashCode()));
             b.append(" with ");
             b.append(((PointersObject) semaphoreOrNil).instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS));
             b.append(" excess signals");
@@ -666,14 +654,14 @@ public final class SqueakImageContext {
                 final Object aContext = aProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
                 if (aContext instanceof ContextObject) {
                     b.append("\tprocess @");
-                    b.append(aProcess.hashCode());
+                    b.append(Integer.toHexString(aProcess.hashCode()));
                     b.append(" with suspended context ");
                     b.append(aContext);
                     b.append(" and stack trace:\n");
                     ((ContextObject) aContext).printSqMaterializedStackTraceOn(b);
                 } else {
                     b.append("\tprocess @");
-                    b.append(aProcess.hashCode());
+                    b.append(Integer.toHexString(aProcess.hashCode()));
                     b.append(" with suspended context nil\n");
                 }
                 temp = aProcess.instVarAt0Slow(PROCESS.NEXT_LINK);
