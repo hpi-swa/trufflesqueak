@@ -88,9 +88,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 LOG.fine(b.toString());
             } catch (final ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
-                final StringBuilder b = new StringBuilder("Process Switch:\n");
-                activeContext.printSqMaterializedStackTraceOn(b);
-                LOG.fine(b.toString());
             } catch (final NonLocalReturn nlr) {
                 final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
                 activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
