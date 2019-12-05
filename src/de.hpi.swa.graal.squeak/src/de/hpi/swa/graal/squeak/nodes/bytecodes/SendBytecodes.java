@@ -22,17 +22,14 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractLookupMethodWithSelectorNode;
+import de.hpi.swa.graal.squeak.nodes.AbstractLookupMethodWithSelectorNodes.AbstractLookupMethodWithSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
-import de.hpi.swa.graal.squeak.nodes.LookupMethodWithSelectorAndBreakpointNode;
-import de.hpi.swa.graal.squeak.nodes.LookupMethodWithSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
-import de.hpi.swa.graal.squeak.util.SqueakMessageInterceptor;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
@@ -60,8 +57,7 @@ public final class SendBytecodes {
             selector = sel instanceof NativeObject ? (NativeObject) sel : code.image.doesNotUnderstand;
             argumentCount = argcount;
             this.lookupClassNode = lookupClassNode;
-            final ClassObject breakpointClass = SqueakMessageInterceptor.classFor(selector);
-            lookupMethodNode = breakpointClass == null ? LookupMethodWithSelectorNode.create(selector) : LookupMethodWithSelectorAndBreakpointNode.create(selector, breakpointClass);
+            lookupMethodNode = AbstractLookupMethodWithSelectorNode.create(selector);
             dispatchSendNode = DispatchSendNode.create(code);
             popNNode = FrameStackPopNNode.create(code, 1 + argumentCount); // receiver + arguments.
         }

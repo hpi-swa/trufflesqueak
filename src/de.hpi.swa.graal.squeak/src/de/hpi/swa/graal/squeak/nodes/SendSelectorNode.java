@@ -12,8 +12,8 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractLookupMethodWithSelectorNodes.AbstractLookupMethodWithSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.graal.squeak.util.SqueakMessageInterceptor;
 
 /**
  * Performs a send to receiver with arguments. For use in other node. Selector must resolve to a
@@ -28,8 +28,7 @@ public final class SendSelectorNode extends Node {
 
     private SendSelectorNode(final CompiledCodeObject code, final NativeObject selector) {
         dispatchNode = DispatchEagerlyNode.create(code);
-        final ClassObject breakpointClass = SqueakMessageInterceptor.classFor(selector);
-        lookupMethodNode = breakpointClass == null ? LookupMethodWithSelectorNode.create(selector) : LookupMethodWithSelectorAndBreakpointNode.create(selector, breakpointClass);
+        lookupMethodNode = AbstractLookupMethodWithSelectorNode.create(selector);
         this.selector = selector;
     }
 

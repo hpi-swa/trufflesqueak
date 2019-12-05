@@ -14,27 +14,25 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 
 public class SqueakMessageInterceptor {
 
-    private static final String BREAK_PROPERTY = "squeakBreakpoints";
+    private static final String SYSTEM_PROPERTY = "squeakBreakpoints";
     private static final Pattern METHOD = Pattern.compile("(\\w+)>>((\\w+\\:)+|\\w+)");
+    private static final String DEFAULTS = "TestCase>>logFailure:,TestCase>>signalFailure:,Object>>halt";
 
     private static final Map<String, Set<byte[]>> classNameToSelectorsMap = initializeClassNameToSelectorsMap();
     private static final Map<byte[], Set<ClassObject>> selectorToClassesMap = new IdentityHashMap<>();
     private static final Map<NativeObject, ClassObject> nativeSelectorToClassMap = new IdentityHashMap<>();
+    private static final Map<NativeObject, String> nativeSelectorToStringMap = new IdentityHashMap<>();
 
     private static Map<String, Set<byte[]>> initializeClassNameToSelectorsMap() {
         final Map<String, Set<byte[]>> aClassNameToSelectorsMap = new HashMap<>();
-        Set<byte[]> selectors = new HashSet<>();
-        aClassNameToSelectorsMap.put("TestCase", selectors);
-        selectors.add("logFailure:".getBytes());
-        selectors.add("signalFailure:".getBytes());
-        final String toIntercept = System.getProperty(BREAK_PROPERTY);
+        final String toIntercept = DEFAULTS + "," + System.getProperty(SYSTEM_PROPERTY, "");
         if (toIntercept != null && !toIntercept.trim().isEmpty()) {
             for (final String token : toIntercept.split(",")) {
                 final Matcher nameAndSelector = METHOD.matcher(token);
                 if (nameAndSelector.matches()) {
                     final String className = nameAndSelector.group(1);
                     final String selector = nameAndSelector.group(2);
-                    selectors = aClassNameToSelectorsMap.getOrDefault(className, new HashSet<>());
+                    final Set<byte[]> selectors = aClassNameToSelectorsMap.getOrDefault(className, new HashSet<>());
                     if (selectors.isEmpty()) {
                         aClassNameToSelectorsMap.put(className, selectors);
                     }
@@ -77,10 +75,16 @@ public class SqueakMessageInterceptor {
         }
         for (final ClassObject aClass : selectorToClassesMap.remove(requested)) {
             nativeSelectorToClassMap.put(symbol, aClass);
+            nativeSelectorToStringMap.put(symbol, "Reached breakpoint " + aClass.getClassNameUnsafe() + ">>" + symbol.asStringUnsafe());
         }
     }
 
-    public static ClassObject classFor(final NativeObject selector) {
+    public static ClassObject breakpointClassFor(final NativeObject selector) {
         return nativeSelectorToClassMap.get(selector);
+    }
+
+    // This is the "halt" method - put a breakpoint in your IDE on the print statement within
+    public static void breakpointReached(final NativeObject selector) {
+        System.out.println(nativeSelectorToStringMap.get(selector));
     }
 }

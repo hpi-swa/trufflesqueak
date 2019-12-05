@@ -20,6 +20,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractLookupMethodWithSelectorNodes.AbstractLookupMethodWithSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -64,7 +65,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
     protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final ClassObject rcvrClass,
                     final Object[] rcvrAndArgs,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                    @Cached(value = "create(code.image.doesNotUnderstand)", allowUncached = true) final LookupMethodWithSelectorNode lookupNode) {
+                    @Cached(value = "create(code.image.doesNotUnderstand)", allowUncached = true) final AbstractLookupMethodWithSelectorNode lookupNode) {
         final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) lookupNode.executeLookup(rcvrClass);
         final PointersObject message = code.image.newMessage(writeNode, selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
         return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message});
@@ -75,8 +76,8 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
                     final Object[] rcvrAndArgs,
                     @Cached final SqueakObjectClassNode classNode,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                    @Cached(value = "create(code.image.runWithInSelector)", allowUncached = true) final LookupMethodWithSelectorNode lookupNode1,
-                    @Cached(value = "create(code.image.doesNotUnderstand)", allowUncached = true) final LookupMethodWithSelectorNode lookupNode2,
+                    @Cached(value = "create(code.image.runWithInSelector)", allowUncached = true) final AbstractLookupMethodWithSelectorNode lookupNode1,
+                    @Cached(value = "create(code.image.doesNotUnderstand)", allowUncached = true) final AbstractLookupMethodWithSelectorNode lookupNode2,
                     @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
         final ClassObject targetClass = classNode.executeLookup(targetObject);
