@@ -58,12 +58,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     @BeforeClass
     public static void setUp() {
-        executor = Executors.newSingleThreadExecutor();
         loadTestImage();
         testWithImageIsActive = false;
     }
 
     public static void loadTestImage() {
+        executor = Executors.newSingleThreadExecutor();
         final String imagePath = getPathToTestImage();
         try {
             runWithTimeout(imagePath, value -> loadImageContext(value), TEST_IMAGE_LOAD_TIMEOUT_SECONDS);
@@ -189,7 +189,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         // The timer semaphore is taken care of in ensureTimerLoop, since the delays need to be
         // reset as well
         final ArrayObject oldExternalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
-        image.evaluate("[ ExternalObjectTable current " +
+        evaluate("[ ExternalObjectTable current " +
                         "            initializeCaches;" +
                         "            externalObjectsArray: (Smalltalk specialObjectsArray at: 39 put: (Array new: 20)) ] value");
         final ArrayObject externalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
@@ -210,7 +210,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void ensureTimerLoop() {
-        image.evaluate("[(Delay classPool at: #SuspendedDelays ifAbsent: [OrderedCollection new]) removeAll. " +
+        evaluate("[(Delay classPool at: #SuspendedDelays ifAbsent: [OrderedCollection new]) removeAll. " +
                         "Delay classPool at: #ScheduledDelay put: nil; at: #FinishedDelay put: nil; at: #ActiveDelay put: nil. " +
                         "Delay startTimerEventLoop] value");
     }
@@ -228,7 +228,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (activePriority == PRIORITY_10_LIST_INDEX + 1) {
             assert activeProcess == idleProcess;
             LOG.severe(() -> "IDLE PROCESS IS ACTIVE, REINSTALL IT (ProcessorScheduler installIdleProcess)");
-            image.evaluate("ProcessorScheduler installIdleProcess");
+            evaluate("ProcessorScheduler installIdleProcess");
             final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
             final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
             final Object firstLink = priority10List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
@@ -242,15 +242,10 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     protected static void patchMethod(final String className, final String selector, final String body) {
         image.getOutput().println("Patching " + className + ">>#" + selector + "...");
-        context.enter();
-        try {
-            final Object patchResult = image.evaluate(String.join(" ",
-                            className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
-                            "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
-            assertNotEquals(NilObject.SINGLETON, patchResult);
-        } finally {
-            context.leave();
-        }
+        final Object patchResult = evaluate(String.join(" ",
+                        className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
+                        "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
+        assertNotEquals(NilObject.SINGLETON, patchResult);
     }
 
     protected static TestResult runTestCase(final TestRequest request) {
