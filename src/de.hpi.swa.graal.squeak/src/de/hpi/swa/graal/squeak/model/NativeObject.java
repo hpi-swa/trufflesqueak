@@ -118,7 +118,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         if (isByteType()) {
             final byte[] bytes = chunk.getBytes();
             setStorage(bytes);
-            if (getSqueakClass() == image.aboutToReturnSelector.getSqueakClass()) {
+            if (getSqueakClass() == image.byteSymbolClass) {
                 if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, bytes)) {
                     image.setDebugErrorSelector(this);
                 } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, bytes)) {

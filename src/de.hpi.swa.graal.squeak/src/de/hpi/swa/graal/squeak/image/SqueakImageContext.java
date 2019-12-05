@@ -167,6 +167,7 @@ public final class SqueakImageContext {
     @CompilationFinal private NativeObject debugSyntaxErrorSelector = null;
 
     public Map<PointersObject, ContextObject> suspendedContexts = new HashMap<>();
+    public ClassObject byteSymbolClass;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;

@@ -21,7 +21,9 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -412,6 +414,7 @@ public final class SqueakImageReader {
             }
         }
         assert image.metaClass.instancesAreClasses();
+        image.byteSymbolClass = ((NativeObject) image.metaClass.getOtherPointers()[CLASS.NAME]).getSqueakClass();
 
         /** Finally, ensure instances of Behavior are {@link ClassObject}s. */
         final ClassObject behaviorClass = classDescriptionClass.getSuperclassOrNull();
