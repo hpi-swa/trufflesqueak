@@ -102,8 +102,9 @@ public final class SqueakImageContext {
     public final NativeObject runWithInSelector = new NativeObject(this);
     public final ArrayObject primitiveErrorTable = new ArrayObject(this);
     public final ArrayObject specialSelectors = new ArrayObject(this);
-    @CompilationFinal public ClassObject smallFloatClass = null;
-    @CompilationFinal public ClassObject foreignObjectClass = null;
+    @CompilationFinal private ClassObject smallFloatClass = null;
+    @CompilationFinal private ClassObject byteSymbolClass = null;
+    @CompilationFinal private ClassObject foreignObjectClass = null;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
@@ -292,41 +293,60 @@ public final class SqueakImageContext {
         return debugErrorSelector;
     }
 
-    public void setDebugErrorSelector(final NativeObject debugErrorSelector) {
+    public void setDebugErrorSelector(final NativeObject classObject) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.debugErrorSelector = debugErrorSelector;
+        assert debugErrorSelector == null;
+        debugErrorSelector = classObject;
     }
 
     public NativeObject getDebugSyntaxErrorSelector() {
         return debugSyntaxErrorSelector;
     }
 
-    public void setDebugSyntaxErrorSelector(final NativeObject debugSyntaxErrorSelector) {
+    public void setDebugSyntaxErrorSelector(final NativeObject classObject) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.debugSyntaxErrorSelector = debugSyntaxErrorSelector;
+        assert debugSyntaxErrorSelector == null;
+        debugSyntaxErrorSelector = classObject;
     }
 
     public ClassObject getCompilerClass() {
         return compilerClass;
     }
 
-    public void setCompilerClass(final ClassObject compilerClass) {
+    public void setCompilerClass(final ClassObject classObject) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.compilerClass = compilerClass;
+        assert compilerClass == null;
+        compilerClass = classObject;
     }
 
     public ClassObject getParserClass() {
         return parserClass;
     }
 
-    public void setParserClass(final ClassObject parserClass) {
+    public void setParserClass(final ClassObject classObject) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.parserClass = parserClass;
+        assert parserClass == null;
+        parserClass = classObject;
     }
 
-    public void setSmallFloat(final ClassObject classObject) {
+    public ClassObject getSmallFloatClass() {
+        return smallFloatClass;
+    }
+
+    public void setSmallFloatClass(final ClassObject classObject) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
+        assert smallFloatClass == null;
         smallFloatClass = classObject;
+    }
+
+    public ClassObject getByteSymbolClass() {
+        return byteSymbolClass;
+    }
+
+    public void setByteSymbolClass(final ClassObject classObject) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        assert byteSymbolClass == null;
+        byteSymbolClass = classObject;
     }
 
     public ClassObject getWideStringClass() {
@@ -359,8 +379,9 @@ public final class SqueakImageContext {
         return foreignObjectClass;
     }
 
-    public boolean supportsForeignObject() {
-        return foreignObjectClass != null;
+    public ClassObject getForeignObjectClass() {
+        assert foreignObjectClass != null;
+        return foreignObjectClass;
     }
 
     public boolean supportsNFI() {

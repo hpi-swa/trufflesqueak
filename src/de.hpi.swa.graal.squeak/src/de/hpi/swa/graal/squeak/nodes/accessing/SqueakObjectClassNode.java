@@ -76,7 +76,7 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     @Specialization
     protected static final ClassObject doDouble(@SuppressWarnings("unused") final double value,
                     @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.smallFloatClass;
+        return image.getSmallFloatClass();
     }
 
     @Specialization
@@ -152,7 +152,6 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"})
     protected static final ClassObject doForeignObject(@SuppressWarnings("unused") final Object value,
                     @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        assert image.supportsForeignObject();
-        return image.foreignObjectClass;
+        return image.getForeignObjectClass();
     }
 }

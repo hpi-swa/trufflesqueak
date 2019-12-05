@@ -223,7 +223,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     /** ByteSymbol. */
     public boolean isSymbolClass() {
-        return this == image.aboutToReturnSelector.getSqueakClass();
+        return this == image.getByteSymbolClass();
     }
 
     /** WideString. */
