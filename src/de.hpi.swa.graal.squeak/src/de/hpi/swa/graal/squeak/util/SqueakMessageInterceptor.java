@@ -15,7 +15,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 public class SqueakMessageInterceptor {
 
     private static final String BREAK_PROPERTY = "squeakBreakpoints";
-    private static final Pattern TEST_CASE = Pattern.compile("(\\w+)>>(\\w+)");
+    private static final Pattern METHOD = Pattern.compile("(\\w+)>>((\\w+\\:)+|\\w+)");
 
     private static final Map<String, Set<byte[]>> classNameToSelectorsMap = initializeClassNameToSelectorsMap();
     private static final Map<byte[], Set<ClassObject>> selectorToClassesMap = new IdentityHashMap<>();
@@ -30,7 +30,7 @@ public class SqueakMessageInterceptor {
         final String toIntercept = System.getProperty(BREAK_PROPERTY);
         if (toIntercept != null && !toIntercept.trim().isEmpty()) {
             for (final String token : toIntercept.split(",")) {
-                final Matcher nameAndSelector = TEST_CASE.matcher(token);
+                final Matcher nameAndSelector = METHOD.matcher(token);
                 if (nameAndSelector.matches()) {
                     final String className = nameAndSelector.group(1);
                     final String selector = nameAndSelector.group(2);

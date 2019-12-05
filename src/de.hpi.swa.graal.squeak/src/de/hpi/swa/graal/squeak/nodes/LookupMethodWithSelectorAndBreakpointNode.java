@@ -17,6 +17,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.Abstr
 
 @ReportPolymorphism
 public abstract class LookupMethodWithSelectorAndBreakpointNode extends AbstractLookupMethodWithSelectorNode {
+    protected static final int LOOKUP_CACHE_SIZE = 6;
 
     private final NativeObject selector;
     private final ClassObject breakpointClass;
@@ -29,6 +30,14 @@ public abstract class LookupMethodWithSelectorAndBreakpointNode extends Abstract
         super();
         this.selector = selector;
         this.breakpointClass = breakpointClass;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass"}, assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()"})
+    protected final static Object doCached(final ClassObject classObject,
+                    @Cached("classObject") final ClassObject cachedClass,
+                    @Cached("doUncachedSlow(cachedClass)") final Object cachedMethod) {
+        return cachedMethod;
     }
 
     @Override
