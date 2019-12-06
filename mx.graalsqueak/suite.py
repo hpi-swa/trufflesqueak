@@ -13,7 +13,7 @@ suite = {
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
-    "version": "1.0.0-rc5",
+    "version": "1.0.0-rc6",
     "graalsqueak:dependencyMap": {
         "assets": "1.0.0-rc5",
         "graalvm": "19.3.0",
