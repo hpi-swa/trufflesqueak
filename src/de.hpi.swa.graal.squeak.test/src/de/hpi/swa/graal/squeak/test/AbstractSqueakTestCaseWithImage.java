@@ -210,8 +210,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void ensureTimerLoop() {
-        evaluate("[(Delay classPool at: #SuspendedDelays ifAbsent: [OrderedCollection new]) removeAll. " +
-                        "Delay classPool at: #ScheduledDelay put: nil; at: #FinishedDelay put: nil; at: #ActiveDelay put: nil. " +
+        evaluate("[Delay stopTimerEventLoop. " +
+                        "Delay classPool at: #SuspendedDelays put: nil; at: #ScheduledDelay put: nil; at: #FinishedDelay put: nil; at: #ActiveDelay put: nil. " +
                         "Delay startTimerEventLoop] value");
     }
 
@@ -314,8 +314,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static String testCommand(final TestRequest request) {
         return String.format(
-                        "[(%s selector: #%s) runCase. '%s'] on: TestFailure, Error do: [:e | | s | s := WriteStream on: (String new: 1500). s nextPutAll: e asString; cr. " +
-                                        "e signalerContext errorReportOn: s. s contents]",
+                        "[(%s selector: #%s) runCase. '%s'] on: TestFailure, Error do: [:e | e signalerContext longStack]",
                         request.testCase, request.testSelector, PASSED_VALUE);
     }
 
