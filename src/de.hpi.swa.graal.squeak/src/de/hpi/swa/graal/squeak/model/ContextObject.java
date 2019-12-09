@@ -480,12 +480,12 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (hasMethod()) {
             final BlockClosureObject closure = getClosure();
             if (closure != null) {
-                return "CTX [] in " + getMethod() + " #" + hashCode();
+                return "CTX [] in " + getMethod() + " @" + Integer.toHexString(hashCode());
             } else {
-                return "CTX " + getMethod() + " #" + hashCode();
+                return "CTX " + getMethod() + " @" + Integer.toHexString(hashCode());
             }
         } else {
-            return "CTX without method" + " #" + hashCode();
+            return "CTX without method @" + Integer.toHexString(hashCode());
         }
     }
 
