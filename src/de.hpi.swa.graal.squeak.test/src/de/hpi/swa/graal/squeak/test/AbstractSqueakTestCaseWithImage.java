@@ -210,8 +210,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void ensureTimerLoop() {
-        evaluate("[Delay stopTimerEventLoop. " +
-                        "Delay classPool at: #SuspendedDelays put: nil; at: #ScheduledDelay put: nil; at: #FinishedDelay put: nil; at: #ActiveDelay put: nil. " +
+        evaluate("[Delay primSignal: nil atUTCMicroseconds: 0. Delay classPool " +
+                        "at: #SuspendedDelays put: nil; at: #ScheduledDelay put: nil; at: #FinishedDelay put: nil; at: #ActiveDelay put: nil. " +
                         "Delay startTimerEventLoop] value");
     }
 
