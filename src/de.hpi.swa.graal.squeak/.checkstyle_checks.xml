@@ -191,10 +191,6 @@
     </module>
     <module name="FinalParameters"/>
     <module name="EqualsHashCode"/>
-    <module name="JUnitTestCase">
-      <property name="severity" value="ignore"/>
-      <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
-    </module>
   </module>
   <module name="FileTabCharacter">
     <property name="severity" value="error"/>
