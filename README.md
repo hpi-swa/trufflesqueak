@@ -82,6 +82,8 @@ Please [report any issues here on GitHub][issues] and open
 
 ## Publications
 
+*To cite this work, please use [the GraalSqueak paper presented at MPLR'19][mplr19_paper].*
+
 ### 2019
 - Fabio Niephaus. [*Smalltalk with the GraalVM*][javaadvent19]. In the
   JVM Programming Advent Calendar, December 7, 2019.
