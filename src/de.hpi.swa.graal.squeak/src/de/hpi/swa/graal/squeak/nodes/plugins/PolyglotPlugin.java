@@ -75,7 +75,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public boolean isEnabled(final SqueakImageContext image) {
-        return image.supportsTruffleObject();
+        return image.supportsForeignObject();
     }
 
     @Override

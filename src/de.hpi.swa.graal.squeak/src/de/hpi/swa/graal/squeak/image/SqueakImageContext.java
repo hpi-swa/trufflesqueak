@@ -103,7 +103,7 @@ public final class SqueakImageContext {
     public final ArrayObject primitiveErrorTable = new ArrayObject(this);
     public final ArrayObject specialSelectors = new ArrayObject(this);
     @CompilationFinal public ClassObject smallFloatClass = null;
-    @CompilationFinal public ClassObject truffleObjectClass = null;
+    @CompilationFinal public ClassObject foreignObjectClass = null;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
@@ -352,14 +352,14 @@ public final class SqueakImageContext {
         primitiveNodeFactory.initialize(this);
     }
 
-    public ClassObject initializeTruffleObject() {
+    public ClassObject initializeForeignObject() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        truffleObjectClass = new ClassObject(this);
-        return truffleObjectClass;
+        foreignObjectClass = new ClassObject(this);
+        return foreignObjectClass;
     }
 
-    public boolean supportsTruffleObject() {
-        return truffleObjectClass != null;
+    public boolean supportsForeignObject() {
+        return foreignObjectClass != null;
     }
 
     public boolean supportsNFI() {

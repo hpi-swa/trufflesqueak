@@ -150,9 +150,9 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     }
 
     @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"})
-    protected static final ClassObject doTruffleObject(@SuppressWarnings("unused") final Object value,
+    protected static final ClassObject doForeignObject(@SuppressWarnings("unused") final Object value,
                     @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        assert image.supportsTruffleObject();
-        return image.truffleObjectClass;
+        assert image.supportsForeignObject();
+        return image.foreignObjectClass;
     }
 }
