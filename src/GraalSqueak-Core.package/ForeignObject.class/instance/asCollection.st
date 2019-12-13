@@ -1,3 +1,3 @@
 converting
 asCollection
-	^ self asArray
+	^ ForeignArray on: self

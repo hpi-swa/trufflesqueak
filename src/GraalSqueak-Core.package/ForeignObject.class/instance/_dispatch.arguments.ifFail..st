@@ -8,6 +8,6 @@ _dispatch: member arguments: arguments ifFail: failBlock
 	(Interop isMemberInvocable: self member: member)
 		ifTrue: [ ^ Interop invokeMember: self member: member arguments: arguments ].
 	result := Interop readMember: self member: member.
-	^ (result isTruffleObject and: [ Interop isExecutable: result ])
+	^ (result isForeignObject and: [ Interop isExecutable: result ])
 		ifTrue: [ Interop execute: result with: arguments ]
 		ifFalse: [ result ]

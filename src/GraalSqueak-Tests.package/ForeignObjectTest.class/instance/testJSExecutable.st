@@ -1,5 +1,5 @@
 testing
-testTruffleObjectExecutable
+testJSExecutable
 	| jsLambda |
 	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
 

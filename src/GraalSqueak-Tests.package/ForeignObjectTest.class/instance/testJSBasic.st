@@ -1,5 +1,5 @@
 testing
-testTruffleObjectBasic
+testJSBasic
 	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
 	self assert: (Interop isNull: (Polyglot eval: Polyglot languageIdJS string: 'null')).
 	

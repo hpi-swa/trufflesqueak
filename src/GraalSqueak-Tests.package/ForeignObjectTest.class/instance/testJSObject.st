@@ -1,5 +1,5 @@
 testing
-testTruffleObjectJSObject
+testJSObject
 	| jsObject |
 	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
 

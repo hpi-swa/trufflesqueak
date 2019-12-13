@@ -4,8 +4,4 @@
 	"instance" : {
 		"testLanguageInfo" : "fn 11/28/2019 14:56",
 		"testPolyglotBindings" : "fn 11/28/2019 14:53",
-		"testPolyglotEval" : "fn 11/28/2019 14:56",
-		"testTruffleObjectArray" : "fn 11/28/2019 14:57",
-		"testTruffleObjectBasic" : "fn 11/28/2019 14:57",
-		"testTruffleObjectExecutable" : "fn 11/28/2019 14:57",
-		"testTruffleObjectJSObject" : "fn 11/28/2019 14:57" } }
+		"testPolyglotEval" : "fn 11/28/2019 14:56" } }

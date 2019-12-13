@@ -1,3 +1,3 @@
 *GraalSqueak-Core
-isTruffleObject
+isForeignObject
 	^ false

@@ -4,11 +4,11 @@
 		 ],
 	"classvars" : [
 		 ],
-	"commentStamp" : "fn 11/4/2019 15:25",
+	"commentStamp" : "",
 	"instvars" : [
-		 ],
-	"name" : "TruffleObject",
+		"foreignObject" ],
+	"name" : "ForeignArray",
 	"pools" : [
 		 ],
-	"super" : "Object",
+	"super" : "ArrayedCollection",
 	"type" : "normal" }

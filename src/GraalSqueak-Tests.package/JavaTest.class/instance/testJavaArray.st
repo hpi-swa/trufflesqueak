@@ -11,3 +11,4 @@ testJavaArray
 	
 	self assert: 32 equals: (ints at: 1 put: 32).
 	self assert: 32 equals: (ints at: 1).
+	self assert: #(32 0) equals: ints asCollection asArray

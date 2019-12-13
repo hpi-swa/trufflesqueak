@@ -4,6 +4,12 @@
 	"instance" : {
 		"expectedFailures" : "fn 11/11/2019 22:19",
 		"testJavaAddToHostClassPath" : "fn 11/11/2019 22:16",
-		"testJavaArray" : "fn 11/4/2019 00:13",
+		"testJavaArray" : "fn 12/13/2019 11:43",
 		"testJavaBasic" : "fn 11/11/2019 22:20",
-		"testJavaString" : "fn 11/4/2019 00:10" } }
+		"testJavaDuration" : "fn 12/12/2019 23:15",
+		"testJavaException" : "fn 12/12/2019 23:15",
+		"testJavaInstant" : "fn 12/12/2019 23:15",
+		"testJavaLocalDate" : "fn 12/12/2019 23:15",
+		"testJavaLocalTime" : "fn 12/12/2019 23:15",
+		"testJavaString" : "fn 11/4/2019 00:10",
+		"testJavaZoneId" : "fn 12/12/2019 23:37" } }

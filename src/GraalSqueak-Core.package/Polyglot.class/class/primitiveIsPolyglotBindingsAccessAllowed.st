@@ -1,5 +1,5 @@
 primitives
 primitiveIsPolyglotBindingsAccessAllowed
 	<primitive: 'primitiveIsPolyglotBindingsAccessAllowed' module: 'PolyglotPlugin'>
-	TruffleObject ensureInitialized.
+	ForeignObject ensureInitialized.
 	^ false
