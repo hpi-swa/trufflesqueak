@@ -364,6 +364,20 @@ def _get_runtime_jvm_args(jdk):
     return mx.get_runtime_jvm_args(dists, jdk=jdk)
 
 
+def _squeak_graalvm_launcher(args):
+    """Build and run a GraalVM graalsqueak launcher"""
+
+    dy = ['--dynamicimports', '/vm']
+    mx.run_mx(dy + ['--env', 'ce-graalsqueak', 'build'])
+    out = mx.OutputCapture()
+    mx.run_mx(dy + ["graalvm-home"], out=mx.TeeOutputCapture(out))
+    launcher = os.path.join(out.data.strip(), "bin", "graalsqueak").split("\n")[-1].strip()
+    mx.log(launcher)
+    if args:
+        mx.run([launcher] + args)
+    return launcher
+
+
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
     supports_coverage = '--jacocout' in sys.argv
@@ -502,6 +516,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
 
 mx.update_commands(_suite, {
     'squeak': [_squeak, '[options]'],
+    'squeak-gvm': [_squeak_graalvm_launcher, '[options]'],
 })
 
 mx_gate.add_gate_runner(_suite, _graalsqueak_gate_runner)
