@@ -83,6 +83,8 @@ Please [report any issues here on GitHub][issues] and open
 ## Publications
 
 ### 2019
+- Fabio Niephaus. [*Smalltalk with the GraalVM*][javaadvent19]. In the
+  JVM Programming Advent Calendar, December 7, 2019.
 - Fabio Niephaus, Tim Felgentreff, and Robert Hirschfeld. *GraalSqueak: Toward a
 Smalltalk-based Tooling Platform for Polyglot Programming*. In Proceedings of
 [the International Conference on Managed Programming Languages and Runtimes
@@ -166,6 +168,7 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [icooolps18_paper]: https://doi.org/10.1145/3242947.3242948
 [icooolps18_pdf]: https://fniephaus.com/2018/icooolps18-graalsqueak.pdf
 [issues]: ../../issues/new
+[javaadvent19]: https://www.javaadvent.com/2019/12/smalltalk-with-the-graalvm.html
 [master]: ../../tree/master
 [morevms19]: https://2019.programming-conference.org/track/MoreVMs-2019
 [morevms19_bibtex]: https://dl.acm.org/downformats.cfm?id=3328440&parent_id=3328433&expformat=bibtex
