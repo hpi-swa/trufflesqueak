@@ -1,0 +1,14 @@
+{
+	"category" : "GraalSqueak-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "GraalSqueakUtilities",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }
