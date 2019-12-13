@@ -83,6 +83,23 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         return PolyglotPluginFactory.getFactories();
     }
 
+    /*
+     * Code evaluation
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsPolyglotEvalAllowed")
+    protected abstract static class PrimIsPolyglotEvalAllowedNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimIsPolyglotEvalAllowedNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(method.image.env.isPolyglotEvalAllowed());
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEvalString")
     protected abstract static class PrimEvalStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
@@ -228,67 +245,24 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveAsPointer")
-    protected abstract static class PrimAsPointerNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    /*
+     * Language information
+     */
 
-        protected PrimAsPointerNode(final CompiledMethodObject method) {
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveListAvailableLanguageIDs")
+    protected abstract static class PrimListAvailableLanguageIDsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimListAvailableLanguageIDsNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"lib.isPointer(object)"}, limit = "2")
-        protected static final long doAsPointer(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary("object") final InteropLibrary lib) {
-            try {
-                return lib.asPointer(object);
-            } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveExecute")
-    protected abstract static class PrimExecuteNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimExecuteNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = {"lib.isExecutable(object)"}, limit = "2")
-        protected static final Object doExecute(@SuppressWarnings("unused") final Object receiver, final Object object, final ArrayObject argumentArray,
-                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
-                        @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("object") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
-            try {
-                return wrapNode.executeWrap(lib.execute(object, getObjectArrayNode.execute(argumentArray)));
-            } catch (UnsupportedTypeException | ArityException | RuntimeException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveExport")
-    protected abstract static class PrimExportNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimExportNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "name.isByteType()")
+        @Specialization
         @TruffleBoundary
-        public final Object exportSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name, final Object value,
-                        @Cached final BranchProfile errorProfile) {
-            try {
-                method.image.env.exportSymbol(name.asStringUnsafe(), value);
-                return value;
-            } catch (final SecurityException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            }
+        protected final ArrayObject doList(@SuppressWarnings("unused") final Object receiver,
+                        @Cached final WrapToSqueakNode wrapNode) {
+            final Collection<LanguageInfo> languages = method.image.env.getPublicLanguages().values();
+            final Object[] result = languages.stream().map(l -> l.getId()).toArray();
+            return wrapNode.executeList(result);
         }
     }
 
@@ -311,24 +285,20 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveGetLastError")
-    protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected static Exception lastError = new Exception("No exception");
+    /*
+     * Interaction with polyglot bindings object
+     */
 
-        protected PrimGetLastErrorNode(final CompiledMethodObject method) {
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsPolyglotBindingsAccessAllowed")
+    protected abstract static class PrimIsPolyglotBindingsAccessAllowedNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimIsPolyglotBindingsAccessAllowedNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final NativeObject doGetLastError(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asByteString(lastError.toString());
-        }
-
-        protected static final void setLastError(final Exception e) {
-            LOG.fine(() -> MiscUtils.toString(e));
-            lastError = e;
+        protected final boolean doIsPolyglotBindingsAccessAllowed(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(method.image.env.isPolyglotBindingsAccessAllowed());
         }
     }
 
@@ -367,47 +337,97 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsPolyglotBindingsAccessAllowed")
-    protected abstract static class PrimIsPolyglotBindingsAccessAllowedNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimIsPolyglotBindingsAccessAllowedNode(final CompiledMethodObject method) {
+    @SqueakPrimitive(names = "primitiveExport")
+    protected abstract static class PrimExportNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        protected PrimExportNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
-        protected final boolean doIsPolyglotBindingsAccessAllowed(@SuppressWarnings("unused") final Object receiver) {
-            return BooleanObject.wrap(method.image.env.isPolyglotBindingsAccessAllowed());
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsPolyglotEvalAllowed")
-    protected abstract static class PrimIsPolyglotEvalAllowedNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimIsPolyglotEvalAllowedNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected final boolean doIsPolyglotEvalAllowed(@SuppressWarnings("unused") final Object receiver) {
-            return BooleanObject.wrap(method.image.env.isPolyglotEvalAllowed());
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveListAvailableLanguageIDs")
-    protected abstract static class PrimListAvailableLanguageIDsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimListAvailableLanguageIDsNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
+        @Specialization(guards = "name.isByteType()")
         @TruffleBoundary
-        protected final ArrayObject doList(@SuppressWarnings("unused") final Object receiver,
-                        @Cached final WrapToSqueakNode wrapNode) {
-            final Collection<LanguageInfo> languages = method.image.env.getPublicLanguages().values();
-            final Object[] result = languages.stream().map(l -> l.getId()).toArray();
-            return wrapNode.executeList(result);
+        public final Object exportSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name, final Object value,
+                        @Cached final BranchProfile errorProfile) {
+            try {
+                method.image.env.exportSymbol(name.asStringUnsafe(), value);
+                return value;
+            } catch (final SecurityException e) {
+                errorProfile.enter();
+                throw primitiveFailedCapturing(e);
+            }
         }
     }
+
+    /*
+     * Generic interop messages
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveExecute")
+    protected abstract static class PrimExecuteNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        protected PrimExecuteNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"lib.isExecutable(object)"}, limit = "2")
+        protected static final Object doExecute(@SuppressWarnings("unused") final Object receiver, final Object object, final ArrayObject argumentArray,
+                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached final WrapToSqueakNode wrapNode,
+                        @CachedLibrary("object") final InteropLibrary lib,
+                        @Cached final BranchProfile errorProfile) {
+            try {
+                return wrapNode.executeWrap(lib.execute(object, getObjectArrayNode.execute(argumentArray)));
+            } catch (UnsupportedTypeException | ArityException | RuntimeException e) {
+                errorProfile.enter();
+                throw primitiveFailedCapturing(e);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsInstantiable")
+    protected abstract static class PrimIsInstantiableNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimIsInstantiableNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsInstantiable(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isInstantiable(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveInstantiate")
+    protected abstract static class PrimInstantiateNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+
+        protected PrimInstantiateNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final Object doIsInstantiable(@SuppressWarnings("unused") final Object receiver, final Object object, final ArrayObject argumentArray,
+                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
+                        @Cached final WrapToSqueakNode wrapNode,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib,
+                        @Cached final BranchProfile errorProfile) {
+            try {
+                return wrapNode.executeWrap(lib.instantiate(object, getObjectArrayNode.execute(argumentArray)));
+            } catch (UnsupportedTypeException | ArityException e) {
+                errorProfile.enter();
+                throw primitiveFailedCapturing(e);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    /*
+     * Value objects
+     */
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsBoolean")
@@ -546,215 +566,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveAsDate")
-    protected abstract static class PrimAsDateNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimAsDateNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "lib.isDate(object)")
-        protected static final Object doAsDate(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            try {
-                return image.env.asGuestValue(lib.asDate(object));
-            } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveAsTime")
-    protected abstract static class PrimAsTimeNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimAsTimeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "lib.isTime(object)")
-        protected static final Object doAsTime(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            try {
-                return image.env.asGuestValue(lib.asTime(object));
-            } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveAsDuration")
-    protected abstract static class PrimAsDurationNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimAsDurationNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "lib.isDuration(object)")
-        protected static final Object doAsDuration(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            try {
-                return image.env.asGuestValue(lib.asDuration(object));
-            } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveAsInstant")
-    protected abstract static class PrimAsInstantNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimAsInstantNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "lib.isInstant(object)")
-        protected static final Object doAsInstant(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            try {
-                return image.env.asGuestValue(lib.asInstant(object));
-            } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveAsTimeZone")
-    protected abstract static class PrimAsTimeZoneNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimAsTimeZoneNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "lib.isTimeZone(object)")
-        protected static final Object doAsTimeZone(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            try {
-                return image.env.asGuestValue(lib.asTimeZone(object));
-            } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsDate")
-    protected abstract static class PrimIsDateNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimIsDateNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final boolean doIsDate(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isDate(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsDuration")
-    protected abstract static class PrimIsDurationNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimIsDurationNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final boolean doIsDuration(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isDuration(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsInstant")
-    protected abstract static class PrimIsInstantNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimIsInstantNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final boolean doIsInstant(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isInstant(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsException")
-    protected abstract static class PrimIsExceptionNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimIsExceptionNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final boolean doIsException(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isException(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveThrowException")
-    protected abstract static class PrimThrowExceptionNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimThrowExceptionNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final Object doThrowException(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            try {
-                throw lib.throwException(object);
-            } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsTime")
-    protected abstract static class PrimIsTimeNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimIsTimeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final boolean doIsTime(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isTime(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsTimeZone")
-    protected abstract static class PrimIsTimeZoneNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimIsTimeZoneNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final boolean doIsTimeZone(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isTimeZone(object));
-        }
-    }
-
-    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsExecutable")
     protected abstract static class PrimIsExecutableNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
 
@@ -766,46 +577,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doIsExecutable(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             return BooleanObject.wrap(lib.isExecutable(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIsInstantiable")
-    protected abstract static class PrimIsInstantiableNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        protected PrimIsInstantiableNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final boolean doIsInstantiable(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return BooleanObject.wrap(lib.isInstantiable(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveInstantiate")
-    protected abstract static class PrimInstantiateNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
-        protected PrimInstantiateNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final Object doIsInstantiable(@SuppressWarnings("unused") final Object receiver, final Object object, final ArrayObject argumentArray,
-                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
-                        @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
-            try {
-                return wrapNode.executeWrap(lib.instantiate(object, getObjectArrayNode.execute(argumentArray)));
-            } catch (UnsupportedTypeException | ArityException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
-            }
         }
     }
 
@@ -836,6 +607,25 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doIsPointer(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             return BooleanObject.wrap(lib.isPointer(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsPointer")
+    protected abstract static class PrimAsPointerNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        protected PrimAsPointerNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"lib.isPointer(object)"}, limit = "2")
+        protected static final long doAsPointer(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary("object") final InteropLibrary lib) {
+            try {
+                return lib.asPointer(object);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
         }
     }
 
@@ -1324,7 +1114,224 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     /*
-     * Java interop.
+     * Time/Date-related objects
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsDate")
+    protected abstract static class PrimIsDateNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimIsDateNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsDate(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isDate(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsDate")
+    protected abstract static class PrimAsDateNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimAsDateNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "lib.isDate(object)")
+        protected static final Object doAsDate(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return image.env.asGuestValue(lib.asDate(object));
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsDuration")
+    protected abstract static class PrimIsDurationNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimIsDurationNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsDuration(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isDuration(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsDuration")
+    protected abstract static class PrimAsDurationNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimAsDurationNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "lib.isDuration(object)")
+        protected static final Object doAsDuration(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return image.env.asGuestValue(lib.asDuration(object));
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsInstant")
+    protected abstract static class PrimIsInstantNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimIsInstantNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsInstant(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isInstant(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsInstant")
+    protected abstract static class PrimAsInstantNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimAsInstantNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "lib.isInstant(object)")
+        protected static final Object doAsInstant(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return image.env.asGuestValue(lib.asInstant(object));
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsTime")
+    protected abstract static class PrimIsTimeNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimIsTimeNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsTime(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isTime(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsTime")
+    protected abstract static class PrimAsTimeNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimAsTimeNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "lib.isTime(object)")
+        protected static final Object doAsTime(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return image.env.asGuestValue(lib.asTime(object));
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsTimeZone")
+    protected abstract static class PrimIsTimeZoneNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimIsTimeZoneNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsTimeZone(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isTimeZone(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveAsTimeZone")
+    protected abstract static class PrimAsTimeZoneNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimAsTimeZoneNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "lib.isTimeZone(object)")
+        protected static final Object doAsTimeZone(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return image.env.asGuestValue(lib.asTimeZone(object));
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    /*
+     * Exception objects
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsException")
+    protected abstract static class PrimIsExceptionNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimIsExceptionNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsException(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isException(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveThrowException")
+    protected abstract static class PrimThrowExceptionNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimThrowExceptionNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final Object doThrowException(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                throw lib.throwException(object);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
+    /*
+     * Java interop
      */
 
     @GenerateNodeFactory
@@ -1452,6 +1459,31 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doString(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.asByteString(MiscUtils.toString(object));
+        }
+    }
+
+    /*
+     * Error handling
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetLastError")
+    protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected static Exception lastError = new Exception("No exception");
+
+        protected PrimGetLastErrorNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final NativeObject doGetLastError(@SuppressWarnings("unused") final Object receiver) {
+            return method.image.asByteString(lastError.toString());
+        }
+
+        protected static final void setLastError(final Exception e) {
+            LOG.fine(() -> MiscUtils.toString(e));
+            lastError = e;
         }
     }
 
