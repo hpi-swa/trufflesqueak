@@ -224,7 +224,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
          * Arguments and copied values are also pushed onto the stack in {@link EnterCodeNode},
          * therefore there must be enough slots for all these values as well as the Squeak stack.
          */
-        return getNumArgsAndCopied() + getSqueakContextSize();
+        return getSqueakContextSize();
     }
 
     @Override
