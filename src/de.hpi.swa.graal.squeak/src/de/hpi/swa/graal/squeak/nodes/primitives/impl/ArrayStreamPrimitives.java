@@ -201,7 +201,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength(), 2)"})
         protected static final long doNativeInts(final NativeObject receiver, final long index) {
-            return Short.toUnsignedLong(UnsafeUtils.getShort(receiver.getIntStorage(), index - 1));
+            return UnsafeUtils.getShort(receiver.getIntStorage(), index - 1);
         }
     }
 
