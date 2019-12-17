@@ -5,14 +5,19 @@
  */
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
+import java.text.NumberFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -34,6 +39,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doCountry(@SuppressWarnings("unused") final Object receiver) {
             final String country = Locale.getDefault().getCountry();
             if (country.isEmpty()) {
@@ -64,8 +70,9 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
+        @TruffleBoundary
+        protected final Object doCurrencySymbol(@SuppressWarnings("unused") final Object receiver) {
+            return method.image.asByteString(NumberFormat.getCurrencyInstance().getCurrency().getCurrencyCode());
         }
     }
 
@@ -77,8 +84,9 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
+        @TruffleBoundary
+        protected static final Object doDaylightSavings(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(TimeZone.getDefault().inDaylightTime(new Date()));
         }
     }
 
@@ -116,6 +124,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doLanguage(@SuppressWarnings("unused") final Object receiver) {
             final String language = Locale.getDefault().getLanguage();
             if (language.isEmpty()) {
@@ -185,8 +194,9 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
+        @TruffleBoundary
+        protected static final long doTimezoneOffset(@SuppressWarnings("unused") final Object receiver) {
+            return TimeZone.getDefault().getRawOffset() / 60 / 1000;
         }
     }
 
@@ -198,8 +208,8 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
-            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
+        protected static final long doVMOffsetToUTC(@SuppressWarnings("unused") final Object receiver) {
+            return 0L;
         }
     }
 }
