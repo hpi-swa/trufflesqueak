@@ -27,7 +27,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
@@ -186,7 +185,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInvertRectInto")
-    protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitive {
         protected PrimInvertRectIntoNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -289,7 +288,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTransformRectInto")
-    protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitive {
         protected PrimTransformRectIntoNode(final CompiledMethodObject method) {
             super(method);
         }
