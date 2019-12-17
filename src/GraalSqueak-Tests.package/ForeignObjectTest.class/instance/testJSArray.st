@@ -35,4 +35,4 @@ testJSArray
 	self assert: (stCollection includes: 1).
 	self assert: 10 equals: stCollection sum.
 	self assert: 4 equals: stCollection max.
-	self assert: #(1 4 9 16) equals: (stCollection asArray collect: [ :e | e * e ])
+	self assert: #(1 4 9 16) equals: (stCollection collect: [ :e | e * e ])
