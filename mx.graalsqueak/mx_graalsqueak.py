@@ -299,9 +299,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     squeak_arguments = []
     if parsed_args.disable_interrupts:
         squeak_arguments.append(
-            '--%s.DisableInterruptHandler' % LANGUAGE_ID)
+            '--%s.disable-interrupts' % LANGUAGE_ID)
     if parsed_args.headless:
-        squeak_arguments.append('--%s.Headless' % LANGUAGE_ID)
+        squeak_arguments.append('--%s.headless' % LANGUAGE_ID)
     if parsed_args.code:
         squeak_arguments.extend(['--code', parsed_args.code])
     if parsed_args.cpusampler:
@@ -455,8 +455,8 @@ def _add_tck_tests(tasks, supports_coverage):
             unittest_args.extend([
                 '--color', '--fail-fast',
                 '-Dtck.language=%s' % LANGUAGE_ID,
-                '-Dpolyglot.%s.Headless=true' % LANGUAGE_ID,
-                '-Dpolyglot.%s.ImagePath=%s' % (LANGUAGE_ID, test_image),
+                '-Dpolyglot.%s.headless=true' % LANGUAGE_ID,
+                '-Dpolyglot.%s.image-path=%s' % (LANGUAGE_ID, test_image),
                 'com.oracle.truffle.tck.tests'])
             mx_unittest.unittest(unittest_args)
 
