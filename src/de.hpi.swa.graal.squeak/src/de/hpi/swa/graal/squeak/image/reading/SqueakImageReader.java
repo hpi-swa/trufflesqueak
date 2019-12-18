@@ -26,6 +26,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageOptions;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
@@ -57,7 +58,7 @@ public final class SqueakImageReader {
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
         if (!truffleFile.isRegularFile()) {
             if (image.getImagePath().isEmpty()) {
-                throw SqueakAbortException.create(MiscUtils.format("An image must be provided via `%s.ImagePath`.", SqueakLanguageConfig.ID));
+                throw SqueakAbortException.create(MiscUtils.format("An image must be provided via `%s.%s`.", SqueakLanguageConfig.ID, SqueakLanguageOptions.IMAGE_PATH));
             } else {
                 throw SqueakAbortException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
             }

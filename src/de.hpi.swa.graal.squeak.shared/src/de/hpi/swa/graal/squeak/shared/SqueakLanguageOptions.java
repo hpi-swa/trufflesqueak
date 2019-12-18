@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+ *
+ * Licensed under the MIT License.
+ */
 package de.hpi.swa.graal.squeak.shared;
 
 public final class SqueakLanguageOptions {
@@ -23,6 +28,8 @@ public final class SqueakLanguageOptions {
     public static final String STACK_DEPTH_PROTECTION = "stack-depth-protection";
     public static final String STACK_DEPTH_PROTECTION_FLAG = "--" + STACK_DEPTH_PROTECTION;
     public static final String STACK_DEPTH_PROTECTION_HELP = "Enable stack depth protection";
+    public static final String TESTING = "testing";
+    public static final String TESTING_HELP = "For internal testing purposes only";
     public static final String TRANSCRIPT_FORWARDING = "enable-transcript-forwarding";
     public static final String TRANSCRIPT_FORWARDING_FLAG = "--" + TRANSCRIPT_FORWARDING;
     public static final String TRANSCRIPT_FORWARDING_HELP = "Forward stdio to Smalltalk transcript";
