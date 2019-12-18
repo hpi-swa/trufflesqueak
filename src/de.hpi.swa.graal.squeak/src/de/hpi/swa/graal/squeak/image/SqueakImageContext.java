@@ -444,7 +444,11 @@ public final class SqueakImageContext {
     }
 
     public String[] getImageArguments() {
-        return env.getApplicationArguments();
+        if (options.imageArguments.length > 0) {
+            return options.imageArguments;
+        } else {
+            return env.getApplicationArguments();
+        }
     }
 
     public Source getLastParseRequestSource() {
@@ -536,7 +540,9 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public void printToStdOut(final Object... arguments) {
-        getOutput().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
+        if (!options.isQuiet) {
+            getOutput().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
+        }
     }
 
     @TruffleBoundary
