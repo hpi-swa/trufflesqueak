@@ -436,7 +436,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object doQuit(final Object receiver, final NotProvided exitStatus) {
-            throw new SqueakQuit(1);
+            throw new SqueakQuit(0);
         }
 
         @Specialization
