@@ -9,7 +9,6 @@ import java.util.function.LongBinaryOperator;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -242,7 +241,6 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#alphaBlendConst:with:paintMode: */
-    @ExplodeLoop
     private long alphaBlendConstwithpaintMode(final long sourceWord, final long destinationWord, final boolean paintMode) {
         final long bitsPerColor;
         long blend;
