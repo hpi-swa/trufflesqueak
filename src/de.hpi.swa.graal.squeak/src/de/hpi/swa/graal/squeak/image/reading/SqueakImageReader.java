@@ -41,6 +41,7 @@ public final class SqueakImageReader {
     private final BufferedInputStream stream;
     private final HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>(750000);
     private final SqueakImageContext image;
+    private final byte[] byteArrayBuffer = new byte[8];
 
     private int chunkCount = 0;
     private long headerSize;
@@ -116,24 +117,21 @@ public final class SqueakImageReader {
     }
 
     private short nextShort() {
-        final byte[] bytes = new byte[2];
-        readBytes(bytes, 2);
+        readBytes(byteArrayBuffer, 2);
         position += 2;
-        return UnsafeUtils.getShort(bytes, 0);
+        return UnsafeUtils.getShort(byteArrayBuffer, 0);
     }
 
     private int nextInt() {
-        final byte[] bytes = new byte[4];
-        readBytes(bytes, 4);
+        readBytes(byteArrayBuffer, 4);
         position += 4;
-        return UnsafeUtils.getInt(bytes, 0);
+        return UnsafeUtils.getInt(byteArrayBuffer, 0);
     }
 
     private long nextLong() {
-        final byte[] bytes = new byte[8];
-        readBytes(bytes, 8);
+        readBytes(byteArrayBuffer, 8);
         position += 8;
-        return UnsafeUtils.getLong(bytes, 0);
+        return UnsafeUtils.getLong(byteArrayBuffer, 0);
     }
 
     private byte[] nextObjectData(final int size, final int format) {
