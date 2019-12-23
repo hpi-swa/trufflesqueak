@@ -1,7 +1,7 @@
 # GraalSqueak Documentation
 
 - [Polyglot API Reference](polyglot-api.md)
-- [Test Image Creation](test-image.md)
+- [Image Creation](images.md)
 
 Please feel free to open a [pull request][pull_request] if you'd like to
 contribute.
