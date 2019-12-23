@@ -75,6 +75,7 @@ public final class SqueakImageReader {
         this.image = image;
     }
 
+    @TruffleBoundary
     public static void load(final SqueakImageContext image) {
         new SqueakImageReader(image).run();
     }
@@ -102,7 +103,6 @@ public final class SqueakImageReader {
         chunktable.clear();
     }
 
-    @TruffleBoundary
     private void readBytes(final byte[] bytes, final int length) {
         try {
             stream.read(bytes, 0, length);
@@ -151,7 +151,6 @@ public final class SqueakImageReader {
         return bytes;
     }
 
-    @TruffleBoundary
     private void skipBytes(final long count) {
         try {
             position += stream.skip(count);
@@ -232,7 +231,6 @@ public final class SqueakImageReader {
         closeStream();
     }
 
-    @TruffleBoundary
     private void closeStream() {
         try {
             stream.close();
