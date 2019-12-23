@@ -254,10 +254,6 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return getSqueakClass().getFormat() == other.getFormat();
     }
 
-    public boolean hasSameStorageType(final NativeObject other) {
-        return storage.getClass() == other.storage.getClass();
-    }
-
     public boolean isByteType() {
         return storage instanceof byte[];
     }

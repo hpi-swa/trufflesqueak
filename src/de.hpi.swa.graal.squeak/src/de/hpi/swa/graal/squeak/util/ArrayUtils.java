@@ -79,33 +79,9 @@ public final class ArrayUtils {
         return newObjects;
     }
 
-    public static boolean equals(final byte[] bytes, final String string) {
-        final int bytesLength = bytes.length;
-        if (bytesLength == string.length()) {
-            for (int i = 0; i < bytesLength; i++) {
-                if (bytes[i] != string.charAt(i)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
     @TruffleBoundary
     public static void fillRandomly(final byte[] bytes) {
         RANDOM.nextBytes(bytes);
-    }
-
-    public static Object[] fillWith(final Object[] input, final int newSize, final Object fill) {
-        final int inputSize = input.length;
-        if (inputSize >= newSize) {
-            return input;
-        } else {
-            final Object[] array = Arrays.copyOf(input, newSize);
-            Arrays.fill(array, inputSize, newSize, fill);
-            return array;
-        }
     }
 
     public static int indexOf(final long[] array, final long value) {

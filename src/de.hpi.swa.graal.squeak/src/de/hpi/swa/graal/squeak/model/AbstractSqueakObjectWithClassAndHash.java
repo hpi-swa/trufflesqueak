@@ -27,12 +27,6 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         squeakClass = klass;
     }
 
-    protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final int hash) {
-        super(image, hash);
-        // TODO: Generate new hash if `0`. This might have something to do with compact classes?
-        squeakClass = null;
-    }
-
     protected AbstractSqueakObjectWithClassAndHash(final SqueakImageContext image, final long hash, final ClassObject klass) {
         super(image, hash);
         squeakClass = klass;

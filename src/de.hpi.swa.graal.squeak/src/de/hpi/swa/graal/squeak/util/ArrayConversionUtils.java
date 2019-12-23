@@ -39,15 +39,6 @@ public final class ArrayConversionUtils {
         return bytes;
     }
 
-    public static byte[] bytesFromLongsReversed(final long[] longs) {
-        final int longsLength = longs.length;
-        final byte[] bytes = new byte[longsLength * LONG_BYTE_SIZE];
-        for (int i = 0; i < longsLength; i++) {
-            UnsafeUtils.putLongReversed(bytes, i, longs[i]);
-        }
-        return bytes;
-    }
-
     public static byte[] bytesFromShorts(final short[] shorts) {
         final int shortLength = shorts.length;
         final byte[] bytes = new byte[shortLength * SHORT_BYTE_SIZE];
@@ -55,24 +46,6 @@ public final class ArrayConversionUtils {
             UnsafeUtils.putShort(bytes, i, shorts[i]);
         }
         return bytes;
-    }
-
-    public static byte[] bytesFromShortsReversed(final short[] shorts) {
-        final int shortLength = shorts.length;
-        final byte[] bytes = new byte[shortLength * SHORT_BYTE_SIZE];
-        for (int i = 0; i < shortLength; i++) {
-            UnsafeUtils.putShortReversed(bytes, i, shorts[i]);
-        }
-        return bytes;
-    }
-
-    public static int[] bytesToInts(final byte[] bytes) {
-        final int length = bytes.length;
-        final int[] ints = new int[length];
-        for (int i = 0; i < length; i++) {
-            ints[i] = bytes[i];
-        }
-        return ints;
     }
 
     @TruffleBoundary
@@ -126,29 +99,6 @@ public final class ArrayConversionUtils {
         final int[] ints = new int[size];
         for (int i = 0; i < ints.length; i++) {
             ints[i] = UnsafeUtils.getIntReversed(bytes, i);
-        }
-        return ints;
-    }
-
-    public static int[] intsFromBytesReversedExact(final byte[] bytes) {
-        final int byteSize = bytes.length;
-        final int intSize = byteSize / INTEGER_BYTE_SIZE;
-        final int size = Math.floorDiv(byteSize + 3, INTEGER_BYTE_SIZE);
-        final int[] ints = new int[size];
-        for (int i = 0; i < intSize; i++) {
-            ints[i] = UnsafeUtils.getIntReversed(bytes, i);
-        }
-        for (int i = intSize; i < size; i++) {
-            final int offset = i * INTEGER_BYTE_SIZE;
-            if (offset < byteSize) {
-                ints[i] |= (bytes[offset] & 0xFF) << 24;
-            }
-            if (offset + 1 < byteSize) {
-                ints[i] |= (bytes[offset + 1] & 0xFF) << 16;
-            }
-            if (offset + 2 < byteSize) {
-                ints[i] |= (bytes[offset + 2] & 0xFF) << 8;
-            }
         }
         return ints;
     }
