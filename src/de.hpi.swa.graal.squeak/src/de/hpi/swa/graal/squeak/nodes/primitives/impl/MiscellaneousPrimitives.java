@@ -24,7 +24,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -826,7 +825,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
          * </pre>
          */
 
-        @ExplodeLoop
         @SuppressWarnings("unused")
         @Specialization
         protected final ArrayObject getVMParameters(final Object receiver, final NotProvided index, final NotProvided value) {
