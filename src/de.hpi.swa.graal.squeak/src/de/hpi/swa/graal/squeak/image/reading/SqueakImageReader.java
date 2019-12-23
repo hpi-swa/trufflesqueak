@@ -115,13 +115,6 @@ public final class SqueakImageReader {
         return nextLong();
     }
 
-    private byte[] nextBytes(final int count) {
-        final byte[] bytes = new byte[count];
-        readBytes(bytes, count);
-        position += count;
-        return bytes;
-    }
-
     private short nextShort() {
         final byte[] bytes = new byte[2];
         readBytes(bytes, 2);
@@ -141,6 +134,21 @@ public final class SqueakImageReader {
         readBytes(bytes, 8);
         position += 8;
         return UnsafeUtils.getLong(bytes, 0);
+    }
+
+    private byte[] nextObjectData(final int size, final int format) {
+        final int paddedObjectSize = size * SqueakImageFlags.WORD_SIZE;
+        final int padding = SqueakImageChunk.getPadding(format);
+        final int dataSize = paddedObjectSize - padding;
+        final byte[] bytes = new byte[dataSize];
+        readBytes(bytes, dataSize);
+        try {
+            stream.skip(padding);
+        } catch (final IOException e) {
+            throw SqueakAbortException.create("Unable to skip next bytes:", e);
+        }
+        position += paddedObjectSize;
+        return bytes;
     }
 
     @TruffleBoundary
@@ -256,7 +264,7 @@ public final class SqueakImageReader {
         final int hash = ObjectHeaderDecoder.getHash(headerWord);
         assert size >= 0 : "Negative object size";
         assert 0 <= format && format <= 31 : "Unexpected format";
-        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextBytes(size * SqueakImageFlags.WORD_SIZE), format, classIndex, hash, pos);
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextObjectData(size, format), format, classIndex, hash, pos);
         final int wordsFor = wordsFor(size);
         if (wordsFor > size * SqueakImageFlags.WORD_SIZE) {
             skipBytes(wordsFor - size * SqueakImageFlags.WORD_SIZE); // skip trailing alignment

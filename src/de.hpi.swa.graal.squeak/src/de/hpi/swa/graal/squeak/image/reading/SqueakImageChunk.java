@@ -57,7 +57,7 @@ public final class SqueakImageChunk {
         this.classIndex = classIndex;
         this.hash = hash;
         this.pos = pos;
-        this.data = Arrays.copyOf(data, data.length - getPadding());
+        this.data = data;
     }
 
     public static SqueakImageChunk createDummyChunk(final SqueakImageContext image, final Object[] pointers) {
@@ -243,7 +243,7 @@ public final class SqueakImageChunk {
         return ArrayConversionUtils.longsFromBytes(data);
     }
 
-    public int getPadding() {
+    public static int getPadding(final int format) {
         if (16 <= format && format <= 31) {
             return format & 7;
         } else if (format == 11) {
