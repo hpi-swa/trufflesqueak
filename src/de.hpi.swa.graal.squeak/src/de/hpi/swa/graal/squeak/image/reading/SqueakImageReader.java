@@ -143,7 +143,8 @@ public final class SqueakImageReader {
         final byte[] bytes = new byte[dataSize];
         readBytes(bytes, dataSize);
         try {
-            stream.skip(padding);
+            final long skipped = stream.skip(padding);
+            assert skipped != padding : "Failed to skip padding bytes";
         } catch (final IOException e) {
             throw SqueakAbortException.create("Unable to skip next bytes:", e);
         }
