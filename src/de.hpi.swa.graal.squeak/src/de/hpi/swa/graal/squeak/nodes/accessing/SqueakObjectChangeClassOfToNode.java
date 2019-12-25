@@ -42,7 +42,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
     protected static final NativeObject doNativeConvertToShorts(final NativeObject receiver, final ClassObject argument,
                     @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToBytesStorage(getBytesNode.execute(receiver));
+        receiver.convertToShortsStorage(getBytesNode.execute(receiver));
         return receiver;
     }
 
@@ -50,7 +50,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
     protected static final NativeObject doNativeConvertToInts(final NativeObject receiver, final ClassObject argument,
                     @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToBytesStorage(getBytesNode.execute(receiver));
+        receiver.convertToIntsStorage(getBytesNode.execute(receiver));
         return receiver;
     }
 
@@ -58,7 +58,7 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
     protected static final NativeObject doNativeConvertToLongs(final NativeObject receiver, final ClassObject argument,
                     @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToBytesStorage(getBytesNode.execute(receiver));
+        receiver.convertToLongsStorage(getBytesNode.execute(receiver));
         return receiver;
     }
 
