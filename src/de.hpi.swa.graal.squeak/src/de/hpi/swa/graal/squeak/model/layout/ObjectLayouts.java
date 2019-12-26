@@ -204,11 +204,8 @@ public final class ObjectLayouts {
         public static final int LOOKUP_CLASS = 2;
     }
 
-    /**
-     * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
-     */
     public static final class METACLASS {
-        public static final int THIS_CLASS = 0;
+        public static final int THIS_CLASS = 5;
         public static final int INST_SIZE = 6;
     }
 

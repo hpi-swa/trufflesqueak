@@ -225,16 +225,15 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @Override
     public final void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final long[] words = chunk.getWords();
         // header is a tagged small integer
-        final long header = words[0] >> 3;
+        final long header = chunk.getWord(0) >> 3;
         final int numberOfLiterals = (int) (header & 0x7fff);
         final Object[] ptrs = chunk.getPointers(numberOfLiterals + 1);
         assert literals == null;
         literals = ptrs;
         decodeHeader();
         assert bytes == null;
-        bytes = chunk.getBytes(ptrs.length * SqueakImageFlags.WORD_SIZE);
+        bytes = Arrays.copyOfRange(chunk.getBytes(), ptrs.length * SqueakImageFlags.WORD_SIZE, chunk.getBytes().length);
         assert innerBlocks == null : "Should not have any inner blocks yet";
     }
 

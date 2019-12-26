@@ -10,8 +10,9 @@ import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 
 public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject {
     public static final int IDENTITY_HASH_MASK = 0x400000 - 1;
-    private static final long HASH_UNINITIALIZED = -1;
-    private static final int PINNED_BIT_SHIFT = 30;
+    /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
+    public static final long HASH_UNINITIALIZED = 0;
+    public static final int PINNED_BIT_SHIFT = 30;
     private static final int PINNED_BIT_MASK = 1 << PINNED_BIT_SHIFT;
 
     public final SqueakImageContext image;
@@ -27,8 +28,7 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
 
     protected AbstractSqueakObjectWithHash(final SqueakImageContext image, final long hash) {
         this.image = image;
-        // TODO: Generate new hash if `0`. This might have something to do with compact classes?
-        squeakHash = hash != 0 ? hash : HASH_UNINITIALIZED;
+        squeakHash = hash;
         markingFlag = image.getCurrentMarkingFlag();
     }
 

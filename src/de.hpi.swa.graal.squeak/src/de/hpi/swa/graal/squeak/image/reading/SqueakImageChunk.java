@@ -5,8 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.image.reading;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -26,42 +24,42 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageChunk {
     private static final long SMALLFLOAT_MASK = 896L << 52 + 1;
 
-    protected Object object;
+    private Object object;
     private ClassObject sqClass;
     private Object[] pointers;
 
-    protected final int classIndex;
-    protected final int pos;
+    private final int classIndex;
+    private final int position;
 
-    public final SqueakImageContext image;
+    private final SqueakImageContext image;
     private final SqueakImageReader reader;
     private final int format;
     private final int hash;
-    private final byte[] data;
-    private long[] words;
+    private final byte[] bytes;
 
     public SqueakImageChunk(final SqueakImageReader reader,
                     final SqueakImageContext image,
-                    final byte[] data,
                     final int format,
                     final int classIndex,
                     final int hash,
-                    final int pos) {
+                    final int position,
+                    final byte[] bytes) {
         this.reader = reader;
         this.image = image;
         this.format = format;
         this.classIndex = classIndex;
         this.hash = hash;
-        this.pos = pos;
-        this.data = data;
+        this.position = position;
+        this.bytes = bytes;
     }
 
     public static SqueakImageChunk createDummyChunk(final SqueakImageContext image, final Object[] pointers) {
-        final SqueakImageChunk chunk = new SqueakImageChunk(null, image, new byte[0], 0, 0, 0, 0);
+        final SqueakImageChunk chunk = new SqueakImageChunk(null, image, 0, 0, 0, 0, new byte[0]);
         chunk.pointers = pointers;
         return chunk;
     }
@@ -78,6 +76,10 @@ public final class SqueakImageChunk {
 
     public Object asObject() {
         if (object == null) {
+            if (bytes == null) {
+                assert SqueakImageReader.isHiddenObject(classIndex);
+                return null; /* Ignored object (see SqueakImageReader#ignoreObjectData) */
+            }
             final ClassObject squeakClass = getSqClass();
             if (format == 0) { // no fields
                 object = new EmptyObject(image, hash, squeakClass);
@@ -109,7 +111,7 @@ public final class SqueakImageChunk {
                 object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
                 if (squeakClass == image.floatClass) {
-                    object = FloatObject.newFromChunkWords(image, getInts());
+                    object = FloatObject.newFrom(this);
                 } else {
                     object = NativeObject.newNativeInts(this);
                 }
@@ -128,6 +130,15 @@ public final class SqueakImageChunk {
         return object;
     }
 
+    public void setObject(final Object value) {
+        assert object == null;
+        object = value;
+    }
+
+    public boolean isNil() {
+        return object == NilObject.SINGLETON;
+    }
+
     public int getFormat() {
         return format;
     }
@@ -143,11 +154,19 @@ public final class SqueakImageChunk {
         return sqClass;
     }
 
+    public SqueakImageContext getImage() {
+        return image;
+    }
+
+    public int getPosition() {
+        return position;
+    }
+
     public SqueakImageChunk getClassChunk() {
         final int majorIdx = majorClassIndexOf(classIndex);
         final int minorIdx = minorClassIndexOf(classIndex);
-        final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.getWords()[majorIdx]);
-        final SqueakImageChunk classChunk = reader.getChunk(classTablePage.getWords()[minorIdx]);
+        final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.getWord(majorIdx));
+        final SqueakImageChunk classChunk = reader.getChunk(classTablePage.getWord(minorIdx));
         assert classChunk != null : "Unable to find class chunk.";
         return classChunk;
     }
@@ -166,10 +185,10 @@ public final class SqueakImageChunk {
 
     public Object[] getPointers() {
         if (pointers == null) {
-            final long[] theWords = getWords();
-            pointers = new Object[theWords.length];
-            for (int i = 0; i < theWords.length; i++) {
-                pointers[i] = decodePointer(theWords[i]);
+            final int length = getWordSize();
+            pointers = new Object[length];
+            for (int i = 0; i < length; i++) {
+                pointers[i] = decodePointer(getWord(i));
             }
         }
         return pointers;
@@ -177,10 +196,9 @@ public final class SqueakImageChunk {
 
     public Object[] getPointers(final int end) {
         if (pointers == null) {
-            final long[] theWords = getWords();
             pointers = new Object[end];
             for (int i = 0; i < end; i++) {
-                pointers[i] = decodePointer(theWords[i]);
+                pointers[i] = decodePointer(getWord(i));
             }
         }
         return pointers;
@@ -194,6 +212,7 @@ public final class SqueakImageChunk {
                     logBogusPointer(ptr);
                     return ptr >>> 3;
                 } else {
+                    assert bytes != null : "Must not be an ignored object";
                     return chunk.asObject();
                 }
             case 1: // SmallInteger
@@ -216,54 +235,19 @@ public final class SqueakImageChunk {
         image.getError().println("Bogus pointer: " + ptr + ". Treating as smallint.");
     }
 
+    public int getClassIndex() {
+        return classIndex;
+    }
+
     public byte[] getBytes() {
-        return getBytes(0);
+        return bytes;
     }
 
-    public byte[] getBytes(final int start) {
-        return Arrays.copyOfRange(data, start, data.length);
+    public long getWord(final int index) {
+        return UnsafeUtils.getLong(bytes, index);
     }
 
-    public short[] getShorts() {
-        return ArrayConversionUtils.shortsFromBytes(data);
-    }
-
-    public int[] getInts() {
-        return ArrayConversionUtils.intsFromBytes(data);
-    }
-
-    public long[] getWords() {
-        if (words == null) {
-            words = ArrayConversionUtils.longsFromBytes(data);
-        }
-        return words;
-    }
-
-    public long[] getLongs() {
-        return ArrayConversionUtils.longsFromBytes(data);
-    }
-
-    public static int getPadding(final int format) {
-        if (16 <= format && format <= 31) {
-            return format & 7;
-        } else if (format == 11) {
-            // 32-bit words with 1 word padding
-            return 4;
-        } else if (12 <= format && format <= 15) {
-            // 16-bit words with 2, 4, or 6 bytes padding
-            return format & 3;
-        } else if (10 <= format) {
-            return format & 1;
-        } else {
-            return 0;
-        }
-    }
-
-    public byte getElementSize() {
-        if (16 <= format && format <= 23) {
-            return 1;
-        } else {
-            return 4;
-        }
+    public int getWordSize() {
+        return bytes.length / ArrayConversionUtils.LONG_BYTE_SIZE;
     }
 }

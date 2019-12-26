@@ -12,6 +12,8 @@ import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class FloatObject extends AbstractSqueakObjectWithHash {
@@ -50,10 +52,12 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         return new FloatObject(image, value);
     }
 
-    public static Object newFromChunkWords(final SqueakImageContext image, final int[] ints) {
-        assert ints.length == 2 : "Unexpected number of int values for double conversion";
-        final double value = Double.longBitsToDouble(Integer.toUnsignedLong(ints[1]) << 32 | Integer.toUnsignedLong(ints[0]));
-        return Double.isFinite(value) ? value : new FloatObject(image, value);
+    public static Object newFrom(final SqueakImageChunk chunk) {
+        assert chunk.getBytes().length == 2 * ArrayConversionUtils.INTEGER_BYTE_SIZE;
+        final long lowValue = Integer.toUnsignedLong(UnsafeUtils.getInt(chunk.getBytes(), 0));
+        final long highValue = Integer.toUnsignedLong(UnsafeUtils.getInt(chunk.getBytes(), 1));
+        final double value = Double.longBitsToDouble(highValue << 32 | lowValue);
+        return Double.isFinite(value) ? value : new FloatObject(chunk.getImage(), value);
     }
 
     public long getHigh() {
@@ -205,5 +209,4 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
     public double asDouble() {
         return doubleValue;
     }
-
 }

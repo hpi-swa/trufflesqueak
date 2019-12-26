@@ -103,7 +103,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @TruffleBoundary
     public String getClassName() {
         if (isAMetaClass()) {
-            final Object classInstance = pointers[METACLASS.THIS_CLASS];
+            final Object classInstance = pointers[CLASS_DESCRIPTION.SIZE - METACLASS.THIS_CLASS];
             if (classInstance != NilObject.SINGLETON) {
                 return "Metaclass (" + ((ClassObject) classInstance).getClassNameUnsafe() + ")";
             } else {
