@@ -49,7 +49,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         }
         variablePart = new WeakReference<?>[pointersObject.length - instSize];
         for (int i = instSize; i < pointersObject.length; i++) {
-            variablePart[i - instSize] = new WeakReference<>(pointersObject[i]);
+            variablePart[i - instSize] = new WeakReference<>(pointersObject[i], image.weakPointersQueue);
         }
         assert size() == pointersObject.length;
     }
