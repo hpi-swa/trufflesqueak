@@ -381,6 +381,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 throw primitiveFailedCapturing(e);
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
+            } catch (final Exception e) {
+                /*
+                 * Workaround: catch all exceptions raised by other languages to avoid crashes (see
+                 * https://github.com/oracle/truffleruby/issues/1864).
+                 */
+                errorProfile.enter();
+                throw primitiveFailedCapturing(e);
             }
         }
     }
@@ -421,6 +428,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 throw primitiveFailedCapturing(e);
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
+            } catch (final Exception e) {
+                /*
+                 * Workaround: catch all exceptions raised by other languages to avoid crashes (see
+                 * https://github.com/oracle/truffleruby/issues/1864).
+                 */
+                errorProfile.enter();
+                throw primitiveFailedCapturing(e);
             }
         }
     }
@@ -1037,6 +1051,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 throw primitiveFailedCapturing(e);
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
+            } catch (final Exception e) {
+                /*
+                 * Workaround: catch all exceptions raised by other languages to avoid crashes (see
+                 * https://github.com/oracle/truffleruby/issues/1864).
+                 */
+                errorProfile.enter();
+                throw primitiveFailedCapturing(e);
             }
         }
     }
