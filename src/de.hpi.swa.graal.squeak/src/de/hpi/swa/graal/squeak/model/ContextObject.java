@@ -35,6 +35,7 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class ContextObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private MaterializedFrame truffleFrame;
+    @CompilationFinal private PointersObject process;
     @CompilationFinal private int size;
     private boolean hasModifiedSender = false;
     private boolean escaped = false;
@@ -537,6 +538,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         writeNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         writeNode.execute(currentProcess, PROCESS.SUSPENDED_CONTEXT, this);
         final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+        newActiveContext.setProcess(newProcess);
         writeNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
             throw ProcessSwitch.create(newActiveContext);
@@ -608,5 +610,14 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                 tracer.addIfUnmarked(atTemp(i));
             }
         }
+    }
+
+    public PointersObject getProcess() {
+        return process;
+    }
+
+    public void setProcess(final PointersObject process) {
+        assert process != null && (this.process == null || this.process == process);
+        this.process = process;
     }
 }

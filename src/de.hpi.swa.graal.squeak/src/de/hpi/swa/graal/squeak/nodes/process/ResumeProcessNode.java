@@ -18,6 +18,8 @@ import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.Abstr
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
 public abstract class ResumeProcessNode extends AbstractNodeWithCode {
+    protected static final boolean TRUE = true;
+
     @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
     @Child private PutToSleepNode putToSleepNode;
 
@@ -35,7 +37,7 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
     @Specialization(guards = "hasHigherPriority(newProcess)")
     protected final void doTransferTo(final VirtualFrame frame, final PointersObject newProcess,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
-                    @Cached("create(code)") final GetOrCreateContextNode contextNode) {
+                    @Cached("create(code, TRUE)") final GetOrCreateContextNode contextNode) {
         putToSleepNode.executePutToSleep(code.image.getActiveProcess(pointersReadNode));
         contextNode.executeGet(frame).transferTo(pointersReadNode, pointersWriteNode, newProcess);
     }
