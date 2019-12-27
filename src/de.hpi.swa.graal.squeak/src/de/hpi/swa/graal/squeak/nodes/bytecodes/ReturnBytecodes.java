@@ -79,11 +79,12 @@ public final class ReturnBytecodes {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             assert homeContext.getProcess() != null;
-            final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(readNode);
             final Object caller = homeContext.getFrameSender();
+            final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(readNode);
             if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
                 getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), getReturnValue(frame));
-                assert false : "Should not reach";
+                throw SqueakException.create("Should not reach");
             }
             throw new NonLocalReturn(getReturnValue(frame), caller);
         }
@@ -180,13 +181,14 @@ public final class ReturnBytecodes {
         protected final Object doNonLocalReturnClosure(final VirtualFrame frame) {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
-            final ContextObject currentContext = FrameAccess.getContext(frame);
             assert homeContext.getProcess() != null;
             final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(readNode);
             final Object caller = homeContext.getFrameSender();
             if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                final ContextObject currentContext = FrameAccess.getContext(frame);
+                assert currentContext != null;
                 getCannotReturnNode().executeSend(frame, currentContext, getReturnValue(frame));
-                assert false : "Should not reach";
+                throw SqueakException.create("Should not reach");
             }
             throw new NonLocalReturn(getReturnValue(frame), caller);
         }

@@ -261,7 +261,7 @@ public final class SqueakImageContext {
         doItContext.atput0(CONTEXT.METHOD, doItMethod);
         doItContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) doItMethod.getInitialPC());
         doItContext.atput0(CONTEXT.RECEIVER, NilObject.SINGLETON);
-        doItContext.atput0(CONTEXT.STACKPOINTER, new Long(doItMethod.getNumTemps()));
+        doItContext.atput0(CONTEXT.STACKPOINTER, (long) doItMethod.getNumTemps());
         doItContext.atput0(CONTEXT.CLOSURE_OR_NIL, NilObject.SINGLETON);
         doItContext.atput0(CONTEXT.SENDER_OR_NIL, NilObject.SINGLETON);
         doItContext.setProcess(getActiveProcessSlow());

@@ -14,8 +14,6 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWithCode {
-    protected static final boolean TRUE = true;
-
     protected MaterializeContextOnMethodExitNode(final CompiledCodeObject code) {
         super(code);
     }
@@ -35,7 +33,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
     protected final void doMaterialize(final VirtualFrame frame,
                     @Cached("createBinaryProfile()") final ConditionProfile isNotLastSeenContextProfile,
                     @Cached("createBinaryProfile()") final ConditionProfile continueProfile,
-                    @Cached("create(code, TRUE)") final GetOrCreateContextNode getOrCreateContextNode) {
+                    @Cached("create(code, true)") final GetOrCreateContextNode getOrCreateContextNode) {
         final ContextObject lastSeenContext = code.image.lastSeenContext;
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
         if (isNotLastSeenContextProfile.profile(context != lastSeenContext)) {
