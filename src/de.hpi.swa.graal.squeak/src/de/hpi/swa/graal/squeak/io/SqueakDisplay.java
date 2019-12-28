@@ -58,6 +58,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.nodes.plugins.DropPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.HostWindowPlugin;
 
 public final class SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
@@ -344,19 +345,19 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6) {
-        addEvent(eventType, value3, value4, value5, value6, 0L, 0L);
+        addEvent(eventType, value3, value4, value5, value6, 0L);
     }
 
     private void addDragEvent(final long type, final Point location) {
-        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, (long) location.getX(), (long) location.getY(), buttons >> 3, DropPlugin.getFileListSize(image), 0L);
+        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, (long) location.getX(), (long) location.getY(), buttons >> 3, DropPlugin.getFileListSize(image));
     }
 
     private void addWindowEvent(final long type) {
         addEvent(EVENT_TYPE.WINDOW, type, 0L, 0L, 0L);
     }
 
-    public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7, final long value8) {
-        deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6, value7, value8});
+    public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7) {
+        deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6, value7, HostWindowPlugin.DEFAULT_HOST_WINDOW_ID});
         if (inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
