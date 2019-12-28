@@ -11,8 +11,6 @@ import java.lang.ref.ReferenceQueue;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.graalvm.collections.EconomicMap;
 
@@ -161,8 +159,6 @@ public final class SqueakImageContext {
     @CompilationFinal private NativeObject debugErrorSelector = null;
     @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes();
     @CompilationFinal private NativeObject debugSyntaxErrorSelector = null;
-
-    public Map<PointersObject, ContextObject> suspendedContexts = new HashMap<>();
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
@@ -355,19 +351,6 @@ public final class SqueakImageContext {
 
     public void initializeAfterLoadingImage() {
         primitiveNodeFactory.initialize(this);
-        initializeContexts();
-    }
-
-    private void initializeContexts() {
-        for (final PointersObject p : suspendedContexts.keySet()) {
-            AbstractSqueakObject currentContext = suspendedContexts.get(p);
-            while (currentContext != NilObject.SINGLETON) {
-                final ContextObject context = (ContextObject) currentContext;
-                context.setProcess(p);
-                currentContext = context.getSender();
-            }
-        }
-        suspendedContexts.clear();
     }
 
     public ClassObject initializeForeignObject() {
