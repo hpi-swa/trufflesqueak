@@ -74,7 +74,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 headless = true;
             } else if (SqueakLanguageOptions.QUIET_FLAG.equals(arg)) {
                 quiet = true;
-            } else if (SqueakLanguageOptions.TRANSCRIPT_FORWARDING.equals(arg)) {
+            } else if (SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG.equals(arg)) {
                 enableTranscriptForwarding = true;
             } else {
                 unrecognized.add(arg);
