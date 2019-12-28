@@ -9,6 +9,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -18,12 +19,14 @@ import com.oracle.truffle.api.TruffleLogger;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
@@ -60,6 +63,7 @@ public final class SqueakImageReader {
     private final HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>(750000);
     private final SqueakImageContext image;
     private final byte[] byteArrayBuffer = new byte[8];
+    private final Map<PointersObject, ContextObject> suspendedContexts = new HashMap<>();
 
     private long headerSize;
     private long oldBaseAddress;
@@ -114,8 +118,13 @@ public final class SqueakImageReader {
         }
         initObjects();
         image.printToStdOut("Image loaded in", System.currentTimeMillis() - start + "ms.");
+        initializeSuspendedContexts();
         image.initializeAfterLoadingImage();
         return image.getSqueakImage();
+    }
+
+    public Map<PointersObject, ContextObject> getSuspendedContexts() {
+        return suspendedContexts;
     }
 
     private void readBytes(final byte[] bytes, final int length) {
@@ -506,7 +515,7 @@ public final class SqueakImageReader {
         image.setSmallFloat((ClassObject) smallFloatClassOrNil);
     }
 
-    public SqueakImageChunk getChunk(final long ptr) {
+    protected SqueakImageChunk getChunk(final long ptr) {
         return chunktable.get(ptr);
     }
 
@@ -524,6 +533,19 @@ public final class SqueakImageReader {
         } else {
             return 0;
         }
+    }
+
+    /* Set process in all ContextObjects. */
+    private void initializeSuspendedContexts() {
+        for (final PointersObject process : suspendedContexts.keySet()) {
+            AbstractSqueakObject currentContext = suspendedContexts.get(process);
+            while (currentContext != NilObject.SINGLETON) {
+                final ContextObject context = (ContextObject) currentContext;
+                context.setProcess(process);
+                currentContext = context.getSender();
+            }
+        }
+        suspendedContexts.clear();
     }
 
     /**

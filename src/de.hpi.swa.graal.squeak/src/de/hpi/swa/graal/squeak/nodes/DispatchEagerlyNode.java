@@ -57,7 +57,7 @@ public abstract class DispatchEagerlyNode extends AbstractNodeWithCode {
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()"}, replaces = {"doPrimitiveEagerly"})
     protected static final Object doDirectWithSender(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledMethodObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Cached("method") final CompiledMethodObject cachedMethod,
-                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
+                    @Cached("create(code, true)") final GetOrCreateContextNode getOrCreateContextNode,
                     @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
         return callDirect(callNode, cachedMethod, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
     }
@@ -70,7 +70,7 @@ public abstract class DispatchEagerlyNode extends AbstractNodeWithCode {
 
     @Specialization(guards = "!method.getDoesNotNeedSenderAssumption().isValid()", replaces = {"doDirect", "doDirectWithSender"})
     protected static final Object doIndirectWithSender(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments,
-                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
+                    @Cached("create(code, true)") final GetOrCreateContextNode getOrCreateContextNode,
                     @Cached final IndirectCallNode callNode) {
         return callIndirect(callNode, method, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
     }

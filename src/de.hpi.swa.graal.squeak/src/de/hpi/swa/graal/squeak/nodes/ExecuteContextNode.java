@@ -31,7 +31,9 @@ import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeFactory.TriggerInterruptHandlerNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -41,7 +43,6 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNod
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
@@ -93,7 +94,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         final boolean enableStackDepthProtection = enableStackDepthProtection();
         try {
             if (enableStackDepthProtection && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
-                throw ProcessSwitch.createWithBoundary(getGetOrCreateContextNode().executeGet(frame));
+                final ContextObject context = getGetOrCreateContextNode().executeGet(frame);
+                context.setProcess(code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached()));
+                throw ProcessSwitch.createWithBoundary(context);
             }
             frameInitializationNode.executeInitialize(frame);
             return startBytecode(frame);
@@ -141,7 +144,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private GetOrCreateContextNode getGetOrCreateContextNode() {
         if (getOrCreateContextNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code));
+            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code, false));
         }
         return getOrCreateContextNode;
     }
@@ -165,8 +168,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         return callPrimitiveNode.primitiveNode.executePrimitive(frame);
                     } catch (final PrimitiveFailed e) {
                         getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                        LOG.log(Level.FINE, () -> callPrimitiveNode.primitiveNode +
-                                        " (" + ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
+                        LOG.log(Level.FINE, () -> "Failed primitive " + callPrimitiveNode.primitiveNode.getClass().getName());
                         /* continue with fallback code. */
                     }
                 }
