@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2017-2020 Software Architecture Group, Hasso Plattner Institute
  *
  * Licensed under the MIT License.
  */
@@ -35,8 +35,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ExecuteTopLevelContextNode.class);
 
     private final SqueakImageContext image;
-    private final ContextObject initialContext;
     private final boolean needsShutdown;
+    private ContextObject initialContext;
 
     @Child private UnwindContextChainNode unwindContextChainNode = UnwindContextChainNode.create();
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
@@ -72,6 +72,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private void executeLoop() {
         ContextObject activeContext = initialContext;
+        initialContext = null; /* Free initialContext. */
         ensureCachedContextCanRunAgain(activeContext);
         while (true) {
             assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
