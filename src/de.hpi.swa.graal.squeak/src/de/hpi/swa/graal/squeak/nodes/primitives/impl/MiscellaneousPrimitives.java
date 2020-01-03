@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2017-2020 Software Architecture Group, Hasso Plattner Institute
  *
  * Licensed under the MIT License.
  */
@@ -202,9 +202,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return BooleanObject.wrap(receiver.pointsTo(thang));
         }
 
-        @Specialization(guards = {"receiver.isEmptyType()", "receiver.getEmptyStorage() > 0"})
+        @Specialization(guards = {"receiver.isEmptyType()"})
         protected static final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
-            return BooleanObject.wrap(thang == NilObject.SINGLETON);
+            if (receiver.getEmptyStorage() > 0) {
+                return BooleanObject.wrap(thang == NilObject.SINGLETON);
+            } else {
+                return BooleanObject.FALSE;
+            }
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
