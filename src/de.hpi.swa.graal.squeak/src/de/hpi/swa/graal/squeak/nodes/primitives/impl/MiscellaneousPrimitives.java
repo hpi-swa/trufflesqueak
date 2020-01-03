@@ -608,14 +608,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
-        protected static final AbstractPointersObject doCopyAbstractPointers(final VariablePointersObject receiver, final VariablePointersObject anotherObject) {
+        protected static final AbstractPointersObject doCopyVariablePointers(final VariablePointersObject receiver, final VariablePointersObject anotherObject) {
             receiver.copyLayoutValuesFrom(anotherObject);
             System.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
             return receiver;
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
-        protected static final AbstractPointersObject doCopyAbstractPointers(final WeakVariablePointersObject receiver, final WeakVariablePointersObject anotherObject) {
+        protected static final AbstractPointersObject doCopyWeakPointers(final WeakVariablePointersObject receiver, final WeakVariablePointersObject anotherObject) {
             receiver.copyLayoutValuesFrom(anotherObject);
             System.arraycopy(anotherObject.getVariablePart(), 0, receiver.getVariablePart(), 0, anotherObject.getVariablePart().length);
             return receiver;
