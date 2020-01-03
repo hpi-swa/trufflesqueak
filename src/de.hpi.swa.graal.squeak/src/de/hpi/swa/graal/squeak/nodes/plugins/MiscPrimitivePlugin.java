@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -40,12 +41,60 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCompareString")
     public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveWithoutFallback {
+        @CompilationFinal private NativeObject asciiOrder;
 
         public PrimCompareStringNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"string1Value.isByteType()", "string2Value.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"})
+        protected static final class NotAsciiOrderException extends RuntimeException {
+            private static final long serialVersionUID = 1L;
+        }
+
+        @Specialization(guards = {"string1Value.isByteType()", "string2Value.isByteType()"}, rewriteOn = NotAsciiOrderException.class)
+        protected final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1Value, final NativeObject string2Value, final NativeObject orderValue) {
+            ensureAsciiOrder(orderValue);
+            final byte[] string1 = string1Value.getByteStorage();
+            final byte[] string2 = string2Value.getByteStorage();
+            final int len1 = string1.length;
+            final int len2 = string2.length;
+            final int min = Math.min(len1, len2);
+            for (int i = 0; i < min; i++) {
+                final byte c1 = UnsafeUtils.getByte(string1, i);
+                final byte c2 = UnsafeUtils.getByte(string2, i);
+                if (c1 != c2) {
+                    return (c1 & 0xff) < (c2 & 0xff) ? 1L : 3L;
+                }
+            }
+            return len1 == len2 ? 2L : len1 < len2 ? 1L : 3L;
+        }
+
+        private void ensureAsciiOrder(final NativeObject orderValue) {
+            if (orderValue != asciiOrder) {
+                CompilerDirectives.transferToInterpreter();
+                if (asciiOrder == null) { /* Haven't seen asciiOrder yet. */
+                    if (!orderValue.isByteType()) {
+                        throw new NotAsciiOrderException();
+                    }
+                    final byte[] bytes = orderValue.getByteStorage();
+                    if (bytes.length != 256) {
+                        throw new NotAsciiOrderException();
+                    }
+                    /* AsciiOrder is the identity function. */
+                    for (int i = 0; i < bytes.length; i++) {
+                        if ((bytes[i] & 0xff) != i) {
+                            throw new NotAsciiOrderException();
+                        }
+                    }
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    asciiOrder = orderValue;
+                } else {
+                    throw new NotAsciiOrderException();
+                }
+            }
+        }
+
+        @Specialization(guards = {"string1Value.isByteType()", "string2Value.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, replaces = "doCompareAsciiOrder")
         protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1Value, final NativeObject string2Value,
                         final NativeObject orderValue) {
             final byte[] string1 = string1Value.getByteStorage();
