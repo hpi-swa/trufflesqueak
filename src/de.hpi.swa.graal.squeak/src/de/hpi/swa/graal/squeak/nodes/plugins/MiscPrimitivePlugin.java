@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2017-2020 Software Architecture Group, Hasso Plattner Institute
  *
  * Licensed under the MIT License.
  */
@@ -26,6 +26,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPr
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArithmeticPrimitives.PrimHashMultiplyNode;
 import de.hpi.swa.graal.squeak.util.NotProvided;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
@@ -395,7 +396,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveStringHash")
     public abstract static class PrimStringHashNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        private static final int TWO_LEFT_SHIFTED_BY_28 = 2 << 28;
 
         public PrimStringHashNode(final CompiledMethodObject method) {
             super(method);
@@ -436,12 +436,12 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         private static long calculateHash(final long initialHash, final byte[] bytes) {
-            int hash = (int) (initialHash & 0x0fffffff);
+            long hash = initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
             final int length = bytes.length;
             for (int i = 0; i < length; i++) {
-                hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * 0x19660D % TWO_LEFT_SHIFTED_BY_28;
+                hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
             }
-            return hash & 0x0fffffffL;
+            return hash;
         }
     }
 
