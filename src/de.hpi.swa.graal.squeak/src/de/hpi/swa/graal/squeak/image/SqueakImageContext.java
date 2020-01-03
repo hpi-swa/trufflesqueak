@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2017-2020 Software Architecture Group, Hasso Plattner Institute
  *
  * Licensed under the MIT License.
  */
@@ -529,9 +529,8 @@ public final class SqueakImageContext {
         final PointersObject message = new PointersObject(this, messageClass);
         writeNode.execute(message, MESSAGE.SELECTOR, selector);
         writeNode.execute(message, MESSAGE.ARGUMENTS, asArrayOfObjects(arguments));
-        if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // Early versions do not have lookupClass.
-            writeNode.execute(message, MESSAGE.LOOKUP_CLASS, rcvrClass);
-        }
+        assert message.instsize() > MESSAGE.LOOKUP_CLASS : "Early versions do not have lookupClass";
+        writeNode.execute(message, MESSAGE.LOOKUP_CLASS, rcvrClass);
         return message;
     }
 
