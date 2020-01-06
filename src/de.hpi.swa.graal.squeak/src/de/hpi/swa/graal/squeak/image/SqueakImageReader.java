@@ -354,9 +354,6 @@ public final class SqueakImageReader {
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_ARRAY, image.arrayClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SMALLTALK_DICTIONARY, image.smalltalk);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FLOAT, image.floatClass);
-        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_FOREIGN_OBJECT).isNil()) {
-            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FOREIGN_OBJECT, image.initializeForeignObject());
-        }
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_METHOD_CONTEXT, image.methodContextClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_POINT, image.pointClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_POSITIVE_INTEGER, image.largePositiveIntegerClass);

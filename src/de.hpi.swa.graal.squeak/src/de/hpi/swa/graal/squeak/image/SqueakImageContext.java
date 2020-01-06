@@ -393,15 +393,19 @@ public final class SqueakImageContext {
         hiddenRoots = theHiddenRoots;
     }
 
-    public ClassObject initializeForeignObject() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        foreignObjectClass = new ClassObject(this);
-        return foreignObjectClass;
-    }
-
     public ClassObject getForeignObjectClass() {
         assert foreignObjectClass != null;
         return foreignObjectClass;
+    }
+
+    public boolean setForeignObjectClass(final ClassObject classObject) {
+        if (foreignObjectClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            foreignObjectClass = classObject;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public boolean supportsNFI() {

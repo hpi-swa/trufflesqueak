@@ -197,9 +197,6 @@ public final class PrimitiveNodeFactory {
 
     private void fillPluginMap(final SqueakImageContext image, final AbstractPrimitiveFactoryHolder[] plugins) {
         for (final AbstractPrimitiveFactoryHolder plugin : plugins) {
-            if (!plugin.isEnabled(image)) {
-                continue;
-            }
             final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = plugin.getFactories();
             final EconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = EconomicMap.create(nodeFactories.size());
             for (final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {

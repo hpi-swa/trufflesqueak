@@ -47,6 +47,7 @@ import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -59,6 +60,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
@@ -74,13 +76,25 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
      */
 
     @Override
-    public boolean isEnabled(final SqueakImageContext image) {
-        return true; // TODO: this check will be removed soon.
-    }
-
-    @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return PolyglotPluginFactory.getFactories();
+    }
+
+    /*
+     * Management
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveRegisterForeignObjectClass")
+    protected abstract static class PrimRegisterForeignObjectClassNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimRegisterForeignObjectClassNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final boolean doRegisterForeignObjectClass(final ClassObject foreignObjectClass) {
+            return BooleanObject.wrap(method.image.setForeignObjectClass(foreignObjectClass));
+        }
     }
 
     /*
