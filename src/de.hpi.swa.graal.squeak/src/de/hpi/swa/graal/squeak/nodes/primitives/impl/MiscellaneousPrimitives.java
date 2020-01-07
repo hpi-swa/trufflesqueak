@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -79,20 +80,25 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     private abstract static class AbstractSignalAtPrimitiveNode extends AbstractPrimitiveNode {
         private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ControlPrimitives.class);
+        private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
         protected AbstractSignalAtPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
         protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
-            LOG.fine(() -> "Setting the timer semaphore to @" + Integer.toHexString(semaphore.hashCode()) + " to be signalled in " + msTime + "ms");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Setting the timer semaphore to @" + Integer.toHexString(semaphore.hashCode()) + " to be signalled in " + msTime + "ms");
+            }
             method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
             method.image.interrupt.setTimerSemaphore(semaphore);
             method.image.interrupt.setNextWakeupTick(msTime);
         }
 
         protected final void resetTimerSemaphore() {
-            LOG.fine(() -> "Resetting the timer semaphore");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Resetting the timer semaphore");
+            }
             method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, NilObject.SINGLETON);
             method.image.interrupt.setTimerSemaphore(null);
             method.image.interrupt.setNextWakeupTick(0);
@@ -428,7 +434,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asByteString(MiscUtils.getVMPath());
+            return method.image.asByteString(System.getProperty("java.home"));
         }
     }
 
