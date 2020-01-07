@@ -21,7 +21,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -40,8 +39,8 @@ public final class ContextObjectInfo implements TruffleObject {
 
     public ContextObjectInfo(final Frame frame) {
         this.frame = frame;
-        final CompiledMethodObject method = FrameAccess.getMethod(frame);
-        for (final FrameSlot slot : method.getStackSlotsUnsafe()) {
+        final CompiledCodeObject code = FrameAccess.getBlockOrMethod(frame);
+        for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
             if (slot == null) {
                 break;
             }
