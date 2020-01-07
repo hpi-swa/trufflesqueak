@@ -34,7 +34,11 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal(dimensions = 0) private Object[] copied;
 
-    public BlockClosureObject(final SqueakImageContext image, final long hash) {
+    private BlockClosureObject(final SqueakImageContext image) {
+        super(image);
+    }
+
+    private BlockClosureObject(final SqueakImageContext image, final long hash) {
         super(image, hash);
         copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
@@ -59,6 +63,16 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         copied = original.copied;
         startPC = original.startPC;
         numArgs = original.numArgs;
+    }
+
+    public static BlockClosureObject createWithHash(final SqueakImageContext image, final int hash) {
+        return new BlockClosureObject(image, hash);
+    }
+
+    public static BlockClosureObject create(final SqueakImageContext image, final int extraSize) {
+        final BlockClosureObject result = new BlockClosureObject(image);
+        result.copied = new Object[extraSize];
+        return result;
     }
 
     @Override
@@ -147,6 +161,12 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @Override
     public int size() {
         return copied.length + instsize();
+    }
+
+    @Override
+    public String toString() {
+        return "a BlockClosureObject @" + Integer.toHexString(hashCode()) + ", with " + (numArgs == -1 && block == null ? "no block" : getNumArgs() + " args") + " and " + copied.length +
+                        " copied values, in " + outerContext;
     }
 
     public Object getReceiver() {

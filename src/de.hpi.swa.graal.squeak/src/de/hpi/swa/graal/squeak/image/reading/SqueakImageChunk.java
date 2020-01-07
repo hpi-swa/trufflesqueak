@@ -95,7 +95,7 @@ public final class SqueakImageChunk {
                 if (squeakClass == image.methodContextClass) {
                     object = ContextObject.createWithHash(image, hash);
                 } else if (squeakClass == image.blockClosureClass) {
-                    object = new BlockClosureObject(image, hash);
+                    object = BlockClosureObject.createWithHash(image, hash);
                 } else {
                     object = new VariablePointersObject(image, hash, squeakClass);
                 }

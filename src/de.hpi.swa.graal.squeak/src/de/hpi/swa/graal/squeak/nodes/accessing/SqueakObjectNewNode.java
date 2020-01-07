@@ -89,7 +89,7 @@ public abstract class SqueakObjectNewNode extends AbstractNodeWithImage {
     @SuppressWarnings("unused")
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isBlockClosureClass()"})
     protected final BlockClosureObject doBlockClosure(final ClassObject classObject, final int extraSize) {
-        return new BlockClosureObject(image, extraSize);
+        return BlockClosureObject.create(image, extraSize);
     }
 
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!classObject.isMethodContextClass()", "!classObject.isBlockClosureClass()"})
