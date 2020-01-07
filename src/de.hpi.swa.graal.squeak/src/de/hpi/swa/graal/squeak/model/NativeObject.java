@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.model;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -37,6 +39,7 @@ import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
+    public static final String REPLACEMENT_CHAR = StandardCharsets.UTF_8.newDecoder().replacement();
     public static final short BYTE_MAX = (short) (Math.pow(2, Byte.SIZE) - 1);
     public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
     public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
@@ -268,8 +271,9 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         this.storage = storage;
     }
 
+    @TruffleBoundary
     public String asStringUnsafe() {
-        return ArrayConversionUtils.bytesToString(getByteStorage());
+        return StandardCharsets.UTF_8.decode(ByteBuffer.wrap((byte[]) storage)).toString();
     }
 
     @TruffleBoundary
@@ -278,14 +282,14 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new String(ints, 0, ints.length);
     }
 
-    @TruffleBoundary
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         if (isByteType()) {
             final ClassObject squeakClass = getSqueakClass();
             if (squeakClass.isStringClass()) {
-                return asStringUnsafe();
+                /* Return no more than 40 characters and stop at first non-printable character. */
+                return String.format("'%.40s'", asStringUnsafe().split("[^\\p{Print}]", 2)[0]);
             } else if (squeakClass.isSymbolClass()) {
                 return "#" + asStringUnsafe();
             } else {

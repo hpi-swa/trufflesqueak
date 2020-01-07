@@ -48,11 +48,6 @@ public final class ArrayConversionUtils {
         return bytes;
     }
 
-    @TruffleBoundary
-    public static String bytesToString(final byte[] bytes) {
-        return new String(bytes);
-    }
-
     public static long[] bytesToUnsignedLongs(final byte[] bytes) {
         final int length = bytes.length;
         final long[] longs = new long[length];

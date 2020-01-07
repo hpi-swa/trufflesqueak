@@ -29,7 +29,7 @@ import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
     private static final String ALL_BYTECODES_EXPECTED_RESULT = String.join("\n", "1 <8B 1F 00> callPrimitive: 31",
                     "2 <1F> pushTemp: 15",
-                    "3 <20> pushConstant: someSelector",
+                    "3 <20> pushConstant: 'someSelector'",
                     "4 <5F> pushLit: 31",
                     "5 <60> popIntoRcvr: 0",
                     "6 <61> popIntoRcvr: 1",

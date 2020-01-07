@@ -35,7 +35,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2;
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
     private static final int PRIORITY_10_LIST_INDEX = 9;
-    private static final String PASSED_VALUE = "passed";
+    private static final String PASSED_VALUE = "'passed'";
 
     private static PointersObject idleProcess;
 
@@ -180,7 +180,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
         final String testResult = ((NativeObject) result).toString();
         if (PASSED_VALUE.equals(testResult)) {
-            assert ((NativeObject) result).isByteType() : "Passing result should always be a ByteString";
             return TestResult.success(testResult);
         } else {
             final boolean shouldPass = (boolean) evaluate(shouldPassCommand(request));
@@ -193,12 +192,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static String testCommand(final TestRequest request) {
-        return String.format("[[(%s selector: #%s) runCase. '%s'] on: TestFailure do: [:e | e asString ]] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack]",
+        return String.format("[[(%s selector: #%s) runCase. %s] on: TestFailure do: [:e | e asString ]] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack]",
                         request.testCase, request.testSelector, PASSED_VALUE);
     }
 
     private static String shouldPassCommand(final TestRequest request) {
-        return String.format("(%s selector: #%s) shouldPass", request.testCase, request.testSelector, PASSED_VALUE);
+        return String.format("(%s selector: #%s) shouldPass", request.testCase, request.testSelector);
     }
 
     private static TestResult runWithTimeout(final TestRequest request, final Supplier<TestResult> action) {
