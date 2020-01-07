@@ -55,7 +55,6 @@ public final class ReturnBytecodes {
     }
 
     protected abstract static class AbstractReturnWithSpecializationsNode extends AbstractReturnNode {
-        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
         @Child private SendSelectorNode cannotReturnNode;
         @Child private GetOrCreateContextNode getOrCreateContextNode;
 
@@ -79,10 +78,9 @@ public final class ReturnBytecodes {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             assert homeContext.getProcess() != null;
-            final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(readNode);
             final Object caller = homeContext.getFrameSender();
-            if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), getReturnValue(frame));
+            if (caller == NilObject.SINGLETON || !homeContext.getProcess().isActiveProcess()) {
+                getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame, NilObject.SINGLETON), getReturnValue(frame));
                 assert false : "Should not reach";
             }
             throw new NonLocalReturn(getReturnValue(frame), caller);
@@ -91,7 +89,7 @@ public final class ReturnBytecodes {
         private GetOrCreateContextNode getGetOrCreateContextNode() {
             if (getOrCreateContextNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getOrCreateContextNode = insert(GetOrCreateContextNode.create(code, true));
+                getOrCreateContextNode = insert(GetOrCreateContextNode.create(code));
             }
             return getOrCreateContextNode;
         }
@@ -181,10 +179,8 @@ public final class ReturnBytecodes {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             final ContextObject currentContext = FrameAccess.getContext(frame);
-            assert homeContext.getProcess() != null;
-            final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(readNode);
             final Object caller = homeContext.getFrameSender();
-            if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+            if (caller == NilObject.SINGLETON || homeContext.getProcess() != null && !homeContext.getProcess().isActiveProcess() || !currentContext.hasSender(homeContext)) {
                 getCannotReturnNode().executeSend(frame, currentContext, getReturnValue(frame));
                 assert false : "Should not reach";
             }
