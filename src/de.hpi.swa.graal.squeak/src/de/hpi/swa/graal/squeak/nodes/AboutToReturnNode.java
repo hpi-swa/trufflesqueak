@@ -38,8 +38,8 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      */
     @Specialization(guards = {"code.isUnwindMarked()", "!hasModifiedSender(frame)", "isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
-                    @Cached("createTemporaryWriteNode(0)") final FrameSlotReadNode blockArgumentNode,
-                    @SuppressWarnings("unused") @Cached("createTemporaryWriteNode(1)") final FrameSlotReadNode completeTempReadNode,
+                    @Cached("createTemporaryReadNode(0)") final FrameSlotReadNode blockArgumentNode,
+                    @SuppressWarnings("unused") @Cached("createTemporaryReadNode(1)") final FrameSlotReadNode completeTempReadNode,
                     @Cached("create(code, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
                     @Cached final DispatchBlockNode dispatchNode) {
         completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
@@ -50,7 +50,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"code.isUnwindMarked()", "!hasModifiedSender(frame)", "!isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
     protected final void doAboutToReturnVirtualizedNothing(final VirtualFrame frame, final NonLocalReturn nlr,
-                    @Cached("createTemporaryWriteNode(1)") final FrameSlotReadNode completeTempReadNode) {
+                    @Cached("createTemporaryReadNode(1)") final FrameSlotReadNode completeTempReadNode) {
         // Nothing to do.
     }
 
@@ -66,7 +66,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
         // Nothing to do.
     }
 
-    protected final FrameSlotReadNode createTemporaryWriteNode(final int tempIndex) {
+    protected final FrameSlotReadNode createTemporaryReadNode(final int tempIndex) {
         return FrameSlotReadNode.create(code.getStackSlot(tempIndex));
     }
 
