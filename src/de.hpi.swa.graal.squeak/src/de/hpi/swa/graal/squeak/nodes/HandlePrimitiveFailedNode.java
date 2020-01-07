@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
+import java.util.logging.Level;
+
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -21,6 +23,8 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, HandlePrimitiveFailedNode.class);
+    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
+
     private static final ERROR_TABLE[] errors = ERROR_TABLE.values();
     private final String errorString;
 
@@ -45,20 +49,26 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     protected final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
                     @Cached("create(code)") final FrameStackPushNode pushNode) {
         final Object reason = code.image.primitiveErrorTable.getObjectStorage()[reasonCode];
-        LOG.fine(errorString + reason);
+        if (isLoggingEnabled) {
+            LOG.fine(errorString + reason);
+        }
         pushNode.execute(frame, reason);
     }
 
     @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode >= code.image.primitiveErrorTable.getObjectLength()"})
     protected final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
                     @Cached("create(code)") final FrameStackPushNode pushNode) {
-        LOG.fine(errorString + errors[reasonCode]);
+        if (isLoggingEnabled) {
+            LOG.fine(errorString + errors[reasonCode]);
+        }
         pushNode.execute(frame, reasonCode);
     }
 
     @Specialization(guards = "!followedByExtendedStore(code)")
     protected final void doNothing(@SuppressWarnings("unused") final int reasonCode) {
-        LOG.fine(errorString + errors[reasonCode]);
+        if (isLoggingEnabled) {
+            LOG.fine(errorString + errors[reasonCode]);
+        }
     }
 
     protected static final boolean followedByExtendedStore(final CompiledCodeObject codeObject) {

@@ -74,7 +74,7 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "a " + getSqueakClassName();
+        return "a " + getSqueakClassName() + " @" + Integer.toHexString(hashCode());
     }
 
     public final Object send(final String selector, final Object... arguments) {

@@ -6,6 +6,7 @@
 package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
@@ -39,7 +40,9 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
     public static final NativeObject NATIVE_OBJECT_NIL_TAG = null;
     public static final boolean ENABLE_STORAGE_STRATEGIES = true;
+
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ArrayObject.class);
+    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINER);
 
     private Object storage;
 
@@ -325,7 +328,9 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromBooleansToObjects() {
-        LOG.finer("transition from Booleans to Objects");
+        if (isLoggingEnabled) {
+            LOG.finer("transition from Booleans to Objects");
+        }
         final byte[] booleans = getBooleanStorage();
         final Object[] objects = new Object[booleans.length];
         for (int i = 0; i < booleans.length; i++) {
@@ -335,7 +340,9 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromCharsToObjects() {
-        LOG.finer("transition from Chars to Objects");
+        if (isLoggingEnabled) {
+            LOG.finer("transition from Chars to Objects");
+        }
         final char[] chars = getCharStorage();
         final Object[] objects = new Object[chars.length];
         for (int i = 0; i < chars.length; i++) {
@@ -345,7 +352,9 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromDoublesToObjects() {
-        LOG.finer("transition from Doubles to Objects");
+        if (isLoggingEnabled) {
+            LOG.finer("transition from Doubles to Objects");
+        }
         final double[] doubles = getDoubleStorage();
         final Object[] objects = new Object[doubles.length];
         for (int i = 0; i < doubles.length; i++) {
@@ -386,7 +395,9 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromLongsToObjects() {
-        LOG.finer("transition from Longs to Objects");
+        if (isLoggingEnabled) {
+            LOG.finer("transition from Longs to Objects");
+        }
         final long[] longs = getLongStorage();
         final Object[] objects = new Object[longs.length];
         for (int i = 0; i < longs.length; i++) {
@@ -396,7 +407,9 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromNativesToObjects() {
-        LOG.finer("transition from NativeObjects to Objects");
+        if (isLoggingEnabled) {
+            LOG.finer("transition from NativeObjects to Objects");
+        }
         final NativeObject[] natives = getNativeObjectStorage();
         final Object[] objects = new Object[natives.length];
         for (int i = 0; i < natives.length; i++) {

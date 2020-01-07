@@ -96,7 +96,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
+        return "a " + getClass().getSimpleName() + " @" + Integer.toHexString(hashCode());
     }
 
     /**
