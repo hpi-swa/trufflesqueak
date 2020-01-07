@@ -22,8 +22,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
@@ -47,6 +45,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -75,6 +74,7 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.FramesAndContextsIterator;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
@@ -166,8 +166,12 @@ public final class SqueakImageContext {
     @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes();
     @CompilationFinal private NativeObject debugSyntaxErrorSelector = null;
 
-    public Map<PointersObject, ContextObject> suspendedContexts = new HashMap<>();
-    public ClassObject byteSymbolClass;
+    public final Map<PointersObject, ContextObject> suspendedContexts = new HashMap<>();
+    @CompilationFinal public ClassObject byteSymbolClass;
+    private final AbstractPointersObjectReadNode schedulerReadNode = AbstractPointersObjectReadNode.create();
+    private final AbstractPointersObjectReadNode processReadNode = AbstractPointersObjectReadNode.create();
+    private final AbstractPointersObjectReadNode semaphoreReadNode = AbstractPointersObjectReadNode.create();
+    private final AbstractPointersObjectReadNode linkedListReadNode = AbstractPointersObjectReadNode.create();
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
@@ -185,7 +189,7 @@ public final class SqueakImageContext {
             getOutput().println("Preparing image for headless execution...");
             LOG.fine(() -> "Fresh after load" + currentState());
             // Remove active context.
-            getActiveProcessSlow().instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
+            getActiveProcess().instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
             // Modify StartUpList for headless execution.
             evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
             try {
@@ -241,8 +245,9 @@ public final class SqueakImageContext {
     }
 
     public ExecuteTopLevelContextNode getActiveContextNode() {
-        final PointersObject activeProcess = getActiveProcessSlow();
-        final ContextObject activeContext = (ContextObject) activeProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
+        final PointersObject activeProcess = getActiveProcess();
+        final ContextObject activeContext = getSuspendedContext(activeProcess);
+        activeContext.setProcess(activeProcess);
         activeProcess.instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
     }
@@ -262,7 +267,7 @@ public final class SqueakImageContext {
 
         final AbstractSqueakObjectWithClassAndHash parser = (AbstractSqueakObjectWithClassAndHash) parserClass.send("new");
         final AbstractSqueakObjectWithClassAndHash methodNode = (AbstractSqueakObjectWithClassAndHash) parser.send(
-                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, new BlockClosureObject(this, 0));
+                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, BlockClosureObject.create(this, 0));
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
@@ -272,7 +277,7 @@ public final class SqueakImageContext {
         doItContext.atput0(CONTEXT.STACKPOINTER, new Long(doItMethod.getNumTemps()));
         doItContext.atput0(CONTEXT.CLOSURE_OR_NIL, NilObject.SINGLETON);
         doItContext.atput0(CONTEXT.SENDER_OR_NIL, NilObject.SINGLETON);
-        doItContext.setProcess(getActiveProcessSlow());
+        doItContext.setProcess(getActiveProcess());
         return ExecuteTopLevelContextNode.create(getLanguage(), doItContext, false);
     }
 
@@ -372,7 +377,7 @@ public final class SqueakImageContext {
             while (currentContext != NilObject.SINGLETON) {
                 final ContextObject context = (ContextObject) currentContext;
                 context.setProcess(p);
-                currentContext = context.getSender();
+                currentContext = (AbstractSqueakObject) context.getFrameSender();
             }
         }
         suspendedContexts.clear();
@@ -401,12 +406,48 @@ public final class SqueakImageContext {
         return scheduler;
     }
 
-    public PointersObject getActiveProcessSlow() {
-        return getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+    public long getActivePriority() {
+        return processReadNode.executeLong(getActiveProcess(), PROCESS.PRIORITY);
     }
 
-    public PointersObject getActiveProcess(final AbstractPointersObjectReadNode pointersReadNode) {
-        return pointersReadNode.executePointers(getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
+    public PointersObject getActiveProcess() {
+        return schedulerReadNode.executePointers(getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS);
+    }
+
+    public AbstractSqueakObject getEffectiveProcess(final PointersObject aProcess) {
+        return (AbstractSqueakObject) processReadNode.execute(aProcess, PROCESS.EFFECTIVE_PROCESS);
+    }
+
+    public long getExcessSignals(final PointersObject semaphore) {
+        return semaphoreReadNode.executeLong(semaphore, SEMAPHORE.EXCESS_SIGNALS);
+    }
+
+    public AbstractSqueakObject getFirstLink(final PointersObject aLinkedList) {
+        return (AbstractSqueakObject) linkedListReadNode.execute(aLinkedList, LINKED_LIST.FIRST_LINK);
+    }
+
+    public AbstractSqueakObject getLastLink(final PointersObject aLinkedList) {
+        return (AbstractSqueakObject) linkedListReadNode.execute(aLinkedList, LINKED_LIST.LAST_LINK);
+    }
+
+    public AbstractSqueakObject getMyList(final PointersObject aProcess) {
+        return (AbstractSqueakObject) processReadNode.execute(aProcess, PROCESS.LIST);
+    }
+
+    public AbstractSqueakObject getNextLink(final PointersObject aProcess) {
+        return (AbstractSqueakObject) processReadNode.execute(aProcess, PROCESS.NEXT_LINK);
+    }
+
+    public long getPriority(final PointersObject aProcess) {
+        return processReadNode.executeLong(aProcess, PROCESS.PRIORITY);
+    }
+
+    public ArrayObject getProcessLists() {
+        return schedulerReadNode.executeArray(getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
+    }
+
+    public ContextObject getSuspendedContext(final PointersObject aProcess) {
+        return (ContextObject) processReadNode.execute(aProcess, PROCESS.SUSPENDED_CONTEXT);
     }
 
     public Object getSpecialObject(final int index) {
@@ -575,64 +616,72 @@ public final class SqueakImageContext {
         CompilerDirectives.transferToInterpreter();
         final boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
         final int[] depth = new int[1];
-        final Object[] lastSender = new Object[]{null};
-        getError().println("== Truffle stack trace ===========================================================");
-        Truffle.getRuntime().iterateFrames(frameInstance -> {
-            if (depth[0]++ > 50 && isTravisBuild) {
-                return null;
-            }
-            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-            if (!FrameAccess.isGraalSqueakFrame(current)) {
-                return null;
-            }
-            final CompiledMethodObject method = FrameAccess.getMethod(current);
-            lastSender[0] = FrameAccess.getSender(current);
-            final Object marker = FrameAccess.getMarker(current, method);
-            final Object context = FrameAccess.getContext(current, method);
-            final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
-            getError().println(MiscUtils.format("%s #(%s) [marker: %s, sender: %s]", context, argumentsString, marker, lastSender[0]));
-            return null;
-        });
-        if (lastSender[0] instanceof ContextObject) {
-            getError().println("== Squeak frames ================================================================");
-            ((ContextObject) lastSender[0]).printSqStackTrace();
-        }
+        final boolean[] truffleFrames = new boolean[1];
+
+        new FramesAndContextsIterator(
+                        (frame, code) -> {
+                            if (depth[0]++ > 50 && isTravisBuild) {
+                                return;
+                            } else if (!truffleFrames[0]) {
+                                truffleFrames[0] = true;
+                                getError().println("== Truffle stack trace ===========================================================");
+                            }
+                            final Object sender = FrameAccess.getSender(frame);
+                            final Object marker = FrameAccess.getMarker(frame, code);
+                            final Object context = FrameAccess.getContext(frame, code);
+                            final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame));
+                            LOG.info(MiscUtils.format("%s #(%s) [marker: %s, sender: %s]", context, argumentsString, marker, sender));
+                        },
+                        (context) -> {
+                            if (depth[0]++ > 50 && isTravisBuild) {
+                                return;
+                            } else if (truffleFrames[0]) {
+                                truffleFrames[0] = false;
+                                getError().println("== Squeak frames ================================================================");
+                            }
+                            final Object[] rcvrAndArgs = context.getReceiverAndNArguments(context.getBlockOrMethod().getNumArgsAndCopied());
+                            LOG.info(MiscUtils.format("%s #(%s) [%s]", context, ArrayUtils.toJoinedString(", ", rcvrAndArgs), context.getFrameMarker()));
+                        }).scanFor((FrameMarker) null, NilObject.SINGLETON, NilObject.SINGLETON);
     }
 
     public String currentState() {
         final StringBuilder b = new StringBuilder();
         b.append("\nImage processes state\n");
-        final PointersObject activeProcess = getActiveProcessSlow();
-        final long activePriority = (long) activeProcess.instVarAt0Slow(PROCESS.PRIORITY);
-        b.append("Active process @");
+        final PointersObject activeProcess = getActiveProcess();
+        final long activePriority = getPriority(activeProcess);
+        b.append("*Active process @");
         b.append(Integer.toHexString(activeProcess.hashCode()));
         b.append(" priority ");
         b.append(activePriority);
         b.append('\n');
         final Object interruptSema = getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
-        printSemaphoreOrNil(b, "Interrupt semaphore @", interruptSema, true);
+        printSemaphoreOrNil(b, "*Interrupt semaphore @", interruptSema, true);
         final Object timerSema = getSpecialObject(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
-        printSemaphoreOrNil(b, "Timer semaphore @", timerSema, true);
+        printSemaphoreOrNil(b, "*Timer semaphore @", timerSema, true);
+        final Object finalizationSema = getSpecialObject(SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE);
+        printSemaphoreOrNil(b, "*Finalization semaphore @", finalizationSema, true);
+        final Object lowSpaceSema = getSpecialObject(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE);
+        printSemaphoreOrNil(b, "*Low space semaphore @", lowSpaceSema, true);
         final ArrayObject externalObjects = (ArrayObject) getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
         if (!externalObjects.isEmptyType()) {
             final Object[] semaphores = externalObjects.getObjectStorage();
             for (int i = 0; i < semaphores.length; i++) {
-                printSemaphoreOrNil(b, "External semaphore at index " + (i + 1) + " @", semaphores[i], false);
+                printSemaphoreOrNil(b, "*External semaphore at index " + (i + 1) + " @", semaphores[i], false);
             }
         }
-        final Object[] lists = ((ArrayObject) getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
+        final Object[] lists = getProcessLists().getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
-            printLinkedList(b, "Quiescent processes list at priority " + (i + 1), (PointersObject) lists[i]);
+            printLinkedList(b, "*Quiescent processes list at priority " + (i + 1), (PointersObject) lists[i]);
         }
         return b.toString();
     }
 
-    private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
+    private void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
         if (semaphoreOrNil instanceof PointersObject) {
             b.append(label);
             b.append(Integer.toHexString(semaphoreOrNil.hashCode()));
             b.append(" with ");
-            b.append(((PointersObject) semaphoreOrNil).instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS));
+            b.append(getExcessSignals((PointersObject) semaphoreOrNil));
             b.append(" excess signals");
             if (!printLinkedList(b, "", (PointersObject) semaphoreOrNil)) {
                 b.append(" and no processes\n");
@@ -645,15 +694,21 @@ public final class SqueakImageContext {
         }
     }
 
-    private static boolean printLinkedList(final StringBuilder b, final String label, final PointersObject linkedList) {
-        Object temp = linkedList.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
+    private boolean printLinkedList(final StringBuilder b, final String label, final PointersObject linkedList) {
+        Object temp = getFirstLink(linkedList);
         if (temp instanceof PointersObject) {
             b.append(label);
-            b.append(" and processes:\n");
+            b.append(" and process");
+            if (temp != getLastLink(linkedList)) {
+                b.append("es:\n");
+            } else {
+                b.append(":\n");
+            }
             while (temp instanceof PointersObject) {
                 final PointersObject aProcess = (PointersObject) temp;
-                final Object aContext = aProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
+                final Object aContext = getSuspendedContext(aProcess);
                 if (aContext instanceof ContextObject) {
+                    assert ((ContextObject) aContext).getProcess() == null || ((ContextObject) aContext).getProcess() == aProcess;
                     b.append("\tprocess @");
                     b.append(Integer.toHexString(aProcess.hashCode()));
                     b.append(" with suspended context ");
@@ -665,7 +720,7 @@ public final class SqueakImageContext {
                     b.append(Integer.toHexString(aProcess.hashCode()));
                     b.append(" with suspended context nil\n");
                 }
-                temp = aProcess.instVarAt0Slow(PROCESS.NEXT_LINK);
+                temp = getNextLink(aProcess);
             }
             return true;
         } else {

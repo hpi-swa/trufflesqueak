@@ -82,6 +82,7 @@ import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ControlPrimitives.class);
+    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
@@ -206,7 +207,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
-            LOG.fine(() -> "Signalling semaphore @" + Integer.toHexString(receiver.hashCode()) + " in primitive 85 signal");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Signalling semaphore @" + Integer.toHexString(receiver.hashCode()) + " in primitive 85 signal");
+            }
             signalSemaphoreNode.executeSignal(frame, receiver);
             return AbstractSendNode.NO_RESULT;
         }
@@ -215,19 +218,20 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 86)
     protected abstract static class PrimWaitNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
 
         protected PrimWaitNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"receiver.getSqueakClass().isSemaphoreClass()", "hasExcessSignals(receiver)"})
-        protected final Object doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
+        protected static Object doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Shared("pushNode") @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
-            final long excessSignals = pointersReadNode.executeLong(receiver, SEMAPHORE.EXCESS_SIGNALS);
-            LOG.fine(() -> "Wait sent to empty semaphore @" + Integer.toHexString(receiver.hashCode()) + " with initially " + excessSignals + " excessSignals in primitive 86 wait");
+            final long excessSignals = receiver.getExcessSignals();
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Wait sent to empty semaphore @" + Integer.toHexString(receiver.hashCode()) + " with initially " + excessSignals + " excessSignals in primitive 86 wait");
+            }
             writeNode.execute(receiver, SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
             return AbstractSendNode.NO_RESULT;
         }
@@ -238,15 +242,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
-            final PointersObject activeProcess = method.image.getActiveProcess(pointersReadNode);
+            final PointersObject activeProcess = method.image.getActiveProcess();
             linkProcessToListNode.executeLink(activeProcess, receiver);
-            LOG.fine(() -> "Blocking active process @" + Integer.toHexString(activeProcess.hashCode()) + " on semaphore @" + Integer.toHexString(receiver.hashCode()) + " in primitive 86 wait");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Blocking active process @" + Integer.toHexString(activeProcess.hashCode()) + " on semaphore @" + Integer.toHexString(receiver.hashCode()) + " in primitive 86 wait");
+            }
             wakeHighestPriorityNode.executeWake(frame);
             return AbstractSendNode.NO_RESULT;
         }
 
-        protected final boolean hasExcessSignals(final PointersObject semaphore) {
-            return pointersReadNode.executeLong(semaphore, SEMAPHORE.EXCESS_SIGNALS) > 0;
+        protected static boolean hasExcessSignals(final PointersObject semaphore) {
+            return semaphore.getExcessSignals() > 0;
         }
     }
 
@@ -262,16 +268,17 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doResume(final VirtualFrame frame, final PointersObject receiver,
-                        @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final BranchProfile errorProfile,
                         @Cached final StackPushForPrimitivesNode pushNode) {
-            if (!(readNode.execute(receiver, PROCESS.SUSPENDED_CONTEXT) instanceof ContextObject)) {
+            if (receiver.getSuspendedContext() == null) {
                 errorProfile.enter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             // keep receiver on stack before resuming other process
             pushNode.executeWrite(frame, receiver);
-            LOG.fine(() -> "Attempting to resume process @" + Integer.toHexString(receiver.hashCode()) + " in primitive 87 Resume");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Attempting to resume process @" + Integer.toHexString(receiver.hashCode()) + " in primitive 87 Resume");
+            }
             resumeProcessNode.executeResume(frame, receiver);
             return AbstractSendNode.NO_RESULT;
         }
@@ -280,40 +287,43 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 88)
     protected abstract static class PrimSuspendNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child protected AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         protected PrimSuspendNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = "receiver.isActiveProcess(readNode)")
+        @Specialization(guards = "receiver.isActiveProcess()")
         protected static final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, NilObject.SINGLETON);
-            LOG.fine(() -> "Suspending active process @" + Integer.toHexString(receiver.hashCode()) + " in primitive 88 suspend");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Suspending active process @" + Integer.toHexString(receiver.hashCode()) + " in primitive 88 suspend");
+            }
             wakeHighestPriorityNode.executeWake(frame);
             return AbstractSendNode.NO_RESULT; // result already pushed above
         }
 
-        @Specialization(guards = {"!receiver.isActiveProcess(readNode)", "!hasNilList(receiver)"})
-        protected final PointersObject doSuspendOtherProcess(final PointersObject receiver,
+        @Specialization(guards = {"!receiver.isActiveProcess()", "!hasNilList(receiver)"})
+        protected static final PointersObject doSuspendOtherProcess(final PointersObject receiver,
                         @Cached final RemoveProcessFromListNode removeProcessNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            final PointersObject oldList = readNode.executePointers(receiver, PROCESS.LIST);
+            final PointersObject oldList = (PointersObject) receiver.getMyList();
             writeNode.execute(receiver, PROCESS.LIST, NilObject.SINGLETON);
-            LOG.fine(() -> "Suspending non-active process @" + Integer.toHexString(receiver.hashCode()) + " in primitive 88 suspend");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Suspending non-active process @" + Integer.toHexString(receiver.hashCode()) + " in primitive 88 suspend");
+            }
             removeProcessNode.executeRemove(receiver, oldList);
             return oldList;
         }
 
-        @Specialization(guards = {"!receiver.isActiveProcess(readNode)", "hasNilList(receiver)"})
+        @Specialization(guards = {"!receiver.isActiveProcess()", "hasNilList(receiver)"})
         protected static final Object doBadReceiver(@SuppressWarnings("unused") final PointersObject receiver) {
             throw PrimitiveFailed.BAD_RECEIVER;
         }
 
-        protected final boolean hasNilList(final PointersObject process) {
-            return readNode.execute(process, PROCESS.LIST) == NilObject.SINGLETON;
+        protected static final boolean hasNilList(final PointersObject process) {
+            return process.getMyList() == NilObject.SINGLETON;
         }
     }
 
@@ -558,7 +568,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 130)
     protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, PrimFullGCNode.class);
 
         protected PrimFullGCNode(final CompiledMethodObject method) {
             super(method);
@@ -596,7 +605,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 count++;
                 element = queue.poll();
             }
-            LOG.log(Level.FINE, "Number of garbage collected WeakPointersObjects", count);
+            if (isLoggingEnabled) {
+                LOG.log(Level.FINE, "Number of garbage collected WeakPointersObjects", count);
+            }
             return count > 0;
         }
     }
@@ -671,27 +682,28 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 185)
     protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child protected AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
         @Child private AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
 
         public PrimExitCriticalSectionNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = "mutex.isEmptyList(readNode)")
+        @Specialization(guards = "mutex.isEmptyList()")
         protected final PointersObject doExitEmpty(final PointersObject mutex) {
             writeNode.executeNil(mutex, MUTEX.OWNER);
             return mutex;
         }
 
-        @Specialization(guards = "!mutex.isEmptyList(readNode)")
+        @Specialization(guards = "!mutex.isEmptyList()")
         protected final Object doExitNonEmpty(final VirtualFrame frame, final PointersObject mutex,
                         @Cached final StackPushForPrimitivesNode pushNode,
                         @Cached("create(method)") final ResumeProcessNode resumeProcessNode) {
             pushNode.executeWrite(frame, mutex); // keep receiver on stack
-            final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode);
+            final PointersObject owningProcess = mutex.removeFirstLinkOfList(writeNode);
             writeNode.execute(mutex, MUTEX.OWNER, owningProcess);
-            LOG.fine(() -> "Attempting to resume process @" + Integer.toHexString(owningProcess.hashCode()) + " in primitive 185 ExitCriticalSection");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Attempting to resume process @" + Integer.toHexString(owningProcess.hashCode()) + " in primitive 185 ExitCriticalSection");
+            }
             resumeProcessNode.executeResume(frame, owningProcess);
             return AbstractSendNode.NO_RESULT;
         }
@@ -709,7 +721,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "ownerIsNil(mutex)")
         protected final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(mutex, MUTEX.OWNER, method.image.getActiveProcess(readNode));
+            writeNode.execute(mutex, MUTEX.OWNER, method.image.getActiveProcess());
             return BooleanObject.FALSE;
         }
 
@@ -725,9 +737,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Shared("linkProcessToListNode") @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, BooleanObject.FALSE);
-            final PointersObject activeProcess = method.image.getActiveProcess(readNode);
+            final PointersObject activeProcess = method.image.getActiveProcess();
             linkProcessToListNode.executeLink(activeProcess, mutex);
-            LOG.fine(() -> "Blocking active process @" + Integer.toHexString(activeProcess.hashCode()) + " on mutex in primitive 186 EnterCriticalSection");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Blocking active process @" + Integer.toHexString(activeProcess.hashCode()) + " on mutex in primitive 186 EnterCriticalSection");
+            }
             wakeHighestPriorityNode.executeWake(frame);
             return AbstractSendNode.NO_RESULT;
         }
@@ -752,7 +766,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Shared("wakeHighestPriorityNode") @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, BooleanObject.FALSE);
             linkProcessToListNode.executeLink(effectiveProcess, mutex);
-            LOG.fine(() -> "Blocking active process @" + Integer.toHexString(effectiveProcess.hashCode()) + " on mutex in primitive 186 EnterCriticalSection");
+            if (isLoggingEnabled) {
+                LOG.fine(() -> "Blocking active process @" + Integer.toHexString(effectiveProcess.hashCode()) + " on mutex in primitive 186 EnterCriticalSection");
+            }
             wakeHighestPriorityNode.executeWake(frame);
             return AbstractSendNode.NO_RESULT;
         }
@@ -762,7 +778,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final boolean activeProcessMutexOwner(final PointersObject mutex) {
-            return readNode.execute(mutex, MUTEX.OWNER) == method.image.getActiveProcess(readNode);
+            return readNode.execute(mutex, MUTEX.OWNER) == method.image.getActiveProcess();
         }
 
         protected final boolean isMutexOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
@@ -783,7 +799,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"ownerIsNil(rcvrMutex)"})
         protected final boolean doNilOwner(final PointersObject rcvrMutex,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            writeNode.execute(rcvrMutex, MUTEX.OWNER, method.image.getActiveProcess(readNode));
+            writeNode.execute(rcvrMutex, MUTEX.OWNER, method.image.getActiveProcess());
             return BooleanObject.FALSE;
         }
 
@@ -802,7 +818,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final boolean ownerIsActiveProcess(final PointersObject mutex) {
-            return readNode.execute(mutex, MUTEX.OWNER) == method.image.getActiveProcess(readNode);
+            return readNode.execute(mutex, MUTEX.OWNER) == method.image.getActiveProcess();
         }
     }
 

@@ -14,16 +14,14 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
 public abstract class RemoveProcessFromListNode extends AbstractNode {
-    @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
     @Child private AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
 
     public final void executeRemove(final PointersObject process, final PointersObject list) {
-        final Object first = readNode.execute(list, LINKED_LIST.FIRST_LINK);
-        final Object last = readNode.execute(list, LINKED_LIST.LAST_LINK);
+        final Object first = list.getFirstLink();
+        final Object last = list.getLastLink();
         executeRemove(process, list, first, last);
         writeNode.executeNil(process, PROCESS.NEXT_LINK);
     }
@@ -32,7 +30,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
 
     @Specialization(guards = "process == first")
     protected final void doRemoveEqual(final PointersObject process, final PointersObject list, @SuppressWarnings("unused") final PointersObject first, final AbstractSqueakObject last) {
-        final Object next = readNode.execute(process, PROCESS.NEXT_LINK);
+        final Object next = process.getNextLink();
         writeNode.execute(list, LINKED_LIST.FIRST_LINK, next);
         if (process == last) {
             writeNode.executeNil(list, LINKED_LIST.LAST_LINK);
@@ -44,7 +42,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
         PointersObject temp = first;
         Object next;
         while (true) {
-            next = readNode.execute(temp, PROCESS.NEXT_LINK);
+            next = temp.getNextLink();
             if (next == process) {
                 break;
             } else if (next == NilObject.SINGLETON) {
@@ -53,7 +51,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNode {
                 temp = (PointersObject) next;
             }
         }
-        next = readNode.execute(process, PROCESS.NEXT_LINK);
+        next = process.getNextLink();
         writeNode.execute(temp, PROCESS.NEXT_LINK, next);
         if (process == last) {
             writeNode.execute(list, LINKED_LIST.LAST_LINK, temp);

@@ -237,6 +237,7 @@ public final class ObjectLayouts {
         public static final int SUSPENDED_CONTEXT = 1;
         public static final int PRIORITY = 2;
         public static final int LIST = 3;
+        public static final int EFFECTIVE_PROCESS = 5;
     }
 
     public static final class PROCESS_SCHEDULER {

@@ -95,13 +95,13 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static void patchImageForTesting() {
         image.interrupt.start();
-        final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final ArrayObject lists = image.getProcessLists();
         final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
-        final Object firstLink = priority10List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
-        final Object lastLink = priority10List.instVarAt0Slow(LINKED_LIST.LAST_LINK);
+        final Object firstLink = priority10List.getFirstLink();
+        final Object lastLink = priority10List.getLastLink();
         assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
         idleProcess = (PointersObject) firstLink;
-        assert idleProcess.instVarAt0Slow(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
+        assert idleProcess.getNextLink() == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
         image.getOutput().println("Increasing default timeout...");
         patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ " + SQUEAK_TIMEOUT_SECONDS);
         if (!runsOnMXGate()) {
@@ -163,7 +163,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static void ensureCleanImageState() {
         if (idleProcess != null) {
-            if (idleProcess.instVarAt0Slow(PROCESS.NEXT_LINK) != NilObject.SINGLETON) {
+            if (idleProcess.getNextLink() != NilObject.SINGLETON) {
                 image.printToStdErr("Resetting dirty idle process...");
                 idleProcess.instVarAtPut0Slow(PROCESS.NEXT_LINK, NilObject.SINGLETON);
             }
@@ -175,7 +175,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void resetProcessLists() {
-        final Object[] lists = ((ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
+        final Object[] lists = image.getProcessLists().getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
             final Object expectedValue = i == PRIORITY_10_LIST_INDEX ? idleProcess : NilObject.SINGLETON;
             resetList(expectedValue, lists[i], "scheduler list #" + (i + 1));
@@ -199,8 +199,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static void resetList(final Object newValue, final Object listOrNil, final String linkedListName) {
         if (listOrNil instanceof PointersObject) {
             final PointersObject linkedList = (PointersObject) listOrNil;
-            final Object key = linkedList.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
-            final Object value = linkedList.instVarAt0Slow(LINKED_LIST.LAST_LINK);
+            final Object key = linkedList.getFirstLink();
+            final Object value = linkedList.getLastLink();
             if (key != newValue || value != newValue) {
                 LOG.severe(String.format("Removing inconsistent entry (%s->%s) from %s...", key, value, linkedListName));
                 linkedList.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, newValue);
@@ -216,8 +216,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void ensureUserProcessForTesting() {
-        final PointersObject activeProcess = image.getActiveProcessSlow();
-        final long activePriority = (long) activeProcess.instVarAt0Slow(PROCESS.PRIORITY);
+        final PointersObject activeProcess = image.getActiveProcess();
+        final long activePriority = activeProcess.getPriority();
         if (activePriority == USER_PRIORITY_LIST_INDEX + 1) {
             return;
         }
@@ -229,12 +229,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             assert activeProcess == idleProcess;
             LOG.severe(() -> "IDLE PROCESS IS ACTIVE, REINSTALL IT (ProcessorScheduler installIdleProcess)");
             evaluate("ProcessorScheduler installIdleProcess");
-            final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
+            final ArrayObject lists = image.getProcessLists();
             final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
-            final Object firstLink = priority10List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
-            final Object lastLink = priority10List.instVarAt0Slow(LINKED_LIST.LAST_LINK);
+            final Object firstLink = priority10List.getFirstLink();
+            final Object lastLink = priority10List.getLastLink();
             assert firstLink instanceof PointersObject && firstLink == lastLink &&
-                            ((PointersObject) firstLink).instVarAt0Slow(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Unexpected idleProcess state";
+                            ((PointersObject) firstLink).getNextLink() == NilObject.SINGLETON : "Unexpected idleProcess state";
             idleProcess = (PointersObject) firstLink;
             return;
         }
@@ -298,7 +298,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (!(result instanceof NativeObject) || !((NativeObject) result).isString()) {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
-        final String testResult = ((NativeObject) result).toString();
+        final String testResult = ((NativeObject) result).asStringUnsafe();
         if (PASSED_VALUE.equals(testResult)) {
             assert ((NativeObject) result).isByteType() : "Passing result should always be a ByteString";
             return TestResult.success(testResult);
