@@ -35,6 +35,7 @@ import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.LogHandlerAccessor;
 
 public abstract class AbstractSqueakTestCase {
 
@@ -139,6 +140,7 @@ public abstract class AbstractSqueakTestCase {
         final String logLevel = System.getProperty("log.level");
         if (logLevel != null) {
             contextBuilder.option("log." + SqueakLanguageConfig.ID + ".level", logLevel);
+            contextBuilder.logHandler(LogHandlerAccessor.createLogHandler());
         }
         context = contextBuilder.build();
         context.initialize(SqueakLanguageConfig.ID);
