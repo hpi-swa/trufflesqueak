@@ -10,8 +10,11 @@ import java.util.Arrays;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -153,27 +156,48 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
                     @Cached final ContextObjectWriteNode writeNode) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
-            // Skip sender (for performance), pc, and sp.
+            final Object toPointer = to[i];
             // TODO: Check that all pointers are actually traced (obj.size()?).
-            for (int j = CONTEXT.METHOD; j < CONTEXT.TEMP_FRAME_START; j++) {
+            for (int j = 0; j < CONTEXT.TEMP_FRAME_START; j++) {
                 final Object newPointer = readNode.execute(obj, j);
                 if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
                     writeNode.execute(obj, j, toPointer);
                     updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                 }
             }
-            final CompiledCodeObject blockOrMethod = obj.getBlockOrMethod();
-            for (int j = CONTEXT.TEMP_FRAME_START; j < obj.size(); j++) {
-                final FrameSlot stackSlot = blockOrMethod.getStackSlot(j - CONTEXT.TEMP_FRAME_START);
-                if (blockOrMethod.getFrameDescriptor().getFrameSlotKind(stackSlot) == FrameSlotKind.Illegal) {
-                    break; // This and all following slots are not (yet) in use.
-                }
-                final Object newPointer = readNode.execute(obj, j);
+            if (!obj.hasTruffleFrame()) {
+                return;
+            }
+            final MaterializedFrame truffleFrame = obj.getTruffleFrame();
+            final Object[] args = truffleFrame.getArguments();
+            for (int j = 4; j < args.length; j++) {
+                final Object newPointer = args[j];
                 if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    writeNode.execute(obj, j, toPointer);
+                    writeNode.execute(obj, j - 4 + CONTEXT.TEMP_FRAME_START, toPointer);
                     updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
+                }
+            }
+            final CompiledCodeObject code = args[2] != null ? ((BlockClosureObject) args[2]).getCompiledBlock() : (CompiledMethodObject) args[0];
+            final int stackp = FrameUtil.getIntSafe(truffleFrame, code.getStackPointerSlot());
+            final FrameSlot[] stackSlots = code.getStackSlotsUnsafe();
+            final FrameDescriptor frameDescriptor = code.getFrameDescriptor();
+            for (int j = 0; j < stackp; j++) {
+                final FrameSlot slot = stackSlots[j];
+                if (slot == null) {
+                    break; // Stop here, slot has not (yet) been created.
+                }
+                final FrameSlotKind currentSlotKind = frameDescriptor.getFrameSlotKind(slot);
+                if (currentSlotKind == FrameSlotKind.Object) {
+                    final Object newPointer = FrameUtil.getObjectSafe(truffleFrame, slot);
+                    if (newPointer == null) {
+                        break;
+                    }
+                    if (newPointer == fromPointer) {
+                        writeNode.execute(obj, j + CONTEXT.TEMP_FRAME_START, toPointer);
+                        updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
+                    }
+                } else if (currentSlotKind == FrameSlotKind.Illegal) {
+                    break; // Stop here, because this slot and all following are not used.
                 }
             }
         }
