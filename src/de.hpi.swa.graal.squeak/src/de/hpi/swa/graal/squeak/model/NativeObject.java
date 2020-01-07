@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.model;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -37,6 +39,7 @@ import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
+    public static final String REPLACEMENT_CHAR = StandardCharsets.UTF_8.newDecoder().replacement();
     public static final short BYTE_MAX = (short) (Math.pow(2, Byte.SIZE) - 1);
     public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
     public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
@@ -283,8 +286,9 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         this.storage = storage;
     }
 
+    @TruffleBoundary
     public String asStringUnsafe() {
-        return ArrayConversionUtils.bytesToString(getByteStorage());
+        return StandardCharsets.UTF_8.decode(ByteBuffer.wrap((byte[]) storage)).toString();
     }
 
     @TruffleBoundary
@@ -300,7 +304,47 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         if (isByteType()) {
             final ClassObject squeakClass = getSqueakClass();
             if (squeakClass.isStringClass()) {
-                return asStringUnsafe();
+                final String string = asStringUnsafe();
+                int i = string.length();
+                int j = string.indexOf(0);
+                final int k = string.indexOf('\n');
+                final int l = string.indexOf(REPLACEMENT_CHAR);
+                final int m = string.indexOf('\r');
+                if (m >= 0 || l >= 0 || k >= 0 || j >= 0 || i > 78) {
+                    if (k >= 0 && j >= 0) {
+                        if (k < j) {
+                            j = k;
+                        }
+                    } else if (k >= 0) {
+                        j = k;
+                    }
+                    if (l >= 0 && j >= 0) {
+                        if (l < j) {
+                            j = l;
+                        }
+                    } else if (l >= 0) {
+                        j = l;
+                    }
+                    if (m >= 0 && j >= 0) {
+                        if (m < j) {
+                            j = m;
+                        }
+                    } else if (m >= 0) {
+                        j = m;
+                    }
+                    if (i > 78) {
+                        i = 40;
+                    }
+                    if (j >= 0 && j < i) {
+                        i = j;
+                    }
+                    String suffix = "";
+                    if (i > 0) {
+                        suffix = ", starting with '" + string.substring(0, i) + "'";
+                    }
+                    return "a string of length " + string.length() + suffix;
+                }
+                return "'" + string + "'";
             } else if (squeakClass.isSymbolClass()) {
                 return "#" + asStringUnsafe();
             } else {

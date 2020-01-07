@@ -57,8 +57,8 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
     @Test
     public void test05OnError() {
         final Object result = compilerEvaluate("[[self error: 'foobar'] on: Error do: [:err| ^ err messageText]]value");
-        assertEquals("foobar", result.toString());
-        assertEquals("foobar", compilerEvaluate("[[self error: 'foobar'] value] on: Error do: [:err| ^ err messageText]").toString());
+        assertEquals("'foobar'", result.toString());
+        assertEquals("'foobar'", compilerEvaluate("[[self error: 'foobar'] value] on: Error do: [:err| ^ err messageText]").toString());
         assertEquals(BooleanObject.TRUE, compilerEvaluate("[[self error: 'foobar'] on: ZeroDivide do: [:e|]] on: Error do: [:err| ^ true]"));
         assertEquals(BooleanObject.TRUE, compilerEvaluate("[self error: 'foobar'. false] on: Error do: [:err| ^ err return: true]"));
     }
@@ -132,7 +132,7 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
 
     @Test
     public void test13CannotReturnAtStart() {
-        assertEquals("bla2", evaluate("| result | \n" +
+        assertEquals("'bla2'", evaluate("| result | \n" +
                         "[ result := [^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork. \n" +
                         "Processor yield.\n" +
                         "result").toString());
@@ -140,7 +140,7 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
 
     @Test
     public void test14CannotReturnInTheMiddle() {
-        assertEquals("bla2", evaluate("| result | \n" +
+        assertEquals("'bla2'", evaluate("| result | \n" +
                         "[ result := [thisContext yourself. ^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork. \n" +
                         "Processor yield.\n" +
                         "result").toString());
