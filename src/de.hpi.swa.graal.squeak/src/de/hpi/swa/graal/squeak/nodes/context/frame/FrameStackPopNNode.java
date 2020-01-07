@@ -62,7 +62,6 @@ public abstract class FrameStackPopNNode extends AbstractNodeWithCode {
         final Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             result[i] = getReadNode(i).executeRead(frame);
-            assert result[i] != null;
         }
         return result;
     }

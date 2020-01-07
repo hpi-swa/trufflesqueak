@@ -15,6 +15,7 @@ import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 
 @ImportStatic(FrameSlotKind.class)
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
@@ -67,7 +68,7 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
             frame.setObject(getSlot(), value);
             return value;
         } else {
-            return FrameUtil.getObjectSafe(frame, getSlot());
+            return NilObject.nullToNil(FrameUtil.getObjectSafe(frame, getSlot()));
         }
     }
 
@@ -87,6 +88,7 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
             assert value != null : "Unexpected `null` value";
         } else {
             value = FrameUtil.getObjectSafe(frame, getSlot());
+            assert value != null : "Unexpected `null` value";
         }
         frame.setObject(getSlot(), null);
         return value;
