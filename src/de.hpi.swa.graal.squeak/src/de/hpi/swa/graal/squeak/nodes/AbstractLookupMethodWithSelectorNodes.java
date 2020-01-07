@@ -45,7 +45,7 @@ public abstract class AbstractLookupMethodWithSelectorNodes extends AbstractNode
                 lookupClass = lookupClass.getSuperclassOrNull();
             }
             assert !selector.isDoesNotUnderstand() : "Could not find does not understand method";
-            return null; // Signals a doesNotUnderstand.
+            return new Object[2]; // Signals a doesNotUnderstand.
         }
 
     }
