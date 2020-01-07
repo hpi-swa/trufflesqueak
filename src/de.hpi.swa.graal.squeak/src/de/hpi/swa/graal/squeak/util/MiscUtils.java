@@ -98,6 +98,11 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static String getJavaHome() {
+        return System.getProperty("java.home");
+    }
+
+    @TruffleBoundary
     public static long getObjectPendingFinalizationCount() {
         return MEMORY_BEAN.getObjectPendingFinalizationCount();
     }

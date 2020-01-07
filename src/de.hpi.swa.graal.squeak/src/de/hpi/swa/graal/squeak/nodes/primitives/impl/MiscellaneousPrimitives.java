@@ -427,7 +427,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asByteString(MiscUtils.getVMPath());
+            return method.image.asByteString(MiscUtils.getJavaHome());
         }
     }
 
