@@ -1426,6 +1426,20 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 575)
+    protected abstract static class PrimHighBitNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimHighBitNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doLong(final long receiver,
+                        @Cached("createBinaryProfile()") final ConditionProfile negativeProfile) {
+            return Long.SIZE - Long.numberOfLeadingZeros(negativeProfile.profile(receiver < 0) ? -receiver : receiver);
+        }
+    }
+
     @TypeSystem
     public static class ArithmeticBaseTypeSystem {
         @ImplicitCast

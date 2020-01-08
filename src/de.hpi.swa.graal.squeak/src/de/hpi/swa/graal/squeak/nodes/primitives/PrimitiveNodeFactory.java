@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2017-2020 Software Architecture Group, Hasso Plattner Institute
  *
  * Licensed under the MIT License.
  */
@@ -216,7 +216,7 @@ public final class PrimitiveNodeFactory {
     }
 
     private void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
-        assert index < MAX_PRIMITIVE_INDEX : "primitive table array not large enough";
+        assert index <= MAX_PRIMITIVE_INDEX : "primitive table array not large enough";
         assert primitiveTable[index - 1] == null : "primitives are not allowed to override others (#" + index + ")";
         primitiveTable[index - 1] = nodeFactory;
     }
