@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2017-2020 Software Architecture Group, Hasso Plattner Institute
  *
  * Licensed under the MIT License.
  */
@@ -10,9 +10,6 @@ import java.util.logging.Level;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -21,8 +18,6 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
@@ -32,7 +27,6 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeFactory.TriggerInterruptHandlerNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
@@ -44,7 +38,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
-import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
+import de.hpi.swa.graal.squeak.util.InterruptByUserHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 @GenerateWrapper
@@ -53,6 +47,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
     private static final int LOCAL_RETURN_PC = -1;
+    private static final int MIN_NUMBER_OF_BYTECODE_FOR_USER_INTERRUPT_CHECKS = 32;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
@@ -60,6 +55,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
 
     @Child private FrameStackInitializationNode frameInitializationNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
+    @Child private InterruptByUserHandlerNode interruptByUserHandlerNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
 
     private SourceSection section;
@@ -72,6 +68,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
         frameInitializationNode = resume ? null : FrameStackInitializationNode.create(code);
+        /* Only check for user interrupts if method is relatively large. */
+        interruptByUserHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_USER_INTERRUPT_CHECKS ? InterruptByUserHandlerNode.create(code) : null;
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
     }
 
@@ -97,6 +95,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 final ContextObject context = getGetOrCreateContextNode().executeGet(frame);
                 context.setProcess(code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached()));
                 throw ProcessSwitch.createWithBoundary(context);
+            }
+            if (interruptByUserHandlerNode != null) {
+                interruptByUserHandlerNode.executeCheckForUserInterrupts(frame);
             }
             frameInitializationNode.executeInitialize(frame);
             return startBytecode(frame);
@@ -326,42 +327,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             section = source.createSection(1, 1, source.getLength());
         }
         return section;
-    }
-
-    // FIXME: Trigger interrupt check on sends and in loops.
-    @NodeInfo(cost = NodeCost.NONE)
-    protected abstract static class TriggerInterruptHandlerNode extends AbstractNodeWithCode {
-        protected static final int BYTECODE_LENGTH_THRESHOLD = 32;
-
-        protected TriggerInterruptHandlerNode(final CompiledCodeObject code) {
-            super(code);
-        }
-
-        @SuppressWarnings("unused")
-        private static TriggerInterruptHandlerNode create(final CompiledCodeObject code) {
-            return TriggerInterruptHandlerNodeGen.create(code);
-        }
-
-        protected abstract void executeGeneric(VirtualFrame frame);
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"shouldTrigger(frame)"})
-        protected static final void doTrigger(final VirtualFrame frame, @Cached("create(code)") final InterruptHandlerNode interruptNode) {
-            interruptNode.executeTrigger(frame);
-        }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        protected final void doNothing() {
-            // Do not trigger.
-        }
-
-        protected final boolean shouldTrigger(@SuppressWarnings("unused") final VirtualFrame frame) {
-            if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot()) {
-                return false; // never trigger in inlined code
-            }
-            return code.image.interrupt.isActiveAndShouldTrigger();
-        }
     }
 
     private HandleNonLocalReturnNode getHandleNonLocalReturnNode() {
