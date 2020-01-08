@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2017-2019 Software Architecture Group, Hasso Plattner Institute
+ * Copyright (c) 2017-2020 Software Architecture Group, Hasso Plattner Institute
  *
  * Licensed under the MIT License.
  */
 package de.hpi.swa.graal.squeak.util;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -20,7 +21,6 @@ public final class InterruptHandlerNode extends Node {
     private final Object[] specialObjects;
     private final InterruptHandlerState istate;
 
-    private final BranchProfile interruptPendingProfile = BranchProfile.create();
     private final BranchProfile nextWakeupTickProfile = BranchProfile.create();
     private final BranchProfile pendingFinalizationSignalsProfile = BranchProfile.create();
     private final BranchProfile hasSemaphoresToSignalProfile = BranchProfile.create();
@@ -37,7 +37,8 @@ public final class InterruptHandlerNode extends Node {
 
     public void executeTrigger(final VirtualFrame frame) {
         if (istate.interruptPending()) {
-            interruptPendingProfile.enter();
+            /* Exclude user interrupt case from compilation. */
+            CompilerDirectives.transferToInterpreter();
             istate.interruptPending = false; // reset interrupt flag
             signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
         }
