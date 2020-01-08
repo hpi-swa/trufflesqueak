@@ -74,8 +74,8 @@ public class SqueakConsistencyTest extends AbstractSqueakTestCaseWithImage {
     private static List<String> inspectCollection(final Object collection) {
         final ArrayObject array = (ArrayObject) ((PointersObject) collection).instVarAt0Slow(0);
         final List<String> items = new ArrayList<>();
-        for (final NativeObject aso : array.getNativeObjectStorage()) {
-            items.add(aso.asStringUnsafe());
+        for (final Object aso : array.getObjectStorage()) {
+            items.add(((NativeObject) aso).asStringUnsafe());
         }
         return items;
     }

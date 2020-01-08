@@ -9,21 +9,16 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
 import sun.misc.Unsafe;
 
 public final class UnsafeUtils {
 
     private static final Unsafe UNSAFE = initUnsafe();
 
-    private static final long ARRAY_NATIVE_OBJECT_BASE_OFFSET;
-    private static final long ARRAY_NATIVE_OBJECT_INDEX_SCALE;
     private static final long ARRAY_WEAK_REFERENCE_BASE_OFFSET;
     private static final long ARRAY_WEAK_REFERENCE_INDEX_SCALE;
 
     static {
-        ARRAY_NATIVE_OBJECT_BASE_OFFSET = UNSAFE.arrayBaseOffset(NativeObject[].class);
-        ARRAY_NATIVE_OBJECT_INDEX_SCALE = UNSAFE.arrayIndexScale(NativeObject[].class);
         ARRAY_WEAK_REFERENCE_BASE_OFFSET = UNSAFE.arrayBaseOffset(WeakReference[].class);
         ARRAY_WEAK_REFERENCE_INDEX_SCALE = UNSAFE.arrayIndexScale(WeakReference[].class);
     }
@@ -123,13 +118,8 @@ public final class UnsafeUtils {
         return Long.reverseBytes(getLong(bytes, index));
     }
 
-    public static NativeObject getNativeObject(final NativeObject[] storage, final long index) {
-        assert 0 <= index && index < storage.length;
-        return (NativeObject) UNSAFE.getObject(storage, ARRAY_NATIVE_OBJECT_BASE_OFFSET + index * ARRAY_NATIVE_OBJECT_INDEX_SCALE);
-    }
-
     public static Object getObject(final Object[] storage, final long index) {
-        assert storage.getClass() == Object[].class && 0 <= index && index < storage.length;
+        assert 0 <= index && index < storage.length;
         return UNSAFE.getObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE);
     }
 
@@ -269,13 +259,8 @@ public final class UnsafeUtils {
         putLong(bytes, i, Long.reverseBytes(value));
     }
 
-    public static void putNativeObject(final NativeObject[] storage, final long index, final NativeObject value) {
-        assert 0 <= index && index < storage.length;
-        UNSAFE.putObject(storage, ARRAY_NATIVE_OBJECT_BASE_OFFSET + index * ARRAY_NATIVE_OBJECT_INDEX_SCALE, value);
-    }
-
     public static void putObject(final Object[] storage, final long index, final Object value) {
-        assert storage.getClass() == Object[].class && 0 <= index && index < storage.length;
+        assert 0 <= index && index < storage.length;
         UNSAFE.putObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE, value);
     }
 

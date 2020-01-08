@@ -13,16 +13,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayCopyNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectTraceableToObjectArrayNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectWriteNodeGen;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -84,12 +81,6 @@ public final class ArrayObjectNodes {
             return nilProfile.profile(Double.doubleToRawLongBits(value) == ArrayObject.DOUBLE_NIL_TAG_LONG) ? NilObject.SINGLETON : value;
         }
 
-        @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final AbstractSqueakObject doArrayOfNativeObjects(final ArrayObject obj, final long index,
-                        @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
-            return NilObject.nullToNil(obj.getNativeObject(index), nilProfile);
-        }
-
         @Specialization(guards = "obj.isObjectType()")
         protected static final Object doArrayOfObjects(final ArrayObject obj, final long index) {
             assert obj.getObject(index) != null : "Unexpected `null` value";
@@ -125,11 +116,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isDoubleType()")
         protected static final ArrayObject doArrayOfDoubles(final ArrayObject obj) {
             return obj.shallowCopy(obj.getDoubleStorage().clone());
-        }
-
-        @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final ArrayObject doArrayOfNatives(final ArrayObject obj) {
-            return obj.shallowCopy(obj.getNativeObjectStorage().clone());
         }
 
         @Specialization(guards = "obj.isObjectType()")
@@ -174,11 +160,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = "obj.isDoubleType()")
         protected static final int doArrayObjectOfDoubles(final ArrayObject obj) {
             return obj.getDoubleLength();
-        }
-
-        @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final int doArrayObjectOfNatives(final ArrayObject obj) {
-            return obj.getNativeObjectLength();
         }
 
         @Specialization(guards = "obj.isObjectType()")
@@ -254,37 +235,6 @@ public final class ArrayObjectNodes {
             }
             return objects;
         }
-
-        @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final Object[] doArrayOfNatives(final ArrayObject obj) {
-            final NativeObject[] nativeObjects = obj.getNativeObjectStorage();
-            final int length = nativeObjects.length;
-            final Object[] objects = new Object[length];
-            for (int i = 0; i < length; i++) {
-                objects[i] = ArrayObject.toObjectFromNativeObject(nativeObjects[i]);
-            }
-            return objects;
-        }
-    }
-
-    @GenerateUncached
-    public abstract static class ArrayObjectTraceableToObjectArrayNode extends AbstractNode {
-
-        public static ArrayObjectTraceableToObjectArrayNode create() {
-            return ArrayObjectTraceableToObjectArrayNodeGen.create();
-        }
-
-        public abstract Object[] execute(ArrayObject obj);
-
-        @Specialization(guards = "obj.isObjectType()")
-        protected static final Object[] doArrayOfObjects(final ArrayObject obj) {
-            return obj.getObjectStorage();
-        }
-
-        @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final Object[] doArrayOfNatives(final ArrayObject obj) {
-            return obj.getNativeObjectStorage();
-        }
     }
 
     @GenerateUncached
@@ -306,13 +256,6 @@ public final class ArrayObjectNodes {
         protected static final void doEmptyArray(final ArrayObject obj, final long index, final NilObject value) {
             assert index < obj.getEmptyLength();
             // Nothing to do.
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()"})
-        protected static final void doEmptyArray(final ArrayObject obj, final long index, final NativeObject value) {
-            obj.transitionFromEmptyToNatives();
-            doArrayOfNativeObjects(obj, index, value);
         }
 
         @SuppressWarnings("unused")
@@ -362,7 +305,7 @@ public final class ArrayObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"obj.isEmptyType()", "!isBoolean(value)", "!isCharacter(value)", "!isLong(value)", "!isDouble(value)", "!isNativeObject(value)"})
+        @Specialization(guards = {"obj.isEmptyType()", "!isBoolean(value)", "!isCharacter(value)", "!isLong(value)", "!isDouble(value)"})
         protected static final void doEmptyArrayToObject(final ArrayObject obj, final long index, final Object value) {
             obj.transitionFromEmptyToObjects();
             doArrayOfObjects(obj, index, value);
@@ -450,22 +393,6 @@ public final class ArrayObjectNodes {
         @Specialization(guards = {"obj.isDoubleType()", "!isDouble(value)", "!isNil(value)"})
         protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, final Object value) {
             obj.transitionFromDoublesToObjects();
-            doArrayOfObjects(obj, index, value);
-        }
-
-        @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final void doArrayOfNativeObjects(final ArrayObject obj, final long index, final NativeObject value) {
-            obj.setNativeObject(index, value);
-        }
-
-        @Specialization(guards = "obj.isNativeObjectType()")
-        protected static final void doArrayOfNativeObjects(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-            obj.setNativeObject(index, ArrayObject.NATIVE_OBJECT_NIL_TAG);
-        }
-
-        @Specialization(guards = {"obj.isNativeObjectType()", "!isNativeObject(value)", "!isNil(value)"})
-        protected static final void doArrayOfNativeObjects(final ArrayObject obj, final long index, final Object value) {
-            obj.transitionFromNativesToObjects();
             doArrayOfObjects(obj, index, value);
         }
 

@@ -485,17 +485,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             }
 
-            @Specialization(guards = {"rcvr.isNativeObjectType()", "repl.isNativeObjectType()"})
-            protected static final void doArraysOfNatives(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                            @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
-                try {
-                    System.arraycopy(repl.getNativeObjectStorage(), (int) replStart - 1, rcvr.getNativeObjectStorage(), (int) start - 1, (int) (1 + stop - start));
-                } catch (final IndexOutOfBoundsException e) {
-                    errorProfile.enter();
-                    throw PrimitiveFailed.BAD_INDEX;
-                }
-            }
-
             @Specialization(guards = {"rcvr.isObjectType()", "repl.isObjectType()"})
             protected static final void doArraysOfObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {

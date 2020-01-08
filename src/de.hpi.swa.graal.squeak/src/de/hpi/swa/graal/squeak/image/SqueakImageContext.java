@@ -510,10 +510,6 @@ public final class SqueakImageContext {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 
-    public ArrayObject asArrayOfNativeObjects(final NativeObject... elements) {
-        return ArrayObject.createWithStorage(this, arrayClass, elements);
-    }
-
     public ArrayObject asArrayOfObjects(final Object... elements) {
         return ArrayObject.createWithStorage(this, arrayClass, elements);
     }

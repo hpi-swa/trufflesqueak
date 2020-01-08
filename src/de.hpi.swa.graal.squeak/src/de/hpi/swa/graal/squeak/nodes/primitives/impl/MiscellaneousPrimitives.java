@@ -275,11 +275,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return BooleanObject.FALSE;
         }
 
-        @Specialization(guards = "receiver.isNativeObjectType()")
-        protected static final boolean doArrayOfNatives(final ArrayObject receiver, final Object thang) {
-            return BooleanObject.wrap(ArrayUtils.contains(receiver.getNativeObjectStorage(), thang));
-        }
-
         @Specialization(guards = "receiver.isObjectType()")
         protected static final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang) {
             return BooleanObject.wrap(ArrayUtils.contains(receiver.getObjectStorage(), thang));

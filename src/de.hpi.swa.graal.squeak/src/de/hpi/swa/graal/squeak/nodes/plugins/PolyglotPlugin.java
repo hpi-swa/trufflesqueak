@@ -845,12 +845,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 final Object members = lib.getMembers(object, true);
                 final int size = (int) membersLib.getArraySize(members);
-                final NativeObject[] byteStrings = new NativeObject[size];
+                final Object[] byteStrings = new Object[size];
                 for (int i = 0; i < size; i++) {
                     final Object memberName = membersLib.readArrayElement(members, i);
                     byteStrings[i] = method.image.asByteString(memberNameLib.asString(memberName));
                 }
-                return method.image.asArrayOfNativeObjects(byteStrings);
+                return method.image.asArrayOfObjects(byteStrings);
             } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
                 throw SqueakException.illegalState(e);
             }
