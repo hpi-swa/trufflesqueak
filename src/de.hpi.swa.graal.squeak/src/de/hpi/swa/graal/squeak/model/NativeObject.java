@@ -288,8 +288,15 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         if (isByteType()) {
             final ClassObject squeakClass = getSqueakClass();
             if (squeakClass.isStringClass()) {
-                /* Return no more than 40 characters and stop at first non-printable character. */
-                return String.format("'%.40s'", asStringUnsafe().split("[^\\p{Print}]", 2)[0]);
+                final String fullString = asStringUnsafe();
+                final int fullLength = fullString.length();
+                /* Split at first non-printable character. */
+                final String displayString = fullString.split("[^\\p{Print}]", 2)[0];
+                if (fullLength <= 40 && fullLength == displayString.length()) {
+                    /* fullString is short and has printable characters only. */
+                    return "'" + fullString + "'";
+                }
+                return String.format("'%.30s...' (string length: %s)", displayString, fullLength);
             } else if (squeakClass.isSymbolClass()) {
                 return "#" + asStringUnsafe();
             } else {
