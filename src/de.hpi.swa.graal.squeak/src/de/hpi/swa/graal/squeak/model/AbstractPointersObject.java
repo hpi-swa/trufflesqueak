@@ -133,7 +133,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             assert !layout.isValid() && layout != latestLayout : "Layout must have changed";
         }
         migrateToLayout(latestLayout);
-        return latestLayout;
+        return getSqueakClass().getLayout(); /* Layout may have evolved again during migration. */
     }
 
     private void migrateToLayout(final ObjectLayout newLayout) {
