@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
@@ -92,6 +93,12 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         } else {
             throw UnsupportedMessageException.create();
         }
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        return "a " + getClass().getSimpleName() + " @" + Integer.toHexString(hashCode());
     }
 
     /**

@@ -66,15 +66,26 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
-        String selector = "unknownSelector";
-        if (hasMethodClassSlow()) {
-            className = getMethodClassSlow().getClassName();
+        final ClassObject methodClass = getMethodClassSlow();
+        if (methodClass != null) {
+            className = methodClass.getClassName();
         }
+        return className + ">>" + getNotNilSelector();
+    }
+
+    public String getNotNilSelector() {
+        CompilerAsserts.neverPartOfCompilation();
+        String selector = "DoIt";
         final NativeObject selectorObj = getCompiledInSelector();
         if (selectorObj != null) {
             selector = selectorObj.asStringUnsafe();
+        } else if (getNumArgs() > 0) {
+            selector += ":";
+            for (int i = 1; i < getNumArgs(); i++) {
+                selector += "with:";
+            }
         }
-        return className + ">>" + selector;
+        return selector;
     }
 
     @Override
