@@ -36,16 +36,12 @@ $GRAALVM_HOME\bin\graalsqueak.cmd path\to\a\GraalSqueak-X.Y.Z.image  # Windows
 
 Documentation is available in [`docs`](docs).
 
-Please feel free to open a [pull request][pull_request] if you'd like to
-contribute.
-
 
 ## Development
 
-Active development is done on the [`dev` branch][dev], which is merged to
-[`master`][master] for new releases.
-Therefore, please open pull requests against [`dev`][pull_request_dev] if you
-like to contribute a bugfix, documentation, or a new feature.
+Active development is done in the [`master` branch][master].
+Please feel free to open a [pull request][pull_request] if you'd like to
+contribute a bugfix, documentation, or a new feature.
 
 
 ### Building from Source
@@ -147,13 +143,13 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [codacy]: https://app.codacy.com/app/fniephaus/graalsqueak/dashboard
 [codacy_coverage]: https://img.shields.io/codacy/coverage/104b3300600346789d604fd269219efe.svg
 [codacy_grade]: https://img.shields.io/codacy/grade/104b3300600346789d604fd269219efe.svg
-[dev]: ../../tree/dev
 [dls19]: https://conf.researchr.org/home/dls-2019
 [dls19_doi]: https://img.shields.io/badge/doi-10.1145/3359619.3359746-blue.svg
 [dls19_paper]: https://doi.org/10.1145/3359619.3359746
 [dls19_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/StolpeFelgentreffHumerNiephausHirschfeld_2019_LanguageIndependentDevelopmentEnvironmentSupportForDynamicRuntimes_AcmDL.pdf
 [eclipse_cs]: http://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
+[github_releases]: https://help.github.com/en/github/administering-a-repository/about-releases
 [graal]: https://github.com/oracle/graal
 [graalsqueak_latest]: https://github.com/hpi-swa/graalsqueak/releases/latest
 [graalsqueak_latest_badge]: https://img.shields.io/github/v/release/hpi-swa/graalsqueak
@@ -182,7 +178,6 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [pp19_post]: https://medium.com/p/3fd06ffa59d2/
 [preprint]: https://img.shields.io/badge/preprint-download-blue.svg
 [pull_request]: https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request
-[pull_request_dev]: ../../compare/dev...
 [px19]: https://2019.programming-conference.org/track/px-2019-papers
 [px19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3328434-blue.svg
 [px19_paper]: https://doi.org/10.1145/3328433.3328434
