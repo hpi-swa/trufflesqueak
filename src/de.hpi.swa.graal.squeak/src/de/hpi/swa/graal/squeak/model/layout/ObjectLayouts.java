@@ -148,7 +148,7 @@ public final class ObjectLayouts {
         public static final int OBSERVERS = 5;
     }
 
-    public static enum ERROR_TABLE {
+    public enum ERROR_TABLE {
         GENERIC_ERROR, // nil
         BAD_RECEIVER,
         BAD_ARGUMENT,
