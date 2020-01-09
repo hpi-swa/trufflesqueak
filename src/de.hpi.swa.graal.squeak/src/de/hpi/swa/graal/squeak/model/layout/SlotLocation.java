@@ -111,6 +111,10 @@ public abstract class SlotLocation {
 
     public abstract boolean isSet(AbstractPointersObject object);
 
+    public void unset(@SuppressWarnings("unused") final AbstractPointersObject object) {
+        /* Do nothing by default. */
+    }
+
     public boolean isUninitialized() {
         return false;
     }
@@ -340,6 +344,11 @@ public abstract class SlotLocation {
         }
 
         @Override
+        public void unset(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
+        }
+
+        @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
             if (value instanceof Boolean) {
                 putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
@@ -401,6 +410,11 @@ public abstract class SlotLocation {
         @Override
         public boolean isSet(final AbstractPointersObject object) {
             return (getPrimitiveUsedMap(object) & usedMask) != 0;
+        }
+
+        @Override
+        public void unset(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
         }
 
         @Override
@@ -474,6 +488,11 @@ public abstract class SlotLocation {
         }
 
         @Override
+        public void unset(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
+        }
+
+        @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
             if (value instanceof Character) {
                 putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
@@ -535,6 +554,11 @@ public abstract class SlotLocation {
         @Override
         public boolean isSet(final AbstractPointersObject object) {
             return (getPrimitiveUsedMap(object) & usedMask) != 0;
+        }
+
+        @Override
+        public void unset(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
         }
 
         @Override
@@ -607,6 +631,11 @@ public abstract class SlotLocation {
         }
 
         @Override
+        public void unset(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
+        }
+
+        @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
             if (value instanceof Long) {
                 putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
@@ -668,6 +697,11 @@ public abstract class SlotLocation {
         @Override
         public boolean isSet(final AbstractPointersObject object) {
             return (getPrimitiveUsedMap(object) & usedMask) != 0;
+        }
+
+        @Override
+        public void unset(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
         }
 
         @Override
@@ -740,6 +774,11 @@ public abstract class SlotLocation {
         }
 
         @Override
+        public void unset(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
+        }
+
+        @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
             if (value instanceof Double) {
                 putPrimitiveUsedMap(object, primitiveUsedMapProfile.profile(getPrimitiveUsedMap(object)) | usedMask);
@@ -801,6 +840,11 @@ public abstract class SlotLocation {
         @Override
         public boolean isSet(final AbstractPointersObject obj) {
             return (getPrimitiveUsedMap(obj) & usedMask) != 0;
+        }
+
+        @Override
+        public void unset(final AbstractPointersObject object) {
+            putPrimitiveUsedMap(object, getPrimitiveUsedMap(object) & ~usedMask);
         }
 
         @Override
