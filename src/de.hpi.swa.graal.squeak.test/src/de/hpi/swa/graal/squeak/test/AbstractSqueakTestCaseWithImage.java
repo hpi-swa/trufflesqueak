@@ -299,7 +299,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (!(result instanceof NativeObject) || !((NativeObject) result).isString()) {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
-        final String testResult = ((NativeObject) result).toString();
+        final String testResult = ((NativeObject) result).asStringUnsafe();
         if (PASSED_VALUE.equals(testResult)) {
             return TestResult.success(testResult);
         } else {
