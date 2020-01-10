@@ -28,6 +28,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.UnwindContextChainNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.DebugUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.LogUtils;
 
@@ -86,7 +87,12 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 image.lastSeenContext = null;  // Reset materialization mechanism.
-                // doIt: activeContext.printSqStackTrace();
+                final ContextObject active = activeContext;
+                LogUtils.SCHEDULING.fine(() -> {
+                    final StringBuilder b = new StringBuilder("Starting top level stack trace:\n");
+                    DebugUtils.printSqMaterializedStackTraceOn(b, active);
+                    return b.toString();
+                });
                 final Object result = callNode.call(activeContext.getCallTarget());
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
                 LogUtils.SCHEDULING.log(Level.FINE, "Local Return on top-level: {0}", activeContext);
