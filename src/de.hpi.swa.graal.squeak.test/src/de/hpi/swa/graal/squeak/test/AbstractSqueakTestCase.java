@@ -17,6 +17,7 @@ import org.junit.ClassRule;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
@@ -27,12 +28,14 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageOptions;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.LogHandlerAccessor;
 
 public abstract class AbstractSqueakTestCase {
 
@@ -40,11 +43,7 @@ public abstract class AbstractSqueakTestCase {
 
     protected static Context context;
     protected static SqueakImageContext image;
-
-    protected CompiledCodeObject makeMethod(final byte[] bytes) {
-        // Always add three literals...
-        return makeMethod(bytes, new Object[]{68419598L, null, null});
-    }
+    protected static PointersObject nilClassBinding;
 
     protected static CompiledMethodObject makeMethod(final byte[] bytes, final Object[] literals) {
         return new CompiledMethodObject(image, bytes, literals);
@@ -56,6 +55,9 @@ public abstract class AbstractSqueakTestCase {
             bytes[i] = (byte) intbytes[i];
         }
         bytes[intbytes.length] = 0; // Set flagByte = 0 for no method trailer.
+        if (literals.length == 0 || literals[literals.length - 1] != nilClassBinding) {
+            return makeMethod(bytes, ArrayUtils.copyWithLast(literals, nilClassBinding));
+        }
         return makeMethod(bytes, literals);
     }
 
@@ -64,7 +66,7 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected CompiledMethodObject makeMethod(final int... intbytes) {
-        return makeMethod(new Object[]{makeHeader(4, 5, 14, false, true)}, intbytes);
+        return makeMethod(new Object[]{makeHeader(0, 5, 14, false, true), nilClassBinding}, intbytes);
     }
 
     protected static Object runMethod(final CompiledMethodObject code, final Object receiver, final Object... arguments) {
@@ -128,13 +130,18 @@ public abstract class AbstractSqueakTestCase {
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 
-    protected static void loadImageContext(final String imagePath) {
+    protected static SqueakImage loadImageContext(final String imagePath) {
         assert context == null && image == null;
         final Builder contextBuilder = Context.newBuilder();
         contextBuilder.allowAllAccess(true);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.IMAGE_PATH, imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, "true");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.TESTING, "true");
+        final String logLevel = System.getProperty("log.level");
+        if (logLevel != null) {
+            contextBuilder.option("log." + SqueakLanguageConfig.ID + ".level", logLevel);
+            contextBuilder.logHandler(LogHandlerAccessor.createLogHandler());
+        }
         context = contextBuilder.build();
         context.initialize(SqueakLanguageConfig.ID);
         context.enter();
@@ -144,7 +151,7 @@ public abstract class AbstractSqueakTestCase {
             if (Files.exists(Paths.get(imagePath))) {
                 image.ensureLoaded();
             }
-            image.getSqueakImage(); // Pretend image has been loaded.
+            return image.getSqueakImage(); // Pretend image has been loaded.
         } finally {
             context.leave();
         }
