@@ -124,24 +124,31 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         private void addObjectsFromTruffleFrames() {
             CompilerAsserts.neverPartOfCompilation();
             Truffle.getRuntime().iterateFrames(frameInstance -> {
-                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
                 if (!FrameAccess.isGraalSqueakFrame(current)) {
                     return null;
                 }
-                for (final Object argument : current.getArguments()) {
-                    addIfUnmarked(argument);
+                final Object[] args = current.getArguments();
+                for (final Object arg : args) {
+                    addIfUnmarked(arg);
                 }
-                final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
-                final FrameDescriptor frameDescriptor = blockOrMethod.getFrameDescriptor();
-                addIfUnmarked(FrameAccess.getContext(current, blockOrMethod));
-                final FrameSlot[] stackSlots = blockOrMethod.getStackSlotsUnsafe();
-                for (final FrameSlot slot : stackSlots) {
+                final CompiledCodeObject code = args[2] != null ? ((BlockClosureObject) args[2]).getCompiledBlock() : (CompiledMethodObject) args[0];
+                addIfUnmarked(FrameUtil.getObjectSafe(current, code.getThisContextSlot()));
+                final int stackp = FrameUtil.getIntSafe(current, code.getStackPointerSlot());
+                final FrameSlot[] stackSlots = code.getStackSlotsUnsafe();
+                final FrameDescriptor frameDescriptor = code.getFrameDescriptor();
+                for (int i = 0; i < stackp; i++) {
+                    final FrameSlot slot = stackSlots[i];
                     if (slot == null) {
                         return null; // Stop here, slot has not (yet) been created.
                     }
                     final FrameSlotKind currentSlotKind = frameDescriptor.getFrameSlotKind(slot);
                     if (currentSlotKind == FrameSlotKind.Object) {
-                        addIfUnmarked(FrameUtil.getObjectSafe(current, slot));
+                        final Object stackObject = FrameUtil.getObjectSafe(current, slot);
+                        if (stackObject == null) {
+                            return null;
+                        }
+                        addIfUnmarked(stackObject);
                     } else if (currentSlotKind == FrameSlotKind.Illegal) {
                         return null; // Stop here, because this slot and all following are not used.
                     }
