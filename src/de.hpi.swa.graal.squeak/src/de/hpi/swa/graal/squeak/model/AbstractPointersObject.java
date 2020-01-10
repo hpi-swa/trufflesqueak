@@ -183,9 +183,9 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             final SlotLocation oldLocation = oldLayout.getLocation(i);
             final SlotLocation newLocation = newLayout.getLocation(i);
             if (oldLocation != newLocation && changes[i] != null) {
+                oldLocation.unset(this);
                 final Object change = changes[i];
                 if (newLocation.canStore(change)) {
-                    oldLocation.unset(this);
                     newLocation.writeMustSucceed(this, change);
                 } else {
                     theLayout = newLayout.evolveLocation(getSqueakClass(), i, change);
