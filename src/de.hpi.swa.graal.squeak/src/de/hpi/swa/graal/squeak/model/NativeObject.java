@@ -35,6 +35,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSiz
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.SqueakMessageInterceptor;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
@@ -118,14 +119,18 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
+        final byte[] bytes = chunk.getBytes();
         if (storage == ArrayUtils.EMPTY_ARRAY) { /* Fill in special selectors. */
-            setStorage(chunk.getBytes());
-        } else if (image.isHeadless() && isByteType()) {
-            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, getByteStorage())) {
-                image.setDebugErrorSelector(this);
-            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, getByteStorage())) {
-                image.setDebugSyntaxErrorSelector(this);
+            setStorage(bytes);
+        } else if (isByteType()) {
+            if (image.isHeadless()) {
+                if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, (byte[]) storage)) {
+                    image.setDebugErrorSelector(this);
+                } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, (byte[]) storage)) {
+                    image.setDebugSyntaxErrorSelector(this);
+                }
             }
+            SqueakMessageInterceptor.notifyLoadedSymbol(this, (byte[]) storage);
         }
     }
 

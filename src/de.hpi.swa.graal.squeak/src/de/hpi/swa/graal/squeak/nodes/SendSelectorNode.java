@@ -12,6 +12,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractLookupMethodWithSelectorNodes.AbstractLookupMethodWithSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 
 /**
@@ -22,11 +23,12 @@ public final class SendSelectorNode extends Node {
     private final NativeObject selector;
 
     @Child private SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
-    @Child private LookupMethodNode lookupMethodNode = LookupMethodNode.create();
+    @Child private AbstractLookupMethodWithSelectorNode lookupMethodNode;
     @Child private DispatchEagerlyNode dispatchNode;
 
     private SendSelectorNode(final CompiledCodeObject code, final NativeObject selector) {
         dispatchNode = DispatchEagerlyNode.create(code);
+        lookupMethodNode = AbstractLookupMethodWithSelectorNode.create(selector);
         this.selector = selector;
     }
 
@@ -36,7 +38,7 @@ public final class SendSelectorNode extends Node {
 
     public Object executeSend(final VirtualFrame frame, final Object... receiverAndArguments) {
         final ClassObject rcvrClass = lookupClassNode.executeLookup(receiverAndArguments[0]);
-        final CompiledMethodObject method = (CompiledMethodObject) lookupMethodNode.executeLookup(rcvrClass, selector);
+        final CompiledMethodObject method = (CompiledMethodObject) lookupMethodNode.executeLookup(rcvrClass);
         final Object result = dispatchNode.executeDispatch(frame, method, receiverAndArguments);
         assert result != null : "Result of a message send should not be null";
         return result;

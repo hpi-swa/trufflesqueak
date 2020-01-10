@@ -20,6 +20,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractLookupMethodWithSelectorNodes.AbstractLookupMethodWithSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -46,12 +47,6 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs);
     }
 
-    @Specialization(guards = {"!code.image.isHeadless() || selector.isAllowedInHeadlessMode()", "lookupResult != null"})
-    protected final Object doDispatchNeedsSender(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
-                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
-        return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs);
-    }
-
     @SuppressWarnings("unused")
     @Specialization(guards = {"code.image.isHeadless()", "selector.isDebugErrorSelector()", "lookupResult != null"})
     protected final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
@@ -70,8 +65,8 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
     protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final ClassObject rcvrClass,
                     final Object[] rcvrAndArgs,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                    @Cached final LookupMethodNode lookupNode) {
-        final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) lookupNode.executeLookup(rcvrClass, code.image.doesNotUnderstand);
+                    @Cached(value = "create(code.image.doesNotUnderstand)", allowUncached = true) final AbstractLookupMethodWithSelectorNode lookupNode) {
+        final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) lookupNode.executeLookup(rcvrClass);
         final PointersObject message = code.image.newMessage(writeNode, selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
         return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message});
     }
@@ -81,16 +76,17 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
                     final Object[] rcvrAndArgs,
                     @Cached final SqueakObjectClassNode classNode,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                    @Cached final LookupMethodNode lookupNode,
+                    @Cached(value = "create(code.image.runWithInSelector)", allowUncached = true) final AbstractLookupMethodWithSelectorNode lookupNode1,
+                    @Cached(value = "create(code.image.doesNotUnderstand)", allowUncached = true) final AbstractLookupMethodWithSelectorNode lookupNode2,
                     @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
         final ClassObject targetClass = classNode.executeLookup(targetObject);
-        final Object newLookupResult = lookupNode.executeLookup(targetClass, code.image.runWithInSelector);
+        final CompiledMethodObject newLookupResult = (CompiledMethodObject) lookupNode1.executeLookup(targetClass);
         if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
-            final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, code.image.doesNotUnderstand);
-            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod, new Object[]{targetObject, code.image.newMessage(writeNode, selector, targetClass, arguments)});
+            final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) lookupNode2.executeLookup(targetClass);
+            return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{targetObject, code.image.newMessage(writeNode, selector, targetClass, arguments)});
         } else {
-            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, code.image.asArrayOfObjects(arguments), rcvrAndArgs[0]});
+            return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, selector, code.image.asArrayOfObjects(arguments), rcvrAndArgs[0]});
         }
     }
 }
