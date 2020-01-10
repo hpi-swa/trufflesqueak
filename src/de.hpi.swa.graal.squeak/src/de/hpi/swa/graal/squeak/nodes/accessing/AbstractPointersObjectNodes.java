@@ -106,8 +106,7 @@ public class AbstractPointersObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout",
-                        "!cachedLocation.isUninitialized()", "cachedLocation.canStore(value)"}, //
+        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedLocation.canStore(value)"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "CACHE_LIMIT")
         protected static final void doWriteCached(final AbstractPointersObject object, final int index,
                         final Object value,
@@ -115,6 +114,9 @@ public class AbstractPointersObjectNodes {
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached("cachedLayout.getLocation(index)") final SlotLocation cachedLocation,
                         @Cached final WriteSlotLocationNode writeNode) {
+            if (cachedLocation.isUninitialized()) {
+                return;
+            }
             try {
                 writeNode.execute(cachedLocation, object, value);
             } catch (final IllegalWriteException e) {
@@ -123,7 +125,7 @@ public class AbstractPointersObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == oldLayout", "oldLocation.isUninitialized()"}, //
+        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == oldLayout", "!oldLocation.canStore(value)"}, //
                         assumptions = {"oldLayout.getValidAssumption()", "newLayout.getValidAssumption()"}, limit = "CACHE_LIMIT")
         protected static final void doWriteCachedUninitialized(final AbstractPointersObject object, final int index, final Object value,
                         @Cached("index") final int cachedIndex,
