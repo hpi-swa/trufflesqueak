@@ -203,7 +203,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             final Object key = linkedList.getFirstLink();
             final Object value = linkedList.getLastLink();
             if (key != newValue || value != newValue) {
-                LOG.severe(String.format("Removing inconsistent entry (%s->%s) from %s...", key, value, linkedListName));
+                image.printToStdErr(String.format("Removing inconsistent entry (%s->%s) from %s...", key, value, linkedListName));
                 linkedList.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, newValue);
                 linkedList.instVarAtPut0Slow(LINKED_LIST.LAST_LINK, newValue);
             }
@@ -228,7 +228,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
         if (activePriority == PRIORITY_10_LIST_INDEX + 1) {
             assert activeProcess == idleProcess;
-            LOG.severe(() -> "IDLE PROCESS IS ACTIVE, REINSTALL IT (ProcessorScheduler installIdleProcess)");
+            image.printToStdErr("IDLE PROCESS IS ACTIVE, REINSTALL IT (ProcessorScheduler installIdleProcess)");
             evaluate("ProcessorScheduler installIdleProcess");
             final ArrayObject lists = image.getProcessLists();
             final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
