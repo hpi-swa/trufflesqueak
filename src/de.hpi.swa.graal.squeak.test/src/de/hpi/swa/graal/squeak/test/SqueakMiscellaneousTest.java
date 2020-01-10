@@ -30,7 +30,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
     private static final String ALL_BYTECODES_EXPECTED_RESULT = String.join("\n", "1 <8B 1F 00> callPrimitive: 31",
                     "2 <1F> pushTemp: 15",
                     "3 <20> pushConstant: 'someSelector'",
-                    "4 <5F> pushLit: 31",
+                    "4 <43> pushLitVar: UndefinedObject",
                     "5 <60> popIntoRcvr: 0",
                     "6 <61> popIntoRcvr: 1",
                     "7 <62> popIntoRcvr: 2",
@@ -155,10 +155,10 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testSourceAllBytecodes() {
-        final Object[] literals = new Object[]{17235971L, image.asByteString("someSelector"), image.asByteString("someOtherSelector"), 63};
+        final Object[] literals = new Object[]{17235971L, image.asByteString("someSelector"), image.asByteString("someOtherSelector"), 63, nilClassBinding};
         final CompiledCodeObject code = makeMethod(literals,
                         139, 31, 0,
-                        31, 32, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
+                        31, 32, 67, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
                         117, 118, 119, 120, 121, 122, 123, 124, 126, 127,
                         128, 31,
                         129, 31,
