@@ -119,18 +119,17 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        final byte[] bytes = chunk.getBytes();
         if (storage == ArrayUtils.EMPTY_ARRAY) { /* Fill in special selectors. */
-            setStorage(bytes);
-        } else if (isByteType()) {
-            if (image.isHeadless()) {
-                if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, (byte[]) storage)) {
-                    image.setDebugErrorSelector(this);
-                } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, (byte[]) storage)) {
-                    image.setDebugSyntaxErrorSelector(this);
-                }
+            setStorage(chunk.getBytes());
+        } else if (image.isHeadless() && isByteType()) {
+            if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, getByteStorage())) {
+                image.setDebugErrorSelector(this);
+            } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, getByteStorage())) {
+                image.setDebugSyntaxErrorSelector(this);
             }
-            SqueakMessageInterceptor.notifyLoadedSymbol(this, (byte[]) storage);
+        }
+        if (image.getByteSymbolClass() == getSqueakClass()) {
+            SqueakMessageInterceptor.notifyLoadedSymbol(this, getByteStorage());
         }
     }
 
