@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.util;
 
+import java.nio.charset.StandardCharsets;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 public final class ArrayConversionUtils {
@@ -160,7 +162,7 @@ public final class ArrayConversionUtils {
 
     @TruffleBoundary
     public static byte[] stringToBytes(final String value) {
-        return value.getBytes();
+        return value.getBytes(StandardCharsets.UTF_8);
     }
 
     @TruffleBoundary
