@@ -5,20 +5,26 @@
  */
 package de.hpi.swa.graal.squeak.nodes.process;
 
+import java.util.logging.Level;
+
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.DebugUtils;
 
 public abstract class ResumeProcessNode extends AbstractNodeWithCode {
-    @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ResumeProcessNode.class);
+    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
+
     @Child private PutToSleepNode putToSleepNode;
 
     protected ResumeProcessNode(final CompiledCodeObject code) {
@@ -35,17 +41,25 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
     @Specialization(guards = "hasHigherPriority(newProcess)")
     protected final void doTransferTo(final VirtualFrame frame, final PointersObject newProcess,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
-                    @Cached("create(code, true)") final GetOrCreateContextNode contextNode) {
-        putToSleepNode.executePutToSleep(code.image.getActiveProcess(pointersReadNode));
-        contextNode.executeGet(frame).transferTo(pointersReadNode, pointersWriteNode, newProcess);
+                    @Cached("create(code)") final GetOrCreateContextNode contextNode) {
+        final PointersObject currentProcess = code.image.getActiveProcess();
+        putToSleepNode.executePutToSleep(currentProcess);
+        final ContextObject thisContext = contextNode.executeGet(frame, currentProcess);
+        if (isLoggingEnabled) {
+            LOG.fine(() -> DebugUtils.logSwitch(newProcess, (int) newProcess.getPriority(), currentProcess, thisContext, (ContextObject) newProcess.getSuspendedContext()));
+        }
+        thisContext.transferTo(pointersWriteNode, newProcess);
     }
 
     @Specialization(guards = "!hasHigherPriority(newProcess)")
     protected final void doSleep(final PointersObject newProcess) {
         putToSleepNode.executePutToSleep(newProcess);
+        if (isLoggingEnabled) {
+            LOG.fine(() -> DebugUtils.logNoSwitch(newProcess));
+        }
     }
 
     protected final boolean hasHigherPriority(final PointersObject newProcess) {
-        return pointersReadNode.executeLong(newProcess, PROCESS.PRIORITY) > pointersReadNode.executeLong(code.image.getActiveProcess(pointersReadNode), PROCESS.PRIORITY);
+        return newProcess.getPriority() > code.image.getActivePriority();
     }
 }
