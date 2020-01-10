@@ -313,7 +313,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static String testCommand(final TestRequest request) {
-        return String.format("[(%s selector: #%s) runCase. '%s'] on: TestFailure, Error do: [:e | e signalerContext longStack]",
+        return String.format("[(%s selector: #%s) runCase. %s] on: TestFailure, Error do: [:e | e signalerContext longStack]",
                         request.testCase, request.testSelector, PASSED_VALUE);
     }
 
