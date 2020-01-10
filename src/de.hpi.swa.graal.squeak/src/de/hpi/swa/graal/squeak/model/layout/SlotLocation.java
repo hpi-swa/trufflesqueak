@@ -342,6 +342,12 @@ public abstract class SlotLocation {
         public final boolean canStore(final Object value) {
             return true;
         }
+
+        @Override
+        public final void unset(final AbstractPointersObject object) {
+            write(object, NilObject.SINGLETON);
+        }
+
     }
 
     protected static int getPrimitiveUsedMask(final int index) {
