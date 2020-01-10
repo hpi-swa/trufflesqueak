@@ -114,9 +114,6 @@ public class AbstractPointersObjectNodes {
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached("cachedLayout.getLocation(index)") final SlotLocation cachedLocation,
                         @Cached final WriteSlotLocationNode writeNode) {
-            if (cachedLocation.isUninitialized()) {
-                return;
-            }
             try {
                 writeNode.execute(cachedLocation, object, value);
             } catch (final IllegalWriteException e) {
