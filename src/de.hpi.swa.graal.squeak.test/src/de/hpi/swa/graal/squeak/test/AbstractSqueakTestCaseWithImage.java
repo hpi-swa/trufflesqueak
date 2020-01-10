@@ -300,7 +300,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
         final String testResult = ((NativeObject) result).asStringUnsafe();
-        if (PASSED_VALUE.equals(testResult)) {
+        if (PASSED_VALUE.equals("'" + testResult + "'")) {
             return TestResult.success(testResult);
         } else {
             final boolean shouldPass = (boolean) evaluate(shouldPassCommand(request));
