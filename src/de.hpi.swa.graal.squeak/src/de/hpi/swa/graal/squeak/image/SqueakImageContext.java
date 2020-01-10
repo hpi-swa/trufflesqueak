@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.lang.ref.ReferenceQueue;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -566,7 +567,7 @@ public final class SqueakImageContext {
     }
 
     public NativeObject asByteString(final String value) {
-        return NativeObject.newNativeBytes(this, byteStringClass, ArrayConversionUtils.stringToBytes(value));
+        return NativeObject.newNativeBytes(this, byteStringClass, value.getBytes(StandardCharsets.UTF_8));
     }
 
     public NativeObject asWideString(final String value) {
