@@ -24,7 +24,8 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -94,9 +95,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         final boolean enableStackDepthProtection = enableStackDepthProtection();
         try {
             if (enableStackDepthProtection && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
-                final ContextObject context = getGetOrCreateContextNode().executeGet(frame);
-                context.setProcess(code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached()));
-                throw ProcessSwitch.createWithBoundary(context);
+                final ContextObject context = getGetOrCreateContextNode().executeGet(frame, NilObject.SINGLETON);
+                throw ProcessSwitch.createWithBoundary(context, context, context.getProcess());
             }
             frameInitializationNode.executeInitialize(frame);
             if (interruptHandlerNode != null) {
@@ -108,11 +108,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } catch (final NonVirtualReturn nvr) {
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame).markEscaped();
+            getGetOrCreateContextNode().executeGet(frame, (PointersObject) null).markEscaped();
             throw nvr;
         } catch (final ProcessSwitch ps) {
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame).markEscaped();
+            getGetOrCreateContextNode().executeGet(frame, ps.getOldProcess()).markEscaped();
             throw ps;
         } finally {
             if (enableStackDepthProtection) {
@@ -147,7 +147,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private GetOrCreateContextNode getGetOrCreateContextNode() {
         if (getOrCreateContextNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code, false));
+            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code));
         }
         return getOrCreateContextNode;
     }
@@ -202,23 +202,29 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                 if (jumpNode.executeCondition(frame)) {
                     final int successor = jumpNode.getJumpSuccessorIndex();
-                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                        backJumpCounter++;
+                    if (successor <= pc) {
+                        if (CompilerDirectives.inInterpreter()) {
+                            backJumpCounter++;
+                        }
                     }
                     pc = successor;
                     continue bytecode_loop;
                 } else {
                     final int successor = jumpNode.getSuccessorIndex();
-                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                        backJumpCounter++;
+                    if (successor <= pc) {
+                        if (CompilerDirectives.inInterpreter()) {
+                            backJumpCounter++;
+                        }
                     }
                     pc = successor;
                     continue bytecode_loop;
                 }
             } else if (node instanceof UnconditionalJumpNode) {
                 final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
-                if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                    backJumpCounter++;
+                if (successor <= pc) {
+                    if (CompilerDirectives.inInterpreter()) {
+                        backJumpCounter++;
+                    }
                 }
                 pc = successor;
                 continue bytecode_loop;
@@ -233,8 +239,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 continue bytecode_loop;
             } else {
                 /* All other bytecode nodes. */
-                pc = node.getSuccessorIndex();
                 node.executeVoid(frame);
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop;
             }
         }
@@ -280,10 +286,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             } else if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                 if (jumpNode.executeCondition(frame)) {
-                    pc = jumpNode.getJumpSuccessorIndex();
+                    final int successor = jumpNode.getJumpSuccessorIndex();
+                    pc = successor;
                     continue bytecode_loop_slow;
                 } else {
-                    pc = jumpNode.getSuccessorIndex();
+                    final int successor = jumpNode.getSuccessorIndex();
+                    pc = successor;
                     continue bytecode_loop_slow;
                 }
             } else if (node instanceof UnconditionalJumpNode) {
@@ -300,9 +308,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 continue bytecode_loop_slow;
             } else {
                 /* All other bytecode nodes. */
-                final int successor = node.getSuccessorIndex();
                 node.executeVoid(frame);
-                pc = successor;
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop_slow;
             }
         }

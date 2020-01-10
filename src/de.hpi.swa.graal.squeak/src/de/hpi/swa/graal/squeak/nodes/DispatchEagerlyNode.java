@@ -18,6 +18,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
@@ -60,9 +61,9 @@ public abstract class DispatchEagerlyNode extends AbstractNodeWithCode {
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()"}, replaces = {"doPrimitiveEagerly"})
     protected static final Object doDirectWithSender(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledMethodObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Cached("method") final CompiledMethodObject cachedMethod,
-                    @Cached("create(code, true)") final GetOrCreateContextNode getOrCreateContextNode,
+                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
                     @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
-        return callDirect(callNode, cachedMethod, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
+        return callDirect(callNode, cachedMethod, getOrCreateContextNode.executeGet(frame, NilObject.SINGLETON), receiverAndArguments);
     }
 
     @Specialization(guards = "method.getDoesNotNeedSenderAssumption().isValid()", replaces = {"doDirect", "doDirectWithSender"})
@@ -73,9 +74,9 @@ public abstract class DispatchEagerlyNode extends AbstractNodeWithCode {
 
     @Specialization(guards = "!method.getDoesNotNeedSenderAssumption().isValid()", replaces = {"doDirect", "doDirectWithSender"})
     protected static final Object doIndirectWithSender(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments,
-                    @Cached("create(code, true)") final GetOrCreateContextNode getOrCreateContextNode,
+                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
                     @Cached final IndirectCallNode callNode) {
-        return callIndirect(callNode, method, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
+        return callIndirect(callNode, method, getOrCreateContextNode.executeGet(frame, NilObject.SINGLETON), receiverAndArguments);
     }
 
     private static Object callDirect(final DirectCallNode callNode, final CompiledMethodObject cachedMethod, final Object contextOrMarker, final Object[] receiverAndArguments) {

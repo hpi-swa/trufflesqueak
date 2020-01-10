@@ -35,9 +35,10 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
     @Specialization(guards = "hasHigherPriority(newProcess)")
     protected final void doTransferTo(final VirtualFrame frame, final PointersObject newProcess,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
-                    @Cached("create(code, true)") final GetOrCreateContextNode contextNode) {
-        putToSleepNode.executePutToSleep(code.image.getActiveProcess(pointersReadNode));
-        contextNode.executeGet(frame).transferTo(pointersReadNode, pointersWriteNode, newProcess);
+                    @Cached("create(code)") final GetOrCreateContextNode contextNode) {
+        final PointersObject currentProcess = code.image.getActiveProcess(pointersReadNode);
+        putToSleepNode.executePutToSleep(currentProcess);
+        contextNode.executeGet(frame, currentProcess).transferTo(pointersReadNode, pointersWriteNode, newProcess);
     }
 
     @Specialization(guards = "!hasHigherPriority(newProcess)")

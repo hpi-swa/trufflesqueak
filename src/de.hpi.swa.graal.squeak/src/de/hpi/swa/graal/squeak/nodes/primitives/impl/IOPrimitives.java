@@ -158,8 +158,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         public final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
-                        @Cached("create(method, true)") final GetOrCreateContextNode getOrCreateContextNode) {
-            final ContextObject thisContext = getOrCreateContextNode.executeGet(frame);
+                        @Cached("create(method)") final GetOrCreateContextNode getOrCreateContextNode,
+                        @Cached final AbstractPointersObjectReadNode readNode) {
+            final ContextObject thisContext = getOrCreateContextNode.executeGet(frame, method.image.getActiveProcess(readNode));
             writeImage(thisContext);
             /* Return false to signal that the image is not resuming. */
             return BooleanObject.FALSE;
