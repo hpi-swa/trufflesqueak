@@ -65,7 +65,7 @@ public final class SqueakImageReader {
     private final HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>(750000);
     private final SqueakImageContext image;
     private final byte[] byteArrayBuffer = new byte[8];
-    private final Map<PointersObject, ContextObject> suspendedContexts = new HashMap<>();
+    private final Map<PointersObject, AbstractSqueakObject> suspendedContexts = new HashMap<>();
 
     private long headerSize;
     private long oldBaseAddress;
@@ -125,7 +125,7 @@ public final class SqueakImageReader {
         return image.getSqueakImage();
     }
 
-    public Map<PointersObject, ContextObject> getSuspendedContexts() {
+    public Map<PointersObject, AbstractSqueakObject> getSuspendedContexts() {
         return suspendedContexts;
     }
 
