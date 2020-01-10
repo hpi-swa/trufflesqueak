@@ -548,7 +548,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         escaped = otherEscaped;
     }
 
-    private Object[] getReceiverAndNArguments(final int numArgs) {
+    public Object[] getReceiverAndNArguments(final int numArgs) {
         final Object[] arguments = new Object[1 + numArgs];
         arguments[0] = getReceiver();
         for (int i = 0; i < numArgs; i++) {

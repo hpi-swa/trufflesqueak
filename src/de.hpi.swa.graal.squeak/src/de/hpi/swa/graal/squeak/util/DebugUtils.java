@@ -12,13 +12,17 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 
-public class DebugUtils {
-
-    /*
-     * Helper functions for debugging purposes.
-     */
+/**
+ * Helper functions for debugging purposes.
+ */
+public final class DebugUtils {
 
     public static void printSqMaterializedStackTraceOn(final StringBuilder b, final ContextObject context) {
         ContextObject current = context;
@@ -49,48 +53,48 @@ public class DebugUtils {
     public static String currentState(final SqueakImageContext image) {
         final StringBuilder b = new StringBuilder();
         b.append("\nImage processes state\n");
-        final PointersObject activeProcess = image.getActiveProcess();
-        final long activePriority = image.getPriority(activeProcess);
+        final PointersObject activeProcess = image.getActiveProcessSlow();
+        final long activePriority = getPriority(activeProcess);
         b.append("*Active process @");
         b.append(Integer.toHexString(activeProcess.hashCode()));
         b.append(" priority ");
         b.append(activePriority);
         b.append('\n');
         final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
-        printSemaphoreOrNil(image, b, "*Interrupt semaphore @", interruptSema, true);
+        printSemaphoreOrNil(b, "*Interrupt semaphore @", interruptSema, true);
         final Object timerSema = image.getSpecialObject(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
-        printSemaphoreOrNil(image, b, "*Timer semaphore @", timerSema, true);
+        printSemaphoreOrNil(b, "*Timer semaphore @", timerSema, true);
         final Object finalizationSema = image.getSpecialObject(SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE);
-        printSemaphoreOrNil(image, b, "*Finalization semaphore @", finalizationSema, true);
+        printSemaphoreOrNil(b, "*Finalization semaphore @", finalizationSema, true);
         final Object lowSpaceSema = image.getSpecialObject(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE);
-        printSemaphoreOrNil(image, b, "*Low space semaphore @", lowSpaceSema, true);
+        printSemaphoreOrNil(b, "*Low space semaphore @", lowSpaceSema, true);
         final ArrayObject externalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
         if (!externalObjects.isEmptyType()) {
             final Object[] semaphores = externalObjects.getObjectStorage();
             for (int i = 0; i < semaphores.length; i++) {
-                printSemaphoreOrNil(image, b, "*External semaphore at index " + (i + 1) + " @", semaphores[i], false);
+                printSemaphoreOrNil(b, "*External semaphore at index " + (i + 1) + " @", semaphores[i], false);
             }
         }
-        final Object[] lists = image.getProcessLists().getObjectStorage();
+        final Object[] lists = AbstractPointersObjectReadNode.getUncached().executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS).getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
-            printLinkedList(image, b, "*Quiescent processes list at priority " + (i + 1), (PointersObject) lists[i]);
+            printLinkedList(b, "*Quiescent processes list at priority " + (i + 1), (PointersObject) lists[i]);
         }
         return b.toString();
     }
 
-    private static boolean printLinkedList(final SqueakImageContext image, final StringBuilder b, final String label, final PointersObject linkedList) {
-        Object temp = image.getFirstLink(linkedList);
+    private static boolean printLinkedList(final StringBuilder b, final String label, final PointersObject linkedList) {
+        Object temp = getFirstLink(linkedList);
         if (temp instanceof PointersObject) {
             b.append(label);
             b.append(" and process");
-            if (temp != image.getLastLink(linkedList)) {
+            if (temp != getLastLink(linkedList)) {
                 b.append("es:\n");
             } else {
                 b.append(":\n");
             }
             while (temp instanceof PointersObject) {
                 final PointersObject aProcess = (PointersObject) temp;
-                final Object aContext = image.getSuspendedContext(aProcess);
+                final Object aContext = getSuspendedContext(aProcess);
                 if (aContext instanceof ContextObject) {
                     assert ((ContextObject) aContext).getProcess() == null || ((ContextObject) aContext).getProcess() == aProcess;
                     b.append("\tprocess @");
@@ -104,7 +108,7 @@ public class DebugUtils {
                     b.append(Integer.toHexString(aProcess.hashCode()));
                     b.append(" with suspended context nil\n");
                 }
-                temp = image.getNextLink(aProcess);
+                temp = getNextLink(aProcess);
             }
             return true;
         } else {
@@ -112,14 +116,14 @@ public class DebugUtils {
         }
     }
 
-    private static void printSemaphoreOrNil(final SqueakImageContext image, final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
+    private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
         if (semaphoreOrNil instanceof PointersObject) {
             b.append(label);
             b.append(Integer.toHexString(semaphoreOrNil.hashCode()));
             b.append(" with ");
-            b.append(image.getExcessSignals((PointersObject) semaphoreOrNil));
+            b.append(getExcessSignals((PointersObject) semaphoreOrNil));
             b.append(" excess signals");
-            if (!printLinkedList(image, b, "", (PointersObject) semaphoreOrNil)) {
+            if (!printLinkedList(b, "", (PointersObject) semaphoreOrNil)) {
                 b.append(" and no processes\n");
             }
         } else {
@@ -172,7 +176,7 @@ public class DebugUtils {
         b.append("Switching from process @");
         b.append(Integer.toHexString(currentProcess.hashCode()));
         b.append(" with priority ");
-        b.append(currentProcess.getPriority());
+        b.append(getPriority(currentProcess));
         b.append(" and stack\n");
         printSqMaterializedStackTraceOn(b, thisContext);
         b.append("\n...to process @");
@@ -189,8 +193,8 @@ public class DebugUtils {
         b.append("\nCannot resume process @");
         b.append(Integer.toHexString(newProcess.hashCode()));
         b.append(" with priority ");
-        b.append(newProcess.getPriority());
-        final AbstractSqueakObject newContext = newProcess.getSuspendedContext();
+        b.append(getPriority(newProcess));
+        final AbstractSqueakObject newContext = getSuspendedContext(newProcess);
         if (newContext == NilObject.SINGLETON) {
             b.append(" and nil suspendedContext\n");
         } else {
@@ -198,10 +202,34 @@ public class DebugUtils {
             printSqMaterializedStackTraceOn(b, (ContextObject) newContext);
         }
         b.append("\n...because it hs a lower priority than the currently active process @");
-        final PointersObject currentProcess = newProcess.image.getActiveProcess();
+        final PointersObject currentProcess = newProcess.image.getActiveProcessSlow();
         b.append(Integer.toHexString(currentProcess.hashCode()));
         b.append(" with priority ");
-        b.append(currentProcess.getPriority());
+        b.append(getPriority(currentProcess));
         return b.toString();
+    }
+
+    private static AbstractSqueakObject getFirstLink(final PointersObject aLinkedList) {
+        return (AbstractSqueakObject) AbstractPointersObjectReadNode.getUncached().execute(aLinkedList, LINKED_LIST.FIRST_LINK);
+    }
+
+    private static AbstractSqueakObject getLastLink(final PointersObject aLinkedList) {
+        return (AbstractSqueakObject) AbstractPointersObjectReadNode.getUncached().execute(aLinkedList, LINKED_LIST.LAST_LINK);
+    }
+
+    private static AbstractSqueakObject getNextLink(final PointersObject aProcess) {
+        return (AbstractSqueakObject) AbstractPointersObjectReadNode.getUncached().execute(aProcess, PROCESS.NEXT_LINK);
+    }
+
+    private static AbstractSqueakObject getSuspendedContext(final PointersObject aProcess) {
+        return (AbstractSqueakObject) AbstractPointersObjectReadNode.getUncached().execute(aProcess, PROCESS.SUSPENDED_CONTEXT);
+    }
+
+    private static long getPriority(final PointersObject aProcess) {
+        return AbstractPointersObjectReadNode.getUncached().executeLong(aProcess, PROCESS.PRIORITY);
+    }
+
+    private static long getExcessSignals(final PointersObject aSemaphore) {
+        return AbstractPointersObjectReadNode.getUncached().executeLong(aSemaphore, SEMAPHORE.EXCESS_SIGNALS);
     }
 }
