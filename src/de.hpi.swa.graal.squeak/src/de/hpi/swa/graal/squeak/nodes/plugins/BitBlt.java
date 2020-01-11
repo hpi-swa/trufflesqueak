@@ -2560,10 +2560,14 @@ public final class BitBlt {
         if (!loadBitBltFromwarping(bbObj, false)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
-        copyBits(factor);
-        assert !failed();
-        showDisplayBits();
-        assert !failed();
+        try {
+            copyBits(factor);
+            assert !failed();
+            showDisplayBits();
+            assert !failed();
+        } catch (final AssertionError e) {
+            PrimitiveFailed.andTransferToInterpreter();
+        }
         if (combinationRule == 22 || combinationRule == 32) {
             return bitCount;
         } else {
