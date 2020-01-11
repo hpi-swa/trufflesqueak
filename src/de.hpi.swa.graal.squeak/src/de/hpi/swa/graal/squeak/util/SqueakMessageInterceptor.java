@@ -9,10 +9,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.oracle.truffle.api.TruffleLogger;
+
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public class SqueakMessageInterceptor {
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqueakMessageInterceptor.class);
 
     private static final String SYSTEM_PROPERTY = "squeakBreakpoints";
     private static final Pattern METHOD = Pattern.compile("(\\w+)>>((\\w+\\:)+|\\w+)");
@@ -85,6 +89,6 @@ public class SqueakMessageInterceptor {
 
     // This is the "halt" method - put a breakpoint in your IDE on the print statement within
     public static void breakpointReached(final NativeObject selector) {
-        System.out.println(nativeSelectorToStringMap.get(selector));
+        LOG.finest(nativeSelectorToStringMap.get(selector));
     }
 }
