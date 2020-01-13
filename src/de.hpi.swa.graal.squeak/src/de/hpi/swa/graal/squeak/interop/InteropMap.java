@@ -11,6 +11,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.DICTIONARY;
@@ -29,16 +30,19 @@ public final class InteropMap implements TruffleObject {
         return true;
     }
 
+    @TruffleBoundary
     @ExportMessage
     public boolean isMemberReadable(final String key) {
         return map.containsKey(key);
     }
 
+    @TruffleBoundary
     @ExportMessage
     public Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
         return new InteropArray(map.keySet().toArray());
     }
 
+    @TruffleBoundary
     @ExportMessage
     public Object readMember(final String key) {
         return map.get(key);
