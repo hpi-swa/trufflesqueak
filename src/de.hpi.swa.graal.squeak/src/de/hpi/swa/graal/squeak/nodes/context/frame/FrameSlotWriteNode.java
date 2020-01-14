@@ -66,6 +66,6 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
     }
 
     private static boolean verifyWrite(final Object value) {
-        return value != null && !(value instanceof Byte || value instanceof Integer || value instanceof Float);
+        return value != null;
     }
 }
