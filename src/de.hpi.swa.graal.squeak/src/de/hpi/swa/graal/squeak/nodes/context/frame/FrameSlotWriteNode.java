@@ -46,7 +46,7 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
         /* Initialize type on first write. No-op if kind is already Object. */
         frame.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Object);
 
-        assert verifyWrite(value) : "Illegal write operation: " + value;
+        assert !isNullOrIllegalPrimitive(value) : "Propagation of illegal value detected: " + value;
         frame.setObject(getSlot(), value);
     }
 
@@ -65,7 +65,8 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
         return kind == FrameSlotKind.Double || kind == FrameSlotKind.Illegal;
     }
 
-    private static boolean verifyWrite(final Object value) {
-        return value != null && !(value instanceof Byte || value instanceof Integer || value instanceof Float);
+    private static boolean isNullOrIllegalPrimitive(final Object value) {
+        /* `null` and all primitive types not globally used/allowed in GraalSqueak. */
+        return value == null || value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Float;
     }
 }
