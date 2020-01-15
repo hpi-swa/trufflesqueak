@@ -121,6 +121,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         switch (test.type) {
             case PASSING: // falls through
             case SLOWLY_PASSING:
+            case EXPECTED_FAILURE:
                 if (result.reason != null) {
                     throw result.reason;
                 }
@@ -134,7 +135,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             case FAILING: // falls through
             case SLOWLY_FAILING: // falls through
             case BROKEN_IN_SQUEAK: // falls through
-            case EXPECTED_FAILURE:
                 assertFalse(result.message, result.passed);
                 break;
 

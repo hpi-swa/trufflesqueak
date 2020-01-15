@@ -56,9 +56,7 @@ public final class PointersObject extends AbstractPointersObject {
         }
         assert size() == pointersObject.length;
         if (isProcess()) { /* Collect suspended contexts */
-            final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-            final ContextObject suspendedContext = (ContextObject) readNode.execute(this, PROCESS.SUSPENDED_CONTEXT);
-            chunk.getReader().getSuspendedContexts().put(this, suspendedContext);
+            chunk.getReader().getSuspendedContexts().put(this, getSuspendedContext());
         }
     }
 
@@ -87,8 +85,8 @@ public final class PointersObject extends AbstractPointersObject {
         return this == image.getActiveProcess();
     }
 
-    public boolean isEmptyList(final AbstractPointersObjectReadNode readNode) {
-        return readNode.execute(this, LINKED_LIST.FIRST_LINK) == NilObject.SINGLETON;
+    public boolean isEmptyList() {
+        return image.getFirstLink(this) == NilObject.SINGLETON;
     }
 
     public boolean isDisplay() {
@@ -101,6 +99,38 @@ public final class PointersObject extends AbstractPointersObject {
 
     public boolean isPoint() {
         return getSqueakClass() == image.pointClass;
+    }
+
+    public AbstractSqueakObject getEffectiveProcess() {
+        return image.getEffectiveProcess(this);
+    }
+
+    public long getExcessSignals() {
+        return image.getExcessSignals(this);
+    }
+
+    public AbstractSqueakObject getFirstLink() {
+        return image.getFirstLink(this);
+    }
+
+    public AbstractSqueakObject getLastLink() {
+        return image.getLastLink(this);
+    }
+
+    public AbstractSqueakObject getMyList() {
+        return image.getMyList(this);
+    }
+
+    public AbstractSqueakObject getNextLink() {
+        return image.getNextLink(this);
+    }
+
+    public long getPriority() {
+        return image.getPriority(this);
+    }
+
+    public AbstractSqueakObject getSuspendedContext() {
+        return image.getSuspendedContext(this);
     }
 
     public boolean isProcess() {
@@ -123,15 +153,15 @@ public final class PointersObject extends AbstractPointersObject {
         return (int) readNode.executeLong(this, FORM.WIDTH);
     }
 
-    public PointersObject removeFirstLinkOfList(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode) {
+    public PointersObject removeFirstLinkOfList(final AbstractPointersObjectWriteNode writeNode) {
         // Remove the first process from the given linked list.
-        final PointersObject first = readNode.executePointers(this, LINKED_LIST.FIRST_LINK);
-        final Object last = readNode.execute(this, LINKED_LIST.LAST_LINK);
+        final PointersObject first = (PointersObject) image.getFirstLink(this);
+        final Object last = image.getLastLink(this);
         if (first == last) {
             writeNode.executeNil(this, LINKED_LIST.FIRST_LINK);
             writeNode.executeNil(this, LINKED_LIST.LAST_LINK);
         } else {
-            writeNode.execute(this, LINKED_LIST.FIRST_LINK, readNode.execute(first, PROCESS.NEXT_LINK));
+            writeNode.execute(this, LINKED_LIST.FIRST_LINK, image.getNextLink(first));
         }
         writeNode.executeNil(first, PROCESS.NEXT_LINK);
         return first;

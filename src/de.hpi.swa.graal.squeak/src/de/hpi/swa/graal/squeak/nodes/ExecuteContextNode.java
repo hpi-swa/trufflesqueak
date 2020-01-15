@@ -36,17 +36,22 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.DebugUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptByUserHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 @GenerateWrapper
 public class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ExecuteContextNode.class);
+    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINER);
+
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
     private static final int LOCAL_RETURN_PC = -1;
@@ -62,6 +67,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
 
     private SourceSection section;
+    private final String toString;
 
     protected ExecuteContextNode(final CompiledCodeObject code, final boolean resume) {
         super(code);
@@ -74,6 +80,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         /* Only check for user interrupts if method is relatively large. */
         interruptByUserHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_USER_INTERRUPT_CHECKS ? InterruptByUserHandlerNode.create(code) : null;
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
+        toString = isLoggingEnabled ? code.toString() : null;
     }
 
     protected ExecuteContextNode(final ExecuteContextNode executeContextNode) {
@@ -95,9 +102,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         final boolean enableStackDepthProtection = enableStackDepthProtection();
         try {
             if (enableStackDepthProtection && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
-                final ContextObject context = getGetOrCreateContextNode().executeGet(frame);
-                context.setProcess(code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached()));
-                throw ProcessSwitch.createWithBoundary(context);
+                final ContextObject context = getGetOrCreateContextNode().executeGet(frame, NilObject.SINGLETON);
+                throw ProcessSwitch.createWithBoundary(context, context, context.getProcess());
             }
             if (interruptByUserHandlerNode != null) {
                 interruptByUserHandlerNode.executeCheckForUserInterrupts(frame);
@@ -105,15 +111,24 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             frameInitializationNode.executeInitialize(frame);
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
+            if (isLoggingEnabled) {
+                LOG.finer("Exited context " + toString + " through a non-local return");
+            }
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } catch (final NonVirtualReturn nvr) {
+            if (isLoggingEnabled) {
+                LOG.finer("Exited context " + toString + " through a non-virtual return");
+            }
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame).markEscaped();
+            getGetOrCreateContextNode().executeGet(frame, (PointersObject) null).markEscaped();
             throw nvr;
         } catch (final ProcessSwitch ps) {
+            if (isLoggingEnabled) {
+                LOG.finer("Exited context " + toString + " through a process switch");
+            }
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame).markEscaped();
+            getGetOrCreateContextNode().executeGet(frame, ps.getOldProcess()).markEscaped();
             throw ps;
         } finally {
             if (enableStackDepthProtection) {
@@ -127,6 +142,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         try {
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
+            if (isLoggingEnabled) {
+                LOG.finer("Exited context " + toString + " through a non-local return");
+            }
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } finally {
@@ -138,6 +156,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         try {
             return resumeBytecode(frame, initialPC);
         } catch (final NonLocalReturn nlr) {
+            if (isLoggingEnabled) {
+                LOG.finer("Exited context " + toString + " through a non-local return");
+            }
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } finally {
@@ -148,7 +169,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private GetOrCreateContextNode getGetOrCreateContextNode() {
         if (getOrCreateContextNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code, false));
+            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code));
         }
         return getOrCreateContextNode;
     }
@@ -159,6 +180,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     private Object startBytecode(final VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
+        final String frameString = toString;
+        if (isLoggingEnabled) {
+            LOG.finer(() -> "Entering fresh context for " + frameString);
+        }
         int pc = 0;
         int backJumpCounter = 0;
         Object returnValue = null;
@@ -166,13 +191,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof CallPrimitiveNode) {
-                final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) fetchNextBytecodeNode(0);
+                final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
                 if (callPrimitiveNode.primitiveNode != null) {
                     try {
+                        if (isLoggingEnabled) {
+                            LOG.finer("Primitive return from " + frameString);
+                        }
                         return callPrimitiveNode.primitiveNode.executePrimitive(frame);
                     } catch (final PrimitiveFailed e) {
                         getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                        LOG.log(Level.FINE, () -> "Failed primitive " + callPrimitiveNode.primitiveNode.getClass().getName());
                         /* continue with fallback code. */
                     } catch (final AssertionError e) {
                         getHandlePrimitiveFailedNode().executeHandle(frame, ERROR_TABLE.GENERIC_ERROR.ordinal());
@@ -182,45 +209,93 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = callPrimitiveNode.getSuccessorIndex();
                 assert pc == CallPrimitiveNode.NUM_BYTECODES;
                 continue;
+            } else if (node instanceof AbstractSendNode) {
+                if (isLoggingEnabled) {
+                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                    final String selector = ((NativeObject) ((AbstractSendNode) node).getSelector()).asStringUnsafe();
+                    switch (selector) {
+                        case "value":
+                        case "value:":
+                        case "value:value:":
+                        case "value:value:value:":
+                        case "value:value:value:value:":
+                        case "value:value:value:value:value:":
+                        case "valueWithArguments:":
+                            LOG.finer("send: " + selector);
+                            break;
+                        default:
+                            LOG.finest(() -> node.getIndex() + " " + node.toString());
+                    }
+                }
+                pc = node.getSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, pc);
+                node.executeVoid(frame);
+                final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
+                if (pc != actualNextPc) {
+                    CompilerDirectives.transferToInterpreter();
+                    pc = actualNextPc;
+                }
+                continue bytecode_loop;
             } else if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                 if (jumpNode.executeCondition(frame)) {
                     final int successor = jumpNode.getJumpSuccessorIndex();
-                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                        backJumpCounter++;
+                    if (successor <= pc) {
+                        if (CompilerDirectives.inInterpreter()) {
+                            backJumpCounter++;
+                        }
                     }
                     pc = successor;
                     continue bytecode_loop;
                 } else {
                     final int successor = jumpNode.getSuccessorIndex();
-                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                        backJumpCounter++;
+                    if (successor <= pc) {
+                        if (CompilerDirectives.inInterpreter()) {
+                            backJumpCounter++;
+                        }
                     }
                     pc = successor;
                     continue bytecode_loop;
                 }
             } else if (node instanceof UnconditionalJumpNode) {
                 final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
-                if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                    backJumpCounter++;
+                if (successor <= pc) {
+                    if (CompilerDirectives.inInterpreter()) {
+                        backJumpCounter++;
+                    }
                 }
                 pc = successor;
                 continue bytecode_loop;
             } else if (node instanceof AbstractReturnNode) {
+                if (isLoggingEnabled) {
+                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                }
                 returnValue = ((AbstractReturnNode) node).executeReturn(frame);
+                if (isLoggingEnabled) {
+                    LOG.finer("Exited context for " + frameString + " normally, at pc " + node.getIndex());
+                }
                 pc = LOCAL_RETURN_PC;
                 continue bytecode_loop;
             } else if (node instanceof PushClosureNode) {
+                if (isLoggingEnabled) {
+                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                    LOG.finest(() -> node.getIndex() + " " + node.toString());
+                }
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
                 pushClosureNode.executePush(frame);
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop;
             } else {
-                pc = node.getSuccessorIndex();
-                if (node instanceof AbstractSendNode) {
-                    FrameAccess.setInstructionPointer(frame, code, pc);
+                if (isLoggingEnabled) {
+                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                    if (node instanceof PushLiteralVariableNode || node instanceof PushLiteralConstantNode) {
+                        LOG.finer(() -> node.getIndex() + " " + node.toString());
+                    } else {
+                        LOG.finest(() -> node.getIndex() + " " + node.toString());
+                    }
                 }
                 node.executeVoid(frame);
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop;
             }
         }
@@ -244,38 +319,86 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
      */
     private Object resumeBytecode(final VirtualFrame frame, final long initialPC) {
         assert initialPC > 0 : "Trying to resume a fresh/terminated/illegal context";
+        final String frameString = toString;
+        if (isLoggingEnabled) {
+            LOG.finer(() -> "Entering resumed context for " + frameString + " at pc " + initialPC);
+        }
         int pc = (int) initialPC;
         Object returnValue = null;
         bytecode_loop_slow: while (pc != LOCAL_RETURN_PC) {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
-            if (node instanceof ConditionalJumpNode) {
+            if (node instanceof AbstractSendNode) {
+                if (isLoggingEnabled) {
+                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                    final String selector = ((NativeObject) ((AbstractSendNode) node).getSelector()).asStringUnsafe();
+                    switch (selector) {
+                        case "value":
+                        case "value:":
+                        case "value:value:":
+                        case "value:value:value:":
+                        case "value:value:value:value:":
+                        case "value:value:value:value:value:":
+                        case "valueWithArguments:":
+                            LOG.finer("send: " + selector);
+                            break;
+                        default:
+                            LOG.finest(() -> node.getIndex() + " " + node.toString());
+                    }
+                }
+                pc = node.getSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, pc);
+                node.executeVoid(frame);
+                final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
+                if (pc != actualNextPc) {
+                    CompilerDirectives.transferToInterpreter();
+                    pc = actualNextPc;
+                }
+                continue bytecode_loop_slow;
+            } else if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                 if (jumpNode.executeCondition(frame)) {
-                    pc = jumpNode.getJumpSuccessorIndex();
+                    final int successor = jumpNode.getJumpSuccessorIndex();
+                    pc = successor;
                     continue bytecode_loop_slow;
                 } else {
-                    pc = jumpNode.getSuccessorIndex();
+                    final int successor = jumpNode.getSuccessorIndex();
+                    pc = successor;
                     continue bytecode_loop_slow;
                 }
             } else if (node instanceof UnconditionalJumpNode) {
-                pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                pc = successor;
                 continue bytecode_loop_slow;
             } else if (node instanceof AbstractReturnNode) {
+                if (isLoggingEnabled) {
+                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                }
                 returnValue = ((AbstractReturnNode) node).executeReturn(frame);
+                if (isLoggingEnabled) {
+                    LOG.finer("Exited context for " + frameString + " normally, at pc " + node.getIndex());
+                }
                 pc = LOCAL_RETURN_PC;
                 continue bytecode_loop_slow;
             } else if (node instanceof PushClosureNode) {
+                if (isLoggingEnabled) {
+                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                    LOG.finest(() -> node.getIndex() + " " + node.toString());
+                }
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
                 pushClosureNode.executePush(frame);
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop_slow;
             } else {
-                final int successor = node.getSuccessorIndex();
-                if (node instanceof AbstractSendNode) {
-                    FrameAccess.setInstructionPointer(frame, code, successor);
+                if (isLoggingEnabled) {
+                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                    if (node instanceof PushLiteralVariableNode || node instanceof PushLiteralConstantNode) {
+                        LOG.finer(() -> node.getIndex() + " " + node.toString());
+                    } else {
+                        LOG.finest(() -> node.getIndex() + " " + node.toString());
+                    }
                 }
                 node.executeVoid(frame);
-                pc = successor;
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop_slow;
             }
         }

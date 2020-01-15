@@ -221,6 +221,23 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         return stackSlots[i];
     }
 
+    public final FrameSlot getStackSlot(final int i, final Object value) {
+        assert 0 <= i && i < stackSlots.length : "Bad stack access";
+        if (stackSlots[i] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (value instanceof Boolean) {
+                stackSlots[i] = frameDescriptor.addFrameSlot(i + 1, FrameSlotKind.Boolean);
+            } else if (value instanceof Long) {
+                stackSlots[i] = frameDescriptor.addFrameSlot(i + 1, FrameSlotKind.Long);
+            } else if (value instanceof Double) {
+                stackSlots[i] = frameDescriptor.addFrameSlot(i + 1, FrameSlotKind.Double);
+            } else {
+                stackSlots[i] = frameDescriptor.addFrameSlot(i + 1, FrameSlotKind.Object);
+            }
+        }
+        return stackSlots[i];
+    }
+
     public final FrameSlot[] getStackSlotsUnsafe() {
         return stackSlots;
     }

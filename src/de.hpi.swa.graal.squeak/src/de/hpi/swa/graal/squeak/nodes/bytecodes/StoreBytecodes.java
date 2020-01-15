@@ -22,18 +22,18 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public final class StoreBytecodes {
 
     private abstract static class AbstractStoreIntoAssociationNode extends AbstractStoreIntoNode {
-        protected final long variableIndex;
+        protected final Object literal;
 
         private AbstractStoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes);
-            this.variableIndex = variableIndex;
+            literal = code.getLiteral(variableIndex);
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(ASSOCIATION.VALUE);
         }
 
         @Override
         public final String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return getTypeName() + "IntoLit: " + variableIndex;
+            return getTypeName() + "IntoLit: ";
         }
     }
 
@@ -75,7 +75,7 @@ public final class StoreBytecodes {
             this.indexInArray = indexInArray;
             this.indexOfArray = indexOfArray;
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(indexInArray);
-            readNode = FrameSlotReadNode.create(code.getStackSlot(indexOfArray));
+            readNode = FrameSlotReadNode.create(code.getStackSlot(indexOfArray, null));
         }
 
         @Override
@@ -115,7 +115,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(code.getLiteral(variableIndex), popNode.execute(frame));
+            storeNode.executeWrite(literal, popNode.execute(frame));
         }
 
         @Override
@@ -191,7 +191,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(code.getLiteral(variableIndex), topNode.execute(frame));
+            storeNode.executeWrite(literal, topNode.execute(frame));
         }
 
         @Override

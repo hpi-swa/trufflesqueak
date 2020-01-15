@@ -5,6 +5,9 @@
  */
 package de.hpi.swa.graal.squeak.nodes.process;
 
+import java.util.logging.Level;
+
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -15,10 +18,13 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public abstract class SignalSemaphoreNode extends AbstractNode {
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SignalSemaphoreNode.class);
+    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
+
     @Child private ResumeProcessNode resumeProcessNode;
 
     protected SignalSemaphoreNode(final CompiledCodeObject code) {
@@ -31,18 +37,23 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
 
     public abstract void executeSignal(VirtualFrame frame, Object semaphore);
 
-    @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "semaphore.isEmptyList(readNode)"}, limit = "1")
+    @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "semaphore.isEmptyList()"})
     public static final void doSignalEmpty(final PointersObject semaphore,
-                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-        writeNode.execute(semaphore, SEMAPHORE.EXCESS_SIGNALS, readNode.executeLong(semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
+        final long excessSignals = semaphore.getExcessSignals();
+        if (isLoggingEnabled) {
+            LOG.fine(() -> "Signalling empty semaphore @" + Integer.toHexString(semaphore.hashCode()) + " with initially " + excessSignals + " excessSignals");
+        }
+        writeNode.execute(semaphore, SEMAPHORE.EXCESS_SIGNALS, excessSignals + 1);
     }
 
-    @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "!semaphore.isEmptyList(readNode)"}, limit = "1")
+    @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "!semaphore.isEmptyList()"})
     public final void doSignal(final VirtualFrame frame, final PointersObject semaphore,
-                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-        resumeProcessNode.executeResume(frame, semaphore.removeFirstLinkOfList(readNode, writeNode));
+        if (isLoggingEnabled) {
+            LOG.fine(() -> "Attempting to resume process after non-empty semaphore @" + Integer.toHexString(semaphore.hashCode()) + " signal");
+        }
+        resumeProcessNode.executeResume(frame, semaphore.removeFirstLinkOfList(writeNode));
     }
 
     @Specialization

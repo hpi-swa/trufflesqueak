@@ -69,10 +69,10 @@ public final class ObjectLayouts {
         public static final int MAP = 3;
     }
 
-    /**
-     * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
-     */
     public static final class CLASS {
+        /**
+         * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+         */
         public static final int SUBCLASSES = 0;
         public static final int NAME = 1;
     }
@@ -88,6 +88,7 @@ public final class ObjectLayouts {
         public static final int FORMAT = 2;
         public static final int INSTANCE_VARIABLES = 3;
         public static final int ORGANIZATION = 4;
+
         public static final int SIZE = 5;
 
         public static String getClassComment(final ClassObject squeakClass) {
@@ -232,6 +233,7 @@ public final class ObjectLayouts {
         public static final int SUSPENDED_CONTEXT = 1;
         public static final int PRIORITY = 2;
         public static final int LIST = 3;
+        public static final int EFFECTIVE_PROCESS = 5;
     }
 
     public static final class PROCESS_SCHEDULER {

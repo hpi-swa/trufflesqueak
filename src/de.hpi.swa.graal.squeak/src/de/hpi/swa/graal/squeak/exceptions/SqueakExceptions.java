@@ -6,10 +6,7 @@
 package de.hpi.swa.graal.squeak.exceptions;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleException;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
@@ -21,7 +18,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SYNTAX_ERROR_NOTIFICAT
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.DebugUtils;
 
 public final class SqueakExceptions {
 
@@ -33,12 +30,12 @@ public final class SqueakExceptions {
 
         private SqueakException(final String message, final Throwable cause) {
             super(message, cause);
-            printSqueakStackTrace();
+            DebugUtils.printSqStackTrace();
         }
 
         private SqueakException(final Object... messageParts) {
             super(ArrayUtils.toJoinedString(" ", messageParts));
-            printSqueakStackTrace();
+            DebugUtils.printSqStackTrace();
         }
 
         public static SqueakException create(final String message, final Throwable cause) {
@@ -54,16 +51,6 @@ public final class SqueakExceptions {
         public static SqueakException illegalState(final Throwable cause) {
             CompilerDirectives.transferToInterpreter();
             return new SqueakException("Illegal state in " + SqueakLanguageConfig.NAME, cause);
-        }
-
-        private static void printSqueakStackTrace() {
-            final FrameInstance currentFrame = Truffle.getRuntime().getCurrentFrame();
-            if (currentFrame != null) {
-                final Frame frame = currentFrame.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                if (FrameAccess.isGraalSqueakFrame(frame)) {
-                    FrameAccess.getMethod(frame).image.printSqStackTrace();
-                }
-            }
         }
     }
 

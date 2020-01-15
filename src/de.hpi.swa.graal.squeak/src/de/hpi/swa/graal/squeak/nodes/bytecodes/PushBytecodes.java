@@ -24,6 +24,8 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeGen;
@@ -55,12 +57,12 @@ public final class PushBytecodes {
 
         public PushActiveContextNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            getContextNode = GetOrCreateContextNode.create(code, true);
+            getContextNode = GetOrCreateContextNode.create(code);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, getContextNode.executeGet(frame));
+            pushNode.execute(frame, getContextNode.executeGet(frame, NilObject.SINGLETON));
         }
 
         @Override
@@ -89,7 +91,7 @@ public final class PushBytecodes {
             blockSize = j << 8 | k;
             popNNode = FrameStackPopNNode.create(code, numCopied);
             pushNode = FrameStackPushNode.create(code);
-            getOrCreateContextNode = GetOrCreateContextNode.create(code, true);
+            getOrCreateContextNode = GetOrCreateContextNode.create(code);
         }
 
         public PushClosureNode(final PushClosureNode node) {
@@ -99,7 +101,7 @@ public final class PushBytecodes {
             blockSize = node.blockSize;
             popNNode = FrameStackPopNNode.create(code, numCopied);
             pushNode = FrameStackPushNode.create(code);
-            getOrCreateContextNode = GetOrCreateContextNode.create(code, true);
+            getOrCreateContextNode = GetOrCreateContextNode.create(code);
         }
 
         public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
@@ -135,7 +137,7 @@ public final class PushBytecodes {
         private BlockClosureObject createClosure(final VirtualFrame frame) {
             final Object receiver = FrameAccess.getReceiver(frame);
             final Object[] copiedValues = popNNode.execute(frame);
-            final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
+            final ContextObject outerContext = getOrCreateContextNode.executeGet(frame, NilObject.SINGLETON);
             return new BlockClosureObject(code.image, getBlock(frame), cachedStartPC, numArgs, receiver, copiedValues, outerContext);
         }
 
@@ -186,44 +188,44 @@ public final class PushBytecodes {
 
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushLiteralConstantNode extends AbstractPushNode {
-        private final int literalIndex;
+        private final Object literal;
 
         public PushLiteralConstantNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             super(code, index, numBytecodes);
-            this.literalIndex = literalIndex;
+            literal = code.getLiteral(literalIndex);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, code.getLiteral(literalIndex));
+            pushNode.execute(frame, literal);
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushConstant: " + code.getLiteral(literalIndex).toString();
+            return "pushConstant: " + literal;
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushLiteralVariableNode extends AbstractPushNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        private final int literalIndex;
+        private final Object literal;
 
         public PushLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             super(code, index, numBytecodes);
-            this.literalIndex = literalIndex;
+            literal = code.getLiteral(literalIndex);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, at0Node.execute(code.getLiteral(literalIndex), 1));
+            pushNode.execute(frame, at0Node.execute(literal, 1));
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushLit: " + literalIndex;
+            return "pushLitVar: " + ((NativeObject) at0Node.execute(literal, 0)).asStringUnsafe();
         }
     }
 
@@ -323,7 +325,7 @@ public final class PushBytecodes {
             super(code, index, numBytecodes);
             this.indexInArray = indexInArray;
             this.indexOfArray = indexOfArray;
-            readTempNode = FrameSlotReadNode.create(code.getStackSlot(indexOfArray));
+            readTempNode = FrameSlotReadNode.create(code.getStackSlot(indexOfArray, null));
         }
 
         @Override
