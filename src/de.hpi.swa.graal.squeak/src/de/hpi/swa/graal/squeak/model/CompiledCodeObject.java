@@ -110,12 +110,18 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         if (source == null) {
             String contents;
             String toString;
-            try {
-                contents = CompiledCodeObjectPrinter.getString(this);
-                toString = toString();
-            } catch (final RuntimeException e) {
+            if (image.isTesting()) {
                 contents = SOURCE_UNAVAILABLE;
                 toString = "<unavailable>";
+            } else {
+                try {
+                    contents = CompiledCodeObjectPrinter.getString(this);
+                    toString = toString();
+                    System.out.println("Getting the source for " + toString);
+                } catch (final RuntimeException e) {
+                    contents = SOURCE_UNAVAILABLE;
+                    toString = "<unavailable>";
+                }
             }
             source = Source.newBuilder(SqueakLanguageConfig.ID, contents, toString).mimeType("text/plain").build();
         }

@@ -81,7 +81,7 @@ public final class SqueakImageReader {
     private SqueakImageChunk freePageList = null;
 
     private SqueakImageReader(final SqueakImageContext image) {
-        final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
+        final TruffleFile truffleFile = image.env.getTruffleFile(image.getImagePath());
         if (!truffleFile.isRegularFile()) {
             if (image.getImagePath().isEmpty()) {
                 throw SqueakAbortException.create(MiscUtils.format("An image must be provided via `%s.%s`.", SqueakLanguageConfig.ID, SqueakLanguageOptions.IMAGE_PATH));
@@ -467,6 +467,12 @@ public final class SqueakImageReader {
                     final ClassObject metaClassObject = metaClass.asClassObject(image.metaClass);
                     final ClassObject classObject = classInstance.asClassObject(metaClassObject);
                     classObject.fillin(classInstance);
+                    final String className = ((NativeObject) classObject.getOtherPointers()[CLASS.NAME]).asStringUnsafe();
+                    if (className.equals("Fraction")) {
+                        image.fractionClass = classObject;
+                    } else if (className.equals("Association")) {
+                        image.associationClass = classObject;
+                    }
                     if (inst.contains(classObject.getSuperclassOrNull())) {
                         inst.add(classObject);
                         classObject.setInstancesAreClasses();

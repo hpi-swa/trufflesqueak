@@ -27,7 +27,10 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -170,6 +173,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     } catch (final PrimitiveFailed e) {
                         getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
                         LOG.log(Level.FINE, () -> "Failed primitive " + callPrimitiveNode.primitiveNode.getClass().getName());
+                        /* continue with fallback code. */
+                    } catch (final AssertionError e) {
+                        getHandlePrimitiveFailedNode().executeHandle(frame, ERROR_TABLE.GENERIC_ERROR.ordinal());
                         /* continue with fallback code. */
                     }
                 }
@@ -319,12 +325,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Override
     public SourceSection getSourceSection() {
         if (section == null) {
-            if (code.image.isTesting()) {
-                // Cannot provide source section in case of AbstractSqueakTestCaseWithDummyImage.
-                return null;
-            }
             final Source source = code.getSource();
-            section = source.createSection(1, 1, source.getLength());
+            if (source.getCharacters().equals(CompiledCodeObject.SOURCE_UNAVAILABLE)) {
+                section = source.createUnavailableSection();
+            } else {
+                section = source.createSection(1, 1, source.getLength());
+            }
         }
         return section;
     }

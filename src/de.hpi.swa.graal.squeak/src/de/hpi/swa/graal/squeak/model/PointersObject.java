@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -78,8 +79,12 @@ public final class PointersObject extends AbstractPointersObject {
         return layoutValuesPointTo(identityNode, isPrimitiveProfile, thang);
     }
 
-    public boolean isActiveProcess(final AbstractPointersObjectReadNode readNode) {
-        return this == image.getActiveProcess(readNode);
+    public boolean isAssociation() {
+        return getSqueakClass() == image.associationClass;
+    }
+
+    public boolean isActiveProcess() {
+        return this == image.getActiveProcess();
     }
 
     public boolean isEmptyList(final AbstractPointersObjectReadNode readNode) {
@@ -88,6 +93,10 @@ public final class PointersObject extends AbstractPointersObject {
 
     public boolean isDisplay() {
         return this == image.getSpecialObject(SPECIAL_OBJECT.THE_DISPLAY);
+    }
+
+    public boolean isFraction() {
+        return getSqueakClass() == image.fractionClass;
     }
 
     public boolean isPoint() {
@@ -134,5 +143,21 @@ public final class PointersObject extends AbstractPointersObject {
 
     public void traceObjects(final ObjectTracer tracer) {
         super.traceLayoutObjects(tracer);
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
+        if (isPoint()) {
+            return readNode.execute(this, 0) + "@" + readNode.execute(this, 1);
+        }
+        if (isFraction()) {
+            return readNode.execute(this, 0) + " / " + readNode.execute(this, 1);
+        }
+        if (isAssociation()) {
+            return readNode.execute(this, 0) + " -> " + readNode.execute(this, 1);
+        }
+        return super.toString();
     }
 }
