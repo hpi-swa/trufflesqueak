@@ -2566,6 +2566,7 @@ public final class BitBlt {
             showDisplayBits();
             assert !failed();
         } catch (final AssertionError e) {
+            bbObj.image.printToStdErr(e.getMessage());
             PrimitiveFailed.andTransferToInterpreter();
         }
         if (combinationRule == 22 || combinationRule == 32) {
