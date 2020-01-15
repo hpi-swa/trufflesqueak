@@ -63,7 +63,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         protected static final Object doAt8Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
             final int byteOffset = (int) byteOffsetLong - 1;
             final byte[] bytes = Arrays.copyOfRange(byteArray.getByteStorage(), byteOffset, byteOffset + 8);
-            return new LargeIntegerObject(byteArray.image, byteArray.image.largePositiveIntegerClass, bytes).toSigned().reduceIfPossible();
+            return new LargeIntegerObject(byteArray.image, byteArray.image.largePositiveIntegerClass, bytes).toSigned();
         }
 
         @SuppressWarnings("unused")
