@@ -107,6 +107,7 @@ public final class SqueakImageContext {
     public final ArrayObject specialSelectors = new ArrayObject(this);
     @CompilationFinal private ClassObject smallFloatClass = null;
     @CompilationFinal private ClassObject byteSymbolClass = null;
+    @CompilationFinal public ClassObject fractionClass = null;
     @CompilationFinal private ClassObject foreignObjectClass = null;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
@@ -168,6 +169,7 @@ public final class SqueakImageContext {
     private final AbstractPointersObjectReadNode processReadNode = AbstractPointersObjectReadNode.create();
     private final AbstractPointersObjectReadNode semaphoreReadNode = AbstractPointersObjectReadNode.create();
     private final AbstractPointersObjectReadNode linkedListReadNode = AbstractPointersObjectReadNode.create();
+    @CompilationFinal public ClassObject associationClass;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
@@ -200,6 +202,10 @@ public final class SqueakImageContext {
             evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
             // Initialize fresh MorphicUIManager.
             evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
+            //
+// evaluate("LargePositiveInteger addSelectorSilently: #isZero withMethod: (LargePositiveInteger
+// compile: 'isZero ^self normalize == 0' notifying: nil trailer: (CompiledMethodTrailer empty)
+// ifFail: [^ nil]) method");
             LOG.fine(() -> "After newly loaded image startUp" + DebugUtils.currentState(SqueakImageContext.this));
         }
     }

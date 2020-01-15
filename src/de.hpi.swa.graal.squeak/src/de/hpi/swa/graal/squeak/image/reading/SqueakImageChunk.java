@@ -109,10 +109,10 @@ public final class SqueakImageChunk {
                 assert false : "Should never happen (unused format)";
             } else if (format == 9) { // 64-bit integers
                 object = NativeObject.newNativeLongs(this);
-            } else if (format <= 11) { // 32-bit integers
+            } else if (format <= 11) {
                 if (squeakClass == image.floatClass) {
                     object = FloatObject.newFrom(this);
-                } else {
+                } else { // 32-bit integers
                     object = NativeObject.newNativeInts(this);
                 }
             } else if (format <= 15) { // 16-bit integers
