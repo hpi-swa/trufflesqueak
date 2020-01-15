@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -46,12 +47,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
-            return Math.addExact(lhs, rhs);
-        }
-
-        @Specialization(replaces = "doLong")
+        @Specialization
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.add(method.image, lhs, rhs);
         }
@@ -75,12 +71,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
-            return Math.subtractExact(lhs, rhs);
-        }
-
-        @Specialization(replaces = "doLong")
+        @Specialization
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.subtract(method.image, lhs, rhs);
         }
@@ -266,12 +257,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
-            return Math.multiplyExact(lhs, rhs);
-        }
-
-        @Specialization(replaces = "doLong")
+        @Specialization
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.multiply(method.image, lhs, rhs);
         }
@@ -471,7 +457,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                      * -1 in check needed, because we do not want to shift a positive long into
                      * negative long (most significant bit indicates positive/negative).
                      */
-                    return LargeIntegerObject.shiftLeft(method.image, receiver, (int) arg);
+                    return new LargeIntegerObject(method.image, BigInteger.valueOf(receiver).shiftLeft((int) arg)).reduceIfPossible();
                 } else {
                     return receiver << arg;
                 }
@@ -511,8 +497,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"rhs != 0"})
-        protected final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
-            return doLargeInteger(lhs, asLargeInteger(rhs));
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.getBigInteger().remainder(BigInteger.valueOf(rhs)).longValue();
         }
 
         @Specialization(guards = {"!rhs.isZero()"})
@@ -534,7 +520,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final BranchProfile nonZeroProfile) {
             if (rhs == 0) {
                 zeroProfile.enter();
-                return lhs;
+                return lhs.reduceIfPossible();
             } else {
                 nonZeroProfile.enter();
                 return lhs.add(rhs);
@@ -560,7 +546,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final BranchProfile nonZeroProfile) {
             if (rhs == 0) {
                 zeroProfile.enter();
-                return lhs;
+                return lhs.reduceIfPossible();
             } else {
                 nonZeroProfile.enter();
                 return lhs.subtract(rhs);

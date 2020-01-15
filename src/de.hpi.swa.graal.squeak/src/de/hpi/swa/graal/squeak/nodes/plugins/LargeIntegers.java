@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -259,12 +260,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final LargeIntegerObject doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
             return rhs.multiply(lhs);
         }
 
         @Specialization
-        protected static final LargeIntegerObject doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
             return lhs.multiply(rhs);
         }
 
@@ -413,7 +414,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 final long value = rhs.longValue();
                 return value == lhs ? 0L : value < lhs ? -1L : 1L;
             } else {
-                return rhs.isNegative() ? -1L : 1L;
+                return rhs.isNegative() ? 1L : -1L;
             }
         }
 
@@ -443,35 +444,76 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             long divide = rcvr / arg;
             if (negative && divide >= 0 || !negative && divide < 0) {
                 signProfile.enter();
-                divide = Math.negateExact(divide);
+                if (divide == Long.MIN_VALUE) {
+                    return method.image.asArrayOfObjects(LargeIntegerObject.LONG_MIN_OVERFLOW_RESULT, rcvr % arg);
+                }
+                divide = -divide;
             }
             return method.image.asArrayOfLongs(divide, rcvr % arg);
         }
 
         @Specialization
-        protected final ArrayObject doLongWithOverflow(final long rcvr, final long arg, final boolean negative) {
-            return doLargeInteger(asLargeInteger(rcvr), asLargeInteger(arg), negative);
-        }
-
-        @Specialization
         protected final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
-            LargeIntegerObject divide = rcvr.divideNoReduce(arg);
-            if (negative != divide.isNegative()) {
+            final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(arg.getBigInteger());
+            final Object[] result = new Object[2];
+            if (negative != divide[0].signum() < 0) {
                 signProfile.enter();
-                divide = divide.negate();
+                if (divide[0].bitLength() < Long.SIZE) {
+                    final long lresult = divide[0].longValue();
+                    if (lresult == Long.MIN_VALUE) {
+                        result[0] = LargeIntegerObject.LONG_MIN_OVERFLOW_RESULT;
+                    } else {
+                        result[0] = -lresult;
+                    }
+                } else {
+                    result[0] = new LargeIntegerObject(method.image, divide[0].negate());
+                }
+            } else {
+                if (divide[0].bitLength() < Long.SIZE) {
+                    result[0] = divide[0].longValue();
+                } else {
+                    result[0] = new LargeIntegerObject(method.image, divide[0]);
+                }
             }
-            final Object remainder = rcvr.remainder(arg);
-            return method.image.asArrayOfObjects(divide.reduceIfPossible(), remainder);
+            if (divide[1].bitLength() < Long.SIZE) {
+                result[1] = divide[1].longValue();
+            } else {
+                result[1] = new LargeIntegerObject(method.image, divide[1]);
+            }
+            return method.image.asArrayOfObjects(result);
         }
 
         @Specialization
         protected final ArrayObject doLong(final long rcvr, final LargeIntegerObject arg, final boolean negative) {
-            return doLargeInteger(asLargeInteger(rcvr), arg, negative);
+            assert !arg.fitsIntoLong() : "non-reduced large integer!";
+            return method.image.asArrayOfLongs(0, rcvr);
         }
 
         @Specialization
         protected final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
-            return doLargeInteger(rcvr, asLargeInteger(arg), negative);
+            final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(BigInteger.valueOf(arg));
+            final Object[] result = new Object[2];
+            if (negative != divide[0].signum() < 0) {
+                signProfile.enter();
+                if (divide[0].bitLength() < Long.SIZE) {
+                    final long lresult = divide[0].longValue();
+                    if (lresult == Long.MIN_VALUE) {
+                        result[0] = LargeIntegerObject.LONG_MIN_OVERFLOW_RESULT;
+                    } else {
+                        result[0] = -lresult;
+                    }
+                } else {
+                    result[0] = new LargeIntegerObject(method.image, divide[0].negate());
+                }
+            } else {
+                if (divide[0].bitLength() < Long.SIZE) {
+                    result[0] = divide[0].longValue();
+                } else {
+                    result[0] = new LargeIntegerObject(method.image, divide[0]);
+                }
+            }
+            result[1] = divide[1].longValue();
+            return method.image.asArrayOfObjects(result);
         }
     }
 
