@@ -34,7 +34,14 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         return FrameSlotReadNodeGen.create(clear, code.getStackSlot(index));
     }
 
-    public abstract Object executeRead(Frame frame);
+    public final Object executeRead(final Frame frame) {
+        final Object value = executeReadUnsafe(frame);
+        assert value != null : "Unexpected `null` value";
+        return value;
+    }
+
+    /* Unsafe as it may return `null` values. */
+    public abstract Object executeReadUnsafe(Frame frame);
 
     @Specialization(guards = "frame.getFrameDescriptor().getFrameSlotKind(getSlot()) == Boolean")
     protected final boolean readBoolean(final Frame frame) {
@@ -84,7 +91,6 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
              */
             CompilerDirectives.transferToInterpreter();
             value = frame.getValue(getSlot());
-            assert value != null : "Unexpected `null` value";
         } else {
             value = FrameUtil.getObjectSafe(frame, getSlot());
         }
