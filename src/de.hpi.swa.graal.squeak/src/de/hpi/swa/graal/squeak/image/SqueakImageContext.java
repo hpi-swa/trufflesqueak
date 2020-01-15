@@ -556,15 +556,25 @@ public final class SqueakImageContext {
      */
 
     @TruffleBoundary
-    public void printToStdOut(final Object... arguments) {
+    public void printToStdOut(final String string) {
         if (!options.isQuiet) {
-            getOutput().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
+            getOutput().println("[graalsqueak] " + string);
         }
     }
 
     @TruffleBoundary
+    public void printToStdOut(final Object... arguments) {
+        printToStdOut(ArrayUtils.toJoinedString(" ", arguments));
+    }
+
+    @TruffleBoundary
+    public void printToStdErr(final String string) {
+        getError().println("[graalsqueak] " + string);
+    }
+
+    @TruffleBoundary
     public void printToStdErr(final Object... arguments) {
-        getError().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
+        printToStdErr(ArrayUtils.toJoinedString(" ", arguments));
     }
 
     @TruffleBoundary
