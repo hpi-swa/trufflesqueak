@@ -5,7 +5,7 @@
   </local-check-config>
   <fileset check-config-name="Checks" enabled="true" local="true" name="all">
     <file-match-pattern include-pattern="true" match-pattern=".*\.java$"/>
-    <file-match-pattern include-pattern="false" match-pattern="src_gen/.*"/>
+    <file-match-pattern include-pattern="false" match-pattern="src_gen\.*"/>
     <file-match-pattern include-pattern="false" match-pattern="/package-info.java$"/>
   </fileset>
 </fileset-config>
