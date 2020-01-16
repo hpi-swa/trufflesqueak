@@ -22,7 +22,6 @@ import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHash {
@@ -39,6 +38,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         this.integer = integer;
         bitLength = integer.bitLength();
         exposedSize = calculateExposedSize(integer);
+        assert integer.signum() != 0 : "LargePositiveInteger>>isZero returns 'false'";
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final long hash, final ClassObject klass, final byte[] bytes) {
@@ -46,6 +46,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
         bitLength = integer.bitLength();
         exposedSize = calculateExposedSize(integer);
+        assert integer.signum() != 0 : "LargePositiveInteger>>isZero returns 'false'";
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final byte[] bytes) {
@@ -53,6 +54,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
         bitLength = integer.bitLength();
         exposedSize = calculateExposedSize(integer);
+        assert integer.signum() != 0 : "LargePositiveInteger>>isZero returns 'false'";
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final int size) {
@@ -67,11 +69,10 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         integer = original.integer;
         bitLength = original.bitLength;
         exposedSize = original.exposedSize;
-        assert exposedSize >= calculateExposedSize(integer);
     }
 
     private static int calculateExposedSize(final BigInteger integer) {
-        return integer.signum() == 0 ? 1 : MiscUtils.ceilDiv(bitLength(integer.abs()), 8);
+        return (integer.abs().bitLength() + 7) / 8;
     }
 
     @Override
@@ -132,12 +133,14 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         assert size() == other.size();
         integer = other.getSqueakClass() == getSqueakClass() ? other.integer : other.integer.negate();
         bitLength = integer.bitLength();
+        assert exposedSize == calculateExposedSize(integer);
     }
 
     public void setBytes(final byte[] bytes) {
         assert size() == bytes.length;
         integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderCopy(bytes));
         bitLength = integer.bitLength();
+        assert exposedSize == calculateExposedSize(integer);
     }
 
     public void setBytes(final LargeIntegerObject src, final int srcPos, final int destPos, final int length) {
@@ -189,11 +192,6 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public int size() {
         return exposedSize;
-    }
-
-    public void setInteger(final LargeIntegerObject other) {
-        integer = other.integer;
-        bitLength = integer.bitLength();
     }
 
     @Override
@@ -264,7 +262,6 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         if (bitLength < Long.SIZE) {
             return integer.longValue();
         } else {
-            assert integer.signum() != 0 : "LargePositiveInteger>>isZero returns 'false'";
             exposedSize = calculateExposedSize(integer);
             return this;
         }
@@ -516,7 +513,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public boolean lessThanOneShiftedBy64() {
-        return bitLength < Long.SIZE + 2;
+        return bitLength < Long.SIZE + 1;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -548,8 +545,12 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public long toSigned() {
-        assert isPositive() && bitLength == Long.SIZE + 1;
-        return integer.subtract(ONE_SHIFTED_BY_64).longValue();
+        assert isPositive() && bitLength <= Long.SIZE;
+        if (bitLength == Long.SIZE) {
+            return integer.subtract(ONE_SHIFTED_BY_64).longValue();
+        } else {
+            return integer.longValue();
+        }
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)

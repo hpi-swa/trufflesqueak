@@ -452,6 +452,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return method.image.asArrayOfLongs(divide, rcvr % arg);
         }
 
+        @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization
         protected final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
             final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(arg.getBigInteger());
@@ -489,6 +490,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return method.image.asArrayOfLongs(0, rcvr);
         }
 
+        @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization
         protected final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
             final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(BigInteger.valueOf(arg));
