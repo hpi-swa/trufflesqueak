@@ -24,7 +24,7 @@ import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
-public class FramesAndContextsIterator {
+public final class FramesAndContextsIterator {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, FramesAndContextsIterator.class);
     private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
@@ -114,7 +114,7 @@ public class FramesAndContextsIterator {
             if (frameFilter != null && frameFilter.test(foundMyself[0], currentCode)) {
                 if (currentContext == null) {
                     currentContext = ContextObject.create(currentFrame.materialize(), currentCode);
-                    currentContext.setProcess(currentCode.image.getActiveProcess());
+                    currentContext.setProcess(currentCode.image.getActiveProcessSlow());
                 }
                 return currentContext;
             }
