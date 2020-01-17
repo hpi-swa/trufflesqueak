@@ -47,7 +47,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final long doLong(final long lhs, final long rhs) {
+            return Math.addExact(lhs, rhs);
+        }
+
+        @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.add(method.image, lhs, rhs);
         }
@@ -71,7 +76,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final long doLong(final long lhs, final long rhs) {
+            return Math.subtractExact(lhs, rhs);
+        }
+
+        @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.subtract(method.image, lhs, rhs);
         }
@@ -257,7 +267,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final long doLong(final long lhs, final long rhs) {
+            return Math.multiplyExact(lhs, rhs);
+        }
+
+        @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs) {
             return LargeIntegerObject.multiply(method.image, lhs, rhs);
         }
@@ -336,7 +351,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!rhs.isZero()"})
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+        protected static final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
             return LargeIntegerObject.floorDivide(lhs, rhs);
         }
     }
@@ -360,7 +375,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!rhs.isZero()"})
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+        protected static final long doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
             return LargeIntegerObject.divide(lhs, rhs);
         }
     }

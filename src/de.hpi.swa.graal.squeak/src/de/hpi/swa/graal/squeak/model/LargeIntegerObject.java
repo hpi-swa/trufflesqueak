@@ -392,7 +392,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return reduceIfPossible(integer.divide(BigInteger.valueOf(b)));
     }
 
-    public static Object divide(final long a, final LargeIntegerObject b) {
+    public static long divide(@SuppressWarnings("unused") final long a, final LargeIntegerObject b) {
         assert !b.fitsIntoLong() : "non-reduced large integer!";
         return 0L;
     }
@@ -407,7 +407,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return reduceIfPossible(floorDivide(integer, BigInteger.valueOf(b)));
     }
 
-    public static Object floorDivide(final long a, final LargeIntegerObject b) {
+    public static long floorDivide(final long a, final LargeIntegerObject b) {
         assert !b.fitsIntoLong() : "non-reduced large integer!";
         if ((a ^ b.integer.signum()) < 0) {
             return -1L;
