@@ -53,8 +53,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.add(method.image, lhs, rhs);
+        protected final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Cached final BranchProfile overflowProfile) {
+            final long result = rhs + lhs;
+            // HD 2-12 Overflow iff both arguments have the opposite sign of the result
+            if (((lhs ^ result) & (rhs ^ result)) < 0) {
+                overflowProfile.enter();
+                return LargeIntegerObject.add(method.image, lhs, rhs);
+            }
+            return result;
         }
 
         @Specialization
@@ -82,8 +89,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.subtract(method.image, lhs, rhs);
+        protected final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Cached final BranchProfile overflowProfile) {
+            final long result = rhs - lhs;
+            // HD 2-12 Overflow iff the arguments have different signs and
+            // the sign of the result is different than the sign of lhs
+            if (((lhs ^ rhs) & (lhs ^ result)) < 0) {
+                overflowProfile.enter();
+                return LargeIntegerObject.subtract(method.image, lhs, rhs);
+            }
+            return result;
         }
 
         @Specialization
@@ -273,8 +288,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.multiply(method.image, lhs, rhs);
+        protected final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Cached final BranchProfile possibleOverflowProfile,
+                        @Cached final BranchProfile overflowProfile) {
+            final long result = lhs * rhs;
+            if ((Math.abs(lhs) | Math.abs(rhs)) >>> 31 != 0) {
+                possibleOverflowProfile.enter();
+                // Some bits greater than 2^31 that might cause overflow
+                // Check the result using the divide operator
+                // and check for the special case of Long.MIN_VALUE * -1
+                if (rhs != 0 && result / rhs != lhs ||
+                                lhs == Long.MIN_VALUE && rhs == -1) {
+                    overflowProfile.enter();
+                    return LargeIntegerObject.multiply(method.image, lhs, rhs);
+                }
+            }
+            return result;
         }
 
         @Specialization

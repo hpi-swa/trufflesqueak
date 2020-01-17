@@ -318,12 +318,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public static Object add(final SqueakImageContext image, final long a, final long b) {
-        final long r = a + b;
-        // HD 2-12 Overflow iff both arguments have the opposite sign of the result
-        if (((a ^ r) & (b ^ r)) < 0) {
-            return new LargeIntegerObject(image, BigInteger.valueOf(a).add(BigInteger.valueOf(b)));
-        }
-        return r;
+        return new LargeIntegerObject(image, BigInteger.valueOf(a).add(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -338,13 +333,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public static Object subtract(final SqueakImageContext image, final long a, final long b) {
-        final long r = a - b;
-        // HD 2-12 Overflow iff the arguments have different signs and
-        // the sign of the result is different than the sign of x
-        if (((a ^ r) & (a ^ b)) < 0) {
-            return new LargeIntegerObject(image, BigInteger.valueOf(a).subtract(BigInteger.valueOf(b)));
-        }
-        return r;
+        return new LargeIntegerObject(image, BigInteger.valueOf(a).subtract(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -367,19 +356,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public static Object multiply(final SqueakImageContext image, final long a, final long b) {
-        final long r = a * b;
-        final long aa = Math.abs(a);
-        final long ab = Math.abs(b);
-        if ((aa | ab) >>> 31 != 0) {
-            // Some bits greater than 2^31 that might cause overflow
-            // Check the result using the divide operator
-            // and check for the special case of Long.MIN_VALUE * -1
-            if (b != 0 && r / b != a ||
-                            a == Long.MIN_VALUE && b == -1) {
-                return new LargeIntegerObject(image, BigInteger.valueOf(a).multiply(BigInteger.valueOf(b)));
-            }
-        }
-        return r;
+        return new LargeIntegerObject(image, BigInteger.valueOf(a).multiply(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
