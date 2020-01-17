@@ -32,7 +32,7 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ExecuteTopLevelContextNode.class);
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "scheduling");
 
     private final SqueakImageContext image;
     private final boolean needsShutdown;

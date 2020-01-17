@@ -65,7 +65,7 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, PolyglotPlugin.class);
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interop");
     private static final String EVAL_SOURCE_NAME = "<eval>";
 
     /**
