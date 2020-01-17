@@ -155,7 +155,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     current = (ContextObject) sender;
                 }
             }
-            terminateBetween(current.getFrameMarker(), end);
+            terminateBetween((FrameMarker) current.getFrameSender(), end);
         }
 
         private void terminateBetween(final FrameMarker start, final ContextObject end) {
