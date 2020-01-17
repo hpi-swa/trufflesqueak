@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -38,6 +36,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
@@ -48,8 +47,8 @@ public final class SqueakImageWriter {
     private final NativeObject freeList;
     private final BufferedOutputStream stream;
     private final byte[] byteArrayBuffer = new byte[Long.BYTES];
-    private final HashMap<AbstractSqueakObjectWithHash, Long> oopMap = new HashMap<>(750_000);
-    private final TreeMap<Long, AbstractSqueakObjectWithHash> oopTree = new TreeMap<>();
+    private final HashMap<AbstractSqueakObjectWithHash, Long> oopMap = new HashMap<>(ObjectGraphNode.getLastSeenObjects());
+    private final ArrayList<AbstractSqueakObjectWithHash> allTracedObjects = new ArrayList<>(ObjectGraphNode.getLastSeenObjects());
     private final ArrayDeque<AbstractSqueakObjectWithHash> traceQueue = new ArrayDeque<>();
     private final ArrayList<AbstractSqueakObjectWithHash> additionalBoxedObjects = new ArrayList<>();
 
@@ -143,10 +142,10 @@ public final class SqueakImageWriter {
         hiddenRootsOop = reserve(image.getHiddenRoots());
 
         /*
-         * Remove freeList and hiddenRoots from oopTree because they will later be written
+         * Remove freeList and hiddenRoots from object list because they will later be written
          * individually.
          */
-        oopTree.clear();
+        allTracedObjects.clear();
         specialObjectOop = reserve(image.specialObjectsArray);
 
         AbstractSqueakObjectWithHash currentObject;
@@ -181,11 +180,11 @@ public final class SqueakImageWriter {
         assert currentOop() == hiddenRootsOop - SqueakImageConstants.WORD_SIZE;
         image.getHiddenRoots().writeAsHiddenRoots(this);
         assert currentOop() == specialObjectOop : "First objects not written correctly";
-        AbstractSqueakObjectWithHash previous = image.getHiddenRoots();
-        for (final Entry<Long, AbstractSqueakObjectWithHash> entry : oopTree.entrySet()) {
-            assert currentOop() == entry.getKey() : "Previous object was not written correctly: " + previous;
-            entry.getValue().write(this);
-            previous = entry.getValue();
+        AbstractSqueakObjectWithHash previousObject = image.getHiddenRoots();
+        for (final AbstractSqueakObjectWithHash currentObject : allTracedObjects) {
+            assert correctPosition(currentObject) : "Previous object was not written correctly: " + previousObject;
+            currentObject.write(this);
+            previousObject = currentObject;
         }
         assert currentOop() == nextChunkAfterTracing;
         /* Write additional large integers and boxed floats. */
@@ -196,6 +195,11 @@ public final class SqueakImageWriter {
 
         /* Write last bridge. */
         writePadding(SqueakImageConstants.IMAGE_BRIDGE_SIZE);
+    }
+
+    private boolean correctPosition(final AbstractSqueakObjectWithHash currentObject) {
+        final int offset = currentObject.getNumSlots() < SqueakImageConstants.OVERFLOW_SLOTS ? 0 : SqueakImageConstants.WORD_SIZE;
+        return currentOop() + offset == oopMap.get(currentObject);
     }
 
     /*
@@ -246,7 +250,8 @@ public final class SqueakImageWriter {
             if (oop != null) {
                 return oop;
             } else {
-                throw SqueakException.create("Unreserved object detected: " + object);
+                image.printToStdErr("Unreserved object detected: " + object + ". Replacing with nil.");
+                return nilOop;
             }
         } else {
             /* Nil out any foreign objects. */
@@ -302,14 +307,14 @@ public final class SqueakImageWriter {
         final int numSlots = object.getNumSlots();
         final int padding = SqueakImageReader.calculateObjectPadding(object.getSqueakClass().getInstanceSpecification());
 
-        final int headerSlots = numSlots < 255 ? 1 : 2;
+        final int headerSlots = numSlots < SqueakImageConstants.OVERFLOW_SLOTS ? 1 : 2;
         final int offset = (headerSlots - 1) * SqueakImageConstants.WORD_SIZE;
         final long oop = nextChunk + offset;
         nextChunk += (headerSlots + Math.max(numSlots, 1 /* at least an alignment word */)) * SqueakImageConstants.WORD_SIZE + padding;
 
         assert !oopMap.containsKey(object);
         oopMap.put(object, oop);
-        oopTree.put(oop - offset, object);
+        allTracedObjects.add(object);
         traceQueue.addLast(object);
 
         if (object instanceof ClassObject) {
