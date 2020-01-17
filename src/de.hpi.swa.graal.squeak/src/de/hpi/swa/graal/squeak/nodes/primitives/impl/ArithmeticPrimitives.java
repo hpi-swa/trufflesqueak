@@ -457,7 +457,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                      * -1 in check needed, because we do not want to shift a positive long into
                      * negative long (most significant bit indicates positive/negative).
                      */
-                    return new LargeIntegerObject(method.image, BigInteger.valueOf(receiver).shiftLeft((int) arg)).reduceIfPossible();
+                    return LargeIntegerObject.reduceIfPossible(method.image, BigInteger.valueOf(receiver).shiftLeft((int) arg));
                 } else {
                     return receiver << arg;
                 }
