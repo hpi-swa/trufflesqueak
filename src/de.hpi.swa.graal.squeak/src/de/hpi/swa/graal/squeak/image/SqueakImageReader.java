@@ -55,7 +55,6 @@ public final class SqueakImageReader {
     private short maxExternalSemaphoreTableSize;
     private long firstSegmentSize;
     private int position = 0;
-    private long segmentEnd;
     private long currentAddressSwizzle;
     private final byte[] emptyBytes = new byte[0];
 
@@ -222,7 +221,7 @@ public final class SqueakImageReader {
 
     private void readBody() {
         position = 0;
-        segmentEnd = firstSegmentSize;
+        long segmentEnd = firstSegmentSize;
         currentAddressSwizzle = oldBaseAddress;
         while (position < segmentEnd) {
             while (position < segmentEnd - SqueakImageConstants.IMAGE_BRIDGE_SIZE) {

@@ -59,13 +59,13 @@ public final class SqueakOptions {
 
         public SqueakContextOptions(final Env env) {
             final OptionValues options = env.getOptions();
-            imagePath = options.get(SqueakOptions.ImagePath);
-            imageArguments = options.get(SqueakOptions.ImageArguments).isEmpty() ? new String[0] : options.get(SqueakOptions.ImageArguments).split(",");
-            isHeadless = options.get(SqueakOptions.Headless);
-            isQuiet = options.get(SqueakOptions.Quiet);
-            disableInterruptHandler = options.get(SqueakOptions.Interrupts);
-            enableStackDepthProtection = options.get(SqueakOptions.StackDepthProtection);
-            isTesting = options.get(SqueakOptions.Testing);
+            imagePath = options.get(ImagePath);
+            imageArguments = options.get(ImageArguments).isEmpty() ? new String[0] : options.get(ImageArguments).split(",");
+            isHeadless = options.get(Headless);
+            isQuiet = options.get(Quiet);
+            disableInterruptHandler = options.get(Interrupts);
+            enableStackDepthProtection = options.get(StackDepthProtection);
+            isTesting = options.get(Testing);
         }
     }
 }

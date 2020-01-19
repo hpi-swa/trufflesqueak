@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.model;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -38,7 +39,8 @@ import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
-    public static final String SOURCE_UNAVAILABLE = "Source unavailable";
+    private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
+    public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
 
     public enum SLOT_IDENTIFIER {
         THIS_MARKER,
@@ -107,19 +109,18 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     }
 
     public final Source getSource() {
+        CompilerAsserts.neverPartOfCompilation();
         if (source == null) {
-            // FIXME: this is called on insert (fetchNextByteCode), maybe add a flag for disabling
-            // it?
+            String name;
             String contents;
-            String toString;
             try {
+                name = toString();
                 contents = CompiledCodeObjectPrinter.getString(this);
-                toString = toString();
             } catch (final RuntimeException e) {
-                contents = SOURCE_UNAVAILABLE;
-                toString = "<unavailable>";
+                name = SOURCE_UNAVAILABLE_NAME;
+                contents = SOURCE_UNAVAILABLE_CONTENTS;
             }
-            source = Source.newBuilder(SqueakLanguageConfig.ID, contents, toString).mimeType("text/plain").build();
+            source = Source.newBuilder(SqueakLanguageConfig.ID, contents, name).mimeType("text/plain").build();
         }
         return source;
     }
