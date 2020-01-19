@@ -29,6 +29,9 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.HEADLESS, category = OptionCategory.USER, stability = OptionStability.STABLE, help = SqueakLanguageOptions.HEADLESS_HELP)//
     public static final OptionKey<Boolean> Headless = new OptionKey<>(false);
 
+    @Option(name = SqueakLanguageOptions.INTERCEPT_MESSAGES, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.INTERCEPT_MESSAGES_HELP)//
+    public static final OptionKey<String> InterceptMessages = new OptionKey<>("");
+
     @Option(name = SqueakLanguageOptions.QUIET, category = OptionCategory.USER, stability = OptionStability.STABLE, help = SqueakLanguageOptions.QUIET_HELP)//
     public static final OptionKey<Boolean> Quiet = new OptionKey<>(false);
 
