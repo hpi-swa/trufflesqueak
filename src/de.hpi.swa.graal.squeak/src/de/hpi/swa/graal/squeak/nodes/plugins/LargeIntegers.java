@@ -485,9 +485,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final ArrayObject doLong(final long rcvr, final LargeIntegerObject arg, final boolean negative) {
+        protected final ArrayObject doLong(final long rcvr, final LargeIntegerObject arg, @SuppressWarnings("unused") final boolean negative) {
             assert !arg.fitsIntoLong() : "non-reduced large integer!";
-            return method.image.asArrayOfLongs(0, rcvr);
+            return method.image.asArrayOfLongs(0L, rcvr);
         }
 
         @TruffleBoundary(transferToInterpreterOnException = false)
