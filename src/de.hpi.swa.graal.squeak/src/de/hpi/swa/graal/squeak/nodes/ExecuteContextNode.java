@@ -48,7 +48,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private static final boolean IS_LOGGING_ENABLED = LOG.isLoggable(Level.FINE);
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
-    private static final int LOCAL_RETURN_PC = -1;
+    private static final int LOCAL_RETURN_PC = -2;
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_USER_INTERRUPT_CHECKS = 32;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
@@ -165,7 +165,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof CallPrimitiveNode) {
-                final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) fetchNextBytecodeNode(0);
+                final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
                 if (callPrimitiveNode.primitiveNode != null) {
                     try {
                         return callPrimitiveNode.primitiveNode.executePrimitive(frame);
@@ -185,6 +185,21 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = callPrimitiveNode.getSuccessorIndex();
                 assert pc == CallPrimitiveNode.NUM_BYTECODES;
                 continue;
+            } else if (node instanceof AbstractSendNode) {
+                pc = node.getSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, pc);
+                node.executeVoid(frame);
+                final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
+                if (pc != actualNextPc) {
+                    /*
+                     * pc has changed, which can happen if a context is restarted (e.g. as part of
+                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
+                     * the Graal compiler.
+                     */
+                    CompilerDirectives.transferToInterpreter();
+                    pc = actualNextPc;
+                }
+                continue bytecode_loop;
             } else if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                 if (jumpNode.executeCondition(frame)) {
@@ -219,10 +234,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop;
             } else {
+                /* All other bytecode nodes. */
                 pc = node.getSuccessorIndex();
-                if (node instanceof AbstractSendNode) {
-                    FrameAccess.setInstructionPointer(frame, code, pc);
-                }
                 node.executeVoid(frame);
                 continue bytecode_loop;
             }
@@ -243,7 +256,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     }
 
     /*
-     * Non-optimized version of startBytecode which is used to resume contexts.
+     * Non-optimized version of startBytecode used to resume contexts.
      */
     private Object resumeBytecode(final VirtualFrame frame, final long initialPC) {
         assert initialPC > 0 : "Trying to resume a fresh/terminated/illegal context";
@@ -251,7 +264,22 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         Object returnValue = null;
         bytecode_loop_slow: while (pc != LOCAL_RETURN_PC) {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
-            if (node instanceof ConditionalJumpNode) {
+            if (node instanceof AbstractSendNode) {
+                pc = node.getSuccessorIndex();
+                FrameAccess.setInstructionPointer(frame, code, pc);
+                node.executeVoid(frame);
+                final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
+                if (pc != actualNextPc) {
+                    /*
+                     * pc has changed, which can happen if a context is restarted (e.g. as part of
+                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
+                     * the Graal compiler.
+                     */
+                    CompilerDirectives.transferToInterpreter();
+                    pc = actualNextPc;
+                }
+                continue bytecode_loop_slow;
+            } else if (node instanceof ConditionalJumpNode) {
                 final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                 if (jumpNode.executeCondition(frame)) {
                     pc = jumpNode.getJumpSuccessorIndex();
@@ -273,10 +301,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop_slow;
             } else {
+                /* All other bytecode nodes. */
                 final int successor = node.getSuccessorIndex();
-                if (node instanceof AbstractSendNode) {
-                    FrameAccess.setInstructionPointer(frame, code, successor);
-                }
                 node.executeVoid(frame);
                 pc = successor;
                 continue bytecode_loop_slow;
