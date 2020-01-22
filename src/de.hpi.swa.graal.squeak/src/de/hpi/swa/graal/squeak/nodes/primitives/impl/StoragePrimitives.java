@@ -145,8 +145,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     if (frameSlot == null) {
                         return null; // Stop here, slot has not (yet) been created.
                     }
-                    final FrameSlotKind frameSlotKind = frameDescriptor.getFrameSlotKind(frameSlot);
-                    if (frameSlotKind == FrameSlotKind.Object) {
+                    if (current.isObject(frameSlot)) {
                         final Object stackObject = FrameUtil.getObjectSafe(current, frameSlot);
                         if (stackObject == null) {
                             return null;
@@ -162,7 +161,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                                 pointersBecomeNode.execute(stackObject, fromPointers, toPointers, copyHash);
                             }
                         }
-                    } else if (frameSlotKind == FrameSlotKind.Illegal) {
+                    } else if (frameDescriptor.getFrameSlotKind(frameSlot) == FrameSlotKind.Illegal) {
                         /** this slot and all following ones are not initialized, done. */
                         return null;
                     }

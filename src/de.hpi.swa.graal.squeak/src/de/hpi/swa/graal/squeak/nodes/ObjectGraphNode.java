@@ -142,14 +142,13 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                     if (slot == null) {
                         return null; // Stop here, slot has not (yet) been created.
                     }
-                    final FrameSlotKind currentSlotKind = frameDescriptor.getFrameSlotKind(slot);
-                    if (currentSlotKind == FrameSlotKind.Object) {
+                    if (current.isObject(slot)) {
                         final Object stackObject = FrameUtil.getObjectSafe(current, slot);
                         if (stackObject == null) {
                             return null;
                         }
                         addIfUnmarked(stackObject);
-                    } else if (currentSlotKind == FrameSlotKind.Illegal) {
+                    } else if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
                         return null; // Stop here, because this slot and all following are not used.
                     }
                 }

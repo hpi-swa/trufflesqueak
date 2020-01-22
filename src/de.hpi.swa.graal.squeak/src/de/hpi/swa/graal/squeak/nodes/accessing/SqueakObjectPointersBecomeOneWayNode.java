@@ -185,8 +185,7 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
                 if (slot == null) {
                     break; // Stop here, slot has not (yet) been created.
                 }
-                final FrameSlotKind currentSlotKind = frameDescriptor.getFrameSlotKind(slot);
-                if (currentSlotKind == FrameSlotKind.Object) {
+                if (truffleFrame.isObject(slot)) {
                     final Object newPointer = FrameUtil.getObjectSafe(truffleFrame, slot);
                     if (newPointer == null) {
                         break;
@@ -195,7 +194,7 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
                         writeNode.execute(obj, j + CONTEXT.TEMP_FRAME_START, toPointer);
                         updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                     }
-                } else if (currentSlotKind == FrameSlotKind.Illegal) {
+                } else if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
                     break; // Stop here, because this slot and all following are not used.
                 }
             }
