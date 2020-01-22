@@ -82,8 +82,16 @@ public final class SqueakImageChunk {
                 object = new EmptyObject(image, hash, squeakClass);
             } else if (format == 1) { // fixed pointers
                 // classes should already be instantiated at this point, check a bit
-                assert squeakClass != image.metaClass && squeakClass.getSqueakClass() != image.metaClass && !squeakClass.instancesAreClasses();
-                object = new PointersObject(image, hash, squeakClass);
+                assert squeakClass != image.metaClass && squeakClass.getSqueakClass() != image.metaClass;
+                if (squeakClass.instancesAreClasses()) {
+                    /*
+                     * In rare cases, there are still some classes that are not in the class table
+                     * for some reason (e.g. not completely removed from the system yet).
+                     */
+                    object = new ClassObject(image, hash, squeakClass);
+                } else {
+                    object = new PointersObject(image, hash, squeakClass);
+                }
             } else if (format == 2) { // indexable fields
                 object = new ArrayObject(image, hash, squeakClass);
             } else if (format == 3) { // fixed and indexable fields
