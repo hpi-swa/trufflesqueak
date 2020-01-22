@@ -38,7 +38,7 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.STACK_DEPTH_PROTECTION, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.STACK_DEPTH_PROTECTION_HELP)//
     public static final OptionKey<Boolean> StackDepthProtection = new OptionKey<>(false);
 
-    @Option(name = SqueakLanguageOptions.TESTING, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.TESTING_HELP)//
+    @Option(name = SqueakLanguageOptions.TESTING, category = OptionCategory.INTERNAL, stability = OptionStability.STABLE, help = SqueakLanguageOptions.TESTING_HELP)//
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
 
     private SqueakOptions() { // no instances
