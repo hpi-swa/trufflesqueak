@@ -22,7 +22,6 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushConstantNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
-import de.hpi.swa.graal.squeak.util.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
@@ -55,10 +54,10 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                     "26 <80 1F> pushRcvr: 31",
                     "27 <81 1F> storeIntoRcvr: 31",
                     "28 <82 1F> popIntoRcvr: 31",
-                    "29 <83 20> send: someSelector",
-                    "30 <84 1F 01> send: someOtherSelector",
-                    "31 <85 20> sendSuper: someSelector",
-                    "32 <86 01> send: someOtherSelector",
+                    "29 <83 20> send: 'someSelector'",
+                    "30 <84 1F 01> send: 'someOtherSelector'",
+                    "31 <85 20> sendSuper: 'someSelector'",
+                    "32 <86 01> send: 'someOtherSelector'",
                     "33 <87> pop",
                     "34 <88> dup",
                     "35 <89> pushThisContext:",
@@ -106,9 +105,9 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                     "77 <CD> send: new:",
                     "78 <CE> send: x",
                     "79 <CF> send: y",
-                    "80 <D0> send: someSelector",
-                    "81 <E1> send: someOtherSelector",
-                    "82 <F0> send: someSelector");
+                    "80 <D0> send: 'someSelector'",
+                    "81 <E1> send: 'someOtherSelector'",
+                    "82 <F0> send: 'someSelector'");
 
     @Test
     public void testIfNil() {
@@ -141,7 +140,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                                                                                                      // with
         // numTemp=55
         final CompiledCodeObject code = makeMethod(literals, 0x70, 0x68, 0x10, 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, 0xC9, 0x7C);
-        final CharSequence source = CompiledCodeObjectPrinter.getString(code);
+        final CharSequence source = SqueakBytecodeDecoder.decodeToString(code);
         assertEquals(String.join("\n",
                         "1 <70> self",
                         "2 <68> popIntoTemp: 0",
@@ -185,7 +184,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                         176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
                         189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201,
                         202, 203, 204, 205, 206, 207, 208, 225, 240);
-        final CharSequence source = CompiledCodeObjectPrinter.getString(code);
+        final CharSequence source = SqueakBytecodeDecoder.decodeToString(code);
         assertEquals(ALL_BYTECODES_EXPECTED_RESULT, source);
     }
 

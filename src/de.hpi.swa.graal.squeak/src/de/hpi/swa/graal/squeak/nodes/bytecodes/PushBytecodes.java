@@ -72,6 +72,8 @@ public final class PushBytecodes {
 
     @GenerateWrapper
     public static class PushClosureNode extends AbstractBytecodeNode implements InstrumentableNode {
+        public static final int NUM_BYTECODES = 4;
+
         private final int blockSize;
         private final int numArgs;
         private final int numCopied;
