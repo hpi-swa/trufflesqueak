@@ -91,7 +91,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "doLong")
         protected final Object doLongWithOverflow(final long lhs, final long rhs,
                         @Cached final BranchProfile overflowProfile) {
-            final long result = rhs - lhs;
+            final long result = lhs - rhs;
             // HD 2-12 Overflow iff the arguments have different signs and
             // the sign of the result is different than the sign of lhs
             if (((lhs ^ rhs) & (lhs ^ result)) < 0) {
