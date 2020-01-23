@@ -15,11 +15,11 @@ suite = {
 
     "version": "1.0.0-rc6",
     "graalsqueak:dependencyMap": {
-        "assets": "1.0.0-rc5",
+        "assets": "1.0.0-rc6",
         "graalvm": "19.3.0",
         "jdk8Update": "232",
         "jvmci": "jvmci-19.3-b05",
-        "testImage": "GraalSqueakTestImage-19230-64bit.zip",
+        "testImage": "GraalSqueakTestImage-19329-64bit.zip",
     },
 
     "release": False,

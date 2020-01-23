@@ -8,6 +8,8 @@ package de.hpi.swa.graal.squeak.test;
 import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +37,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2;
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
     private static final int PRIORITY_10_LIST_INDEX = 9;
-    private static final String PASSED_VALUE = "'passed'";
+    private static final String PASSED_VALUE = "passed";
+
+    protected static final String[] GRAALSQUEAK_TEST_CASE_NAMES = graalSqueakTestCaseNames();
 
     private static PointersObject idleProcess;
 
@@ -75,6 +79,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             // Patch TestCase>>#performTest, so errors are printed to stderr for debugging purposes.
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
+        image.getOutput().println("Image ready for testing...");
     }
 
     private static boolean runsOnMXGate() {
@@ -178,7 +183,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (!(result instanceof NativeObject) || !((NativeObject) result).isString()) {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
-        final String testResult = ((NativeObject) result).toString();
+        final String testResult = ((NativeObject) result).asStringUnsafe();
         if (PASSED_VALUE.equals(testResult)) {
             return TestResult.success(testResult);
         } else {
@@ -192,7 +197,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static String testCommand(final TestRequest request) {
-        return String.format("[[(%s selector: #%s) runCase. %s] on: TestFailure do: [:e | e asString ]] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack]",
+        return String.format("[[(%s selector: #%s) runCase. '%s'] on: TestFailure do: [:e | e asString ]] on: Error do: [:e | e asString, String crlf, e signalerContext shortStack]",
                         request.testCase, request.testSelector, PASSED_VALUE);
     }
 
@@ -249,5 +254,28 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         protected static TestResult success(final String message) {
             return new TestResult(true, message, null);
         }
+    }
+
+    private static String[] graalSqueakTestCaseNames() {
+        final File[] srcDirectories = new File(getPathToInImageCode()).listFiles(File::isDirectory);
+        final ArrayList<String> testCaseNames = new ArrayList<>();
+        for (final File subDirectory : srcDirectories) {
+            for (final File classDirectories : subDirectory.listFiles((FileFilter) pathname -> pathname.isDirectory() && pathname.getName().endsWith("Test.class"))) {
+                testCaseNames.add(classDirectories.getName().substring(0, classDirectories.getName().lastIndexOf(".class")));
+            }
+        }
+        return testCaseNames.toArray(new String[testCaseNames.size()]);
+    }
+
+    protected static final String getPathToInImageCode() {
+        File currentDirectory = new File(System.getProperty("user.dir"));
+        while (currentDirectory != null) {
+            final String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "src" + File.separator + "image" + File.separator + "src";
+            if (new File(pathToImage).isDirectory()) {
+                return pathToImage;
+            }
+            currentDirectory = currentDirectory.getParentFile();
+        }
+        return null;
     }
 }

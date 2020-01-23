@@ -67,6 +67,7 @@ public class SqueakConsistencyTest extends AbstractSqueakTestCaseWithImage {
 
         final Set<String> removed = new HashSet<>(categorizedTests);
         removed.removeAll(imageTests);
+        removeGraalSqueakTestCases(removed);
         printOrderedSelectors(removed);
         assertEquals("Tests no longer exist in the image", emptySet(), removed);
     }
@@ -82,6 +83,17 @@ public class SqueakConsistencyTest extends AbstractSqueakTestCaseWithImage {
 
     private static Set<String> collectTests() {
         return SqueakTests.allTests().map(SqueakTest::qualifiedName).collect(toSet());
+    }
+
+    private static void removeGraalSqueakTestCases(final Set<String> removed) {
+        removed.removeIf(s -> {
+            for (final String className : GRAALSQUEAK_TEST_CASE_NAMES) {
+                if (s.startsWith(className + ">>")) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     private static void printOrderedSelectors(final Collection<String> selectors) {
