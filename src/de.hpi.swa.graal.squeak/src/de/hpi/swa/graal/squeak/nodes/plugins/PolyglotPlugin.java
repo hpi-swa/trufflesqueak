@@ -190,7 +190,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
                 final String lang = mimeType ? findLanguageByMimeType(image.env, languageIdOrMimeType) : languageIdOrMimeType;
-                SourceBuilder newBuilder = Source.newBuilder(lang, image.env.getTruffleFile(pathString));
+                SourceBuilder newBuilder = Source.newBuilder(lang, image.env.getPublicTruffleFile(pathString));
                 if (mimeType) {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
@@ -241,7 +241,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             Files.write(Paths.get(cFile), foreignCode.getBytes());
             final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
             p.waitFor();
-            return Source.newBuilder("llvm", method.image.env.getTruffleFile(llvmFile)).build();
+            return Source.newBuilder("llvm", method.image.env.getPublicTruffleFile(llvmFile)).build();
         }
     }
 
@@ -1317,6 +1317,40 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
      * Exception objects
      */
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsException")
+    protected abstract static class PrimIsExceptionNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimIsExceptionNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final boolean doIsException(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isException(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveThrowException")
+    protected abstract static class PrimThrowExceptionNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        protected PrimThrowExceptionNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final Object doThrowException(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                throw lib.throwException(object);
+            } catch (final UnsupportedMessageException e) {
+                throw SqueakException.illegalState(e);
+            }
+        }
+    }
+
     /*
      * Java interop
      */
@@ -1334,7 +1368,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final BranchProfile errorProfile) {
             final String path = value.asStringUnsafe();
             try {
-                image.env.addToHostClassPath(image.env.getTruffleFile(path));
+                image.env.addToHostClassPath(image.env.getPublicTruffleFile(path));
                 return receiver;
             } catch (final SecurityException e) {
                 errorProfile.enter();

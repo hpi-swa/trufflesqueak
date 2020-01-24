@@ -90,7 +90,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final TruffleFile asPublicTruffleFile(final String obj) {
-            return method.image.env.getTruffleFile(obj);
+            return method.image.env.getPublicTruffleFile(obj);
         }
 
         protected static final boolean inBounds(final long startIndex, final long count, final int slotSize) {
@@ -234,7 +234,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final ArrayList<TruffleFile> fileList = new ArrayList<>();
             // TODO: avoid to use Path and FileSystems here.
             for (final Path path : FileSystems.getDefault().getRootDirectories()) {
-                fileList.add(method.image.env.getTruffleFile(path.toUri()));
+                fileList.add(method.image.env.getPublicTruffleFile(path.toUri()));
             }
             final TruffleFile[] files = fileList.toArray(new TruffleFile[fileList.size()]);
             final int index = (int) longIndex - 1;
