@@ -60,6 +60,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -973,7 +974,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         protected final String[] getExternalModuleNames() {
             if (externalModuleNames == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                externalModuleNames = method.image.primitiveNodeFactory.getPluginNames();
+                externalModuleNames = PrimitiveNodeFactory.getPluginNames();
                 Arrays.sort(externalModuleNames);
             }
             return externalModuleNames;

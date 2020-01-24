@@ -14,10 +14,8 @@ import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -70,12 +68,11 @@ public final class PrimitiveNodeFactory {
     @CompilationFinal(dimensions = 1) private static final byte[] NULL_MODULE_NAME = NullPlugin.class.getSimpleName().getBytes();
 
     // Using an array instead of a HashMap requires type-checking to be disabled here.
-    @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
+    @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] PRIMITIVE_TABLE = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
 
-    private final EconomicMap<String, UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>>> pluginsMap = EconomicMap.create();
+    private static final EconomicMap<String, UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>>> PLUGIN_MAP = EconomicMap.create();
 
-    @TruffleBoundary
-    public void initialize(final SqueakImageContext image) {
+    static {
         final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
                         new ArithmeticPrimitives(),
                         new ArrayStreamPrimitives(),
@@ -115,10 +112,13 @@ public final class PrimitiveNodeFactory {
                         new ZipPlugin(),
                         OSDetector.SINGLETON.isWindows() ? new Win32OSProcessPlugin() : new UnixOSProcessPlugin()};
         fillPrimitiveTable(plugins);
-        fillPluginMap(image, plugins);
+        fillPluginMap(plugins);
     }
 
-    public AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final int primitiveIndex) {
+    private PrimitiveNodeFactory() {
+    }
+
+    public static AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final int primitiveIndex) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         assert primitiveIndex >= 0 : "Unexpected negative primitiveIndex";
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
@@ -126,7 +126,7 @@ public final class PrimitiveNodeFactory {
         } else if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
             return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(method, primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX, new AbstractArgumentNode[]{new ArgumentNode(0)});
         } else if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
-            final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable[primitiveIndex - 1];
+            final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PRIMITIVE_TABLE[primitiveIndex - 1];
             if (nodeFactory != null) {
                 return createInstance(method, nodeFactory);
             }
@@ -134,7 +134,7 @@ public final class PrimitiveNodeFactory {
         return null;
     }
 
-    public AbstractPrimitiveNode namedFor(final CompiledMethodObject method) {
+    public static AbstractPrimitiveNode namedFor(final CompiledMethodObject method) {
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
         if (values[1] == NilObject.SINGLETON) {
             return null;
@@ -148,9 +148,9 @@ public final class PrimitiveNodeFactory {
         }
     }
 
-    private AbstractPrimitiveNode forName(final CompiledMethodObject method, final byte[] moduleName, final byte[] functionName) {
+    private static AbstractPrimitiveNode forName(final CompiledMethodObject method, final byte[] moduleName, final byte[] functionName) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
-        final UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = pluginsMap.get(new String(moduleName));
+        final UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = PLUGIN_MAP.get(new String(moduleName));
         if (functionNameToNodeFactory != null) {
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = functionNameToNodeFactory.get(new String(functionName));
             if (nodeFactory != null) {
@@ -160,9 +160,9 @@ public final class PrimitiveNodeFactory {
         return null;
     }
 
-    public String[] getPluginNames() {
+    public static String[] getPluginNames() {
         final Set<String> target = new HashSet<>();
-        for (final String key : pluginsMap.getKeys()) {
+        for (final String key : PLUGIN_MAP.getKeys()) {
             target.add(key);
         }
         return target.toArray(new String[target.size()]);
@@ -179,7 +179,7 @@ public final class PrimitiveNodeFactory {
         return primitiveNode;
     }
 
-    private void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {
+    private static void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {
         for (final AbstractPrimitiveFactoryHolder primitiveFactory : primitiveFactories) {
             final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = primitiveFactory.getFactories();
             for (final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
@@ -195,7 +195,7 @@ public final class PrimitiveNodeFactory {
         }
     }
 
-    private void fillPluginMap(final SqueakImageContext image, final AbstractPrimitiveFactoryHolder[] plugins) {
+    private static void fillPluginMap(final AbstractPrimitiveFactoryHolder[] plugins) {
         for (final AbstractPrimitiveFactoryHolder plugin : plugins) {
             final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = plugin.getFactories();
             final EconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = EconomicMap.create(nodeFactories.size());
@@ -208,13 +208,13 @@ public final class PrimitiveNodeFactory {
                 }
             }
             final String pluginName = plugin.getClass().getSimpleName();
-            pluginsMap.put(pluginName, EconomicMap.create(functionNameToNodeFactory));
+            PLUGIN_MAP.put(pluginName, EconomicMap.create(functionNameToNodeFactory));
         }
     }
 
-    private void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
+    private static void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
         assert index <= MAX_PRIMITIVE_INDEX : "primitive table array not large enough";
-        assert primitiveTable[index - 1] == null : "primitives are not allowed to override others (#" + index + ")";
-        primitiveTable[index - 1] = nodeFactory;
+        assert PRIMITIVE_TABLE[index - 1] == null : "primitives are not allowed to override others (#" + index + ")";
+        PRIMITIVE_TABLE[index - 1] = nodeFactory;
     }
 }

@@ -523,7 +523,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * acceptable because primitive is mostly used for debugging anyway.
              */
             final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, receiver);
-            final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.forIndex(method, (int) primitiveIndex);
+            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(method, (int) primitiveIndex);
             if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
@@ -842,7 +842,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
              * acceptable because primitive is mostly used for debugging anyway.
              */
-            final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.namedFor(methodObject);
+            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.namedFor(methodObject);
             final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, target);
             return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
         }

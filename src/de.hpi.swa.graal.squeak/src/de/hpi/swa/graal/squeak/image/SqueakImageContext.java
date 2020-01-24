@@ -64,7 +64,6 @@ import de.hpi.swa.graal.squeak.nodes.plugins.JPEGReader;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
 import de.hpi.swa.graal.squeak.nodes.plugins.Zip;
 import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -123,7 +122,6 @@ public final class SqueakImageContext {
     private long globalClassCounter = -1;
     @CompilationFinal private SqueakDisplayInterface display;
     public final InterruptHandlerState interrupt;
-    public final PrimitiveNodeFactory primitiveNodeFactory = new PrimitiveNodeFactory();
     public final long startUpMillis = System.currentTimeMillis();
     public final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
 
@@ -388,7 +386,6 @@ public final class SqueakImageContext {
     }
 
     public void initializeAfterLoadingImage(final ArrayObject theHiddenRoots) {
-        primitiveNodeFactory.initialize(this);
         assert hiddenRoots == null;
         hiddenRoots = theHiddenRoots;
     }
