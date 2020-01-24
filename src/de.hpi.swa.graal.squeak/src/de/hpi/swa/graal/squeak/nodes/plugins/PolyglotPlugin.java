@@ -832,18 +832,18 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetMembers")
-    protected abstract static class PrimGetMembersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimGetMembersNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimGetMembersNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"lib.hasMembers(object)"}, limit = "2")
-        protected final ArrayObject doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object,
+        protected final ArrayObject doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object, final boolean includeInternal,
                         @CachedLibrary("object") final InteropLibrary lib,
                         @CachedLibrary(limit = "2") final InteropLibrary membersLib,
                         @CachedLibrary(limit = "2") final InteropLibrary memberNameLib) {
             try {
-                final Object members = lib.getMembers(object, true);
+                final Object members = lib.getMembers(object, includeInternal);
                 final int size = (int) membersLib.getArraySize(members);
                 final Object[] byteStrings = new Object[size];
                 for (int i = 0; i < size; i++) {
@@ -859,17 +859,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetMemberSize")
-    protected abstract static class PrimGetMemberSizeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimGetMemberSizeNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimGetMemberSizeNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"lib.hasMembers(object)"}, limit = "2")
-        protected static final Object doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object,
+        protected static final Object doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object, final boolean includeInternal,
                         @CachedLibrary("object") final InteropLibrary lib,
                         @CachedLibrary(limit = "2") final InteropLibrary sizeLib) {
             try {
-                return sizeLib.getArraySize(lib.getMembers(object, true));
+                return sizeLib.getArraySize(lib.getMembers(object, includeInternal));
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }
