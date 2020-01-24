@@ -8,6 +8,7 @@
 		"testJavaBasic" : "fn 11/11/2019 22:20",
 		"testJavaDuration" : "fn 12/12/2019 23:15",
 		"testJavaException" : "fn 12/12/2019 23:15",
+		"testJavaInetAddress" : "fn 1/24/2020 17:14",
 		"testJavaInstant" : "fn 12/12/2019 23:15",
 		"testJavaLocalDate" : "fn 12/12/2019 23:15",
 		"testJavaLocalTime" : "fn 12/12/2019 23:15",
