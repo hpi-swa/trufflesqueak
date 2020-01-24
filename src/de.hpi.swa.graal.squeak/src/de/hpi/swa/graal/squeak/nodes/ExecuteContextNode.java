@@ -232,6 +232,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 node.executeVoid(frame);
                 final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
                 if (pc != actualNextPc) {
+                    /*
+                     * pc has changed, which can happen if a context is restarted (e.g. as part of
+                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
+                     * the Graal compiler.
+                     */
                     CompilerDirectives.transferToInterpreter();
                     pc = actualNextPc;
                 }
@@ -350,6 +355,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 node.executeVoid(frame);
                 final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
                 if (pc != actualNextPc) {
+                    /*
+                     * pc has changed, which can happen if a context is restarted (e.g. as part of
+                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
+                     * the Graal compiler.
+                     */
                     CompilerDirectives.transferToInterpreter();
                     pc = actualNextPc;
                 }
