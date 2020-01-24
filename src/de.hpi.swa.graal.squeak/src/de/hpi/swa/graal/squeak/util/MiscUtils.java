@@ -66,7 +66,7 @@ public final class MiscUtils {
     public static long getCollectionCount() {
         long totalCollectionCount = 0;
         for (final GarbageCollectorMXBean gcBean : GC_BEANS) {
-            totalCollectionCount += Math.min(gcBean.getCollectionCount(), 0);
+            totalCollectionCount += Math.max(gcBean.getCollectionCount(), 0);
         }
         return totalCollectionCount;
     }
@@ -75,7 +75,7 @@ public final class MiscUtils {
     public static long getCollectionTime() {
         long totalCollectionTime = 0;
         for (final GarbageCollectorMXBean gcBean : GC_BEANS) {
-            totalCollectionTime += Math.min(gcBean.getCollectionTime(), 0);
+            totalCollectionTime += Math.max(gcBean.getCollectionTime(), 0);
         }
         return totalCollectionTime;
     }
