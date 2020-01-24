@@ -5,11 +5,14 @@
  */
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
+import java.lang.management.GarbageCollectorMXBean;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.logging.Level;
+
+import javax.management.JMException;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -24,6 +27,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.sun.management.DiagnosticCommandMBean;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
@@ -79,6 +83,7 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.NotProvided;
+import sun.management.ManagementFactoryHelper;
 
 public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ControlPrimitives.class);
@@ -583,16 +588,76 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         /**
-         * {@link System#gc()} does not force a garbage collect, but it can be called until a new
-         * object has been GC'ed (Source: https://git.io/fjED4).
+         * {@link System#gc()} does not force a garbage collect, but the diagnostics command
+         * "gcClassHistogram" does.
          */
         @TruffleBoundary
         public static void forceFullGC() {
-            Object obj = new Object();
-            final WeakReference<?> ref = new WeakReference<>(obj);
-            obj = null;
-            while (ref.get() != null) {
-                System.gc();
+            LOG.fine("Performing full GC (primitive 130)");
+
+            final DiagnosticCommandMBean dcmd = ManagementFactoryHelper.getDiagnosticCommandMBean();
+            final IdentityHashMap<GarbageCollectorMXBean, Long> enabledBeansCounts = new IdentityHashMap<>();
+            final IdentityHashMap<GarbageCollectorMXBean, Long> enabledBeansTimes = new IdentityHashMap<>();
+            for (final GarbageCollectorMXBean bean : ManagementFactoryHelper.getGarbageCollectorMXBeans()) {
+                final long count = bean.getCollectionCount();
+                if (count != -1) {
+                    enabledBeansCounts.put(bean, count);
+                    final long accumulatedCollectionTime = bean.getCollectionTime();
+                    if (accumulatedCollectionTime != -1) {
+                        enabledBeansTimes.put(bean, accumulatedCollectionTime);
+                    }
+                }
+            }
+            long elapsed = 0;
+            final long start = System.nanoTime();
+            try {
+                dcmd.invoke("gcClassHistogram", new Object[]{new String[]{}}, new String[]{"[Ljava.lang.String;"});
+                elapsed = System.nanoTime() - start;
+            } catch (final JMException e) {
+                e.printStackTrace();
+            }
+            assert elapsed > 0;
+            for (final GarbageCollectorMXBean bean : ManagementFactoryHelper.getGarbageCollectorMXBeans()) {
+                final long count = bean.getCollectionCount();
+                if (count != -1) {
+                    long previousCount = 0;
+                    if (enabledBeansCounts.containsKey(bean)) {
+                        previousCount = enabledBeansCounts.get(bean);
+                    }
+                    assert count > previousCount;
+                    final StringBuilder b = new StringBuilder("Memory manager ");
+                    b.append(bean.getName());
+                    b.append(" has performed ");
+                    b.append(count - previousCount);
+                    b.append(" garbage collection");
+                    if (count - previousCount > 1) {
+                        b.append("s");
+                    }
+                    final long accumulatedCollectionTime = bean.getCollectionTime();
+                    if (accumulatedCollectionTime != -1) {
+                        long previousAccumulatedCollectionTime = 0;
+                        if (enabledBeansTimes.containsKey(bean)) {
+                            previousAccumulatedCollectionTime = enabledBeansTimes.get(bean);
+                        }
+                        assert accumulatedCollectionTime > previousAccumulatedCollectionTime;
+                        b.append(" in ");
+                        b.append(accumulatedCollectionTime - previousAccumulatedCollectionTime);
+                        b.append("ms (out of ");
+                        b.append(elapsed / 1000000);
+                        b.append(")");
+                    }
+                    final String[] names = bean.getMemoryPoolNames();
+                    if (names.length > 0) {
+                        b.append(" for pools [");
+                        b.append(names[0]);
+                        for (int i = 1; i < names.length; i++) {
+                            b.append(", ");
+                            b.append(names[i]);
+                        }
+                        b.append("]");
+                    }
+                    LOG.fine(b.toString());
+                }
             }
         }
 
@@ -605,8 +670,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 count++;
                 element = queue.poll();
             }
-            if (isLoggingEnabled) {
-                LOG.log(Level.FINE, "Number of garbage collected WeakPointersObjects", count);
+            if (isLoggingEnabled && count > 0) {
+                LOG.log(Level.FINE, "Number of garbage collected WeakPointersObject referents: " + count);
             }
             return count > 0;
         }
