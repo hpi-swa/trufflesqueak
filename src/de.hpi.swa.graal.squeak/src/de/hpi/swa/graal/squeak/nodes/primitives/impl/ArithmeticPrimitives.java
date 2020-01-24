@@ -47,13 +47,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
-            return Math.addExact(lhs, rhs);
-        }
-
-        @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs,
+        @Specialization
+        protected final Object doLong(final long lhs, final long rhs,
                         @Cached final BranchProfile overflowProfile) {
             final long result = rhs + lhs;
             // HD 2-12 Overflow iff both arguments have the opposite sign of the result
@@ -83,13 +78,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
-            return Math.subtractExact(lhs, rhs);
-        }
-
-        @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs,
+        @Specialization
+        protected final Object doLong(final long lhs, final long rhs,
                         @Cached final BranchProfile overflowProfile) {
             final long result = lhs - rhs;
             // HD 2-12 Overflow iff the arguments have different signs and
@@ -282,13 +272,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
-            return Math.multiplyExact(lhs, rhs);
-        }
-
-        @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs,
+        @Specialization
+        protected final Object doLong(final long lhs, final long rhs,
                         @Cached final BranchProfile possibleOverflowProfile,
                         @Cached final BranchProfile overflowProfile) {
             final long result = lhs * rhs;
@@ -559,16 +544,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
-                        @Cached final BranchProfile zeroProfile,
-                        @Cached final BranchProfile nonZeroProfile) {
-            if (rhs == 0) {
-                zeroProfile.enter();
-                return lhs.reduceIfPossible();
-            } else {
-                nonZeroProfile.enter();
-                return lhs.add(rhs);
-            }
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.add(rhs);
         }
 
         @Specialization
@@ -585,16 +562,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
-                        @Cached final BranchProfile zeroProfile,
-                        @Cached final BranchProfile nonZeroProfile) {
-            if (rhs == 0) {
-                zeroProfile.enter();
-                return lhs.reduceIfPossible();
-            } else {
-                nonZeroProfile.enter();
-                return lhs.subtract(rhs);
-            }
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.subtract(rhs);
         }
 
         @Specialization
@@ -733,16 +702,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs,
-                        @Cached final BranchProfile zeroProfile,
-                        @Cached final BranchProfile nonZeroProfile) {
-            if (rhs == 0 || lhs.isZero()) {
-                zeroProfile.enter();
-                return 0L;
-            } else {
-                nonZeroProfile.enter();
-                return lhs.multiply(rhs);
-            }
+        protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
+            return lhs.multiply(rhs);
         }
 
         @Specialization

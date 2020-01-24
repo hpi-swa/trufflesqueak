@@ -439,7 +439,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
+        @Specialization
         protected final ArrayObject doLong(final long rcvr, final long arg, final boolean negative) {
             long divide = rcvr / arg;
             if (negative && divide >= 0 || !negative && divide < 0) {
