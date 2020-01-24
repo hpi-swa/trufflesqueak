@@ -51,8 +51,6 @@ setupTestImage
 	(Smalltalk at: #BitBltSimulation) compile: 'assert: aBlock "disable #assert:"'.
 	(Smalltalk at: #ThisOSProcess) class compile: 'startUp: resuming "disable #startUp:"'.
 
-	ForeignObject ensureInitialized.
-
 	"The DecompilerTests use this in MethodNode>>printPrimitiveOn:"
 	(Smalltalk at: #StackInterpreter) initializePrimitiveTable.
 

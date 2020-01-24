@@ -1,10 +1,9 @@
 {
 	"class" : {
-		"ensureInitialized" : "fn 5/25/2019 18:49",
-		"initialize" : "fn 5/25/2019 18:42",
 		"new" : "fn 4/13/2019 13:39",
 		"new:" : "fn 4/13/2019 13:40",
-		"specialObjectsArrayIndex" : "fn 5/25/2019 18:42" },
+		"primitiveRegisterForeignObjectClass" : "fn 1/5/2020 17:27",
+		"register" : "fn 1/5/2020 17:27" },
 	"instance" : {
 		"*" : "fn 8/2/2019 08:58",
 		"+" : "fn 8/2/2019 08:58",
@@ -44,10 +43,6 @@
 		"explorerContents" : "fn 11/11/2019 22:14",
 		"hasContentsInExplorer" : "fn 4/13/2019 22:50",
 		"hash" : "fn 11/11/2019 22:13",
-		"ifNil:" : "fn 11/11/2019 19:51",
-		"ifNil:ifNotNil:" : "fn 11/11/2019 19:51",
-		"ifNotNil:" : "fn 11/11/2019 19:51",
-		"ifNotNil:ifNil:" : "fn 11/11/2019 19:51",
 		"inspectorClass" : "fn 4/13/2019 23:52",
 		"instSize" : "fn 11/11/2019 22:12",
 		"instVarAt:" : "fn 11/21/2018 23:37",

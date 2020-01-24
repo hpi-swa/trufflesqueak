@@ -1,4 +1,4 @@
 system startup
 startUp: resuming
-	self primitiveIsPolyglotBindingsAccessAllowed
-		ifTrue: [ self export: 'bindings' value: Polyglot bindings ]
+	resuming ifFalse: [ ^ self ].
+	self setUpPolyglotEnvironment

@@ -1,3 +1,4 @@
 class initialization
 initialize
-	Smalltalk addToStartUpList: self
+	Smalltalk addToStartUpList: self.
+	self setUpPolyglotEnvironment

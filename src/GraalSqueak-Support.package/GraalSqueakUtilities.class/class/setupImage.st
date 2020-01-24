@@ -1,8 +1,5 @@
 image creation
 setupImage
-	"Install ForeignObject"
-	ForeignObject ensureInitialized.
-
 	"Install polyglot tools"
 	PolyglotToolSet register.
 
