@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.model;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -15,10 +16,9 @@ import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.WeakVariablePointersObjectWriteNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
-import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class WeakVariablePointersObject extends AbstractPointersObject {
     private static final WeakReference<?> NIL_REFERENCE = new WeakReference<>(NilObject.SINGLETON);
@@ -41,7 +41,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        final WeakVariablePointersObjectWriteNode writeNode = WeakVariablePointersObjectWriteNode.getUncached();
+        final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
         final Object[] pointersObject = chunk.getPointers();
         initializeLayoutAndExtensionsUnsafe();
         final int instSize = getSqueakClass().getBasicInstanceSize();
@@ -50,7 +50,12 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         }
         variablePart = new WeakReference<?>[pointersObject.length - instSize];
         for (int i = instSize; i < pointersObject.length; i++) {
-            variablePart[i - instSize] = new WeakReference<>(pointersObject[i], image.weakPointersQueue);
+            final Object value = pointersObject[i];
+            if (value instanceof Double || value instanceof Long || value instanceof Character || value == NilObject.SINGLETON) {
+                variablePart[i - instSize] = new WeakReference<>(value);
+            } else {
+                variablePart[i - instSize] = new WeakReference<>(value, image.weakPointersQueue);
+            }
         }
         assert size() == pointersObject.length;
     }
@@ -93,15 +98,19 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     public Object getFromVariablePart(final int index) {
-        return NilObject.nullToNil(UnsafeUtils.getWeakReference(variablePart, index).get());
+        return NilObject.nullToNil(variablePart[index].get());
     }
 
     public Object getFromVariablePart(final int index, final ConditionProfile nilProfile) {
-        return NilObject.nullToNil(UnsafeUtils.getWeakReference(variablePart, index).get(), nilProfile);
+        return NilObject.nullToNil(variablePart[index].get(), nilProfile);
     }
 
     public void putIntoVariablePart(final int index, final Object value) {
-        UnsafeUtils.putWeakReference(variablePart, index, new WeakReference<>(value, image.weakPointersQueue));
+        if (value instanceof Double || value instanceof Long || value instanceof Character || value == NilObject.SINGLETON) {
+            variablePart[index] = new WeakReference<>(value);
+        } else {
+            variablePart[index] = new WeakReference<>(value, image.weakPointersQueue);
+        }
     }
 
     public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final ConditionProfile isPrimitiveProfile, final Object thang) {
@@ -138,4 +147,23 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        String prefix = "";
+        if (variablePart.length > 0) {
+            final Object referent = variablePart[0].get();
+            prefix = "[" + referent;
+            if (variablePart[0].isEnqueued()) {
+                prefix += " (marked as garbage)";
+            }
+            if (variablePart.length > 1) {
+                prefix += "...";
+            }
+            prefix += "]";
+        }
+        return prefix + " a " + getSqueakClassName() + " @" + Integer.toHexString(hashCode()) + " of size " + variablePart.length;
+    }
+
 }
