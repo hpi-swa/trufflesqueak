@@ -37,7 +37,6 @@ import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -123,20 +122,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 }
 
                 final CompiledCodeObject blockOrMethod = arguments[2] != null ? ((BlockClosureObject) arguments[2]).getCompiledBlock() : (CompiledMethodObject) arguments[0];
-                final ContextObject context = (ContextObject) FrameUtil.getObjectSafe(current, blockOrMethod.getThisContextSlot());
-                if (context != null) {
-                    for (int j = 0; j < fromPointersLength; j++) {
-                        final Object fromPointer = fromPointers[j];
-                        if (context == fromPointer) {
-                            final Object toPointer = toPointers[j];
-                            FrameAccess.setContext(current, blockOrMethod, (ContextObject) toPointer);
-                            updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
-                        } else {
-                            pointersBecomeNode.execute(context, fromPointers, toPointers, copyHash);
-                        }
-                    }
-                }
-
                 final int stackp = FrameUtil.getIntSafe(current, blockOrMethod.getStackPointerSlot());
                 final FrameSlot[] stackSlots = blockOrMethod.getStackSlotsUnsafe();
                 final FrameDescriptor frameDescriptor = blockOrMethod.getFrameDescriptor();
@@ -146,7 +131,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         return null; // Stop here, slot has not (yet) been created.
                     }
                     if (current.isObject(frameSlot)) {
-                        final Object stackObject = FrameUtil.getObjectSafe(current, frameSlot);
+                        final Object stackObject = current.getValue(frameSlot);
                         if (stackObject == null) {
                             return null;
                         }

@@ -75,7 +75,7 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
             frame.setObject(getSlot(), value);
             return value;
         } else {
-            return NilObject.nullToNil(FrameUtil.getObjectSafe(frame, getSlot()));
+            return NilObject.nullToNil(frame.getValue(getSlot()));
         }
     }
 
@@ -93,7 +93,7 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
             CompilerDirectives.transferToInterpreter();
             value = frame.getValue(getSlot());
         } else {
-            value = FrameUtil.getObjectSafe(frame, getSlot());
+            value = frame.getValue(getSlot());
             assert value != null : "Unexpected `null` value";
         }
         frame.setObject(getSlot(), null);
