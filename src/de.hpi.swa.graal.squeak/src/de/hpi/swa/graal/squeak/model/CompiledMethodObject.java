@@ -147,18 +147,18 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         CompilerAsserts.neverPartOfCompilation();
         final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
         if (hasMethodClass(readNode)) {
-            return getMethodClass(readNode);
+            return (ClassObject) getMethodClass(readNode);
         }
         return null;
     }
 
     /** CompiledMethod>>#methodClass. */
-    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
-        return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
+    public AbstractSqueakObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
+        return (AbstractSqueakObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
     }
 
     /** CompiledMethod>>#methodClass:. */
-    public void setMethodClass(final AbstractPointersObjectWriteNode writeNode, final ClassObject newClass) {
+    public void setMethodClass(final AbstractPointersObjectWriteNode writeNode, final AbstractSqueakObject newClass) {
         writeNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE, newClass);
     }
 

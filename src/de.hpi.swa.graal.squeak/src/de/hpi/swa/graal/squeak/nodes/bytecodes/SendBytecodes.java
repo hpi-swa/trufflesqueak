@@ -151,7 +151,7 @@ public final class SendBytecodes {
 
         @Override
         protected ClassObject executeLookup(final Object receiver) {
-            final ClassObject methodClass = method.getMethodClass(readNode);
+            final ClassObject methodClass = (ClassObject) method.getMethodClass(readNode);
             final ClassObject superclass = methodClass.getSuperclassOrNull();
             return hasSuperclassProfile.profile(superclass == null) ? methodClass : superclass;
         }
