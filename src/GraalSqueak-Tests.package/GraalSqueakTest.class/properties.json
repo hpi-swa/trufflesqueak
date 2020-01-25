@@ -1,0 +1,14 @@
+{
+	"category" : "GraalSqueak-Tests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "GraalSqueakTest",
+	"pools" : [
+		 ],
+	"super" : "TestCase",
+	"type" : "normal" }
