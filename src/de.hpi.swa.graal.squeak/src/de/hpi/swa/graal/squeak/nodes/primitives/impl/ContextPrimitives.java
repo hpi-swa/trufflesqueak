@@ -95,10 +95,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
              * Terminate all the Contexts between me and previousContext, if previousContext is on
              * my Context stack. Make previousContext my sender.
              */
-            final Object sender = FrameAccess.getSender(receiver.getOrCreateTruffleFrame());
-            if (sender == previousContext || sender == previousContext.getFrameMarker() || sender != NilObject.SINGLETON &&
-                            (sender instanceof FrameMarker ? FramesAndContextsIterator.Empty.scanFor((FrameMarker) sender, previousContext, previousContext) == previousContext
-                                            : FramesAndContextsIterator.Empty.scanFor((ContextObject) sender, previousContext, previousContext) == previousContext)) {
+            if (receiver.hasSender(previousContext)) {
                 terminatingIterator.scanFor(receiver, previousContext, NilObject.SINGLETON);
             }
             receiver.setSender(previousContext);
