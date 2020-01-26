@@ -13,7 +13,9 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -36,26 +38,23 @@ public class FramesAndContextsIterator {
     }
 
     public FramesAndContextsIterator(final BiPredicate<Boolean, CompiledCodeObject> frameFilter, final Predicate<ContextObject> contextFilter) {
-        this.frameFilter = frameFilter;
         this.contextFilter = contextFilter;
+        this.frameFilter = frameFilter;
     }
 
-    public FramesAndContextsIterator() {
+    private FramesAndContextsIterator() {
         super();
     }
 
     public AbstractSqueakObject scanFor(final ContextObject start, final AbstractSqueakObject end, final AbstractSqueakObject endReturnValue) {
-        if (isLoggingEnabled) {
-            LOG.fine(() -> "Inside FramesAndContextsIterator.scanFor with args: " + start + ", " + end);
-        }
         Object current = start.getFrameSender();
+        if (current == end) {
+            return endReturnValue;
+        }
+        if (current == NilObject.SINGLETON) {
+            return NilObject.SINGLETON;
+        }
         while (!(current instanceof FrameMarker)) {
-            if (current == end) {
-                return endReturnValue;
-            }
-            if (current == NilObject.SINGLETON) {
-                return NilObject.SINGLETON;
-            }
             final ContextObject currentContext = (ContextObject) current;
             if (contextFilter != null && contextFilter.test(currentContext)) {
                 return currentContext;
@@ -65,6 +64,12 @@ public class FramesAndContextsIterator {
                 contextVisitor.accept(currentContext);
             }
             current = sender;
+            if (current == end) {
+                return endReturnValue;
+            }
+            if (current == NilObject.SINGLETON) {
+                return NilObject.SINGLETON;
+            }
         }
         if (end instanceof ContextObject) {
             if (current != null && current == ((ContextObject) end).getFrameMarker()) {
@@ -83,12 +88,18 @@ public class FramesAndContextsIterator {
         final boolean[] foundMyself = {false};
         final ContextObject result = Truffle.getRuntime().iterateFrames((frameInstance) -> {
             final Frame currentFrame = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-            if (!FrameAccess.isGraalSqueakFrame(currentFrame)) {
+            final Object[] arguments = currentFrame.getArguments();
+            if (arguments.length < 3) {
                 return null;
             }
-            final CompiledCodeObject currentCode = FrameAccess.getBlockOrMethod(currentFrame);
-            FrameMarker currentMarker = null;
-            if (!foundMyself[0] && null != (currentMarker = FrameAccess.getMarker(currentFrame, currentCode)) && start == currentMarker) {
+            final Object maybeMethod = arguments[0];
+            if (!(maybeMethod instanceof CompiledMethodObject)) {
+                return null;
+            }
+            final BlockClosureObject closure = (BlockClosureObject) arguments[2];
+            final CompiledCodeObject currentCode = closure != null ? closure.getCompiledBlock() : (CompiledMethodObject) maybeMethod;
+            Object currentMarker = null;
+            if (!foundMyself[0] && null != (currentMarker = currentFrame.getValue(currentCode.getThisMarkerSlot())) && start == currentMarker) {
                 if (lastSender[0] instanceof FrameMarker) {
                     assert lastSender[0] == currentMarker;
                 }
@@ -96,14 +107,9 @@ public class FramesAndContextsIterator {
             }
             ContextObject currentContext = null;
             if (!frameInstance.isVirtualFrame()) {
-                currentContext = FrameAccess.getContext(currentFrame, currentCode);
-                if (currentContext != null) {
-                    if (lastSender[0] instanceof ContextObject) {
-                        assert lastSender[0] == currentContext;
-                    }
-                    if (currentContext == end) {
-                        return currentContext;
-                    }
+                currentContext = (ContextObject) currentFrame.getValue(currentCode.getThisContextSlot());
+                if (currentContext == end) {
+                    return currentContext;
                 }
             }
             if (frameFilter != null && frameFilter.test(foundMyself[0], currentCode)) {
@@ -113,7 +119,7 @@ public class FramesAndContextsIterator {
                 }
                 return currentContext;
             }
-            lastSender[0] = FrameAccess.getSender(currentFrame);
+            lastSender[0] = arguments[1];
             if (foundMyself[0] && frameVisitor != null) {
                 frameVisitor.accept(currentFrame, currentCode);
             }
@@ -132,13 +138,13 @@ public class FramesAndContextsIterator {
             return endReturnValue;
         } else {
             Object current = ((ContextObject) lastSender[0]).getFrameSender();
+            if (current == end) {
+                return endReturnValue;
+            }
+            if (current == NilObject.SINGLETON) {
+                return NilObject.SINGLETON;
+            }
             while (!(current instanceof FrameMarker)) {
-                if (current == end) {
-                    return endReturnValue;
-                }
-                if (current == NilObject.SINGLETON) {
-                    return NilObject.SINGLETON;
-                }
                 final ContextObject currentContext = (ContextObject) current;
                 if (contextFilter != null && contextFilter.test(currentContext)) {
                     return currentContext;
@@ -148,6 +154,12 @@ public class FramesAndContextsIterator {
                     contextVisitor.accept(currentContext);
                 }
                 current = sender;
+                if (current == end) {
+                    return endReturnValue;
+                }
+                if (current == NilObject.SINGLETON) {
+                    return NilObject.SINGLETON;
+                }
             }
             if (current != null && end instanceof ContextObject) {
                 if (current == ((ContextObject) end).getFrameMarker()) {
