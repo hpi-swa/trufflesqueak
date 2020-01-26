@@ -288,8 +288,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
      * Sets the sender of a ContextObject.
      */
     public void setSender(final ContextObject value) {
-        if (!hasModifiedSender && truffleFrame != null && FrameAccess.getSender(truffleFrame) != value.getFrameMarker()) {
-            hasModifiedSender = true;
+        if (truffleFrame != null) {
+            final Object sender = FrameAccess.getSender(truffleFrame);
+            if (!hasModifiedSender && sender != value && sender != value.getFrameMarker()) {
+                hasModifiedSender = true;
+            }
         }
         FrameAccess.setSender(getOrCreateTruffleFrame(), value);
     }
