@@ -16,6 +16,7 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
@@ -100,6 +101,11 @@ public final class ContextObjectNodes {
             context.removeSender();
         }
 
+        @Specialization(guards = "index == SENDER_OR_NIL")
+        protected static final void doPointersSender(final ContextObject context, @SuppressWarnings("unused") final long index, final PointersObject value) {
+            context.getOrCreateTruffleFrame().getArguments()[1] = value;
+        }
+
         @Specialization(guards = {"index == INSTRUCTION_POINTER"})
         protected static final void doInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index, final long value) {
             context.setInstructionPointer((int) value);
@@ -121,6 +127,11 @@ public final class ContextObjectNodes {
             context.setMethod(value);
         }
 
+        @Specialization(guards = "index == METHOD")
+        protected static final void doPointersMethod(final ContextObject context, @SuppressWarnings("unused") final long index, final PointersObject value) {
+            context.getOrCreateTruffleFrame().getArguments()[0] = value;
+        }
+
         @Specialization(guards = {"index == CLOSURE_OR_NIL"})
         protected static final void doClosure(final ContextObject context, @SuppressWarnings("unused") final long index, final BlockClosureObject value) {
             context.setClosure(value);
@@ -130,6 +141,11 @@ public final class ContextObjectNodes {
         @Specialization(guards = {"index == CLOSURE_OR_NIL"})
         protected static final void doClosure(final ContextObject context, final long index, final NilObject value) {
             context.setClosure(null);
+        }
+
+        @Specialization(guards = "index == CLOSURE_OR_NIL")
+        protected static final void doPointersClosure(final ContextObject context, @SuppressWarnings("unused") final long index, final PointersObject value) {
+            context.getOrCreateTruffleFrame().getArguments()[2] = value;
         }
 
         @Specialization(guards = "index == RECEIVER")
