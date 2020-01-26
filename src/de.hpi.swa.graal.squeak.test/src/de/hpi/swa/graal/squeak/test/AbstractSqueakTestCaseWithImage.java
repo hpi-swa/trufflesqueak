@@ -40,7 +40,7 @@ import de.hpi.swa.graal.squeak.util.DebugUtils;
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, AbstractSqueakTestCaseWithImage.class);
     private static final boolean underDebug = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
-    private static final int SQUEAK_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("SQUEAK_TIMEOUT", underDebug ? "2000" : "120"));    // generous
+    private static final int SQUEAK_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("SQUEAK_TIMEOUT", underDebug ? "2000" : "300"));    // generous
                                                                                                                                              // default
                                                                                                                                              // for
                                                                                                                                              // debugging
@@ -162,29 +162,27 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static void ensureCleanImageState() {
         if (idleProcess != null) {
-            if (idleProcess.getNextLink() != NilObject.SINGLETON) {
-                image.printToStdErr("Resetting dirty idle process...");
-                idleProcess.instVarAtPut0Slow(PROCESS.NEXT_LINK, NilObject.SINGLETON);
-            }
             resetProcessLists();
             resetSemaphoreLists();
-            ensureTimerLoop();
-            ensureUserProcessForTesting();
+            ensureRequiredProcessesForTesting();
         }
     }
 
     private static void resetProcessLists() {
         final Object[] lists = image.getProcessLists().getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
-            final Object expectedValue = i == PRIORITY_10_LIST_INDEX ? idleProcess : NilObject.SINGLETON;
-            resetList(expectedValue, lists[i], "scheduler list #" + (i + 1));
+            resetList(lists[i], "scheduler list #" + (i + 1));
         }
     }
 
     private static void resetSemaphoreLists() {
         image.interrupt.reset();
         final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
-        resetList(NilObject.SINGLETON, interruptSema, "Interrupt semaphore");
+        resetList(interruptSema, "Interrupt semaphore");
+        final Object finalizationSema = image.getSpecialObject(SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE);
+        resetList(finalizationSema, "Finalization semaphore");
+        final Object lowSpaceSema = image.getSpecialObject(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE);
+        resetList(lowSpaceSema, "Low space semaphore");
         // The timer semaphore is taken care of in ensureTimerLoop, since the delays need to be
         // reset as well
         final ArrayObject oldExternalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
@@ -195,15 +193,19 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         assert oldExternalObjects.getSqueakHash() != externalObjects.getSqueakHash();
     }
 
-    private static void resetList(final Object newValue, final Object listOrNil, final String linkedListName) {
+    private static void resetList(final Object listOrNil, final String linkedListName) {
         if (listOrNil instanceof PointersObject) {
             final PointersObject linkedList = (PointersObject) listOrNil;
             final Object key = linkedList.getFirstLink();
             final Object value = linkedList.getLastLink();
-            if (key != newValue || value != newValue) {
-                image.printToStdErr(String.format("Removing inconsistent entry (%s->%s) from %s...", key, value, linkedListName));
-                linkedList.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, newValue);
-                linkedList.instVarAtPut0Slow(LINKED_LIST.LAST_LINK, newValue);
+            if (key != NilObject.SINGLETON || value != NilObject.SINGLETON) {
+                if (key != value) {
+                    image.printToStdErr(String.format("Removing entries (%s->%s) from %s...", key, value, linkedListName));
+                } else {
+                    image.printToStdErr(String.format("Removing entry (%s) from %s...", key, linkedListName));
+                }
+                linkedList.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, NilObject.SINGLETON);
+                linkedList.instVarAtPut0Slow(LINKED_LIST.LAST_LINK, NilObject.SINGLETON);
             }
         }
     }
@@ -214,29 +216,32 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
                         "Delay startTimerEventLoop] value");
     }
 
-    private static void ensureUserProcessForTesting() {
-        final PointersObject activeProcess = image.getActiveProcess();
-        final long activePriority = activeProcess.getPriority();
-        if (activePriority == USER_PRIORITY_LIST_INDEX + 1) {
-            return;
-        }
+    private static void ensureFinalization() {
+        evaluate("WeakArray startUp: true");
+    }
+
+    private static void ensureRequiredProcessesForTesting() {
+        ensureTimerLoop();
+        ensureLowSpaceWatcherAndIdleLoop();
+        ensureFinalization();
+        ensureActiveUserProcess();
+    }
+
+    private static void ensureActiveUserProcess() {
         final PointersObject newProcess = new PointersObject(image, image.processClass);
         newProcess.instVarAtPut0Slow(PROCESS.PRIORITY, Long.valueOf(USER_PRIORITY_LIST_INDEX + 1));
         image.getScheduler().instVarAtPut0Slow(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
+    }
 
-        if (activePriority == PRIORITY_10_LIST_INDEX + 1) {
-            assert activeProcess == idleProcess;
-            image.printToStdErr("IDLE PROCESS IS ACTIVE, REINSTALL IT (ProcessorScheduler installIdleProcess)");
-            evaluate("ProcessorScheduler installIdleProcess");
-            final ArrayObject lists = image.getProcessLists();
-            final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
-            final Object firstLink = priority10List.getFirstLink();
-            final Object lastLink = priority10List.getLastLink();
-            assert firstLink instanceof PointersObject && firstLink == lastLink &&
-                            ((PointersObject) firstLink).getNextLink() == NilObject.SINGLETON : "Unexpected idleProcess state";
-            idleProcess = (PointersObject) firstLink;
-            return;
-        }
+    private static void ensureLowSpaceWatcherAndIdleLoop() {
+        evaluate("ProcessorScheduler startUp: true");
+        final ArrayObject lists = image.getProcessLists();
+        final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
+        final Object firstLink = priority10List.getFirstLink();
+        final Object lastLink = priority10List.getLastLink();
+        assert firstLink instanceof PointersObject && firstLink == lastLink &&
+                        ((PointersObject) firstLink).getNextLink() == NilObject.SINGLETON : "Unexpected idleProcess state";
+        idleProcess = (PointersObject) firstLink;
     }
 
     protected static void patchMethod(final String className, final String selector, final String body) {
