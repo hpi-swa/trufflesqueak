@@ -173,7 +173,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
              * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
              * some tests (e.g. BitmapStreamTests) run quickly.
              */
-            return receiver;
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
 
@@ -192,7 +192,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
              * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
              * some tests (e.g. BitmapStreamTests) run quickly.
              */
-            return method.image.newEmptyArray();
+            throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
 
