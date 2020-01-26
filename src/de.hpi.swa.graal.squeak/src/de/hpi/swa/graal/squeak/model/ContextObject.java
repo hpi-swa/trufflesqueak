@@ -72,9 +72,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         escaped = original.escaped;
         size = original.size;
         // Create shallow copy of Truffle frame
-        truffleFrame = Truffle.getRuntime().createMaterializedFrame(original.truffleFrame.getArguments(), code.getFrameDescriptor());
+        truffleFrame = Truffle.getRuntime().createMaterializedFrame(original.truffleFrame.getArguments().clone(), code.getFrameDescriptor());
         // Copy frame slot values
-        FrameAccess.setMarker(truffleFrame, code, FrameAccess.getMarker(original.truffleFrame, code));
+        FrameAccess.initializeMarker(truffleFrame, code);
         FrameAccess.setContext(truffleFrame, code, this);
         FrameAccess.setInstructionPointer(truffleFrame, code, FrameAccess.getInstructionPointer(original.truffleFrame, code));
         FrameAccess.setStackPointer(truffleFrame, code, FrameAccess.getStackPointer(original.truffleFrame, code));
@@ -344,27 +344,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public boolean hasSender(final ContextObject context) {
-        if (this == context) {
-            return false;
-        }
-        Object sender = null;
-        if ((sender = FrameAccess.getSender(getOrCreateTruffleFrame())) == context || sender == context.getFrameMarker()) {
-            return true;
-        } else if (sender == NilObject.SINGLETON) {
-            return false;
-        }
-        if (sender instanceof FrameMarker) {
-            return FramesAndContextsIterator.Empty.scanFor((FrameMarker) sender, context, context) == context;
-        } else {
-            return FramesAndContextsIterator.Empty.scanFor((ContextObject) sender, context, context) == context;
-        }
+        return FramesAndContextsIterator.Empty.scanFor(this, context, context) == context;
     }
 
     /**
      * Sets the sender of a ContextObject.
      */
     public void setSender(final ContextObject value) {
-        if (!hasModifiedSender && truffleFrame != null && FrameAccess.getSender(truffleFrame) != value.getFrameMarker()) {
+        Object sender = null;
+        if (!hasModifiedSender && truffleFrame != null && (sender = FrameAccess.getSender(truffleFrame)) != value && sender != value.getFrameMarker()) {
             hasModifiedSender = true;
         }
         FrameAccess.setSender(getOrCreateTruffleFrame(), value);
@@ -623,7 +611,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                     break; // Stop here, slot has not (yet) been created.
                 }
                 if (truffleFrame.isObject(slot)) {
-                    final Object stackObject = FrameUtil.getObjectSafe(truffleFrame, slot);
+                    final Object stackObject = truffleFrame.getValue(slot);
                     if (stackObject == null) {
                         break;
                     }
