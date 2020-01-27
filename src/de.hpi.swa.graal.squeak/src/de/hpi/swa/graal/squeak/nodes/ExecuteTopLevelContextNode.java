@@ -35,21 +35,21 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "scheduling");
 
     private final SqueakImageContext image;
-    private final boolean needsShutdown;
+    private final boolean isImageResuming;
     private ContextObject initialContext;
 
     @Child private UnwindContextChainNode unwindContextChainNode = UnwindContextChainNode.create();
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
 
-    private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean needsShutdown) {
+    private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean isImageResuming) {
         super(language, new FrameDescriptor());
         image = code.image;
         initialContext = context;
-        this.needsShutdown = needsShutdown;
+        this.isImageResuming = isImageResuming;
     }
 
-    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean needsShutdown) {
-        return new ExecuteTopLevelContextNode(language, context, context.getBlockOrMethod(), needsShutdown);
+    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
+        return new ExecuteTopLevelContextNode(language, context, context.getBlockOrMethod(), isImageResuming);
     }
 
     @Override
@@ -60,7 +60,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             return e.getReturnValue();
         } finally {
             CompilerAsserts.neverPartOfCompilation();
-            if (needsShutdown) {
+            if (isImageResuming) {
                 image.interrupt.shutdown();
                 if (image.hasDisplay()) {
                     image.getDisplay().close();
@@ -72,8 +72,16 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private void executeLoop() {
         ContextObject activeContext = initialContext;
-        initialContext = null; /* Free initialContext. */
-        ensureCachedContextCanRunAgain(activeContext);
+        if (isImageResuming) {
+            /*
+             * Free initialContext if resuming an image. Headless code execution requests can be
+             * cached by Truffle. Therefore, they must keep their initialContext, so that they can
+             * be restarted.
+             */
+            initialContext = null;
+        } else {
+            ensureCachedContextCanRunAgain(activeContext);
+        }
         while (true) {
             assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
             final AbstractSqueakObject sender = activeContext.getSender();
