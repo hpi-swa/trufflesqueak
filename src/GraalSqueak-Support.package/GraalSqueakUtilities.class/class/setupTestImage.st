@@ -57,7 +57,6 @@ setupTestImage
 	"Disable performance killers"
 	World setAsBackground: Color black lighter.
 	Morph useSoftDropShadow: false.
-
 	SystemWindow gradientWindow: false.
 	DialogWindow gradientDialog: false.
 	MenuMorph gradientMenu: false.

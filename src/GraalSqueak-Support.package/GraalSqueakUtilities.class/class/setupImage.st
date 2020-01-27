@@ -9,7 +9,6 @@ setupImage
 
 	"Disable performance killers"
 	Morph useSoftDropShadow: false.
-
 	SystemWindow gradientWindow: false.
 	DialogWindow gradientDialog: false.
 	MenuMorph gradientMenu: false.
@@ -17,6 +16,15 @@ setupImage
 	ScrollBar gradientScrollBar: false.
 
 	Morph indicateKeyboardFocus: false.
+	
+	"Set up environment"
+	ReleaseBuilder deleteAllWindows.
+	self openButton: PolyglotWorkspace asString, ' open' at: 20@28.
+	self openButton: PolyglotNotebook asString, ' open' at: 190@28.
+
+	PolyglotWorkspace open
+		position: 20@60;
+		extent: 600@300.
 
 	"Clean up image"
 	Smalltalk garbageCollect.
