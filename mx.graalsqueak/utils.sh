@@ -67,6 +67,18 @@ download-openjdk8-jvmci() {
   popd > /dev/null
 }
 
+download-graalsqueak-image() {
+  local target_dir="${BASE_DIRECTORY}/src/resources"
+
+  pushd "${target_dir}" > /dev/null
+
+  download-asset "${DEP_IMAGE}"
+  unzip "${DEP_IMAGE}"
+  rm -f "${DEP_IMAGE}"
+
+  popd > /dev/null
+}
+
 ensure-test-image() {
   local target_dir="${BASE_DIRECTORY}/images"
 

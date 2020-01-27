@@ -64,6 +64,7 @@ import de.hpi.swa.graal.squeak.nodes.plugins.JPEGReader;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
 import de.hpi.swa.graal.squeak.nodes.plugins.Zip;
 import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
+import de.hpi.swa.graal.squeak.shared.SqueakImageLocator;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -113,6 +114,7 @@ public final class SqueakImageContext {
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
     private String imagePath;
+    private String resourcesPath;
     @CompilationFinal private boolean isHeadless;
     public final SqueakContextOptions options;
 
@@ -459,14 +461,27 @@ public final class SqueakImageContext {
         return display;
     }
 
+    public String getResourcesDirectory() {
+        if (resourcesPath == null) {
+            CompilerDirectives.transferToInterpreter();
+            final String languageHome = language.getTruffleLanguageHome();
+            if (languageHome != null) {
+                resourcesPath = Paths.get(language.getTruffleLanguageHome()).resolve("resources").toString();
+            } else { /* Fallback to image directory. */
+                resourcesPath = getImageDirectory();
+            }
+        }
+        return resourcesPath;
+    }
+
     public String imageRelativeFilePathFor(final String fileName) {
         return getImageDirectory() + File.separator + fileName;
     }
 
     public String getImagePath() {
         if (imagePath == null) {
-            assert !options.imagePath.isEmpty();
-            setImagePath(options.imagePath);
+            CompilerDirectives.transferToInterpreter();
+            setImagePath(options.imagePath.isEmpty() ? SqueakImageLocator.findImage() : options.imagePath);
         }
         return imagePath;
     }

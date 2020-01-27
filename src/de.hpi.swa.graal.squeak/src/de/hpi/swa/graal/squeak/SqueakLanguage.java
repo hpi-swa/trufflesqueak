@@ -119,6 +119,10 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         return getCurrentContext(SqueakLanguage.class);
     }
 
+    public String getTruffleLanguageHome() {
+        return getLanguageHome();
+    }
+
     @Override
     protected OptionDescriptors getOptionDescriptors() {
         return SqueakOptions.createDescriptors();

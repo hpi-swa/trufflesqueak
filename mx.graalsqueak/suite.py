@@ -17,6 +17,7 @@ suite = {
     "graalsqueak:dependencyMap": {
         "assets": "1.0.0-rc6",
         "graalvm": "19.3.0",
+        "image": "GraalSqueakImage-1.0.0-rc6.zip",
         "jdk8Update": "232",
         "jvmci": "jvmci-19.3-b05",
         "testImage": "GraalSqueakTestImage-19329-64bit.zip",
@@ -102,6 +103,9 @@ suite = {
         "de.hpi.swa.graal.squeak.shared": {
             "subDir": "src",
             "sourceDirs": ["src"],
+            "dependencies": [
+                "sdk:GRAAL_SDK",
+            ],
             "checkstyle": "de.hpi.swa.graal.squeak",
             "jacoco": "include",
             "javaCompliance": "8+",
@@ -155,6 +159,9 @@ suite = {
             "dependencies": [
                 "de.hpi.swa.graal.squeak.shared",
             ],
+            "distDependencies": [
+                "sdk:GRAAL_SDK",
+            ],
         },
 
         "GRAALSQUEAK_LAUNCHER": {
@@ -191,9 +198,8 @@ suite = {
             "description": "GraalSqueak support distribution for the GraalVM",
             "layout": {
                 "LICENSE_GRAALSQUEAK.txt": "file:LICENSE",
-                "./": [
-                    "file:mx.graalsqueak/native-image.properties",
-                ],
+                "resources": "file:src/resources",
+                "native-image.properties": "file:mx.graalsqueak/native-image.properties",
             },
             "maven": False,
         },
