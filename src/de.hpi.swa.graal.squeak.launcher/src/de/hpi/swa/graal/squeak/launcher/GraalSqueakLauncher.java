@@ -94,9 +94,9 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         try (Context context = contextBuilder.build()) {
             println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
             if (sourceCode != null) {
-                final Object result = context.eval(
+                final Value result = context.eval(
                                 Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).cached(false).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
-                println("[graalsqueak] Result: ", result);
+                println("[graalsqueak] Result: " + (result.isString() ? result.asString() : result.toString()));
                 return 0;
             } else {
                 final Value image = context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build());
