@@ -186,6 +186,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             return;
         }
         graalSqueakPackagesLoaded = true;
+        final long start = System.currentTimeMillis();
         image.getOutput().println("Loading GraalSqueak packages. This may take a while...");
         evaluate(String.format("[Metacello new\n" +
                         "  baseline: 'GraalSqueak';\n" +
@@ -197,5 +198,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
                         "                ifFalse: [e rearmHandlerDuring:\n" +
                         "                    [[e sendNotificationsTo: [:min :max :current | \"silence\"]]\n" +
                         "                        on: ProgressNotification do: [:notification | notification resume]]]]", getPathToInImageCode()));
+        image.getOutput().println("GraalSqueak packages loaded in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
     }
 }
