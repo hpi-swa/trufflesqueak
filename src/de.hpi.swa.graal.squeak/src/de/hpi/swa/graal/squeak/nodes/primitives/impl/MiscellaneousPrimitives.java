@@ -546,7 +546,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1003:  // this platform's processor type
                     return "intel";
                 case 1004:  // vm version
-                    return SqueakLanguageConfig.NAME + " " + SqueakLanguageConfig.VERSION;
+                    /*
+                     * Start with "Croquet" to let `LanguageEnvironment win32VMUsesUnicode` return
+                     * `true`. Add fake VMMaker info to make `Smalltalk vmVMMakerVersion` work.
+                     */
+                    return "Croquet " + SqueakLanguageConfig.IMPLEMENTATION_NAME + " " + SqueakLanguageConfig.VERSION + " VMMaker.fn.9999";
                 case 1005:  // window system name
                     return "Aqua";
                 case 1006:  // vm build id
