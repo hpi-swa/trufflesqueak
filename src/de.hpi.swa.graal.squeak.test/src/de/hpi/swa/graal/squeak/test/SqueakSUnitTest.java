@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -81,13 +82,16 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         return SqueakTests.allTests();
     }
 
-    @Test
-    public void runSqueakTest() throws Throwable {
-        checkTermination();
-
+    @Before
+    public void loadPackagesOnDemand() throws Throwable {
         if (inGraalSqueakPackage(test.className)) {
             ensureGraalSqueakPackagesLoaded();
         }
+    }
+
+    @Test
+    public void runSqueakTest() throws Throwable {
+        checkTermination();
 
         final TestResult result = runTestCase(buildRequest());
 
