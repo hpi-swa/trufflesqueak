@@ -7,6 +7,7 @@ package de.hpi.swa.graal.squeak.shared;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import org.graalvm.home.HomeFinder;
 
@@ -18,6 +19,8 @@ public final class SqueakImageLocator {
         final File resourcesDirectoryFile = resourcesDirectory.toFile();
         final String[] imageFiles = resourcesDirectoryFile.list((dir, name) -> dir == resourcesDirectoryFile && name.endsWith(".image"));
         if (imageFiles != null && imageFiles.length > 0) {
+            /* Sort imageFiles alphabetically and return the last. */
+            Arrays.sort(imageFiles);
             return resourcesDirectory.resolve(imageFiles[imageFiles.length - 1]).toString();
         } else {
             throw new RuntimeException("Unable to locate an image file in GraalSqueak's resources directory.");
