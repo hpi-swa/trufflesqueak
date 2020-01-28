@@ -198,7 +198,12 @@ suite = {
             "description": "GraalSqueak support distribution for the GraalVM",
             "layout": {
                 "LICENSE_GRAALSQUEAK.txt": "file:LICENSE",
-                "resources": "file:src/resources",
+                "README_GRAALSQUEAK.md": "file:README.md",
+                "resources": {
+                    "source_type": "file",
+                    "path": "src/resources",
+                    "exclude": ["src/resources/.gitignore"],
+                },
                 "native-image.properties": "file:mx.graalsqueak/native-image.properties",
             },
             "maven": False,
