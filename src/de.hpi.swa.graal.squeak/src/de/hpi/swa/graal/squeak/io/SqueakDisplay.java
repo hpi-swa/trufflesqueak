@@ -59,6 +59,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.nodes.plugins.DropPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.HostWindowPlugin;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
@@ -254,7 +255,15 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     public void open(final PointersObject sqDisplay) {
         canvas.setSqDisplay(sqDisplay);
         // Set or update frame title.
-        frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.getImagePath() + ")");
+        final String imageFileName = new File(image.getImagePath()).getName();
+        // Avoid name duplication in frame title.
+        final String title;
+        if (imageFileName.contains(SqueakLanguageConfig.IMPLEMENTATION_NAME)) {
+            title = imageFileName;
+        } else {
+            title = imageFileName + " running on " + SqueakLanguageConfig.IMPLEMENTATION_NAME;
+        }
+        frame.setTitle(title);
         if (!frame.isVisible()) {
             final DisplayPoint lastWindowSize = image.flags.getLastWindowSize();
             frame.getContentPane().setPreferredSize(new Dimension(lastWindowSize.getWidth(), lastWindowSize.getHeight()));
