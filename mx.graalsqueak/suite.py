@@ -13,14 +13,15 @@ suite = {
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
-    "version": "1.0.0-rc6",
+    "version": "1.0.0-rc7",
     "graalsqueak:dependencyMap": {
-        "assets": "1.0.0-rc6",
         "graalvm": "19.3.0",
-        "image": "GraalSqueakImage-1.0.0-rc6.zip",
-        "jdk8Update": "232",
+        "image": "GraalSqueakImage-1.0.0-rc7.zip",
+        "image_tag": "1.0.0-rc7",
+        "jdk8_update": "232",
         "jvmci": "jvmci-19.3-b05",
-        "testImage": "GraalSqueakTestImage-19329-64bit.zip",
+        "test_image": "GraalSqueakTestImage-19329-64bit.zip",
+        "test_image_tag": "1.0.0-rc6",
     },
 
     "release": False,

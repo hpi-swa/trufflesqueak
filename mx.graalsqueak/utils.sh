@@ -33,7 +33,7 @@ readonly OS_NAME JAVA_HOME_SUFFIX
 
 download-asset() {
   local filename=$1
-  local git_tag="${2:-${DEP_ASSETS}}"
+  local git_tag=$2
   local target="${3:-$1}"
 
   curl -L --retry 3 --retry-connrefused --retry-delay 2 -o "${target}" \
@@ -60,9 +60,9 @@ download-openjdk8-jvmci() {
 
   pushd "${target_dir}" > /dev/null
 
-  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${DEP_JVMCI}/openjdk-8u${DEP_JDK8UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64.tar.gz"
+  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${DEP_JVMCI}/openjdk-8u${DEP_JDK8_UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64.tar.gz"
   tar xzf "${jdk_tar}"
-  echo "$(pwd)/openjdk1.8.0_${DEP_JDK8UPDATE}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
+  echo "$(pwd)/openjdk1.8.0_${DEP_JDK8_UPDATE}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 
   popd > /dev/null
 }
@@ -72,7 +72,7 @@ download-graalsqueak-image() {
 
   pushd "${target_dir}" > /dev/null
 
-  download-asset "${DEP_IMAGE}"
+  download-asset "${DEP_IMAGE}" "${DEP_IMAGE_TAG}"
   unzip "${DEP_IMAGE}"
   rm -f "${DEP_IMAGE}"
 
@@ -89,8 +89,8 @@ ensure-test-image() {
   mkdir "${target_dir}" || true
   pushd "${target_dir}" > /dev/null
 
-  download-asset "${DEP_TESTIMAGE}"
-  unzip "${DEP_TESTIMAGE}"
+  download-asset "${DEP_TEST_IMAGE}" "${DEP_TEST_IMAGE_TAG}"
+  unzip "${DEP_TEST_IMAGE}"
   mv ./*.image test-64bit.image
   mv ./*.changes test-64bit.changes
 
