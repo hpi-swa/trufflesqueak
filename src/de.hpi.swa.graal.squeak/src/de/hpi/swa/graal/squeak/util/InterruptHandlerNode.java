@@ -20,19 +20,22 @@ public final class InterruptHandlerNode extends Node {
 
     private final Object[] specialObjects;
     private final InterruptHandlerState istate;
+    private final boolean enableTimerInterrupts;
 
-    private final BranchProfile nextWakeupTickProfile = BranchProfile.create();
+    private final BranchProfile nextWakeupTickProfile;
     private final BranchProfile pendingFinalizationSignalsProfile = BranchProfile.create();
     private final BranchProfile hasSemaphoresToSignalProfile = BranchProfile.create();
 
-    protected InterruptHandlerNode(final CompiledCodeObject code) {
+    protected InterruptHandlerNode(final CompiledCodeObject code, final boolean enableTimerInterrupts) {
         specialObjects = code.image.specialObjectsArray.getObjectStorage();
         istate = code.image.interrupt;
         signalSemaporeNode = SignalSemaphoreNode.create(code);
+        this.enableTimerInterrupts = enableTimerInterrupts;
+        nextWakeupTickProfile = enableTimerInterrupts ? BranchProfile.create() : null;
     }
 
-    public static InterruptHandlerNode create(final CompiledCodeObject code) {
-        return new InterruptHandlerNode(code);
+    public static InterruptHandlerNode create(final CompiledCodeObject code, final boolean enableTimerInterrupts) {
+        return new InterruptHandlerNode(code, enableTimerInterrupts);
     }
 
     public void executeTrigger(final VirtualFrame frame) {
@@ -43,7 +46,7 @@ public final class InterruptHandlerNode extends Node {
             istate.interruptPending = false; // reset interrupt flag
             signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
         }
-        if (istate.nextWakeUpTickTrigger()) {
+        if (enableTimerInterrupts && istate.nextWakeUpTickTrigger()) {
             nextWakeupTickProfile.enter();
             LogUtils.INTERRUPTS.fine("Timer interrupt");
             istate.nextWakeupTick = 0; // reset timer interrupt

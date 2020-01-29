@@ -35,7 +35,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
-import de.hpi.swa.graal.squeak.util.InterruptByUserHandlerNode;
+import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.LogUtils;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
@@ -44,7 +44,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
     private static final int LOCAL_RETURN_PC = -2;
-    private static final int MIN_NUMBER_OF_BYTECODE_FOR_USER_INTERRUPT_CHECKS = 32;
+    private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
@@ -52,7 +52,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
 
     @Child private FrameStackInitializationNode frameInitializationNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
-    @Child private InterruptByUserHandlerNode interruptByUserHandlerNode;
+    @Child private InterruptHandlerNode interruptHandlerNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
 
     private SourceSection section;
@@ -65,8 +65,13 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
         frameInitializationNode = resume ? null : FrameStackInitializationNode.create(code);
-        /* Only check for user interrupts if method is relatively large. */
-        interruptByUserHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_USER_INTERRUPT_CHECKS ? InterruptByUserHandlerNode.create(code) : null;
+        /*
+         * Only check for interrupts if method is relatively large. Also, skip timer interrupts here
+         * as they trigger too often, which causes a lot of context switches and therefore
+         * materialization and deopts. Timer inputs are currently handled in
+         * primitiveRelinquishProcessor (#230) only.
+         */
+        interruptHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? InterruptHandlerNode.create(code, false) : null;
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
     }
 
@@ -93,10 +98,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 context.setProcess(code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached()));
                 throw ProcessSwitch.createWithBoundary(context);
             }
-            if (interruptByUserHandlerNode != null) {
-                interruptByUserHandlerNode.executeCheckForUserInterrupts(frame);
-            }
             frameInitializationNode.executeInitialize(frame);
+            if (interruptHandlerNode != null) {
+                interruptHandlerNode.executeTrigger(frame);
+            }
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
