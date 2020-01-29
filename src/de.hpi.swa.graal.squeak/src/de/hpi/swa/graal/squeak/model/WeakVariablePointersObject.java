@@ -16,6 +16,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
+import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
@@ -50,12 +51,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         }
         variablePart = new WeakReference<?>[pointersObject.length - instSize];
         for (int i = instSize; i < pointersObject.length; i++) {
-            final Object value = pointersObject[i];
-            if (value instanceof Double || value instanceof Long || value instanceof Character || value == NilObject.SINGLETON) {
-                variablePart[i - instSize] = new WeakReference<>(value);
-            } else {
-                variablePart[i - instSize] = new WeakReference<>(value, image.weakPointersQueue);
-            }
+            putIntoVariablePart(i - instSize, pointersObject[i]);
         }
         assert size() == pointersObject.length;
     }
@@ -106,10 +102,10 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     public void putIntoVariablePart(final int index, final Object value) {
-        if (value instanceof Double || value instanceof Long || value instanceof Character || value == NilObject.SINGLETON) {
-            variablePart[index] = new WeakReference<>(value);
+        if (value == NilObject.SINGLETON) {
+            variablePart[index] = NIL_REFERENCE;
         } else {
-            variablePart[index] = new WeakReference<>(value, image.weakPointersQueue);
+            variablePart[index] = new WeakReference<>(value, SqueakGuards.isUsedJavaPrimitive(value) ? null : image.weakPointersQueue);
         }
     }
 
