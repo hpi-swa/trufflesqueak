@@ -39,21 +39,25 @@ public final class InterruptHandlerNode extends Node {
         if (istate.interruptPending()) {
             /* Exclude user interrupt case from compilation. */
             CompilerDirectives.transferToInterpreter();
+            LogUtils.INTERRUPTS.fine("User interrupt");
             istate.interruptPending = false; // reset interrupt flag
             signalSemaporeNode.executeSignal(frame, istate.getInterruptSemaphore());
         }
         if (istate.nextWakeUpTickTrigger()) {
             nextWakeupTickProfile.enter();
+            LogUtils.INTERRUPTS.fine("Timer interrupt");
             istate.nextWakeupTick = 0; // reset timer interrupt
             signalSemaporeNode.executeSignal(frame, istate.getTimerSemaphore());
         }
         if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
             pendingFinalizationSignalsProfile.enter();
+            LogUtils.INTERRUPTS.fine("Finalization interrupt");
             istate.setPendingFinalizations(false);
             signalSemaporeNode.executeSignal(frame, specialObjects[SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE]);
         }
         if (istate.hasSemaphoresToSignal()) {
             hasSemaphoresToSignalProfile.enter();
+            LogUtils.INTERRUPTS.fine("Semaphore interrupt");
             final ArrayObject externalObjects = (ArrayObject) specialObjects[SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY];
             if (!externalObjects.isEmptyType()) { // signal external semaphores
                 final Object[] semaphores = externalObjects.getObjectStorage();

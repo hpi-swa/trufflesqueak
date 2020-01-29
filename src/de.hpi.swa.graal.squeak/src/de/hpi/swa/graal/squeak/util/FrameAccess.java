@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
@@ -29,7 +28,6 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 /**
  * GraalSqueak frame argument layout.
@@ -74,8 +72,6 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
  * </pre>
  */
 public final class FrameAccess {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "iterate-frames");
-
     private enum ArgumentIndicies {
         METHOD, // 0
         SENDER_OR_SENDER_MARKER, // 1
@@ -308,13 +304,13 @@ public final class FrameAccess {
     @TruffleBoundary
     public static MaterializedFrame findFrameForMarker(final FrameMarker frameMarker) {
         CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
-        LOG.fine("Iterating frames to find a marker...");
+        LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a marker...");
         final Frame frame = Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
             if (!isGraalSqueakFrame(current)) {
                 return null;
             }
-            LOG.fine(() -> "..." + FrameAccess.getMethod(current).toString());
+            LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getMethod(current).toString());
             if (frameMarker == getMarker(current)) {
                 return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
             }
