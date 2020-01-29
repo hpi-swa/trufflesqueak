@@ -32,6 +32,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_TRAIT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectNewNode;
@@ -113,13 +114,21 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public String getClassName() {
         CompilerAsserts.neverPartOfCompilation();
         if (isAMetaClass()) {
-            final Object classInstance = pointers[CLASS_DESCRIPTION.SIZE - METACLASS.THIS_CLASS];
-            if (classInstance != NilObject.SINGLETON) {
+            final Object classInstance = pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.SIZE];
+            if (classInstance != NilObject.SINGLETON && ((ClassObject) classInstance).pointers[CLASS.NAME] != NilObject.SINGLETON) {
                 return ((ClassObject) classInstance).getClassNameUnsafe() + " class";
             } else {
                 return "Unknown metaclass";
             }
-        } else if (size() >= 11) {
+        } else if (isAClassTrait()) {
+            final ClassObject traitInstance = (ClassObject) pointers[CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE];
+            if (traitInstance.pointers[CLASS.NAME] != NilObject.SINGLETON) {
+                return traitInstance.getClassNameUnsafe() + " classTrait";
+            } else {
+                return "Unknown classTrait";
+            }
+        } else if (size() >= 10 && pointers[CLASS.NAME] != NilObject.SINGLETON) {
+            // this also works for traits, since TRAIT.NAME == CLASS.NAME
             return getClassNameUnsafe();
         } else {
             return "Unknown behavior";
@@ -128,6 +137,14 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public String getClassNameUnsafe() {
         return ((NativeObject) pointers[CLASS.NAME]).asStringUnsafe();
+    }
+
+    private boolean isAClassTrait() {
+        if (pointers.length <= CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE) {
+            return false;
+        }
+        final Object traitInstance = pointers[CLASS_TRAIT.BASE_TRAIT - CLASS_DESCRIPTION.SIZE];
+        return traitInstance instanceof ClassObject && this != ((ClassObject) traitInstance).getSqueakClass() && ((ClassObject) traitInstance).getSqueakClass().getClassName().equals("Trait");
     }
 
     private boolean isAMetaClass() {

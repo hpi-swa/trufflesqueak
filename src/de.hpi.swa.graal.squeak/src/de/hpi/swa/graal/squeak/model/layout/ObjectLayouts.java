@@ -112,6 +112,13 @@ public final class ObjectLayouts {
         public static final int COMMENT_STAMP = 5;
     }
 
+    public static final class CLASS_TRAIT {
+        /**
+         * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+         */
+        public static final int BASE_TRAIT = 6;
+    }
+
     public static final class CONTEXT {
         public static final int SENDER_OR_NIL = 0;
         public static final int INSTRUCTION_POINTER = 1;
@@ -209,7 +216,11 @@ public final class ObjectLayouts {
     }
 
     public static final class METACLASS {
+        /**
+         * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+         */
         public static final int THIS_CLASS = 5;
+
         public static final int INST_SIZE = 6;
     }
 
@@ -331,6 +342,14 @@ public final class ObjectLayouts {
     public static final class TEXT {
         public static final int STRING = 0;
         public static final int RUNS = 1;
+    }
+
+    public static final class TRAIT {
+        /**
+         * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+         */
+        public static final int USERS = 0;
+        public static final int NAME = 1;
     }
 
     public static final class WEAK_FINALIZATION_LIST {
