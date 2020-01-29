@@ -43,17 +43,17 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
     /* Unsafe as it may return `null` values. */
     public abstract Object executeReadUnsafe(Frame frame);
 
-    @Specialization(guards = "frame.getFrameDescriptor().getFrameSlotKind(getSlot()) == Boolean")
+    @Specialization(guards = "frame.isBoolean(getSlot())")
     protected final boolean readBoolean(final Frame frame) {
         return FrameUtil.getBooleanSafe(frame, getSlot());
     }
 
-    @Specialization(guards = "frame.getFrameDescriptor().getFrameSlotKind(getSlot()) == Long")
+    @Specialization(guards = "frame.isLong(getSlot())")
     protected final long readLong(final Frame frame) {
         return FrameUtil.getLongSafe(frame, getSlot());
     }
 
-    @Specialization(guards = "frame.getFrameDescriptor().getFrameSlotKind(getSlot()) == Double")
+    @Specialization(guards = "frame.isDouble(getSlot())")
     protected final double readDouble(final Frame frame) {
         return FrameUtil.getDoubleSafe(frame, getSlot());
     }
