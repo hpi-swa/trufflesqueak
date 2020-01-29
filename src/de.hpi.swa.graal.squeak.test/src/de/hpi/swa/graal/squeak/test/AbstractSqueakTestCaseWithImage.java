@@ -9,7 +9,6 @@ import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -35,18 +34,15 @@ import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
-import sun.management.ManagementFactoryHelper;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, AbstractSqueakTestCaseWithImage.class);
-    private static final boolean underDebug = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
-    private static final int SQUEAK_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("SQUEAK_TIMEOUT", underDebug ? "2000" : "300"));    // generous
-                                                                                                                                             // default
-                                                                                                                                             // for
-                                                                                                                                             // debugging
+    private static final int SQUEAK_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("SQUEAK_TIMEOUT", DebugUtils.underDebug ? "2000" : "300"));    // generous
+    // default
+    // for
+    // debugging
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
-    private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("IMAGE_LOAD_TIMEOUT", underDebug ? "1000" : "20"));
+    private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("IMAGE_LOAD_TIMEOUT", DebugUtils.underDebug ? "1000" : "20"));
     private static final int PRIORITY_10_LIST_INDEX = 9;
     protected static final String PASSED_VALUE = "passed";
 
@@ -76,7 +72,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         } catch (final ExecutionException e) {
             throw new IllegalStateException(e.getCause());
         } catch (final TimeoutException e) {
-            dumpState();
+            DebugUtils.dumpState(null);
             throw new IllegalStateException("Timed out while trying to load the image from " + imagePath +
                             ".\nMake sure the image is not currently loaded by another executable");
         }
@@ -192,23 +188,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    public static void dumpState() {
-        MiscUtils.gc();
-        final StringBuilder sb = new StringBuilder("Thread dump");
-        DebugUtils.dumpThreads(sb);
-        System.err.println(sb.toString());
-        DebugUtils.forceGcWithHistogram();
-        try {
-            ManagementFactoryHelper.getDiagnosticMXBean().dumpHeap(System.currentTimeMillis() + ".hprof", true);
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-        if (image != null) {
-            System.err.println(DebugUtils.currentState(image));
-            DebugUtils.printSqStackTrace();
-        }
-    }
-
     protected static <T, R> R runWithTimeout(final T argument, final Function<T, R> function, final int timeout) throws InterruptedException, ExecutionException, TimeoutException {
         final Future<R> future = executor.submit(() -> {
             testWithImageIsActive = true;
@@ -224,7 +203,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         } finally {
             future.cancel(true);
             if (testWithImageIsActive) {
-                dumpState();
+                DebugUtils.dumpState(image);
                 if (context != null) {
                     context.close(true);
                 }

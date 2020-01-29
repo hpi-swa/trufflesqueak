@@ -20,8 +20,8 @@ public class SqueakMessageInterceptor {
 
     private static final String SYSTEM_PROPERTY = "squeakBreakpoints";
     private static final Pattern METHOD = Pattern.compile("(\\w+)>>((\\w+\\:)+|\\w+)");
-    private static final String DEFAULTS = "TestCase>>logFailure:,TestCase>>signalFailure:,Object>>halt,Object>>inform:,SmalltalkImage>>logSqueakError:inContext:,UnhandledError>>defaultAction," +
-                    "SyntaxErrorNotification>>setClass:code:doitFlag:errorMessage:location:,TruffleObject>>asNumber";
+    private static final String DEFAULTS = "TestCase>>logFailure:,TestCase>>signalFailure:,Object>>halt,Object>>inform:,Object>>error:,Object>>mustBeBoolean," +
+                    "SmalltalkImage>>logSqueakError:inContext:,UnhandledError>>defaultAction,SyntaxErrorNotification>>setClass:code:doitFlag:errorMessage:location:,TruffleObject>>asNumber";
 
     private static final Map<String, Set<byte[]>> classNameToSelectorsMap = initializeClassNameToSelectorsMap();
     private static final Map<byte[], Set<ClassObject>> selectorToClassesMap = new IdentityHashMap<>();
@@ -36,6 +36,9 @@ public class SqueakMessageInterceptor {
 
     private static Map<String, Set<byte[]>> initializeClassNameToSelectorsMap() {
         final Map<String, Set<byte[]>> aClassNameToSelectorsMap = new HashMap<>();
+        if (DebugUtils.underDebug) {
+            return aClassNameToSelectorsMap;
+        }
         final String toIntercept = DEFAULTS + "," + System.getProperty(SYSTEM_PROPERTY, "");
         if (toIntercept != null && !toIntercept.trim().isEmpty()) {
             for (final String token : toIntercept.split(",")) {

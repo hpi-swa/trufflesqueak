@@ -1,11 +1,13 @@
 package de.hpi.swa.graal.squeak.util;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
+import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +59,23 @@ public class DebugUtils {
             } else {
                 current = (ContextObject) sender;
             }
+        }
+    }
+
+    public static void dumpState(final SqueakImageContext image) {
+        MiscUtils.gc();
+        final StringBuilder sb = new StringBuilder("Thread dump");
+        DebugUtils.dumpThreads(sb);
+        System.err.println(sb.toString());
+        DebugUtils.forceGcWithHistogram();
+        try {
+            ManagementFactoryHelper.getDiagnosticMXBean().dumpHeap(".." + FileSystems.getDefault().getSeparator() + System.currentTimeMillis() + ".hprof", true);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+        if (image != null) {
+            System.err.println(DebugUtils.currentState(image));
+            DebugUtils.printSqStackTrace();
         }
     }
 
@@ -552,5 +571,7 @@ public class DebugUtils {
         }
         System.out.println(histogram);
     }
+
+    public static final boolean underDebug = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
 
 }

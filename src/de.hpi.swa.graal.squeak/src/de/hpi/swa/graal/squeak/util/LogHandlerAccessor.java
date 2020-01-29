@@ -18,6 +18,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessController;
@@ -51,7 +52,7 @@ public class LogHandlerAccessor {
     }
 
     protected static Path getLogPath() {
-        return Paths.get(System.currentTimeMillis() + ".log");
+        return Paths.get(".." + FileSystems.getDefault().getSeparator() + System.currentTimeMillis() + ".log");
     }
 
     private static class MappedHandler extends Handler {
