@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
@@ -101,11 +102,16 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         return NilObject.nullToNil(variablePart[index].get(), nilProfile);
     }
 
-    public void putIntoVariablePart(final int index, final Object value) {
+    private void putIntoVariablePart(final int index, final Object value) {
+        putIntoVariablePart(index, value, BranchProfile.getUncached(), ConditionProfile.getUncached());
+    }
+
+    public void putIntoVariablePart(final int index, final Object value, final BranchProfile nilProfile, final ConditionProfile primitiveProfile) {
         if (value == NilObject.SINGLETON) {
+            nilProfile.enter();
             variablePart[index] = NIL_REFERENCE;
         } else {
-            variablePart[index] = new WeakReference<>(value, SqueakGuards.isUsedJavaPrimitive(value) ? null : image.weakPointersQueue);
+            variablePart[index] = new WeakReference<>(value, primitiveProfile.profile(SqueakGuards.isUsedJavaPrimitive(value)) ? null : image.weakPointersQueue);
         }
     }
 
