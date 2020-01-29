@@ -20,7 +20,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
@@ -66,14 +65,16 @@ import de.hpi.swa.graal.squeak.nodes.plugins.JPEGReader;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
 import de.hpi.swa.graal.squeak.nodes.plugins.Zip;
 import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
+import de.hpi.swa.graal.squeak.shared.SqueakImageLocator;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 
 public final class SqueakImageContext {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqueakImageContext.class);
     /* Special objects */
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
@@ -116,6 +117,7 @@ public final class SqueakImageContext {
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
     private String imagePath;
+    private String resourcesPath;
     @CompilationFinal private boolean isHeadless;
     public final SqueakContextOptions options;
 
@@ -176,6 +178,7 @@ public final class SqueakImageContext {
         isHeadless = options.isHeadless;
         interrupt = InterruptHandlerState.create(this);
         allocationReporter = env.lookup(AllocationReporter.class);
+        SqueakMessageInterceptor.enableIfRequested(environment);
     }
 
     public void ensureLoaded() {
@@ -183,7 +186,7 @@ public final class SqueakImageContext {
             // Load image.
             SqueakImageReader.load(this);
             printToStdOut("Preparing image for headless execution...");
-            LOG.fine(() -> "Fresh after load" + DebugUtils.currentState(SqueakImageContext.this));
+            LogUtils.STARTUP.fine(() -> "Fresh after load" + DebugUtils.currentState(SqueakImageContext.this));
             // Remove active context.
             getActiveProcess().instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
             // Modify StartUpList for headless execution.
@@ -201,10 +204,7 @@ public final class SqueakImageContext {
             // Initialize fresh MorphicUIManager.
             evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
             //
-// evaluate("LargePositiveInteger addSelectorSilently: #isZero withMethod: (LargePositiveInteger
-// compile: 'isZero ^self normalize == 0' notifying: nil trailer: (CompiledMethodTrailer empty)
-// ifFail: [^ nil]) method");
-            LOG.fine(() -> "After newly loaded image startUp" + DebugUtils.currentState(SqueakImageContext.this));
+            LogUtils.STARTUP.fine(() -> "After newly loaded image startUp" + DebugUtils.currentState(SqueakImageContext.this));
         }
     }
 
@@ -227,7 +227,7 @@ public final class SqueakImageContext {
     public Object evaluate(final String sourceCode) {
         CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
         final Source source = Source.newBuilder(SqueakLanguageConfig.NAME, sourceCode, "<image#evaluate>").build();
-        LOG.fine("\nimage.evaluate " + sourceCode);
+        LogUtils.STARTUP.fine("\nimage.evaluate " + sourceCode);
         return Truffle.getRuntime().createCallTarget(getDoItContextNode(source)).call();
     }
 
@@ -512,14 +512,27 @@ public final class SqueakImageContext {
         return display;
     }
 
+    public String getResourcesDirectory() {
+        if (resourcesPath == null) {
+            CompilerDirectives.transferToInterpreter();
+            final String languageHome = language.getTruffleLanguageHome();
+            if (languageHome != null) {
+                resourcesPath = Paths.get(language.getTruffleLanguageHome()).resolve("resources").toString();
+            } else { /* Fallback to image directory. */
+                resourcesPath = getImageDirectory();
+            }
+        }
+        return resourcesPath;
+    }
+
     public String imageRelativeFilePathFor(final String fileName) {
         return getImageDirectory() + File.separator + fileName;
     }
 
     public String getImagePath() {
         if (imagePath == null) {
-            assert !options.imagePath.isEmpty();
-            setImagePath(options.imagePath);
+            CompilerDirectives.transferToInterpreter();
+            setImagePath(options.imagePath.isEmpty() ? SqueakImageLocator.findImage() : options.imagePath);
         }
         return imagePath;
     }

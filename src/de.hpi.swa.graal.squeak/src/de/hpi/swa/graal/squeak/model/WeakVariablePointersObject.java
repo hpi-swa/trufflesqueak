@@ -10,15 +10,18 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
+import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class WeakVariablePointersObject extends AbstractPointersObject {
     private static final WeakReference<?> NIL_REFERENCE = new WeakReference<>(NilObject.SINGLETON);
@@ -50,12 +53,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         }
         variablePart = new WeakReference<?>[pointersObject.length - instSize];
         for (int i = instSize; i < pointersObject.length; i++) {
-            final Object value = pointersObject[i];
-            if (value instanceof Double || value instanceof Long || value instanceof Character || value == NilObject.SINGLETON) {
-                variablePart[i - instSize] = new WeakReference<>(value);
-            } else {
-                variablePart[i - instSize] = new WeakReference<>(value, image.weakPointersQueue);
-            }
+            putIntoVariablePart(i - instSize, pointersObject[i]);
         }
         assert size() == pointersObject.length;
     }
@@ -105,11 +103,16 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         return NilObject.nullToNil(variablePart[index].get(), nilProfile);
     }
 
-    public void putIntoVariablePart(final int index, final Object value) {
-        if (value instanceof Double || value instanceof Long || value instanceof Character || value == NilObject.SINGLETON) {
-            variablePart[index] = new WeakReference<>(value);
+    private void putIntoVariablePart(final int index, final Object value) {
+        putIntoVariablePart(index, value, BranchProfile.getUncached(), ConditionProfile.getUncached());
+    }
+
+    public void putIntoVariablePart(final int index, final Object value, final BranchProfile nilProfile, final ConditionProfile primitiveProfile) {
+        if (value == NilObject.SINGLETON) {
+            nilProfile.enter();
+            UnsafeUtils.putWeakReference(variablePart, index, NIL_REFERENCE);
         } else {
-            variablePart[index] = new WeakReference<>(value, image.weakPointersQueue);
+            UnsafeUtils.putWeakReference(variablePart, index, new WeakReference<>(value, primitiveProfile.profile(SqueakGuards.isUsedJavaPrimitive(value)) ? null : image.weakPointersQueue));
         }
     }
 

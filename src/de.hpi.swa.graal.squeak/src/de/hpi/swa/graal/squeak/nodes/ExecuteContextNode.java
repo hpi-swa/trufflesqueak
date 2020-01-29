@@ -5,11 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
-import java.util.logging.Level;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -41,20 +38,19 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralVariable
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
-import de.hpi.swa.graal.squeak.util.InterruptByUserHandlerNode;
+import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 @GenerateWrapper
 public class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "primitives");
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINER);
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
     private static final int LOCAL_RETURN_PC = -2;
-    private static final int MIN_NUMBER_OF_BYTECODE_FOR_USER_INTERRUPT_CHECKS = 32;
+    private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
@@ -62,7 +58,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
 
     @Child private FrameStackInitializationNode frameInitializationNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
-    @Child private InterruptByUserHandlerNode interruptByUserHandlerNode;
+    @Child private InterruptHandlerNode interruptHandlerNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
 
     private SourceSection section;
@@ -76,10 +72,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
         frameInitializationNode = resume ? null : FrameStackInitializationNode.create(code);
-        /* Only check for user interrupts if method is relatively large. */
-        interruptByUserHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_USER_INTERRUPT_CHECKS ? InterruptByUserHandlerNode.create(code) : null;
+        /*
+         * Only check for interrupts if method is relatively large. Also, skip timer interrupts here
+         * as they trigger too often, which causes a lot of context switches and therefore
+         * materialization and deopts. Timer inputs are currently handled in
+         * primitiveRelinquishProcessor (#230) only.
+         */
+        interruptHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? InterruptHandlerNode.create(code, false) : null;
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
-        toString = isLoggingEnabled ? code.toString() : null;
+        toString = code.toString();
     }
 
     protected ExecuteContextNode(final ExecuteContextNode executeContextNode) {
@@ -104,28 +105,22 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 final ContextObject context = getGetOrCreateContextNode().executeGet(frame, NilObject.SINGLETON);
                 throw ProcessSwitch.createWithBoundary(context, context, context.getProcess());
             }
-            if (interruptByUserHandlerNode != null) {
-                interruptByUserHandlerNode.executeCheckForUserInterrupts(frame);
-            }
             frameInitializationNode.executeInitialize(frame);
+            if (interruptHandlerNode != null) {
+                interruptHandlerNode.executeTrigger(frame);
+            }
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
-            if (isLoggingEnabled) {
-                LOG.finer("Exited context " + toString + " through a non-local return");
-            }
+            LogUtils.SCHEDULING.finer("Exited context " + toString + " through a non-local return");
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } catch (final NonVirtualReturn nvr) {
-            if (isLoggingEnabled) {
-                LOG.finer("Exited context " + toString + " through a non-virtual return");
-            }
+            LogUtils.SCHEDULING.finer("Exited context " + toString + " through a non-virtual return");
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame, (PointersObject) null).markEscaped();
             throw nvr;
         } catch (final ProcessSwitch ps) {
-            if (isLoggingEnabled) {
-                LOG.finer("Exited context " + toString + " through a process switch");
-            }
+            LogUtils.SCHEDULING.finer("Exited context " + toString + " through a process switch");
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame, ps.getOldProcess()).markEscaped();
             throw ps;
@@ -141,9 +136,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         try {
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
-            if (isLoggingEnabled) {
-                LOG.finer("Exited context " + toString + " through a non-local return");
-            }
+            LogUtils.SCHEDULING.finer("Exited context " + toString + " through a non-local return");
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } finally {
@@ -155,9 +148,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         try {
             return resumeBytecode(frame, initialPC);
         } catch (final NonLocalReturn nlr) {
-            if (isLoggingEnabled) {
-                LOG.finer("Exited context " + toString + " through a non-local return");
-            }
+            LogUtils.SCHEDULING.finer("Exited context " + toString + " through a non-local return");
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } finally {
@@ -180,9 +171,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private Object startBytecode(final VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         final String frameString = toString;
-        if (isLoggingEnabled) {
-            LOG.finer(() -> "Entering fresh context for " + frameString);
-        }
+        LogUtils.SCHEDULING.finer(() -> "Entering fresh context for " + frameString);
         int pc = 0;
         int backJumpCounter = 0;
         Object returnValue = null;
@@ -193,12 +182,16 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
                 if (callPrimitiveNode.primitiveNode != null) {
                     try {
-                        if (isLoggingEnabled) {
-                            LOG.finer("Primitive return from " + frameString);
-                        }
+                        LogUtils.SCHEDULING.finer("Primitive return from " + frameString);
                         return callPrimitiveNode.primitiveNode.executePrimitive(frame);
                     } catch (final PrimitiveFailed e) {
                         getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
+                        /*
+                         * Same toString() methods may throw compilation warnings, this is expected
+                         * and ok for primitive failure logging purposes.
+                         */
+                        LogUtils.PRIMITIVES.fine(() -> callPrimitiveNode.primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
+                                        ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
                         /* continue with fallback code. */
                     } catch (final AssertionError e) {
                         getHandlePrimitiveFailedNode().executeHandle(frame, ERROR_TABLE.GENERIC_ERROR.ordinal());
@@ -209,8 +202,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 assert pc == CallPrimitiveNode.NUM_BYTECODES;
                 continue;
             } else if (node instanceof AbstractSendNode) {
-                if (isLoggingEnabled) {
-                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                LogUtils.CONTEXT_STACK_TRACE.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code) +
+                                "\n" + node.getIndex() + " " + node);
+                LogUtils.SCHEDULING.finer(() -> {
                     final String selector = ((NativeObject) ((AbstractSendNode) node).getSelector()).asStringUnsafe();
                     switch (selector) {
                         case "value":
@@ -220,12 +214,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         case "value:value:value:value:":
                         case "value:value:value:value:value:":
                         case "valueWithArguments:":
-                            LOG.finer("send: " + selector);
-                            break;
-                        default:
-                            LOG.finest(() -> node.getIndex() + " " + node.toString());
+                            return "send: " + selector;
                     }
-                }
+                    return "";
+                });
                 pc = node.getSuccessorIndex();
                 FrameAccess.setInstructionPointer(frame, code, pc);
                 node.executeVoid(frame);
@@ -271,32 +263,24 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = successor;
                 continue bytecode_loop;
             } else if (node instanceof AbstractReturnNode) {
-                if (isLoggingEnabled) {
-                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
-                }
+                LogUtils.CONTEXT_STACK_TRACE.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
                 returnValue = ((AbstractReturnNode) node).executeReturn(frame);
-                if (isLoggingEnabled) {
-                    LOG.finer("Exited context for " + frameString + " normally, at pc " + node.getIndex());
-                }
+                LogUtils.SCHEDULING.finer("Exited context for " + frameString + " normally, at pc " + node.getIndex());
                 pc = LOCAL_RETURN_PC;
                 continue bytecode_loop;
             } else if (node instanceof PushClosureNode) {
-                if (isLoggingEnabled) {
-                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
-                    LOG.finest(() -> node.getIndex() + " " + node.toString());
-                }
+                LogUtils.CONTEXT_STACK_TRACE.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code) +
+                                "\n" + node.getIndex() + " " + node);
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
                 pushClosureNode.executePush(frame);
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop;
             } else {
-                if (isLoggingEnabled) {
-                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
-                    if (node instanceof PushLiteralVariableNode || node instanceof PushLiteralConstantNode) {
-                        LOG.finer(() -> node.getIndex() + " " + node.toString());
-                    } else {
-                        LOG.finest(() -> node.getIndex() + " " + node.toString());
-                    }
+                LogUtils.CONTEXT_STACK_TRACE.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                if (node instanceof PushLiteralVariableNode || node instanceof PushLiteralConstantNode) {
+                    LogUtils.SCHEDULING.finer(() -> node.getIndex() + " " + node);
+                } else {
+                    LogUtils.CONTEXT_STACK_TRACE.finest(() -> node.getIndex() + " " + node);
                 }
                 node.executeVoid(frame);
                 pc = node.getSuccessorIndex();
@@ -324,16 +308,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private Object resumeBytecode(final VirtualFrame frame, final long initialPC) {
         assert initialPC > 0 : "Trying to resume a fresh/terminated/illegal context";
         final String frameString = toString;
-        if (isLoggingEnabled) {
-            LOG.finer(() -> "Entering resumed context for " + frameString + " at pc " + initialPC);
-        }
+        LogUtils.SCHEDULING.finer(() -> "Entering resumed context for " + frameString + " at pc " + initialPC);
         int pc = (int) initialPC;
         Object returnValue = null;
         bytecode_loop_slow: while (pc != LOCAL_RETURN_PC) {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof AbstractSendNode) {
-                if (isLoggingEnabled) {
-                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                LogUtils.CONTEXT_STACK_TRACE.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code) +
+                                "\n" + node.getIndex() + " " + node);
+                LogUtils.SCHEDULING.finer(() -> {
                     final String selector = ((NativeObject) ((AbstractSendNode) node).getSelector()).asStringUnsafe();
                     switch (selector) {
                         case "value":
@@ -343,12 +326,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         case "value:value:value:value:":
                         case "value:value:value:value:value:":
                         case "valueWithArguments:":
-                            LOG.finer("send: " + selector);
-                            break;
-                        default:
-                            LOG.finest(() -> node.getIndex() + " " + node.toString());
+                            return "send: " + selector;
                     }
-                }
+                    return "";
+                });
                 pc = node.getSuccessorIndex();
                 FrameAccess.setInstructionPointer(frame, code, pc);
                 node.executeVoid(frame);
@@ -379,32 +360,24 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 pc = successor;
                 continue bytecode_loop_slow;
             } else if (node instanceof AbstractReturnNode) {
-                if (isLoggingEnabled) {
-                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
-                }
+                LogUtils.CONTEXT_STACK_TRACE.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
                 returnValue = ((AbstractReturnNode) node).executeReturn(frame);
-                if (isLoggingEnabled) {
-                    LOG.finer("Exited context for " + frameString + " normally, at pc " + node.getIndex());
-                }
+                LogUtils.SCHEDULING.finer("Exited context for " + frameString + " normally, at pc " + node.getIndex());
                 pc = LOCAL_RETURN_PC;
                 continue bytecode_loop_slow;
             } else if (node instanceof PushClosureNode) {
-                if (isLoggingEnabled) {
-                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
-                    LOG.finest(() -> node.getIndex() + " " + node.toString());
-                }
+                LogUtils.CONTEXT_STACK_TRACE.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code) +
+                                "\n" + node.getIndex() + " " + node);
                 final PushClosureNode pushClosureNode = (PushClosureNode) node;
                 pushClosureNode.executePush(frame);
                 pc = pushClosureNode.getClosureSuccessorIndex();
                 continue bytecode_loop_slow;
             } else {
-                if (isLoggingEnabled) {
-                    LOG.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
-                    if (node instanceof PushLiteralVariableNode || node instanceof PushLiteralConstantNode) {
-                        LOG.finer(() -> node.getIndex() + " " + node.toString());
-                    } else {
-                        LOG.finest(() -> node.getIndex() + " " + node.toString());
-                    }
+                LogUtils.CONTEXT_STACK_TRACE.finest(() -> "...within " + frameString + DebugUtils.stackFor(frame, code));
+                if (node instanceof PushLiteralVariableNode || node instanceof PushLiteralConstantNode) {
+                    LogUtils.SCHEDULING.finer(() -> node.getIndex() + " " + node);
+                } else {
+                    LogUtils.CONTEXT_STACK_TRACE.finest(() -> node.getIndex() + " " + node);
                 }
                 node.executeVoid(frame);
                 pc = node.getSuccessorIndex();

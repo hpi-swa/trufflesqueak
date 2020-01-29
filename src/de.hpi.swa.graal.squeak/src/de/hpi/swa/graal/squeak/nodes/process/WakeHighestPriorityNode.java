@@ -5,9 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.nodes.process;
 
-import java.util.logging.Level;
-
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
@@ -23,12 +20,10 @@ import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 
 public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, WakeHighestPriorityNode.class);
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
     @Child private ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.create();
     @Child private ArrayObjectSizeNode arraySizeNode = ArrayObjectSizeNode.create();
@@ -57,15 +52,11 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
                 final int priority = (int) (p + 1);
                 if (newContext instanceof ContextObject) {
                     final ContextObject thisContext = contextNode.executeGet(frame, NilObject.SINGLETON);
-                    if (isLoggingEnabled) {
-                        LOG.fine(() -> DebugUtils.logSwitch(newProcess, priority, image.getActiveProcess(), thisContext, (ContextObject) newContext));
-                    }
+                    LogUtils.SCHEDULING.fine(() -> DebugUtils.logSwitch(newProcess, priority, image.getActiveProcess(), thisContext, (ContextObject) newContext));
                     thisContext.transferTo(pointersWriteNode, newProcess);
                     throw SqueakException.create("Should not be reached");
                 } else {
-                    if (isLoggingEnabled) {
-                        LOG.severe(() -> "evicted zombie process from run queue " + priority);
-                    }
+                    LogUtils.SCHEDULING.severe(() -> "evicted zombie process from run queue " + priority);
                 }
             }
         }

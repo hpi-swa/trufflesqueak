@@ -54,6 +54,7 @@ aliases:
 before_install:
   - *initialize-environment
   - mx.graalsqueak/utils.sh shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
+  - mx.graalsqueak/utils.sh download-graalsqueak-image
   - mx.graalsqueak/utils.sh ensure-test-image
 
 script:
@@ -63,7 +64,7 @@ script:
   - cp $(mx --env ce-graalsqueak paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
   - export GRAALVM_HOME="$(mx.graalsqueak/utils.sh download-graalvm-ce ~/)"
   - ${GRAALVM_HOME}/bin/gu install -L "${INSTALLABLE_TARGET}"
-  - "${GRAALVM_HOME}/bin/graalsqueak --jvm --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\" images/test-64bit.image"
+  - "${GRAALVM_HOME}/bin/graalsqueak --jvm --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\""
   - "${GRAALVM_HOME}/bin/graalsqueak --native --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\" images/test-64bit.image"
   - ${GRAALVM_HOME}/bin/graalsqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
   - ${GRAALVM_HOME}/bin/graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
@@ -103,6 +104,7 @@ jobs:
       language: c
       before_install:
         - choco install --no-progress python
+        - mx.graalsqueak/utils.sh download-graalsqueak-image
         - mx.graalsqueak/utils.sh ensure-test-image
         - *initialize-environment
       script:
@@ -118,6 +120,7 @@ jobs:
         # `gu` tool not yet support on Windows, unzip installable for now
         # - gu install -L "${INSTALLABLE_TARGET}"
         - unzip "${INSTALLABLE_TARGET}" -d ${GRAALVM_HOME}
+        - "${GRAALVM_HOME}/bin/graalsqueak.cmd --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\""
         - "${GRAALVM_HOME}/bin/graalsqueak.cmd --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\" images/test-64bit.image"
         - ${GRAALVM_HOME}/bin/graalsqueak.cmd --code "1 tinyBenchmarks" images/test-64bit.image
       <<: *deploy-component

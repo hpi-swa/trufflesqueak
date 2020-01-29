@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.launcher;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +17,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.graalvm.launcher.AbstractLanguageLauncher;
-import org.graalvm.nativeimage.ImageInfo;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -24,37 +24,20 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
+import de.hpi.swa.graal.squeak.shared.SqueakImageLocator;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageOptions;
 
 public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
-    private static final String HELP_FLAG = "--help";
-    private static final String POLYGLOT_FLAG = "--polyglot";
-
     private boolean headless = false;
     private boolean quiet = false;
-    private String[] imageArguments;
-    private String imagePath = "Squeak.image";
+    private String[] imageArguments = new String[0];
+    private String imagePath = null;
     private String sourceCode = null;
     private boolean enableTranscriptForwarding = false;
 
     public static void main(final String[] arguments) throws RuntimeException {
-        final String[] argumentsForLauncher;
-        if (arguments.length > 1 || arguments.length == 1 && !POLYGLOT_FLAG.equals(arguments[0])) {
-            argumentsForLauncher = arguments;
-        } else {
-            if (ImageInfo.inImageCode()) {
-                argumentsForLauncher = new String[]{HELP_FLAG};
-            } else {
-                final String image = FileChooser.run();
-                if (image != null) {
-                    argumentsForLauncher = new String[]{POLYGLOT_FLAG, image};
-                } else {
-                    argumentsForLauncher = new String[]{HELP_FLAG};
-                }
-            }
-        }
-        new GraalSqueakLauncher().launch(argumentsForLauncher);
+        new GraalSqueakLauncher().launch(arguments);
     }
 
     @Override
@@ -62,7 +45,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         final List<String> unrecognized = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
             final String arg = arguments.get(i);
-            if (fileExists(arg)) {
+            if (isExistingImageFile(arg)) {
                 imagePath = Paths.get(arg).toAbsolutePath().toString();
                 final List<String> remainingArguments = arguments.subList(i + 1, arguments.size());
                 imageArguments = remainingArguments.toArray(new String[remainingArguments.size()]);
@@ -89,6 +72,9 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     }
 
     protected int execute(final Context.Builder contextBuilder) {
+        if (imagePath == null) {
+            imagePath = SqueakImageLocator.findImage();
+        }
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.IMAGE_PATH, imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, Boolean.toString(headless));
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.QUIET, Boolean.toString(quiet));
@@ -108,9 +94,9 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         try (Context context = contextBuilder.build()) {
             println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
             if (sourceCode != null) {
-                final Object result = context.eval(
+                final Value result = context.eval(
                                 Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).cached(false).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
-                println("[graalsqueak] Result: %s", result);
+                println("[graalsqueak] Result: " + (result.isString() ? result.asString() : result.toString()));
                 return 0;
             } else {
                 final Value image = context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build());
@@ -179,10 +165,10 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         return VMType.JVM;
     }
 
-    private static boolean fileExists(final String path) {
+    private static boolean isExistingImageFile(final String fileName) {
         try {
-            return Files.exists(Paths.get(path));
-        } catch (final Exception e) {
+            return fileName.endsWith(".image") && Files.exists(Paths.get(fileName));
+        } catch (final SecurityException | InvalidPathException e) {
             return false;
         }
     }

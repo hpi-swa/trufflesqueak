@@ -5,9 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.nodes.process;
 
-import java.util.logging.Level;
-
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -18,12 +15,10 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 
 public abstract class ResumeProcessNode extends AbstractNodeWithCode {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ResumeProcessNode.class);
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
     @Child private PutToSleepNode putToSleepNode;
 
@@ -45,18 +40,14 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
         final PointersObject currentProcess = code.image.getActiveProcess();
         putToSleepNode.executePutToSleep(currentProcess);
         final ContextObject thisContext = contextNode.executeGet(frame, currentProcess);
-        if (isLoggingEnabled) {
-            LOG.fine(() -> DebugUtils.logSwitch(newProcess, (int) newProcess.getPriority(), currentProcess, thisContext, (ContextObject) newProcess.getSuspendedContext()));
-        }
+        LogUtils.SCHEDULING.fine(() -> DebugUtils.logSwitch(newProcess, (int) newProcess.getPriority(), currentProcess, thisContext, (ContextObject) newProcess.getSuspendedContext()));
         thisContext.transferTo(pointersWriteNode, newProcess);
     }
 
     @Specialization(guards = "!hasHigherPriority(newProcess)")
     protected final void doSleep(final PointersObject newProcess) {
         putToSleepNode.executePutToSleep(newProcess);
-        if (isLoggingEnabled) {
-            LOG.fine(() -> DebugUtils.logNoSwitch(newProcess));
-        }
+        LogUtils.SCHEDULING.fine(() -> DebugUtils.logNoSwitch(newProcess));
     }
 
     protected final boolean hasHigherPriority(final PointersObject newProcess) {

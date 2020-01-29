@@ -5,9 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
-import java.util.logging.Level;
-
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -20,13 +17,10 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, HandlePrimitiveFailedNode.class);
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINER);
-
     @Child protected ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
 
     private static final ERROR_TABLE[] errors = ERROR_TABLE.values();
@@ -52,26 +46,20 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
                     @Cached("create(code)") final FrameStackPushNode pushNode,
                     @Cached final ArrayObjectReadNode readNode) {
         final Object reason = readNode.execute(code.image.primitiveErrorTable, reasonCode);
-        if (isLoggingEnabled) {
-            LOG.finer("Primitive failed in method " + code + " with reason " + reason);
-        }
+        LogUtils.PRIMITIVES.finer("Primitive failed in method " + code + " with reason " + reason);
         pushNode.execute(frame, reason);
     }
 
     @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode >= sizeNode.execute(code.image.primitiveErrorTable)"})
     protected final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
                     @Cached("create(code)") final FrameStackPushNode pushNode) {
-        if (isLoggingEnabled) {
-            LOG.finer("Primitive failed in method " + code + " with reason " + errors[reasonCode]);
-        }
+        LogUtils.PRIMITIVES.finer("Primitive failed in method " + code + " with reason " + errors[reasonCode]);
         pushNode.execute(frame, reasonCode);
     }
 
     @Specialization(guards = "!followedByExtendedStore(code)")
     protected final void doNothing(@SuppressWarnings("unused") final int reasonCode) {
-        if (isLoggingEnabled) {
-            LOG.finer("Primitive failed in method " + code + " with reason " + errors[reasonCode]);
-        }
+        LogUtils.PRIMITIVES.finer("Primitive failed in method " + code + " with reason " + errors[reasonCode]);
     }
 
     protected static final boolean followedByExtendedStore(final CompiledCodeObject codeObject) {

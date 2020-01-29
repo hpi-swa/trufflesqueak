@@ -6,7 +6,6 @@
 package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
-import java.util.logging.Level;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -14,7 +13,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -34,13 +32,11 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.FramesAndContextsIterator;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 
 public final class ContextObject extends AbstractSqueakObjectWithHash {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ContextObject.class);
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINER);
 
     private static final int NIL_PC_VALUE = -1;
 
@@ -684,9 +680,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         }
         assert aProcess != null && process == null || aProcess == null && getFrameSender() == NilObject.SINGLETON;
         if (aProcess != null) {
-            if (isLoggingEnabled) {
-                LOG.finer(() -> "Setting process @" + Integer.toHexString(aProcess.hashCode()) + " as owner of context @" + Integer.toHexString(hashCode()));
-            }
+            LogUtils.SCHEDULING.finer(() -> "Setting process @" + Integer.toHexString(aProcess.hashCode()) + " as owner of context @" + Integer.toHexString(hashCode()));
         }
         process = aProcess;
     }

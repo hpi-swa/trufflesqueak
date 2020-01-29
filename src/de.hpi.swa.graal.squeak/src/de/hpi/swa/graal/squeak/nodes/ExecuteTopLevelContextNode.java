@@ -5,10 +5,9 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
-import java.util.logging.Level;
+import static java.util.logging.Level.FINE;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -31,27 +30,25 @@ import de.hpi.swa.graal.squeak.nodes.context.UnwindContextChainNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "scheduling");
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
-
     private final SqueakImageContext image;
-    private final boolean needsShutdown;
+    private final boolean isImageResuming;
     private ContextObject initialContext;
 
     @Child private UnwindContextChainNode unwindContextChainNode = UnwindContextChainNode.create();
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
 
-    private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean needsShutdown) {
+    private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean isImageResuming) {
         super(language, new FrameDescriptor());
         image = code.image;
         initialContext = context;
-        this.needsShutdown = needsShutdown;
+        this.isImageResuming = isImageResuming;
     }
 
-    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean needsShutdown) {
-        return new ExecuteTopLevelContextNode(language, context, context.getBlockOrMethod(), needsShutdown);
+    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
+        return new ExecuteTopLevelContextNode(language, context, context.getBlockOrMethod(), isImageResuming);
     }
 
     @Override
@@ -62,7 +59,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             return e.getReturnValue();
         } finally {
             CompilerAsserts.neverPartOfCompilation();
-            if (needsShutdown) {
+            if (isImageResuming) {
                 image.interrupt.shutdown();
                 if (image.hasDisplay()) {
                     image.getDisplay().close();
@@ -74,38 +71,41 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private void executeLoop() {
         ContextObject activeContext = initialContext;
-        initialContext = null; /* Free initialContext. */
-        ensureCachedContextCanRunAgain(activeContext);
+        if (isImageResuming) {
+            /*
+             * Free initialContext if resuming an image. Headless code execution requests can be
+             * cached by Truffle. Therefore, they must keep their initialContext, so that they can
+             * be restarted.
+             */
+            initialContext = null;
+        } else {
+            ensureCachedContextCanRunAgain(activeContext);
+        }
         while (true) {
             assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
             final AbstractSqueakObject sender = activeContext.getSender();
             assert sender == NilObject.SINGLETON || ((ContextObject) sender).hasTruffleFrame();
             try {
                 image.lastSeenContext = null;  // Reset materialization mechanism.
-                // doIt: activeContext.printSqStackTrace();
-                if (isLoggingEnabled) {
+                final ContextObject active = activeContext;
+                LogUtils.SCHEDULING.fine(() -> {
                     final StringBuilder b = new StringBuilder("Starting top level stack trace:\n");
-                    DebugUtils.printSqMaterializedStackTraceOn(b, activeContext);
-                    LOG.fine(b.toString());
-                }
+                    DebugUtils.printSqMaterializedStackTraceOn(b, active);
+                    return b.toString();
+                });
                 final Object result = callNode.call(activeContext.getCallTarget());
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
-                if (isLoggingEnabled) {
-                    LOG.fine("Local Return to top-level:\n");
-                }
+                LogUtils.SCHEDULING.log(FINE, "Local Return on top-level: {0}", activeContext);
             } catch (final ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
+                LogUtils.SCHEDULING.log(FINE, "Process Switch: {0}", activeContext);
             } catch (final NonLocalReturn nlr) {
                 final ContextObject target = (ContextObject) nlr.getTargetContextOrMarker();
                 activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
-                if (isLoggingEnabled) {
-                    LOG.fine("Non Local Return to top-level:\n");
-                }
+                LogUtils.SCHEDULING.log(FINE, "Non Local Return on top-level: {0}", activeContext);
             } catch (final NonVirtualReturn nvr) {
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
-                if (isLoggingEnabled) {
-                    LOG.fine("Non Virtual Return to top-level:\n");
-                }
+                LogUtils.SCHEDULING.log(FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
             assert image.stackDepth == 0 : "Stack depth should be zero before switching to another context";
         }

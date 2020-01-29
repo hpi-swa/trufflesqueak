@@ -14,6 +14,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -317,20 +318,26 @@ public class AbstractPointersObjectNodes {
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex >= cachedLayout.getInstSize()"}, limit = "VARIABLE_PART_INDEX_CACHE_LIMIT")
         protected static final void doWriteIntoVariablePartCachedIndex(final WeakVariablePointersObject object, @SuppressWarnings("unused") final int index, final Object value,
                         @Cached("index") final int cachedIndex,
-                        @Cached("object.getLayout()") final ObjectLayout cachedLayout) {
-            object.putIntoVariablePart(cachedIndex - cachedLayout.getInstSize(), value);
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout,
+                        @Cached final BranchProfile nilProfile,
+                        @Cached("createBinaryProfile()") final ConditionProfile primitiveProfile) {
+            object.putIntoVariablePart(cachedIndex - cachedLayout.getInstSize(), value, nilProfile, primitiveProfile);
         }
 
         @Specialization(guards = {"object.getLayout() == cachedLayout", "index >= cachedLayout.getInstSize()"}, //
                         replaces = "doWriteIntoVariablePartCachedIndex", limit = "VARIABLE_PART_LAYOUT_CACHE_LIMIT")
         protected static final void doWriteIntoVariablePartCachedLayout(final WeakVariablePointersObject object, final int index, final Object value,
-                        @Cached("object.getLayout()") final ObjectLayout cachedLayout) {
-            object.putIntoVariablePart(index - cachedLayout.getInstSize(), value);
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout,
+                        @Cached final BranchProfile nilProfile,
+                        @Cached("createBinaryProfile()") final ConditionProfile primitiveProfile) {
+            object.putIntoVariablePart(index - cachedLayout.getInstSize(), value, nilProfile, primitiveProfile);
         }
 
         @Specialization(guards = "index >= object.instsize()", replaces = {"doWriteIntoVariablePartCachedIndex", "doWriteIntoVariablePartCachedLayout"})
-        protected static final void doWriteIntoVariablePart(final WeakVariablePointersObject object, final int index, final Object value) {
-            object.putIntoVariablePart(index - object.instsize(), value);
+        protected static final void doWriteIntoVariablePart(final WeakVariablePointersObject object, final int index, final Object value,
+                        @Cached final BranchProfile nilProfile,
+                        @Cached("createBinaryProfile()") final ConditionProfile primitiveProfile) {
+            object.putIntoVariablePart(index - object.instsize(), value, nilProfile, primitiveProfile);
         }
     }
 }

@@ -110,11 +110,11 @@ public final class SqueakTests {
 
     /**
      * Test names in the order they appear in the file - useful for testing properties such as
-     * sorting, duplication.
+     * sorting, duplication (see GraalSqueakTest in image).
      */
-    protected static List<String> rawTestNames() {
+    public static String[] rawTestNames() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(SqueakTests.class.getResourceAsStream(FILENAME)))) {
-            return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).collect(toList());
+            return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).collect(toList()).toArray(new String[0]);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

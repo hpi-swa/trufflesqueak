@@ -5,9 +5,6 @@
  */
 package de.hpi.swa.graal.squeak.nodes.process;
 
-import java.util.logging.Level;
-
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -19,11 +16,9 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 
 public abstract class SignalSemaphoreNode extends AbstractNode {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SignalSemaphoreNode.class);
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
     @Child private ResumeProcessNode resumeProcessNode;
 
@@ -41,18 +36,14 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
     public static final void doSignalEmpty(final PointersObject semaphore,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
         final long excessSignals = semaphore.getExcessSignals();
-        if (isLoggingEnabled) {
-            LOG.fine(() -> "Signalling empty semaphore @" + Integer.toHexString(semaphore.hashCode()) + " with initially " + excessSignals + " excessSignals");
-        }
+        LogUtils.SCHEDULING.fine(() -> "Signalling empty semaphore @" + Integer.toHexString(semaphore.hashCode()) + " with initially " + excessSignals + " excessSignals");
         writeNode.execute(semaphore, SEMAPHORE.EXCESS_SIGNALS, excessSignals + 1);
     }
 
     @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "!semaphore.isEmptyList()"})
     public final void doSignal(final VirtualFrame frame, final PointersObject semaphore,
                     @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
-        if (isLoggingEnabled) {
-            LOG.fine(() -> "Attempting to resume process after non-empty semaphore @" + Integer.toHexString(semaphore.hashCode()) + " signal");
-        }
+        LogUtils.SCHEDULING.fine(() -> "Attempting to resume process after non-empty semaphore @" + Integer.toHexString(semaphore.hashCode()) + " signal");
         resumeProcessNode.executeResume(frame, semaphore.removeFirstLinkOfList(writeNode));
     }
 

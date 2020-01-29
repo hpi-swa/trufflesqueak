@@ -16,7 +16,6 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.TruffleLanguage.Env;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -63,11 +62,10 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interop");
     private static final String EVAL_SOURCE_NAME = "<eval>";
 
     /**
@@ -1517,7 +1515,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final void setLastError(final Exception e) {
-            LOG.fine(() -> MiscUtils.toString(e));
+            LogUtils.INTEROP.fine(() -> MiscUtils.toString(e));
             lastError = e;
         }
     }

@@ -573,7 +573,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
 
     private void queueEvent(final long[] eventData) {
         deferredEvents.add(eventData);
-        if (inputSemaphoreIndex > 0) {
+        if (image.options.signalInputSemaphore && inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
     }

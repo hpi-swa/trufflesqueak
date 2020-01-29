@@ -6,11 +6,9 @@
 package de.hpi.swa.graal.squeak.util;
 
 import java.util.Arrays;
-import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -26,7 +24,6 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 /**
  * GraalSqueak frame argument layout.
@@ -71,8 +68,6 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
  * </pre>
  */
 public final class FrameAccess {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "iterate-frames");
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
     private enum ArgumentIndicies {
         METHOD, // 0
@@ -305,14 +300,10 @@ public final class FrameAccess {
 
     @TruffleBoundary
     public static ContextObject findContextForMarker(final FrameMarker frameMarker) {
-        if (isLoggingEnabled) {
-            LOG.fine("Iterating frames to find a marker...");
-        }
+        LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a marker...");
         final ContextObject context = (ContextObject) new FramesAndContextsIterator(
                         (bool, code) -> {
-                            if (isLoggingEnabled) {
-                                LOG.finer(() -> "..." + code);
-                            }
+                            LogUtils.ITERATE_FRAMES.finer(() -> "..." + code);
                             return bool;
                         }, null).scanFor(frameMarker, NilObject.SINGLETON, NilObject.SINGLETON);
         if (context == null) {

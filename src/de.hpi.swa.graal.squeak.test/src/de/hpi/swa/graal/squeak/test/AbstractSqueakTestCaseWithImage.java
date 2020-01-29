@@ -23,7 +23,6 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -32,11 +31,10 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, AbstractSqueakTestCaseWithImage.class);
     private static final int SQUEAK_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("SQUEAK_TIMEOUT", DebugUtils.underDebug ? "2000" : "300"));    // generous
     // default
     // for
@@ -155,7 +153,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     protected static Object evaluate(final String expression) {
         context.enter();
         try {
-            LOG.fine(() -> "\nEvaluating " + expression + DebugUtils.currentState(image));
+            LogUtils.TESTING.fine(() -> "\nEvaluating " + expression + DebugUtils.currentState(image));
             final ExecuteTopLevelContextNode doItContextNode = image.getDoItContextNode(expression);
             return Truffle.getRuntime().createCallTarget(doItContextNode).call();
         } finally {

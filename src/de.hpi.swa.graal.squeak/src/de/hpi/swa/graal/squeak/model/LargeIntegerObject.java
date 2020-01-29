@@ -334,8 +334,14 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object add(final SqueakImageContext image, final long a, final long b) {
-        return new LargeIntegerObject(image, BigInteger.valueOf(a).add(BigInteger.valueOf(b)));
+    public static Object add(final SqueakImageContext image, final long lhs, final long rhs) {
+        /* Inlined version of Math.addExact(x, y) with large integer fallback. */
+        final long result = lhs + rhs;
+        // HD 2-12 Overflow iff both arguments have the opposite sign of the result
+        if (((lhs ^ result) & (rhs ^ result)) < 0) {
+            return new LargeIntegerObject(image, BigInteger.valueOf(lhs).add(BigInteger.valueOf(rhs)));
+        }
+        return result;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -349,8 +355,15 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object subtract(final SqueakImageContext image, final long a, final long b) {
-        return new LargeIntegerObject(image, BigInteger.valueOf(a).subtract(BigInteger.valueOf(b)));
+    public static Object subtract(final SqueakImageContext image, final long lhs, final long rhs) {
+        /* Inlined version of Math.subtractExact(x, y) with large integer fallback. */
+        final long result = lhs - rhs;
+        // HD 2-12 Overflow iff the arguments have different signs and
+        // the sign of the result is different than the sign of x
+        if (((lhs ^ rhs) & (lhs ^ result)) < 0) {
+            return new LargeIntegerObject(image, BigInteger.valueOf(lhs).subtract(BigInteger.valueOf(rhs)));
+        }
+        return result;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -372,8 +385,20 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object multiply(final SqueakImageContext image, final long a, final long b) {
-        return new LargeIntegerObject(image, BigInteger.valueOf(a).multiply(BigInteger.valueOf(b)));
+    public static Object multiply(final SqueakImageContext image, final long lhs, final long rhs) {
+        /* Inlined version of Math.multiplyExact(x, y) with large integer fallback. */
+        final long result = lhs * rhs;
+        final long ax = Math.abs(lhs);
+        final long ay = Math.abs(rhs);
+        if ((ax | ay) >>> 31 != 0) {
+            // Some bits greater than 2^31 that might cause overflow
+            // Check the result using the divide operator
+            // and check for the special case of Long.MIN_VALUE * -1
+            if (rhs != 0 && result / rhs != lhs || lhs == Long.MIN_VALUE && rhs == -1) {
+                return new LargeIntegerObject(image, BigInteger.valueOf(lhs).multiply(BigInteger.valueOf(rhs)));
+            }
+        }
+        return result;
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -530,6 +555,11 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     public static LargeIntegerObject toUnsigned(final SqueakImageContext image, final long value) {
         assert value < 0;
         return new LargeIntegerObject(image, BigInteger.valueOf(value).add(ONE_SHIFTED_BY_64));
+    }
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object truncateExact(final SqueakImageContext image, final double value) {
+        return reduceIfPossible(image, new BigDecimal(value).toBigInteger());
     }
 
     /*

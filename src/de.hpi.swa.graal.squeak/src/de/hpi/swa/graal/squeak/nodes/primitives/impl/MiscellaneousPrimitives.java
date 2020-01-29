@@ -13,13 +13,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -67,6 +65,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
+import de.hpi.swa.graal.squeak.util.LogUtils;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.NotProvided;
 import de.hpi.swa.graal.squeak.util.OSDetector;
@@ -79,26 +78,20 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     private abstract static class AbstractSignalAtPrimitiveNode extends AbstractPrimitiveNode {
-        private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, AbstractSignalAtPrimitiveNode.class);
-        private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
         protected AbstractSignalAtPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
         protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
-            if (isLoggingEnabled) {
-                LOG.fine(() -> "Setting the timer semaphore to @" + Integer.toHexString(semaphore.hashCode()) + " to be signalled in " + msTime + "ms");
-            }
+            LogUtils.INTERRUPTS.fine(() -> "Setting the timer semaphore to @" + Integer.toHexString(semaphore.hashCode()) + " to be signalled in " + msTime + "ms");
             method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
             method.image.interrupt.setTimerSemaphore(semaphore);
             method.image.interrupt.setNextWakeupTick(msTime);
         }
 
         protected final void resetTimerSemaphore() {
-            if (isLoggingEnabled) {
-                LOG.fine(() -> "Resetting the timer semaphore");
-            }
+            LogUtils.INTERRUPTS.fine(() -> "Resetting the timer semaphore");
             method.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, NilObject.SINGLETON);
             method.image.interrupt.setTimerSemaphore(null);
             method.image.interrupt.setNextWakeupTick(0);
@@ -439,7 +432,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asByteString(MiscUtils.getJavaHome());
+            return method.image.asByteString(method.image.getResourcesDirectory());
         }
     }
 
@@ -556,7 +549,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1003:  // this platform's processor type
                     return "intel";
                 case 1004:  // vm version
-                    return SqueakLanguageConfig.NAME + " " + SqueakLanguageConfig.VERSION;
+                    /*
+                     * Start with "Croquet" to let `LanguageEnvironment win32VMUsesUnicode` return
+                     * `true`. Add fake VMMaker info to make `Smalltalk vmVMMakerVersion` work.
+                     */
+                    return "Croquet " + SqueakLanguageConfig.IMPLEMENTATION_NAME + " " + SqueakLanguageConfig.VERSION + " VMMaker.fn.9999";
                 case 1005:  // window system name
                     return "Aqua";
                 case 1006:  // vm build id

@@ -4,11 +4,9 @@ import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 
@@ -19,11 +17,8 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public class FramesAndContextsIterator {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "iterate-frames");
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
     public static final FramesAndContextsIterator Empty = new FramesAndContextsIterator();
 
@@ -81,9 +76,7 @@ public class FramesAndContextsIterator {
 
     @TruffleBoundary
     public AbstractSqueakObject scanFor(final FrameMarker start, final AbstractSqueakObject end, final AbstractSqueakObject endReturnValue) {
-        if (isLoggingEnabled) {
-            LOG.fine(() -> "Inside FramesAndContextsIterator.scanFor with args: " + start + ", " + end);
-        }
+        LogUtils.ITERATE_FRAMES.fine(() -> "Inside FramesAndContextsIterator.scanFor with args: " + start + ", " + end);
         final Object[] lastSender = new Object[1];
         final boolean[] foundMyself = {false};
         final ContextObject result = Truffle.getRuntime().iterateFrames((frameInstance) -> {

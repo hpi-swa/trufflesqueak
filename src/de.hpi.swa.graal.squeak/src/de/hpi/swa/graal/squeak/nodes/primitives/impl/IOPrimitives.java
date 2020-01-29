@@ -204,7 +204,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "segmentWordArray.isIntType()")
-        protected final ArrayObject doLoad(final Object receiver, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
+        protected static final ArrayObject doLoad(final Object receiver, final NativeObject segmentWordArray, final ArrayObject outPointerArray) {
             /**
              * TODO: implement primitive. In the meantime, pretend this primitive succeeds so that
              * some tests (e.g. BitmapStreamTests) run quickly.

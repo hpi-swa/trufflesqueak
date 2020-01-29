@@ -9,23 +9,17 @@ import java.util.ArrayDeque;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class InterruptHandlerState {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, InterruptHandlerState.class);
-    private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
-
     private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
 
     private final SqueakImageContext image;
@@ -98,15 +92,13 @@ public final class InterruptHandlerState {
     }
 
     public void setNextWakeupTick(final long msTime) {
-        if (isLoggingEnabled) {
-            LOG.fine(() -> {
-                if (nextWakeupTick != 0) {
-                    return (msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick + " after " + count + " checks";
-                } else {
-                    return (msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0") + " after " + count + " checks";
-                }
-            });
-        }
+        LogUtils.INTERRUPTS.finer(() -> {
+            if (nextWakeupTick != 0) {
+                return (msTime != 0 ? "Changing nextWakeupTick to " + msTime + " from " : "Resetting nextWakeupTick from ") + nextWakeupTick + " after " + count + " checks";
+            } else {
+                return (msTime != 0 ? "Setting nextWakeupTick to " + msTime : "Resetting nextWakeupTick when it was already 0") + " after " + count + " checks";
+            }
+        });
         nextWakeupTick = msTime;
         count = 0;
     }
@@ -140,9 +132,7 @@ public final class InterruptHandlerState {
             final long time = System.currentTimeMillis();
             count++;
             if (time >= nextWakeupTick) {
-                if (isLoggingEnabled) {
-                    LOG.fine(() -> "Reached nextWakeupTick: " + nextWakeupTick + " after " + count + " checks");
-                }
+                LogUtils.INTERRUPTS.finer(() -> "Reached nextWakeupTick: " + nextWakeupTick + " after " + count + " checks");
                 return true;
             }
         }

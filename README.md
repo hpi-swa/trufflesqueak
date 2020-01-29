@@ -23,12 +23,12 @@ $GRAALVM_HOME/bin/gu install \
 powershell Expand-Archive graalsqueak-installable-….zip -DestinationPath $GRAALVM_HOME
 ```
 
-4. You should now be able to open the GraalSqueak image attached to the release:
+4. You should now be able to open GraalSqueak:
 
 ```bash
-$GRAALVM_HOME/bin/graalsqueak path/to/a/GraalSqueak-X.Y.Z.image      # Linux or macOS
+$GRAALVM_HOME/bin/graalsqueak      # Linux or macOS
 
-$GRAALVM_HOME\bin\graalsqueak.cmd path\to\a\GraalSqueak-X.Y.Z.image  # Windows
+$GRAALVM_HOME\bin\graalsqueak.cmd  # Windows
 ```
 
 ## Community Support
