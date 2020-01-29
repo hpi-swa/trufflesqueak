@@ -21,6 +21,7 @@ import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class WeakVariablePointersObject extends AbstractPointersObject {
     private static final WeakReference<?> NIL_REFERENCE = new WeakReference<>(NilObject.SINGLETON);
@@ -95,11 +96,11 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     public Object getFromVariablePart(final int index) {
-        return NilObject.nullToNil(variablePart[index].get());
+        return NilObject.nullToNil(UnsafeUtils.getWeakReference(variablePart, index).get());
     }
 
     public Object getFromVariablePart(final int index, final ConditionProfile nilProfile) {
-        return NilObject.nullToNil(variablePart[index].get(), nilProfile);
+        return NilObject.nullToNil(UnsafeUtils.getWeakReference(variablePart, index).get(), nilProfile);
     }
 
     private void putIntoVariablePart(final int index, final Object value) {
@@ -109,9 +110,9 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     public void putIntoVariablePart(final int index, final Object value, final BranchProfile nilProfile, final ConditionProfile primitiveProfile) {
         if (value == NilObject.SINGLETON) {
             nilProfile.enter();
-            variablePart[index] = NIL_REFERENCE;
+            UnsafeUtils.putWeakReference(variablePart, index, NIL_REFERENCE);
         } else {
-            variablePart[index] = new WeakReference<>(value, primitiveProfile.profile(SqueakGuards.isUsedJavaPrimitive(value)) ? null : image.weakPointersQueue);
+            UnsafeUtils.putWeakReference(variablePart, index, new WeakReference<>(value, primitiveProfile.profile(SqueakGuards.isUsedJavaPrimitive(value)) ? null : image.weakPointersQueue));
         }
     }
 

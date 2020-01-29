@@ -18,6 +18,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.Abstr
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class VariablePointersObject extends AbstractPointersObject {
     @CompilationFinal(dimensions = 0) private Object[] variablePart;
@@ -91,11 +92,11 @@ public final class VariablePointersObject extends AbstractPointersObject {
     }
 
     public Object getFromVariablePart(final int index) {
-        return variablePart[index];
+        return UnsafeUtils.getObject(variablePart, index);
     }
 
     public void putIntoVariablePart(final int index, final Object value) {
-        variablePart[index] = value;
+        UnsafeUtils.putObject(variablePart, index, value);
     }
 
     public VariablePointersObject shallowCopy() {
