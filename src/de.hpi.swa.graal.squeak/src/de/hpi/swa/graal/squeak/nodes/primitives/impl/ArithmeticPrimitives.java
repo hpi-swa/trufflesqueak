@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -114,9 +115,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) >= 0);
         }
 
-        @Specialization
+        @Specialization(guards = "isAnExactFloat(lhs)")
         protected static final boolean doLongDouble(final long lhs, final double rhs) {
             return BooleanObject.wrap(lhs < rhs);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!isAnExactFloat(lhs)")
+        protected static final boolean doLongNotExactDouble(final long lhs, final double rhs) {
+            return new BigDecimal(lhs).compareTo(new BigDecimal(rhs)) < 0;
         }
     }
 
@@ -137,9 +144,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) <= 0);
         }
 
-        @Specialization
+        @Specialization(guards = "isAnExactFloat(lhs)")
         protected static final boolean doLongDouble(final long lhs, final double rhs) {
             return BooleanObject.wrap(lhs > rhs);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!isAnExactFloat(lhs)")
+        protected static final boolean doLongNotExactDouble(final long lhs, final double rhs) {
+            return new BigDecimal(lhs).compareTo(new BigDecimal(rhs)) > 0;
         }
     }
 
@@ -160,9 +173,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) > 0);
         }
 
-        @Specialization
+        @Specialization(guards = "isAnExactFloat(lhs)")
         protected static final boolean doLongDouble(final long lhs, final double rhs) {
             return BooleanObject.wrap(lhs <= rhs);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!isAnExactFloat(lhs)")
+        protected static final boolean doLongNotExactDouble(final long lhs, final double rhs) {
+            return new BigDecimal(lhs).compareTo(new BigDecimal(rhs)) <= 0;
         }
     }
 
@@ -183,9 +202,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) < 0);
         }
 
-        @Specialization
+        @Specialization(guards = "isAnExactFloat(lhs)")
         protected static final boolean doLongDouble(final long lhs, final double rhs) {
             return BooleanObject.wrap(lhs >= rhs);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!isAnExactFloat(lhs)")
+        protected static final boolean doLongNotExactDouble(final long lhs, final double rhs) {
+            return new BigDecimal(lhs).compareTo(new BigDecimal(rhs)) >= 0;
         }
     }
 
@@ -890,7 +915,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {43, 543})
-    protected abstract static class PrimLessThanFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimLessThanFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         protected PrimLessThanFloatNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -899,11 +924,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doDouble(final double lhs, final double rhs) {
             return BooleanObject.wrap(lhs < rhs);
         }
+
+        @Specialization(guards = "isAnExactFloat(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(lhs < rhs);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!isAnExactFloat(rhs)")
+        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
+            return new BigDecimal(lhs).compareTo(new BigDecimal(rhs)) < 0;
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {44, 544})
-    protected abstract static class PrimGreaterThanFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimGreaterThanFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         protected PrimGreaterThanFloatNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -912,11 +948,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doDouble(final double lhs, final double rhs) {
             return BooleanObject.wrap(lhs > rhs);
         }
+
+        @Specialization(guards = "isAnExactFloat(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(lhs > rhs);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!isAnExactFloat(rhs)")
+        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
+            return new BigDecimal(lhs).compareTo(new BigDecimal(rhs)) > 0;
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {45, 545})
-    protected abstract static class PrimLessOrEqualFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimLessOrEqualFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         protected PrimLessOrEqualFloatNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -925,11 +972,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doDouble(final double lhs, final double rhs) {
             return BooleanObject.wrap(lhs <= rhs);
         }
+
+        @Specialization(guards = "isAnExactFloat(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(lhs <= rhs);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!isAnExactFloat(rhs)")
+        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
+            return new BigDecimal(lhs).compareTo(new BigDecimal(rhs)) <= 0;
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {46, 546})
-    protected abstract static class PrimGreaterOrEqualFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimGreaterOrEqualFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         protected PrimGreaterOrEqualFloatNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -938,11 +996,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doDouble(final double lhs, final double rhs) {
             return BooleanObject.wrap(lhs >= rhs);
         }
+
+        @Specialization(guards = "isAnExactFloat(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(lhs >= rhs);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!isAnExactFloat(rhs)")
+        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
+            return new BigDecimal(lhs).compareTo(new BigDecimal(rhs)) >= 0;
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {47, 547})
-    protected abstract static class PrimEqualFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimEqualFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         protected PrimEqualFloatNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -951,11 +1020,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doDouble(final double lhs, final double rhs) {
             return BooleanObject.wrap(lhs == rhs);
         }
+
+        @Specialization
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(isAnExactFloat(rhs) && lhs == rhs);
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {48, 548})
-    protected abstract static class PrimNotEqualFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimNotEqualFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         protected PrimNotEqualFloatNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -963,6 +1037,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final boolean doDouble(final double lhs, final double rhs) {
             return BooleanObject.wrap(lhs != rhs);
+        }
+
+        @Specialization
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return BooleanObject.wrap(!(isAnExactFloat(rhs) && lhs == rhs));
         }
     }
 
@@ -1001,7 +1080,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "inSafeIntegerRange(receiver.getValue())")
         protected static final long doFloat(final FloatObject receiver,
                         @Cached final BranchProfile positiveProfile,
                         @Cached final BranchProfile negativeProfile,
@@ -1023,6 +1102,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
+
+        @Specialization(guards = "!inSafeIntegerRange(receiver.getValue())")
+        protected final Object doFloatExact(final FloatObject receiver) {
+            return LargeIntegerObject.truncateExact(method.image, receiver.getValue());
+        }
     }
 
     @GenerateNodeFactory
@@ -1032,9 +1116,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "inSafeIntegerRange(receiver.getValue())")
         protected static final double doFloat(final FloatObject receiver) {
             return receiver.getValue() - (long) receiver.getValue();
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!inSafeIntegerRange(receiver.getValue())")
+        protected static final double doFloatExact(final FloatObject receiver) {
+            return receiver.getValue() - new BigDecimal(receiver.getValue()).toBigInteger().doubleValue();
         }
     }
 
@@ -1239,12 +1329,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 551)
-    protected abstract static class PrimSmallFloatTruncatedNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSmallFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
         protected PrimSmallFloatTruncatedNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "inSafeIntegerRange(receiver)")
         protected static final long doDouble(final double receiver,
                         @Cached final BranchProfile positiveProfile,
                         @Cached final BranchProfile negativeProfile,
@@ -1265,18 +1355,29 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
+
+        @Specialization(guards = "!inSafeIntegerRange(receiver)")
+        protected final Object doDoubleExact(final double receiver) {
+            return LargeIntegerObject.truncateExact(method.image, receiver);
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 552)
-    protected abstract static class PrimSmallFloatFractionPartNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSmallFloatFractionPartNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
         protected PrimSmallFloatFractionPartNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "inSafeIntegerRange(receiver)")
         protected static final double doDouble(final double receiver) {
             return receiver - (long) receiver;
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "!inSafeIntegerRange(receiver)")
+        protected static final double doDoubleExact(final double receiver) {
+            return receiver - new BigDecimal(receiver).toBigInteger().doubleValue();
         }
     }
 
@@ -1451,18 +1552,24 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(Double.class)
     @TypeSystemReference(ArithmeticBaseTypeSystem.class)
     public abstract static class AbstractArithmeticPrimitiveNode extends AbstractPrimitiveNode {
+        private static final long ONE_SHIFTED_BY_53 = 1L << FloatObject.PRECISION;
+        private static final double DOUBLE_MAX_SAFE_INTEGER = ONE_SHIFTED_BY_53 - 1;
+
         public AbstractArithmeticPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @TruffleBoundary
         public static final boolean isAnExactFloat(final long value) {
             final long abs = Math.abs(value);
-            final int h = Long.bitCount(abs);
-            if (h <= FloatObject.PRECISION) {
+            if (abs <= ONE_SHIFTED_BY_53) {
                 return true;
             }
-            return value - 1 <= FloatObject.EMAX && h - Math.log(Long.lowestOneBit(abs)) / Math.log(2) < FloatObject.PRECISION;
+            final long lowest = Long.lowestOneBit(abs);
+            return lowest > Double.MAX_EXPONENT || lowest > 1 && Long.highestOneBit(abs) <= lowest << FloatObject.PRECISION;
+        }
+
+        protected static final boolean inSafeIntegerRange(final double d) {
+            return d >= -DOUBLE_MAX_SAFE_INTEGER && d <= DOUBLE_MAX_SAFE_INTEGER;
         }
 
         protected static final boolean differentSign(final long lhs, final long rhs) {

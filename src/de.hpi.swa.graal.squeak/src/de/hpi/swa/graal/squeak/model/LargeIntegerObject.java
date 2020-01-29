@@ -534,6 +534,11 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static Object truncateExact(final SqueakImageContext image, final double value) {
+        return reduceIfPossible(image, new BigDecimal(value).toBigInteger());
+    }
+
     /*
      * Bit Operations
      */
