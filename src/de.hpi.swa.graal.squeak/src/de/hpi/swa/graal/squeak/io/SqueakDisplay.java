@@ -367,7 +367,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7) {
         deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6, value7, HostWindowPlugin.DEFAULT_HOST_WINDOW_ID});
-        if (inputSemaphoreIndex > 0) {
+        if (image.options.signalInputSemaphore && inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
     }

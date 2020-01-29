@@ -38,6 +38,9 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.INTERRUPTS, category = OptionCategory.USER, stability = OptionStability.STABLE, help = SqueakLanguageOptions.INTERRUPTS_HELP)//
     public static final OptionKey<Boolean> Interrupts = new OptionKey<>(false);
 
+    @Option(name = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.SIGNAL_INPUT_SEMAPHORE_HELP)//
+    public static final OptionKey<Boolean> SignalInputSemaphore = new OptionKey<>(false);
+
     @Option(name = SqueakLanguageOptions.STACK_DEPTH_PROTECTION, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.STACK_DEPTH_PROTECTION_HELP)//
     public static final OptionKey<Boolean> StackDepthProtection = new OptionKey<>(false);
 
@@ -59,6 +62,7 @@ public final class SqueakOptions {
         public final boolean disableInterruptHandler;
         public final boolean enableStackDepthProtection;
         public final boolean isTesting;
+        public final boolean signalInputSemaphore;
 
         public SqueakContextOptions(final Env env) {
             final OptionValues options = env.getOptions();
@@ -67,6 +71,7 @@ public final class SqueakOptions {
             isHeadless = options.get(Headless);
             isQuiet = options.get(Quiet);
             disableInterruptHandler = options.get(Interrupts);
+            signalInputSemaphore = options.get(SignalInputSemaphore);
             enableStackDepthProtection = options.get(StackDepthProtection);
             isTesting = options.get(Testing);
         }
