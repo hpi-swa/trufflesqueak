@@ -8,10 +8,12 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -22,11 +24,13 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -38,6 +42,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CHARACTER_SCANNER;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.VariablePointersObjectReadNode;
@@ -57,6 +62,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.NotProvided;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
@@ -142,19 +148,30 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     /** Primitive 96 (primitiveCopyBits) not in use anymore. */
 
+    @ImportStatic(FrameAccess.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 97)
     protected abstract static class PrimSnapshotNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-
         public PrimSnapshotNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        public static final Object doSnapshot(final VirtualFrame frame, final PointersObject receiver) {
-            // TODO: implement primitiveSnapshot
-            throw PrimitiveFailed.GENERIC_ERROR;
+        public final boolean doSnapshot(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+                        @Cached("create(method)") final GetOrCreateContextNode getOrCreateContextNode) {
+            final ContextObject thisContext = getOrCreateContextNode.executeGet(frame, method.image.getActiveProcess());
+            writeImage(thisContext);
+            /* Return false to signal that the image is not resuming. */
+            return BooleanObject.FALSE;
+        }
+
+        @TruffleBoundary
+        private void writeImage(final ContextObject thisContext) {
+            /* Push true on stack for saved snapshot. */
+            thisContext.push(BooleanObject.TRUE);
+            SqueakImageWriter.write(method.image, thisContext);
+            /* Pop true again. */
+            thisContext.pop();
         }
     }
 

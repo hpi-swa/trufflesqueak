@@ -171,6 +171,10 @@ public final class NativeObjectNodes {
             return NativeObjectSizeNodeGen.create();
         }
 
+        public static NativeObjectSizeNode getUncached() {
+            return NativeObjectSizeNodeGen.getUncached();
+        }
+
         public abstract int execute(NativeObject obj);
 
         @Specialization(guards = "obj.isByteType()")

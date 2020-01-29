@@ -71,7 +71,7 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
  * </pre>
  */
 public final class FrameAccess {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, FrameAccess.class);
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "iterate-frames");
     private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
     private enum ArgumentIndicies {

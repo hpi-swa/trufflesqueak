@@ -39,6 +39,7 @@ public final class TestLog {
                 public void evaluate() throws Throwable {
                     Travis.get().begin(description.getClassName(), description.getTestClass().getSimpleName());
                     try {
+                        System.out.println("Running tests in " + description.getTestClass().getSimpleName());
                         base.evaluate();
                     } finally {
                         Travis.get().end();

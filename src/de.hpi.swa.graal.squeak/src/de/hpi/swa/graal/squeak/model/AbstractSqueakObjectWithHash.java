@@ -5,8 +5,12 @@
  */
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
+
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 
 public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject {
     public static final int IDENTITY_HASH_MASK = 0x400000 - 1;
@@ -36,6 +40,12 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
         image = original.image;
         markingFlag = original.markingFlag;
         squeakHash = HASH_UNINITIALIZED;
+    }
+
+    @Override
+    public int getNumSlots() {
+        CompilerAsserts.neverPartOfCompilation();
+        return size();
     }
 
     public abstract ClassObject getSqueakClass();
@@ -98,6 +108,33 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
             return false;
         } else {
             markingFlag = currentMarkingFlag;
+            return true;
+        }
+    }
+
+    public void trace(final SqueakImageWriter writerNode) {
+        writerNode.traceIfNecessary(getSqueakClass());
+    }
+
+    public abstract void write(SqueakImageWriter writerNode);
+
+    /* Returns true if more content is following. */
+    protected final boolean writeHeader(final SqueakImageWriter writerNode) {
+        return writeHeader(writerNode, 0);
+    }
+
+    protected final boolean writeHeader(final SqueakImageWriter writerNode, final int formatOffset) {
+        final long numSlots = getNumSlots();
+        if (numSlots >= SqueakImageConstants.OVERFLOW_SLOTS) {
+            writerNode.writeLong(numSlots | SqueakImageConstants.SLOTS_MASK);
+            writerNode.writeObjectHeader(SqueakImageConstants.OVERFLOW_SLOTS, getSqueakHash(), getSqueakClass(), formatOffset);
+        } else {
+            writerNode.writeObjectHeader(numSlots, getSqueakHash(), getSqueakClass(), formatOffset);
+        }
+        if (numSlots == 0) {
+            writerNode.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
+            return false;
+        } else {
             return true;
         }
     }

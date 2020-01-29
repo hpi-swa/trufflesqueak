@@ -1,4 +1,4 @@
-# GraalSqueak [![Latest Release][graalsqueak_latest_badge]][graalsqueak_latest] [![Build Status][travis_badge]][travis] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy]  [![License][graalsqueak_license_badge]][graalsqueak_license]
+# GraalSqueak [![Latest Release][graalsqueak_latest_badge]][graalsqueak_latest] [![Slack][graalvm_slack_badge]][graalvm_slack] [![Build Status][travis_badge]][travis] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy] [![License][graalsqueak_license_badge]][graalsqueak_license]
 
 A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 
@@ -31,6 +31,12 @@ $GRAALVM_HOME/bin/graalsqueak path/to/a/GraalSqueak-X.Y.Z.image      # Linux or 
 $GRAALVM_HOME\bin\graalsqueak.cmd path\to\a\GraalSqueak-X.Y.Z.image  # Windows
 ```
 
+## Community Support
+
+If you have a question, need some help, or want to discuss a new feature, feel
+free to open an [issue][issues] or join the `#graalsqueak` channel on the
+[GraalVM Slack][graalvm_slack].
+
 
 ## Documentation
 
@@ -41,7 +47,7 @@ Documentation is available in [`docs`](docs).
 
 Active development is done in the [`master` branch][master].
 Please feel free to open a [pull request][pull_request] if you'd like to
-contribute a bugfix, documentation, or a new feature.
+contribute a bug-fix, documentation, or a new feature.
 
 
 ### Building from Source
@@ -159,6 +165,8 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [graalvm]: http://www.graalvm.org/
 [graalvm_blog]: https://medium.com/graalvm
 [graalvm_download]: http://www.graalvm.org/downloads/
+[graalvm_slack]: https://www.graalvm.org/slack-invitation/
+[graalvm_slack_badge]: https://img.shields.io/badge/slack-%23graalsqueak-active
 [icooolps18]: https://2018.ecoop.org/event/icooolps-2018-papers-graalsqueak-a-fast-smalltalk-bytecode-interpreter-written-in-an-ast-interpreter-framework
 [icooolps18_doi]: https://img.shields.io/badge/doi-10.1145/3242947.3242948-blue.svg
 [icooolps18_paper]: https://doi.org/10.1145/3242947.3242948

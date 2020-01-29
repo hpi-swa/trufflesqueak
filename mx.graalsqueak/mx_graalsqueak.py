@@ -313,18 +313,13 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.inspect:
         squeak_arguments.append('--inspect')
     if parsed_args.trace_interop:
-        parsed_args.log = (
-            '%s.nodes.plugins.PolyglotPlugin=FINE' % PACKAGE_NAME)
+        parsed_args.log = 'interop=FINE'
     if parsed_args.trace_iterate_frames:
-        parsed_args.log = (
-            '%s.util.FrameAccess=FINE' % PACKAGE_NAME)
+        parsed_args.log = 'iterate-frames=FINE'
     if parsed_args.trace_primitive_failures:
-        parsed_args.log = (
-            '%s.nodes.bytecodes.MiscellaneousBytecodes$CallPrimitiveNode=FINE'
-            % PACKAGE_NAME)
+        parsed_args.log = 'primitives=FINE'
     if parsed_args.trace_process_switches:
-        parsed_args.log = (
-            '%s.nodes.ExecuteTopLevelContextNode=FINE' % PACKAGE_NAME)
+        parsed_args.log = 'scheduling=FINE'
     if parsed_args.log:
         split = parsed_args.log.split("=")
         if len(split) != 2:

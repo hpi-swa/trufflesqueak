@@ -58,13 +58,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static final String TEST_CLASS_PROPERTY = "squeakTests";
 
-    private static final String RELOAD_IMAGE_PROPERTY = "reloadImage";
-    private static final String RELOAD_ON_EXCEPTION = "exception";
-    private static final String RELOAD_NEVER = "never";
-
     protected static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
 
+    private static boolean graalSqueakPackagesLoaded = false;
+
     @Parameter public SqueakTest test;
+
+    private static boolean stopRunningSuite;
 
     @Parameters(name = "{0} (#{index})")
     public static Collection<SqueakTest> getParameters() {
@@ -83,37 +83,47 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     public void runSqueakTest() throws Throwable {
         checkTermination();
 
-        final TestResult result = runTestCase(buildRequest());
+        if (inGraalSqueakPackage(test.className)) {
+            ensureGraalSqueakPackagesLoaded();
+        }
 
-        checkResult(result);
+        TestResult result = null;
+        try {
+            result = runTestCase(buildRequest());
+        } catch (final RuntimeException e) {
+            e.printStackTrace();
+            stopRunningSuite = true;
+            throw e;
+        }
+        RuntimeException exceptionDuringReload = null;
+        if (!(result.passed && result.message.equals(PASSED_VALUE))) {
+            try {
+                System.err.println("Closing current image context and reloading");
+                reloadImage();
+            } catch (final RuntimeException e) {
+                exceptionDuringReload = e;
+            }
+        }
+        try {
+            checkResult(result);
+        } finally {
+            if (exceptionDuringReload != null) {
+                System.err.println("Exception during reload: " + exceptionDuringReload);
+                exceptionDuringReload.printStackTrace();
+                stopRunningSuite = true;
+            }
+        }
     }
 
     private void checkTermination() {
-        Assume.assumeFalse("skipped", test.type == TestType.IGNORED || test.type == TestType.NOT_TERMINATING || test.type == TestType.BROKEN_IN_SQUEAK);
+        Assume.assumeFalse("skipped", stopRunningSuite || test.type == TestType.IGNORED || test.type == TestType.NOT_TERMINATING || test.type == TestType.BROKEN_IN_SQUEAK);
         if (test.type == TestType.SLOWLY_FAILING || test.type == TestType.SLOWLY_PASSING) {
             assumeNotOnMXGate();
         }
     }
 
     private TestRequest buildRequest() {
-        return new TestRequest(test.className, test.selector, isReloadOnException());
-    }
-
-    private boolean isReloadOnException() {
-        final String value = System.getProperty(RELOAD_IMAGE_PROPERTY, RELOAD_NEVER);
-        switch (value) {
-            case RELOAD_NEVER:
-                return false;
-            case RELOAD_ON_EXCEPTION:
-                return !isLastTestCase();
-            default:
-                throw new IllegalArgumentException(value);
-        }
-    }
-
-    private boolean isLastTestCase() {
-        final SqueakTest last = TESTS.get(TESTS.size() - 1);
-        return !last.nameEquals(test);
+        return new TestRequest(test.className, test.selector);
     }
 
     private void checkResult(final TestResult result) throws Throwable {
@@ -164,5 +174,32 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         } else {
             assertFalse(result.message, result.passed);
         }
+    }
+
+    protected static final boolean inGraalSqueakPackage(final String className) {
+        for (final String testCaseName : GRAALSQUEAK_TEST_CASE_NAMES) {
+            if (testCaseName.equals(className)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected static final void ensureGraalSqueakPackagesLoaded() {
+        if (graalSqueakPackagesLoaded) {
+            return;
+        }
+        graalSqueakPackagesLoaded = true;
+        image.getOutput().println("Loading GraalSqueak packages. This may take a while...");
+        evaluate(String.format("[Metacello new\n" +
+                        "  baseline: 'GraalSqueak';\n" +
+                        "  repository: 'filetree://%s';\n" +
+                        "  onConflict: [:ex | ex allow];\n" +
+                        "  load: #('tests')] on: ProgressInitiationException do: [:e |\n" +
+                        "            e isNested\n" +
+                        "                ifTrue: [e pass]\n" +
+                        "                ifFalse: [e rearmHandlerDuring:\n" +
+                        "                    [[e sendNotificationsTo: [:min :max :current | \"silence\"]]\n" +
+                        "                        on: ProgressNotification do: [:notification | notification resume]]]]", getPathToInImageCode()));
     }
 }

@@ -47,8 +47,8 @@ download-graalvm-ce() {
 
   pushd "${target_dir}" > /dev/null
 
-  curl -sSL --retry 3 -o ${file} https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${DEP_GRAALVM}/${file}
-  if [[ "${OS_NAME}" == "windows" ]]; then unzip -qq ${file}; else tar -xzf ${file}; fi
+  curl -sSL --retry 3 -o "${file}" "https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${DEP_GRAALVM}/${file}"
+  if [[ "${OS_NAME}" == "windows" ]]; then unzip -qq "${file}"; else tar -xzf "${file}"; fi
   echo "$(pwd)/graalvm-ce-java8-${DEP_GRAALVM}${JAVA_HOME_SUFFIX}"
 
   popd > /dev/null
@@ -60,8 +60,8 @@ download-openjdk8-jvmci() {
 
   pushd "${target_dir}" > /dev/null
 
-  curl -sSL --retry 3 -o ${jdk_tar} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${DEP_JVMCI}/openjdk-8u${DEP_JDK8UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64.tar.gz
-  tar xzf ${jdk_tar}
+  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${DEP_JVMCI}/openjdk-8u${DEP_JDK8UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64.tar.gz"
+  tar xzf "${jdk_tar}"
   echo "$(pwd)/openjdk1.8.0_${DEP_JDK8UPDATE}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 
   popd > /dev/null
@@ -97,8 +97,8 @@ shallow-clone() {
   local git_commit_or_tag=$2
   local target_dir=$3
 
-  mkdir ${target_dir} || true
-  pushd ${target_dir} > /dev/null
+  mkdir "${target_dir}" || true
+  pushd "${target_dir}" > /dev/null
 
   git init > /dev/null
   git remote add origin "${git_url}"

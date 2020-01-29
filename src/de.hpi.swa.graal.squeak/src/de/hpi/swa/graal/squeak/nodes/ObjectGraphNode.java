@@ -47,6 +47,10 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
         return new ObjectGraphNode(image);
     }
 
+    public static int getLastSeenObjects() {
+        return lastSeenObjects;
+    }
+
     @TruffleBoundary
     public AbstractCollection<AbstractSqueakObjectWithHash> executeAllInstances() {
         final ArrayDeque<AbstractSqueakObjectWithHash> seen = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);

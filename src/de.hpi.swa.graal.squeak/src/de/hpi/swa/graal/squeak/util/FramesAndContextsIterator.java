@@ -22,7 +22,7 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public class FramesAndContextsIterator {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, FramesAndContextsIterator.class);
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "iterate-frames");
     private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINE);
 
     public static final FramesAndContextsIterator Empty = new FramesAndContextsIterator();

@@ -49,12 +49,11 @@ import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 @GenerateWrapper
 public class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ExecuteContextNode.class);
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "primitives");
     private static final boolean isLoggingEnabled = LOG.isLoggable(Level.FINER);
-
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
-    private static final int LOCAL_RETURN_PC = -1;
+    private static final int LOCAL_RETURN_PC = -2;
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_USER_INTERRUPT_CHECKS = 32;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
@@ -320,7 +319,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     }
 
     /*
-     * Non-optimized version of startBytecode which is used to resume contexts.
+     * Non-optimized version of startBytecode used to resume contexts.
      */
     private Object resumeBytecode(final VirtualFrame frame, final long initialPC) {
         assert initialPC > 0 : "Trying to resume a fresh/terminated/illegal context";
@@ -459,7 +458,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     public SourceSection getSourceSection() {
         if (section == null) {
             final Source source = code.getSource();
-            if (source.getCharacters().equals(CompiledCodeObject.SOURCE_UNAVAILABLE)) {
+            if (source.getName().equals(CompiledCodeObject.SOURCE_UNAVAILABLE_NAME)) {
                 section = source.createUnavailableSection();
             } else {
                 section = source.createSection(1, 1, source.getLength());

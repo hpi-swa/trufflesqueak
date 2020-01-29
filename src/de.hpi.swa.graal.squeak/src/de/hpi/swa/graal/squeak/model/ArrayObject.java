@@ -7,6 +7,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
@@ -16,9 +17,10 @@ import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -225,7 +227,8 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
 
     @Override
     public int size() {
-        throw SqueakException.create("Use ArrayObjectSizeNode");
+        CompilerAsserts.neverPartOfCompilation();
+        return ArrayObjectSizeNode.getUncached().execute(this);
     }
 
     public ArrayObject shallowCopy(final Object storageCopy) {
@@ -363,6 +366,80 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
             for (final Object value : getObjectStorage()) {
                 tracer.addIfUnmarked(value);
             }
+        }
+    }
+
+    @Override
+    public void trace(final SqueakImageWriter writerNode) {
+        super.trace(writerNode);
+        if (isObjectType()) {
+            for (final Object item : getObjectStorage()) {
+                writerNode.traceIfNecessary(item);
+            }
+        }
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        if (!writeHeader(writerNode)) {
+            return;
+        }
+        if (isEmptyType()) {
+            for (int i = 0; i < getEmptyLength(); i++) {
+                writerNode.writeNil();
+            }
+        } else if (isBooleanType()) {
+            for (final byte item : getBooleanStorage()) {
+                if (item == BOOLEAN_FALSE_TAG) {
+                    writerNode.writeFalse();
+                } else if (item == BOOLEAN_TRUE_TAG) {
+                    writerNode.writeTrue();
+                } else {
+                    assert item == BOOLEAN_NIL_TAG;
+                    writerNode.writeNil();
+                }
+            }
+        } else if (isCharType()) {
+            for (final char item : getCharStorage()) {
+                if (isCharNilTag(item)) {
+                    writerNode.writeNil();
+                } else {
+                    writerNode.writeChar(item);
+                }
+            }
+        } else if (isDoubleType()) {
+            for (final double item : getDoubleStorage()) {
+                if (isDoubleNilTag(item)) {
+                    writerNode.writeNil();
+                } else {
+                    writerNode.writeSmallFloat(item);
+                }
+            }
+        } else if (isLongType()) {
+            for (final long item : getLongStorage()) {
+                if (isLongNilTag(item)) {
+                    writerNode.writeNil();
+                } else {
+                    writerNode.writeSmallInteger(item);
+                }
+            }
+        } else if (isObjectType()) {
+            for (final Object item : getObjectStorage()) {
+                writerNode.writeObject(item);
+            }
+        }
+    }
+
+    public void writeAsHiddenRoots(final SqueakImageWriter writerNode) {
+        assert isObjectType();
+        /* Write header. */
+        final long numSlots = getObjectLength();
+        assert numSlots >= SqueakImageConstants.OVERFLOW_SLOTS;
+        writerNode.writeLong(numSlots | SqueakImageConstants.SLOTS_MASK);
+        writerNode.writeObjectHeader(SqueakImageConstants.OVERFLOW_SLOTS, 0, getSqueakClass().getInstanceSpecification(), 0, SqueakImageConstants.ARRAY_CLASS_INDEX_PUN);
+        /* Write content. */
+        for (final Object item : getObjectStorage()) {
+            writerNode.writeObject(item);
         }
     }
 

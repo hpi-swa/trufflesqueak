@@ -5,14 +5,10 @@
  */
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
-import java.lang.management.GarbageCollectorMXBean;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.logging.Level;
-
-import javax.management.JMException;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -27,7 +23,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.sun.management.DiagnosticCommandMBean;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
@@ -83,7 +78,6 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.NotProvided;
-import sun.management.ManagementFactoryHelper;
 
 public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ControlPrimitives.class);
@@ -546,7 +540,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * acceptable because primitive is mostly used for debugging anyway.
              */
             final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, receiver);
-            final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.forIndex(method, (int) primitiveIndex);
+            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(method, (int) primitiveIndex);
             if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
@@ -587,78 +581,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return MiscUtils.runtimeFreeMemory();
         }
 
-        /**
-         * {@link System#gc()} does not force a garbage collect, but the diagnostics command
-         * "gcClassHistogram" does.
-         */
         @TruffleBoundary
         public static void forceFullGC() {
             LOG.fine("Performing full GC (primitive 130)");
-
-            final DiagnosticCommandMBean dcmd = ManagementFactoryHelper.getDiagnosticCommandMBean();
-            final IdentityHashMap<GarbageCollectorMXBean, Long> enabledBeansCounts = new IdentityHashMap<>();
-            final IdentityHashMap<GarbageCollectorMXBean, Long> enabledBeansTimes = new IdentityHashMap<>();
-            for (final GarbageCollectorMXBean bean : ManagementFactoryHelper.getGarbageCollectorMXBeans()) {
-                final long count = bean.getCollectionCount();
-                if (count != -1) {
-                    enabledBeansCounts.put(bean, count);
-                    final long accumulatedCollectionTime = bean.getCollectionTime();
-                    if (accumulatedCollectionTime != -1) {
-                        enabledBeansTimes.put(bean, accumulatedCollectionTime);
-                    }
-                }
-            }
-            long elapsed = 0;
-            final long start = System.nanoTime();
-            try {
-                dcmd.invoke("gcClassHistogram", new Object[]{new String[]{}}, new String[]{"[Ljava.lang.String;"});
-                elapsed = System.nanoTime() - start;
-            } catch (final JMException e) {
-                e.printStackTrace();
-            }
-            assert elapsed > 0;
-            for (final GarbageCollectorMXBean bean : ManagementFactoryHelper.getGarbageCollectorMXBeans()) {
-                final long count = bean.getCollectionCount();
-                if (count != -1) {
-                    long previousCount = 0;
-                    if (enabledBeansCounts.containsKey(bean)) {
-                        previousCount = enabledBeansCounts.get(bean);
-                    }
-                    assert count > previousCount;
-                    final StringBuilder b = new StringBuilder("Memory manager ");
-                    b.append(bean.getName());
-                    b.append(" has performed ");
-                    b.append(count - previousCount);
-                    b.append(" garbage collection");
-                    if (count - previousCount > 1) {
-                        b.append("s");
-                    }
-                    final long accumulatedCollectionTime = bean.getCollectionTime();
-                    if (accumulatedCollectionTime != -1) {
-                        long previousAccumulatedCollectionTime = 0;
-                        if (enabledBeansTimes.containsKey(bean)) {
-                            previousAccumulatedCollectionTime = enabledBeansTimes.get(bean);
-                        }
-                        assert accumulatedCollectionTime > previousAccumulatedCollectionTime;
-                        b.append(" in ");
-                        b.append(accumulatedCollectionTime - previousAccumulatedCollectionTime);
-                        b.append("ms (out of ");
-                        b.append(elapsed / 1000000);
-                        b.append(")");
-                    }
-                    final String[] names = bean.getMemoryPoolNames();
-                    if (names.length > 0) {
-                        b.append(" for pools [");
-                        b.append(names[0]);
-                        for (int i = 1; i < names.length; i++) {
-                            b.append(", ");
-                            b.append(names[i]);
-                        }
-                        b.append("]");
-                    }
-                    LOG.fine(b.toString());
-                }
-            }
+            MiscUtils.gc();
         }
 
         @TruffleBoundary
@@ -935,7 +861,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
              * acceptable because primitive is mostly used for debugging anyway.
              */
-            final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.namedFor(methodObject);
+            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.namedFor(methodObject);
             final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, target);
             return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
         }

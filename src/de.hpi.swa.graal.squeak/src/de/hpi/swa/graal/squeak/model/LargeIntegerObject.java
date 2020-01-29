@@ -17,8 +17,10 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
@@ -43,16 +45,14 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         super(image, hash, klass);
         integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
         bitLength = integer.bitLength();
-        exposedSize = calculateExposedSize(integer);
-        assert integer.signum() != 0 : "LargePositiveInteger>>isZero returns 'false'";
+        exposedSize = bytes.length;
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final byte[] bytes) {
         super(image, klass);
         integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderInPlace(bytes));
         bitLength = integer.bitLength();
-        exposedSize = calculateExposedSize(integer);
-        assert integer.signum() != 0 : "LargePositiveInteger>>isZero returns 'false'";
+        exposedSize = bytes.length;
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final int size) {
@@ -131,14 +131,12 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         assert size() == other.size();
         integer = other.getSqueakClass() == getSqueakClass() ? other.integer : other.integer.negate();
         bitLength = integer.bitLength();
-        assert exposedSize == calculateExposedSize(integer);
     }
 
     public void setBytes(final byte[] bytes) {
         assert size() == bytes.length;
         integer = new BigInteger(isPositive() ? 1 : -1, ArrayUtils.swapOrderCopy(bytes));
         bitLength = integer.bitLength();
-        assert exposedSize == calculateExposedSize(integer);
     }
 
     public void setBytes(final LargeIntegerObject src, final int srcPos, final int destPos, final int length) {
@@ -175,6 +173,11 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         }
         integer = new BigInteger(isPositive() ? 1 : -1, bytes);
         bitLength = integer.bitLength();
+    }
+
+    @Override
+    public int getNumSlots() {
+        return (int) Math.ceil((double) exposedSize / 8);
     }
 
     @Override
@@ -219,6 +222,20 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public int hashCode() {
         return super.hashCode();
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
+        assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
+        if (writeHeader(writerNode, formatOffset)) {
+            final byte[] bytes = getBytes();
+            writerNode.writeBytes(bytes);
+            final int offset = bytes.length % SqueakImageConstants.WORD_SIZE;
+            if (offset > 0) {
+                writerNode.writePadding(SqueakImageConstants.WORD_SIZE - offset);
+            }
+        }
     }
 
     public LargeIntegerObject shallowCopy() {

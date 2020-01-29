@@ -27,6 +27,7 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackTopNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 
 public final class MiscellaneousBytecodes {
 
@@ -39,7 +40,7 @@ public final class MiscellaneousBytecodes {
         public CallPrimitiveNode(final CompiledMethodObject method, final int index, final int byte1, final int byte2) {
             super(method, index, NUM_BYTECODES);
             primitiveIndex = byte1 + (byte2 << 8);
-            primitiveNode = method.image.primitiveNodeFactory.forIndex(method, primitiveIndex);
+            primitiveNode = PrimitiveNodeFactory.forIndex(method, primitiveIndex);
             assert method.hasPrimitive();
         }
 

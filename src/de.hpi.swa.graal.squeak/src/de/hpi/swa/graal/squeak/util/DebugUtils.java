@@ -1,6 +1,16 @@
 package de.hpi.swa.graal.squeak.util;
 
 import java.io.PrintWriter;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.LockInfo;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MonitorInfo;
+import java.lang.management.ThreadInfo;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.management.JMException;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -9,6 +19,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.sun.management.DiagnosticCommandMBean;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -22,6 +33,7 @@ import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import sun.management.ManagementFactoryHelper;
 
 public class DebugUtils {
 
@@ -31,7 +43,7 @@ public class DebugUtils {
 
     public static void printSqMaterializedStackTraceOn(final StringBuilder b, final ContextObject context) {
         ContextObject current = context;
-        while (current != null) {
+        while (current != null && current.hasTruffleFrame()) {
             final Object[] rcvrAndArgs = current.getReceiverAndNArguments(current.getBlockOrMethod().getNumArgsAndCopied());
             b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
             b.append('\n');
@@ -45,6 +57,90 @@ public class DebugUtils {
             } else {
                 current = (ContextObject) sender;
             }
+        }
+    }
+
+    @TruffleBoundary
+    public static void dumpThreads(final StringBuilder sb) {
+        sb.append("\r\n\r\n\r\n");
+        sb.append("Total number of threads started: ");
+        sb.append(ManagementFactory.getThreadMXBean().getTotalStartedThreadCount());
+        sb.append("\r\n\r\n");
+
+        final Runtime r = Runtime.getRuntime();
+        sb.append("Total Memory : ");
+        sb.append(r.totalMemory());
+        sb.append("\r\n");
+        sb.append("Max Memory   : ");
+        sb.append(r.maxMemory());
+        sb.append("\r\n");
+        sb.append("Free Memory  : ");
+        sb.append(r.freeMemory());
+        sb.append("\r\n\r\n");
+
+        final ThreadInfo[] threads = ManagementFactory.getThreadMXBean().dumpAllThreads(true, true);
+        for (final ThreadInfo info : threads) {
+            sb.append("\"" + info.getThreadName() + "\" Id=" + info.getThreadId() + " " + info.getThreadState());
+            if (info.getLockName() != null) {
+                sb.append(" on " + info.getLockName());
+            }
+            if (info.getLockOwnerName() != null) {
+                sb.append(" owned by \"" + info.getLockOwnerName() + "\" Id=" + info.getLockOwnerId());
+            }
+            if (info.isSuspended()) {
+                sb.append(" (suspended)");
+            }
+            if (info.isInNative()) {
+                sb.append(" (in native)");
+            }
+            sb.append("\r\n");
+            int i = 0;
+            for (; i < info.getStackTrace().length; i++) {
+                final StackTraceElement ste = info.getStackTrace()[i];
+                sb.append("\tat " + ste.toString());
+                sb.append("\r\n");
+                if (i == 0 && info.getLockInfo() != null) {
+                    final Thread.State ts = info.getThreadState();
+                    switch (ts) {
+                        case BLOCKED:
+                            sb.append("\t-  blocked on " + info.getLockInfo());
+                            sb.append("\r\n");
+                            break;
+                        case WAITING:
+                            sb.append("\t-  waiting on " + info.getLockInfo());
+                            sb.append("\r\n");
+                            break;
+                        case TIMED_WAITING:
+                            sb.append("\t-  waiting on " + info.getLockInfo());
+                            sb.append("\r\n");
+                            break;
+                        default:
+                    }
+                }
+
+                for (final MonitorInfo mi : info.getLockedMonitors()) {
+                    if (mi.getLockedStackDepth() == i) {
+                        sb.append("\t-  locked " + mi);
+                        sb.append("\r\n");
+                    }
+                }
+            }
+            if (i < info.getStackTrace().length) {
+                sb.append("\t...");
+                sb.append("\r\n");
+            }
+
+            final LockInfo[] locks = info.getLockedSynchronizers();
+            if (locks.length > 0) {
+                sb.append("\r\n\tNumber of locked synchronizers = " + locks.length);
+                sb.append("\r\n");
+                for (final LockInfo li : locks) {
+                    sb.append("\t- " + li);
+                    sb.append("\r\n");
+                }
+            }
+
+            sb.append("\r\n\r\n");
         }
     }
 
@@ -370,6 +466,91 @@ public class DebugUtils {
             b.append("\t\t\t\t\t------------------------------------------------\n");
         }
         return b.toString();
+    }
+
+    /**
+     * {@link System#gc()} does not force a garbage collect, but the diagnostics command
+     * "gcClassHistogram" does.
+     */
+    public static void forceGcWithHistogram() {
+        final DiagnosticCommandMBean dcmd = ManagementFactoryHelper.getDiagnosticCommandMBean();
+        final Map<String, Long> enabledBeansCounts = new HashMap<>();
+        final Map<String, Long> enabledBeansTimes = new HashMap<>();
+        List<GarbageCollectorMXBean> gcBeans = ManagementFactoryHelper.getGarbageCollectorMXBeans();
+        for (final GarbageCollectorMXBean bean : gcBeans) {
+            final long count = bean.getCollectionCount();
+            if (count != -1) {
+                enabledBeansCounts.put(bean.getName(), count);
+                final long accumulatedCollectionTime = bean.getCollectionTime();
+                if (accumulatedCollectionTime != -1) {
+                    enabledBeansTimes.put(bean.getName(), accumulatedCollectionTime);
+                }
+            }
+        }
+        long elapsed = 0;
+        final long start = System.nanoTime();
+        Object histogram = null;
+        try {
+            histogram = dcmd.invoke("gcClassHistogram", new Object[]{new String[]{}}, new String[]{"[Ljava.lang.String;"});
+            elapsed = System.nanoTime() - start;
+            // just in case the diagnostics command materialized some new collectors/beans
+            gcBeans = ManagementFactoryHelper.getGarbageCollectorMXBeans();
+        } catch (final JMException e) {
+            e.printStackTrace();
+        }
+        assert elapsed > 0 && histogram != null;
+        boolean atLeastOne = false;
+        for (final GarbageCollectorMXBean bean : gcBeans) {
+            final long count = bean.getCollectionCount();
+            if (count != -1) {
+                long previousCount = 0;
+                if (enabledBeansCounts.containsKey(bean.getName())) {
+                    previousCount = enabledBeansCounts.get(bean.getName());
+                }
+                if (count == previousCount) {
+                    continue;
+                }
+                atLeastOne = true;
+                final StringBuilder b = new StringBuilder("Memory manager ");
+                b.append(bean.getName());
+                b.append(" has performed ");
+                b.append(count - previousCount);
+                b.append(" garbage collection");
+                if (count - previousCount > 1) {
+                    b.append("s");
+                }
+                final long accumulatedCollectionTime = bean.getCollectionTime();
+                if (accumulatedCollectionTime != -1) {
+                    long previousAccumulatedCollectionTime = 0;
+                    if (enabledBeansTimes.containsKey(bean.getName())) {
+                        previousAccumulatedCollectionTime = enabledBeansTimes.get(bean.getName());
+                    }
+                    assert accumulatedCollectionTime > previousAccumulatedCollectionTime;
+                    b.append(" in ");
+                    b.append(accumulatedCollectionTime - previousAccumulatedCollectionTime);
+                    b.append("ms (out of ");
+                    b.append(elapsed / 1000000);
+                    b.append(")");
+                }
+                final String[] names = bean.getMemoryPoolNames();
+                if (names.length > 0) {
+                    b.append(" for pools [");
+                    b.append(names[0]);
+                    for (int i = 1; i < names.length; i++) {
+                        b.append(", ");
+                        b.append(names[i]);
+                    }
+                    b.append("]");
+                }
+                System.out.println(b.toString());
+            }
+        }
+        if (!atLeastOne) {
+            System.out.println("No garbage collection occurred! Class histogram follows:");
+        } else {
+            System.out.println("Successfully forced a garbage collect! Class histogram follows:");
+        }
+        System.out.println(histogram);
     }
 
 }

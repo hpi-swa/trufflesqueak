@@ -8,6 +8,9 @@ package de.hpi.swa.graal.squeak.test;
 import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,14 +31,12 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
+import sun.management.ManagementFactoryHelper;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, AbstractSqueakTestCaseWithImage.class);
@@ -47,8 +48,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
     private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = Integer.valueOf(System.getProperty("IMAGE_LOAD_TIMEOUT", underDebug ? "1000" : "20"));
     private static final int PRIORITY_10_LIST_INDEX = 9;
-    private static final int USER_PRIORITY_LIST_INDEX = 39;
-    private static final String PASSED_VALUE = "'passed'";
+    protected static final String PASSED_VALUE = "passed";
+
+    protected static final String[] GRAALSQUEAK_TEST_CASE_NAMES = graalSqueakTestCaseNames();
 
     private static PointersObject idleProcess;
     private static volatile boolean testWithImageIsActive;     // for now we are single-threaded, so
@@ -74,6 +76,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         } catch (final ExecutionException e) {
             throw new IllegalStateException(e.getCause());
         } catch (final TimeoutException e) {
+            dumpState();
             throw new IllegalStateException("Timed out while trying to load the image from " + imagePath +
                             ".\nMake sure the image is not currently loaded by another executable");
         }
@@ -87,7 +90,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         destroyImageContext();
     }
 
-    private static void reloadImage() {
+    protected static void reloadImage() {
         cleanUp();
         loadTestImage();
     }
@@ -106,7 +109,11 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (!runsOnMXGate()) {
             // Patch TestCase>>#performTest, so errors are printed to stderr for debugging purposes.
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
+            // The above patch is modifying the dependencies of the SUnit package, fix the
+            // associated test
+            patchMethod("PackageDependencyTest", "testSUnit", "testSUnit self testPackage: #SUnit dependsExactlyOn: #(#''Chronology-Core'' Collections Kernel System Files)");
         }
+        image.getOutput().println("Image ready for testing...");
     }
 
     private static boolean runsOnMXGate() {
@@ -160,90 +167,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    private static void ensureCleanImageState() {
-        if (idleProcess != null) {
-            resetProcessLists();
-            resetSemaphoreLists();
-            ensureRequiredProcessesForTesting();
-        }
-    }
-
-    private static void resetProcessLists() {
-        final Object[] lists = image.getProcessLists().getObjectStorage();
-        for (int i = 0; i < lists.length; i++) {
-            resetList(lists[i], "scheduler list #" + (i + 1));
-        }
-    }
-
-    private static void resetSemaphoreLists() {
-        image.interrupt.reset();
-        final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
-        resetList(interruptSema, "Interrupt semaphore");
-        final Object finalizationSema = image.getSpecialObject(SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE);
-        resetList(finalizationSema, "Finalization semaphore");
-        final Object lowSpaceSema = image.getSpecialObject(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE);
-        resetList(lowSpaceSema, "Low space semaphore");
-        // The timer semaphore is taken care of in ensureTimerLoop, since the delays need to be
-        // reset as well
-        final ArrayObject oldExternalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
-        evaluate("[ ExternalObjectTable current " +
-                        "            initializeCaches;" +
-                        "            externalObjectsArray: (Smalltalk specialObjectsArray at: 39 put: (Array new: 20)) ] value");
-        final ArrayObject externalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
-        assert oldExternalObjects.getSqueakHash() != externalObjects.getSqueakHash();
-    }
-
-    private static void resetList(final Object listOrNil, final String linkedListName) {
-        if (listOrNil instanceof PointersObject) {
-            final PointersObject linkedList = (PointersObject) listOrNil;
-            final Object key = linkedList.getFirstLink();
-            final Object value = linkedList.getLastLink();
-            if (key != NilObject.SINGLETON || value != NilObject.SINGLETON) {
-                if (key != value) {
-                    image.printToStdErr(String.format("Removing entries (%s->%s) from %s...", key, value, linkedListName));
-                } else {
-                    image.printToStdErr(String.format("Removing entry (%s) from %s...", key, linkedListName));
-                }
-                linkedList.instVarAtPut0Slow(LINKED_LIST.FIRST_LINK, NilObject.SINGLETON);
-                linkedList.instVarAtPut0Slow(LINKED_LIST.LAST_LINK, NilObject.SINGLETON);
-            }
-        }
-    }
-
-    private static void ensureTimerLoop() {
-        evaluate("[Delay primSignal: nil atUTCMicroseconds: 0. Delay classPool " +
-                        "at: #SuspendedDelays put: nil; at: #ScheduledDelay put: nil; at: #FinishedDelay put: nil; at: #ActiveDelay put: nil. " +
-                        "Delay startTimerEventLoop] value");
-    }
-
-    private static void ensureFinalization() {
-        evaluate("WeakArray startUp: true");
-    }
-
-    private static void ensureRequiredProcessesForTesting() {
-        ensureTimerLoop();
-        ensureLowSpaceWatcherAndIdleLoop();
-        ensureFinalization();
-        ensureActiveUserProcess();
-    }
-
-    private static void ensureActiveUserProcess() {
-        final PointersObject newProcess = new PointersObject(image, image.processClass);
-        newProcess.instVarAtPut0Slow(PROCESS.PRIORITY, Long.valueOf(USER_PRIORITY_LIST_INDEX + 1));
-        image.getScheduler().instVarAtPut0Slow(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-    }
-
-    private static void ensureLowSpaceWatcherAndIdleLoop() {
-        evaluate("ProcessorScheduler startUp: true");
-        final ArrayObject lists = image.getProcessLists();
-        final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
-        final Object firstLink = priority10List.getFirstLink();
-        final Object lastLink = priority10List.getLastLink();
-        assert firstLink instanceof PointersObject && firstLink == lastLink &&
-                        ((PointersObject) firstLink).getNextLink() == NilObject.SINGLETON : "Unexpected idleProcess state";
-        idleProcess = (PointersObject) firstLink;
-    }
-
     protected static void patchMethod(final String className, final String selector, final String body) {
         image.getOutput().println("Patching " + className + ">>#" + selector + "...");
         final Object patchResult = evaluate(String.join(" ",
@@ -256,21 +179,33 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (testWithImageIsActive) {
             throw new IllegalStateException("The previous test case has not finished yet");
         }
-        ensureCleanImageState();
         System.out.println("\nRunning testcase " + request.testCase + "." + request.testSelector);
         try {
             return runWithTimeout(request, value -> extractFailuresAndErrorsFromTestResult(value), TIMEOUT_SECONDS);
         } catch (final TimeoutException e) {
-            reloadImage();
             return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Test was interrupted");
         } catch (final ExecutionException e) {
-            if (request.reloadImageOnException) {
-                reloadImage();
-            }
             return TestResult.fromException("failed with an error", e.getCause());
+        }
+    }
+
+    public static void dumpState() {
+        MiscUtils.gc();
+        final StringBuilder sb = new StringBuilder("Thread dump");
+        DebugUtils.dumpThreads(sb);
+        System.err.println(sb.toString());
+        DebugUtils.forceGcWithHistogram();
+        try {
+            ManagementFactoryHelper.getDiagnosticMXBean().dumpHeap(System.currentTimeMillis() + ".hprof", true);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+        if (image != null) {
+            System.err.println(DebugUtils.currentState(image));
+            DebugUtils.printSqStackTrace();
         }
     }
 
@@ -289,6 +224,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         } finally {
             future.cancel(true);
             if (testWithImageIsActive) {
+                dumpState();
                 if (context != null) {
                     context.close(true);
                 }
@@ -303,10 +239,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             return TestResult.failure("did not return a ByteString, got " + result);
         }
         final String testResult = ((NativeObject) result).asStringUnsafe();
-        if (PASSED_VALUE.equals("'" + testResult + "'")) {
+        if (PASSED_VALUE.equals(testResult)) {
             return TestResult.success(testResult);
         } else {
             final boolean shouldPass = (boolean) evaluate(shouldPassCommand(request));
+            // we cannot estimate or reliably clean up the state of the image after some unknown
+            // exception was thrown
             if (shouldPass) {
                 return TestResult.failure(testResult);
             } else {
@@ -316,7 +254,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static String testCommand(final TestRequest request) {
-        return String.format("[(%s selector: #%s) runCase. %s] on: TestFailure, Error do: [:e | e signalerContext longStack]",
+        return String.format("[(%s selector: #%s) runCase. '%s'] on: TestFailure, Error do: [:e | e signalerContext longStack]",
                         request.testCase, request.testSelector, PASSED_VALUE);
     }
 
@@ -327,12 +265,10 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     protected static final class TestRequest {
         protected final String testCase;
         protected final String testSelector;
-        protected final boolean reloadImageOnException;
 
-        protected TestRequest(final String testCase, final String testSelector, final boolean reloadImageOnException) {
+        protected TestRequest(final String testCase, final String testSelector) {
             this.testCase = testCase;
             this.testSelector = testSelector;
-            this.reloadImageOnException = reloadImageOnException;
         }
     }
 
@@ -358,5 +294,28 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         protected static TestResult success(final String message) {
             return new TestResult(true, message, null);
         }
+    }
+
+    private static String[] graalSqueakTestCaseNames() {
+        final File[] srcDirectories = new File(getPathToInImageCode()).listFiles(File::isDirectory);
+        final ArrayList<String> testCaseNames = new ArrayList<>();
+        for (final File subDirectory : srcDirectories) {
+            for (final File classDirectories : subDirectory.listFiles((FileFilter) pathname -> pathname.isDirectory() && pathname.getName().endsWith("Test.class"))) {
+                testCaseNames.add(classDirectories.getName().substring(0, classDirectories.getName().lastIndexOf(".class")));
+            }
+        }
+        return testCaseNames.toArray(new String[testCaseNames.size()]);
+    }
+
+    protected static final String getPathToInImageCode() {
+        File currentDirectory = new File(System.getProperty("user.dir"));
+        while (currentDirectory != null) {
+            final String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "src" + File.separator + "image" + File.separator + "src";
+            if (new File(pathToImage).isDirectory()) {
+                return pathToImage;
+            }
+            currentDirectory = currentDirectory.getParentFile();
+        }
+        return null;
     }
 }

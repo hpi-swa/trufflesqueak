@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
 import de.hpi.swa.graal.squeak.model.layout.SlotLocation;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
@@ -316,6 +317,31 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             for (final Object object : objectExtension) {
                 tracer.addIfUnmarked(object);
             }
+        }
+    }
+
+    @Override
+    public void trace(final SqueakImageWriter writerNode) {
+        super.trace(writerNode);
+        writerNode.traceIfNecessary(object0);
+        writerNode.traceIfNecessary(object1);
+        writerNode.traceIfNecessary(object2);
+        if (objectExtension != null) {
+            for (final Object object : objectExtension) {
+                writerNode.traceIfNecessary(object);
+            }
+        }
+    }
+
+    protected final boolean writeHeaderAndLayoutObjects(final SqueakImageWriter writerNode) {
+        if (writeHeader(writerNode)) {
+            final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
+            for (int i = 0; i < instsize(); i++) {
+                writerNode.writeObject(readNode.execute(this, i));
+            }
+            return true;
+        } else {
+            return false;
         }
     }
 }

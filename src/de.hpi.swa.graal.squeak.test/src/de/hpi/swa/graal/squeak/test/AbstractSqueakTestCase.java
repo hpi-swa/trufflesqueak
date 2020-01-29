@@ -36,6 +36,8 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageOptions;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.LogHandlerAccessor;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.graal.squeak.util.SqueakMessageInterceptor;
 
 public abstract class AbstractSqueakTestCase {
 
@@ -161,6 +163,7 @@ public abstract class AbstractSqueakTestCase {
         context.close(true);
         context = null;
         image = null;
-        System.gc();
+        SqueakMessageInterceptor.clear();
+        MiscUtils.gc();
     }
 }

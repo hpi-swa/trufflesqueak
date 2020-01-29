@@ -18,8 +18,10 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
@@ -161,7 +163,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
 
     @Override
     public int size() {
-        return copied.length + instsize();
+        return instsize() + copied.length;
     }
 
     @Override
@@ -243,6 +245,29 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         tracer.addIfUnmarked(getOuterContext());
         for (final Object value : getCopied()) {
             tracer.addIfUnmarked(value);
+        }
+    }
+
+    @Override
+    public void trace(final SqueakImageWriter writerNode) {
+        super.trace(writerNode);
+        writerNode.traceIfNecessary(getReceiver());
+        writerNode.traceIfNecessary(getOuterContext());
+        for (final Object value : getCopied()) {
+            writerNode.traceIfNecessary(value);
+        }
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        if (!writeHeader(writerNode)) {
+            throw SqueakException.create("BlockClosureObject must have slots:", this);
+        }
+        writerNode.writeObject(getOuterContext());
+        writerNode.writeSmallInteger(getStartPC());
+        writerNode.writeSmallInteger(getNumArgs());
+        for (final Object value : getCopied()) {
+            writerNode.writeObject(value);
         }
     }
 

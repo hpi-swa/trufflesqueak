@@ -505,13 +505,13 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                         final long startIndex, final long longCount,
                         @Exclusive @Cached final BranchProfile errorProfile) {
             final int count = (int) longCount;
-            final ByteBuffer dst = allocate(count * ArrayConversionUtils.INTEGER_BYTE_SIZE);
+            final ByteBuffer dst = allocate(count * Integer.BYTES);
             try {
                 final long readBytes = readFrom(fileDescriptor, dst);
-                assert readBytes % ArrayConversionUtils.INTEGER_BYTE_SIZE == 0;
-                final long readInts = readBytes / ArrayConversionUtils.INTEGER_BYTE_SIZE;
+                assert readBytes % Integer.BYTES == 0;
+                final long readInts = readBytes / Integer.BYTES;
                 for (int index = 0; index < readInts; index++) {
-                    final int offset = index * ArrayConversionUtils.INTEGER_BYTE_SIZE;
+                    final int offset = index * Integer.BYTES;
                     target.getIntStorage()[(int) (startIndex - 1 + index)] = getFromUnsigned(dst, offset + 3) << 24 |
                                     getFromUnsigned(dst, offset + 2) << 16 |
                                     getFromUnsigned(dst, offset + 1) << 8 |

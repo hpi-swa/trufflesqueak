@@ -55,9 +55,10 @@ public class LogHandlerAccessor {
     }
 
     private static class MappedHandler extends Handler {
-
         private MappedByteBuffer buffer;
         private Path path;
+        private PrintStream originalOut = System.out;
+        private PrintStream originalErr = System.err;
 
         private MappedHandler() {
             initializeMappedBuffer();
@@ -67,6 +68,81 @@ public class LogHandlerAccessor {
             path = getLogPath();
             try (FileChannel channel = FileChannel.open(path, CREATE_NEW, READ, WRITE)) {
                 buffer = channel.map(MapMode.READ_WRITE, 0, GIG);
+                final PrintStream ps = new PrintStream(
+                                new OutputStream() {
+                                    @Override
+                                    public void write(final int b) throws IOException {
+                                        if (buffer.position() + 1 >= GIG) {
+                                            close();
+                                            initializeMappedBuffer();
+                                        }
+                                        buffer.put((byte) b);
+                                    }
+                                },
+                                true) {
+                    @Override
+                    public void println() {
+                        if (buffer.position() + 1 >= GIG) {
+                            close();
+                            initializeMappedBuffer();
+                        }
+                        buffer.put((byte) 10);
+                    }
+
+                    @Override
+                    public void println(final boolean x) {
+                        println(String.valueOf(x));
+                    }
+
+                    @Override
+                    public void println(final char x) {
+                        println(String.valueOf(x));
+                    }
+
+                    @Override
+                    public void println(final int x) {
+                        println(String.valueOf(x));
+                    }
+
+                    @Override
+                    public void println(final long x) {
+                        println(String.valueOf(x));
+                    }
+
+                    @Override
+                    public void println(final float x) {
+                        println(String.valueOf(x));
+                    }
+
+                    @Override
+                    public void println(final double x) {
+                        println(String.valueOf(x));
+                    }
+
+                    @Override
+                    public void println(final char x[]) {
+                        println(String.valueOf(x));
+                    }
+
+                    @Override
+                    public void println(final Object x) {
+                        println(String.valueOf(x));
+                    }
+
+                    @Override
+                    public void println(final String x) {
+                        final CharsetEncoder encoder = ThreadLocalCoders.encoderFor(StandardCharsets.UTF_8);
+                        if (buffer.position() + 1 + x.length() * encoder.maxBytesPerChar() >= GIG) {
+                            close();
+                            initializeMappedBuffer();
+                        }
+                        encoder.encode(CharBuffer.wrap(x), buffer, true);
+                        encoder.flush(buffer);
+                        buffer.put((byte) 10);
+                    }
+                };
+                System.setOut(ps);
+                System.setErr(ps);
             } catch (final IOException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
@@ -75,8 +151,8 @@ public class LogHandlerAccessor {
 
         @Override
         public void publish(final LogRecord record) {
-            final String message = record.getMessage();
             final CharsetEncoder encoder = ThreadLocalCoders.encoderFor(StandardCharsets.UTF_8);
+            final String message = record.getMessage();
             if (buffer.position() + 1 + message.length() * encoder.maxBytesPerChar() >= GIG) {
                 close();
                 initializeMappedBuffer();
@@ -99,8 +175,13 @@ public class LogHandlerAccessor {
             buffer.force();
             MappedBufferCleaner.closeDirectByteBuffer(buffer);
             buffer = null;  // let it be garbage collected
+            System.setOut(originalOut);
+            System.setErr(originalErr);
             try (FileChannel channel = FileChannel.open(path, READ, WRITE)) {
                 channel.truncate(position);
+                if (position == 0) {
+                    path.getFileSystem().provider().delete(path);
+                }
             } catch (final IOException e) {
                 e.printStackTrace();
             }

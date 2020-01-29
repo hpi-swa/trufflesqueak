@@ -47,6 +47,7 @@ import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -59,13 +60,14 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, PolyglotPlugin.class);
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "interop");
     private static final String EVAL_SOURCE_NAME = "<eval>";
 
     /**
@@ -74,13 +76,25 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
      */
 
     @Override
-    public boolean isEnabled(final SqueakImageContext image) {
-        return true; // TODO: this check will be removed soon.
-    }
-
-    @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return PolyglotPluginFactory.getFactories();
+    }
+
+    /*
+     * Management
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveRegisterForeignObjectClass")
+    protected abstract static class PrimRegisterForeignObjectClassNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimRegisterForeignObjectClassNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final boolean doRegisterForeignObjectClass(final ClassObject foreignObjectClass) {
+            return BooleanObject.wrap(method.image.setForeignObjectClass(foreignObjectClass));
+        }
     }
 
     /*
@@ -832,18 +846,18 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetMembers")
-    protected abstract static class PrimGetMembersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimGetMembersNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimGetMembersNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"lib.hasMembers(object)"}, limit = "2")
-        protected final ArrayObject doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object,
+        protected final ArrayObject doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object, final boolean includeInternal,
                         @CachedLibrary("object") final InteropLibrary lib,
                         @CachedLibrary(limit = "2") final InteropLibrary membersLib,
                         @CachedLibrary(limit = "2") final InteropLibrary memberNameLib) {
             try {
-                final Object members = lib.getMembers(object, true);
+                final Object members = lib.getMembers(object, includeInternal);
                 final int size = (int) membersLib.getArraySize(members);
                 final Object[] byteStrings = new Object[size];
                 for (int i = 0; i < size; i++) {
@@ -859,17 +873,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetMemberSize")
-    protected abstract static class PrimGetMemberSizeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimGetMemberSizeNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimGetMemberSizeNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"lib.hasMembers(object)"}, limit = "2")
-        protected static final Object doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object,
+        protected static final Object doGetMembers(@SuppressWarnings("unused") final Object receiver, final Object object, final boolean includeInternal,
                         @CachedLibrary("object") final InteropLibrary lib,
                         @CachedLibrary(limit = "2") final InteropLibrary sizeLib) {
             try {
-                return sizeLib.getArraySize(lib.getMembers(object, true));
+                return sizeLib.getArraySize(lib.getMembers(object, includeInternal));
             } catch (final UnsupportedMessageException e) {
                 throw SqueakException.illegalState(e);
             }

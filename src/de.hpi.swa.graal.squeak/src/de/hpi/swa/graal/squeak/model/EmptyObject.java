@@ -5,8 +5,10 @@
  */
 package de.hpi.swa.graal.squeak.model;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 
 public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
@@ -43,5 +45,12 @@ public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 
     public EmptyObject shallowCopy() {
         return new EmptyObject(this);
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        if (writeHeader(writerNode)) {
+            throw SqueakException.create("Empty objects should not have any slots:", this);
+        }
     }
 }

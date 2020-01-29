@@ -7,7 +7,6 @@ package de.hpi.swa.graal.squeak.util;
 
 import java.util.AbstractCollection;
 import java.util.Arrays;
-import java.util.Random;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -16,8 +15,6 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 
 public final class ArrayUtils {
     @CompilationFinal(dimensions = 1) public static final Object[] EMPTY_ARRAY = new Object[0];
-
-    private static final Random RANDOM = new Random();
 
     private ArrayUtils() {
     }
@@ -88,7 +85,7 @@ public final class ArrayUtils {
 
     @TruffleBoundary
     public static void fillRandomly(final byte[] bytes) {
-        RANDOM.nextBytes(bytes);
+        MiscUtils.RANDOM.nextBytes(bytes);
     }
 
     public static int indexOf(final long[] array, final long value) {

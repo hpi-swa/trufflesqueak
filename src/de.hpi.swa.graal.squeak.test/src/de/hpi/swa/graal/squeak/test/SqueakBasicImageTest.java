@@ -8,10 +8,6 @@ package de.hpi.swa.graal.squeak.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -102,13 +98,7 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
 
     @Test
     public void test11InteropJavaStringConversion() {
-        /* Java Strings to Smalltalk ByteString/WideString */
-        final String[] values = new String[]{"65" /* $A */, "16r1f43b" /* Bear Emoji */};
-        for (final String value : values) {
-            final String javaString = String.format("((Java type: 'java.lang.String') new: ((Java type: 'java.lang.Character') toChars: %s))", value);
-            final String smalltalkString = String.format("(String with: (Character value: %s))", value);
-            assertEquals(BooleanObject.TRUE, evaluate(String.format("%s = %s", javaString, smalltalkString)));
-        }
+        /* For a Java Strings to Smalltalk ByteString/WideString test, see Java>>testJavaString. */
 
         /* Smalltalk ByteString to Java */
         final String byteString = context.eval(SqueakLanguageConfig.ID, "String with: $A").asString();
@@ -120,18 +110,7 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
     }
 
     @Test
-    public void test12InteropJavaMiscellaneous() {
-        // Issue #78
-        final InetAddress inetAddress = context.eval(SqueakLanguageConfig.ID, "(Java type: 'java.net.InetAddress') getByAddress: #[192 168 0 1]").asHostObject();
-        try {
-            assertEquals(InetAddress.getByAddress(new byte[]{(byte) 192, (byte) 168, 0, 1}), inetAddress);
-        } catch (final UnknownHostException e) {
-            fail(e.toString());
-        }
-    }
-
-    @Test
-    public void test13CannotReturnAtStart() {
+    public void test12CannotReturnAtStart() {
         assertEquals("'bla2'", evaluate("| result | \n" +
                         "[ result := [^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork. \n" +
                         "Processor yield.\n" +
@@ -139,7 +118,7 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
     }
 
     @Test
-    public void test14CannotReturnInTheMiddle() {
+    public void test13CannotReturnInTheMiddle() {
         assertEquals("'bla2'", evaluate("| result | \n" +
                         "[ result := [thisContext yourself. ^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork. \n" +
                         "Processor yield.\n" +

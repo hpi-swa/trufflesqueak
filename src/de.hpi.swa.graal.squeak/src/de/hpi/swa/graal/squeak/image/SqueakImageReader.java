@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.image.reading;
+package de.hpi.swa.graal.squeak.image;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -17,8 +17,6 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.SqueakImageFlags;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
@@ -41,30 +39,12 @@ import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 public final class SqueakImageReader {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqueakImageReader.class);
 
-    private static final int CLASS_INDEX_FIELD_WIDTH = 22; /* 22-bit class mask => ~ 4M classes */
-    private static final int CLASS_TABLE_MAJOR_INDEX_SHIFT = 10;
-    private static final int CLASS_TABLE_PAGE_SIZE = 1 << CLASS_TABLE_MAJOR_INDEX_SHIFT;
-    /* Answer the number of slots for class table pages in the hidden root object. */
-    private static final int CLASS_TABLE_ROOT_SLOTS = 1 << CLASS_INDEX_FIELD_WIDTH - CLASS_TABLE_MAJOR_INDEX_SHIFT;
-    /* Answer the number of extra root slots in the root of the hidden root object. */
-    private static final int HIDDEN_ROOT_SLOTS = 8;
-    private static final int NUM_FREE_LISTS = 64;
-    private static final int OBJ_STACK_PAGE_SLOTS = 4092;
-    private static final long OVERFLOW_SLOTS = 255;
-    private static final long SLOTS_MASK = 0xFF << 56;
-
-    // CLASS INDEX PUNS
-    private static final int ARRAY_CLASS_INDEX_PUN = 16;
-    private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
-    private static final int LAST_CLASS_INDEX_PUN = 31;
-    private static final int WORD_SIZE_CLASS_INDEX_PUN = 19;
-
     protected SqueakImageChunk hiddenRootsChunk;
 
     private final BufferedInputStream stream;
     private final HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>(750000);
     private final SqueakImageContext image;
-    private final byte[] byteArrayBuffer = new byte[8];
+    private final byte[] byteArrayBuffer = new byte[Long.BYTES];
     private final Map<PointersObject, AbstractSqueakObject> suspendedContexts = new HashMap<>();
 
     private long headerSize;
@@ -75,8 +55,8 @@ public final class SqueakImageReader {
     private short maxExternalSemaphoreTableSize;
     private long firstSegmentSize;
     private int position = 0;
-    private long segmentEnd;
     private long currentAddressSwizzle;
+    private final byte[] emptyBytes = new byte[0];
 
     private SqueakImageChunk freePageList = null;
 
@@ -101,6 +81,10 @@ public final class SqueakImageReader {
         this.image = image;
     }
 
+    /*
+     * Image reading happens only once per GraalSqueak instance and should therefore be excluded
+     * from Truffle compilation.
+     */
     @TruffleBoundary
     public static void load(final SqueakImageContext image) {
         new SqueakImageReader(image).run();
@@ -111,7 +95,7 @@ public final class SqueakImageReader {
             return null;
         }
         SqueakImageContext.initializeBeforeLoadingImage();
-        final long start = System.currentTimeMillis();
+        final long start = MiscUtils.currentTimeMillis();
         readHeader();
         try {
             readBody();
@@ -119,9 +103,9 @@ public final class SqueakImageReader {
             closeStream();
         }
         initObjects();
-        image.printToStdOut("Image loaded in", System.currentTimeMillis() - start + "ms.");
+        image.printToStdOut("Image loaded in", MiscUtils.currentTimeMillis() - start + "ms.");
         initializeSuspendedContexts();
-        image.initializeAfterLoadingImage();
+        image.initializeAfterLoadingImage((ArrayObject) hiddenRootsChunk.asObject());
         return image.getSqueakImage();
     }
 
@@ -129,12 +113,13 @@ public final class SqueakImageReader {
         return suspendedContexts;
     }
 
-    private void readBytes(final byte[] bytes, final int length) {
+    private long readBytes(final byte[] bytes, final int length) {
         try {
             final int readBytes = stream.read(bytes, 0, length);
             assert readBytes == length : "Failed to read bytes";
+            return readBytes;
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Unable to read next bytes:", e.getMessage());
+            throw SqueakAbortException.create("Failed to read next bytes:", e.getMessage());
         }
     }
 
@@ -143,38 +128,35 @@ public final class SqueakImageReader {
     }
 
     private short nextShort() {
-        readBytes(byteArrayBuffer, 2);
-        position += 2;
+        position += readBytes(byteArrayBuffer, Short.BYTES);
         return UnsafeUtils.getShort(byteArrayBuffer, 0);
     }
 
     private int nextInt() {
-        readBytes(byteArrayBuffer, 4);
-        position += 4;
+        position += readBytes(byteArrayBuffer, Integer.BYTES);
         return UnsafeUtils.getInt(byteArrayBuffer, 0);
     }
 
     private long nextLong() {
-        readBytes(byteArrayBuffer, 8);
-        position += 8;
+        position += readBytes(byteArrayBuffer, Long.BYTES);
         return UnsafeUtils.getLong(byteArrayBuffer, 0);
     }
 
     private byte[] nextObjectData(final int size, final int format) {
-        final int paddedObjectSize = size * SqueakImageFlags.WORD_SIZE;
+        final int paddedObjectSize = size * SqueakImageConstants.WORD_SIZE;
         final int padding = calculateObjectPadding(format);
         final int dataSize = paddedObjectSize - padding;
-        final byte[] bytes = new byte[dataSize];
         if (size == 0) {
-            skipBytes(SqueakImageFlags.WORD_SIZE); // skip trailing alignment word
-            return bytes;
+            skipBytes(SqueakImageConstants.WORD_SIZE); // skip trailing alignment word
+            return emptyBytes;
         }
+        final byte[] bytes = new byte[dataSize];
         readBytes(bytes, dataSize);
         try {
             final long skipped = stream.skip(padding);
             assert skipped == padding : "Failed to skip padding bytes";
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Unable to skip next bytes:", e);
+            throw SqueakAbortException.create("Failed to skip next bytes:", e);
         }
         position += paddedObjectSize;
         return bytes;
@@ -189,15 +171,15 @@ public final class SqueakImageReader {
                 pending -= skipped;
             }
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Unable to skip next bytes:", e);
+            throw SqueakAbortException.create("Failed to skip next bytes:", e);
         }
         position += count;
     }
 
     private void readVersion() {
         final long version = nextInt();
-        if (version != SqueakImageFlags.IMAGE_FORMAT) {
-            throw SqueakAbortException.create(MiscUtils.format("Image format %s not supported. Please supply a 64bit Spur image (format %s).", version, SqueakImageFlags.IMAGE_FORMAT));
+        if (version != SqueakImageConstants.IMAGE_FORMAT) {
+            throw SqueakAbortException.create(MiscUtils.format("Image format %s not supported. Please supply a 64bit Spur image (format %s).", version, SqueakImageConstants.IMAGE_FORMAT));
         }
         // nextWord(); // magic2
     }
@@ -229,7 +211,7 @@ public final class SqueakImageReader {
         readVersion();
         readBaseHeader();
         readSpurHeader();
-        image.flags.initialize(headerFlags, lastWindowSizeWord, maxExternalSemaphoreTableSize);
+        image.flags.initialize(oldBaseAddress, headerFlags, lastWindowSizeWord, maxExternalSemaphoreTableSize);
         skipToBody();
     }
 
@@ -239,19 +221,20 @@ public final class SqueakImageReader {
 
     private void readBody() {
         position = 0;
-        segmentEnd = firstSegmentSize;
+        long segmentEnd = firstSegmentSize;
         currentAddressSwizzle = oldBaseAddress;
         while (position < segmentEnd) {
-            while (position < segmentEnd - 16) {
+            while (position < segmentEnd - SqueakImageConstants.IMAGE_BRIDGE_SIZE) {
                 final SqueakImageChunk chunk = readObject();
                 if (chunk != null) {
                     putChunk(chunk);
                 }
             }
+            assert hiddenRootsChunk != null : "hiddenRootsChunk must be known from now on.";
             final long bridge = nextLong();
             long bridgeSpan = 0;
-            if ((bridge & SLOTS_MASK) != 0) {
-                bridgeSpan = bridge & ~SLOTS_MASK;
+            if ((bridge & SqueakImageConstants.SLOTS_MASK) != 0) {
+                bridgeSpan = bridge & ~SqueakImageConstants.SLOTS_MASK;
             }
             final long nextSegmentSize = nextLong();
             assert bridgeSpan >= 0;
@@ -261,7 +244,7 @@ public final class SqueakImageReader {
                 break;
             }
             segmentEnd += nextSegmentSize;
-            currentAddressSwizzle += bridgeSpan * SqueakImageFlags.WORD_SIZE;
+            currentAddressSwizzle += bridgeSpan * SqueakImageConstants.WORD_SIZE;
         }
     }
 
@@ -269,7 +252,7 @@ public final class SqueakImageReader {
         try {
             stream.close();
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Unable to close stream:", e);
+            throw SqueakAbortException.create("Failed to close stream:", e);
         }
     }
 
@@ -279,70 +262,60 @@ public final class SqueakImageReader {
 
     private SqueakImageChunk readObject() {
         int pos = position;
-        assert pos % 8 == 0 : "every object must be 64-bit aligned: " + pos % 8;
+        assert pos % SqueakImageConstants.WORD_SIZE == 0 : "every object must be 64-bit aligned: " + pos % SqueakImageConstants.WORD_SIZE;
         long headerWord = nextLong();
-        int numSlots = ObjectHeaderDecoder.getNumSlots(headerWord);
-        if (numSlots == OVERFLOW_SLOTS) {
-            numSlots = (int) (headerWord & ~SLOTS_MASK);
+        int numSlots = SqueakImageConstants.ObjectHeader.getNumSlots(headerWord);
+        if (numSlots == SqueakImageConstants.OVERFLOW_SLOTS) {
+            numSlots = (int) (headerWord & ~SqueakImageConstants.SLOTS_MASK);
+            assert numSlots >= SqueakImageConstants.OVERFLOW_SLOTS;
             pos = position;
             headerWord = nextLong();
-            assert ObjectHeaderDecoder.getNumSlots(headerWord) == OVERFLOW_SLOTS : "Objects with long header must have 255 in slot count";
+            assert SqueakImageConstants.ObjectHeader.getNumSlots(headerWord) == SqueakImageConstants.OVERFLOW_SLOTS : "Objects with long header must have 255 in slot count";
         }
         final int size = numSlots;
         assert size >= 0 : "Negative object size";
-        final int classIndex = ObjectHeaderDecoder.getClassIndex(headerWord);
-        final int format = ObjectHeaderDecoder.getFormat(headerWord);
-        assert 0 <= format && format <= 31 : "Unexpected format";
+        final int classIndex = SqueakImageConstants.ObjectHeader.getClassIndex(headerWord);
+        final int format = SqueakImageConstants.ObjectHeader.getFormat(headerWord);
+        assert 0 <= format && format != 6 && format != 8 && format <= 31 : "Unexpected format";
         assert format != 0 || classIndex == 0 || size == 0 : "Empty objects must not have slots";
-        final int hash = ObjectHeaderDecoder.getHash(headerWord);
+        final int hash = SqueakImageConstants.ObjectHeader.getHash(headerWord);
         final byte[] objectData;
         if (ignoreObjectData(headerWord, classIndex, size)) {
             /* Skip some hidden objects for performance reasons. */
             objectData = null;
             LOG.log(Level.FINE, () -> "classIdx: " + classIndex + ", size: " + size + ", format: " + format + ", hash: " + hash);
-            skipBytes(size * SqueakImageFlags.WORD_SIZE);
+            skipBytes(size * SqueakImageConstants.WORD_SIZE);
         } else {
             objectData = nextObjectData(size, format);
         }
         final SqueakImageChunk chunk = new SqueakImageChunk(this, image, format, classIndex, hash, pos, objectData);
-        if (isHiddenObject(classIndex)) {
+        if (hiddenRootsChunk == null && isHiddenObject(classIndex)) {
             if (freePageList == null) {
-                assert classIndex == WORD_SIZE_CLASS_INDEX_PUN && size == NUM_FREE_LISTS;
+                assert classIndex == SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN && size == SqueakImageConstants.NUM_FREE_LISTS;
                 freePageList = chunk; /* First hidden object. */
             } else if (hiddenRootsChunk == null) {
-                assert classIndex == ARRAY_CLASS_INDEX_PUN && size == CLASS_TABLE_ROOT_SLOTS + HIDDEN_ROOT_SLOTS : "hiddenRootsObj has unexpected size";
+                assert classIndex == SqueakImageConstants.ARRAY_CLASS_INDEX_PUN &&
+                                size == SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS + SqueakImageConstants.HIDDEN_ROOT_SLOTS : "hiddenRootsObj has unexpected size";
                 hiddenRootsChunk = chunk; /* Seconds hidden object. */
             }
         }
-        assert checkAddressIntegrity(classIndex, format, chunk);
         return chunk;
     }
 
     protected static boolean ignoreObjectData(final long headerWord, final int classIndex, final int size) {
-        return isFreeObject(classIndex) || isObjectStack(classIndex, size) || isHiddenObject(classIndex) && ObjectHeaderDecoder.isPinned(headerWord);
+        return isFreeObject(classIndex) || isObjectStack(classIndex, size) || isHiddenObject(classIndex) && SqueakImageConstants.ObjectHeader.isPinned(headerWord);
     }
 
     protected static boolean isHiddenObject(final int classIndex) {
-        return classIndex <= LAST_CLASS_INDEX_PUN;
+        return classIndex <= SqueakImageConstants.LAST_CLASS_INDEX_PUN;
     }
 
     protected static boolean isFreeObject(final int classIndex) {
-        return classIndex == FREE_OBJECT_CLASS_INDEX_PUN;
+        return classIndex == SqueakImageConstants.FREE_OBJECT_CLASS_INDEX_PUN;
     }
 
     protected static boolean isObjectStack(final int classIndex, final int size) {
-        return classIndex == WORD_SIZE_CLASS_INDEX_PUN && size == OBJ_STACK_PAGE_SLOTS;
-    }
-
-    @SuppressWarnings("unused")
-    private static boolean checkAddressIntegrity(final int classIndex, final int format, final SqueakImageChunk chunk) {
-        // boolean result = true;
-        // if (format < 10 && classIndex != FREE_OBJECT_CLASS_INDEX_PUN) {
-        // for (final long slot : chunk.getWords()) {
-        // result &= slot % 16 != 0 || slot >= oldBaseAddress;
-        // }
-        // }
-        return true; // FIXME: temporarily disabled (used to work for 32bit).
+        return classIndex == SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN && size == SqueakImageConstants.OBJ_STACK_PAGE_SLOTS;
     }
 
     private SqueakImageChunk specialObjectChunk(final SqueakImageChunk specialObjectsChunk, final int idx) {
@@ -381,9 +354,6 @@ public final class SqueakImageReader {
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_ARRAY, image.arrayClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SMALLTALK_DICTIONARY, image.smalltalk);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FLOAT, image.floatClass);
-        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_FOREIGN_OBJECT).isNil()) {
-            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FOREIGN_OBJECT, image.initializeForeignObject());
-        }
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_METHOD_CONTEXT, image.methodContextClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_POINT, image.pointClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_POSITIVE_INTEGER, image.largePositiveIntegerClass);
@@ -417,24 +387,29 @@ public final class SqueakImageReader {
      */
     private void fillInClassObjects() {
         /** Find all metaclasses and instantiate their singleton instances as class objects. */
-        for (int p = 0; p < CLASS_TABLE_ROOT_SLOTS; p++) {
+        long highestKnownClassIndex = -1;
+        for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = getChunk(hiddenRootsChunk.getWord(p));
-            if (classTablePage.getWordSize() != CLASS_TABLE_PAGE_SIZE) {
-                break;
+            if (classTablePage.isNil()) {
+                break; /* End of classTable reached (pages are consecutive). */
             }
-            for (int i = 0; i < CLASS_TABLE_PAGE_SIZE; i++) {
+            for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
-                final SqueakImageChunk metaClass = getChunk(potentialClassPtr);
-                if (metaClass != null && metaClass.getSqClass() == image.metaClass) {
-                    assert metaClass.getWordSize() == METACLASS.INST_SIZE;
-                    final SqueakImageChunk classInstance = getChunk(metaClass.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = metaClass.asClassObject(image.metaClass);
+                final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
+                if (classChunk != null && classChunk.getSqClass() == image.metaClass) {
+                    /* Derive classIndex from current position in class table. */
+                    highestKnownClassIndex = p << SqueakImageConstants.CLASS_TABLE_MAJOR_INDEX_SHIFT | i;
+                    assert classChunk.getWordSize() == METACLASS.INST_SIZE;
+                    final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
+                    final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
                     metaClassObject.setInstancesAreClasses();
                     classInstance.asClassObject(metaClassObject);
                 }
             }
         }
+        assert highestKnownClassIndex > 0 : "Failed to find highestKnownClassIndex";
+        image.setGlobalClassCounter(highestKnownClassIndex);
 
         /** Fill in metaClass. */
         final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
@@ -452,19 +427,19 @@ public final class SqueakImageReader {
         classDescriptionClass.setInstancesAreClasses();
         inst.add(classDescriptionClass);
 
-        for (int p = 0; p < CLASS_TABLE_ROOT_SLOTS; p++) {
+        for (int p = 0; p < SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS; p++) {
             final SqueakImageChunk classTablePage = getChunk(hiddenRootsChunk.getWord(p));
-            if (classTablePage.getWordSize() != CLASS_TABLE_PAGE_SIZE) {
-                break;
+            if (classTablePage.isNil()) {
+                break; /* End of classTable reached (pages are consecutive). */
             }
-            for (int i = 0; i < CLASS_TABLE_PAGE_SIZE; i++) {
+            for (int i = 0; i < SqueakImageConstants.CLASS_TABLE_PAGE_SIZE; i++) {
                 final long potentialClassPtr = classTablePage.getWord(i);
                 assert potentialClassPtr != 0;
-                final SqueakImageChunk metaClass = getChunk(potentialClassPtr);
-                if (metaClass != null && metaClass.getSqClass() == image.metaClass) {
-                    assert metaClass.getWordSize() == METACLASS.INST_SIZE;
-                    final SqueakImageChunk classInstance = getChunk(metaClass.getWord(METACLASS.THIS_CLASS));
-                    final ClassObject metaClassObject = metaClass.asClassObject(image.metaClass);
+                final SqueakImageChunk classChunk = getChunk(potentialClassPtr);
+                if (classChunk != null && classChunk.getSqClass() == image.metaClass) {
+                    assert classChunk.getWordSize() == METACLASS.INST_SIZE;
+                    final SqueakImageChunk classInstance = getChunk(classChunk.getWord(METACLASS.THIS_CLASS));
+                    final ClassObject metaClassObject = classChunk.asClassObject(image.metaClass);
                     final ClassObject classObject = classInstance.asClassObject(metaClassObject);
                     classObject.fillin(classInstance);
                     final String className = ((NativeObject) classObject.getOtherPointers()[CLASS.NAME]).asStringUnsafe();
@@ -528,17 +503,17 @@ public final class SqueakImageReader {
         return chunktable.get(ptr);
     }
 
+    /* Calculate odd bits (see Behavior>>instSpec). */
     public static int calculateObjectPadding(final int format) {
         if (16 <= format && format <= 31) {
-            return format & 7;
+            return format & 7; /* 8-bit indexable and compiled methods: three odd bits */
         } else if (format == 11) {
-            // 32-bit words with 1 word padding
-            return 4;
+            return 4; /* 32-bit words with 1 word padding. */
         } else if (12 <= format && format <= 15) {
             // 16-bit words with 2, 4, or 6 bytes padding
-            return format & 3;
+            return format & 3; /* 16-bit indexable: two odd bits */
         } else if (10 <= format) {
-            return format & 1;
+            return format & 1; /* 1 word padding */
         } else {
             return 0;
         }
@@ -555,40 +530,5 @@ public final class SqueakImageReader {
             }
         }
         suspendedContexts.clear();
-    }
-
-    /**
-     * Object Header Specification (see SpurMemoryManager).
-     *
-     * <pre>
-     *  MSB:  | 8: numSlots       | (on a byte boundary)
-     *        | 2 bits            |   (msb,lsb = {isMarked,?})
-     *        | 22: identityHash  | (on a word boundary)
-     *        | 3 bits            |   (msb <-> lsb = {isGrey,isPinned,isRemembered}
-     *        | 5: format         | (on a byte boundary)
-     *        | 2 bits            |   (msb,lsb = {isImmutable,?})
-     *        | 22: classIndex    | (on a word boundary) : LSB
-     * </pre>
-     */
-    private static final class ObjectHeaderDecoder {
-        private static int getClassIndex(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 0, 22);
-        }
-
-        private static int getFormat(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 24, 5);
-        }
-
-        private static int getHash(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 32, 22);
-        }
-
-        private static int getNumSlots(final long headerWord) {
-            return MiscUtils.bitSplit(headerWord, 56, 8);
-        }
-
-        private static boolean isPinned(final long headerWord) {
-            return (headerWord >> AbstractSqueakObjectWithHash.PINNED_BIT_SHIFT & 1) == 1;
-        }
     }
 }

@@ -282,7 +282,6 @@ public final class ObjectLayouts {
         public static final int THE_TIMER_SEMAPHORE = 29;
         public static final int THE_INTERRUPT_SEMAPHORE = 30;
         public static final int FLOAT_PROTO = 31;
-        public static final int CLASS_FOREIGN_OBJECT = 32; // reusing unused slot for ForeignObject
         public static final int SELECTOR_CANNOT_INTERPRET = 34;
         public static final int METHOD_CONTEXT_PROTO = 35;
         public static final int CLASS_BLOCK_CLOSURE = 36;

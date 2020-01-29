@@ -10,6 +10,9 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
+
 @ExportLibrary(InteropLibrary.class)
 public final class NilObject extends AbstractSqueakObject {
     public static final NilObject SINGLETON = new NilObject();
@@ -38,6 +41,11 @@ public final class NilObject extends AbstractSqueakObject {
     }
 
     @Override
+    public int getNumSlots() {
+        return 0;
+    }
+
+    @Override
     public int instsize() {
         return 0;
     }
@@ -56,5 +64,10 @@ public final class NilObject extends AbstractSqueakObject {
     @ExportMessage
     public boolean isNull() {
         return true;
+    }
+
+    public void write(final SqueakImageWriter writerNode) {
+        writerNode.writeObjectHeader(instsize() + size(), getSqueakHash(), writerNode.getImage().nilClass, 0);
+        writerNode.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
     }
 }

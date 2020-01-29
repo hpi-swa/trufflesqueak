@@ -8,8 +8,9 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
@@ -189,5 +190,10 @@ public final class PointersObject extends AbstractPointersObject {
             return readNode.execute(this, 0) + " -> " + readNode.execute(this, 1);
         }
         return super.toString();
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writerNode) {
+        super.writeHeaderAndLayoutObjects(writerNode);
     }
 }

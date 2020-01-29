@@ -16,6 +16,11 @@ public final class CharacterObject extends AbstractSqueakObject {
     }
 
     @Override
+    public int getNumSlots() {
+        return 0;
+    }
+
+    @Override
     public int instsize() {
         return 0;
     }
