@@ -433,36 +433,39 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitDivNegative")
     protected abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
-        private final BranchProfile signProfile = BranchProfile.create();
-
         protected PrimDigitDivNegativeNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected final ArrayObject doLong(final long rcvr, final long arg, final boolean negative) {
+        @Specialization
+        protected final ArrayObject doLong(final long rcvr, final long arg, final boolean negative,
+                        @Cached final BranchProfile signProfile) {
             long divide = rcvr / arg;
             if (negative && divide >= 0 || !negative && divide < 0) {
                 signProfile.enter();
                 if (divide == Long.MIN_VALUE) {
-                    return method.image.asArrayOfObjects(LargeIntegerObject.LONG_MIN_OVERFLOW_RESULT, rcvr % arg);
+                    return createArrayWithLongMinOverflowResult(rcvr, arg);
                 }
                 divide = -divide;
             }
             return method.image.asArrayOfLongs(divide, rcvr % arg);
         }
 
-        @TruffleBoundary(transferToInterpreterOnException = false)
+        @TruffleBoundary
+        private ArrayObject createArrayWithLongMinOverflowResult(final long rcvr, final long arg) {
+            return method.image.asArrayOfObjects(LargeIntegerObject.createLongMinOverflowResult(method.image), rcvr % arg);
+        }
+
         @Specialization
+        @TruffleBoundary
         protected final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
             final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(arg.getBigInteger());
             final Object[] result = new Object[2];
             if (negative != divide[0].signum() < 0) {
-                signProfile.enter();
                 if (divide[0].bitLength() < Long.SIZE) {
                     final long lresult = divide[0].longValue();
                     if (lresult == Long.MIN_VALUE) {
-                        result[0] = LargeIntegerObject.LONG_MIN_OVERFLOW_RESULT;
+                        result[0] = LargeIntegerObject.createLongMinOverflowResult(method.image);
                     } else {
                         result[0] = -lresult;
                     }
@@ -485,22 +488,21 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final ArrayObject doLong(final long rcvr, final LargeIntegerObject arg, final boolean negative) {
+        protected final ArrayObject doLongLargeInteger(final long rcvr, final LargeIntegerObject arg, @SuppressWarnings("unused") final boolean negative) {
             assert !arg.fitsIntoLong() : "non-reduced large integer!";
-            return method.image.asArrayOfLongs(0, rcvr);
+            return method.image.asArrayOfLongs(0L, rcvr);
         }
 
-        @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization
-        protected final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
+        @TruffleBoundary
+        protected final ArrayObject doLargeIntegerLong(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
             final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(BigInteger.valueOf(arg));
             final Object[] result = new Object[2];
             if (negative != divide[0].signum() < 0) {
-                signProfile.enter();
                 if (divide[0].bitLength() < Long.SIZE) {
                     final long lresult = divide[0].longValue();
                     if (lresult == Long.MIN_VALUE) {
-                        result[0] = LargeIntegerObject.LONG_MIN_OVERFLOW_RESULT;
+                        result[0] = LargeIntegerObject.createLongMinOverflowResult(method.image);
                     } else {
                         result[0] = -lresult;
                     }
@@ -623,10 +625,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final int[] firstInts = ArrayConversionUtils.intsFromBytesExact(receiver.getBytes());
             final int[] secondInts = ArrayConversionUtils.intsFromBytesExact(a.getBytes());
             final int[] thirdInts = ArrayConversionUtils.intsFromBytesExact(m.getBytes());
-            return montgomeryTimesModulo(firstInts, secondInts, thirdInts, mInv);
-        }
 
-        private Object montgomeryTimesModulo(final int[] firstInts, final int[] secondInts, final int[] thirdInts, final long mInv) {
             final int firstLen = firstInts.length;
             final int secondLen = secondInts.length;
             final int thirdLen = thirdInts.length;

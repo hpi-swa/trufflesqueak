@@ -52,7 +52,7 @@ public final class NativeObjectNodes {
         protected static final Object doNativeLongs(final NativeObject obj, final long index,
                         @Cached("createBinaryProfile()") final ConditionProfile positiveValueProfile) {
             final long value = obj.getLong(index);
-            if (positiveValueProfile.profile(0 <= value)) {
+            if (positiveValueProfile.profile(value >= 0)) {
                 return value;
             } else {
                 return LargeIntegerObject.toUnsigned(obj.image, value);
@@ -150,7 +150,7 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "!value.fitsIntoLong()", "value.lessThanOneShiftedBy64()"})
         protected static final void doNativeLongsLargeIntegerSigned(final NativeObject obj, final long index, final LargeIntegerObject value) {
-            doNativeLongs(obj, index, value.toSigned());
+            doNativeLongs(obj, index, value.toSignedLong());
         }
 
         @SuppressWarnings("unused")

@@ -6,14 +6,15 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -60,18 +61,20 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "isSigned"})
-        protected static final Object doAt8Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] bytes = Arrays.copyOfRange(byteArray.getByteStorage(), byteOffset, byteOffset + 8);
-            return new LargeIntegerObject(byteArray.image, byteArray.image.largePositiveIntegerClass, bytes).toSigned();
+        protected static final long doAt8Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
+            return UnsafeUtils.getLongAtByteIndex(byteArray.getByteStorage(), (int) byteOffsetLong - 1);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned"})
-        protected static final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
-            final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] bytes = Arrays.copyOfRange(byteArray.getByteStorage(), byteOffset, byteOffset + 8);
-            return new LargeIntegerObject(byteArray.image, byteArray.image.largePositiveIntegerClass, bytes).reduceIfPossible();
+        protected static final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
+                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile) {
+            final long signedLong = doAt8Signed(byteArray, byteOffsetLong, byteSize, isSigned);
+            if (positiveProfile.profile(signedLong >= 0)) {
+                return signedLong;
+            } else {
+                return LargeIntegerObject.toUnsigned(byteArray.image, signedLong);
+            }
         }
     }
 

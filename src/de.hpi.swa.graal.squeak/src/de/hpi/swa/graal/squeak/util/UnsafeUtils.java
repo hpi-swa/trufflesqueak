@@ -114,6 +114,11 @@ public final class UnsafeUtils {
         return UNSAFE.getLong(object, address);
     }
 
+    public static long getLongAtByteIndex(final byte[] bytes, final long index) {
+        assert 0 <= index && index < bytes.length - Long.BYTES;
+        return UNSAFE.getLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+    }
+
     public static long getLongReversed(final byte[] bytes, final long index) {
         return Long.reverseBytes(getLong(bytes, index));
     }
