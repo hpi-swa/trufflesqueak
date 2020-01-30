@@ -11,6 +11,7 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.RuntimeMXBean;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
@@ -183,6 +184,16 @@ public final class MiscUtils {
             Thread.currentThread().interrupt();
             throw new SqueakInterrupt();
         }
+    }
+
+    @TruffleBoundary
+    public static byte[] stringToBytes(final String value) {
+        return value.getBytes(StandardCharsets.UTF_8);
+    }
+
+    @TruffleBoundary
+    public static int[] stringToCodePointsArray(final String value) {
+        return value.codePoints().toArray();
     }
 
     @TruffleBoundary

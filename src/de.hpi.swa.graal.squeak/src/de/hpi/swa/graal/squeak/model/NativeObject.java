@@ -35,7 +35,6 @@ import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
@@ -86,7 +85,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static NativeObject newNativeInts(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), ArrayConversionUtils.intsFromBytes(chunk.getBytes()));
+        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), UnsafeUtils.toInts(chunk.getBytes()));
     }
 
     public static NativeObject newNativeInts(final SqueakImageContext img, final ClassObject klass, final int size) {
@@ -98,7 +97,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static NativeObject newNativeLongs(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), ArrayConversionUtils.longsFromBytes(chunk.getBytes()));
+        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), UnsafeUtils.toLongs(chunk.getBytes()));
     }
 
     public static NativeObject newNativeLongs(final SqueakImageContext img, final ClassObject klass, final int size) {
@@ -110,7 +109,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static NativeObject newNativeShorts(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), ArrayConversionUtils.shortsFromBytes(chunk.getBytes()));
+        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), UnsafeUtils.toShorts(chunk.getBytes()));
     }
 
     public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final int size) {
@@ -177,19 +176,19 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         setStorage(bytes);
     }
 
-    public void convertToIntsStorage(final byte[] bytes) {
-        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ArrayConversionUtils.intsFromBytesReversed(bytes));
+    public void convertToIntsStorage(final int[] ints) {
+        assert storage.getClass() != ints.getClass() : "Converting storage of same type unnecessary";
+        setStorage(ints);
     }
 
-    public void convertToLongsStorage(final byte[] bytes) {
-        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ArrayConversionUtils.longsFromBytesReversed(bytes));
+    public void convertToLongsStorage(final long[] longs) {
+        assert storage.getClass() != longs.getClass() : "Converting storage of same type unnecessary";
+        setStorage(longs);
     }
 
-    public void convertToShortsStorage(final byte[] bytes) {
-        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ArrayConversionUtils.shortsFromBytesReversed(bytes));
+    public void convertToShortsStorage(final short[] shorts) {
+        assert storage.getClass() != shorts.getClass() : "Converting storage of same type unnecessary";
+        setStorage(shorts);
     }
 
     public byte getByte(final long index) {

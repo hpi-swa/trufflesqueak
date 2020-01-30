@@ -51,9 +51,9 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.OSDetector;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, FilePlugin.class);
@@ -691,7 +691,14 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary(transferToInterpreterOnException = false)
         protected final long doWriteInt(@SuppressWarnings("unused") final Object receiver, final long fileDescriptor, final NativeObject content, final long startIndex,
                         final long count) {
-            return fileWriteFromAt(fileDescriptor, count, ArrayConversionUtils.bytesFromIntsReversed(content.getIntStorage()), startIndex, 4);
+            // TODO: use ByteBuffer or UnsafeUtils here?
+            final int[] ints = content.getIntStorage();
+            final int intsLength = ints.length;
+            final byte[] bytes = new byte[intsLength * Integer.BYTES];
+            for (int i = 0; i < intsLength; i++) {
+                UnsafeUtils.putIntReversed(bytes, i, ints[i]);
+            }
+            return fileWriteFromAt(fileDescriptor, count, bytes, startIndex, 4);
         }
 
         @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)", "inBounds(startIndex, count, content.size())"})

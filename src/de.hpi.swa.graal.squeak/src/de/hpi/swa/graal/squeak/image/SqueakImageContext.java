@@ -67,7 +67,6 @@ import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
 import de.hpi.swa.graal.squeak.shared.SqueakImageLocator;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.tools.SqueakMessageInterceptor;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
@@ -556,11 +555,11 @@ public final class SqueakImageContext {
     }
 
     public NativeObject asByteString(final String value) {
-        return NativeObject.newNativeBytes(this, byteStringClass, ArrayConversionUtils.stringToBytes(value));
+        return NativeObject.newNativeBytes(this, byteStringClass, MiscUtils.stringToBytes(value));
     }
 
     public NativeObject asWideString(final String value) {
-        return NativeObject.newNativeInts(this, getWideStringClass(), ArrayConversionUtils.stringToCodePointsArray(value));
+        return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
     }
 
     public NativeObject asString(final String value, final ConditionProfile wideStringProfile) {

@@ -6,7 +6,6 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -18,6 +17,10 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetIntsNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetLongsNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetShortsNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectByteSizeNode;
 
 /** This node should only be used in primitive nodes as it may throw a PrimitiveFailed exception. */
 public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
@@ -32,33 +35,36 @@ public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {
 
     @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isBytes()"})
     protected static final NativeObject doNativeConvertToBytes(final NativeObject receiver, final ClassObject argument,
-                    @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
+                    @Cached final NativeGetBytesNode getBytesNode) {
         receiver.setSqueakClass(argument);
         receiver.convertToBytesStorage(getBytesNode.execute(receiver));
         return receiver;
     }
 
-    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isShorts()"})
+    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isShorts()", "isIntegralWhenDividedBy(byteSize.execute(receiver), 2)"}, limit = "1")
     protected static final NativeObject doNativeConvertToShorts(final NativeObject receiver, final ClassObject argument,
-                    @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
+                    @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
+                    @Cached final NativeGetShortsNode getShortsNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToShortsStorage(getBytesNode.execute(receiver));
+        receiver.convertToShortsStorage(getShortsNode.execute(receiver));
         return receiver;
     }
 
-    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isWords()"})
+    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isWords()", "isIntegralWhenDividedBy(byteSize.execute(receiver), 4)"}, limit = "1")
     protected static final NativeObject doNativeConvertToInts(final NativeObject receiver, final ClassObject argument,
-                    @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
+                    @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
+                    @Cached final NativeGetIntsNode getIntsNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToIntsStorage(getBytesNode.execute(receiver));
+        receiver.convertToIntsStorage(getIntsNode.execute(receiver));
         return receiver;
     }
 
-    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isLongs()"})
+    @Specialization(guards = {"!receiver.hasSameFormat(argument)", "argument.isLongs()", "isIntegralWhenDividedBy(byteSize.execute(receiver), 8)"}, limit = "1")
     protected static final NativeObject doNativeConvertToLongs(final NativeObject receiver, final ClassObject argument,
-                    @Shared("getBytesNode") @Cached final NativeGetBytesNode getBytesNode) {
+                    @SuppressWarnings("unused") @Cached final NativeObjectByteSizeNode byteSize,
+                    @Cached final NativeGetLongsNode getLongsNode) {
         receiver.setSqueakClass(argument);
-        receiver.convertToLongsStorage(getBytesNode.execute(receiver));
+        receiver.convertToLongsStorage(getLongsNode.execute(receiver));
         return receiver;
     }
 

@@ -138,7 +138,7 @@ public final class UnsafeUtils {
     }
 
     public static short getShort(final int[] ints, final long index) {
-        assert 0 <= index && index / Short.BYTES < ints.length;
+        assert 0 <= index && index * Short.BYTES / Integer.BYTES < ints.length;
         return UNSAFE.getShort(ints, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_SHORT_INDEX_SCALE);
     }
 
@@ -300,5 +300,102 @@ public final class UnsafeUtils {
     public static void putWeakReference(final WeakReference<?>[] storage, final long index, final WeakReference<?> value) {
         assert 0 <= index && index < storage.length;
         UNSAFE.putObject(storage, ARRAY_WEAK_REFERENCE_BASE_OFFSET + index * ARRAY_WEAK_REFERENCE_INDEX_SCALE, value);
+    }
+
+    public static byte[] toBytes(final int[] ints) {
+        final int numBytes = ints.length * Integer.BYTES;
+        final byte[] bytes = new byte[numBytes];
+        UNSAFE.copyMemory(ints, Unsafe.ARRAY_INT_BASE_OFFSET, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, numBytes);
+        return bytes;
+    }
+
+    public static byte[] toBytes(final long[] longs) {
+        final int numBytes = longs.length * Long.BYTES;
+        final byte[] bytes = new byte[numBytes];
+        UNSAFE.copyMemory(longs, Unsafe.ARRAY_LONG_BASE_OFFSET, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, numBytes);
+        return bytes;
+    }
+
+    public static byte[] toBytes(final short[] shorts) {
+        final int numBytes = shorts.length * Short.BYTES;
+        final byte[] bytes = new byte[numBytes];
+        UNSAFE.copyMemory(shorts, Unsafe.ARRAY_SHORT_BASE_OFFSET, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, numBytes);
+        return bytes;
+    }
+
+    public static int[] toInts(final byte[] bytes) {
+        final int numBytes = bytes.length;
+        assert numBytes % Integer.BYTES == 0;
+        final int[] ints = new int[numBytes / Integer.BYTES];
+        UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, ints, Unsafe.ARRAY_INT_BASE_OFFSET, numBytes);
+        return ints;
+    }
+
+    public static int[] toInts(final long[] longs) {
+        final int numBytes = longs.length * Long.BYTES;
+        final int[] ints = new int[numBytes / Integer.BYTES];
+        UNSAFE.copyMemory(longs, Unsafe.ARRAY_LONG_BASE_OFFSET, ints, Unsafe.ARRAY_INT_BASE_OFFSET, numBytes);
+        return ints;
+    }
+
+    public static int[] toInts(final short[] shorts) {
+        final int numBytes = shorts.length * Short.BYTES;
+        assert numBytes % Integer.BYTES == 0;
+        final int[] ints = new int[numBytes / Integer.BYTES];
+        UNSAFE.copyMemory(shorts, Unsafe.ARRAY_SHORT_BASE_OFFSET, ints, Unsafe.ARRAY_INT_BASE_OFFSET, numBytes);
+        return ints;
+    }
+
+    public static int[] toIntsExact(final byte[] bytes) {
+        final int numBytes = bytes.length;
+        final int[] ints = new int[Math.floorDiv(numBytes + 3, Integer.BYTES)];
+        UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, ints, Unsafe.ARRAY_INT_BASE_OFFSET, numBytes);
+        return ints;
+    }
+
+    public static long[] toLongs(final byte[] bytes) {
+        final int numBytes = bytes.length;
+        assert numBytes % Long.BYTES == 0;
+        final long[] longs = new long[numBytes / Long.BYTES];
+        UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, longs, Unsafe.ARRAY_LONG_BASE_OFFSET, numBytes);
+        return longs;
+    }
+
+    public static long[] toLongs(final int[] ints) {
+        final int numBytes = ints.length * Integer.BYTES;
+        assert numBytes % Long.BYTES == 0;
+        final long[] longs = new long[numBytes / Long.BYTES];
+        UNSAFE.copyMemory(ints, Unsafe.ARRAY_INT_BASE_OFFSET, longs, Unsafe.ARRAY_LONG_BASE_OFFSET, numBytes);
+        return longs;
+    }
+
+    public static long[] toLongs(final short[] shorts) {
+        final int numBytes = shorts.length * Short.BYTES;
+        assert numBytes % Long.BYTES == 0;
+        final long[] longs = new long[numBytes / Long.BYTES];
+        UNSAFE.copyMemory(shorts, Unsafe.ARRAY_SHORT_BASE_OFFSET, longs, Unsafe.ARRAY_LONG_BASE_OFFSET, numBytes);
+        return longs;
+    }
+
+    public static short[] toShorts(final byte[] bytes) {
+        final int numBytes = bytes.length;
+        assert numBytes % Short.BYTES == 0;
+        final short[] shorts = new short[numBytes / Short.BYTES];
+        UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, shorts, Unsafe.ARRAY_SHORT_BASE_OFFSET, numBytes);
+        return shorts;
+    }
+
+    public static short[] toShorts(final int[] ints) {
+        final int numBytes = ints.length * Integer.BYTES;
+        final short[] shorts = new short[numBytes / Short.BYTES];
+        UNSAFE.copyMemory(ints, Unsafe.ARRAY_INT_BASE_OFFSET, shorts, Unsafe.ARRAY_SHORT_BASE_OFFSET, numBytes);
+        return shorts;
+    }
+
+    public static short[] toShorts(final long[] longs) {
+        final int numBytes = longs.length * Long.BYTES;
+        final short[] shorts = new short[numBytes / Short.BYTES];
+        UNSAFE.copyMemory(longs, Unsafe.ARRAY_LONG_BASE_OFFSET, shorts, Unsafe.ARRAY_SHORT_BASE_OFFSET, numBytes);
+        return shorts;
     }
 }

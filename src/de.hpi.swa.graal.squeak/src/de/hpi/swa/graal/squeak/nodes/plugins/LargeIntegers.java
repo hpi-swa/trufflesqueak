@@ -31,7 +31,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimiti
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     private static final String MODULE_NAME = "LargeIntegers v2.0 (GraalSqueak)";
@@ -622,9 +622,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
-            final int[] firstInts = ArrayConversionUtils.intsFromBytesExact(receiver.getBytes());
-            final int[] secondInts = ArrayConversionUtils.intsFromBytesExact(a.getBytes());
-            final int[] thirdInts = ArrayConversionUtils.intsFromBytesExact(m.getBytes());
+            final int[] firstInts = UnsafeUtils.toIntsExact(receiver.getBytes());
+            final int[] secondInts = UnsafeUtils.toIntsExact(a.getBytes());
+            final int[] thirdInts = UnsafeUtils.toIntsExact(m.getBytes());
 
             final int firstLen = firstInts.length;
             final int secondLen = secondInts.length;
@@ -689,7 +689,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                     accum = 0 - (accum >> 63);
                 }
             }
-            final byte[] resultBytes = ArrayConversionUtils.bytesFromInts(result);
+            final byte[] resultBytes = UnsafeUtils.toBytes(result);
             return new LargeIntegerObject(method.image, method.image.largePositiveIntegerClass, resultBytes).reduceIfPossible(); // normalize
         }
 

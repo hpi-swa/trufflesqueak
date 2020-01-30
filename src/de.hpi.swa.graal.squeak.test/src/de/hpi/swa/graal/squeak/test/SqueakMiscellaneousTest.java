@@ -22,9 +22,9 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushConstantNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
     private static final String ALL_BYTECODES_EXPECTED_RESULT = String.join("\n", "1 <8B 1F 00> callPrimitive: 31",
@@ -191,16 +191,16 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testFloatDecoding() {
-        SqueakImageChunk chunk = newFloatChunk(ArrayConversionUtils.bytesFromInts(new int[]{0, 1072693248}));
+        SqueakImageChunk chunk = newFloatChunk(UnsafeUtils.toBytes(new int[]{0, 1072693248}));
         assertEquals(1.0, (double) chunk.asObject(), 0);
 
-        chunk = newFloatChunk(ArrayConversionUtils.bytesFromInts(new int[]{(int) 2482401462L, 1065322751}));
+        chunk = newFloatChunk(UnsafeUtils.toBytes(new int[]{(int) 2482401462L, 1065322751}));
         assertEquals(0.007699011184197404, (double) chunk.asObject(), 0);
 
-        chunk = newFloatChunk(ArrayConversionUtils.bytesFromInts(new int[]{876402988, 1075010976}));
+        chunk = newFloatChunk(UnsafeUtils.toBytes(new int[]{876402988, 1075010976}));
         assertEquals(4.841431442464721, (double) chunk.asObject(), 0);
 
-        chunk = newFloatChunk(ArrayConversionUtils.bytesFromInts(new int[]{0, (int) 4294443008L}));
+        chunk = newFloatChunk(UnsafeUtils.toBytes(new int[]{0, (int) 4294443008L}));
         final Object nan = chunk.asObject();
         assertTrue(nan instanceof FloatObject && ((FloatObject) nan).isNaN());
     }

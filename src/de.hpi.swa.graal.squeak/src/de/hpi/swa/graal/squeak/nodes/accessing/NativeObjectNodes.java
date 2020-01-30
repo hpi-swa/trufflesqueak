@@ -17,19 +17,12 @@ import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeGetBytesNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeObjectSizeNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeObjectWriteNodeGen;
-import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class NativeObjectNodes {
     @GenerateUncached
     public abstract static class NativeObjectReadNode extends AbstractNode {
-
-        public static NativeObjectReadNode create() {
-            return NativeObjectReadNodeGen.create();
-        }
 
         public abstract Object execute(NativeObject obj, long index);
 
@@ -63,10 +56,6 @@ public final class NativeObjectNodes {
     @GenerateUncached
     @ImportStatic(NativeObject.class)
     public abstract static class NativeObjectWriteNode extends AbstractNode {
-
-        public static NativeObjectWriteNode create() {
-            return NativeObjectWriteNodeGen.create();
-        }
 
         public abstract void execute(NativeObject obj, long index, Object value);
 
@@ -167,10 +156,6 @@ public final class NativeObjectNodes {
     @GenerateUncached
     public abstract static class NativeObjectSizeNode extends AbstractNode {
 
-        public static NativeObjectSizeNode create() {
-            return NativeObjectSizeNodeGen.create();
-        }
-
         public static NativeObjectSizeNode getUncached() {
             return NativeObjectSizeNodeGen.getUncached();
         }
@@ -198,12 +183,32 @@ public final class NativeObjectNodes {
         }
     }
 
-    @GenerateUncached
-    public abstract static class NativeGetBytesNode extends AbstractNode {
+    public abstract static class NativeObjectByteSizeNode extends AbstractNode {
 
-        public static NativeGetBytesNode create() {
-            return NativeGetBytesNodeGen.create();
+        public abstract int execute(NativeObject obj);
+
+        @Specialization(guards = "obj.isByteType()")
+        protected static final int doNativeBytes(final NativeObject obj) {
+            return obj.getByteLength();
         }
+
+        @Specialization(guards = "obj.isShortType()")
+        protected static final int doNativeShorts(final NativeObject obj) {
+            return obj.getShortLength() * Short.BYTES;
+        }
+
+        @Specialization(guards = "obj.isIntType()")
+        protected static final int doNativeInts(final NativeObject obj) {
+            return obj.getIntLength() * Integer.BYTES;
+        }
+
+        @Specialization(guards = "obj.isLongType()")
+        protected static final int doNativeLongs(final NativeObject obj) {
+            return obj.getLongLength() * Long.BYTES;
+        }
+    }
+
+    public abstract static class NativeGetBytesNode extends AbstractNode {
 
         public abstract byte[] execute(NativeObject obj);
 
@@ -214,21 +219,95 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = "obj.isShortType()")
         protected static final byte[] doNativeShorts(final NativeObject obj) {
-            return ArrayConversionUtils.bytesFromShorts(obj.getShortStorage());
+            return UnsafeUtils.toBytes(obj.getShortStorage());
         }
 
         @Specialization(guards = "obj.isIntType()")
         protected static final byte[] doNativeInts(final NativeObject obj) {
-            return ArrayConversionUtils.bytesFromInts(obj.getIntStorage());
+            return UnsafeUtils.toBytes(obj.getIntStorage());
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final byte[] doNativeLongs(final NativeObject obj) {
-            return ArrayConversionUtils.bytesFromLongs(obj.getLongStorage());
+            return UnsafeUtils.toBytes(obj.getLongStorage());
         }
     }
 
-    @GenerateUncached
+    public abstract static class NativeGetShortsNode extends AbstractNode {
+
+        public abstract short[] execute(NativeObject obj);
+
+        @Specialization(guards = "obj.isByteType()")
+        protected static final short[] doNativeBytes(final NativeObject obj) {
+            return UnsafeUtils.toShorts(obj.getByteStorage());
+        }
+
+        @Specialization(guards = "obj.isShortType()")
+        protected static final short[] doNativeShorts(final NativeObject obj) {
+            return obj.getShortStorage();
+        }
+
+        @Specialization(guards = "obj.isIntType()")
+        protected static final short[] doNativeInts(final NativeObject obj) {
+            return UnsafeUtils.toShorts(obj.getIntStorage());
+        }
+
+        @Specialization(guards = "obj.isLongType()")
+        protected static final short[] doNativeLongs(final NativeObject obj) {
+            return UnsafeUtils.toShorts(obj.getLongStorage());
+        }
+    }
+
+    public abstract static class NativeGetIntsNode extends AbstractNode {
+
+        public abstract int[] execute(NativeObject obj);
+
+        @Specialization(guards = "obj.isByteType()")
+        protected static final int[] doNativeBytes(final NativeObject obj) {
+            return UnsafeUtils.toInts(obj.getByteStorage());
+        }
+
+        @Specialization(guards = "obj.isShortType()")
+        protected static final int[] doNativeShorts(final NativeObject obj) {
+            return UnsafeUtils.toInts(obj.getShortStorage());
+        }
+
+        @Specialization(guards = "obj.isIntType()")
+        protected static final int[] doNativeInts(final NativeObject obj) {
+            return obj.getIntStorage();
+        }
+
+        @Specialization(guards = "obj.isLongType()")
+        protected static final int[] doNativeLongs(final NativeObject obj) {
+            return UnsafeUtils.toInts(obj.getLongStorage());
+        }
+    }
+
+    public abstract static class NativeGetLongsNode extends AbstractNode {
+
+        public abstract long[] execute(NativeObject obj);
+
+        @Specialization(guards = "obj.isByteType()")
+        protected static final long[] doNativeBytes(final NativeObject obj) {
+            return UnsafeUtils.toLongs(obj.getByteStorage());
+        }
+
+        @Specialization(guards = "obj.isShortType()")
+        protected static final long[] doNativeShorts(final NativeObject obj) {
+            return UnsafeUtils.toLongs(obj.getShortStorage());
+        }
+
+        @Specialization(guards = "obj.isIntType()")
+        protected static final long[] doNativeInts(final NativeObject obj) {
+            return UnsafeUtils.toLongs(obj.getIntStorage());
+        }
+
+        @Specialization(guards = "obj.isLongType()")
+        protected static final long[] doNativeLongs(final NativeObject obj) {
+            return obj.getLongStorage();
+        }
+    }
+
     public abstract static class NativeObjectShallowCopyNode extends AbstractNode {
 
         public abstract NativeObject execute(NativeObject obj);
