@@ -30,6 +30,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -559,15 +560,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return arguments;
     }
 
-    public void transferTo(final AbstractPointersObjectWriteNode writeNode, final PointersObject newProcess) {
+    public void transferTo(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode, final PointersObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
-        final PointersObject currentProcess = image.getActiveProcess();
+        final PointersObject currentProcess = newProcess.image.getActiveProcess(readNode);
         assert newProcess != currentProcess : "trying to switch to already active process";
         // overwritten in next line.
         writeNode.execute(image.getScheduler(), PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         writeNode.execute(currentProcess, PROCESS.SUSPENDED_CONTEXT, this);
         setProcess(currentProcess);
-        final ContextObject newActiveContext = (ContextObject) newProcess.getSuspendedContext();
+        final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
         newActiveContext.setProcess(newProcess);
         writeNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
@@ -628,7 +629,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                     break; // Stop here, slot has not (yet) been created.
                 }
                 if (truffleFrame.isObject(slot)) {
-                    final Object stackObject = truffleFrame.getValue(slot);
+                    final Object stackObject = FrameUtil.getObjectSafe(truffleFrame, slot);
                     if (stackObject == null) {
                         break;
                     }

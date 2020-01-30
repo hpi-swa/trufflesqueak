@@ -131,7 +131,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         return null; // Stop here, slot has not (yet) been created.
                     }
                     if (current.isObject(frameSlot)) {
-                        final Object stackObject = current.getValue(frameSlot);
+                        final Object stackObject = FrameUtil.getObjectSafe(current, frameSlot);
                         if (stackObject == null) {
                             return null;
                         }

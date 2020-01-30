@@ -9,6 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -92,7 +93,7 @@ public class FramesAndContextsIterator {
             final BlockClosureObject closure = (BlockClosureObject) arguments[2];
             final CompiledCodeObject currentCode = closure != null ? closure.getCompiledBlock() : (CompiledMethodObject) maybeMethod;
             Object currentMarker = null;
-            if (!foundMyself[0] && null != (currentMarker = currentFrame.getValue(currentCode.getThisMarkerSlot())) && start == currentMarker) {
+            if (!foundMyself[0] && null != (currentMarker = FrameUtil.getObjectSafe(currentFrame, currentCode.getThisMarkerSlot())) && start == currentMarker) {
                 if (lastSender[0] instanceof FrameMarker) {
                     assert lastSender[0] == currentMarker;
                 }
@@ -100,7 +101,7 @@ public class FramesAndContextsIterator {
             }
             ContextObject currentContext = null;
             if (!frameInstance.isVirtualFrame()) {
-                currentContext = (ContextObject) currentFrame.getValue(currentCode.getThisContextSlot());
+                currentContext = (ContextObject) FrameUtil.getObjectSafe(currentFrame, currentCode.getThisContextSlot());
                 if (currentContext == end) {
                     return currentContext;
                 }

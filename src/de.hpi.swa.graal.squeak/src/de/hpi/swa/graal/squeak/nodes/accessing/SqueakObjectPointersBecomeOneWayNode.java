@@ -181,7 +181,7 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
                     break; // Stop here, slot has not (yet) been created.
                 }
                 if (truffleFrame.isObject(slot)) {
-                    final Object newPointer = truffleFrame.getValue(slot);
+                    final Object newPointer = FrameUtil.getObjectSafe(truffleFrame, slot);
                     if (newPointer == null) {
                         break;
                     }

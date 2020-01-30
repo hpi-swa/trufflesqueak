@@ -147,7 +147,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
                         return null; // Stop here, slot has not (yet) been created.
                     }
                     if (current.isObject(slot)) {
-                        final Object stackObject = current.getValue(slot);
+                        final Object stackObject = FrameUtil.getObjectSafe(current, slot);
                         if (stackObject == null) {
                             return null;
                         }
