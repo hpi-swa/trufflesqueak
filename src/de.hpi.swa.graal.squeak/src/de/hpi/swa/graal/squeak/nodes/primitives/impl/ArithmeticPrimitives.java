@@ -6,6 +6,7 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -1083,8 +1084,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "inSafeIntegerRange(receiver.getValue())")
         protected static final long doFloat(final FloatObject receiver,
                         @Cached final BranchProfile positiveProfile,
-                        @Cached final BranchProfile negativeProfile,
-                        @Cached final BranchProfile errorProfile) {
+                        @Cached final BranchProfile negativeProfile) {
             final double value = receiver.getValue();
             final double rounded;
             if (value >= 0) {
@@ -1094,13 +1094,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 negativeProfile.enter();
                 rounded = Math.ceil(value);
             }
-            final long castedValue = (long) rounded;
-            if (castedValue == rounded) {
-                return castedValue;
-            } else {
-                errorProfile.enter();
-                throw PrimitiveFailed.GENERIC_ERROR;
-            }
+            return (long) rounded;
         }
 
         @Specialization(guards = "!inSafeIntegerRange(receiver.getValue())")
@@ -1337,8 +1331,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "inSafeIntegerRange(receiver)")
         protected static final long doDouble(final double receiver,
                         @Cached final BranchProfile positiveProfile,
-                        @Cached final BranchProfile negativeProfile,
-                        @Cached final BranchProfile errorProfile) {
+                        @Cached final BranchProfile negativeProfile) {
             final double rounded;
             if (receiver >= 0) {
                 positiveProfile.enter();
@@ -1347,13 +1340,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 negativeProfile.enter();
                 rounded = Math.ceil(receiver);
             }
-            final long value = (long) rounded;
-            if (value == rounded) {
-                return value;
-            } else {
-                errorProfile.enter();
-                throw PrimitiveFailed.GENERIC_ERROR;
-            }
+            return (long) rounded;
         }
 
         @Specialization(guards = "!inSafeIntegerRange(receiver)")
@@ -1553,23 +1540,29 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @TypeSystemReference(ArithmeticBaseTypeSystem.class)
     public abstract static class AbstractArithmeticPrimitiveNode extends AbstractPrimitiveNode {
         private static final long ONE_SHIFTED_BY_53 = 1L << FloatObject.PRECISION;
-        private static final double DOUBLE_MAX_SAFE_INTEGER = ONE_SHIFTED_BY_53 - 1;
 
         public AbstractArithmeticPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
         public static final boolean isAnExactFloat(final long value) {
-            final long abs = Math.abs(value);
-            if (abs <= ONE_SHIFTED_BY_53) {
+            // We are being a little tricky here:
+            // if value is Long.MIN_VALUE, -value == value, so both tests will succeed
+            // despite the fact that the absolute value is outside the long range, but that is ok,
+            // since Long.MIN_VALUE is a power of two, therefore representable as a double anyway.
+            // Similarly, ONE_SHIFTED_BY_53 is representable, being a power of two, regardless if it
+            // fits in 53 bits or not, so we can use <= instead of <
+            if (-value <= ONE_SHIFTED_BY_53 && value <= ONE_SHIFTED_BY_53) {
                 return true;
             }
+            final long abs = value < 0 ? -value : value;
             final long lowest = Long.lowestOneBit(abs);
             return lowest > Double.MAX_EXPONENT || lowest > 1 && Long.highestOneBit(abs) <= lowest << FloatObject.PRECISION;
         }
 
         protected static final boolean inSafeIntegerRange(final double d) {
-            return d >= -DOUBLE_MAX_SAFE_INTEGER && d <= DOUBLE_MAX_SAFE_INTEGER;
+            // The ends of the interval are also included, since they are powers of two
+            return d >= -ONE_SHIFTED_BY_53 && d <= ONE_SHIFTED_BY_53;
         }
 
         protected static final boolean differentSign(final long lhs, final long rhs) {
