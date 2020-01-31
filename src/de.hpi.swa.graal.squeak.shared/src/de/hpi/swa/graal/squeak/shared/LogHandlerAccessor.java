@@ -196,7 +196,8 @@ public final class LogHandlerAccessor {
     /**
      *
      * Cleaner code courtesy of Luke Hutchison via a StackOverflow answer.
-     * https://stackoverflow.com/questions/2972986/how-to-unmap-a-file-from-memory-mapped-using-filechannel-in-java
+     * https://stackoverflow.com/questions/2972986/how-to-unmap-a-file-from-memory-mapped-using-
+     * filechannel-in-java
      *
      */
     private static class MappedBufferCleaner {
