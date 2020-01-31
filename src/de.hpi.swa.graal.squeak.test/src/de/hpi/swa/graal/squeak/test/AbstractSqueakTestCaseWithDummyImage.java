@@ -47,6 +47,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
                         image.asByteString("UndefinedObject"), image.nilClass}));
 
         image.initializeAfterLoadingImage(ArrayObject.createEmptyStrategy(image, image.arrayClass, 0));
+        context.enter();
     }
 
     private static ClassObject setupMeta(final ClassObject aClass, final Object[] pointers) {
