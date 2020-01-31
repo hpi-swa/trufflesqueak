@@ -10,11 +10,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -31,13 +29,10 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqueakImageReader.class);
-
     protected SqueakImageChunk hiddenRootsChunk;
 
     private final BufferedInputStream stream;
@@ -278,7 +273,6 @@ public final class SqueakImageReader {
         if (ignoreObjectData(headerWord, classIndex, size)) {
             /* Skip some hidden objects for performance reasons. */
             objectData = null;
-            LOG.log(Level.FINE, () -> "classIdx: " + classIndex + ", size: " + size + ", format: " + format + ", hash: " + hash);
             skipBytes(size * SqueakImageConstants.WORD_SIZE);
         } else {
             objectData = nextObjectData(size, format);
