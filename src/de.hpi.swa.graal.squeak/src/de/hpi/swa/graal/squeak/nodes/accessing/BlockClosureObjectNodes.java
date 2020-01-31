@@ -14,17 +14,11 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.BlockClosureObjectNodesFactory.BlockClosureObjectReadNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.BlockClosureObjectNodesFactory.BlockClosureObjectWriteNodeGen;
 
 public final class BlockClosureObjectNodes {
-
     @GenerateUncached
     @ImportStatic(BLOCK_CLOSURE.class)
     public abstract static class BlockClosureObjectReadNode extends AbstractNode {
-        public static BlockClosureObjectReadNode create() {
-            return BlockClosureObjectReadNodeGen.create();
-        }
 
         public abstract Object execute(BlockClosureObject closure, long index);
 
@@ -52,10 +46,6 @@ public final class BlockClosureObjectNodes {
     @GenerateUncached
     @ImportStatic(BLOCK_CLOSURE.class)
     public abstract static class BlockClosureObjectWriteNode extends AbstractNode {
-
-        public static BlockClosureObjectWriteNode create() {
-            return BlockClosureObjectWriteNodeGen.create();
-        }
 
         public abstract void execute(BlockClosureObject closure, long index, Object value);
 

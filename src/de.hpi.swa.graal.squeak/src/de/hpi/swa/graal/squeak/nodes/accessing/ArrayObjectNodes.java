@@ -24,7 +24,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObje
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class ArrayObjectNodes {
-
     @GenerateUncached
     public abstract static class ArrayObjectReadNode extends AbstractNode {
 
@@ -88,7 +87,6 @@ public final class ArrayObjectNodes {
         }
     }
 
-    @GenerateUncached
     public abstract static class ArrayObjectShallowCopyNode extends AbstractNode {
 
         public abstract ArrayObject execute(ArrayObject obj);
@@ -168,7 +166,6 @@ public final class ArrayObjectNodes {
         }
     }
 
-    @GenerateUncached
     public abstract static class ArrayObjectToObjectArrayCopyNode extends AbstractNode {
 
         public static ArrayObjectToObjectArrayCopyNode create() {

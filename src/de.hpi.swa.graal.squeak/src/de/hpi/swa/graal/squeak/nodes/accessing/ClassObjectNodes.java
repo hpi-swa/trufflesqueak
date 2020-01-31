@@ -17,19 +17,12 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ClassObjectReadNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ClassObjectWriteNodeGen;
 
 public final class ClassObjectNodes {
-
     @GenerateUncached
     @ImportStatic(ClassObject.class)
     public abstract static class ClassObjectReadNode extends AbstractNode {
         protected static final int CACHE_LIMIT = 3;
-
-        public static ClassObjectReadNode create() {
-            return ClassObjectReadNodeGen.create();
-        }
 
         public abstract Object execute(ClassObject obj, long index);
 
@@ -83,10 +76,6 @@ public final class ClassObjectNodes {
     @GenerateUncached
     @ImportStatic(ClassObject.class)
     public abstract static class ClassObjectWriteNode extends AbstractNode {
-
-        public static ClassObjectWriteNode create() {
-            return ClassObjectWriteNodeGen.create();
-        }
 
         public abstract void execute(ClassObject obj, long index, Object value);
 

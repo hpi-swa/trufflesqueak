@@ -7,7 +7,6 @@ package de.hpi.swa.graal.squeak.interop;
 
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -23,7 +22,6 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 /**
  * Converts an object to a GraalSqueak object, returns `nil` if conversion is not possible.
  */
-@GenerateUncached
 public abstract class ConvertToSqueakNode extends AbstractNode {
 
     public abstract Object executeConvert(Object value);

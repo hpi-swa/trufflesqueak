@@ -23,7 +23,6 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ContextObjectNodes {
-
     @GenerateUncached
     @ImportStatic(CONTEXT.class)
     public abstract static class ContextObjectReadNode extends AbstractNode {

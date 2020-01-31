@@ -6,7 +6,6 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -32,7 +31,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodes.ClassObjectWrite
 import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 
-@GenerateUncached
 @ImportStatic(NativeObject.class)
 public abstract class SqueakObjectAtPut0Node extends AbstractNode {
 

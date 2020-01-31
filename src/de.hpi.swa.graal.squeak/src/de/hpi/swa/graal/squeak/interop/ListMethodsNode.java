@@ -8,7 +8,6 @@ package de.hpi.swa.graal.squeak.interop;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -22,7 +21,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadN
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 /** Similar to {@link LookupMethodNode}, but for interop. */
-@GenerateUncached
 public abstract class ListMethodsNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 3;
 

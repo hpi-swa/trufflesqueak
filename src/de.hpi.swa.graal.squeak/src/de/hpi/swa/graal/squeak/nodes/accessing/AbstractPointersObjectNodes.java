@@ -33,8 +33,6 @@ import de.hpi.swa.graal.squeak.model.layout.SlotLocation.WriteSlotLocationNode;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectWriteNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.VariablePointersObjectWriteNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.WeakVariablePointersObjectWriteNodeGen;
 
 public class AbstractPointersObjectNodes {
     protected static final int CACHE_LIMIT = 6;
@@ -206,10 +204,6 @@ public class AbstractPointersObjectNodes {
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class VariablePointersObjectWriteNode extends Node {
 
-        public static VariablePointersObjectWriteNode getUncached() {
-            return VariablePointersObjectWriteNodeGen.getUncached();
-        }
-
         public abstract void execute(VariablePointersObject object, int index, Object value);
 
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedIndex < cachedLayout.getInstSize()"}, limit = "CACHE_LIMIT")
@@ -294,10 +288,6 @@ public class AbstractPointersObjectNodes {
     @NodeInfo(cost = NodeCost.NONE)
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class WeakVariablePointersObjectWriteNode extends Node {
-
-        public static WeakVariablePointersObjectWriteNode getUncached() {
-            return WeakVariablePointersObjectWriteNodeGen.getUncached();
-        }
 
         public abstract void execute(WeakVariablePointersObject object, int index, Object value);
 
