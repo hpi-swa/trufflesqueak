@@ -31,7 +31,6 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
 
 public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode {
@@ -154,7 +153,6 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
 
     @Specialization
     protected final void doContext(final ContextObject obj, final Object[] from, final Object[] to, final boolean copyHash,
-                    @Cached final ContextObjectReadNode readNode,
                     @Cached final ContextObjectWriteNode writeNode) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];

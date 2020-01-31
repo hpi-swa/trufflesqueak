@@ -187,28 +187,28 @@ public class DebugUtils {
         b.append(activePriority);
         b.append('\n');
         final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
-        printSemaphoreOrNil(image, b, "*Interrupt semaphore @", interruptSema, true);
+        printSemaphoreOrNil(b, "*Interrupt semaphore @", interruptSema, true);
         final Object timerSema = image.getSpecialObject(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
-        printSemaphoreOrNil(image, b, "*Timer semaphore @", timerSema, true);
+        printSemaphoreOrNil(b, "*Timer semaphore @", timerSema, true);
         final Object finalizationSema = image.getSpecialObject(SPECIAL_OBJECT.THE_FINALIZATION_SEMAPHORE);
-        printSemaphoreOrNil(image, b, "*Finalization semaphore @", finalizationSema, true);
+        printSemaphoreOrNil(b, "*Finalization semaphore @", finalizationSema, true);
         final Object lowSpaceSema = image.getSpecialObject(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE);
-        printSemaphoreOrNil(image, b, "*Low space semaphore @", lowSpaceSema, true);
+        printSemaphoreOrNil(b, "*Low space semaphore @", lowSpaceSema, true);
         final ArrayObject externalObjects = (ArrayObject) image.getSpecialObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY);
         if (!externalObjects.isEmptyType()) {
             final Object[] semaphores = externalObjects.getObjectStorage();
             for (int i = 0; i < semaphores.length; i++) {
-                printSemaphoreOrNil(image, b, "*External semaphore at index " + (i + 1) + " @", semaphores[i], false);
+                printSemaphoreOrNil(b, "*External semaphore at index " + (i + 1) + " @", semaphores[i], false);
             }
         }
         final Object[] lists = pointersReadNode.executeArray(image.scheduler(), PROCESS_SCHEDULER.PROCESS_LISTS).getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
-            printLinkedList(image, b, "*Quiescent processes list at priority " + (i + 1), (PointersObject) lists[i]);
+            printLinkedList(b, "*Quiescent processes list at priority " + (i + 1), (PointersObject) lists[i]);
         }
         return b.toString();
     }
 
-    private static boolean printLinkedList(final SqueakImageContext image, final StringBuilder b, final String label, final PointersObject linkedList) {
+    private static boolean printLinkedList(final StringBuilder b, final String label, final PointersObject linkedList) {
         Object temp = pointersReadNode.execute(linkedList, LINKED_LIST.FIRST_LINK);
         if (temp instanceof PointersObject) {
             b.append(label);
@@ -242,14 +242,14 @@ public class DebugUtils {
         }
     }
 
-    private static void printSemaphoreOrNil(final SqueakImageContext image, final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
+    private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
         if (semaphoreOrNil instanceof PointersObject) {
             b.append(label);
             b.append(Integer.toHexString(semaphoreOrNil.hashCode()));
             b.append(" with ");
             b.append(pointersReadNode.executeLong((AbstractPointersObject) semaphoreOrNil, SEMAPHORE.EXCESS_SIGNALS));
             b.append(" excess signals");
-            if (!printLinkedList(image, b, "", (PointersObject) semaphoreOrNil)) {
+            if (!printLinkedList(b, "", (PointersObject) semaphoreOrNil)) {
                 b.append(" and no processes\n");
             }
         } else {
