@@ -100,7 +100,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 return 0;
             } else {
                 final Value image = context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build());
-                if (out != null || err != null) {
+                if (out != null && err != null) {
                     out.setUp(context);
                     err.setUp(context);
                 }
