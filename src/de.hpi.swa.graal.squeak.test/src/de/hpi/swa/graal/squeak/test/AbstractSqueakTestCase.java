@@ -29,6 +29,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.graal.squeak.shared.LogHandlerAccessor;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageOptions;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -135,6 +136,11 @@ public abstract class AbstractSqueakTestCase {
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.IMAGE_PATH, imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, "true");
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.TESTING, "true");
+        final String logLevel = System.getProperty("log.level");
+        if (logLevel != null) {
+            contextBuilder.option("log." + SqueakLanguageConfig.ID + ".level", logLevel);
+            contextBuilder.logHandler(LogHandlerAccessor.createLogHandler(System.getProperty("log.mode", "out")));
+        }
         context = contextBuilder.build();
         context.initialize(SqueakLanguageConfig.ID);
         context.enter();

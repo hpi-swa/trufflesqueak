@@ -24,6 +24,7 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
+import de.hpi.swa.graal.squeak.shared.LogHandlerAccessor;
 import de.hpi.swa.graal.squeak.shared.SqueakImageLocator;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageOptions;
@@ -35,6 +36,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     private String imagePath = null;
     private String sourceCode = null;
     private boolean enableTranscriptForwarding = false;
+    private String logHandlerMode = null;
 
     public static void main(final String[] arguments) throws RuntimeException {
         new GraalSqueakLauncher().launch(arguments);
@@ -59,6 +61,8 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 quiet = true;
             } else if (SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG.equals(arg)) {
                 enableTranscriptForwarding = true;
+            } else if (SqueakLanguageOptions.LOG_HANDLER_FLAG.equals(arg)) {
+                logHandlerMode = arguments.get(++i);
             } else {
                 unrecognized.add(arg);
             }
@@ -90,6 +94,9 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         } else {
             out = null;
             err = null;
+        }
+        if (logHandlerMode != null) {
+            contextBuilder.logHandler(LogHandlerAccessor.createLogHandler(logHandlerMode));
         }
         try (Context context = contextBuilder.build()) {
             println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
@@ -145,13 +152,15 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         println("Basic options:");
         println("  %s \"<code>\", %s \"<code>\"\t\t%s", SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.CODE_HELP);
         println("  %s\t\t\t\t%s", SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.HEADLESS_HELP);
+        println("  %s \"<mode>\"\t\t%s", SqueakLanguageOptions.LOG_HANDLER_FLAG, SqueakLanguageOptions.LOG_HANDLER_HELP);
         println("  %s\t\t\t\t%s", SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.QUIET_HELP);
         println("  %s\t%s", SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_HELP);
     }
 
     @Override
     protected void collectArguments(final Set<String> options) {
-        options.addAll(Arrays.asList(SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.QUIET_FLAG,
+        options.addAll(Arrays.asList(SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.LOG_HANDLER_FLAG,
+                        SqueakLanguageOptions.QUIET_FLAG,
                         SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
     }
 
