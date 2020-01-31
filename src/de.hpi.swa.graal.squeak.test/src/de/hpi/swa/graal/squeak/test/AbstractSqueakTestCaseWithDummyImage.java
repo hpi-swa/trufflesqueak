@@ -29,6 +29,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         image.nilClass.setFormat(0);
         image.arrayClass.setFormat(0);
         image.initializeAfterLoadingImage(ArrayObject.createEmptyStrategy(image, image.arrayClass, 0));
+        context.enter();
     }
 
     private static ArrayObject createDummySpecialSelectors() {
