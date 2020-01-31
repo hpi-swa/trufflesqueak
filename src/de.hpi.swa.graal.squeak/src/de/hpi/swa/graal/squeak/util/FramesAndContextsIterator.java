@@ -109,7 +109,7 @@ public class FramesAndContextsIterator {
             if (frameFilter != null && frameFilter.test(foundMyself[0], currentCode)) {
                 if (currentContext == null) {
                     currentContext = ContextObject.create(currentFrame.materialize(), currentCode);
-                    currentContext.setProcess(currentCode.image.getActiveProcess());
+                    currentContext.setProcess(currentCode.image.getActiveProcessSlow());
                 }
                 return currentContext;
             }

@@ -37,6 +37,7 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
@@ -89,7 +90,7 @@ public final class SqueakImageWriter {
     private void run(final ContextObject thisContext) {
         final long start = MiscUtils.currentTimeMillis();
         nextChunk = image.flags.getOldBaseAddress();
-        final PointersObject activeProcess = image.getActiveProcess();
+        final PointersObject activeProcess = image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
         try {
             /* Mark thisContext as suspended during tracing and writing. */
             AbstractPointersObjectWriteNode.getUncached().execute(activeProcess, PROCESS.SUSPENDED_CONTEXT, thisContext);

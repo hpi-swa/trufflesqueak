@@ -29,6 +29,9 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
@@ -91,13 +94,13 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     private static void patchImageForTesting() {
         image.interrupt.start();
-        final ArrayObject lists = image.getProcessLists();
+        final ArrayObject lists = (ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject priority10List = (PointersObject) ArrayObjectReadNode.getUncached().execute(lists, PRIORITY_10_LIST_INDEX);
-        final Object firstLink = priority10List.getFirstLink();
-        final Object lastLink = priority10List.getLastLink();
+        final Object firstLink = priority10List.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
+        final Object lastLink = priority10List.instVarAt0Slow(LINKED_LIST.LAST_LINK);
         assert firstLink != NilObject.SINGLETON && firstLink == lastLink : "Unexpected idleProcess state";
         idleProcess = (PointersObject) firstLink;
-        assert idleProcess.getNextLink() == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
+        assert idleProcess.instVarAt0Slow(PROCESS.NEXT_LINK) == NilObject.SINGLETON : "Idle process expected to have `nil` successor";
         image.getOutput().println("Increasing default timeout...");
         patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ " + SQUEAK_TIMEOUT_SECONDS);
         if (!runsOnMXGate()) {

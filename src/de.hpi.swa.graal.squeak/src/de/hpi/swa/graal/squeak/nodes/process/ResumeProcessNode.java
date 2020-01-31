@@ -12,13 +12,16 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.DebugUtils;
 import de.hpi.swa.graal.squeak.util.LogUtils;
 
 public abstract class ResumeProcessNode extends AbstractNodeWithCode {
+    @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
 
     @Child private PutToSleepNode putToSleepNode;
 
@@ -37,11 +40,12 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
     protected final void doTransferTo(final VirtualFrame frame, final PointersObject newProcess,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                     @Cached("create(code)") final GetOrCreateContextNode contextNode) {
-        final PointersObject currentProcess = code.image.getActiveProcess();
+        final PointersObject currentProcess = code.image.getActiveProcess(pointersReadNode);
         putToSleepNode.executePutToSleep(currentProcess);
         final ContextObject thisContext = contextNode.executeGet(frame, currentProcess);
-        LogUtils.SCHEDULING.fine(() -> DebugUtils.logSwitch(newProcess, (int) newProcess.getPriority(), currentProcess, thisContext, (ContextObject) newProcess.getSuspendedContext()));
-        thisContext.transferTo(pointersWriteNode, newProcess);
+        LogUtils.SCHEDULING.fine(() -> DebugUtils.logSwitch(newProcess, (int) pointersReadNode.executeLong(newProcess, PROCESS.PRIORITY), currentProcess, thisContext,
+                        (ContextObject) pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT)));
+        thisContext.transferTo(pointersReadNode, pointersWriteNode, newProcess);
     }
 
     @Specialization(guards = "!hasHigherPriority(newProcess)")
@@ -51,6 +55,6 @@ public abstract class ResumeProcessNode extends AbstractNodeWithCode {
     }
 
     protected final boolean hasHigherPriority(final PointersObject newProcess) {
-        return newProcess.getPriority() > code.image.getActivePriority();
+        return pointersReadNode.executeLong(newProcess, PROCESS.PRIORITY) > pointersReadNode.executeLong(code.image.getActiveProcess(pointersReadNode), PROCESS.PRIORITY);
     }
 }

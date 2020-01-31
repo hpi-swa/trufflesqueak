@@ -24,6 +24,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.sun.management.DiagnosticCommandMBean;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -34,11 +35,16 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import sun.management.ManagementFactoryHelper;
 
 public class DebugUtils {
-
+    private static final AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
     /*
      * Helper functions for debugging purposes.
      */
@@ -173,8 +179,8 @@ public class DebugUtils {
     public static String currentState(final SqueakImageContext image) {
         final StringBuilder b = new StringBuilder();
         b.append("\nImage processes state\n");
-        final PointersObject activeProcess = image.getActiveProcess();
-        final long activePriority = image.getPriority(activeProcess);
+        final PointersObject activeProcess = image.getActiveProcess(pointersReadNode);
+        final long activePriority = pointersReadNode.executeLong(activeProcess, PROCESS.PRIORITY);
         b.append("*Active process @");
         b.append(Integer.toHexString(activeProcess.hashCode()));
         b.append(" priority ");
@@ -195,7 +201,7 @@ public class DebugUtils {
                 printSemaphoreOrNil(image, b, "*External semaphore at index " + (i + 1) + " @", semaphores[i], false);
             }
         }
-        final Object[] lists = image.getProcessLists().getObjectStorage();
+        final Object[] lists = pointersReadNode.executeArray(image.scheduler(), PROCESS_SCHEDULER.PROCESS_LISTS).getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
             printLinkedList(image, b, "*Quiescent processes list at priority " + (i + 1), (PointersObject) lists[i]);
         }
@@ -203,18 +209,18 @@ public class DebugUtils {
     }
 
     private static boolean printLinkedList(final SqueakImageContext image, final StringBuilder b, final String label, final PointersObject linkedList) {
-        Object temp = image.getFirstLink(linkedList);
+        Object temp = pointersReadNode.execute(linkedList, LINKED_LIST.FIRST_LINK);
         if (temp instanceof PointersObject) {
             b.append(label);
             b.append(" and process");
-            if (temp != image.getLastLink(linkedList)) {
+            if (temp != pointersReadNode.execute(linkedList, LINKED_LIST.LAST_LINK)) {
                 b.append("es:\n");
             } else {
                 b.append(":\n");
             }
             while (temp instanceof PointersObject) {
                 final PointersObject aProcess = (PointersObject) temp;
-                final Object aContext = image.getSuspendedContext(aProcess);
+                final Object aContext = pointersReadNode.execute(aProcess, PROCESS.SUSPENDED_CONTEXT);
                 if (aContext instanceof ContextObject) {
                     assert ((ContextObject) aContext).getProcess() == null || ((ContextObject) aContext).getProcess() == aProcess;
                     b.append("\tprocess @");
@@ -228,7 +234,7 @@ public class DebugUtils {
                     b.append(Integer.toHexString(aProcess.hashCode()));
                     b.append(" with suspended context nil\n");
                 }
-                temp = image.getNextLink(aProcess);
+                temp = pointersReadNode.execute(aProcess, PROCESS.NEXT_LINK);
             }
             return true;
         } else {
@@ -241,7 +247,7 @@ public class DebugUtils {
             b.append(label);
             b.append(Integer.toHexString(semaphoreOrNil.hashCode()));
             b.append(" with ");
-            b.append(image.getExcessSignals((PointersObject) semaphoreOrNil));
+            b.append(pointersReadNode.executeLong((AbstractPointersObject) semaphoreOrNil, SEMAPHORE.EXCESS_SIGNALS));
             b.append(" excess signals");
             if (!printLinkedList(image, b, "", (PointersObject) semaphoreOrNil)) {
                 b.append(" and no processes\n");
@@ -296,7 +302,7 @@ public class DebugUtils {
         b.append("Switching from process @");
         b.append(Integer.toHexString(currentProcess.hashCode()));
         b.append(" with priority ");
-        b.append(currentProcess.getPriority());
+        b.append(pointersReadNode.executeLong(currentProcess, PROCESS.PRIORITY));
         b.append(" and stack\n");
         printSqMaterializedStackTraceOn(b, thisContext);
         b.append("\n...to process @");
@@ -313,8 +319,8 @@ public class DebugUtils {
         b.append("\nCannot resume process @");
         b.append(Integer.toHexString(newProcess.hashCode()));
         b.append(" with priority ");
-        b.append(newProcess.getPriority());
-        final AbstractSqueakObject newContext = newProcess.getSuspendedContext();
+        b.append(pointersReadNode.executeLong(newProcess, PROCESS.PRIORITY));
+        final AbstractSqueakObject newContext = (AbstractSqueakObject) pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
         if (newContext == NilObject.SINGLETON) {
             b.append(" and nil suspendedContext\n");
         } else {
@@ -322,10 +328,10 @@ public class DebugUtils {
             printSqMaterializedStackTraceOn(b, (ContextObject) newContext);
         }
         b.append("\n...because it hs a lower priority than the currently active process @");
-        final PointersObject currentProcess = newProcess.image.getActiveProcess();
+        final PointersObject currentProcess = newProcess.image.getActiveProcess(pointersReadNode);
         b.append(Integer.toHexString(currentProcess.hashCode()));
         b.append(" with priority ");
-        b.append(currentProcess.getPriority());
+        b.append(pointersReadNode.executeLong(currentProcess, PROCESS.PRIORITY));
         return b.toString();
     }
 

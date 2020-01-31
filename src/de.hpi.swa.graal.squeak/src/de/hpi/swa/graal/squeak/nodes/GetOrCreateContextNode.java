@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -15,6 +16,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
@@ -32,9 +34,10 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     public abstract ContextObject executeGet(Frame frame, final NilObject nil);
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected final ContextObject doCreate(final VirtualFrame frame, @SuppressWarnings("unused") final NilObject nil) {
+    protected final ContextObject doCreate(final VirtualFrame frame, @SuppressWarnings("unused") final NilObject nil,
+                    @Cached final AbstractPointersObjectReadNode readNode) {
         final ContextObject result = ContextObject.create(frame.materialize(), code);
-        result.setProcess(code.image.getActiveProcess());
+        result.setProcess(code.image.getActiveProcess(readNode));
         return result;
     }
 

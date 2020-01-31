@@ -7,6 +7,7 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -74,12 +75,13 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"isCompiledBlockObject(code)"})
-        protected final Object doClosureReturnFromMaterialized(final VirtualFrame frame) {
+        protected final Object doClosureReturnFromMaterialized(final VirtualFrame frame,
+                        @Cached final AbstractPointersObjectReadNode readNode) {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             assert homeContext.getProcess() != null;
             final Object caller = homeContext.getFrameSender();
-            if (caller == NilObject.SINGLETON || !homeContext.getProcess().isActiveProcess()) {
+            if (caller == NilObject.SINGLETON || homeContext.getProcess() != code.image.getActiveProcess(readNode)) {
                 /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
                 getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame, NilObject.SINGLETON), getReturnValue(frame));
                 throw SqueakException.create("Should not reach");
@@ -181,7 +183,7 @@ public final class ReturnBytecodes {
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             final ContextObject currentContext = FrameAccess.getContext(frame);
             final Object caller = homeContext.getFrameSender();
-            if (caller == NilObject.SINGLETON || homeContext.getProcess() != null && !homeContext.getProcess().isActiveProcess() || !currentContext.hasSender(homeContext)) {
+            if (caller == NilObject.SINGLETON || homeContext.getProcess() != null && homeContext.getProcess() != code.image.getActiveProcess(readNode) || !currentContext.hasSender(homeContext)) {
                 getCannotReturnNode().executeSend(frame, currentContext, getReturnValue(frame));
                 throw SqueakException.create("Should not reach");
             }
