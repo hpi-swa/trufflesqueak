@@ -24,6 +24,7 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
+import de.hpi.swa.graal.squeak.shared.LogHandlerAccessor;
 import de.hpi.swa.graal.squeak.shared.SqueakImageLocator;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageOptions;
@@ -90,6 +91,10 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         } else {
             out = null;
             err = null;
+        }
+        final String logLevel = System.getProperty("log.handler");
+        if (logLevel != null) {
+            contextBuilder.logHandler(LogHandlerAccessor.createLogHandler());
         }
         try (Context context = contextBuilder.build()) {
             println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());

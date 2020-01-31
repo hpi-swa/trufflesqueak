@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.graal.squeak.shared;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.READ;

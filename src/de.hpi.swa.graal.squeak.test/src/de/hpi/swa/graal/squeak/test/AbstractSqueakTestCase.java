@@ -31,11 +31,11 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.graal.squeak.shared.LogHandlerAccessor;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageOptions;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
-import de.hpi.swa.graal.squeak.util.LogHandlerAccessor;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.SqueakMessageInterceptor;
 
