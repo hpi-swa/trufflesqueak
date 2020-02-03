@@ -8,6 +8,8 @@ package de.hpi.swa.graal.squeak.launcher;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.graalvm.polyglot.Context;
@@ -34,7 +36,7 @@ public final class SqueakTranscriptForwarder extends PrintStream {
     public void write(final byte[] b) throws IOException {
         try {
             if (transcriptBlock != null) {
-                transcriptBlock.execute(new String(b));
+                transcriptBlock.execute(bytesToString(b));
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -47,12 +49,16 @@ public final class SqueakTranscriptForwarder extends PrintStream {
     public void write(final byte[] b, final int off, final int len) {
         try {
             if (transcriptBlock != null) {
-                transcriptBlock.execute(new String(Arrays.copyOfRange(b, off, off + len)));
+                transcriptBlock.execute(bytesToString(Arrays.copyOfRange(b, off, off + len)));
             }
         } catch (final Exception e) {
             e.printStackTrace();
         } finally {
             super.write(b, off, len);
         }
+    }
+
+    private static String bytesToString(final byte[] b) {
+        return StandardCharsets.UTF_8.decode(ByteBuffer.wrap(b)).toString();
     }
 }
