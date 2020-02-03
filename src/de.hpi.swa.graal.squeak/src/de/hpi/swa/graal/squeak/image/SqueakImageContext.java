@@ -312,20 +312,20 @@ public final class SqueakImageContext {
         return debugErrorSelector;
     }
 
-    public void setDebugErrorSelector(final NativeObject classObject) {
+    public void setDebugErrorSelector(final NativeObject nativeObject) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert debugErrorSelector == null;
-        debugErrorSelector = classObject;
+        debugErrorSelector = nativeObject;
     }
 
     public NativeObject getDebugSyntaxErrorSelector() {
         return debugSyntaxErrorSelector;
     }
 
-    public void setDebugSyntaxErrorSelector(final NativeObject classObject) {
+    public void setDebugSyntaxErrorSelector(final NativeObject nativeObject) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert debugSyntaxErrorSelector == null;
-        debugSyntaxErrorSelector = classObject;
+        debugSyntaxErrorSelector = nativeObject;
     }
 
     public ClassObject getCompilerClass() {
