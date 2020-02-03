@@ -466,11 +466,16 @@ public final class SqueakImageContext {
         if (resourcesPath == null) {
             CompilerDirectives.transferToInterpreter();
             final String languageHome = language.getTruffleLanguageHome();
+            final Path path;
             if (languageHome != null) {
-                resourcesPath = Paths.get(language.getTruffleLanguageHome()).resolve("resources").toString();
+                path = Paths.get(language.getTruffleLanguageHome()).resolve("resources");
             } else { /* Fallback to image directory. */
-                resourcesPath = getImageDirectory();
+                path = Paths.get(getImagePath()).getParent();
+                if (path == null) {
+                    throw SqueakException.create("`parent` should not be `null`.");
+                }
             }
+            resourcesPath = path.toAbsolutePath().toString();
         }
         return resourcesPath;
     }
