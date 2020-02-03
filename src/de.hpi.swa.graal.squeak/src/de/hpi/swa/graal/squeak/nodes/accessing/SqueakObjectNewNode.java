@@ -73,7 +73,7 @@ public abstract class SqueakObjectNewNode extends AbstractNodeWithImage {
     @Specialization(guards = "classObject.isIndexableWithNoInstVars()")
     protected final ArrayObject doIndexedPointers(final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() == 0;
-        if (ArrayObject.ENABLE_STORAGE_STRATEGIES) {
+        if (image.options.enableStorageStrategies) {
             return ArrayObject.createEmptyStrategy(image, classObject, extraSize);
         } else {
             return ArrayObject.createObjectStrategy(image, classObject, extraSize);

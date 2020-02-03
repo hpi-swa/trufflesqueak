@@ -33,6 +33,8 @@ public final class SqueakLanguageOptions {
     public static final String STACK_DEPTH_PROTECTION = "stack-depth-protection";
     public static final String STACK_DEPTH_PROTECTION_FLAG = "--" + STACK_DEPTH_PROTECTION;
     public static final String STACK_DEPTH_PROTECTION_HELP = "Enable stack depth protection";
+    public static final String STORAGE_STRATEGIES = "storage-strategies";
+    public static final String STORAGE_STRATEGIES_HELP = "Disable storage strategy optimization for arrays";
     public static final String TESTING = "testing";
     public static final String TESTING_HELP = "For internal testing purposes only";
     public static final String TRANSCRIPT_FORWARDING_FLAG = "--enable-transcript-forwarding";

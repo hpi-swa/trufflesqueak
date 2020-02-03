@@ -39,7 +39,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public static final long LONG_NIL_TAG = Long.MIN_VALUE + 42; // Rather unlikely long.
     public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L); // NaN+1.
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
-    public static final boolean ENABLE_STORAGE_STRATEGIES = true;
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ArrayObject.class);
 
     private Object storage;
@@ -91,7 +90,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         final Object[] pointers = chunk.getPointers();
-        if (!ENABLE_STORAGE_STRATEGIES) {
+        if (!image.options.enableStorageStrategies) {
             storage = pointers;
             return;
         }
