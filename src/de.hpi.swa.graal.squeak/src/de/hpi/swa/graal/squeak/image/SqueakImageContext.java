@@ -28,7 +28,9 @@ import com.oracle.truffle.api.source.Source;
 import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions.SqueakContextOptions;
+import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.graal.squeak.interop.InteropMap;
 import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
@@ -143,6 +145,7 @@ public final class SqueakImageContext {
 
     @CompilationFinal private ClassObject compilerClass = null;
     @CompilationFinal private ClassObject parserClass = null;
+    @CompilationFinal private PointersObject parserSharedInstance = null;
     @CompilationFinal private PointersObject scheduler = null;
     @CompilationFinal private ClassObject wideStringClass = null;
 
@@ -252,9 +255,23 @@ public final class SqueakImageContext {
         assert parserClass != null;
         assert compilerClass != null;
 
-        final AbstractSqueakObjectWithClassAndHash parser = (AbstractSqueakObjectWithClassAndHash) parserClass.send("new");
-        final AbstractSqueakObjectWithClassAndHash methodNode = (AbstractSqueakObjectWithClassAndHash) parser.send(
-                        "parse:class:noPattern:notifying:ifFail:", asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, BlockClosureObject.create(this, 0));
+        if (parserSharedInstance == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            parserSharedInstance = (PointersObject) parserClass.send("new");
+        }
+        final PointersObject methodNode;
+        try {
+            methodNode = (PointersObject) parserSharedInstance.send("parse:class:noPattern:notifying:ifFail:",
+                            asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, BlockClosureObject.create(this, 0));
+        } catch (final ProcessSwitch e) {
+            /*
+             * A ProcessSwitch exception is thrown in case of a syntax error to open the
+             * corresponding window. Fail with an appropriate exception here. This way, it is clear
+             * why code execution failed (e.g. when requested through the Polyglot API).
+             */
+            CompilerDirectives.transferToInterpreter();
+            throw new SqueakSyntaxError("Syntax Error in \"" + source + "\"");
+        }
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
