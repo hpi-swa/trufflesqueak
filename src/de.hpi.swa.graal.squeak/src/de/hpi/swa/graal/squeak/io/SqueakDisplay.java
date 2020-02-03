@@ -376,7 +376,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         final int shiftValue = e.isShiftDown() ? KEYBOARD.SHIFT : 0;
         final int ctrlValue = e.isControlDown() && !e.isAltDown() ? KEYBOARD.CTRL : 0;
         final int cmdValue = e.isMetaDown() || e.isAltDown() && !e.isControlDown() ? KEYBOARD.CMD : 0;
-        final int modifiers = shiftValue + ctrlValue + cmdValue;
+        final int altGValue = e.isAltGraphDown() ? KEYBOARD.ALT : 0;
+        final int modifiers = shiftValue + ctrlValue + cmdValue + altGValue;
         buttons = buttons & ~KEYBOARD.ALL | modifiers;
         return modifiers;
     }

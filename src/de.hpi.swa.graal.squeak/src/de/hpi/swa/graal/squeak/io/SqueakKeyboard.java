@@ -49,7 +49,7 @@ public final class SqueakKeyboard implements KeyListener {
         if (code == KEYBOARD.INTERRUPT_KEYCODE) {
             display.image.interrupt.setInterruptPending();
         } else {
-            display.addEvent(EVENT_TYPE.KEYBOARD, key, KEYBOARD_EVENT.CHAR, buttonsShifted, key);
+            display.addEvent(EVENT_TYPE.KEYBOARD, code, KEYBOARD_EVENT.CHAR, buttonsShifted, key);
         }
     }
 
