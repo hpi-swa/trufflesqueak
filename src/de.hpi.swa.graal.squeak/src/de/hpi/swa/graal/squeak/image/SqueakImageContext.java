@@ -234,6 +234,7 @@ public final class SqueakImageContext {
     public ExecuteTopLevelContextNode getActiveContextNode() {
         final PointersObject activeProcess = getActiveProcessSlow();
         final ContextObject activeContext = (ContextObject) activeProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
+        activeContext.setProcess(activeProcess);
         activeProcess.instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
         return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
     }
