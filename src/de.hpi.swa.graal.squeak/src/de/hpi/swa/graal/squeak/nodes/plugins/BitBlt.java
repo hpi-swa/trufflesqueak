@@ -3037,7 +3037,6 @@ public final class BitBlt {
             r = gammaLookupTable[(int) r];
         }
         dstMask = dstMask >>> 8;
-        srcColor = srcColor >>> 8;
         /* no need to gamma correct alpha value ? */
         a = ((dstMask & 0xFF) * (0xFF - aA) >>> 8) + aA;
         if (a > 0xFF) {

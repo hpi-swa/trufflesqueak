@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
@@ -231,11 +230,6 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             super(method);
         }
 
-        @TruffleBoundary
-        private static long decodePermissions(final Set<PosixFilePermission> permissions, final PosixFilePermission read, final PosixFilePermission write, final PosixFilePermission execute) {
-            return (permissions.contains(read) ? 4 : 0) | (permissions.contains(write) ? 2 : 0) | (permissions.contains(execute) ? 1 : 0);
-        }
-
         @Specialization(guards = "pathString.isByteType()")
         protected final ArrayObject doFileStat(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
                         @Cached final BranchProfile errorProfile) {
@@ -442,7 +436,6 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetUid")
     protected abstract static class PrimGetUidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitive {
-        @CompilationFinal private Object getuidObject;
 
         protected PrimGetUidNode(final CompiledMethodObject method) {
             super(method);
