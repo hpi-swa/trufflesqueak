@@ -613,7 +613,8 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object shiftLeft(final SqueakImageContext image, final long a, final int b) {
+    public static Object shiftLeftPositive(final SqueakImageContext image, final long a, final int b) {
+        assert b >= 0 : "This method must be used with a positive 'b' argument";
         return reduceIfPossible(image, BigInteger.valueOf(a).shiftLeft(b));
     }
 
