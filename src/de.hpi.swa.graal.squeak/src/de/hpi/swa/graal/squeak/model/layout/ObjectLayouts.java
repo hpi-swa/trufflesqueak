@@ -30,6 +30,11 @@ public final class ObjectLayouts {
         public static final int VALUE = 1;
     }
 
+    public static final class BINDING {
+        public static final int KEY = 0;
+        public static final int VALUE = 1;
+    }
+
     public static final class BIT_BLT {
         public static final int DEST_FORM = 0;
         public static final int SOURCE_FORM = 1;
@@ -189,6 +194,11 @@ public final class ObjectLayouts {
         public static final int HEIGHT = 2;
         public static final int DEPTH = 3;
         public static final int OFFSET = 4;
+    }
+
+    public static final class FRACTION {
+        public static final int NUMERATOR = 0;
+        public static final int DENOMINATOR = 1;
     }
 
     public static final class HASHED_COLLECTION {

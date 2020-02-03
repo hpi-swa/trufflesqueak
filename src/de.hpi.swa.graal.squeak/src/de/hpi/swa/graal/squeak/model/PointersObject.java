@@ -5,13 +5,18 @@
  */
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.BINDING;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FRACTION;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode.ObjectTracer;
@@ -135,6 +140,27 @@ public final class PointersObject extends AbstractPointersObject {
 
     public void traceObjects(final ObjectTracer tracer) {
         super.traceLayoutObjects(tracer);
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
+        if (isPoint()) {
+            return readNode.execute(this, POINT.X) + "@" + readNode.execute(this, POINT.Y);
+        }
+        final String squeakClassName = getSqueakClass().getClassName();
+        if ("Fraction".equals(squeakClassName)) {
+            return readNode.execute(this, FRACTION.NUMERATOR) + " / " + readNode.execute(this, FRACTION.DENOMINATOR);
+        }
+        if ("Association".equals(squeakClassName)) {
+            return readNode.execute(this, ASSOCIATION.KEY) + " -> " + readNode.execute(this, ASSOCIATION.VALUE);
+        }
+        final ClassObject superclass = getSqueakClass().getSuperclassOrNull();
+        if (superclass != null && "Binding".equals(superclass.getClassName())) {
+            return readNode.execute(this, BINDING.KEY) + " => " + readNode.execute(this, BINDING.VALUE);
+        }
+        return super.toString();
     }
 
     @Override
