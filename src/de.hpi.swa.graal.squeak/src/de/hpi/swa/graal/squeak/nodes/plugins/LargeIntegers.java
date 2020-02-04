@@ -579,53 +579,67 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doLongQuick")
+        @TruffleBoundary
         protected final Object doLong(final long receiver, final long a, final long m, final long mInv) {
-            // TODO: avoid falling back to LargeIntegerObject
-            return doLargeInteger(asLargeInteger(receiver), asLargeInteger(a), asLargeInteger(m), mInv);
-        }
-
-        @Specialization
-        protected final Object doLong(final long receiver, final LargeIntegerObject a, final long m, final long mInv) {
-            return doLargeInteger(asLargeInteger(receiver), a, asLargeInteger(m), mInv);
-        }
-
-        @Specialization
-        protected final Object doLong(final long receiver, final long a, final LargeIntegerObject m, final long mInv) {
-            return doLargeInteger(asLargeInteger(receiver), asLargeInteger(a), m, mInv);
-        }
-
-        @Specialization
-        protected final Object doLong(final long receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
-            return doLargeInteger(asLargeInteger(receiver), a, m, mInv);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final long m, final long mInv) {
-            return doLargeInteger(receiver, asLargeInteger(a), asLargeInteger(m), mInv);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final long m, final long mInv) {
-            return doLargeInteger(receiver, a, asLargeInteger(m), mInv);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final LargeIntegerObject m, final long mInv) {
-            return doLargeInteger(receiver, asLargeInteger(a), m, mInv);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final LargeIntegerObject mInv) {
-            return doLargeInteger(receiver, a, m, mInv.longValueExact());
+            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
-            final int[] firstInts = UnsafeUtils.toIntsExact(receiver.getBytes());
-            final int[] secondInts = UnsafeUtils.toIntsExact(a.getBytes());
-            final int[] thirdInts = UnsafeUtils.toIntsExact(m.getBytes());
+        protected final Object doLong(final long receiver, final LargeIntegerObject a, final long m, final long mInv) {
+            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        }
 
+        @Specialization
+        @TruffleBoundary
+        protected final Object doLong(final long receiver, final long a, final LargeIntegerObject m, final long mInv) {
+            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final Object doLong(final long receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
+            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final long m, final long mInv) {
+            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final long m, final long mInv) {
+            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final LargeIntegerObject m, final long mInv) {
+            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final LargeIntegerObject mInv) {
+            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv.longValueExact());
+        }
+
+        private static int[] toInts(final LargeIntegerObject value) {
+            return UnsafeUtils.toIntsExact(value.getBytes());
+        }
+
+        private static int[] toInts(final long value) {
+            if (fitsInOneWord(value)) {
+                return new int[]{(int) value};
+            } else {
+                return new int[]{(int) value, (int) (value >> 32)};
+            }
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final int[] firstInts, final int[] secondInts, final int[] thirdInts, final long mInv) {
             final int firstLen = firstInts.length;
             final int secondLen = secondInts.length;
             final int thirdLen = thirdInts.length;

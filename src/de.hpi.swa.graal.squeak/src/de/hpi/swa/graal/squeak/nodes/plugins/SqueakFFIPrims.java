@@ -147,7 +147,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned", "inUnsignedBounds(asLargeInteger(value))"})
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned", "value >= 0"})
         protected static final Object doAtPut8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
             UnsafeUtils.putLongIntoBytes(byteArray.getByteStorage(), byteOffsetLong - 1, value);
             return value;
