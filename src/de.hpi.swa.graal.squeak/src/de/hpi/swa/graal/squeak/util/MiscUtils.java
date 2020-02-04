@@ -12,14 +12,12 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.RuntimeMXBean;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakInterrupt;
@@ -36,7 +34,7 @@ public final class MiscUtils {
     public static final long TIME_ZONE_OFFSET_MICROSECONDS = (Calendar.getInstance().get(Calendar.ZONE_OFFSET) + Calendar.getInstance().get(Calendar.DST_OFFSET)) * 1000L;
     public static final long TIME_ZONE_OFFSET_SECONDS = TIME_ZONE_OFFSET_MICROSECONDS / 1000 / 1000;
 
-    @CompilationFinal static SecureRandom random;
+    public static final Random RANDOM = new Random();
 
     private MiscUtils() {
     }
@@ -116,15 +114,6 @@ public final class MiscUtils {
     @TruffleBoundary
     public static long getObjectPendingFinalizationCount() {
         return MEMORY_BEAN.getObjectPendingFinalizationCount();
-    }
-
-    public static SecureRandom getSecureRandom() {
-        /* SecureRandom must be initialized at (native image) runtime. */
-        if (random == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            random = new SecureRandom();
-        }
-        return random;
     }
 
     @TruffleBoundary
