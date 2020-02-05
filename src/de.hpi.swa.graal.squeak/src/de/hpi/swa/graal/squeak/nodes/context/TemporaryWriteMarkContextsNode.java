@@ -12,15 +12,14 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class TemporaryWriteMarkContextsNode extends AbstractNodeWithCode {
+public abstract class TemporaryWriteMarkContextsNode extends AbstractNode {
     @Child private FrameSlotWriteNode writeNode;
 
     protected TemporaryWriteMarkContextsNode(final CompiledCodeObject code, final int tempIndex) {
-        super(code);
         writeNode = FrameSlotWriteNode.create(code.getStackSlot(tempIndex));
     }
 
