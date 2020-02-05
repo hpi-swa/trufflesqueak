@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes;
+package de.hpi.swa.graal.squeak.util;
 
 import java.util.AbstractCollection;
 import java.util.ArrayDeque;
@@ -32,19 +32,13 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public final class ObjectGraphNode extends AbstractNodeWithImage {
+public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
 
     private static int lastSeenObjects = 500_000;
 
-    protected ObjectGraphNode(final SqueakImageContext image) {
-        super(image);
-    }
-
-    public static ObjectGraphNode create(final SqueakImageContext image) {
-        return new ObjectGraphNode(image);
+    private ObjectGraphUtils() {
     }
 
     public static int getLastSeenObjects() {
@@ -52,7 +46,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    public AbstractCollection<AbstractSqueakObjectWithHash> executeAllInstances() {
+    public static AbstractCollection<AbstractSqueakObjectWithHash> allInstances(final SqueakImageContext image) {
         final ArrayDeque<AbstractSqueakObjectWithHash> seen = new ArrayDeque<>(lastSeenObjects + ADDITIONAL_SPACE);
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithHash currentObject;
@@ -67,7 +61,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    public void executePointersBecomeOneWay(final SqueakObjectPointersBecomeOneWayNode pointersBecomeNode, final Object[] fromPointers,
+    public static void pointersBecomeOneWay(final SqueakImageContext image, final SqueakObjectPointersBecomeOneWayNode pointersBecomeNode, final Object[] fromPointers,
                     final Object[] toPointers, final boolean copyHash) {
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithHash currentObject;
@@ -80,7 +74,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    public Object[] executeAllInstancesOf(final ClassObject classObj) {
+    public static Object[] allInstancesOf(final SqueakImageContext image, final ClassObject classObj) {
         final ArrayDeque<AbstractSqueakObjectWithHash> result = new ArrayDeque<>();
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithHash currentObject;
@@ -96,7 +90,7 @@ public final class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    public AbstractSqueakObject executeSomeInstanceOf(final ClassObject classObj) {
+    public static AbstractSqueakObject someInstanceOf(final SqueakImageContext image, final ClassObject classObj) {
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {

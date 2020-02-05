@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -27,7 +28,9 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
@@ -37,7 +40,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -60,6 +62,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.NotProvided;
+import de.hpi.swa.graal.squeak.util.ObjectGraphUtils;
 
 public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -68,16 +71,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         return StoragePrimitivesFactory.getFactories();
     }
 
-    private abstract static class AbstractInstancesPrimitiveNode extends AbstractPrimitiveNode {
-        @Child protected ObjectGraphNode objectGraphNode;
-
-        protected AbstractInstancesPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
-            objectGraphNode = ObjectGraphNode.create(method.image);
-        }
-    }
-
-    protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
+    protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
 
@@ -90,7 +84,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] toPointers = toArray.getObjectStorage();
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            objectGraphNode.executePointersBecomeOneWay(pointersBecomeNode, fromPointersClone, toPointers, copyHash);
+            ObjectGraphUtils.pointersBecomeOneWay(fromArray.image, pointersBecomeNode, fromPointersClone, toPointers, copyHash);
             patchTruffleFrames(fromPointersClone, toPointers, copyHash);
             return fromArray;
         }
@@ -488,15 +482,16 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 139)
-    protected abstract static class PrimNextObjectNode extends AbstractInstancesPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimNextObjectNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimNextObjectNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash receiver) {
-            return getNext(receiver, objectGraphNode.executeAllInstances());
+        protected static final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return getNext(receiver, ObjectGraphUtils.allInstances(image));
         }
 
         @TruffleBoundary
@@ -623,15 +618,16 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 178)
-    protected abstract static class PrimAllObjectsNode extends AbstractInstancesPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimAllObjectsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         protected PrimAllObjectsNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.asArrayOfObjects(ArrayUtils.toArray(objectGraphNode.executeAllInstances()));
+        protected static final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.asArrayOfObjects(ArrayUtils.toArray(ObjectGraphUtils.allInstances(image)));
         }
     }
 

@@ -36,10 +36,10 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.graal.squeak.util.ObjectGraphUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class SqueakImageWriter {
@@ -47,8 +47,8 @@ public final class SqueakImageWriter {
     private final NativeObject freeList;
     private final BufferedOutputStream stream;
     private final byte[] byteArrayBuffer = new byte[Long.BYTES];
-    private final HashMap<AbstractSqueakObjectWithHash, Long> oopMap = new HashMap<>(ObjectGraphNode.getLastSeenObjects());
-    private final ArrayList<AbstractSqueakObjectWithHash> allTracedObjects = new ArrayList<>(ObjectGraphNode.getLastSeenObjects());
+    private final HashMap<AbstractSqueakObjectWithHash, Long> oopMap = new HashMap<>(ObjectGraphUtils.getLastSeenObjects());
+    private final ArrayList<AbstractSqueakObjectWithHash> allTracedObjects = new ArrayList<>(ObjectGraphUtils.getLastSeenObjects());
     private final ArrayDeque<AbstractSqueakObjectWithHash> traceQueue = new ArrayDeque<>();
     private final ArrayList<AbstractSqueakObjectWithHash> additionalBoxedObjects = new ArrayList<>();
 

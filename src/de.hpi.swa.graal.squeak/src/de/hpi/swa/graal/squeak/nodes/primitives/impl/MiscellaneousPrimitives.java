@@ -19,6 +19,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -27,9 +28,11 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
@@ -47,7 +50,6 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.graal.squeak.nodes.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
@@ -67,6 +69,7 @@ import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.NotProvided;
 import de.hpi.swa.graal.squeak.util.OSDetector;
+import de.hpi.swa.graal.squeak.util.ObjectGraphUtils;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -97,11 +100,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 77)
     protected abstract static class PrimSomeInstanceNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private ObjectGraphNode objectGraphNode;
 
         protected PrimSomeInstanceNode(final CompiledMethodObject method) {
             super(method);
-            objectGraphNode = ObjectGraphNode.create(method.image);
         }
 
         @SuppressWarnings("unused")
@@ -111,9 +112,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = "!classObject.isImmediateClassType()")
-        protected final AbstractSqueakObject doSomeInstance(final ClassObject classObject) {
+        protected static final AbstractSqueakObject doSomeInstance(final ClassObject classObject,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
-                return objectGraphNode.executeSomeInstanceOf(classObject);
+                return ObjectGraphUtils.someInstanceOf(image, classObject);
             } catch (final IndexOutOfBoundsException e) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
@@ -690,27 +692,28 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 177)
     protected abstract static class PrimAllInstancesNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child private ObjectGraphNode objectGraphNode;
 
         protected PrimAllInstancesNode(final CompiledMethodObject method) {
             super(method);
-            objectGraphNode = ObjectGraphNode.create(method.image);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject.isImmediateClassType()")
-        protected final ArrayObject noInstances(final ClassObject classObject) {
-            return method.image.newEmptyArray();
+        protected static final ArrayObject noInstances(final ClassObject classObject,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.newEmptyArray();
         }
 
         @Specialization(guards = {"!classObject.isNilClass()", "!classObject.isImmediateClassType()"})
-        protected final ArrayObject allInstances(final ClassObject classObject) {
-            return method.image.asArrayOfObjects(objectGraphNode.executeAllInstancesOf(classObject));
+        protected static final ArrayObject allInstances(final ClassObject classObject,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.asArrayOfObjects(ObjectGraphUtils.allInstancesOf(image, classObject));
         }
 
         @Specialization(guards = "classObject.isNilClass()")
-        protected final ArrayObject doNil(@SuppressWarnings("unused") final ClassObject classObject) {
-            return method.image.asArrayOfObjects(NilObject.SINGLETON);
+        protected static final ArrayObject doNil(@SuppressWarnings("unused") final ClassObject classObject,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.asArrayOfObjects(NilObject.SINGLETON);
         }
     }
 
