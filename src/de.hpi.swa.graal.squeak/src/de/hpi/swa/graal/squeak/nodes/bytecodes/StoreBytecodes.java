@@ -12,6 +12,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
@@ -33,7 +34,7 @@ public final class StoreBytecodes {
         @Override
         public final String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return getTypeName() + "IntoLit: " + variableIndex;
+            return getTypeName() + "IntoLit: " + SqueakObjectAt0Node.getUncached().execute(code.getLiteral(variableIndex), ASSOCIATION.KEY);
         }
     }
 
