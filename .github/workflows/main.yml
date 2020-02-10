@@ -1,0 +1,163 @@
+name: GraalSqueak CI
+
+on:
+  push:
+    branches-ignore:
+      - 'experiements/**'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  style_and_build_config:
+    name: Code Style and Build Config
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check style and perform full build
+      run: |
+        # Install pylint
+        sudo apt update -qq && sudo apt install -y python-pip python-virtualenv
+        virtualenv ~/venv
+        source ~/venv/bin/activate
+        pip install --quiet astroid==1.1.0 pylint==1.1.0
+        # Download Eclipse SDK
+        eclipse_tar="ci-dep-eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz"
+        eclipse_tar_path="${HOME}/${eclipse_tar}"
+        mx.graalsqueak/utils.sh download-asset "${eclipse_tar}" 0.8.0 "${eclipse_tar_path}"
+        tar -xzf ${eclipse_tar_path} -C ${HOME}
+        export ECLIPSE_EXE="${HOME}/eclipse/eclipse" # required by mx
+        # Download ECJ
+        export JDT=${HOME}/ecj.jar # required by mx
+        mx.graalsqueak/utils.sh download-asset "ci-dep-ecj-4.5.2.jar" 0.8.0 "${JDT}"
+    
+        # Set up mx and oracle/graal
+        export MX_PATH=${HOME}/mx
+        git clone --quiet --depth 1 https://github.com/graalvm/mx.git ${MX_PATH}
+        export JAVA_HOME="$(mx.graalsqueak/utils.sh download-openjdk8-jvmci ~/)"
+        export PATH=${PATH}:${MX_PATH}:${JAVA_HOME}/bin
+        mx.graalsqueak/utils.sh shallow-clone-graalvm-project https://github.com/oracle/graal.git
+
+        mx gate --strict-mode --tags style,fullbuild
+
+  linux:
+    name: Test on Linux with Coverage
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      shell: bash
+      run: git submodule update --init --force --recursive --depth=1
+    - name: Set up dependencies
+      shell: bash
+      run: |
+        sudo apt update -qq && sudo apt install -y libsdl2-dev
+        mx.graalsqueak/utils.sh shallow-clone-graalvm-project https://github.com/oracle/graal.git
+        mx.graalsqueak/utils.sh shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
+        mx.graalsqueak/utils.sh download-graalsqueak-image
+        mx.graalsqueak/utils.sh ensure-test-image
+        git clone --quiet --depth 1 https://github.com/graalvm/mx.git ${HOME}/mx
+        echo "::add-path::${HOME}/mx"
+        export JAVA_HOME="$(mx.graalsqueak/utils.sh download-openjdk8-jvmci ~/)"
+        echo "::add-path::${JAVA_HOME}/bin"
+        echo "::set-env name=JAVA_HOME::${JAVA_HOME}"
+    - name: Run gate with code coverage
+      run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
+    - name: Report code coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+        curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
+        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
+      if: success()
+    - name: Build and install GraalSqueak component
+      run: |
+        mx --env graalsqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
+        export INSTALLABLE_TARGET="$(mx.graalsqueak/utils.sh installable-filename)"
+        cp $(mx --env graalsqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
+        export GRAALVM_HOME="$(mx.graalsqueak/utils.sh download-graalvm-ce ~/)"
+        ${GRAALVM_HOME}/bin/gu install -L "${INSTALLABLE_TARGET}"
+        echo "::add-path::${GRAALVM_HOME}/bin"
+    - name: Run SystemReporter on GraalVM
+      run: 'graalsqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+    - name: Run SystemReporter on Native Image
+      run: 'graalsqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+    - name: Run tinyBenchmarks on GraalVM
+      run: graalsqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Run tinyBenchmarks on Native Image
+      run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
+        
+  macos:
+    name: Test on macOS with Graal
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      shell: bash
+      run: git submodule update --init --force --recursive --depth=1
+    - name: Set up dependencies
+      shell: bash
+      run: |
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
+        mx.graalsqueak/utils.sh shallow-clone-graalvm-project https://github.com/oracle/graal.git
+        mx.graalsqueak/utils.sh shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
+        mx.graalsqueak/utils.sh download-graalsqueak-image
+        mx.graalsqueak/utils.sh ensure-test-image
+        git clone --quiet --depth 1 https://github.com/graalvm/mx.git ${HOME}/mx
+        echo "::add-path::${HOME}/mx"
+        export JAVA_HOME="$(mx.graalsqueak/utils.sh download-openjdk8-jvmci ~/)"
+        echo "::add-path::${JAVA_HOME}/bin"
+        echo "::set-env name=JAVA_HOME::${JAVA_HOME}"
+    - name: Run gate with Graal compiler
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+    - name: Build and install GraalSqueak component
+      run: |
+        mx --env graalsqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
+        export INSTALLABLE_TARGET="$(mx.graalsqueak/utils.sh installable-filename)"
+        cp $(mx --env graalsqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
+        export GRAALVM_HOME="$(mx.graalsqueak/utils.sh download-graalvm-ce ~/)"
+        ${GRAALVM_HOME}/bin/gu install -L "${INSTALLABLE_TARGET}"
+        echo "::add-path::${GRAALVM_HOME}/bin"
+    - name: Run SystemReporter on GraalVM
+      run: 'graalsqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+    - name: Run SystemReporter on Native Image
+      run: 'graalsqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+    - name: Run tinyBenchmarks on GraalVM
+      run: graalsqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Run tinyBenchmarks on Native Image
+      run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
+        
+  windows:
+    name: Test on Windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      shell: bash
+      run: git submodule update --init --force --recursive --depth=1
+    - name: Set up dependencies
+      shell: bash
+      run: |
+        mx.graalsqueak/utils.sh shallow-clone-graalvm-project https://github.com/oracle/graal.git
+        mx.graalsqueak/utils.sh shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
+        mx.graalsqueak/utils.sh download-graalsqueak-image
+        mx.graalsqueak/utils.sh ensure-test-image
+        git clone --quiet --depth 1 https://github.com/graalvm/mx.git ${HOME}/mx
+        echo "::add-path::$(echo ${HOME} | sed 's/\/c/C:/g' | sed 's/\//\\/g')\mx"
+        export GRAALVM_HOME="$(mx.graalsqueak/utils.sh download-graalvm-ce ~/ | sed 's/\/c/C:/g' | sed 's/\//\\/g')"
+        echo "::add-path::${GRAALVM_HOME}\bin"
+        echo "::set-env name=GRAALVM_HOME::${GRAALVM_HOME}"
+    - name: Run gate
+      shell: cmd
+      run: mx gate -B="--no-native" --strict-mode --tags build,test
+    - name: Build and install GraalSqueak component
+      shell: pwsh
+      run: |
+        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8) -Destination "$HOME\graalsqueak-installable.zip"
+        Expand-Archive "$HOME\graalsqueak-installable.zip" -DestinationPath $Env:GRAALVM_HOME
+    - name: Run SystemReporter on GraalVM
+      run: 'graalsqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+    - name: Run tinyBenchmarks on GraalVM
+      run: graalsqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
