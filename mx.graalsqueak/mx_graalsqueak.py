@@ -36,10 +36,13 @@ BASE_VM_ARGS_TESTING = [
     # GARBAGE COLLECTOR (optimized for Travis CI)
     '-Xms4G',                   # Initial heap size
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
-
-    # JVMCI
-    '-XX:-UseJVMCIClassLoader',
 ]
+
+
+# Disable JVMCI class loader if not on Windows
+if sys.platform != 'win32':
+    BASE_VM_ARGS_TESTING.append('-XX:-UseJVMCIClassLoader')
+
 
 _suite = mx.suite('graalsqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
