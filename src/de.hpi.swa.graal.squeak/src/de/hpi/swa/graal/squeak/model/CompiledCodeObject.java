@@ -111,13 +111,15 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     public final Source getSource() {
         CompilerAsserts.neverPartOfCompilation();
         if (source == null) {
-            String name;
+            String name = null;
             String contents;
             try {
                 name = toString();
                 contents = SqueakBytecodeDecoder.decodeToString(this);
             } catch (final RuntimeException e) {
-                name = SOURCE_UNAVAILABLE_NAME;
+                if (name == null) {
+                    name = SOURCE_UNAVAILABLE_NAME;
+                }
                 contents = SOURCE_UNAVAILABLE_CONTENTS;
             }
             source = Source.newBuilder(SqueakLanguageConfig.ID, contents, name).mimeType("text/plain").build();
