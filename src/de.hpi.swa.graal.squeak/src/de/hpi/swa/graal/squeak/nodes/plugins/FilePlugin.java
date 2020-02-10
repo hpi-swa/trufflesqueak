@@ -238,10 +238,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             for (final Path path : FileSystems.getDefault().getRootDirectories()) {
                 fileList.add(method.image.env.getPublicTruffleFile(path.toUri()));
             }
-            final TruffleFile[] files = fileList.toArray(new TruffleFile[fileList.size()]);
             final int index = (int) longIndex - 1;
-            if (index < files.length) {
-                final TruffleFile file = files[index];
+            if (index < fileList.size()) {
+                final TruffleFile file = fileList.get(index);
                 // Use getPath here, getName returns empty string on root path.
                 // Squeak strips the trailing backslash from C:\ on Windows.
                 return newFileEntry(method.image, file, file.getPath().replace("\\", ""));
