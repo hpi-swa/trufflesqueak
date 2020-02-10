@@ -132,7 +132,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return image.asArrayOfObjects(image.asByteString(fileName), lastModifiedSeconds, lastModifiedSeconds,
                             BooleanObject.wrap(file.isDirectory()), file.size());
         } catch (final IOException e) {
-            throw SqueakException.create("File must exist", e);
+            // TODO: make this better
+            image.printToStdErr("File must exist: " + file + " (" + e + "). Falling back to nil...");
+            return NilObject.SINGLETON;
         }
     }
 
