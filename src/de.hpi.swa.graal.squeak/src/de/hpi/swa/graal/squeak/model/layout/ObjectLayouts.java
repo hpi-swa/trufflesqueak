@@ -74,10 +74,10 @@ public final class ObjectLayouts {
         public static final int MAP = 3;
     }
 
-    /**
-     * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
-     */
     public static final class CLASS {
+        /**
+         * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+         */
         public static final int SUBCLASSES = 0;
         public static final int NAME = 1;
     }
@@ -93,6 +93,7 @@ public final class ObjectLayouts {
         public static final int FORMAT = 2;
         public static final int INSTANCE_VARIABLES = 3;
         public static final int ORGANIZATION = 4;
+
         public static final int SIZE = 5;
 
         public static String getClassComment(final ClassObject squeakClass) {
@@ -114,6 +115,13 @@ public final class ObjectLayouts {
         public static final int SUBJECT = 3;
         public static final int CLASS_COMMENT = 4;
         public static final int COMMENT_STAMP = 5;
+    }
+
+    public static final class CLASS_TRAIT {
+        /**
+         * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+         */
+        public static final int BASE_TRAIT = 6;
     }
 
     public static final class CONTEXT {
@@ -218,7 +226,11 @@ public final class ObjectLayouts {
     }
 
     public static final class METACLASS {
+        /**
+         * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+         */
         public static final int THIS_CLASS = 5;
+
         public static final int INST_SIZE = 6;
     }
 
@@ -242,6 +254,7 @@ public final class ObjectLayouts {
         public static final int SUSPENDED_CONTEXT = 1;
         public static final int PRIORITY = 2;
         public static final int LIST = 3;
+        public static final int EFFECTIVE_PROCESS = 5;
     }
 
     public static final class PROCESS_SCHEDULER {
@@ -339,6 +352,14 @@ public final class ObjectLayouts {
     public static final class TEXT {
         public static final int STRING = 0;
         public static final int RUNS = 1;
+    }
+
+    public static final class TRAIT {
+        /**
+         * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+         */
+        public static final int USERS = 0;
+        public static final int NAME = 1;
     }
 
     public static final class WEAK_FINALIZATION_LIST {
