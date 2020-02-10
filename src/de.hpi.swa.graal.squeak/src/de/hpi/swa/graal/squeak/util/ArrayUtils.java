@@ -76,6 +76,13 @@ public final class ArrayUtils {
         return newObjects;
     }
 
+    public static Object[] copyWithLast(final Object[] objects, final Object last) {
+        final int numObjects = objects.length;
+        final Object[] newObjects = Arrays.copyOf(objects, numObjects + 1);
+        newObjects[numObjects] = last;
+        return newObjects;
+    }
+
     @TruffleBoundary
     public static void fillRandomly(final byte[] bytes) {
         MiscUtils.getSecureRandom().nextBytes(bytes);
