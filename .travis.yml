@@ -108,12 +108,12 @@ jobs:
         - mx.graalsqueak/utils.sh ensure-test-image
         - *initialize-environment
       script:
-        - cmd.exe /C '"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" amd64 &&
-          python ../mx/mx.py gate --strict-mode --tags build,test'
-        - cmd.exe /C '"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" amd64 &&
-          python ../mx/mx.py --env ce-graalsqueak --dy /vm --force-bash-launchers=true build'
-        - cmd.exe /C '"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" amd64 &&
-          python ../mx/mx.py --env ce-graalsqueak --dy /vm --force-bash-launchers=true paths SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8'
+        - cmd.exe //C 'C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat' amd64 &&
+          python ../mx/mx.py gate -B="--no-native" --strict-mode --tags build,test
+        - cmd.exe //C 'C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat' amd64 &&
+          python ../mx/mx.py --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8
+        - cmd.exe //C 'C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat' amd64 &&
+          python ../mx/mx.py --disable-installables=false paths SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8
         - export INSTALLABLE_TARGET="$(mx.graalsqueak/utils.sh installable-filename)"
         - cp /c/Users/travis/build/hpi-swa/graal/sdk/mxbuild/windows-amd64/dists/smalltalk-installable-bgraalsqueak.exe-java8.jar "${INSTALLABLE_TARGET}"
         - export GRAALVM_HOME="$(mx.graalsqueak/utils.sh download-graalvm-ce ~/)"
