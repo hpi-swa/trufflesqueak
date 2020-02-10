@@ -63,15 +63,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static final String TEST_CLASS_PROPERTY = "squeakTests";
 
-    private static final String RELOAD_IMAGE_PROPERTY = "reloadImage";
-    private static final String RELOAD_ON_EXCEPTION = "exception";
-    private static final String RELOAD_NEVER = "never";
-
     protected static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
 
     private static boolean graalSqueakPackagesLoaded = false;
 
     @Parameter public SqueakTest test;
+
+    private static boolean stopRunningSuite;
 
     @Parameters(name = "{0} (#{index})")
     public static Collection<SqueakTest> getParameters() {
@@ -112,37 +110,43 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     public void runSqueakTest() throws Throwable {
         checkTermination();
 
-        final TestResult result = runTestCase(buildRequest());
-
-        checkResult(result);
+        TestResult result = null;
+        try {
+            result = runTestCase(buildRequest());
+        } catch (final RuntimeException e) {
+            e.printStackTrace();
+            stopRunningSuite = true;
+            throw e;
+        }
+        RuntimeException exceptionDuringReload = null;
+        if (!(result.passed && result.message.equals(PASSED_VALUE))) {
+            try {
+                image.getError().println("Closing current image context and reloading");
+                reloadImage();
+            } catch (final RuntimeException e) {
+                exceptionDuringReload = e;
+            }
+        }
+        try {
+            checkResult(result);
+        } finally {
+            if (exceptionDuringReload != null) {
+                image.getError().println("Exception during reload: " + exceptionDuringReload);
+                exceptionDuringReload.printStackTrace();
+                stopRunningSuite = true;
+            }
+        }
     }
 
     private void checkTermination() {
-        Assume.assumeFalse("skipped", test.type == TestType.IGNORED || test.type == TestType.NOT_TERMINATING || test.type == TestType.BROKEN_IN_SQUEAK);
+        Assume.assumeFalse("skipped", stopRunningSuite || test.type == TestType.IGNORED || test.type == TestType.NOT_TERMINATING || test.type == TestType.BROKEN_IN_SQUEAK);
         if (test.type == TestType.SLOWLY_FAILING || test.type == TestType.SLOWLY_PASSING) {
             assumeNotOnMXGate();
         }
     }
 
     private TestRequest buildRequest() {
-        return new TestRequest(test.className, test.selector, isReloadOnException());
-    }
-
-    private boolean isReloadOnException() {
-        final String value = System.getProperty(RELOAD_IMAGE_PROPERTY, RELOAD_NEVER);
-        switch (value) {
-            case RELOAD_NEVER:
-                return false;
-            case RELOAD_ON_EXCEPTION:
-                return !isLastTestCase();
-            default:
-                throw new IllegalArgumentException(value);
-        }
-    }
-
-    private boolean isLastTestCase() {
-        final SqueakTest last = TESTS.get(TESTS.size() - 1);
-        return !last.nameEquals(test);
+        return new TestRequest(test.className, test.selector);
     }
 
     private void checkResult(final TestResult result) throws Throwable {
@@ -150,6 +154,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         switch (test.type) {
             case PASSING: // falls through
             case SLOWLY_PASSING:
+            case EXPECTED_FAILURE:
                 if (result.reason != null) {
                     throw result.reason;
                 }
@@ -163,7 +168,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             case FAILING: // falls through
             case SLOWLY_FAILING: // falls through
             case BROKEN_IN_SQUEAK: // falls through
-            case EXPECTED_FAILURE:
                 assertFalse(result.message, result.passed);
                 break;
 

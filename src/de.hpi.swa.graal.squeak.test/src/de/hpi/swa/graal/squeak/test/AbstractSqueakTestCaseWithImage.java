@@ -37,7 +37,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 3;
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
     private static final int PRIORITY_10_LIST_INDEX = 9;
-    private static final String PASSED_VALUE = "passed";
+    protected static final String PASSED_VALUE = "passed";
 
     protected static final String[] GRAALSQUEAK_TEST_CASE_NAMES = graalSqueakTestCaseNames();
 
@@ -57,11 +57,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         destroyImageContext();
     }
 
-    private static void reloadImage(final TestRequest request) {
-        if (request.reloadImageOnException) {
-            cleanUp();
-            loadTestImage();
-        }
+    protected static void reloadImage() {
+        cleanUp();
+        loadTestImage();
     }
 
     private static void patchImageForTesting() {
@@ -168,7 +166,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     protected static TestResult runTestCase(final TestRequest request) {
-        return runWithTimeout(request, () -> {
+        return runWithTimeout(() -> {
             context.enter();
             try {
                 return extractFailuresAndErrorsFromTestResult(request);
@@ -205,17 +203,17 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         return String.format("(%s selector: #%s) shouldPass", request.testCase, request.testSelector);
     }
 
-    private static TestResult runWithTimeout(final TestRequest request, final Supplier<TestResult> action) {
+    private static TestResult runWithTimeout(final Supplier<TestResult> action) {
         try {
             return CompletableFuture.supplyAsync(action).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (final TimeoutException e) {
-            reloadImage(request);
+            reloadImage();
             return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             return TestResult.fromException("interrupted", e);
         } catch (final ExecutionException e) {
-            reloadImage(request);
+            reloadImage();
             return TestResult.fromException("failed with an error", e.getCause());
         }
     }
@@ -223,12 +221,10 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     protected static final class TestRequest {
         protected final String testCase;
         protected final String testSelector;
-        protected final boolean reloadImageOnException;
 
-        protected TestRequest(final String testCase, final String testSelector, final boolean reloadImageOnException) {
+        protected TestRequest(final String testCase, final String testSelector) {
             this.testCase = testCase;
             this.testSelector = testSelector;
-            this.reloadImageOnException = reloadImageOnException;
         }
     }
 
