@@ -72,9 +72,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         escaped = original.escaped;
         size = original.size;
         // Create shallow copy of Truffle frame
-        truffleFrame = Truffle.getRuntime().createMaterializedFrame(original.truffleFrame.getArguments(), code.getFrameDescriptor());
+        truffleFrame = Truffle.getRuntime().createMaterializedFrame(original.truffleFrame.getArguments().clone(), code.getFrameDescriptor());
         // Copy frame slot values
-        FrameAccess.setMarker(truffleFrame, code, FrameAccess.getMarker(original.truffleFrame, code));
+        FrameAccess.initializeMarker(truffleFrame, code);
         FrameAccess.setContext(truffleFrame, code, this);
         FrameAccess.setInstructionPointer(truffleFrame, code, FrameAccess.getInstructionPointer(original.truffleFrame, code));
         FrameAccess.setStackPointer(truffleFrame, code, FrameAccess.getStackPointer(original.truffleFrame, code));
