@@ -17,7 +17,7 @@ readonly BASE_DIRECTORY="$(dirname "${SCRIPT_DIRECTORY}")"
 readonly py_export=$(cat <<-END
 from suite import suite;
 vars= ' '.join(['DEP_%s=%s' % (k.upper(), v)
-  for k, v in suite['graalsqueak:dependencyMap'].iteritems()]);
+  for k, v in suite['graalsqueak:dependencyMap'].items()]);
 slug = '/'.join(suite['url'].split('/')[-2:]);
 print('export %s GITHUB_SLUG=%s' % (vars, slug))
 END
@@ -115,7 +115,7 @@ shallow-clone() {
   git init > /dev/null
   git remote add origin "${git_url}"
   git fetch origin --depth 1 "${git_commit_or_tag}"
-  git reset --hard FETCH_HEAD
+  git reset --quiet --hard FETCH_HEAD
 
   popd > /dev/null
 }

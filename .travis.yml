@@ -59,9 +59,9 @@ before_install:
 
 script:
   - mx --disable-polyglot --dy ${MX_DY} gate ${MX_GATE_OPTS} --strict-mode --tags ${GATE}
-  - mx --env ce-graalsqueak build
+  - mx --env graalsqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
   - export INSTALLABLE_TARGET="$(mx.graalsqueak/utils.sh installable-filename)"
-  - cp $(mx --env ce-graalsqueak paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
+  - cp $(mx --env graalsqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
   - export GRAALVM_HOME="$(mx.graalsqueak/utils.sh download-graalvm-ce ~/)"
   - ${GRAALVM_HOME}/bin/gu install -L "${INSTALLABLE_TARGET}"
   - "${GRAALVM_HOME}/bin/graalsqueak --jvm --code \"String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000\""
