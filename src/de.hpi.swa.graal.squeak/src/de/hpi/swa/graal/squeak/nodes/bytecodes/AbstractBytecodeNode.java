@@ -11,6 +11,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -66,11 +67,12 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     public final SourceSection getSourceSection() {
         CompilerAsserts.neverPartOfCompilation();
         if (sourceSection == null) {
-            final Source source = code.getSource();
+            final CompiledMethodObject method = code.getMethod();
+            final Source source = method.getSource();
             if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.equals(source.getCharacters())) {
                 sourceSection = source.createUnavailableSection();
             } else {
-                final int lineNumber = SqueakBytecodeDecoder.findLineNumber(code, index);
+                final int lineNumber = SqueakBytecodeDecoder.findLineNumber(method, index);
                 sourceSection = source.createSection(lineNumber);
             }
         }
