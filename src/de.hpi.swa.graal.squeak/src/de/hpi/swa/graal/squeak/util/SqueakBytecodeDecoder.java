@@ -70,7 +70,7 @@ public final class SqueakBytecodeDecoder {
             index += decodeNumBytes(method, index);
             lineNumber++;
         }
-        assert lineNumber <= decode(method).length;
+        assert lineNumber <= trailerPosition(method.getBytes());
         return lineNumber;
     }
 
