@@ -1,0 +1,14 @@
+{
+	"category" : "GraalSqueak-Tools-Notebooks",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "PNBBindingsWrapper",
+	"pools" : [
+		 ],
+	"super" : "ObjectExplorerWrapper",
+	"type" : "normal" }

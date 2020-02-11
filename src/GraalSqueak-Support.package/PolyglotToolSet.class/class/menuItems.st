@@ -1,4 +1,4 @@
-as yet unclassified
+menu
 menuItems
 	^#(
 		('polyglot workspace' 			#openPolyglotWorkspace)

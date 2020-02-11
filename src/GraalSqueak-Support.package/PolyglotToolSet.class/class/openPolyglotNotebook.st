@@ -1,3 +1,3 @@
-as yet unclassified
+helpers
 openPolyglotNotebook
 	PolyglotNotebook open

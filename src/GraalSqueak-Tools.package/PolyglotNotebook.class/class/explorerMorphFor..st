@@ -1,6 +1,6 @@
 helpers
 explorerMorphFor: anObject
 	| explorerView |
-	explorerView := (ToolBuilder build: (ObjectExplorer explore: anObject))
+	explorerView := (ToolBuilder build: (PolyglotObjectExplorer explore: anObject))
 		findA: PluggableTreeMorph.
 	^ explorerView

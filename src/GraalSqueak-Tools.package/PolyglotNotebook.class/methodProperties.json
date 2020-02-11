@@ -1,7 +1,7 @@
 {
 	"class" : {
 		"colorFor:" : "fn 9/12/2019 23:58",
-		"explorerMorphFor:" : "fn 3/26/2019 11:59",
+		"explorerMorphFor:" : "fn 2/10/2020 15:57",
 		"initialize" : "fn 4/14/2019 00:01",
 		"markdownName" : "fn 6/20/2019 17:19",
 		"open" : "fn 3/26/2019 09:18",
@@ -12,7 +12,7 @@
 		"actionRunAll" : "fn 3/30/2019 00:29",
 		"actionSave" : "fn 3/26/2019 11:55",
 		"buildCodePaneWith:" : "fn 3/27/2019 10:07",
-		"buildSidebar:" : "fn 3/27/2019 10:37",
+		"buildSidebar:" : "fn 2/10/2020 16:44",
 		"buildSwitchesWith:" : "fn 3/27/2019 10:38",
 		"buildWith:" : "fn 3/27/2019 10:36",
 		"buttonHeight" : "fn 3/27/2019 10:39",

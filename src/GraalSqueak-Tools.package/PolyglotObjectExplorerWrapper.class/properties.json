@@ -1,0 +1,14 @@
+{
+	"category" : "GraalSqueak-Tools",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "PolyglotObjectExplorerWrapper",
+	"pools" : [
+		 ],
+	"super" : "ObjectExplorerWrapper",
+	"type" : "normal" }

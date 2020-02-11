@@ -1,13 +1,4 @@
 printing
 longPrintOn: aStream
-	"Append to the argument, aStream, the names and values of all 
-	of the receiver's instance variables."
-
-	self allInstVarNames doWithIndex:
-		[:title :index |
-		aStream nextPutAll: title;
-		 nextPut: $:;
-		 space;
-		 tab;
-		 print: (self instVarAt: index);
-		 cr]
+	"Return empty string, which effectively maps #longPrintString to #printString for now."
+	^ ''

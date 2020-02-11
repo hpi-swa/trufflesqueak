@@ -10,15 +10,15 @@ buildSidebar: builder
 	treeSpec := builder pluggableTreeSpec new.
 	treeSpec
 		model: self;
-		nodeClass: ObjectExplorerWrapper;
+		nodeClass: PNBBindingsWrapper;
 		roots: #getList;
-		keyPress: #explorerKey:from:event:;
+		"keyPress: #explorerKey:from:event:;"
 		getSelected: #currentSelection;
 		"setSelected: #currentSelection:;"
 		"setSelectedParent: #currentParent:;"
-		menu: #genericMenu:;
-		dragItem: #getDragItem:;
-		columns: (ObjectExplorerWrapper showContentsInColumns
+		"menu: #genericMenu:;"
+		"dragItem: #getDragItem:;"
+		columns: (PNBBindingsWrapper showContentsInColumns
 			ifTrue: [{
 				[:listMorph | (listMorph filteredItems collect: [:item |
 					item preferredWidthOfColumn: 1]) max].
