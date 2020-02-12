@@ -61,16 +61,16 @@ public final class SqueakBytecodeDecoder {
         return nodes;
     }
 
-    public static int findLineNumber(final CompiledMethodObject method, final int targetIndex) {
-        final int trailerPosition = trailerPosition(method);
+    public static int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
+        final int trailerPosition = trailerPosition(code);
         assert 0 <= targetIndex && targetIndex <= trailerPosition;
         int index = 0;
         int lineNumber = 1;
         while (index != targetIndex) {
-            index += decodeNumBytes(method, index);
+            index += decodeNumBytes(code, index);
             lineNumber++;
         }
-        assert lineNumber <= trailerPosition(method.getBytes());
+        assert lineNumber <= trailerPosition;
         return lineNumber;
     }
 
