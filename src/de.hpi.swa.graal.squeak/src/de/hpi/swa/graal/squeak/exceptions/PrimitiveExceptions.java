@@ -50,14 +50,6 @@ public final class PrimitiveExceptions {
         }
     }
 
-    public static final class SimulationPrimitiveFailed extends AbstractPrimitiveFailed {
-        private static final long serialVersionUID = 1L;
-
-        public SimulationPrimitiveFailed(final int reasonCode) {
-            super(reasonCode);
-        }
-    }
-
     private PrimitiveExceptions() {
     }
 }

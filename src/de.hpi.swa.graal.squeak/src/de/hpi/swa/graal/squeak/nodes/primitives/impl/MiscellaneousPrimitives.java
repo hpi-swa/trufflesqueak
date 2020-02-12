@@ -30,7 +30,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
@@ -933,18 +932,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 255)
-    protected abstract static class PrimMetaFailNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        public PrimMetaFailNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
-            throw new SimulationPrimitiveFailed((int) reasonCode);
-        }
-    }
+    /* Primitive 255 is reserved for RSqueak/VM and no longer needed in GraalSqueak. */
 
     /*
      * List all plugins as external modules (prim 572 is for builtins but is not used).
