@@ -67,12 +67,11 @@ public final class SendBytecodes {
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
-            final Object result;
+            final Object[] rcvrAndArgs = popNNode.execute(frame);
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
+            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             try {
-                final Object[] rcvrAndArgs = popNNode.execute(frame);
-                final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
-                final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
-                result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs);
+                final Object result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs);
                 assert result != null : "Result of a message send should not be null";
                 if (noResultProfile.profile(result != NO_RESULT)) {
                     getPushNode().execute(frame, result);
