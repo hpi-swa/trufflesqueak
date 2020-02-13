@@ -519,14 +519,16 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target,
                         @Shared("isFiniteProfile") @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
-            return CharacterObject.valueOf(Math.toIntExact(receiver), isFiniteProfile);
+            assert (int) receiver == receiver;
+            return CharacterObject.valueOf((int) receiver, isFiniteProfile);
         }
 
         /* Character class>>#value: */
         @Specialization
         protected static final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target,
                         @Shared("isFiniteProfile") @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
-            return CharacterObject.valueOf(Math.toIntExact(target), isFiniteProfile);
+            assert (int) target == target;
+            return CharacterObject.valueOf((int) target, isFiniteProfile);
         }
     }
 
