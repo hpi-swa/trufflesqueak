@@ -13,6 +13,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
@@ -399,8 +400,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         this.methodDict = methodDict;
     }
 
-    public Object[] listMethods() {
-        CompilerAsserts.neverPartOfCompilation("This is only for the interop API.");
+    @TruffleBoundary
+    public Object[] listInteropMembers() {
         final List<String> methodNames = new ArrayList<>();
         ClassObject lookupClass = this;
         while (lookupClass != null) {

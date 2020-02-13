@@ -47,7 +47,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     @ExportMessage
     protected final Object getMembers(@SuppressWarnings("unused") final boolean includeInternal,
                     @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
-        return new InteropArray(classNode.executeLookup(this).listMethods());
+        return new InteropArray(classNode.executeLookup(this).listInteropMembers());
     }
 
     @ExportMessage(name = "isMemberReadable")
