@@ -173,7 +173,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
                         /*
                          * Same toString() methods may throw compilation warnings, this is expected
-                         * and ok for primitive failure logging purposes.
+                         * and ok for primitive failure logging purposes. Note that primitives that
+                         * are not implemented are also not logged.
                          */
                         LogUtils.PRIMITIVES.fine(() -> callPrimitiveNode.primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
                                         ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
