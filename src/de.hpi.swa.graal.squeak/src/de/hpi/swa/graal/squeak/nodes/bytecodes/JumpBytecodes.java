@@ -21,6 +21,7 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class JumpBytecodes {
 
@@ -37,7 +38,7 @@ public final class JumpBytecodes {
             offset = (bytecode & 7) + 1;
             isIfTrue = false;
             popNode = FrameStackPopNode.create(code);
-            handleConditionResultNode = HandleConditionResultNode.create(code);
+            handleConditionResultNode = HandleConditionResultNode.create(code, getSuccessorIndex());
         }
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter, final boolean condition) {
@@ -45,7 +46,7 @@ public final class JumpBytecodes {
             offset = ((bytecode & 3) << 8) + parameter;
             isIfTrue = condition;
             popNode = FrameStackPopNode.create(code);
-            handleConditionResultNode = HandleConditionResultNode.create(code);
+            handleConditionResultNode = HandleConditionResultNode.create(code, getSuccessorIndex());
         }
 
         @Override
@@ -74,13 +75,15 @@ public final class JumpBytecodes {
 
         protected abstract static class HandleConditionResultNode extends AbstractNodeWithCode {
             @Child private SendSelectorNode sendMustBeBooleanNode;
+            private final int successorIndex;
 
-            protected HandleConditionResultNode(final CompiledCodeObject code) {
+            protected HandleConditionResultNode(final CompiledCodeObject code, final int successorIndex) {
                 super(code);
+                this.successorIndex = successorIndex;
             }
 
-            protected static HandleConditionResultNode create(final CompiledCodeObject code) {
-                return HandleConditionResultNodeGen.create(code);
+            protected static HandleConditionResultNode create(final CompiledCodeObject code, final int successorIndex) {
+                return HandleConditionResultNodeGen.create(code, successorIndex);
             }
 
             protected abstract boolean execute(VirtualFrame frame, boolean expected, Object result);
@@ -101,6 +104,7 @@ public final class JumpBytecodes {
 
             @Fallback
             protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result) {
+                FrameAccess.setInstructionPointer(frame, code, successorIndex);
                 getSendMustBeBooleanNode().executeSend(frame, result);
                 throw SqueakException.create("Should not be reached");
             }
