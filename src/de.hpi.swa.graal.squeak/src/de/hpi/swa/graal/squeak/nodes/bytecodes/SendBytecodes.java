@@ -184,8 +184,8 @@ public final class SendBytecodes {
         }
     }
 
-    public static final class SendSelfSelector extends AbstractSendNode {
-        public SendSelfSelector(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
+    public static final class SendSelfSelectorNode extends AbstractSendNode {
+        public SendSelfSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
             super(code, index, numBytecodes, selector, numArgs);
         }
     }
