@@ -1,0 +1,14 @@
+{
+	"category" : "GraalSqueak-Tests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "InteropTestDNUTestSubject",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }
