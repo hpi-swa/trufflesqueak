@@ -638,7 +638,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization
         protected final Object doLargeInteger(final int[] firstInts, final int[] secondInts, final int[] thirdInts, final long mInv) {
             final int firstLen = firstInts.length;
             final int secondLen = secondInts.length;
