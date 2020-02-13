@@ -902,14 +902,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 133)
-    protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimSetInterruptKeyNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected static final Object set(final Object receiver) {
+        protected static final Object set(final Object receiver, @SuppressWarnings("unused") final long keycode) {
             // TODO: interrupt key is obsolete in image, but maybe still needed in the vm?
             return receiver;
         }
