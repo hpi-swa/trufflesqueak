@@ -306,7 +306,7 @@ public final class SqueakBytecodeDecoder {
             case 72: case 73: case 74: case 75: case 76: case 77: case 78: case 79:
             case 80: case 81: case 82: case 83: case 84: case 85: case 86: case 87:
             case 88: case 89: case 90: case 91: case 92: case 93: case 94: case 95:
-                return "pushLit: " + (b0 & 31);
+                return "pushLitVar: " + code.getLiteral(b0 & 31);
             case 96: case 97: case 98: case 99: case 100: case 101: case 102: case 103:
                 return "popIntoRcvr: " + (b0 & 7);
             case 104: case 105: case 106: case 107: case 108: case 109: case 110: case 111:

@@ -226,7 +226,7 @@ public final class PushBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushLit: " + literalIndex;
+            return "pushLitVar: " + code.getLiteral(literalIndex);
         }
     }
 
