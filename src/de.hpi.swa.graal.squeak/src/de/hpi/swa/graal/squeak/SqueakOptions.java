@@ -47,7 +47,7 @@ public final class SqueakOptions {
     @Option(name = SqueakLanguageOptions.STORAGE_STRATEGIES, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.STORAGE_STRATEGIES_HELP)//
     public static final OptionKey<Boolean> StorageStrategies = new OptionKey<>(true);
 
-    @Option(name = SqueakLanguageOptions.TESTING, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.TESTING_HELP)//
+    @Option(name = SqueakLanguageOptions.TESTING, category = OptionCategory.INTERNAL, stability = OptionStability.STABLE, help = SqueakLanguageOptions.TESTING_HELP)//
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
 
     private SqueakOptions() { // no instances
