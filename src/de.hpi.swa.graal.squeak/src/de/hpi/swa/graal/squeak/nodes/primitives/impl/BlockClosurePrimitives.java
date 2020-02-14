@@ -28,14 +28,13 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SenaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimRelinquishProcessorNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {201, 221})
+    @SqueakPrimitive(indices = 201)
     public abstract static class PrimClosureValue0Node extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimClosureValue0Node(final CompiledMethodObject method) {
@@ -137,7 +136,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {206, 222})
+    @SqueakPrimitive(indices = 206)
     protected abstract static class PrimClosureValueAryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimClosureValueAryNode(final CompiledMethodObject method) {
@@ -153,14 +152,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
-    /**
-     * Non-context-switching closureValue primitives are not in use because interrupt checks only
-     * happen in the idleProcess (see {@link PrimRelinquishProcessorNode}). Using standard
-     * closureValue primitives instead.
-     */
-
-    // @GenerateNodeFactory
-    // @SqueakPrimitive(indices = 221)
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 221)
     public abstract static class PrimClosureValueNoContextSwitchNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimClosureValueNoContextSwitchNode(final CompiledMethodObject method) {
@@ -183,8 +176,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
-    // @GenerateNodeFactory
-    // @SqueakPrimitive(indices = 222)
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 222)
     protected abstract static class PrimClosureValueAryNoContextSwitchNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimClosureValueAryNoContextSwitchNode(final CompiledMethodObject method) {
