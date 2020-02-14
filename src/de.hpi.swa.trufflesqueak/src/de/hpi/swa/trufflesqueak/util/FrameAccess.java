@@ -350,7 +350,7 @@ public final class FrameAccess {
         // Sender is thisContext (or marker)
         arguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = senderOrMarker;
         arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
-        arguments[ArgumentIndicies.RECEIVER.ordinal()] = closure.getReceiver();
+        arguments[ArgumentIndicies.RECEIVER.ordinal()] = closure.getOuterContextOrNull().getReceiver();
         System.arraycopy(copied, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs, numCopied);
         return arguments;
     }

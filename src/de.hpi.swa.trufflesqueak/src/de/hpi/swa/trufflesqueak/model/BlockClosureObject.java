@@ -30,7 +30,6 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 @ExportLibrary(InteropLibrary.class)
 public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
-    @CompilationFinal private Object receiver;
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private long startPC = -1;
@@ -46,13 +45,12 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
-    public BlockClosureObject(final SqueakImageContext image, final CompiledBlockObject block, final int startPC, final int numArgs, final Object receiver, final Object[] copied,
+    public BlockClosureObject(final SqueakImageContext image, final CompiledBlockObject block, final int startPC, final int numArgs, final Object[] copied,
                     final ContextObject outerContext) {
         super(image);
         assert block.getInitialPC() == startPC;
         this.block = block;
         this.outerContext = outerContext;
-        this.receiver = receiver;
         this.copied = copied;
         this.startPC = startPC;
         this.numArgs = numArgs;
@@ -62,7 +60,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         super(original);
         block = original.block;
         outerContext = original.outerContext;
-        receiver = original.receiver;
         copied = original.copied;
         startPC = original.startPC;
         numArgs = original.numArgs;
@@ -169,21 +166,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "a BlockClosureObject @" + Integer.toHexString(hashCode()) + ", with " + (numArgs == -1 && block == null ? "no block" : getNumArgs() + " args") + " and " + copied.length +
-                        " copied values, in " + outerContext;
-    }
-
-    public Object getReceiver() {
-        if (receiver == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            receiver = outerContext.getReceiver();
-        }
-        return receiver;
-    }
-
-    public void setReceiver(final Object receiver) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.receiver = receiver;
+        return "a BlockClosureObject @" + Integer.toHexString(hashCode()) + " (with " + (numArgs == -1 && block == null ? "no block" : getNumArgs() + " args") + " and " + copied.length +
+                        " copied values in " + outerContext + ")";
     }
 
     private void initializeCompiledBlock(final CompiledMethodObject method) {
@@ -244,10 +228,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
-            if (getReceiver() == fromPointer && fromPointer != to[i]) {
-                setReceiver(to[i]);
-                copyHash(fromPointer, to[i], copyHash);
-            }
             if (getOuterContextOrNull() == fromPointer && fromPointer != to[i] && to[i] instanceof ContextObject) {
                 setOuterContext((ContextObject) to[i]);
                 copyHash(fromPointer, to[i], copyHash);
@@ -264,7 +244,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
 
     @Override
     public void tracePointers(final ObjectTracer tracer) {
-        tracer.addIfUnmarked(getReceiver());
         tracer.addIfUnmarked(getOuterContext());
         for (final Object value : getCopied()) {
             tracer.addIfUnmarked(value);
@@ -274,7 +253,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @Override
     public void trace(final SqueakImageWriter writer) {
         super.trace(writer);
-        writer.traceIfNecessary(receiver);
         writer.traceIfNecessary(outerContext);
         writer.traceAllIfNecessary(getCopied());
     }

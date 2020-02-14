@@ -133,10 +133,9 @@ public final class PushBytecodes {
         }
 
         private BlockClosureObject createClosure(final VirtualFrame frame) {
-            final Object receiver = FrameAccess.getReceiver(frame);
             final Object[] copiedValues = popNNode.execute(frame);
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
-            return new BlockClosureObject(code.image, getBlock(frame), cachedStartPC, numArgs, receiver, copiedValues, outerContext);
+            return new BlockClosureObject(code.image, getBlock(frame), cachedStartPC, numArgs, copiedValues, outerContext);
         }
 
         @Override
