@@ -15,11 +15,11 @@ suite = {
 
     "version": "1.0.0-rc7",
     "graalsqueak:dependencyMap": {
-        "graalvm": "19.3.0",
+        "graalvm": "20.0.0",
         "image": "GraalSqueakImage-1.0.0-rc7.zip",
         "image_tag": "1.0.0-rc7",
-        "jdk8_update": "232",
-        "jvmci": "jvmci-19.3-b05",
+        "jdk8_update": "242",
+        "jvmci": "jvmci-20.0-b02",
         "test_image": "GraalSqueakTestImage-19329-64bit.zip",
         "test_image_tag": "1.0.0-rc6",
     },
@@ -48,7 +48,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "72d10ce1cd95b094d371e308e922a5960d8c35a8",
+            "version": "022fcbd2479944aeb411f851dc2cb062b1bbb441",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
