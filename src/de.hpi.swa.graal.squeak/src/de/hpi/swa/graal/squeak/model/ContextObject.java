@@ -149,74 +149,20 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         truffleFrame = Truffle.getRuntime().createMaterializedFrame(frameArguments, code.getFrameDescriptor());
         FrameAccess.initializeMarker(truffleFrame, code);
         FrameAccess.setContext(truffleFrame, code, this);
-        atput0(CONTEXT.INSTRUCTION_POINTER, pointers[CONTEXT.INSTRUCTION_POINTER]);
-        atput0(CONTEXT.STACKPOINTER, pointers[CONTEXT.STACKPOINTER]);
+        final Object pc = pointers[CONTEXT.INSTRUCTION_POINTER];
+        if (pc == NilObject.SINGLETON) {
+            removeInstructionPointer();
+        } else {
+            setInstructionPointer((int) (long) pc);
+        }
+        setStackPointer((int) (long) pointers[CONTEXT.STACKPOINTER]);
         for (int i = CONTEXT.TEMP_FRAME_START; i < pointers.length; i++) {
-            atput0(i, pointers[i]);
+            atTempPut(i - CONTEXT.TEMP_FRAME_START, pointers[i]);
         }
     }
 
     public CallTarget getCallTarget() {
         return getBlockOrMethod().getResumptionCallTarget(this);
-    }
-
-    private Object at0(final long longIndex) {
-        CompilerAsserts.neverPartOfCompilation();
-        assert longIndex >= 0;
-        final int index = (int) longIndex;
-        switch (index) {
-            case CONTEXT.SENDER_OR_NIL:
-                return getSender();
-            case CONTEXT.INSTRUCTION_POINTER:
-                return getInstructionPointer(ConditionProfile.getUncached());
-            case CONTEXT.STACKPOINTER:
-                return (long) getStackPointer(); // Must return a long here.
-            case CONTEXT.METHOD:
-                return getMethod();
-            case CONTEXT.CLOSURE_OR_NIL:
-                return NilObject.nullToNil(getClosure());
-            case CONTEXT.RECEIVER:
-                return getReceiver();
-            default:
-                return atTemp(index - CONTEXT.TEMP_FRAME_START);
-        }
-    }
-
-    public void atput0(final long longIndex, final Object value) {
-        assert longIndex >= 0 && value != null;
-        final int index = (int) longIndex;
-        assert value != null : "null indicates a problem";
-        switch (index) {
-            case CONTEXT.SENDER_OR_NIL:
-                if (value == NilObject.SINGLETON) {
-                    removeSender();
-                } else {
-                    setSender((ContextObject) value);
-                }
-                break;
-            case CONTEXT.INSTRUCTION_POINTER:
-                if (value == NilObject.SINGLETON) {
-                    removeInstructionPointer();
-                } else {
-                    setInstructionPointer((int) (long) value);
-                }
-                break;
-            case CONTEXT.STACKPOINTER:
-                setStackPointer((int) (long) value);
-                break;
-            case CONTEXT.METHOD:
-                setMethod((CompiledMethodObject) value);
-                break;
-            case CONTEXT.CLOSURE_OR_NIL:
-                setClosure(value == NilObject.SINGLETON ? null : (BlockClosureObject) value);
-                break;
-            case CONTEXT.RECEIVER:
-                setReceiver(value);
-                break;
-            default:
-                atTempPut(index - CONTEXT.TEMP_FRAME_START, value);
-                break;
-        }
     }
 
     public MaterializedFrame getOrCreateTruffleFrame() {
@@ -455,9 +401,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     public void terminate() {
-        // Remove pc and sender.
-        atput0(CONTEXT.INSTRUCTION_POINTER, NilObject.SINGLETON);
-        atput0(CONTEXT.SENDER_OR_NIL, NilObject.SINGLETON);
+        removeInstructionPointer();
+        removeSender();
     }
 
     public boolean isTerminated() {
@@ -617,11 +562,16 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return !hasClosure() && getMethod().hasPrimitive() && getInstructionPointerForBytecodeLoop() <= CallPrimitiveNode.NUM_BYTECODES;
     }
 
+    @TruffleBoundary
     public boolean pointsTo(final Object thang) {
         // TODO: make sure this works correctly
         if (truffleFrame != null) {
-            for (int i = 0; i < size(); i++) {
-                if (at0(i) == thang) {
+            if (getSender() == thang || thang.equals(getInstructionPointer(ConditionProfile.getUncached())) || thang.equals(getStackPointer()) || getMethod() == thang || getClosure() == thang ||
+                            getReceiver() == thang) {
+                return true;
+            }
+            for (int i = 0; i < getBlockOrMethod().getNumStackSlots(); i++) {
+                if (atTemp(i) == thang) {
                     return true;
                 }
             }

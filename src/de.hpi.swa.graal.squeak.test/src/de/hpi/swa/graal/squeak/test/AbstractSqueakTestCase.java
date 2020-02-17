@@ -28,7 +28,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.shared.LogHandlerAccessor;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
@@ -83,12 +82,11 @@ public abstract class AbstractSqueakTestCase {
 
     protected static ExecuteTopLevelContextNode createContext(final CompiledMethodObject code, final Object receiver, final Object[] arguments) {
         final ContextObject testContext = ContextObject.create(image, code.getSqueakContextSize());
-        testContext.atput0(CONTEXT.METHOD, code);
-        testContext.atput0(CONTEXT.RECEIVER, receiver);
-        testContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) code.getInitialPC());
-        testContext.atput0(CONTEXT.STACKPOINTER, 0L);
-        testContext.atput0(CONTEXT.CLOSURE_OR_NIL, NilObject.SINGLETON);
-        testContext.atput0(CONTEXT.SENDER_OR_NIL, NilObject.SINGLETON);
+        testContext.setReceiver(receiver);
+        testContext.setMethod(code);
+        testContext.setInstructionPointer(code.getInitialPC());
+        testContext.setStackPointer(0);
+        testContext.removeSender();
         for (int i = 0; i < arguments.length; i++) {
             testContext.push(arguments[i]);
         }
