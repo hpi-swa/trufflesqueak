@@ -99,11 +99,15 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             contextBuilder.logHandler(LogHandlerAccessor.createLogHandler(logHandlerMode));
         }
         try (Context context = contextBuilder.build()) {
-            println("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName());
+            if (!quiet) {
+                println(String.format("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName()));
+            }
             if (sourceCode != null) {
                 final Value result = context.eval(
                                 Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).cached(false).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
-                println("[graalsqueak] Result: " + (result.isString() ? result.asString() : result.toString()));
+                if (!quiet) {
+                    println("[graalsqueak] Result: " + (result.isString() ? result.asString() : result.toString()));
+                }
                 return 0;
             } else {
                 final Value image = context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).cached(false).mimeType(SqueakLanguageConfig.MIME_TYPE).build());
@@ -150,11 +154,11 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     protected void printHelp(final OptionCategory maxCategory) {
         println("Usage: graalsqueak [options] <image file> [image arguments]\n");
         println("Basic options:");
-        println("  %s \"<code>\", %s \"<code>\"\t\t%s", SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.CODE_HELP);
-        println("  %s\t\t\t\t%s", SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.HEADLESS_HELP);
-        println("  %s \"<mode>\"\t\t%s", SqueakLanguageOptions.LOG_HANDLER_FLAG, SqueakLanguageOptions.LOG_HANDLER_HELP);
-        println("  %s\t\t\t\t%s", SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.QUIET_HELP);
-        println("  %s\t%s", SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_HELP);
+        launcherOption(SqueakLanguageOptions.CODE_FLAG + " \"<code>\", " + SqueakLanguageOptions.CODE_FLAG_SHORT + " \"<code>\"", SqueakLanguageOptions.CODE_HELP);
+        launcherOption(SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.HEADLESS_HELP);
+        launcherOption(SqueakLanguageOptions.LOG_HANDLER_FLAG, SqueakLanguageOptions.LOG_HANDLER_HELP);
+        launcherOption(SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.QUIET_HELP);
+        launcherOption(SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_HELP);
     }
 
     @Override
@@ -179,14 +183,6 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             return fileName.endsWith(".image") && Files.exists(Paths.get(fileName));
         } catch (final SecurityException | InvalidPathException e) {
             return false;
-        }
-    }
-
-    private void println(final String string, final Object... arguments) {
-        if (!quiet) {
-            // Checkstyle: stop
-            System.out.println(String.format(string, arguments));
-            // Checkstyle: resume
         }
     }
 
