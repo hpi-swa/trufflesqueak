@@ -147,7 +147,6 @@ jobs:
         echo "::add-path::$(echo ${HOME} | sed 's/\/c/C:/g' | sed 's/\//\\/g')\mx"
         export GRAALVM_HOME="$(mx.graalsqueak/utils.sh download-graalvm-ce ~/ | sed 's/\/c/C:/g' | sed 's/\//\\/g')"
         echo "::add-path::${GRAALVM_HOME}\bin"
-        echo "::set-env name=GRAALVM_HOME::${GRAALVM_HOME}"
     - name: Run gate
       shell: cmd
       run: mx gate -B="--no-native" --strict-mode --tags build,test
@@ -155,9 +154,10 @@ jobs:
       shell: pwsh
       run: |
         mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8
-        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8) -Destination "$HOME\graalsqueak-installable.zip"
-        Expand-Archive "$HOME\graalsqueak-installable.zip" -DestinationPath $Env:GRAALVM_HOME
+        $env:InstallableTarget = (bash mx.graalsqueak/utils.sh installable-filename)
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8) -Destination "${pwd}\${env:InstallableTarget}"
+        gu.cmd install -L "${pwd}\${env:InstallableTarget}"
     - name: Run SystemReporter on GraalVM
-      run: 'graalsqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+      run: 'graalsqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
     - name: Run tinyBenchmarks on GraalVM
-      run: graalsqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+      run: graalsqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image

@@ -98,7 +98,7 @@ ensure-test-image() {
 }
 
 installable-filename() {
-  local git_describe=$(git describe --tags)
+  local git_describe=$(git describe --tags --always)
   local git_short_commit=$(git log -1 --format="%h")
   local git_description="${git_describe:-${git_short_commit}}"
   echo "graalsqueak-installable-${OS_NAME}-amd64-${git_description}-for-GraalVM-${DEP_GRAALVM}.jar"
