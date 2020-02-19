@@ -72,7 +72,8 @@ public class AbstractPointersObjectNodes {
             return readNode.execute(cachedLocation, object);
         }
 
-        @Specialization(guards = "object.getLayout().isValid()", replaces = {"doReadCached"})
+        @TruffleBoundary
+        @Specialization(guards = "object.getLayout().isValid()", replaces = "doReadCached")
         protected static final Object doReadUncached(final AbstractPointersObject object, final int index,
                         @Cached final ReadSlotLocationNode readNode) {
             return readNode.execute(object.getLayout().getLocation(index), object);
@@ -80,6 +81,7 @@ public class AbstractPointersObjectNodes {
 
         @Specialization(guards = "!object.getLayout().isValid()")
         protected static final Object doUpdateLayoutAndRead(final AbstractPointersObject object, final int index) {
+            /* Note that this specialization does not replace the cached specialization. */
             CompilerDirectives.transferToInterpreter();
             object.updateLayout();
             return doReadUncached(object, index, ReadSlotLocationNode.getUncached());
@@ -105,7 +107,7 @@ public class AbstractPointersObjectNodes {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout", "cachedLocation.canStore(value)"}, //
+        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout"}, //
                         assumptions = "cachedLayout.getValidAssumption()", limit = "CACHE_LIMIT")
         protected static final void doWriteCached(final AbstractPointersObject object, final int index,
                         final Object value,
@@ -113,6 +115,17 @@ public class AbstractPointersObjectNodes {
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached("cachedLayout.getLocation(index)") final SlotLocation cachedLocation,
                         @Cached final WriteSlotLocationNode writeNode) {
+            if (!cachedLocation.canStore(value)) {
+                /*
+                 * Update layout in interpreter if it is not stable yet. This will also invalidate
+                 * the assumption and therefore this particular instance of the specialization will
+                 * be removed from the cache and replaced by an updated version.
+                 */
+                CompilerDirectives.transferToInterpreter();
+                object.updateLayout(index, value);
+                writeNode.execute(object.getLayout().getLocation(index), object, value);
+                return;
+            }
             try {
                 writeNode.execute(cachedLocation, object, value);
             } catch (final IllegalWriteException e) {
@@ -120,36 +133,26 @@ public class AbstractPointersObjectNodes {
             }
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedIndex == index", "object.getLayout() == oldLayout", "!oldLocation.canStore(value)"}, //
-                        assumptions = {"oldLayout.getValidAssumption()", "newLayout.getValidAssumption()"}, limit = "CACHE_LIMIT")
-        protected static final void doWriteCachedUninitialized(final AbstractPointersObject object, final int index, final Object value,
-                        @Cached("index") final int cachedIndex,
-                        @Cached("object.getLayout()") final ObjectLayout oldLayout,
-                        @Cached("oldLayout.getLocation(index)") final SlotLocation oldLocation,
-                        @Cached("object.updateLayout(index, value)") final ObjectLayout newLayout,
-                        @Cached("newLayout.getLocation(index)") final SlotLocation newLocation) {
-            try {
-                newLocation.write(object, value);
-            } catch (final IllegalWriteException e) {
-                throw SqueakException.illegalState(e);
-            }
-        }
-
-        @Specialization(guards = "object.getLayout().isValid()", replaces = {"doWriteCached", "doWriteCachedUninitialized"})
+        @TruffleBoundary
+        @Specialization(guards = "object.getLayout().isValid()", replaces = "doWriteCached")
         protected static final void doWriteUncached(final AbstractPointersObject object, final int index, final Object value,
                         @Cached final WriteSlotLocationNode writeNode) {
             try {
                 writeNode.execute(object.getLayout().getLocation(index), object, value);
             } catch (final IllegalWriteException e) {
+                /*
+                 * Although the layout was valid, it is possible that the location cannot store the
+                 * value. Generialize location in the interpreter.
+                 */
+                CompilerDirectives.transferToInterpreter();
                 object.updateLayout(index, value);
                 writeNode.execute(object.getLayout().getLocation(index), object, value);
             }
         }
 
-        @TruffleBoundary
         @Specialization(guards = "!object.getLayout().isValid()")
         protected static final void doUpdateLayoutAndWrite(final AbstractPointersObject object, final int index, final Object value) {
+            /* Note that this specialization does not replace the cached specialization. */
             CompilerDirectives.transferToInterpreter();
             object.updateLayout();
             doWriteUncached(object, index, value, WriteSlotLocationNode.getUncached());
