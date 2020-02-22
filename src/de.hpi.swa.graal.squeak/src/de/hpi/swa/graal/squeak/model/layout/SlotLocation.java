@@ -8,13 +8,13 @@ package de.hpi.swa.graal.squeak.model.layout;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -89,12 +89,18 @@ public abstract class SlotLocation {
         return location;
     }
 
-    public static final class IllegalWriteException extends ControlFlowException {
+    public static final class IllegalWriteException extends RuntimeException {
         private static final long serialVersionUID = 1L;
-        public static final IllegalWriteException SINGLETON = new IllegalWriteException();
+        private static final IllegalWriteException SINGLETON = new IllegalWriteException();
 
         private IllegalWriteException() {
+            super(null, null);
         }
+    }
+
+    private static final void transferToInterpreterAndThrowIllegalWriteException() {
+        CompilerDirectives.transferToInterpreter();
+        throw IllegalWriteException.SINGLETON;
     }
 
     public abstract Object read(AbstractPointersObject obj);
@@ -209,7 +215,7 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject obj, final Object value) {
             if (value != NilObject.SINGLETON) {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -396,7 +402,7 @@ public abstract class SlotLocation {
                 set(object, primitiveUsedMapProfile);
                 UnsafeUtils.putBoolAt(object, address, (boolean) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -407,7 +413,7 @@ public abstract class SlotLocation {
                 set(object);
                 UnsafeUtils.putBoolAt(object, address, (boolean) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -450,7 +456,7 @@ public abstract class SlotLocation {
                 set(object, primitiveUsedMapProfile);
                 UnsafeUtils.putBoolIntoLongs(object.primitiveExtension, index, (boolean) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -462,7 +468,7 @@ public abstract class SlotLocation {
                 object.primitiveExtension[index] = (boolean) value ? 1 : 0;
                 UnsafeUtils.putBoolIntoLongs(object.primitiveExtension, index, (boolean) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -510,7 +516,7 @@ public abstract class SlotLocation {
                 set(object, primitiveUsedMapProfile);
                 UnsafeUtils.putCharAt(object, address, (char) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -521,7 +527,7 @@ public abstract class SlotLocation {
                 set(object);
                 UnsafeUtils.putCharAt(object, address, (char) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -564,7 +570,7 @@ public abstract class SlotLocation {
                 set(object, primitiveUsedMapProfile);
                 UnsafeUtils.putCharIntoLongs(object.primitiveExtension, index, (char) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -575,7 +581,7 @@ public abstract class SlotLocation {
                 set(object);
                 UnsafeUtils.putCharIntoLongs(object.primitiveExtension, index, (char) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -623,7 +629,7 @@ public abstract class SlotLocation {
                 set(object, primitiveUsedMapProfile);
                 UnsafeUtils.putLongAt(object, address, (long) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -634,7 +640,7 @@ public abstract class SlotLocation {
                 set(object);
                 UnsafeUtils.putLongAt(object, address, (long) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -677,7 +683,7 @@ public abstract class SlotLocation {
                 set(object, primitiveUsedMapProfile);
                 UnsafeUtils.putLong(object.primitiveExtension, index, (long) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -688,7 +694,7 @@ public abstract class SlotLocation {
                 set(object);
                 UnsafeUtils.putLong(object.primitiveExtension, index, (long) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -736,7 +742,7 @@ public abstract class SlotLocation {
                 set(object, primitiveUsedMapProfile);
                 UnsafeUtils.putDoubleAt(object, address, (double) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -747,7 +753,7 @@ public abstract class SlotLocation {
                 set(object);
                 UnsafeUtils.putDoubleAt(object, address, (double) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -790,7 +796,7 @@ public abstract class SlotLocation {
                 set(object, primitiveUsedMapProfile);
                 UnsafeUtils.putDoubleIntoLongs(object.primitiveExtension, index, (double) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
@@ -801,7 +807,7 @@ public abstract class SlotLocation {
                 set(object);
                 UnsafeUtils.putDoubleIntoLongs(object.primitiveExtension, index, (double) value);
             } else {
-                throw IllegalWriteException.SINGLETON;
+                transferToInterpreterAndThrowIllegalWriteException();
             }
         }
 
