@@ -146,7 +146,7 @@ Amsterdam, Netherlands, July 17, 2018, ACM DL.
 GraalSqueak is released under the [MIT license][graalsqueak_license].
 
 
-[codacy]: https://app.codacy.com/app/fniephaus/graalsqueak/dashboard
+[codacy]: https://app.codacy.com/gh/hpi-swa/graalsqueak/dashboard
 [codacy_coverage]: https://img.shields.io/codacy/coverage/104b3300600346789d604fd269219efe.svg
 [codacy_grade]: https://img.shields.io/codacy/grade/104b3300600346789d604fd269219efe.svg
 [dls19]: https://conf.researchr.org/home/dls-2019
