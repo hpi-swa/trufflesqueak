@@ -98,7 +98,7 @@ public abstract class SlotLocation {
         }
     }
 
-    private static final void transferToInterpreterAndThrowIllegalWriteException() {
+    private static void transferToInterpreterAndThrowIllegalWriteException() {
         CompilerDirectives.transferToInterpreter();
         throw IllegalWriteException.SINGLETON;
     }
