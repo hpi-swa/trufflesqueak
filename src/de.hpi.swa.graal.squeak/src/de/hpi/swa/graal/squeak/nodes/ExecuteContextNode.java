@@ -168,7 +168,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
                 if (callPrimitiveNode.primitiveNode != null) {
                     try {
-                        return callPrimitiveNode.primitiveNode.executePrimitive(frame);
+                        returnValue = callPrimitiveNode.primitiveNode.executePrimitive(frame);
+                        pc = LOCAL_RETURN_PC;
+                        continue bytecode_loop;
                     } catch (final PrimitiveFailed e) {
                         getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
                         /*
