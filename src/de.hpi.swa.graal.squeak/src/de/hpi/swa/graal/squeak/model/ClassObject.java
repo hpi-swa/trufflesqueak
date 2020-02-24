@@ -531,7 +531,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.smallIntegerClass;
     }
 
-    public void traceObjects(final ObjectTracer tracer) {
+    @Override
+    public void tracePointers(final ObjectTracer tracer) {
         tracer.addIfUnmarked(getSuperclass());
         tracer.addIfUnmarked(getMethodDict());
         tracer.addIfUnmarked(getInstanceVariables());

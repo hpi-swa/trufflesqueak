@@ -11,6 +11,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
+import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
 
 public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject {
     public static final int IDENTITY_HASH_MASK = 0x400000 - 1;
@@ -110,6 +111,10 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
             markingFlag = currentMarkingFlag;
             return true;
         }
+    }
+
+    public void tracePointers(@SuppressWarnings("unused") final ObjectTracer objectTracer) {
+        // Nothing to trace by default.
     }
 
     public void trace(final SqueakImageWriter writerNode) {

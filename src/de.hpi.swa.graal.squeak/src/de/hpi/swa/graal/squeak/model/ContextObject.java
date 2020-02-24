@@ -628,7 +628,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return false;
     }
 
-    public void traceObjects(final ObjectTracer tracer) {
+    @Override
+    public void tracePointers(final ObjectTracer tracer) {
         if (hasTruffleFrame()) {
             tracer.addIfUnmarked(getFrameSender());
             tracer.addIfUnmarked(getMethod());

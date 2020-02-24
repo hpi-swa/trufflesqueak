@@ -21,16 +21,9 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.VariablePointersObject;
-import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 
 public final class ObjectGraphUtils {
@@ -170,23 +163,7 @@ public final class ObjectGraphUtils {
 
         private void tracePointers(final AbstractSqueakObjectWithHash object) {
             addIfUnmarked(object.getSqueakClass());
-            if (object instanceof ClassObject) {
-                ((ClassObject) object).traceObjects(this);
-            } else if (object instanceof BlockClosureObject) {
-                ((BlockClosureObject) object).traceObjects(this);
-            } else if (object instanceof ContextObject) {
-                ((ContextObject) object).traceObjects(this);
-            } else if (object instanceof CompiledMethodObject) {
-                ((CompiledMethodObject) object).traceObjects(this);
-            } else if (object instanceof ArrayObject) {
-                ((ArrayObject) object).traceObjects(this);
-            } else if (object instanceof PointersObject) {
-                ((PointersObject) object).traceObjects(this);
-            } else if (object instanceof VariablePointersObject) {
-                ((VariablePointersObject) object).traceObjects(this);
-            } else if (object instanceof WeakVariablePointersObject) {
-                ((WeakVariablePointersObject) object).traceObjects(this);
-            }
+            object.tracePointers(this);
         }
     }
 }

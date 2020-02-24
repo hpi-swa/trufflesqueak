@@ -200,7 +200,8 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return getBytecodeOffset() + bytes.length;
     }
 
-    public void traceObjects(final ObjectTracer tracer) {
+    @Override
+    public void tracePointers(final ObjectTracer tracer) {
         for (final Object literal : getLiterals()) {
             tracer.addIfUnmarked(literal);
         }

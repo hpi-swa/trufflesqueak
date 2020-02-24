@@ -27,8 +27,8 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeN
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
@@ -360,7 +360,8 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         storage = objects;
     }
 
-    public void traceObjects(final ObjectTracer tracer) {
+    @Override
+    public void tracePointers(final ObjectTracer tracer) {
         if (isObjectType()) {
             for (final Object value : getObjectStorage()) {
                 tracer.addIfUnmarked(value);

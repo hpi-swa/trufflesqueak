@@ -240,7 +240,8 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         return new BlockClosureObject(this);
     }
 
-    public void traceObjects(final ObjectTracer tracer) {
+    @Override
+    public void tracePointers(final ObjectTracer tracer) {
         tracer.addIfUnmarked(getReceiver());
         tracer.addIfUnmarked(getOuterContext());
         for (final Object value : getCopied()) {

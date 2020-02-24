@@ -20,8 +20,8 @@ import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
-import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public final class WeakVariablePointersObject extends AbstractPointersObject {
     private static final WeakReference<?> NIL_REFERENCE = new WeakReference<>(NilObject.SINGLETON);
@@ -133,7 +133,8 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         return new WeakVariablePointersObject(this);
     }
 
-    public void traceObjects(final ObjectTracer tracer) {
+    @Override
+    public void tracePointers(final ObjectTracer tracer) {
         super.traceLayoutObjects(tracer);
         /* Weak pointers excluded from tracing. */
     }
