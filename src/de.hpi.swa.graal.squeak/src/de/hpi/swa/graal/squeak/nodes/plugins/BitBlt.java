@@ -14,7 +14,6 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
-import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -1529,14 +1528,9 @@ public final class BitBlt {
             return floatToLong(((FloatObject) fieldOop).getValue());
         } else if (fieldOop instanceof Double) {
             return floatToLong((double) fieldOop);
-        } else if (fieldOop instanceof LargeIntegerObject) {
-            final LargeIntegerObject fieldLarge = (LargeIntegerObject) fieldOop;
-            if (fieldLarge.fitsIntoInt()) {
-                return fieldLarge.intValueExact();
-            }
-            PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         }
-        throw SqueakException.create("Should not be reached:", fieldOop);
+        /* Fail if the value is not an int or float (e.g. Fraction). */
+        throw PrimitiveFailed.andTransferToInterpreter();
     }
 
     private static int floatToLong(final double floatValue) {
@@ -1568,14 +1562,9 @@ public final class BitBlt {
             return floatToLong((double) fieldOop);
         } else if (fieldOop instanceof FloatObject) {
             return floatToLong(((FloatObject) fieldOop).getValue());
-        } else if (fieldOop instanceof LargeIntegerObject) {
-            final LargeIntegerObject fieldLarge = (LargeIntegerObject) fieldOop;
-            if (fieldLarge.fitsIntoInt()) {
-                return fieldLarge.intValueExact();
-            }
-            PrimitiveFailed.andTransferToInterpreter(); // Fail because value is too big.
         }
-        throw SqueakException.create("Should not be reached:", fieldOop);
+        /* Fail if the value is not an int or float (e.g. Fraction). */
+        throw PrimitiveFailed.andTransferToInterpreter();
     }
 
     /*
