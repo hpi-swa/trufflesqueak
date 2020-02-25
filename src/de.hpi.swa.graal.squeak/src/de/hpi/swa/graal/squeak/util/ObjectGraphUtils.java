@@ -12,10 +12,8 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -123,18 +121,13 @@ public final class ObjectGraphUtils {
                     addIfUnmarked(argument);
                 }
                 final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
-                final FrameDescriptor frameDescriptor = blockOrMethod.getFrameDescriptor();
                 addIfUnmarked(FrameAccess.getContext(current, blockOrMethod));
-                final FrameSlot[] stackSlots = blockOrMethod.getStackSlotsUnsafe();
-                for (final FrameSlot slot : stackSlots) {
+                for (final FrameSlot slot : blockOrMethod.getStackSlotsUnsafe()) {
                     if (slot == null) {
                         return null; // Stop here, slot has not (yet) been created.
                     }
-                    final FrameSlotKind currentSlotKind = frameDescriptor.getFrameSlotKind(slot);
-                    if (currentSlotKind == FrameSlotKind.Object) {
+                    if (current.isObject(slot)) {
                         addIfUnmarked(FrameUtil.getObjectSafe(current, slot));
-                    } else if (currentSlotKind == FrameSlotKind.Illegal) {
-                        return null; // Stop here, because this slot and all following are not used.
                     }
                 }
                 return null;

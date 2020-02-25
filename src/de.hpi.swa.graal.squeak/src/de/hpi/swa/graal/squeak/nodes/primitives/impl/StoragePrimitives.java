@@ -21,7 +21,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -129,28 +128,26 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 }
 
                 /*
-                 * use blockOrMethod.getNumStackSlots() here instead of stackPointer because in rare
-                 * cases, the stack is accessed behind the stackPointer.
+                 * use blockOrMethod.getStackSlotsUnsafe() here instead of stackPointer because in
+                 * rare cases, the stack is accessed behind the stackPointer.
                  */
-                for (int i = 0; i < blockOrMethod.getNumStackSlots(); i++) {
-                    final FrameSlot frameSlot = blockOrMethod.getStackSlot(i);
-                    final FrameSlotKind frameSlotKind = blockOrMethod.getFrameDescriptor().getFrameSlotKind(frameSlot);
-                    if (frameSlotKind == FrameSlotKind.Object) {
-                        final Object stackObject = FrameUtil.getObjectSafe(current, frameSlot);
+                for (final FrameSlot slot : blockOrMethod.getStackSlotsUnsafe()) {
+                    if (slot == null) {
+                        return null; // Stop here, slot has not (yet) been created.
+                    }
+                    if (current.isObject(slot)) {
+                        final Object stackObject = FrameUtil.getObjectSafe(current, slot);
                         for (int j = 0; j < fromPointersLength; j++) {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
                                 assert toPointer != null : "Unexpected `null` value";
-                                current.setObject(frameSlot, toPointer);
+                                current.setObject(slot, toPointer);
                                 updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                             } else {
                                 pointersBecomeNode.execute(stackObject, fromPointers, toPointers, copyHash);
                             }
                         }
-                    } else if (frameSlotKind == FrameSlotKind.Illegal) {
-                        /** this slot and all following ones are not initialized, done. */
-                        return null;
                     }
                 }
                 return null;
