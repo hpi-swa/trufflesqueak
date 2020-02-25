@@ -16,6 +16,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -635,8 +636,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             tracer.addIfUnmarked(getMethod());
             tracer.addIfUnmarked(getClosure());
             tracer.addIfUnmarked(getReceiver());
-            for (int i = 0; i < getBlockOrMethod().getNumStackSlots(); i++) {
-                tracer.addIfUnmarked(atTemp(i));
+            assert getBlockOrMethod().getStackSlotsUnsafe().length == getBlockOrMethod().getNumStackSlots();
+            for (final FrameSlot slot : getBlockOrMethod().getStackSlotsUnsafe()) {
+                if (slot == null) {
+                    break; /* Done, this and all following slots have not (yet) been used. */
+                } else if (truffleFrame.isObject(slot)) {
+                    tracer.addIfUnmarked(FrameUtil.getObjectSafe(truffleFrame, slot));
+                }
             }
         }
     }
@@ -649,8 +655,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             writerNode.traceIfNecessary(getMethod());
             writerNode.traceIfNecessary(getClosure());
             writerNode.traceIfNecessary(getReceiver());
-            for (int i = 0; i < getBlockOrMethod().getNumStackSlots(); i++) {
-                writerNode.traceIfNecessary(atTemp(i));
+            assert getBlockOrMethod().getStackSlotsUnsafe().length == getBlockOrMethod().getNumStackSlots();
+            for (final FrameSlot slot : getBlockOrMethod().getStackSlotsUnsafe()) {
+                if (slot == null) {
+                    break; /* Done, this and all following slots have not (yet) been used. */
+                } else if (truffleFrame.isObject(slot)) {
+                    writerNode.traceIfNecessary(FrameUtil.getObjectSafe(truffleFrame, slot));
+                }
             }
         }
     }
@@ -666,8 +677,20 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         writerNode.writeObject(getMethod());
         writerNode.writeObject(NilObject.nullToNil(getClosure()));
         writerNode.writeObject(getReceiver());
-        for (int i = 0; i < getBlockOrMethod().getNumStackSlots(); i++) {
-            writerNode.writeObject(atTemp(i));
+        assert getBlockOrMethod().getStackSlotsUnsafe().length == getBlockOrMethod().getNumStackSlots();
+        final FrameSlot[] stackSlots = getBlockOrMethod().getStackSlotsUnsafe();
+        for (int i = 0; i < stackSlots.length; i++) {
+            final FrameSlot slot = stackSlots[i];
+            if (slot == null) {
+                writerNode.writeNil();
+            } else {
+                final Object stackValue = truffleFrame.getValue(slot);
+                if (stackValue == null) {
+                    writerNode.writeNil();
+                } else {
+                    writerNode.writeObject(stackValue);
+                }
+            }
         }
     }
 
