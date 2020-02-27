@@ -7,6 +7,7 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -56,7 +57,6 @@ public final class ReturnBytecodes {
     }
 
     protected abstract static class AbstractReturnWithSpecializationsNode extends AbstractReturnNode {
-        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
         @Child private SendSelectorNode cannotReturnNode;
         @Child private GetOrCreateContextNode getOrCreateContextNode;
 
@@ -76,7 +76,8 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"isCompiledBlockObject(code)"})
-        protected final Object doClosureReturnFromMaterialized(final VirtualFrame frame) {
+        protected final Object doClosureReturnFromMaterialized(final VirtualFrame frame,
+                        @Cached final AbstractPointersObjectReadNode readNode) {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             assert homeContext.getProcess() != null;
@@ -156,7 +157,6 @@ public final class ReturnBytecodes {
     public abstract static class ReturnTopFromBlockNode extends AbstractReturnNode {
         @Child private FrameStackPopNode popNode;
         @Child private SendSelectorNode cannotReturnNode;
-        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -174,7 +174,8 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"hasModifiedSender(frame)"})
-        protected final Object doNonLocalReturnClosure(final VirtualFrame frame) {
+        protected final Object doNonLocalReturnClosure(final VirtualFrame frame,
+                        @Cached final AbstractPointersObjectReadNode readNode) {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             assert homeContext.getProcess() != null;
