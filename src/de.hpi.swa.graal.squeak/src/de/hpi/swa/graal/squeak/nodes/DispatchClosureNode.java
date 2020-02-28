@@ -6,22 +6,22 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 
-@NodeInfo(cost = NodeCost.NONE)
+@ReportPolymorphism
 public abstract class DispatchClosureNode extends AbstractNode {
+    protected static final int INLINE_CACHE_SIZE = 3;
 
     public abstract Object execute(BlockClosureObject closure, Object[] arguments);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock"}, assumptions = {"cachedBlock.getCallTargetStable()"})
+    @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
     protected static final Object doDirect(final BlockClosureObject closure, final Object[] arguments,
                     @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
                     @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
