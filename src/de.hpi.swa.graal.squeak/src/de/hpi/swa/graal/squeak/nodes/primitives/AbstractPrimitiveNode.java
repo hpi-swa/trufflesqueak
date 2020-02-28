@@ -20,8 +20,8 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 @NodeChild(value = "arguments", type = AbstractArgumentNode[].class)
 public abstract class AbstractPrimitiveNode extends AbstractNode implements AbstractPrimitive {
     protected final CompiledMethodObject method;
-    @CompilationFinal private ConditionProfile hasContextProfile = ConditionProfile.createBinaryProfile();
-    @CompilationFinal private ConditionProfile hasMarkerProfile = ConditionProfile.createBinaryProfile();
+    @CompilationFinal private ConditionProfile hasContextProfile;
+    @CompilationFinal private ConditionProfile hasMarkerProfile;
 
     public AbstractPrimitiveNode(final CompiledMethodObject method) {
         this.method = method;
