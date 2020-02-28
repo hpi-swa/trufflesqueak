@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -40,10 +41,12 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
                     @Cached("createTemporaryReadNode(0)") final FrameSlotReadNode blockArgumentNode,
                     @SuppressWarnings("unused") @Cached("createTemporaryReadNode(1)") final FrameSlotReadNode completeTempReadNode,
                     @Cached("create(code, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
+                    /* It is very likely that ensure block is constant, hence the ValueProfile. */
+                    @Cached("createIdentityProfile()") final ValueProfile blockProfile,
                     @Cached final DispatchClosureNode dispatchNode) {
         completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
         final BlockClosureObject closure = (BlockClosureObject) blockArgumentNode.executeRead(frame);
-        dispatchNode.execute(closure, FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarker(frame), 0));
+        dispatchNode.execute(closure, FrameAccess.newClosureArgumentsTemplate(closure, blockProfile.profile(closure.getCompiledBlock()), getContextOrMarker(frame), 0));
     }
 
     @SuppressWarnings("unused")

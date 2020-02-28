@@ -23,6 +23,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -270,11 +271,17 @@ public final class FrameAccess {
 
     /* Template because closure arguments still need to be filled in. */
     public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final Object senderOrMarker, final int numArgs) {
+        return newClosureArgumentsTemplate(closure, closure.getCompiledBlock(), senderOrMarker, numArgs);
+    }
+
+    /* Template because closure arguments still need to be filled in. */
+    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final CompiledBlockObject block, final Object senderOrMarker, final int numArgs) {
+        assert closure.getCompiledBlock() == block;
         final Object[] copied = closure.getCopied();
         final int numCopied = copied.length;
-        assert closure.getCompiledBlock().getNumArgs() == numArgs : "number of required and provided block arguments do not match";
+        assert block.getNumArgs() == numArgs : "number of required and provided block arguments do not match";
         final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs + numCopied];
-        arguments[ArgumentIndicies.METHOD.ordinal()] = closure.getCompiledBlock().getMethod();
+        arguments[ArgumentIndicies.METHOD.ordinal()] = block.getMethod();
         // Sender is thisContext (or marker)
         arguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = senderOrMarker;
         arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
