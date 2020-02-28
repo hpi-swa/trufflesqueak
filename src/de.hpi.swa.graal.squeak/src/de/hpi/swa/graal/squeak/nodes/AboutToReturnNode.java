@@ -15,7 +15,6 @@ import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
@@ -41,10 +40,10 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
                     @Cached("createTemporaryReadNode(0)") final FrameSlotReadNode blockArgumentNode,
                     @SuppressWarnings("unused") @Cached("createTemporaryReadNode(1)") final FrameSlotReadNode completeTempReadNode,
                     @Cached("create(code, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
-                    @Cached final DispatchBlockNode dispatchNode) {
+                    @Cached final DispatchClosureNode dispatchNode) {
         completeTempWriteNode.executeWrite(frame, BooleanObject.TRUE);
-        final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
-        dispatchNode.executeBlock(block, FrameAccess.newClosureArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY));
+        final BlockClosureObject closure = (BlockClosureObject) blockArgumentNode.executeRead(frame);
+        dispatchNode.execute(closure, FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarker(frame), 0));
     }
 
     @SuppressWarnings("unused")
