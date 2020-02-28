@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -22,6 +24,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObje
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayCopyNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectWriteNodeGen;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ArrayObjectNodes {
     @GenerateUncached
@@ -231,6 +234,54 @@ public final class ArrayObjectNodes {
                 objects[i] = ArrayObject.toObjectFromDouble(doubles[i]);
             }
             return objects;
+        }
+    }
+
+    public abstract static class ArrayObjectCopyIntoFrameArgumentsNode extends AbstractNode {
+        private static final int OFFSET = FrameAccess.getArgumentStartIndex();
+
+        public abstract void execute(ArrayObject obj, Object[] target);
+
+        @Specialization(guards = "obj.isObjectType()")
+        protected static final void doArrayOfObjects(final ArrayObject obj, final Object[] target) {
+            System.arraycopy(obj.getObjectStorage(), 0, target, OFFSET, obj.getObjectLength());
+        }
+
+        @Specialization(guards = "obj.isEmptyType()")
+        protected static final void doEmptyArray(final ArrayObject obj, final Object[] target) {
+            Arrays.fill(target, OFFSET, OFFSET + obj.getEmptyStorage(), NilObject.SINGLETON);
+        }
+
+        @Specialization(guards = "obj.isBooleanType()")
+        protected static final void doArrayOfBooleans(final ArrayObject obj, final Object[] target) {
+            final byte[] booleans = obj.getBooleanStorage();
+            for (int i = 0; i < booleans.length; i++) {
+                target[OFFSET + i] = ArrayObject.toObjectFromBoolean(booleans[i]);
+            }
+        }
+
+        @Specialization(guards = "obj.isCharType()")
+        protected static final void doArrayOfChars(final ArrayObject obj, final Object[] target) {
+            final char[] chars = obj.getCharStorage();
+            for (int i = 0; i < chars.length; i++) {
+                target[OFFSET + i] = ArrayObject.toObjectFromChar(chars[i]);
+            }
+        }
+
+        @Specialization(guards = "obj.isLongType()")
+        protected static final void doArrayOfLongs(final ArrayObject obj, final Object[] target) {
+            final long[] longs = obj.getLongStorage();
+            for (int i = 0; i < longs.length; i++) {
+                target[OFFSET + i] = ArrayObject.toObjectFromLong(longs[i]);
+            }
+        }
+
+        @Specialization(guards = "obj.isDoubleType()")
+        protected static final void doArrayOfDoubles(final ArrayObject obj, final Object[] target) {
+            final double[] doubles = obj.getDoubleStorage();
+            for (int i = 0; i < doubles.length; i++) {
+                target[OFFSET + i] = ArrayObject.toObjectFromDouble(doubles[i]);
+            }
         }
     }
 

@@ -268,13 +268,6 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    public static Object[] newClosureArguments(final BlockClosureObject closure, final Object senderOrMarker, final Object[] closureArguments) {
-        final int numClosureArguments = closureArguments.length;
-        final Object[] arguments = newClosureArgumentsTemplate(closure, senderOrMarker, numClosureArguments);
-        System.arraycopy(closureArguments, 0, arguments, ArgumentIndicies.ARGUMENTS_START.ordinal(), numClosureArguments);
-        return arguments;
-    }
-
     /* Template because closure arguments still need to be filled in. */
     public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final Object senderOrMarker, final int numArgs) {
         final Object[] copied = closure.getCopied();

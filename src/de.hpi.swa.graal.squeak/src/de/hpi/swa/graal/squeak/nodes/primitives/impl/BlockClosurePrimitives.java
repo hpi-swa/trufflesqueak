@@ -18,7 +18,7 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchClosureNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectCopyIntoFrameArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -147,8 +147,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final DispatchClosureNode dispatchNode,
-                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode) {
-            return dispatchNode.execute(closure, FrameAccess.newClosureArguments(closure, getContextOrMarker(frame), getObjectArrayNode.execute(argArray)));
+                        @Cached final ArrayObjectCopyIntoFrameArgumentsNode copyIntoNode) {
+            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarker(frame), sizeNode.execute(argArray));
+            copyIntoNode.execute(argArray, frameArguments);
+            return dispatchNode.execute(closure, frameArguments);
         }
     }
 
@@ -188,8 +190,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached final DispatchClosureNode dispatchNode,
-                        @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode) {
-            final Object[] frameArguments = FrameAccess.newClosureArguments(closure, getContextOrMarker(frame), getObjectArrayNode.execute(argArray));
+                        @Cached final ArrayObjectCopyIntoFrameArgumentsNode copyIntoNode) {
+            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarker(frame), sizeNode.execute(argArray));
+            copyIntoNode.execute(argArray, frameArguments);
             final boolean wasActive = method.image.interrupt.isActive();
             method.image.interrupt.deactivate();
             try {

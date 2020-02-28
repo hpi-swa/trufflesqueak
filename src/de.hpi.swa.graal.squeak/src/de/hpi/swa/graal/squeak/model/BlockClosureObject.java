@@ -286,7 +286,10 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     public Object execute(final Object[] arguments,
                     @Exclusive @Cached final WrapToSqueakNode wrapNode) throws ArityException {
         if (getNumArgs() == arguments.length) {
-            final Object[] frameArguments = FrameAccess.newClosureArguments(this, NilObject.SINGLETON, wrapNode.executeObjects(arguments));
+            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(this, NilObject.SINGLETON, arguments.length);
+            for (int i = 0; i < arguments.length; i++) {
+                frameArguments[FrameAccess.getArgumentStartIndex() + i] = wrapNode.executeWrap(arguments[i]);
+            }
             return getCompiledBlock().getCallTarget().call(frameArguments);
         } else {
             throw ArityException.create((int) getNumArgs(), arguments.length);
