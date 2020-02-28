@@ -12,8 +12,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -24,7 +22,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ReportPolymorphism
-@NodeInfo(cost = NodeCost.NONE)
 @ImportStatic(PrimitiveNodeFactory.class)
 public abstract class DispatchEagerlyNode extends AbstractNodeWithCode {
     protected static final int INLINE_CACHE_SIZE = 6;
