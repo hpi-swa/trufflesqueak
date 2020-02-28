@@ -5,8 +5,11 @@
  */
 package de.hpi.swa.graal.squeak.nodes.primitives;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -17,6 +20,8 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 @NodeChild(value = "arguments", type = AbstractArgumentNode[].class)
 public abstract class AbstractPrimitiveNode extends AbstractNode implements AbstractPrimitive {
     protected final CompiledMethodObject method;
+    @CompilationFinal private ConditionProfile hasContextProfile = ConditionProfile.createBinaryProfile();
+    @CompilationFinal private ConditionProfile hasMarkerProfile = ConditionProfile.createBinaryProfile();
 
     public AbstractPrimitiveNode(final CompiledMethodObject method) {
         this.method = method;
@@ -31,6 +36,11 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
     public abstract Object executePrimitive(VirtualFrame frame);
 
     protected final Object getContextOrMarker(final VirtualFrame frame) {
-        return FrameAccess.getContextOrMarker(frame, method);
+        if (hasContextProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            hasContextProfile = ConditionProfile.createBinaryProfile();
+            hasMarkerProfile = ConditionProfile.createBinaryProfile();
+        }
+        return FrameAccess.getContextOrMarker(frame, method, hasContextProfile, hasMarkerProfile);
     }
 }

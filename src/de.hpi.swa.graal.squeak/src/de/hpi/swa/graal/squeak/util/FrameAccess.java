@@ -18,6 +18,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -163,13 +164,13 @@ public final class FrameAccess {
     }
 
     /* Gets context or marker, lazily initializes the latter if necessary. */
-    public static Object getContextOrMarker(final Frame frame, final CompiledCodeObject blockOrMethod) {
+    public static Object getContextOrMarker(final Frame frame, final CompiledCodeObject blockOrMethod, final ConditionProfile hasContextProfile, final ConditionProfile hasMarkerProfile) {
         final ContextObject context = getContext(frame, blockOrMethod);
-        if (context != null) {
+        if (hasContextProfile.profile(context != null)) {
             return context;
         } else {
             final FrameMarker marker = getMarker(frame, blockOrMethod);
-            if (marker != null) {
+            if (hasMarkerProfile.profile(marker != null)) {
                 return marker;
             } else {
                 final FrameMarker newMarker = new FrameMarker();
