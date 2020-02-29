@@ -5,6 +5,9 @@
  */
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -22,10 +25,13 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives.PrimNewNode;
 
+@ImportStatic(PrimNewNode.class)
 public abstract class SqueakObjectNewNode extends AbstractNodeWithImage {
 
     protected SqueakObjectNewNode(final SqueakImageContext image) {
@@ -64,8 +70,17 @@ public abstract class SqueakObjectNewNode extends AbstractNodeWithImage {
         return new ClassObject(image, classObject, classObject.getBasicInstanceSize() + METACLASS.INST_SIZE);
     }
 
+    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!classObject.isMetaClass()", "!classObject.instancesAreClasses()",
+                    "classObject.getLayout() == cachedLayout"}, limit = "NEW_CACHE_SIZE")
+    protected final PointersObject doPointers(final ClassObject classObject, final int extraSize,
+                    @Cached("classObject.getLayout()") final ObjectLayout cachedLayout) {
+        assert extraSize == 0;
+        return new PointersObject(image, classObject, cachedLayout);
+    }
+
+    @TruffleBoundary
     @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!classObject.isMetaClass()", "!classObject.instancesAreClasses()"})
-    protected final PointersObject doPointers(final ClassObject classObject, final int extraSize) {
+    protected final PointersObject doPointersFallback(final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
         return new PointersObject(image, classObject);
     }
@@ -92,13 +107,28 @@ public abstract class SqueakObjectNewNode extends AbstractNodeWithImage {
         return BlockClosureObject.create(image, extraSize);
     }
 
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!classObject.isMethodContextClass()", "!classObject.isBlockClosureClass()",
+                    "classObject.getLayout() == cachedLayout"}, limit = "NEW_CACHE_SIZE")
+    protected final VariablePointersObject doVariablePointers(final ClassObject classObject, final int extraSize,
+                    @Cached("classObject.getLayout()") final ObjectLayout cachedLayout) {
+        return new VariablePointersObject(image, classObject, cachedLayout, extraSize);
+    }
+
+    @TruffleBoundary
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!classObject.isMethodContextClass()", "!classObject.isBlockClosureClass()"})
-    protected final VariablePointersObject doVariablePointers(final ClassObject classObject, final int extraSize) {
+    protected final VariablePointersObject doVariablePointersFallback(final ClassObject classObject, final int extraSize) {
         return new VariablePointersObject(image, classObject, extraSize);
     }
 
+    @Specialization(guards = {"classObject.isWeak()", "classObject.getLayout() == cachedLayout"}, limit = "NEW_CACHE_SIZE")
+    protected final WeakVariablePointersObject doWeakPointers(final ClassObject classObject, final int extraSize,
+                    @Cached("classObject.getLayout()") final ObjectLayout cachedLayout) {
+        return new WeakVariablePointersObject(image, classObject, cachedLayout, extraSize);
+    }
+
+    @TruffleBoundary
     @Specialization(guards = "classObject.isWeak()")
-    protected final WeakVariablePointersObject doWeakPointers(final ClassObject classObject, final int extraSize) {
+    protected final WeakVariablePointersObject doWeakPointersFallback(final ClassObject classObject, final int extraSize) {
         return new WeakVariablePointersObject(image, classObject, extraSize);
     }
 

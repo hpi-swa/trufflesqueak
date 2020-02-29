@@ -22,8 +22,8 @@ import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.Abstr
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
+import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
 public abstract class AbstractPointersObject extends AbstractSqueakObjectWithClassAndHash {
     /*
@@ -56,9 +56,20 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         super(image);
     }
 
+    protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {
+        super(image, classObject);
+        assert classObject.getLayout() == layout : "Layout mismatch";
+        CompilerAsserts.partialEvaluationConstant(layout);
+        this.layout = layout;
+        primitiveExtension = layout.getFreshPrimitiveExtension();
+        objectExtension = layout.getFreshObjectExtension();
+    }
+
     protected AbstractPointersObject(final SqueakImageContext image, final ClassObject classObject) {
         super(image, classObject);
-        initializeLayoutAndExtensionsUnsafe();
+        layout = classObject.getLayout();
+        primitiveExtension = layout.getFreshPrimitiveExtension();
+        objectExtension = layout.getFreshObjectExtension();
     }
 
     protected AbstractPointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
@@ -103,7 +114,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         }
     }
 
-    protected final void initializeLayoutAndExtensionsUnsafe() {
+    protected final void fillInLayoutAndExtensions() {
         layout = getSqueakClass().getLayout();
         primitiveExtension = layout.getFreshPrimitiveExtension();
         objectExtension = layout.getFreshObjectExtension();

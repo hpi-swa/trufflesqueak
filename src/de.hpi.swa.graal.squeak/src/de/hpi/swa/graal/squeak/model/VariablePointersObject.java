@@ -13,6 +13,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
@@ -25,6 +26,11 @@ public final class VariablePointersObject extends AbstractPointersObject {
 
     public VariablePointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
+    }
+
+    public VariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
+        super(image, classObject, layout);
+        variablePart = ArrayUtils.withAll(variableSize, NilObject.SINGLETON);
     }
 
     public VariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final int variableSize) {
@@ -41,7 +47,7 @@ public final class VariablePointersObject extends AbstractPointersObject {
     public void fillin(final SqueakImageChunk chunk) {
         final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
         final Object[] pointersObject = chunk.getPointers();
-        initializeLayoutAndExtensionsUnsafe();
+        fillInLayoutAndExtensions();
         final int instSize = getSqueakClass().getBasicInstanceSize();
         for (int i = 0; i < instSize; i++) {
             writeNode.execute(this, i, pointersObject[i]);

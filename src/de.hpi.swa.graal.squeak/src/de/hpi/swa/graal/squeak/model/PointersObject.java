@@ -11,6 +11,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.BINDING;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
@@ -35,6 +36,10 @@ public final class PointersObject extends AbstractPointersObject {
         super(image, hash, klass);
     }
 
+    public PointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout) {
+        super(image, classObject, layout);
+    }
+
     public PointersObject(final SqueakImageContext image, final ClassObject classObject) {
         super(image, classObject);
     }
@@ -55,7 +60,7 @@ public final class PointersObject extends AbstractPointersObject {
     public void fillin(final SqueakImageChunk chunk) {
         final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
         final Object[] pointersObject = chunk.getPointers();
-        initializeLayoutAndExtensionsUnsafe();
+        fillInLayoutAndExtensions();
         for (int i = 0; i < pointersObject.length; i++) {
             writeNode.execute(this, i, pointersObject[i]);
         }

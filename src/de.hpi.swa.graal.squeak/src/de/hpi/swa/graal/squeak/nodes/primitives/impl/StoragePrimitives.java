@@ -15,6 +15,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -186,8 +187,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 70)
-    protected abstract static class PrimNewNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        protected static final int NEW_CACHE_SIZE = 3;
+    public abstract static class PrimNewNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        public static final int NEW_CACHE_SIZE = 6;
         @Child private SqueakObjectNewNode newNode;
 
         protected PrimNewNode(final CompiledMethodObject method) {
@@ -222,8 +223,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 71)
+    @ImportStatic(PrimNewNode.class)
     protected abstract static class PrimNewWithArgNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-        protected static final int NEW_CACHE_SIZE = 3;
         @Child private SqueakObjectNewNode newNode;
 
         protected PrimNewWithArgNode(final CompiledMethodObject method) {
