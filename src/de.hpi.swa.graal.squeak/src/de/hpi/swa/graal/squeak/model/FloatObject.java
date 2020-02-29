@@ -114,6 +114,10 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         return doubleValue >= 0;
     }
 
+    public boolean isZero() {
+        return doubleValue == 0;
+    }
+
     @Override
     public int getNumSlots() {
         return 1; /* FIXME: inconsistent with size (not counting in header for some reason) */
