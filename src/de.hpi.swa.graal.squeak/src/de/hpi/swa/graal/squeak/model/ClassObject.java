@@ -57,7 +57,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private PointersObject organization;
     private Object[] pointers;
 
-    private ObjectLayout layout;
+    @CompilationFinal private ObjectLayout layout;
 
     public ClassObject(final SqueakImageContext image) {
         super(image);
@@ -94,7 +94,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public ObjectLayout getLayout() {
         if (layout == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             layout = new ObjectLayout(this, getBasicInstanceSize());
         }
         return layout;
@@ -102,6 +102,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void updateLayout(final ObjectLayout newLayout) {
         assert layout == null || !layout.isValid() : "Old layout not invalidated";
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         layout = newLayout;
     }
 
