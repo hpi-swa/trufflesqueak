@@ -172,6 +172,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         pc = LOCAL_RETURN_PC;
                         continue bytecode_loop;
                     } catch (final PrimitiveFailed e) {
+                        /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
                         getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
                         /*
                          * Same toString() methods may throw compilation warnings, this is expected
