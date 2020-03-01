@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -41,7 +42,13 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "value.isByteType()")
+        protected Object printArgs(final Object receiver, final NativeObject value) {
+            method.image.printToStdOut(value.asStringUnsafe());
+            return receiver;
+        }
+
+        @Fallback
         protected Object printArgs(final Object receiver, final Object value) {
             method.image.printToStdOut(value);
             return receiver;
