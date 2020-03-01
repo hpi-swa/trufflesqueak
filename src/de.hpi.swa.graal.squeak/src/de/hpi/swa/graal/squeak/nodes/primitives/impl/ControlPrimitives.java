@@ -209,6 +209,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             signalSemaphoreNode = SignalSemaphoreNode.create(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @Specialization(guards = "receiver.getSqueakClass().isSemaphoreClass()")
         protected final Object doSignal(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final StackPushForPrimitivesNode pushNode) {
@@ -225,6 +230,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimWaitNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @Specialization(guards = {"receiver.getSqueakClass().isSemaphoreClass()", "hasExcessSignals(receiver)"})
@@ -263,6 +273,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             resumeProcessNode = ResumeProcessNode.create(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @Specialization
         protected final Object doResume(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final AbstractPointersObjectReadNode readNode,
@@ -286,6 +301,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimSuspendNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @Specialization(guards = "receiver.isActiveProcess(readNode)")
@@ -663,6 +683,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             yieldProcessNode = YieldProcessNode.create(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @Specialization
         protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
                         @Cached final StackPushForPrimitivesNode pushNode) {
@@ -697,6 +722,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @Specialization(guards = "mutex.isEmptyList(readNode)")
         protected final PointersObject doExitEmpty(final PointersObject mutex) {
             writeNode.executeNil(mutex, MUTEX.OWNER);
@@ -722,6 +752,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         public PrimEnterCriticalSectionNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @Specialization(guards = "ownerIsNil(mutex)")
@@ -881,6 +916,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         public PrimRelinquishProcessorNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @Specialization

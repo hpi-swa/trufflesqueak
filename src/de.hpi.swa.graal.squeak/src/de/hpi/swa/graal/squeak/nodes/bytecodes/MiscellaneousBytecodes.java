@@ -26,22 +26,18 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoTempNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackTopNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 
 public final class MiscellaneousBytecodes {
 
     public static final class CallPrimitiveNode extends AbstractBytecodeNode {
         public static final int NUM_BYTECODES = 3;
 
-        @Child public AbstractPrimitiveNode primitiveNode;
         private final int primitiveIndex;
 
         public CallPrimitiveNode(final CompiledMethodObject method, final int index, final int byte1, final int byte2) {
             super(method, index, NUM_BYTECODES);
-            primitiveIndex = byte1 + (byte2 << 8);
-            primitiveNode = PrimitiveNodeFactory.forIndex(method, primitiveIndex);
             assert method.hasPrimitive();
+            primitiveIndex = byte1 + (byte2 << 8);
         }
 
         public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int byte1, final int byte2) {

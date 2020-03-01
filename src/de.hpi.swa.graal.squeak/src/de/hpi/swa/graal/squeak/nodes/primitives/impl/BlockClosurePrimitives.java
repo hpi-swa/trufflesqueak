@@ -45,6 +45,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 0"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure,
@@ -67,6 +72,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         protected PrimClosureValue1Node(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @SuppressWarnings("unused")
@@ -95,6 +105,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         protected PrimClosureValue2Node(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @SuppressWarnings("unused")
@@ -127,6 +142,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 3"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3,
@@ -157,6 +177,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         protected PrimClosureValueNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @SuppressWarnings("unused")
@@ -223,6 +248,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == sizeNode.execute(argArray)"}, assumptions = {
                         "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
@@ -254,6 +284,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         protected PrimClosureValueNoContextSwitchNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @SuppressWarnings("unused")
@@ -294,6 +329,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         protected PrimClosureValueAryNoContextSwitchNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @SuppressWarnings("unused")

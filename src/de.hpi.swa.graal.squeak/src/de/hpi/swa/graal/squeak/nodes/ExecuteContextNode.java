@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
@@ -33,6 +34,8 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
@@ -51,6 +54,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
     @Child private FrameStackInitializationNode frameInitializationNode;
+    @Child private AbstractPrimitiveNode primitiveNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
     @Child private InterruptHandlerNode interruptHandlerNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
@@ -64,15 +68,18 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         } else {
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
-        frameInitializationNode = resume ? null : FrameStackInitializationNode.create(code);
-        /*
-         * Only check for interrupts if method is relatively large. Also, skip timer interrupts here
-         * as they trigger too often, which causes a lot of context switches and therefore
-         * materialization and deopts. Timer inputs are currently handled in
-         * primitiveRelinquishProcessor (#230) only.
-         */
-        interruptHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? InterruptHandlerNode.create(code, false) : null;
-        materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
+        if (code.hasPrimitive()) {
+            primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, code.primitiveIndex());
+        } else if (bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS) {
+            /* Only check for interrupts if method has no primitive and is relatively large. */
+            interruptHandlerNode = InterruptHandlerNode.create(code, false);
+        }
+        if (!resume) {
+            materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create(code);
+            if (primitiveNode == null || primitiveNode.needsFrameInitialization()) {
+                frameInitializationNode = FrameStackInitializationNode.create(code);
+            }
+        }
     }
 
     protected ExecuteContextNode(final ExecuteContextNode executeContextNode) {
@@ -97,10 +104,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 final ContextObject context = getGetOrCreateContextNode().executeGet(frame);
                 context.setProcess(code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached()));
                 throw ProcessSwitch.createWithBoundary(context);
-            }
-            frameInitializationNode.executeInitialize(frame);
-            if (interruptHandlerNode != null) {
-                interruptHandlerNode.executeTrigger(frame);
             }
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
@@ -160,18 +163,32 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         int pc = 0;
         int backJumpCounter = 0;
+
+        if (frameInitializationNode != null) {
+            frameInitializationNode.executeInitialize(frame);
+        }
+        if (interruptHandlerNode != null) {
+            interruptHandlerNode.executeTrigger(frame);
+        }
+
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
             if (node instanceof CallPrimitiveNode) {
-                final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
-                if (callPrimitiveNode.primitiveNode != null) {
+                if (primitiveNode != null) {
                     try {
-                        returnValue = callPrimitiveNode.primitiveNode.executePrimitive(frame);
+                        returnValue = primitiveNode.executePrimitive(frame);
                         pc = LOCAL_RETURN_PC;
                         continue bytecode_loop;
                     } catch (final PrimitiveFailed e) {
+                        if (!primitiveNode.needsFrameInitialization()) {
+                            if (frameInitializationNode == null) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                frameInitializationNode = insert(FrameStackInitializationNode.create(code));
+                            }
+                            frameInitializationNode.executeInitialize(frame);
+                        }
                         /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
                         getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
                         /*
@@ -179,12 +196,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                          * and ok for primitive failure logging purposes. Note that primitives that
                          * are not implemented are also not logged.
                          */
-                        LogUtils.PRIMITIVES.fine(() -> callPrimitiveNode.primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
+                        LogUtils.PRIMITIVES.fine(() -> primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
                                         ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
                         /* continue with fallback code. */
                     }
                 }
-                pc = callPrimitiveNode.getSuccessorIndex();
+                pc = node.getSuccessorIndex();
                 assert pc == CallPrimitiveNode.NUM_BYTECODES;
                 continue;
             } else if (node instanceof AbstractSendNode) {

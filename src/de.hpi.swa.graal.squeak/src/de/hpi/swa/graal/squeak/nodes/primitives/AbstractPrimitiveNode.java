@@ -43,4 +43,8 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
         }
         return FrameAccess.getContextOrMarker(frame, method, hasContextProfile, hasMarkerProfile);
     }
+
+    public boolean needsFrameInitialization() {
+        return false;
+    }
 }

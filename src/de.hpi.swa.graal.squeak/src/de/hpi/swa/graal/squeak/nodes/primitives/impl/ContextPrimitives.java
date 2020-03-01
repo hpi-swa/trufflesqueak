@@ -47,6 +47,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @Specialization(guards = {"0 <= newStackPointer", "newStackPointer <= LARGE_FRAMESIZE"})
         protected static final ContextObject store(final ContextObject receiver, final long newStackPointer) {
             /**
@@ -63,6 +68,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @Specialization(guards = "receiver.hasMaterializedSender()")
@@ -125,6 +135,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimTerminateToNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         public PrimTerminateToNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @Specialization
@@ -209,6 +224,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @Specialization(guards = {"receiver.hasMaterializedSender()"})
         protected static final AbstractSqueakObject findNext(final ContextObject receiver) {
             ContextObject context = receiver;
@@ -279,6 +299,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @Specialization(guards = {"index < receiver.getStackSize()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
                         @Cached final ContextObjectReadNode readNode) {
@@ -295,6 +320,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
+        }
+
         @Specialization(guards = "index < receiver.getStackSize()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
                         @Cached final ContextObjectWriteNode writeNode) {
@@ -309,6 +339,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimContextSizeNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final boolean needsFrameInitialization() {
+            return true;
         }
 
         @Specialization(guards = "receiver.hasTruffleFrame()")
