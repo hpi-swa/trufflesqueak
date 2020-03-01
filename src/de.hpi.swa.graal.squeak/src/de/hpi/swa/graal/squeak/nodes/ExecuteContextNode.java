@@ -237,8 +237,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 continue bytecode_loop;
             } else {
                 /* All other bytecode nodes. */
-                pc = node.getSuccessorIndex();
                 node.executeVoid(frame);
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop;
             }
         }
@@ -304,9 +304,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 continue bytecode_loop_slow;
             } else {
                 /* All other bytecode nodes. */
-                final int successor = node.getSuccessorIndex();
                 node.executeVoid(frame);
-                pc = successor;
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop_slow;
             }
         }
