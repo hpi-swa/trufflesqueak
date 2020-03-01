@@ -355,10 +355,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Override
     public SourceSection getSourceSection() {
         if (section == null) {
-            if (code.image.isTesting()) {
-                // Cannot provide source section in case of AbstractSqueakTestCaseWithDummyImage.
-                return null;
-            }
             final Source source = code.getSource();
             section = source.createSection(1, 1, source.getLength());
         }
