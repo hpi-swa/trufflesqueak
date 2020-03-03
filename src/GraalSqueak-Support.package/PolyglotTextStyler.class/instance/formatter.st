@@ -1,3 +1,3 @@
-as yet unclassified
+accessing
 formatter
-	^ formatter ifNil: [ formatter := Polyglot eval: 'ruby' string: 'require ''rouge''; Rouge::Formatters::HTMLInline.new(Rouge::Themes::IgorPro.new)' ]
+	^ formatter ifNil: [ formatter := self newRougeFormatter ]

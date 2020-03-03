@@ -22,6 +22,12 @@ setupImage
 	self openButton: PolyglotWorkspace asString, ' open' at: 20@28.
 	self openButton: PolyglotNotebook asString, ' open' at: 190@28.
 
+	self logo asMorph
+		position: 650@28;
+		setToAdhereToEdge: #bottomRight;
+		beSticky;
+		openInWorld.
+
 	PolyglotWorkspace open
 		position: 20@60;
 		extent: 600@300.

@@ -1,4 +1,4 @@
-as yet unclassified
+private
 startUp
 	((Polyglot isPermitted: 'ruby') and:
 		[ (Smalltalk os platformName = 'Win32') not ]) ifTrue: [

@@ -1,4 +1,4 @@
 accessing
 languageID
 	
-	^ languageID ifNil: [ languageID := Polyglot defaultLanguage ]
+	^ languageID ifNil: [ languageID := Polyglot defaultLanguageId ]

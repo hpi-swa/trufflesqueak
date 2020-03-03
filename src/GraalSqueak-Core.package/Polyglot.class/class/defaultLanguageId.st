@@ -1,3 +1,3 @@
 constants
-defaultLanguage
+defaultLanguageId
 	^ self languageIdSmalltalk

@@ -1,16 +1,13 @@
 {
-	"category" : "GraalSqueak-Support",
+	"category" : "GraalSqueak-Utilities",
 	"classinstvars" : [
-		"Default" ],
+		 ],
 	"classvars" : [
 		 ],
 	"commentStamp" : "",
 	"instvars" : [
-		"formatter",
-		"lexers",
-		"rubyUnbox",
-		"stStyler" ],
-	"name" : "PolyglotTextStyler",
+		 ],
+	"name" : "GraalSqueakUtilities",
 	"pools" : [
 		 ],
 	"super" : "Object",

@@ -1,4 +1,4 @@
-as yet unclassified
+rouge
 lexerNameFor: languageID
 	languageID = Polyglot languageIdJS ifTrue: [ ^ 'Javascript' ].
 	languageID = Polyglot languageIdRuby ifTrue: [ ^ 'Ruby' ].
