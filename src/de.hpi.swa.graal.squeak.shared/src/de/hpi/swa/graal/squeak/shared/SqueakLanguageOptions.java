@@ -33,6 +33,8 @@ public final class SqueakLanguageOptions {
     public static final String STACK_DEPTH_PROTECTION = "stack-depth-protection";
     public static final String STACK_DEPTH_PROTECTION_FLAG = "--" + STACK_DEPTH_PROTECTION;
     public static final String STACK_DEPTH_PROTECTION_HELP = "Enable stack depth protection";
+    public static final String STARTUP = "disable-startup";
+    public static final String STARTUP_HELP = "Disable image startup routine in headless mode";
     public static final String STORAGE_STRATEGIES = "storage-strategies";
     public static final String STORAGE_STRATEGIES_HELP = "Disable storage strategy optimization for arrays";
     public static final String TESTING = "testing";

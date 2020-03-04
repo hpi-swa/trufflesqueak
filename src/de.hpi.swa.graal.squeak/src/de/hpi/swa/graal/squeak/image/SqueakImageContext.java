@@ -179,6 +179,10 @@ public final class SqueakImageContext {
         if (!loaded()) {
             // Load image.
             SqueakImageReader.load(this);
+            if (options.disableStartup) {
+                printToStdOut("Skipping startup routine...");
+                return;
+            }
             printToStdOut("Preparing image for headless execution...");
             // Remove active context.
             getActiveProcessSlow().instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
