@@ -163,6 +163,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='disable interrupt handler',
                         dest='disable_interrupts',
                         action='store_true', default=False)
+    parser.add_argument('--disable-startup',
+                        help='disable startup routine in headless mode',
+                        dest='disable_startup',
+                        action='store_true', default=False)
     parser.add_argument('-etf', '--enable-transcript-forwarding',
                         help='Forward stdio to Transcript',
                         dest='enable_transcript_forwarding',
@@ -303,6 +307,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.disable_interrupts:
         squeak_arguments.append(
             '--%s.disable-interrupts' % LANGUAGE_ID)
+    if parsed_args.disable_startup:
+        squeak_arguments.extend([
+            '--experimental-options', 
+            '--%s.disable-startup' % LANGUAGE_ID])
     if parsed_args.headless:
         squeak_arguments.append('--%s.headless' % LANGUAGE_ID)
     if parsed_args.code:
