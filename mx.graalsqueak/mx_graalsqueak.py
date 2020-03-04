@@ -309,7 +309,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
             '--%s.disable-interrupts' % LANGUAGE_ID)
     if parsed_args.disable_startup:
         squeak_arguments.extend([
-            '--experimental-options', 
+            '--experimental-options',
             '--%s.disable-startup' % LANGUAGE_ID])
     if parsed_args.headless:
         squeak_arguments.append('--%s.headless' % LANGUAGE_ID)
