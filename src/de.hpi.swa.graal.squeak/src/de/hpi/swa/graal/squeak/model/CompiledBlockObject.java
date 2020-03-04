@@ -56,7 +56,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
 
     @Override
     public String toString() {
-        return "[] in " + getMethod().toString();
+        return "[] in " + getMethod().toString() + " (offset: " + offset + ")";
     }
 
     @Override
