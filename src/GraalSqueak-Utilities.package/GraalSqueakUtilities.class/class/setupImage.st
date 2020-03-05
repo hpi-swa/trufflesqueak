@@ -24,6 +24,7 @@ setupImage
 
 	self logo asMorph
 		position: 650@28;
+		borderWidth: 10;
 		setToAdhereToEdge: #bottomRight;
 		beSticky;
 		openInWorld.
