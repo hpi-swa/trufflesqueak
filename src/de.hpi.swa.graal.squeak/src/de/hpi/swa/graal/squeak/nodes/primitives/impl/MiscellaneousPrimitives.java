@@ -7,6 +7,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.awt.DisplayMode;
 import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -577,9 +578,17 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 10002: // operating system details (Win32 only)
                     return String.format("Operating System: %s (%s, %s)", getOSName(), getOSVersion(), getOSArch());
                 case 10003: // graphics hardware details (Win32 only)
-                    final DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+                    int width = 0;
+                    int height = 0;
+                    try {
+                        final DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+                        width = dm.getWidth();
+                        height = dm.getHeight();
+                    } catch (final HeadlessException e) {
+                        /* Report 0 x 0 in headless mode. */
+                    }
                     return String.format("Display Information: \n" +
-                                    "\tPrimary monitor resolution: %d x %d\n", dm.getWidth(), dm.getHeight());
+                                    "\tPrimary monitor resolution: %d x %d\n", width, height);
                 default:
                     return null;
             }
