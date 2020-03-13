@@ -7,6 +7,7 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -14,7 +15,7 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
@@ -41,9 +42,12 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimit
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SecondExtendedSendNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SingleExtendedSuperNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.LogUtils;
@@ -64,6 +68,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
     @Child private InterruptHandlerNode interruptHandlerNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
+    @Child private AbstractPrimitiveNode primitiveNode;
+    @CompilationFinal private boolean primitiveNodeInitialized = false;
+
+    @Children private FrameSlotReadNode[] slotReadNodes;
+    @Children private FrameSlotWriteNode[] slotWriteNodes;
+    @Children private Node[] opcodeNodes;
 
     @Child private SqueakObjectAt0Node at0Node;
     @Child private SqueakObjectAtPut0Node atPut0Node;
@@ -87,6 +97,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
          */
         interruptHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? InterruptHandlerNode.create(code, false) : null;
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
+        slotReadNodes = new FrameSlotReadNode[code.getNumStackSlots()];
+        slotWriteNodes = new FrameSlotWriteNode[code.getNumStackSlots()];
     }
 
     protected ExecuteContextNode(final ExecuteContextNode executeContextNode) {
@@ -167,19 +179,35 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     }
 
     private void push(final VirtualFrame frame, final int slot, final Object value) {
-        frame.setObject(code.getStackSlot(slot), value);
+        getStackWriteNode(slot).executeWrite(frame, value);
     }
 
     private Object pop(final VirtualFrame frame, final int slot) {
-        return frame.getValue(code.getStackSlot(slot));
+        return getStackReadNode(slot).executeRead(frame);
     }
 
     private Object peek(final VirtualFrame frame, final int slot) {
-        return frame.getValue(code.getStackSlot(slot));
+        return getStackReadNode(slot).executeRead(frame);
     }
 
     private Object top(final VirtualFrame frame, final int stackPointer) {
         return pop(frame, stackPointer - 1);
+    }
+
+    private FrameSlotWriteNode getStackWriteNode(final int slot) {
+        if (slotWriteNodes[slot] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            slotWriteNodes[slot] = insert(FrameSlotWriteNode.create(code.getStackSlot(slot)));
+        }
+        return slotWriteNodes[slot];
+    }
+
+    private FrameSlotReadNode getStackReadNode(final int slot) {
+        if (slotReadNodes[slot] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            slotReadNodes[slot] = insert(FrameSlotReadNode.create(code.getStackSlot(slot)));
+        }
+        return slotReadNodes[slot];
     }
 
     private SqueakObjectAt0Node getAt0Node() {
@@ -223,7 +251,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         int pc = 0;
         final int backJumpCounter = 0;
         int stackPointer = 0;
-        Object returnValue = null;
+        final Object returnValue = null;
         while (true) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final int opcode = code.getBytes()[pc] & 0xFF;
@@ -444,8 +472,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 }
                 case 131: {
                     final int nextByte = code.getBytes()[pc++] & 0xFF;
-                    final Object selector = code.getLiteral(nextByte & 31);
-                    final int argCount = nextByte >> 5;
+                    final NativeObject selector = (NativeObject) code.getLiteral(nextByte & 31);
+                    final int numArgs = nextByte >> 5;
+                    final Object[] receiverAndArguments = createArgumentsForCall(frame, numArgs, stackPointer);
+                    final Object result = getExecuteSendNode(opcode, false).execute(frame, selector, receiverAndArguments);
                 }
                 case 132: {
                     final int second = code.getBytes()[pc++] & 0xFF;
@@ -453,13 +483,17 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int opType = second >> 5;
                     switch (opType) {
                         case 0: {
-                            final Object selector = code.getLiteral(third);
-                            final int argCount = second & 31;
+                            final NativeObject selector = (NativeObject) code.getLiteral(third);
+                            final int numArgs = second & 31;
+                            final Object[] receiverAndArguments = createArgumentsForCall(frame, numArgs, stackPointer);
+                            final Object result = getExecuteSendNode(opcode, false).execute(frame, selector, receiverAndArguments);
                         }
                         case 1: {
-                            final Object selector = code.getLiteral(third);
-                            final int argCount = second & 31;
-                            // super
+                            final NativeObject selector = (NativeObject) code.getLiteral(third);
+                            final int numArgs = second & 31;
+                            final Object[] receiverAndArguments = createArgumentsForCall(frame, numArgs, stackPointer);
+                            final Object result = getExecuteSendNode(opcode, true).execute(frame, selector, receiverAndArguments);
+                            // superd
                         }
                         case 2:
                             push(frame, stackPointer++, getAt0Node().execute(FrameAccess.getReceiver(frame), third));
@@ -477,10 +511,20 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             throw SqueakException.create("Unknown/uninterpreted bytecode:", opType);
                     }
                 }
-                case 133:
-                    return new SingleExtendedSuperNode(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
-                case 134:
-                    return new SecondExtendedSendNode(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
+                case 133: {
+                    final int nextByte = code.getBytes()[pc++] & 0xFF;
+                    final NativeObject selector = (NativeObject) code.getLiteral(nextByte & 31);
+                    final int numArgs = nextByte >> 5;
+                    final Object[] receiverAndArguments = createArgumentsForCall(frame, numArgs, stackPointer);
+                    final Object result = getExecuteSendNode(opcode, true).execute(frame, selector, receiverAndArguments);
+                }
+                case 134: {
+                    final int nextByte = code.getBytes()[pc++] & 0xFF;
+                    final NativeObject selector = (NativeObject) code.getLiteral(nextByte & 63);
+                    final int numArgs = nextByte >> 6;
+                    final Object[] receiverAndArguments = createArgumentsForCall(frame, numArgs, stackPointer);
+                    final Object result = getExecuteSendNode(opcode, false).execute(frame, selector, receiverAndArguments);
+                }
                 case 135:
                     pop(frame, --stackPointer);
                 case 136: {
@@ -509,9 +553,36 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     }
                     push(frame, stackPointer++, array);
                 }
-                case 139:
-                    assert code instanceof CompiledMethodObject;
-                    return CallPrimitiveNode.create((CompiledMethodObject) code, index, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
+                case 139: {
+                    if (!primitiveNodeInitialized) {
+                        assert primitiveNode == null;
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        assert code instanceof CompiledMethodObject && code.hasPrimitive();
+                        final int byte1 = code.getBytes()[pc++] & 0xFF;
+                        final int byte2 = code.getBytes()[pc++] & 0xFF;
+                        final int primitiveIndex = byte1 + (byte2 << 8);
+                        primitiveNode = insert(PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex));
+                        primitiveNodeInitialized = true;
+                    }
+                    if (primitiveNode != null) {
+                        try {
+                            return primitiveNode.executePrimitive(frame);
+                        } catch (final PrimitiveFailed e) {
+                            /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
+                            getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
+                            /*
+                             * Same toString() methods may throw compilation warnings, this is
+                             * expected and ok for primitive failure logging purposes. Note that
+                             * primitives that are not implemented are also not logged.
+                             */
+                            LogUtils.PRIMITIVES.fine(() -> primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
+                                            ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
+                            /* continue with fallback code. */
+                        }
+                    }
+                    pc = CallPrimitiveNode.NUM_BYTECODES;
+                    continue;
+                }
                 case 140: {
                     final int indexInArray = code.getBytes()[pc++] & 0xFF;
                     final int indexOfArray = code.getBytes()[pc++] & 0xFF;
@@ -625,8 +696,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 205:
                 case 206:
                 case 207: {
-                    final NativeObject specialSelector = code.image.getSpecialSelector(opcode - 176);
-                    final int numArguments = code.image.getSpecialSelectorNumArgs(opcode - 176);
+                    final NativeObject selector = code.image.getSpecialSelector(opcode - 176);
+                    final int numRcvrAndArgs = 1 + code.image.getSpecialSelectorNumArgs(opcode - 176);
+                    final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
+                    stackPointer -= numRcvrAndArgs;
+                    final Object result = getExecuteSendNode(opcode, false).execute(frame, selector, receiverAndArguments);
+                    assert result != null : "Result of a message send should not be null";
+                    if (result != AbstractSendNode.NO_RESULT) {
+                        push(frame, stackPointer++, result);
+                    }
                 }
                 case 208:
                 case 209:
@@ -644,8 +722,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 221:
                 case 222:
                 case 223: {
-                    final Object selector = code.getLiteral(opcode & 0xF);
-                    // args == 0
+                    final NativeObject selector = (NativeObject) code.getLiteral(opcode & 0xF);
+                    final int numRcvrAndArgs = 1;
+                    final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
+                    stackPointer -= numRcvrAndArgs;
+                    final Object result = getExecuteSendNode(opcode, false).execute(frame, selector, receiverAndArguments);
+                    assert result != null : "Result of a message send should not be null";
+                    if (result != AbstractSendNode.NO_RESULT) {
+                        push(frame, stackPointer++, result);
+                    }
                 }
                 case 224:
                 case 225:
@@ -663,8 +748,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 237:
                 case 238:
                 case 239: {
-                    final Object selector = code.getLiteral(opcode & 0xF);
-                    // args == 1
+                    final NativeObject selector = (NativeObject) code.getLiteral(opcode & 0xF);
+                    final int numRcvrAndArgs = 2;
+                    final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
+                    stackPointer -= numRcvrAndArgs;
+                    final Object result = getExecuteSendNode(opcode, false).execute(frame, selector, receiverAndArguments);
+                    assert result != null : "Result of a message send should not be null";
+                    if (result != AbstractSendNode.NO_RESULT) {
+                        push(frame, stackPointer++, result);
+                    }
                 }
                 case 240:
                 case 241:
@@ -682,100 +774,44 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 253:
                 case 254:
                 case 255: {
-                    final Object selector = code.getLiteral(opcode & 0xF);
-                    // args == 2
+                    final NativeObject selector = (NativeObject) code.getLiteral(opcode & 0xF);
+                    final int numRcvrAndArgs = 3;
+                    final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
+                    stackPointer -= numRcvrAndArgs;
+                    final Object result = getExecuteSendNode(opcode, false).execute(frame, selector, receiverAndArguments);
+                    assert result != null : "Result of a message send should not be null";
+                    if (result != AbstractSendNode.NO_RESULT) {
+                        push(frame, stackPointer++, result);
+                    }
                 }
                 default:
                     throw SqueakException.create("Unknown bytecode:", opcode);
             }
         }
+// assert returnValue != null && !hasModifiedSender(frame);
+// FrameAccess.terminate(frame, code);
+// assert backJumpCounter >= 0;
+// LoopNode.reportLoopCount(this, backJumpCounter);
+// return returnValue;
+    }
 
-        bytecode_loop: while (pc != LOCAL_RETURN_PC) {
-            CompilerAsserts.partialEvaluationConstant(pc);
-            final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
-            if (node instanceof CallPrimitiveNode) {
-                final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
-                if (callPrimitiveNode.primitiveNode != null) {
-                    try {
-                        returnValue = callPrimitiveNode.primitiveNode.executePrimitive(frame);
-                        pc = LOCAL_RETURN_PC;
-                        continue bytecode_loop;
-                    } catch (final PrimitiveFailed e) {
-                        /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
-                        getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                        /*
-                         * Same toString() methods may throw compilation warnings, this is expected
-                         * and ok for primitive failure logging purposes. Note that primitives that
-                         * are not implemented are also not logged.
-                         */
-                        LogUtils.PRIMITIVES.fine(() -> callPrimitiveNode.primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
-                                        ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
-                        /* continue with fallback code. */
-                    }
-                }
-                pc = callPrimitiveNode.getSuccessorIndex();
-                assert pc == CallPrimitiveNode.NUM_BYTECODES;
-                continue;
-            } else if (node instanceof AbstractSendNode) {
-                pc = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, pc);
-                node.executeVoid(frame);
-                final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
-                if (pc != actualNextPc) {
-                    /*
-                     * pc has changed, which can happen if a context is restarted (e.g. as part of
-                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
-                     * the Graal compiler.
-                     */
-                    CompilerDirectives.transferToInterpreter();
-                    pc = actualNextPc;
-                }
-                continue bytecode_loop;
-            } else if (node instanceof ConditionalJumpNode) {
-                final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame)) {
-                    final int successor = jumpNode.getJumpSuccessorIndex();
-                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                        backJumpCounter++;
-                    }
-                    pc = successor;
-                    continue bytecode_loop;
-                } else {
-                    final int successor = jumpNode.getSuccessorIndex();
-                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                        backJumpCounter++;
-                    }
-                    pc = successor;
-                    continue bytecode_loop;
-                }
-            } else if (node instanceof UnconditionalJumpNode) {
-                final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
-                if (CompilerDirectives.inInterpreter() && successor <= pc) {
-                    backJumpCounter++;
-                }
-                pc = successor;
-                continue bytecode_loop;
-            } else if (node instanceof AbstractReturnNode) {
-                returnValue = ((AbstractReturnNode) node).executeReturn(frame);
-                pc = LOCAL_RETURN_PC;
-                continue bytecode_loop;
-            } else if (node instanceof PushClosureNode) {
-                final PushClosureNode pushClosureNode = (PushClosureNode) node;
-                pushClosureNode.executePush(frame);
-                pc = pushClosureNode.getClosureSuccessorIndex();
-                continue bytecode_loop;
-            } else {
-                /* All other bytecode nodes. */
-                node.executeVoid(frame);
-                pc = node.getSuccessorIndex();
-                continue bytecode_loop;
-            }
+    private ExecuteSendNode getExecuteSendNode(final int opcode, final boolean isSuper) {
+        if (opcodeNodes[opcode] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            opcodeNodes[opcode] = insert(ExecuteSendNode.create(code, isSuper));
         }
-        assert returnValue != null && !hasModifiedSender(frame);
-        FrameAccess.terminate(frame, code);
-        assert backJumpCounter >= 0;
-        LoopNode.reportLoopCount(this, backJumpCounter);
-        return returnValue;
+        return (ExecuteSendNode) opcodeNodes[opcode];
+    }
+
+    @ExplodeLoop
+    private Object[] createArgumentsForCall(final VirtualFrame frame, final int numArgs, final int stackPointerOffset) {
+        CompilerAsserts.partialEvaluationConstant(numArgs);
+        final Object[] args = new Object[numArgs];
+        int stackPointer = stackPointerOffset;
+        for (int i = numArgs - 1; i >= 0; --i) {
+            args[i] = pop(frame, --stackPointer);
+        }
+        return args;
     }
 
     private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
