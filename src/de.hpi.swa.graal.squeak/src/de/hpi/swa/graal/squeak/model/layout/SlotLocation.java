@@ -10,11 +10,6 @@ import org.graalvm.collections.EconomicMap;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.GenerateUncached;
-import com.oracle.truffle.api.dsl.ImportStatic;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -23,9 +18,6 @@ import com.oracle.truffle.api.profiles.IntValueProfile;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocationFactory.ReadSlotLocationNodeGen;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocationFactory.WriteSlotLocationNodeGen;
-import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
@@ -159,50 +151,67 @@ public abstract class SlotLocation {
         return -1;
     }
 
-    @GenerateUncached
     @NodeInfo(cost = NodeCost.NONE)
-    public abstract static class ReadSlotLocationNode extends Node {
-        public abstract Object execute(SlotLocation location, AbstractPointersObject object);
-
-        public static ReadSlotLocationNode getUncached() {
-            return ReadSlotLocationNodeGen.getUncached();
+    public abstract static class AbstractSlotLocationAccessorNode extends Node {
+        public static final AbstractSlotLocationAccessorNode create(final SlotLocation location) {
+            if (location.isPrimitive()) {
+                return new PrimitiveSlotLocationAccessorNode((PrimitiveLocation) location);
+            } else {
+                return new NonPrimitiveSlotLocationAccessorNode(location);
+            }
         }
 
-        @Specialization
-        protected static final Object doPrimitive(final PrimitiveLocation location, final AbstractPointersObject object,
-                        @Cached("createIdentityProfile()") final IntValueProfile primitiveUsedMapProfile) {
-            return location.readProfiled(object, primitiveUsedMapProfile);
+        public abstract Object executeRead(AbstractPointersObject object);
+
+        public abstract void executeWrite(AbstractPointersObject object, Object value);
+
+        public abstract boolean canStore(Object value);
+    }
+
+    private static final class NonPrimitiveSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
+        private final SlotLocation location;
+
+        private NonPrimitiveSlotLocationAccessorNode(final SlotLocation location) {
+            this.location = location;
         }
 
-        @Fallback
-        protected static final Object doGeneric(final SlotLocation location, final AbstractPointersObject object) {
+        @Override
+        public Object executeRead(final AbstractPointersObject object) {
             return location.read(object);
+        }
+
+        @Override
+        public void executeWrite(final AbstractPointersObject object, final Object value) {
+            location.write(object, value);
+        }
+
+        @Override
+        public boolean canStore(final Object value) {
+            return location.canStore(value);
         }
     }
 
-    @ImportStatic({SqueakGuards.class})
-    @GenerateUncached
-    public abstract static class WriteSlotLocationNode extends Node {
-        public abstract void execute(SlotLocation location, AbstractPointersObject object, Object value);
+    private static final class PrimitiveSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
+        private final PrimitiveLocation location;
+        private final IntValueProfile primitiveUsedMapProfile = IntValueProfile.createIdentityProfile();
 
-        public static WriteSlotLocationNode getUncached() {
-            return WriteSlotLocationNodeGen.getUncached();
+        private PrimitiveSlotLocationAccessorNode(final PrimitiveLocation location) {
+            this.location = location;
         }
 
-        @Specialization
-        protected static final void doNil(final SlotLocation location, final AbstractPointersObject object, @SuppressWarnings("unused") final NilObject value) {
-            location.unset(object);
+        @Override
+        public Object executeRead(final AbstractPointersObject object) {
+            return location.readProfiled(object, primitiveUsedMapProfile);
         }
 
-        @Specialization(guards = "!isNil(value)")
-        protected static final void doPrimitive(final PrimitiveLocation location, final AbstractPointersObject object, final Object value,
-                        @Cached("createIdentityProfile()") final IntValueProfile primitiveUsedMapProfile) {
+        @Override
+        public void executeWrite(final AbstractPointersObject object, final Object value) {
             location.writeProfiled(object, value, primitiveUsedMapProfile);
         }
 
-        @Fallback
-        protected static final void doGeneric(final SlotLocation location, final AbstractPointersObject object, final Object value) {
-            location.write(object, value);
+        @Override
+        public boolean canStore(final Object value) {
+            return location.canStore(value);
         }
     }
 
@@ -286,7 +295,7 @@ public abstract class SlotLocation {
 
         @Override
         public final boolean canStore(final Object value) {
-            return value instanceof Boolean || value == NilObject.SINGLETON;
+            return value instanceof Boolean;
         }
     }
 
@@ -302,7 +311,7 @@ public abstract class SlotLocation {
 
         @Override
         public final boolean canStore(final Object value) {
-            return value instanceof Character || value == NilObject.SINGLETON;
+            return value instanceof Character;
         }
     }
 
@@ -318,7 +327,7 @@ public abstract class SlotLocation {
 
         @Override
         public final boolean canStore(final Object value) {
-            return value instanceof Long || value == NilObject.SINGLETON;
+            return value instanceof Long;
         }
     }
 
@@ -334,7 +343,7 @@ public abstract class SlotLocation {
 
         @Override
         public final boolean canStore(final Object value) {
-            return value instanceof Double || value == NilObject.SINGLETON;
+            return value instanceof Double;
         }
     }
 

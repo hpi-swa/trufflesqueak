@@ -26,10 +26,8 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocation;
+import de.hpi.swa.graal.squeak.model.layout.SlotLocation.AbstractSlotLocationAccessorNode;
 import de.hpi.swa.graal.squeak.model.layout.SlotLocation.IllegalWriteException;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocation.ReadSlotLocationNode;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocation.WriteSlotLocationNode;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectWriteNodeGen;
@@ -67,16 +65,14 @@ public class AbstractPointersObjectNodes {
         protected static final Object doReadCached(final AbstractPointersObject object, final int index,
                         @Cached("index") final int cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Cached("cachedLayout.getLocation(index)") final SlotLocation cachedLocation,
-                        @Cached final ReadSlotLocationNode readNode) {
-            return readNode.execute(cachedLocation, object);
+                        @Cached("create(cachedLayout.getLocation(index))") final AbstractSlotLocationAccessorNode accessorNode) {
+            return accessorNode.executeRead(object);
         }
 
         @TruffleBoundary
         @Specialization(guards = "object.getLayout().isValid()", replaces = "doReadCached")
-        protected static final Object doReadUncached(final AbstractPointersObject object, final int index,
-                        @Cached final ReadSlotLocationNode readNode) {
-            return readNode.execute(object.getLayout().getLocation(index), object);
+        protected static final Object doReadUncached(final AbstractPointersObject object, final int index) {
+            return object.getLayout().getLocation(index).read(object);
         }
 
         @Specialization(guards = "!object.getLayout().isValid()")
@@ -84,7 +80,7 @@ public class AbstractPointersObjectNodes {
             /* Note that this specialization does not replace the cached specialization. */
             CompilerDirectives.transferToInterpreter();
             object.updateLayout();
-            return doReadUncached(object, index, ReadSlotLocationNode.getUncached());
+            return doReadUncached(object, index);
         }
     }
 
@@ -113,9 +109,8 @@ public class AbstractPointersObjectNodes {
                         final Object value,
                         @Cached("index") final int cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Cached("cachedLayout.getLocation(index)") final SlotLocation cachedLocation,
-                        @Cached final WriteSlotLocationNode writeNode) {
-            if (!cachedLocation.canStore(value)) {
+                        @Cached("create(cachedLayout.getLocation(index))") final AbstractSlotLocationAccessorNode accessorNode) {
+            if (!accessorNode.canStore(value)) {
                 /*
                  * Update layout in interpreter if it is not stable yet. This will also invalidate
                  * the assumption and therefore this particular instance of the specialization will
@@ -123,11 +118,11 @@ public class AbstractPointersObjectNodes {
                  */
                 CompilerDirectives.transferToInterpreter();
                 object.updateLayout(index, value);
-                writeNode.execute(object.getLayout().getLocation(index), object, value);
+                object.getLayout().getLocation(index).write(object, value);
                 return;
             }
             try {
-                writeNode.execute(cachedLocation, object, value);
+                accessorNode.executeWrite(object, value);
             } catch (final IllegalWriteException e) {
                 throw SqueakException.illegalState(e);
             }
@@ -135,10 +130,9 @@ public class AbstractPointersObjectNodes {
 
         @TruffleBoundary
         @Specialization(guards = "object.getLayout().isValid()", replaces = "doWriteCached")
-        protected static final void doWriteUncached(final AbstractPointersObject object, final int index, final Object value,
-                        @Cached final WriteSlotLocationNode writeNode) {
+        protected static final void doWriteUncached(final AbstractPointersObject object, final int index, final Object value) {
             try {
-                writeNode.execute(object.getLayout().getLocation(index), object, value);
+                object.getLayout().getLocation(index).write(object, value);
             } catch (final IllegalWriteException e) {
                 /*
                  * Although the layout was valid, it is possible that the location cannot store the
@@ -146,7 +140,7 @@ public class AbstractPointersObjectNodes {
                  */
                 CompilerDirectives.transferToInterpreter();
                 object.updateLayout(index, value);
-                writeNode.execute(object.getLayout().getLocation(index), object, value);
+                object.getLayout().getLocation(index).writeMustSucceed(object, value);
             }
         }
 
@@ -155,7 +149,7 @@ public class AbstractPointersObjectNodes {
             /* Note that this specialization does not replace the cached specialization. */
             CompilerDirectives.transferToInterpreter();
             object.updateLayout();
-            doWriteUncached(object, index, value, WriteSlotLocationNode.getUncached());
+            doWriteUncached(object, index, value);
         }
     }
 
