@@ -25,6 +25,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectInstSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 
@@ -58,18 +59,21 @@ public abstract class SqueakObjectSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doPointers(final PointersObject obj) {
-        return obj.size();
+    protected static final int doPointers(final PointersObject obj,
+                    @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(obj);
     }
 
     @Specialization
-    protected static final int doVariablePointers(final VariablePointersObject obj) {
-        return obj.size();
+    protected static final int doVariablePointers(final VariablePointersObject obj,
+                    @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(obj) + obj.getVariablePartSize();
     }
 
     @Specialization
-    protected static final int doWeakVariablePointers(final WeakVariablePointersObject obj) {
-        return obj.size();
+    protected static final int doWeakVariablePointers(final WeakVariablePointersObject obj,
+                    @Cached final AbstractPointersObjectInstSizeNode sizeNode) {
+        return sizeNode.execute(obj) + obj.getVariablePartSize();
     }
 
     @Specialization

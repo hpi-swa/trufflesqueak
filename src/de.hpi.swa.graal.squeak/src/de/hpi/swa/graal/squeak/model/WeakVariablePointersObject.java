@@ -102,6 +102,10 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         return variablePart;
     }
 
+    public int getVariablePartSize() {
+        return variablePart.length;
+    }
+
     public Object getFromVariablePart(final int index) {
         return NilObject.nullToNil(UnsafeUtils.getWeakReference(variablePart, index).get());
     }

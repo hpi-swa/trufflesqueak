@@ -154,6 +154,22 @@ public class AbstractPointersObjectNodes {
     }
 
     @GenerateUncached
+    public abstract static class AbstractPointersObjectInstSizeNode extends AbstractNode {
+        public abstract int execute(AbstractPointersObject obj);
+
+        @Specialization(guards = {"object.getLayout() == cachedLayout"}, limit = "1")
+        protected static final int doSizeCached(@SuppressWarnings("unused") final AbstractPointersObject object,
+                        @Cached("object.getLayout()") final ObjectLayout cachedLayout) {
+            return cachedLayout.getInstSize();
+        }
+
+        @Specialization(replaces = "doSizeCached")
+        protected static final int doSizeUncached(final AbstractPointersObject object) {
+            return object.getLayout().getInstSize();
+        }
+    }
+
+    @GenerateUncached
     @NodeInfo(cost = NodeCost.NONE)
     @ImportStatic(AbstractPointersObjectNodes.class)
     public abstract static class VariablePointersObjectReadNode extends Node {
