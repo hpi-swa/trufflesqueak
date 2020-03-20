@@ -8,9 +8,9 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 public final class CharacterObject extends AbstractSqueakObject {
-    private final int value;
+    private final long value;
 
-    private CharacterObject(final int value) {
+    private CharacterObject(final long value) {
         assert value > Character.MAX_VALUE : "CharacterObject should only be used for non-primitive chars.";
         this.value = value;
     }
@@ -30,7 +30,7 @@ public final class CharacterObject extends AbstractSqueakObject {
         return 0;
     }
 
-    public static Object valueOf(final int value) {
+    public static Object valueOf(final long value) {
         if (value <= Character.MAX_VALUE) {
             return (char) value;
         } else {
@@ -38,8 +38,8 @@ public final class CharacterObject extends AbstractSqueakObject {
         }
     }
 
-    public static Object valueOf(final int value, final ConditionProfile isFiniteProfile) {
-        if (isFiniteProfile.profile(value <= Character.MAX_VALUE)) {
+    public static Object valueOf(final long value, final ConditionProfile isImmediateProfile) {
+        if (isImmediateProfile.profile(value <= Character.MAX_VALUE)) {
             return (char) value;
         } else {
             return new CharacterObject(value);
@@ -47,10 +47,6 @@ public final class CharacterObject extends AbstractSqueakObject {
     }
 
     public long getValue() {
-        return Integer.toUnsignedLong(value);
-    }
-
-    public long getValueRaw() {
         return value;
     }
 }

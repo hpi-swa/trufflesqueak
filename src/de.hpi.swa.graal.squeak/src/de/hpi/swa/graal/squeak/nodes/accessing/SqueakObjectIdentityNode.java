@@ -41,7 +41,7 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
 
     @Specialization
     protected static final boolean doCharacterObject(final CharacterObject a, final CharacterObject b) {
-        return BooleanObject.wrap(a.getValueRaw() == b.getValueRaw());
+        return BooleanObject.wrap(a.getValue() == b.getValue());
     }
 
     @Fallback

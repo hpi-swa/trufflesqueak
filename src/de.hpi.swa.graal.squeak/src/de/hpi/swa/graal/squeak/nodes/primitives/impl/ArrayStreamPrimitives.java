@@ -155,8 +155,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"obj.isIntType()", "inBounds1(index, obj.getIntLength())"})
         protected static final Object doNativeObjectInts(final NativeObject obj, final long index,
-                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
-            return CharacterObject.valueOf(obj.getInt(index - 1), isFiniteProfile);
+                        @Cached("createBinaryProfile()") final ConditionProfile isImmediateProfile) {
+            return CharacterObject.valueOf(Integer.toUnsignedLong(obj.getInt(index - 1)), isImmediateProfile);
         }
     }
 

@@ -215,7 +215,7 @@ public final class SqueakImageChunk {
             case SqueakImageConstants.SMALL_INTEGER_TAG: // SmallInteger
                 return ptr >> SqueakImageConstants.NUM_TAG_BITS;
             case SqueakImageConstants.CHARACTER_TAG: // Character
-                return CharacterObject.valueOf((int) (ptr >> SqueakImageConstants.NUM_TAG_BITS));
+                return CharacterObject.valueOf(ptr >> SqueakImageConstants.NUM_TAG_BITS);
             case SqueakImageConstants.SMALL_FLOAT_TAG:
                 /* SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:). */
                 long valueWithoutTag = ptr >>> SqueakImageConstants.NUM_TAG_BITS;
