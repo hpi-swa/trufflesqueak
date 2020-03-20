@@ -162,6 +162,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             final SlotLocation newLocation = newLayout.getLocation(i);
             if (oldLocation != newLocation && oldLocation.isSet(this)) {
                 changes[i] = oldLocation.read(this);
+                oldLocation.unset(this);
             }
         }
         if (oldLayout.getNumPrimitiveExtension() != newLayout.getNumPrimitiveExtension()) {
@@ -171,8 +172,13 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
                 // ... primitiveExtension now needed
                 primitiveExtension = newLayout.getFreshPrimitiveExtension();
             } else {
-                // ... resize primitiveExtension
-                primitiveExtension = Arrays.copyOf(primitiveExtension, newLayout.getNumPrimitiveExtension());
+                if (newLayout.getNumPrimitiveExtension() == 0) {
+                    // ... primitiveExtension no longer needed
+                    primitiveExtension = null;
+                } else {
+                    // ... resize primitiveExtension
+                    primitiveExtension = Arrays.copyOf(primitiveExtension, newLayout.getNumPrimitiveExtension());
+                }
             }
         }
         if (oldLayout.getNumObjectExtension() != newLayout.getNumObjectExtension()) {
@@ -182,6 +188,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
                 // ... objectExtension now needed
                 objectExtension = newLayout.getFreshObjectExtension();
             } else {
+                assert newLayout.getNumObjectExtension() > oldLayout.getNumObjectExtension() : "Number of generic extension slots should only grow";
                 // ... resize objectExtension
                 objectExtension = Arrays.copyOf(objectExtension, newLayout.getNumObjectExtension());
                 for (int i = oldLayout.getNumObjectExtension(); i < newLayout.getNumObjectExtension(); i++) {
@@ -196,7 +203,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
             final SlotLocation oldLocation = oldLayout.getLocation(i);
             final SlotLocation newLocation = newLayout.getLocation(i);
             if (oldLocation != newLocation && changes[i] != null) {
-                oldLocation.unset(this);
                 final Object change = changes[i];
                 if (newLocation.canStore(change)) {
                     newLocation.writeMustSucceed(this, change);
