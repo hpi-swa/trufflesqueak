@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -191,6 +192,7 @@ public abstract class SlotLocation {
 
     private static final class PrimitiveSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
         private final PrimitiveLocation location;
+        private final BranchProfile nilProfile = BranchProfile.create();
         private final IntValueProfile primitiveUsedMapProfile = IntValueProfile.createIdentityProfile();
 
         private PrimitiveSlotLocationAccessorNode(final PrimitiveLocation location) {
@@ -199,7 +201,7 @@ public abstract class SlotLocation {
 
         @Override
         public Object executeRead(final AbstractPointersObject object) {
-            return location.readProfiled(object, primitiveUsedMapProfile);
+            return location.readProfiled(object, primitiveUsedMapProfile, nilProfile);
         }
 
         @Override
@@ -255,7 +257,7 @@ public abstract class SlotLocation {
             usedMask = getPrimitiveUsedMask(index);
         }
 
-        public abstract Object readProfiled(AbstractPointersObject object, IntValueProfile primitiveUsedMapProfile);
+        public abstract Object readProfiled(AbstractPointersObject object, IntValueProfile primitiveUsedMapProfile, BranchProfile nilProfile);
 
         public abstract void writeProfiled(AbstractPointersObject object, Object value, IntValueProfile primitiveUsedMapProfile);
 
@@ -390,10 +392,11 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile) {
+        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
                 return UnsafeUtils.getBoolAt(object, address);
             } else {
+                nilProfile.enter();
                 return NilObject.SINGLETON;
             }
         }
@@ -451,10 +454,11 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile) {
+        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
                 return UnsafeUtils.getBoolFromLongs(object.primitiveExtension, index);
             } else {
+                nilProfile.enter();
                 return NilObject.SINGLETON;
             }
         }
@@ -519,10 +523,11 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile) {
+        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
                 return UnsafeUtils.getCharAt(object, address);
             } else {
+                nilProfile.enter();
                 return NilObject.SINGLETON;
             }
         }
@@ -580,10 +585,11 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile) {
+        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
                 return UnsafeUtils.getCharFromLongs(object.primitiveExtension, index);
             } else {
+                nilProfile.enter();
                 return NilObject.SINGLETON;
             }
         }
@@ -648,10 +654,11 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile) {
+        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
                 return UnsafeUtils.getLongAt(object, address);
             } else {
+                nilProfile.enter();
                 return NilObject.SINGLETON;
             }
         }
@@ -709,10 +716,11 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile) {
+        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
                 return UnsafeUtils.getLong(object.primitiveExtension, index);
             } else {
+                nilProfile.enter();
                 return NilObject.SINGLETON;
             }
         }
@@ -777,10 +785,11 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile) {
+        public Object readProfiled(final AbstractPointersObject object, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(object, primitiveUsedMapProfile)) {
                 return UnsafeUtils.getDoubleAt(object, address);
             } else {
+                nilProfile.enter();
                 return NilObject.SINGLETON;
             }
         }
@@ -838,10 +847,11 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public Object readProfiled(final AbstractPointersObject obj, final IntValueProfile primitiveUsedMapProfile) {
+        public Object readProfiled(final AbstractPointersObject obj, final IntValueProfile primitiveUsedMapProfile, final BranchProfile nilProfile) {
             if (isSet(obj, primitiveUsedMapProfile)) {
                 return UnsafeUtils.getDoubleFromLongs(obj.primitiveExtension, index);
             } else {
+                nilProfile.enter();
                 return NilObject.SINGLETON;
             }
         }
