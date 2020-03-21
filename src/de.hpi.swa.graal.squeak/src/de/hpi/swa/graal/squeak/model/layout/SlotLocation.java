@@ -471,7 +471,7 @@ public abstract class SlotLocation {
 
         @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
-            if (value instanceof Boolean) {
+            if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putBoolIntoLongs(object.primitiveExtension, index, (boolean) value);
             } else {
@@ -482,9 +482,8 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
             CompilerAsserts.neverPartOfCompilation();
-            if (value instanceof Boolean) {
+            if (canStore(value)) {
                 setMask(object);
-                object.primitiveExtension[index] = (boolean) value ? 1 : 0;
                 UnsafeUtils.putBoolIntoLongs(object.primitiveExtension, index, (boolean) value);
             } else {
                 transferToInterpreterAndThrowIllegalWriteException();
@@ -540,7 +539,7 @@ public abstract class SlotLocation {
 
         @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
-            if (value instanceof Character) {
+            if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putCharAt(object, address, (char) value);
             } else {
@@ -551,7 +550,7 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
             CompilerAsserts.neverPartOfCompilation();
-            if (value instanceof Character) {
+            if (canStore(value)) {
                 setMask(object);
                 UnsafeUtils.putCharAt(object, address, (char) value);
             } else {
@@ -601,7 +600,7 @@ public abstract class SlotLocation {
 
         @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
-            if (value instanceof Character) {
+            if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putCharIntoLongs(object.primitiveExtension, index, (char) value);
             } else {
@@ -612,7 +611,7 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
             CompilerAsserts.neverPartOfCompilation();
-            if (value instanceof Character) {
+            if (canStore(value)) {
                 setMask(object);
                 UnsafeUtils.putCharIntoLongs(object.primitiveExtension, index, (char) value);
             } else {
@@ -669,7 +668,7 @@ public abstract class SlotLocation {
 
         @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
-            if (value instanceof Long) {
+            if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putLongAt(object, address, (long) value);
             } else {
@@ -680,7 +679,7 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
             CompilerAsserts.neverPartOfCompilation();
-            if (value instanceof Long) {
+            if (canStore(value)) {
                 setMask(object);
                 UnsafeUtils.putLongAt(object, address, (long) value);
             } else {
@@ -730,7 +729,7 @@ public abstract class SlotLocation {
 
         @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
-            if (value instanceof Long) {
+            if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putLong(object.primitiveExtension, index, (long) value);
             } else {
@@ -741,7 +740,7 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
             CompilerAsserts.neverPartOfCompilation();
-            if (value instanceof Long) {
+            if (canStore(value)) {
                 setMask(object);
                 UnsafeUtils.putLong(object.primitiveExtension, index, (long) value);
             } else {
@@ -798,7 +797,7 @@ public abstract class SlotLocation {
 
         @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
-            if (value instanceof Double) {
+            if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putDoubleAt(object, address, (double) value);
             } else {
@@ -809,7 +808,7 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
             CompilerAsserts.neverPartOfCompilation();
-            if (value instanceof Double) {
+            if (canStore(value)) {
                 setMask(object);
                 UnsafeUtils.putDoubleAt(object, address, (double) value);
             } else {
@@ -859,7 +858,7 @@ public abstract class SlotLocation {
 
         @Override
         public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
-            if (value instanceof Double) {
+            if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putDoubleIntoLongs(object.primitiveExtension, index, (double) value);
             } else {
@@ -870,7 +869,7 @@ public abstract class SlotLocation {
         @Override
         public void write(final AbstractPointersObject object, final Object value) {
             CompilerAsserts.neverPartOfCompilation();
-            if (value instanceof Double) {
+            if (canStore(value)) {
                 setMask(object);
                 UnsafeUtils.putDoubleIntoLongs(object.primitiveExtension, index, (double) value);
             } else {
@@ -913,6 +912,7 @@ public abstract class SlotLocation {
 
         @Override
         public boolean isSet(final AbstractPointersObject object) {
+            CompilerAsserts.neverPartOfCompilation();
             assert UnsafeUtils.getObjectAt(object, OBJECT_ADDRESSES[index]) != null : "Unexpected null value (initialized with nil)";
             return true;
         }
@@ -944,6 +944,7 @@ public abstract class SlotLocation {
 
         @Override
         public boolean isSet(final AbstractPointersObject object) {
+            CompilerAsserts.neverPartOfCompilation();
             assert object.objectExtension == null || UnsafeUtils.getObject(object.objectExtension, index) != null : "Unexpected null value (initialized with nil)";
             return object.objectExtension != null;
         }
