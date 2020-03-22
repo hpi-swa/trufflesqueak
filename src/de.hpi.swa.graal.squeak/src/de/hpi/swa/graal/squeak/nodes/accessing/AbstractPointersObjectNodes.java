@@ -65,7 +65,7 @@ public class AbstractPointersObjectNodes {
         protected static final Object doReadCached(final AbstractPointersObject object, final int index,
                         @Cached("index") final int cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Cached("create(cachedLayout.getLocation(index))") final AbstractSlotLocationAccessorNode accessorNode) {
+                        @Cached("create(cachedLayout.getLocation(index), true)") final AbstractSlotLocationAccessorNode accessorNode) {
             return accessorNode.executeRead(object);
         }
 
@@ -109,7 +109,7 @@ public class AbstractPointersObjectNodes {
                         final Object value,
                         @Cached("index") final int cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Cached("create(cachedLayout.getLocation(index))") final AbstractSlotLocationAccessorNode accessorNode) {
+                        @Cached("create(cachedLayout.getLocation(index), false)") final AbstractSlotLocationAccessorNode accessorNode) {
             if (!accessorNode.canStore(value)) {
                 /*
                  * Update layout in interpreter if it is not stable yet. This will also invalidate

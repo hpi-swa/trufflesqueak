@@ -152,9 +152,9 @@ public abstract class SlotLocation {
 
     @NodeInfo(cost = NodeCost.NONE)
     public abstract static class AbstractSlotLocationAccessorNode extends Node {
-        public static final AbstractSlotLocationAccessorNode create(final SlotLocation location) {
+        public static final AbstractSlotLocationAccessorNode create(final SlotLocation location, final boolean isReading) {
             if (location.isPrimitive()) {
-                return new PrimitiveSlotLocationAccessorNode((PrimitiveLocation) location);
+                return new PrimitiveSlotLocationAccessorNode((PrimitiveLocation) location, isReading);
             } else {
                 return new NonPrimitiveSlotLocationAccessorNode(location);
             }
@@ -192,11 +192,12 @@ public abstract class SlotLocation {
 
     private static final class PrimitiveSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
         private final PrimitiveLocation location;
-        private final BranchProfile nilProfile = BranchProfile.create();
+        private final BranchProfile nilProfile;
         private final IntValueProfile primitiveUsedMapProfile = IntValueProfile.createIdentityProfile();
 
-        private PrimitiveSlotLocationAccessorNode(final PrimitiveLocation location) {
+        private PrimitiveSlotLocationAccessorNode(final PrimitiveLocation location, final boolean isReading) {
             this.location = location;
+            nilProfile = isReading ? BranchProfile.create() : null;
         }
 
         @Override
