@@ -4,4 +4,6 @@
 	"instance" : {
 		"assertSorted:name:" : "fn 1/25/2020 15:24",
 		"testAdoptInstanceArrays" : "fn 1/31/2020 10:20",
-		"testTestMapConsistency" : "fn 1/26/2020 19:00" } }
+		"testLayoutStatistics" : "fn 3/23/2020 10:43",
+		"testTestMapConsistency" : "fn 1/26/2020 19:00",
+		"testVMIntrospection" : "fn 3/23/2020 11:46" } }
