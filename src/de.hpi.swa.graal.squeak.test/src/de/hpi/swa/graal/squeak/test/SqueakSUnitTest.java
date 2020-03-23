@@ -120,7 +120,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         RuntimeException exceptionDuringReload = null;
         if (!(result.passed && result.message.equals(PASSED_VALUE))) {
             try {
-                image.getError().println("Closing current image context and reloading");
+                image.getError().println("Closing current image context and reloading: " + result.message);
                 reloadImage();
             } catch (final RuntimeException e) {
                 exceptionDuringReload = e;

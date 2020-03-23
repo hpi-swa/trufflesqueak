@@ -38,6 +38,12 @@ BASE_VM_ARGS_TESTING = [
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ]
 
+IS_JDK9_AND_LATER = mx.get_jdk(tag='default').javaCompliance > '1.8'
+
+if IS_JDK9_AND_LATER:
+    # Make Truffle.getRuntime() accessible for VM introspection
+    BASE_VM_ARGS.append('--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED')
+    BASE_VM_ARGS_TESTING.append('--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED')
 
 _suite = mx.suite('graalsqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
