@@ -2,9 +2,9 @@ printing
 printOnTitle
 	| arraySize memberSize properties |
 	(Interop isNull: self) ifTrue: [ ^ 'ForeignNil' ].
-	(Interop isString: self) ifTrue: [ ^ 'ForeignString[', self asString ,']' ].
-	(Interop fitsInLong: self) ifTrue: [ ^ 'ForeignInteger' ].
-	(Interop fitsInDouble: self) ifTrue: [ ^ 'ForeignFloat' ].
+	(Interop isString: self) ifTrue: [ ^ 'ForeignString[', self asString, ']' ].
+	(Interop fitsInLong: self) ifTrue: [ ^ 'ForeignInteger[', (Interop asLong: self), ']' ].
+	(Interop fitsInDouble: self) ifTrue: [ ^ 'ForeignFloat[', (Interop asDouble: self), ']' ].
 	properties := OrderedCollection new.
 	arraySize := (Interop hasArrayElements: self)
 		ifTrue: [ Interop getArraySize: self ] ifFalse: [ 0 ].
