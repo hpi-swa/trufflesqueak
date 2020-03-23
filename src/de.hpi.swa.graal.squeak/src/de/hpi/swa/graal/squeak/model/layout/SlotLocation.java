@@ -32,7 +32,7 @@ import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 public abstract class SlotLocation {
     public static final int NUM_PRIMITIVE_INLINE_LOCATIONS = 3;
     public static final int NUM_PRIMITIVE_EXTENSION_LOCATIONS = Integer.SIZE - NUM_PRIMITIVE_INLINE_LOCATIONS;
-    public static final int NUM_OBJECT_INLINE_LOCATIONS = 3;
+    public static final int NUM_OBJECT_INLINE_LOCATIONS = 4;
 
     @CompilationFinal(dimensions = 1) private static final long[] PRIMITIVE_ADDRESSES = new long[NUM_PRIMITIVE_INLINE_LOCATIONS];
     @CompilationFinal(dimensions = 1) private static final long[] OBJECT_ADDRESSES = new long[NUM_OBJECT_INLINE_LOCATIONS];
@@ -75,6 +75,7 @@ public abstract class SlotLocation {
         OBJECT_ADDRESSES[0] = AbstractPointersObject.OBJECT_0_ADDRESS;
         OBJECT_ADDRESSES[1] = AbstractPointersObject.OBJECT_1_ADDRESS;
         OBJECT_ADDRESSES[2] = AbstractPointersObject.OBJECT_2_ADDRESS;
+        OBJECT_ADDRESSES[3] = AbstractPointersObject.OBJECT_3_ADDRESS;
         for (int i = 0; i < NUM_OBJECT_INLINE_LOCATIONS; i++) {
             OBJECT_LOCATIONS.put(i, new ObjectInlineSlotLocation(i));
         }

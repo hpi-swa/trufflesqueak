@@ -38,6 +38,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public static final long OBJECT_0_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object0");
     public static final long OBJECT_1_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object1");
     public static final long OBJECT_2_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object2");
+    public static final long OBJECT_3_ADDRESS = UnsafeUtils.getAddress(AbstractPointersObject.class, "object3");
 
     @CompilationFinal private ObjectLayout layout;
 
@@ -49,6 +50,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     public Object object0 = NilObject.SINGLETON;
     public Object object1 = NilObject.SINGLETON;
     public Object object2 = NilObject.SINGLETON;
+    public Object object3 = NilObject.SINGLETON;
 
     public long[] primitiveExtension;
     public Object[] objectExtension;
@@ -89,6 +91,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         object0 = original.object0;
         object1 = original.object1;
         object2 = original.object2;
+        object3 = original.object3;
 
         if (original.primitiveExtension != null) {
             primitiveExtension = original.primitiveExtension.clone();
@@ -107,6 +110,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         object0 = anotherObject.object0;
         object1 = anotherObject.object1;
         object2 = anotherObject.object2;
+        object3 = anotherObject.object3;
         if (anotherObject.primitiveExtension != null) {
             System.arraycopy(anotherObject.primitiveExtension, 0, primitiveExtension, 0, anotherObject.primitiveExtension.length);
         }
@@ -229,6 +233,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         final Object otherObject0 = other.object0;
         final Object otherObject1 = other.object1;
         final Object otherObject2 = other.object2;
+        final Object otherObject3 = other.object3;
 
         final long[] otherPrimitiveExtension = other.primitiveExtension;
         final Object[] otherObjectExtension = other.objectExtension;
@@ -244,6 +249,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         other.object0 = object0;
         other.object1 = object1;
         other.object2 = object2;
+        other.object3 = object3;
 
         other.primitiveExtension = primitiveExtension;
         other.objectExtension = objectExtension;
@@ -259,6 +265,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         object0 = otherObject0;
         object1 = otherObject1;
         object2 = otherObject2;
+        object3 = otherObject3;
 
         primitiveExtension = otherPrimitiveExtension;
         objectExtension = otherObjectExtension;
@@ -281,7 +288,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     }
 
     protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final ConditionProfile isPrimitiveProfile, final Object thang) {
-        final boolean pointTo = object0 == thang || object1 == thang || object2 == thang || objectExtension != null && ArrayUtils.contains(objectExtension, thang);
+        final boolean pointTo = object0 == thang || object1 == thang || object2 == thang || object3 == thang || objectExtension != null && ArrayUtils.contains(objectExtension, thang);
         if (pointTo) {
             return true;
         }
@@ -311,6 +318,10 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
                 object2 = to[i];
                 updateHashNode.executeUpdate(fromPointer, to[i], copyHash);
             }
+            if (object3 == fromPointer) {
+                object3 = to[i];
+                updateHashNode.executeUpdate(fromPointer, to[i], copyHash);
+            }
             if (objectExtension != null) {
                 for (int j = 0; j < objectExtension.length; j++) {
                     final Object object = objectExtension[j];
@@ -327,6 +338,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         tracer.addIfUnmarked(object0);
         tracer.addIfUnmarked(object1);
         tracer.addIfUnmarked(object2);
+        tracer.addIfUnmarked(object3);
         if (objectExtension != null) {
             for (final Object object : objectExtension) {
                 tracer.addIfUnmarked(object);
@@ -340,6 +352,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         writerNode.traceIfNecessary(object0);
         writerNode.traceIfNecessary(object1);
         writerNode.traceIfNecessary(object2);
+        writerNode.traceIfNecessary(object3);
         if (objectExtension != null) {
             for (final Object object : objectExtension) {
                 writerNode.traceIfNecessary(object);
