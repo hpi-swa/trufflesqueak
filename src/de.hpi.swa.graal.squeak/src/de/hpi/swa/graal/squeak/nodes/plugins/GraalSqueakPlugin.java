@@ -7,6 +7,8 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -62,17 +64,22 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @TruffleBoundary
         @Specialization(guards = {"value.isByteType()"})
         protected final Object doLookupGraalSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject value,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final BranchProfile errorProfile) {
-            final String symbolName = value.asStringUnsafe();
-            try {
-                final Class<?> symbolClass = Class.forName(symbolName, true, method.getCallTarget().getClass().getClassLoader());
-                return NilObject.nullToNil(image.env.asHostSymbol(symbolClass));
-            } catch (final ClassNotFoundException e) {
-                errorProfile.enter();
+            if (TruffleOptions.AOT) {
                 throw PrimitiveFailed.GENERIC_ERROR;
+            } else {
+                final String symbolName = value.asStringUnsafe();
+                try {
+                    final Class<?> symbolClass = Class.forName(symbolName, true, method.getCallTarget().getClass().getClassLoader());
+                    return NilObject.nullToNil(image.env.asHostSymbol(symbolClass));
+                } catch (final ClassNotFoundException e) {
+                    errorProfile.enter();
+                    throw PrimitiveFailed.GENERIC_ERROR;
+                }
             }
         }
     }
