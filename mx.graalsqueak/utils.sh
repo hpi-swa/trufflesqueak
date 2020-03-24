@@ -31,6 +31,55 @@ OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
 JAVA_HOME_SUFFIX="" && [[ "${OS_NAME}" == "darwin" ]] && JAVA_HOME_SUFFIX="/Contents/Home"
 readonly OS_NAME JAVA_HOME_SUFFIX
 
+
+deploy-asset() {
+  if ! [[ "$1" =~ ^refs\/tags\/[[:digit:]] ]]; then
+    echo "Skipping deployment step (ref does not start with a digit)"
+    exit 0
+  fi
+  local git_ref=${1:10} # cut off 'refs/tags/'
+  local filename=$2
+  local auth="Authorization: token $3"
+  local release_id
+
+  tag_result=$(curl -L --retry 3 --retry-connrefused --retry-delay 2 -sH "${auth}" \
+    "https://api.github.com/repos/${GITHUB_SLUG}/releases/tags/${git_ref}")
+  
+  if echo "${tag_result}" | grep -q '"id":'; then
+    release_id=$(echo "${tag_result}" | grep '"id":' | head -n 1 | sed 's/[^0-9]*//g')
+    echo "Found GitHub release #${release_id} for ${git_ref}"
+  else
+    # Retry (in case release was just created by some other worker)
+    tag_result=$(curl -L --retry 3 --retry-connrefused --retry-delay 2 -sH "${auth}" \
+    "https://api.github.com/repos/${GITHUB_SLUG}/releases/tags/${git_ref}")
+  
+    if echo "${tag_result}" | grep -q '"id":'; then
+      release_id=$(echo "${tag_result}" | grep '"id":' | head -n 1 | sed 's/[^0-9]*//g')
+      echo "Found GitHub release #${release_id} for ${git_ref}"
+    else
+      create_result=$(curl -sH "${auth}" \
+        --data "{\"tag_name\": \"${git_ref}\",
+                \"name\": \"${git_ref}\",
+                \"body\": \"\",
+                \"draft\": false,
+                \"prerelease\": false}" \
+        "https://api.github.com/repos/${GITHUB_SLUG}/releases")
+      if echo "${create_result}" | grep -q '"id":'; then
+        release_id=$(echo "${create_result}" | grep '"id":' | head -n 1 | sed 's/[^0-9]*//g')
+        echo "Created GitHub release #${release_id} for ${git_ref}"
+      else
+        echo "Failed to create GitHub release for ${git_ref}"
+        exit 1
+      fi
+    fi
+  fi
+
+  curl --fail -o /dev/null -w "%{http_code}" \
+    -H "${auth}" -H "Content-Type: application/zip" \
+    --data-binary @"${filename}" \
+    "https://uploads.github.com/repos/${GITHUB_SLUG}/releases/${release_id}/assets?name=${filename}"
+}
+
 download-asset() {
   local filename=$1
   local git_tag=$2
