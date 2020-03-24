@@ -643,12 +643,12 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public void printSqStackTrace() {
         CompilerDirectives.transferToInterpreter();
-        final boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
+        final boolean isCIBuild = System.getenv().containsKey("GITHUB_ACTIONS");
         final int[] depth = new int[1];
         final Object[] lastSender = new Object[]{null};
         getError().println("== Truffle stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(frameInstance -> {
-            if (depth[0]++ > 50 && isTravisBuild) {
+            if (depth[0]++ > 50 && isCIBuild) {
                 return null;
             }
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);

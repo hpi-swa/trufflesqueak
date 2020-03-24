@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
-import org.junit.ClassRule;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -38,8 +37,6 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class AbstractSqueakTestCase {
-
-    @ClassRule public static final TestLog.Rule TEST_LOG = new TestLog.Rule();
 
     protected static Context context;
     protected static SqueakImageContext image;

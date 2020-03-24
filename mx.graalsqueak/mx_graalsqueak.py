@@ -33,7 +33,7 @@ BASE_VM_ARGS_TESTING = [
     # RUNTIME
     '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
 
-    # GARBAGE COLLECTOR (optimized for Travis CI)
+    # GARBAGE COLLECTOR (optimized for GitHub Actions)
     '-Xms4G',                   # Initial heap size
     '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ]

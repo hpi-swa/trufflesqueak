@@ -1,4 +1,4 @@
-# GraalSqueak [![Latest Release][graalsqueak_latest_badge]][graalsqueak_latest] [![Slack][graalvm_slack_badge]][graalvm_slack] [![Build Status][travis_badge]][travis] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy] [![License][graalsqueak_license_badge]][graalsqueak_license]
+# GraalSqueak [![Latest Release][graalsqueak_latest_badge]][graalsqueak_latest] [![Slack][graalvm_slack_badge]][graalvm_slack] [![Build Status][gh_action_badge]][gh_action] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy] [![License][graalsqueak_license_badge]][graalsqueak_license]
 
 A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 
@@ -155,6 +155,8 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [dls19_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/StolpeFelgentreffHumerNiephausHirschfeld_2019_LanguageIndependentDevelopmentEnvironmentSupportForDynamicRuntimes_AcmDL.pdf
 [eclipse_cs]: http://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
+[gh_action]: https://github.com/hpi-swa/graalsqueak/actions
+[gh_action_badge]: https://img.shields.io/github/workflow/status/hpi-swa/graalsqueak/CI
 [github_releases]: https://help.github.com/en/github/administering-a-repository/about-releases
 [graal]: https://github.com/oracle/graal
 [graalsqueak_latest]: https://github.com/hpi-swa/graalsqueak/releases/latest
@@ -196,5 +198,3 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [sdr19_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/PapeFelgentreffNiephausHirschfeld_2019_LetThemFailTowardsVmBuiltInBehaviorThatFallsBackToTheProgram_AcmDL.pdf
 [squeak]: https://squeak.org
 [squeak_downloads]: https://squeak.org/downloads/
-[travis]: https://travis-ci.org/hpi-swa/graalsqueak
-[travis_badge]: https://travis-ci.org/hpi-swa/graalsqueak.svg?branch=master

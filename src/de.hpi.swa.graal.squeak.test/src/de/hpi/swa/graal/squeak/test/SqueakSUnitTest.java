@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.graal.squeak.test;
 
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -12,10 +14,12 @@ import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -80,6 +84,21 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             return SqueakTests.getTestsToRun(toRun);
         }
         return SqueakTests.allTests();
+    }
+
+    @BeforeClass
+    public static void printStatistics() {
+        final Map<TestType, Long> counts = countByType(TESTS);
+
+        print(TestType.PASSING, counts, AnsiCodes.GREEN);
+        print(TestType.SLOWLY_PASSING, counts, AnsiCodes.GREEN);
+        print(TestType.FLAKY, counts, AnsiCodes.YELLOW);
+        print(TestType.EXPECTED_FAILURE, counts, AnsiCodes.YELLOW);
+        print(TestType.SLOWLY_FAILING, counts, AnsiCodes.RED);
+        print(TestType.FAILING, counts, AnsiCodes.RED);
+        print(TestType.NOT_TERMINATING, counts, AnsiCodes.RED);
+        print(TestType.BROKEN_IN_SQUEAK, counts, AnsiCodes.BLUE);
+        print(TestType.IGNORED, counts, AnsiCodes.BOLD);
     }
 
     @Before
@@ -203,5 +222,30 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
                         "                    [[e sendNotificationsTo: [:min :max :current | \"silence\"]]\n" +
                         "                        on: ProgressNotification do: [:notification | notification resume]]]]", getPathToInImageCode()));
         image.getOutput().println("GraalSqueak packages loaded in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
+    }
+
+    private static Map<TestType, Long> countByType(final Collection<SqueakTest> tests) {
+        return tests.stream().collect(groupingBy(t -> t.type, counting()));
+    }
+
+    private static void print(final TestType type, final Map<TestType, Long> counts, final String color) {
+        // Checkstyle: stop
+        System.out.printf("%s%5d %s tests%s\n",
+                        color,
+                        counts.getOrDefault(type, 0L),
+                        type.getMessage(),
+                        AnsiCodes.RESET);
+        // Checkstyle: resume
+    }
+
+    protected static final class AnsiCodes {
+        protected static final String BOLD = "\033[1m";
+        protected static final String RED = "\033[31;1m";
+        protected static final String GREEN = "\033[32;1m";
+        protected static final String BLUE = "\033[34m";
+        protected static final String YELLOW = "\033[33;1m";
+        protected static final String RESET = "\033[0m";
+        protected static final String CLEAR = "\033[0K";
+        protected static final String CR = "\r";
     }
 }
