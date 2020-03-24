@@ -6,7 +6,6 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -85,8 +84,8 @@ public final class PointersObject extends AbstractPointersObject {
         return instsize();
     }
 
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final ConditionProfile isPrimitiveProfile, final Object thang) {
-        return layoutValuesPointTo(identityNode, isPrimitiveProfile, thang);
+    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
+        return layoutValuesPointTo(identityNode, thang);
     }
 
     public boolean isActiveProcess(final AbstractPointersObjectReadNode readNode) {

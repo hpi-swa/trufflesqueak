@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -515,28 +516,35 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray,
-                        @SuppressWarnings("unused") final NotProvided notProvided) {
-            return doPrimitiveWithArgs(frame, receiver, primitiveIndex, argumentArray);
+                        @SuppressWarnings("unused") final NotProvided notProvided,
+                        @Cached("createBinaryProfile()") final ConditionProfile primFailedProfile) {
+            return doPrimitiveWithArgs(frame, receiver, primitiveIndex, argumentArray, primFailedProfile);
         }
 
         @Specialization
         protected final Object doPrimitiveWithArgs(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context, final Object receiver,
-                        final long primitiveIndex, final ArrayObject argumentArray) {
-            return doPrimitiveWithArgs(frame, receiver, primitiveIndex, argumentArray);
+                        final long primitiveIndex, final ArrayObject argumentArray,
+                        @Cached("createBinaryProfile()") final ConditionProfile primFailedProfile) {
+            return doPrimitiveWithArgs(frame, receiver, primitiveIndex, argumentArray, primFailedProfile);
         }
 
-        private Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
+        private Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray, final ConditionProfile primFailedProfile) {
             /*
              * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
              * acceptable because primitive is mostly used for debugging anyway.
              */
             final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, receiver);
-            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(method, (int) primitiveIndex);
-            if (primitiveNode == null) {
+            final AbstractPrimitiveNode primitiveNode = createPrimitiveNode(primitiveIndex);
+            if (primFailedProfile.profile(primitiveNode == null)) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
             }
+        }
+
+        @TruffleBoundary
+        private AbstractPrimitiveNode createPrimitiveNode(final long primitiveIndex) {
+            return PrimitiveNodeFactory.forIndex(method, (int) primitiveIndex);
         }
     }
 
@@ -869,9 +877,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
              * acceptable because primitive is mostly used for debugging anyway.
              */
-            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.namedFor(methodObject);
             final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, target);
-            return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
+            return replace(createPrimitiveNode(methodObject)).executeWithArguments(frame, receiverAndArguments);
+        }
+
+        @TruffleBoundary
+        private static AbstractPrimitiveNode createPrimitiveNode(final CompiledMethodObject methodObject) {
+            return PrimitiveNodeFactory.namedFor(methodObject);
         }
     }
 

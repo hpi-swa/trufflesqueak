@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
@@ -286,12 +285,18 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         AbstractPointersObjectWriteNode.getUncached().execute(this, index, value);
     }
 
-    protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final ConditionProfile isPrimitiveProfile, final Object thang) {
+    protected final boolean layoutValuesPointTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
         final boolean pointTo = object0 == thang || object1 == thang || object2 == thang || objectExtension != null && ArrayUtils.contains(objectExtension, thang);
         if (pointTo) {
             return true;
+        } else {
+            return primitiveLocationsPointTo(identityNode, thang);
         }
-        if (isPrimitiveProfile.profile(SqueakGuards.isUsedJavaPrimitive(thang))) {
+    }
+
+    @TruffleBoundary
+    private boolean primitiveLocationsPointTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
+        if (SqueakGuards.isUsedJavaPrimitive(thang)) {
             // TODO: This could be more efficient.
             for (final SlotLocation slotLocation : getLayout().getLocations()) {
                 if (slotLocation.isPrimitive() && identityNode.execute(slotLocation.read(this), thang)) {

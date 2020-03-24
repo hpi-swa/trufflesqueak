@@ -6,6 +6,7 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -71,8 +72,8 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return "a " + getSqueakClassName() + " @" + Integer.toHexString(hashCode());
     }
 
+    @TruffleBoundary
     public final Object send(final String selector, final Object... arguments) {
-        CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
         final Object methodObject = LookupMethodByStringNode.getUncached().executeLookup(getSqueakClass(), selector);
         if (methodObject instanceof CompiledMethodObject) {
             return DispatchUneagerlyNode.getUncached().executeDispatch((CompiledMethodObject) methodObject, ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);

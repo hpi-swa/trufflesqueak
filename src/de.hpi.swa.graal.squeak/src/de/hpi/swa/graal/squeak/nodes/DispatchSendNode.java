@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -53,15 +54,17 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
     }
 
     @SuppressWarnings("unused")
+    @TruffleBoundary
     @Specialization(guards = {"code.image.isHeadless()", "selector.isDebugErrorSelector()", "lookupResult != null"})
-    protected final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
+    protected final Object doDispatchHeadlessError(final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
         throw new SqueakError(this, MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asStringUnsafe()));
     }
 
     @SuppressWarnings("unused")
+    @TruffleBoundary
     @Specialization(guards = {"code.image.isHeadless()", "selector.isDebugSyntaxErrorSelector()", "lookupResult != null"})
-    protected static final Object doDispatchHeadlessSyntaxError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
+    protected static final Object doDispatchHeadlessSyntaxError(final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
         throw new SqueakSyntaxError((PointersObject) rcvrAndArgs[1]);
     }

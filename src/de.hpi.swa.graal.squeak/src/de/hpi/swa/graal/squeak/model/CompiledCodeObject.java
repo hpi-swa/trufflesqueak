@@ -76,6 +76,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     private final Assumption doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
     @CompilationFinal private RootCallTarget resumptionCallTarget;
 
+    @TruffleBoundary
     protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues) {
         super(image, hash);
         this.numCopiedValues = numCopiedValues;

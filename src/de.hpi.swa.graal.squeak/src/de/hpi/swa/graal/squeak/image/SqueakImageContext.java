@@ -144,7 +144,7 @@ public final class SqueakImageContext {
 
     @CompilationFinal private ClassObject compilerClass = null;
     @CompilationFinal private ClassObject parserClass = null;
-    @CompilationFinal private PointersObject parserSharedInstance = null;
+    private PointersObject parserSharedInstance = null;
     @CompilationFinal private PointersObject scheduler = null;
     @CompilationFinal private ClassObject wideStringClass = null;
 
@@ -218,8 +218,8 @@ public final class SqueakImageContext {
         return squeakImage;
     }
 
+    @TruffleBoundary
     public Object evaluate(final String sourceCode) {
-        CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
         final Source source = Source.newBuilder(SqueakLanguageConfig.NAME, sourceCode, "<image#evaluate>").build();
         return Truffle.getRuntime().createCallTarget(getDoItContextNode(source)).call();
     }
@@ -237,6 +237,7 @@ public final class SqueakImageContext {
         return true;
     }
 
+    @TruffleBoundary
     public ExecuteTopLevelContextNode getActiveContextNode() {
         final PointersObject activeProcess = getActiveProcessSlow();
         final ContextObject activeContext = (ContextObject) activeProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
@@ -245,11 +246,13 @@ public final class SqueakImageContext {
         return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
     }
 
+    @TruffleBoundary
     public ExecuteTopLevelContextNode getDoItContextNode(final Source source) {
         lastParseRequestSource = source;
         return getDoItContextNode(source.getCharacters().toString());
     }
 
+    @TruffleBoundary
     public ExecuteTopLevelContextNode getDoItContextNode(final String source) {
         /*
          * (Parser new parse: '1 + 2 * 3' class: UndefinedObject noPattern: true notifying: nil
@@ -259,7 +262,6 @@ public final class SqueakImageContext {
         assert compilerClass != null;
 
         if (parserSharedInstance == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             parserSharedInstance = (PointersObject) parserClass.send("new");
         }
         final PointersObject methodNode;

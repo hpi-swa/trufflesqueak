@@ -8,7 +8,6 @@ package de.hpi.swa.graal.squeak.model;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -89,8 +88,8 @@ public final class VariablePointersObject extends AbstractPointersObject {
         }
     }
 
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final ConditionProfile isPrimitiveProfile, final Object thang) {
-        return layoutValuesPointTo(identityNode, isPrimitiveProfile, thang) || ArrayUtils.contains(variablePart, thang);
+    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
+        return layoutValuesPointTo(identityNode, thang) || ArrayUtils.contains(variablePart, thang);
     }
 
     public Object[] getVariablePart() {

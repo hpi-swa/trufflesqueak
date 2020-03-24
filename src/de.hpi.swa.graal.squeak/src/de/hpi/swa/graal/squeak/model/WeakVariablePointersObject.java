@@ -127,8 +127,8 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         }
     }
 
-    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final ConditionProfile isPrimitiveProfile, final Object thang) {
-        return layoutValuesPointTo(identityNode, isPrimitiveProfile, thang) || variablePartPointsTo(thang);
+    public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
+        return layoutValuesPointTo(identityNode, thang) || variablePartPointsTo(thang);
     }
 
     private boolean variablePartPointsTo(final Object thang) {

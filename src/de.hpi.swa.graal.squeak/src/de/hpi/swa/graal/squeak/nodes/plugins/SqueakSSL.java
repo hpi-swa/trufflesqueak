@@ -202,6 +202,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         long id();
     }
 
+    @TruffleBoundary
     private static <T extends Enum<T> & HasId> T propertyWithId(final Class<T> enumCls, final long id) {
         for (final T t : enumCls.getEnumConstants()) {
             if (t.id() == id) {

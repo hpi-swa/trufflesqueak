@@ -7,7 +7,6 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import java.util.logging.Level;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -57,7 +56,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         } catch (final TopLevelReturn e) {
             return e.getReturnValue();
         } finally {
-            CompilerAsserts.neverPartOfCompilation();
             if (isImageResuming) {
                 image.interrupt.shutdown();
                 if (image.hasDisplay()) {

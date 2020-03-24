@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -56,6 +57,7 @@ public final class SqueakImage implements TruffleObject {
     }
 
     @ExportMessage
+    @TruffleBoundary
     public Object execute(final Object... arguments) {
         assert arguments.length == 0;
         image.interrupt.start();

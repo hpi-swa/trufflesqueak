@@ -141,6 +141,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     }
 
     @Override
+    @TruffleBoundary
     public void open(final PointersObject sqDisplay) {
         bitmap = (NativeObject) sqDisplay.instVarAt0Slow(FORM.BITS);
         if (!bitmap.isIntType()) {

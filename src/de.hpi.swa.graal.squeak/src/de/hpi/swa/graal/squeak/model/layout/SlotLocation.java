@@ -155,8 +155,10 @@ public abstract class SlotLocation {
         public static final AbstractSlotLocationAccessorNode create(final SlotLocation location, final boolean isReading) {
             if (location.isPrimitive()) {
                 return new PrimitiveSlotLocationAccessorNode((PrimitiveLocation) location, isReading);
+            } else if (location.isUninitialized()) {
+                return new UninitializedSlotLocationAccessorNode((UninitializedSlotLocation) location);
             } else {
-                return new NonPrimitiveSlotLocationAccessorNode(location);
+                return new GenericSlotLocationAccessorNode((GenericLocation) location);
             }
         }
 
@@ -167,10 +169,33 @@ public abstract class SlotLocation {
         public abstract boolean canStore(Object value);
     }
 
-    private static final class NonPrimitiveSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
-        private final SlotLocation location;
+    private static final class GenericSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
+        private final GenericLocation location;
 
-        private NonPrimitiveSlotLocationAccessorNode(final SlotLocation location) {
+        private GenericSlotLocationAccessorNode(final GenericLocation location) {
+            this.location = location;
+        }
+
+        @Override
+        public Object executeRead(final AbstractPointersObject object) {
+            return location.read(object);
+        }
+
+        @Override
+        public void executeWrite(final AbstractPointersObject object, final Object value) {
+            location.write(object, value);
+        }
+
+        @Override
+        public boolean canStore(final Object value) {
+            return location.canStore(value);
+        }
+    }
+
+    private static final class UninitializedSlotLocationAccessorNode extends AbstractSlotLocationAccessorNode {
+        private final UninitializedSlotLocation location;
+
+        private UninitializedSlotLocationAccessorNode(final UninitializedSlotLocation location) {
             this.location = location;
         }
 
