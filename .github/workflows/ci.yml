@@ -75,6 +75,7 @@ jobs:
       run: |
         mx --env graalsqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
         export INSTALLABLE_TARGET="$(mx.graalsqueak/utils.sh installable-filename)"
+        echo "::set-env name=INSTALLABLE_TARGET::${INSTALLABLE_TARGET}"
         cp $(mx --env graalsqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
         export GRAALVM_HOME="$(mx.graalsqueak/utils.sh download-graalvm-ce ~/)"
         ${GRAALVM_HOME}/bin/gu install -L "${INSTALLABLE_TARGET}"
@@ -87,6 +88,11 @@ jobs:
       run: graalsqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Run tinyBenchmarks on Native Image
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Upload GraalSqueak component
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ env.INSTALLABLE_TARGET }}
+        path: ${{ env.INSTALLABLE_TARGET }}
         
   macos:
     name: Test on macOS with Graal
@@ -115,6 +121,7 @@ jobs:
       run: |
         mx --env graalsqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
         export INSTALLABLE_TARGET="$(mx.graalsqueak/utils.sh installable-filename)"
+        echo "::set-env name=INSTALLABLE_TARGET::${INSTALLABLE_TARGET}"
         cp $(mx --env graalsqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
         export GRAALVM_HOME="$(mx.graalsqueak/utils.sh download-graalvm-ce ~/)"
         ${GRAALVM_HOME}/bin/gu install -L "${INSTALLABLE_TARGET}"
@@ -127,6 +134,11 @@ jobs:
       run: graalsqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Run tinyBenchmarks on Native Image
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Upload GraalSqueak component
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ env.INSTALLABLE_TARGET }}
+        path: ${{ env.INSTALLABLE_TARGET }}
         
   windows:
     name: Test on Windows
@@ -155,9 +167,15 @@ jobs:
       run: |
         mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8
         $env:InstallableTarget = (bash mx.graalsqueak/utils.sh installable-filename)
+        echo "::set-env name=INSTALLABLE_TARGET::${env:InstallableTarget}"
         Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_BGRAALSQUEAK.EXE_JAVA8) -Destination "${pwd}\${env:InstallableTarget}"
         gu.cmd install -L "${pwd}\${env:InstallableTarget}"
     - name: Run SystemReporter on GraalVM
       run: 'graalsqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
     - name: Run tinyBenchmarks on GraalVM
       run: graalsqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Upload GraalSqueak component
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ env.INSTALLABLE_TARGET }}
+        path: ${{ env.INSTALLABLE_TARGET }}
