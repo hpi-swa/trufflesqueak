@@ -90,15 +90,29 @@ download-asset() {
 }
 
 download-graalvm-ce() {
-  local target_dir=$1
+  local java_version=$1
+  local target_dir=$2
   local file_suffix=".tar.gz" && [[ "${OS_NAME}" == "windows" ]]  && file_suffix=".zip"
-  local file="graalvm-ce-java8-${OS_NAME}-amd64-${DEP_GRAALVM}${file_suffix}"
+  local file="graalvm-ce-${java_version}-${OS_NAME}-amd64-${DEP_GRAALVM}${file_suffix}"
 
   pushd "${target_dir}" > /dev/null
 
   curl -sSL --retry 3 -o "${file}" "https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${DEP_GRAALVM}/${file}"
   if [[ "${OS_NAME}" == "windows" ]]; then unzip -qq "${file}"; else tar -xzf "${file}"; fi
-  echo "$(pwd)/graalvm-ce-java8-${DEP_GRAALVM}${JAVA_HOME_SUFFIX}"
+  echo "$(pwd)/graalvm-ce-${java_version}-${DEP_GRAALVM}${JAVA_HOME_SUFFIX}"
+
+  popd > /dev/null
+}
+
+download-labsjdk11() {
+  local target_dir=$1
+  local jdk_tar=${target_dir}/jdk.tar.gz
+
+  pushd "${target_dir}" > /dev/null
+
+  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/labs-openjdk-11/releases/download/${DEP_JVMCI}/labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64.tar.gz"
+  tar xzf "${jdk_tar}"
+  echo "$(pwd)/labsjdk-ce-${DEP_JDK11}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 
   popd > /dev/null
 }
@@ -147,10 +161,11 @@ ensure-test-image() {
 }
 
 installable-filename() {
+  local java_version=$1
   local git_describe=$(git describe --tags --always)
   local git_short_commit=$(git log -1 --format="%h")
   local git_description="${git_describe:-${git_short_commit}}"
-  echo "graalsqueak-installable-${OS_NAME}-amd64-${git_description}-for-GraalVM-${DEP_GRAALVM}.jar"
+  echo "graalsqueak-installable-${java_version}-${OS_NAME}-amd64-${git_description}-for-GraalVM-${DEP_GRAALVM}.jar"
 }
 
 shallow-clone() {

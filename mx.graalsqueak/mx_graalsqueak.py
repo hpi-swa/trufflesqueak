@@ -39,11 +39,6 @@ BASE_VM_ARGS_TESTING = [
 ]
 
 
-# Disable JVMCI class loader if not on Windows
-if sys.platform != 'win32':
-    BASE_VM_ARGS_TESTING.append('-XX:-UseJVMCIClassLoader')
-
-
 _suite = mx.suite('graalsqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
 

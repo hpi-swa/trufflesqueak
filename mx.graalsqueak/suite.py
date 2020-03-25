@@ -19,6 +19,8 @@ suite = {
         "image": "GraalSqueakImage-1.0.0-rc7.zip",
         "image_tag": "1.0.0-rc7",
         "jdk8_update": "242",
+        "jdk11": "11.0.6",
+        "jdk11_update": "9",
         "jvmci": "jvmci-20.0-b02",
         "test_image": "GraalSqueakTestImage-19329-64bit.zip",
         "test_image_tag": "1.0.0-rc6",
