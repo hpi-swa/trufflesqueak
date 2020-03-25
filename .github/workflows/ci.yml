@@ -4,9 +4,6 @@ on:
   push:
     branches-ignore:
       - 'experiements/**'
-  create:
-    tags:
-      - '*'
   pull_request:
     branches:
       - master
@@ -94,6 +91,7 @@ jobs:
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      if: contains(github.ref, 'tags')
 
   linux-java8:
     name: Linux + JDK8 + Coverage
@@ -145,6 +143,7 @@ jobs:
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      if: contains(github.ref, 'tags')
 
   macos-java11:
     name: macOS + JDK11 + Graal
@@ -188,6 +187,7 @@ jobs:
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      if: contains(github.ref, 'tags')
 
   macos-java8:
     name: macOS + JDK8 + Graal
@@ -231,6 +231,7 @@ jobs:
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      if: contains(github.ref, 'tags')
 
   windows-java11:
     name: Windows + JDK11
@@ -273,6 +274,7 @@ jobs:
     - name: Upload GraalSqueak component
       shell: bash
       run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      if: contains(github.ref, 'tags')
 
   windows-java8:
     name: Windows + JDK8
@@ -315,3 +317,4 @@ jobs:
     - name: Upload GraalSqueak component
       shell: bash
       run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      if: contains(github.ref, 'tags')
