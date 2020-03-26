@@ -230,6 +230,12 @@ set-up-openjdk8-jvmci() {
 
   enable-jdk "${target_dir}/openjdk1.8.0_${DEP_JDK8_UPDATE}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 
+  # Workaround for Windows (can be removed when https://git.io/Jv9IQ is available)
+  if [[ "${OS_NAME}" == "windows" ]]; then
+    # Remove empty lines
+    sed -i '/^$/d' "${target_dir}/openjdk1.8.0_${DEP_JDK8_UPDATE}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}/release"
+  fi
+
   echo "[openjdk1.8.0_${DEP_JDK8_UPDATE}-${DEP_JVMCI} set up successfully]"
 }
 
