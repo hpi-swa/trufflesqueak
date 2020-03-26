@@ -32,9 +32,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class ContextObject extends AbstractSqueakObjectWithHash {
@@ -494,6 +492,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         escaped = otherEscaped;
     }
 
+    public Object[] getReceiverAndNArguments() {
+        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
+        return getReceiverAndNArguments(getBlockOrMethod().getNumArgsAndCopied());
+    }
+
     private Object[] getReceiverAndNArguments(final int numArgs) {
         final Object[] arguments = new Object[1 + numArgs];
         arguments[0] = getReceiver();
@@ -519,25 +522,6 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         } else {
             // Avoid further PE if newActiveContext is not a PE constant.
             throw ProcessSwitch.createWithBoundary(newActiveContext);
-        }
-    }
-
-    /*
-     * Helper function for debugging purposes.
-     */
-    @TruffleBoundary
-    public void printSqStackTrace() {
-        ContextObject current = this;
-        while (current != null) {
-            final CompiledCodeObject code = current.getBlockOrMethod();
-            final Object[] rcvrAndArgs = current.getReceiverAndNArguments(code.getNumArgsAndCopied());
-            code.image.getOutput().println(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
-            final Object sender = current.getSender();
-            if (sender == NilObject.SINGLETON) {
-                break;
-            } else {
-                current = (ContextObject) sender;
-            }
         }
     }
 

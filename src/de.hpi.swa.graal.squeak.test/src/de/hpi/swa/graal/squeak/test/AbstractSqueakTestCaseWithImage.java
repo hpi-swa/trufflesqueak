@@ -34,11 +34,12 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.graal.squeak.util.DebugUtils;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
-    private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 3;
+    private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
     private static final int TIMEOUT_SECONDS = SQUEAK_TIMEOUT_SECONDS + 2;
-    private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = 20;
+    private static final int TEST_IMAGE_LOAD_TIMEOUT_SECONDS = 20 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
     private static final int PRIORITY_10_LIST_INDEX = 9;
     protected static final String PASSED_VALUE = "passed";
 

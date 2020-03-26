@@ -1,31 +1,29 @@
+/*
+ * Copyright (c) 2017-2020 Software Architecture Group, Hasso Plattner Institute
+ *
+ * Licensed under the MIT License.
+ */
 package de.hpi.swa.graal.squeak.util;
 
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
-import java.nio.file.FileSystems;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import javax.management.JMException;
-
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.sun.management.DiagnosticCommandMBean;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -40,58 +38,24 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
-import sun.management.ManagementFactoryHelper;
 
-public class DebugUtils {
-    private static final AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
-    /*
-     * Helper functions for debugging purposes.
-     */
+/**
+ * Helper functions for debugging purposes.
+ */
+public final class DebugUtils {
+    public static final boolean UNDER_DEBUG = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
 
-    public static void printSqMaterializedStackTraceOn(final StringBuilder b, final ContextObject context) {
-        ContextObject current = context;
-        while (current != null && current.hasTruffleFrame()) {
-            final Object[] rcvrAndArgs = current.getReceiverAndNArguments(current.getBlockOrMethod().getNumArgsAndCopied());
-            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
-            b.append('\n');
-            final Object sender = current.getFrameSender();
-            if (sender == NilObject.SINGLETON) {
-                break;
-            } else if (sender instanceof FrameMarker) {
-                b.append(sender);
-                b.append('\n');
-                break;
-            } else {
-                current = (ContextObject) sender;
-            }
-        }
-    }
-
-    public static void dumpState(final SqueakImageContext image) {
-        MiscUtils.gc();
+    public static void dumpState() {
+        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
+        MiscUtils.systemGC();
         final StringBuilder sb = new StringBuilder("Thread dump");
         dumpThreads(sb);
-        System.err.println(sb.toString());
-        if (image != null) {
-            try {
-                System.err.println(currentState(image));
-            } catch (final RuntimeException e) {
-                e.printStackTrace();
-            }
-        }
+        println(sb.toString());
+        println(currentState());
     }
 
-    public static void dumpHeap() {
-        try {
-            ManagementFactoryHelper.getDiagnosticMXBean().dumpHeap(".." + FileSystems.getDefault().getSeparator() + System.currentTimeMillis() + ".hprof", true);
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @TruffleBoundary
     public static void dumpThreads(final StringBuilder sb) {
+        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         sb.append("\r\n\r\n\r\n");
         sb.append("Total number of threads started: ");
         sb.append(ManagementFactory.getThreadMXBean().getTotalStartedThreadCount());
@@ -174,18 +138,13 @@ public class DebugUtils {
         }
     }
 
-    @TruffleBoundary
-    public static void printSqStackTrace(final ContextObject context) {
-        final StringBuilder b = new StringBuilder();
-        printSqMaterializedStackTraceOn(b, context);
-        context.image.getOutput().println(b.toString());
-    }
-
-    public static String currentState(final SqueakImageContext image) {
+    public static String currentState() {
+        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
+        final SqueakImageContext image = SqueakLanguage.getContext();
         final StringBuilder b = new StringBuilder();
         b.append("\nImage processes state\n");
-        final PointersObject activeProcess = image.getActiveProcess(pointersReadNode);
-        final long activePriority = pointersReadNode.executeLong(activeProcess, PROCESS.PRIORITY);
+        final PointersObject activeProcess = image.getActiveProcessSlow();
+        final long activePriority = (long) activeProcess.instVarAt0Slow(PROCESS.PRIORITY);
         b.append("*Active process @");
         b.append(Integer.toHexString(activeProcess.hashCode()));
         b.append(" priority ");
@@ -206,141 +165,52 @@ public class DebugUtils {
                 printSemaphoreOrNil(b, "*External semaphore at index " + (i + 1) + " @", semaphores[i], false);
             }
         }
-        final Object[] lists = pointersReadNode.executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS).getObjectStorage();
+        final Object[] lists = ((ArrayObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
         for (int i = 0; i < lists.length; i++) {
             printLinkedList(b, "*Quiescent processes list at priority " + (i + 1), (PointersObject) lists[i]);
         }
         return b.toString();
     }
 
-    private static boolean printLinkedList(final StringBuilder b, final String label, final PointersObject linkedList) {
-        Object temp = pointersReadNode.execute(linkedList, LINKED_LIST.FIRST_LINK);
-        if (temp instanceof PointersObject) {
-            b.append(label);
-            b.append(" and process");
-            if (temp != pointersReadNode.execute(linkedList, LINKED_LIST.LAST_LINK)) {
-                b.append("es:\n");
-            } else {
-                b.append(":\n");
-            }
-            while (temp instanceof PointersObject) {
-                final PointersObject aProcess = (PointersObject) temp;
-                final Object aContext = pointersReadNode.execute(aProcess, PROCESS.SUSPENDED_CONTEXT);
-                if (aContext instanceof ContextObject) {
-                    assert ((ContextObject) aContext).getProcess() == null || ((ContextObject) aContext).getProcess() == aProcess;
-                    b.append("\tprocess @");
-                    b.append(Integer.toHexString(aProcess.hashCode()));
-                    b.append(" with suspended context ");
-                    b.append(aContext);
-                    b.append(" and stack trace:\n");
-                    DebugUtils.printSqMaterializedStackTraceOn(b, (ContextObject) aContext);
-                } else {
-                    b.append("\tprocess @");
-                    b.append(Integer.toHexString(aProcess.hashCode()));
-                    b.append(" with suspended context nil\n");
-                }
-                temp = pointersReadNode.execute(aProcess, PROCESS.NEXT_LINK);
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
-        if (semaphoreOrNil instanceof PointersObject) {
-            b.append(label);
-            b.append(Integer.toHexString(semaphoreOrNil.hashCode()));
-            b.append(" with ");
-            b.append(pointersReadNode.executeLong((AbstractPointersObject) semaphoreOrNil, SEMAPHORE.EXCESS_SIGNALS));
-            b.append(" excess signals");
-            if (!printLinkedList(b, "", (PointersObject) semaphoreOrNil)) {
-                b.append(" and no processes\n");
-            }
-        } else {
-            if (printIfNil) {
-                b.append(label);
-                b.append(" is nil\n");
-            }
-        }
-    }
-
-    @TruffleBoundary
     public static void printSqStackTrace() {
-        CompilerDirectives.transferToInterpreter();
-        final boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
+        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
+        final boolean isCIBuild = System.getenv().containsKey("GITHUB_ACTIONS");
         final int[] depth = new int[1];
-        final boolean[] truffleFrames = new boolean[1];
-
-        new FramesAndContextsIterator(
-                        (frame, code) -> {
-                            if (depth[0]++ > 50 && isTravisBuild) {
-                                return;
-                            }
-                            final PrintWriter err = FrameAccess.getMethod(frame).image.getError();
-                            if (!truffleFrames[0]) {
-                                truffleFrames[0] = true;
-                                err.println("== Truffle stack trace ===========================================================");
-                            }
-                            final Object sender = FrameAccess.getSender(frame);
-                            final Object marker = FrameAccess.getMarker(frame, code);
-                            final Object context = FrameAccess.getContext(frame, code);
-                            final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame));
-                            err.println(MiscUtils.format("%s #(%s) [marker: %s, sender: %s]", context, argumentsString, marker, sender));
-                        },
-                        (context) -> {
-                            if (depth[0]++ > 50 && isTravisBuild) {
-                                return;
-                            }
-                            final PrintWriter err = context.image.getError();
-                            if (truffleFrames[0]) {
-                                truffleFrames[0] = false;
-                                err.println("== Squeak frames ================================================================");
-                            }
-                            final Object[] rcvrAndArgs = context.getReceiverAndNArguments(context.getBlockOrMethod().getNumArgsAndCopied());
-                            err.println(MiscUtils.format("%s #(%s) [%s]", context, ArrayUtils.toJoinedString(", ", rcvrAndArgs), context.getFrameMarker()));
-                        }).scanFor((FrameMarker) null, NilObject.SINGLETON, NilObject.SINGLETON);
-    }
-
-    public static String logSwitch(final PointersObject newProcess, final int newPriority, final PointersObject currentProcess, final ContextObject thisContext, final ContextObject newContext) {
-        final StringBuilder b = new StringBuilder();
-        b.append("Switching from process @");
-        b.append(Integer.toHexString(currentProcess.hashCode()));
-        b.append(" with priority ");
-        b.append(pointersReadNode.executeLong(currentProcess, PROCESS.PRIORITY));
-        b.append(" and stack\n");
-        printSqMaterializedStackTraceOn(b, thisContext);
-        b.append("\n...to process @");
-        b.append(Integer.toHexString(newProcess.hashCode()));
-        b.append(" with priority ");
-        b.append(newPriority);
-        b.append(" and stack\n");
-        printSqMaterializedStackTraceOn(b, newContext);
-        return b.toString();
-    }
-
-    public static String logNoSwitch(final PointersObject newProcess) {
-        final StringBuilder b = new StringBuilder();
-        b.append("\nCannot resume process @");
-        b.append(Integer.toHexString(newProcess.hashCode()));
-        b.append(" with priority ");
-        b.append(pointersReadNode.executeLong(newProcess, PROCESS.PRIORITY));
-        final AbstractSqueakObject newContext = (AbstractSqueakObject) pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
-        if (newContext == NilObject.SINGLETON) {
-            b.append(" and nil suspendedContext\n");
-        } else {
-            b.append(" and stack\n");
-            printSqMaterializedStackTraceOn(b, (ContextObject) newContext);
+        final Object[] lastSender = new Object[]{null};
+        final PrintWriter err = SqueakLanguage.getContext().getError();
+        err.println("== Truffle stack trace ===========================================================");
+        Truffle.getRuntime().iterateFrames(frameInstance -> {
+            if (depth[0]++ > 50 && isCIBuild) {
+                return null;
+            }
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+            if (!FrameAccess.isGraalSqueakFrame(current)) {
+                return null;
+            }
+            final CompiledMethodObject method = FrameAccess.getMethod(current);
+            lastSender[0] = FrameAccess.getSender(current);
+            final Object marker = FrameAccess.getMarker(current, method);
+            final Object context = FrameAccess.getContext(current, method);
+            final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
+            final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
+            err.println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, method, argumentsString, marker, context, lastSender[0]));
+            return null;
+        });
+        if (lastSender[0] instanceof ContextObject) {
+            err.println("== Squeak frames ================================================================");
+            printSqStackTrace((ContextObject) lastSender[0]);
         }
-        b.append("\n...because it hs a lower priority than the currently active process @");
-        final PointersObject currentProcess = newProcess.image.getActiveProcess(pointersReadNode);
-        b.append(Integer.toHexString(currentProcess.hashCode()));
-        b.append(" with priority ");
-        b.append(pointersReadNode.executeLong(currentProcess, PROCESS.PRIORITY));
-        return b.toString();
+    }
+
+    public static void printSqStackTrace(final ContextObject context) {
+        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
+        final StringBuilder b = new StringBuilder();
+        printSqMaterializedStackTraceOn(b, context);
+        context.image.getOutput().println(b.toString());
     }
 
     public static String stackFor(final VirtualFrame frame, final CompiledCodeObject code) {
+        CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final Object[] frameArguments = frame.getArguments();
         final Object receiver = frameArguments[3];
         final StringBuilder b = new StringBuilder("\n\t\t- Receiver:                         ");
@@ -498,91 +368,80 @@ public class DebugUtils {
         return b.toString();
     }
 
-    /**
-     * {@link System#gc()} does not force a garbage collect, but the diagnostics command
-     * "gcClassHistogram" does.
-     */
-    public static void forceGcWithHistogram() {
-        final DiagnosticCommandMBean dcmd = ManagementFactoryHelper.getDiagnosticCommandMBean();
-        final Map<String, Long> enabledBeansCounts = new HashMap<>();
-        final Map<String, Long> enabledBeansTimes = new HashMap<>();
-        List<GarbageCollectorMXBean> gcBeans = ManagementFactoryHelper.getGarbageCollectorMXBeans();
-        for (final GarbageCollectorMXBean bean : gcBeans) {
-            final long count = bean.getCollectionCount();
-            if (count != -1) {
-                enabledBeansCounts.put(bean.getName(), count);
-                final long accumulatedCollectionTime = bean.getCollectionTime();
-                if (accumulatedCollectionTime != -1) {
-                    enabledBeansTimes.put(bean.getName(), accumulatedCollectionTime);
-                }
+    private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
+        if (semaphoreOrNil instanceof PointersObject) {
+            b.append(label);
+            b.append(Integer.toHexString(semaphoreOrNil.hashCode()));
+            b.append(" with ");
+            b.append(((AbstractPointersObject) semaphoreOrNil).instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS));
+            b.append(" excess signals");
+            if (!printLinkedList(b, "", (PointersObject) semaphoreOrNil)) {
+                b.append(" and no processes\n");
             }
-        }
-        long elapsed = 0;
-        final long start = System.nanoTime();
-        Object histogram = null;
-        try {
-            histogram = dcmd.invoke("gcClassHistogram", new Object[]{new String[]{}}, new String[]{"[Ljava.lang.String;"});
-            elapsed = System.nanoTime() - start;
-            // just in case the diagnostics command materialized some new collectors/beans
-            gcBeans = ManagementFactoryHelper.getGarbageCollectorMXBeans();
-        } catch (final JMException e) {
-            e.printStackTrace();
-        }
-        assert elapsed > 0 && histogram != null;
-        boolean atLeastOne = false;
-        for (final GarbageCollectorMXBean bean : gcBeans) {
-            final long count = bean.getCollectionCount();
-            if (count != -1) {
-                long previousCount = 0;
-                if (enabledBeansCounts.containsKey(bean.getName())) {
-                    previousCount = enabledBeansCounts.get(bean.getName());
-                }
-                if (count == previousCount) {
-                    continue;
-                }
-                atLeastOne = true;
-                final StringBuilder b = new StringBuilder("Memory manager ");
-                b.append(bean.getName());
-                b.append(" has performed ");
-                b.append(count - previousCount);
-                b.append(" garbage collection");
-                if (count - previousCount > 1) {
-                    b.append("s");
-                }
-                final long accumulatedCollectionTime = bean.getCollectionTime();
-                if (accumulatedCollectionTime != -1) {
-                    long previousAccumulatedCollectionTime = 0;
-                    if (enabledBeansTimes.containsKey(bean.getName())) {
-                        previousAccumulatedCollectionTime = enabledBeansTimes.get(bean.getName());
-                    }
-                    assert accumulatedCollectionTime > previousAccumulatedCollectionTime;
-                    b.append(" in ");
-                    b.append(accumulatedCollectionTime - previousAccumulatedCollectionTime);
-                    b.append("ms (out of ");
-                    b.append(elapsed / 1000000);
-                    b.append(")");
-                }
-                final String[] names = bean.getMemoryPoolNames();
-                if (names.length > 0) {
-                    b.append(" for pools [");
-                    b.append(names[0]);
-                    for (int i = 1; i < names.length; i++) {
-                        b.append(", ");
-                        b.append(names[i]);
-                    }
-                    b.append("]");
-                }
-                System.out.println(b.toString());
-            }
-        }
-        if (!atLeastOne) {
-            System.out.println("No garbage collection occurred! Class histogram follows:");
         } else {
-            System.out.println("Successfully forced a garbage collect! Class histogram follows:");
+            if (printIfNil) {
+                b.append(label);
+                b.append(" is nil\n");
+            }
         }
-        System.out.println(histogram);
     }
 
-    public static final boolean underDebug = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
+    private static boolean printLinkedList(final StringBuilder b, final String label, final PointersObject linkedList) {
+        Object temp = linkedList.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
+        if (temp instanceof PointersObject) {
+            b.append(label);
+            b.append(" and process");
+            if (temp != linkedList.instVarAt0Slow(LINKED_LIST.LAST_LINK)) {
+                b.append("es:\n");
+            } else {
+                b.append(":\n");
+            }
+            while (temp instanceof PointersObject) {
+                final PointersObject aProcess = (PointersObject) temp;
+                final Object aContext = aProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
+                if (aContext instanceof ContextObject) {
+                    assert ((ContextObject) aContext).getProcess() == null || ((ContextObject) aContext).getProcess() == aProcess;
+                    b.append("\tprocess @");
+                    b.append(Integer.toHexString(aProcess.hashCode()));
+                    b.append(" with suspended context ");
+                    b.append(aContext);
+                    b.append(" and stack trace:\n");
+                    printSqMaterializedStackTraceOn(b, (ContextObject) aContext);
+                } else {
+                    b.append("\tprocess @");
+                    b.append(Integer.toHexString(aProcess.hashCode()));
+                    b.append(" with suspended context nil\n");
+                }
+                temp = aProcess.instVarAt0Slow(PROCESS.NEXT_LINK);
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
 
+    private static void printSqMaterializedStackTraceOn(final StringBuilder b, final ContextObject context) {
+        ContextObject current = context;
+        while (current != null && current.hasTruffleFrame()) {
+            final Object[] rcvrAndArgs = current.getReceiverAndNArguments();
+            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
+            b.append('\n');
+            final Object sender = current.getFrameSender();
+            if (sender == NilObject.SINGLETON) {
+                break;
+            } else if (sender instanceof FrameMarker) {
+                b.append(sender);
+                b.append('\n');
+                break;
+            } else {
+                current = (ContextObject) sender;
+            }
+        }
+    }
+
+    private static void println(final Object object) {
+        // Checkstyle: stop
+        System.out.println(object);
+        // Checkstyle: resume
+    }
 }
