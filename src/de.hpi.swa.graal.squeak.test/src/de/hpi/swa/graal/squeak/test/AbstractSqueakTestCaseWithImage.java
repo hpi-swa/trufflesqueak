@@ -209,7 +209,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
         final String testResult = ((NativeObject) result).asStringUnsafe();
         if (PASSED_VALUE.equals(testResult)) {
-            return TestResult.success(testResult);
+            return TestResult.success();
         } else {
             final boolean shouldPass = (boolean) evaluate(shouldPassCommand(request));
             // we cannot estimate or reliably clean up the state of the image after some unknown
@@ -217,7 +217,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             if (shouldPass) {
                 return TestResult.failure(testResult);
             } else {
-                return TestResult.success("expected failure in Squeak");
+                return TestResult.success(); // Expected failure in Squeak.
             }
         }
     }
@@ -242,6 +242,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     protected static final class TestResult {
+        private static final TestResult SUCCESS = new TestResult(true, PASSED_VALUE, null);
         protected final boolean passed;
         protected final String message;
         protected final Throwable reason;
@@ -260,8 +261,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             return new TestResult(false, message, null);
         }
 
-        protected static TestResult success(final String message) {
-            return new TestResult(true, message, null);
+        protected static TestResult success() {
+            return SUCCESS;
         }
     }
 
