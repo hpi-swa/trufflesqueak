@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -210,11 +211,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization(guards = {"receiver.isEmptyType()"})
-        protected static final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
-            if (receiver.getEmptyStorage() > 0) {
-                return BooleanObject.wrap(thang == NilObject.SINGLETON);
-            } else {
+        protected static final boolean doEmptyArray(final ArrayObject receiver, final Object thang,
+                        @Cached("createBinaryProfile()") final ConditionProfile noElementsProfile) {
+            if (noElementsProfile.profile(receiver.getEmptyStorage() == 0)) {
                 return BooleanObject.FALSE;
+            } else {
+                return BooleanObject.wrap(thang == NilObject.SINGLETON);
             }
         }
 
