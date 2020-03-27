@@ -1,3 +1,3 @@
 testing
 testLayoutStatistics
-	[ GraalSqueakUtilities layoutStatistics ] on: Error do: [ self fail ]
+	[ GraalSqueakUtilities layoutStatistics ] on: Error do: [ :e | self fail: e ]
