@@ -282,7 +282,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"index < receiver.getStackSize()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
                         @Cached final ContextObjectReadNode readNode) {
-            return readNode.execute(receiver, CONTEXT.TEMP_FRAME_START + index - 1);
+            return readNode.execute(receiver, CONTEXT.RECEIVER + index);
         }
     }
 
@@ -298,7 +298,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "index < receiver.getStackSize()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
                         @Cached final ContextObjectWriteNode writeNode) {
-            writeNode.execute(receiver, CONTEXT.TEMP_FRAME_START + index - 1, value);
+            writeNode.execute(receiver, CONTEXT.RECEIVER + index, value);
             return value;
         }
     }
