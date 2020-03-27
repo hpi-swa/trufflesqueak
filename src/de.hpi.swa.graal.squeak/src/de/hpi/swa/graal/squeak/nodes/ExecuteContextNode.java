@@ -237,8 +237,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 continue bytecode_loop;
             } else {
                 /* All other bytecode nodes. */
-                pc = node.getSuccessorIndex();
                 node.executeVoid(frame);
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop;
             }
         }
@@ -304,9 +304,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 continue bytecode_loop_slow;
             } else {
                 /* All other bytecode nodes. */
-                final int successor = node.getSuccessorIndex();
                 node.executeVoid(frame);
-                pc = successor;
+                pc = node.getSuccessorIndex();
                 continue bytecode_loop_slow;
             }
         }
@@ -356,10 +355,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Override
     public SourceSection getSourceSection() {
         if (section == null) {
-            if (code.image.isTesting()) {
-                // Cannot provide source section in case of AbstractSqueakTestCaseWithDummyImage.
-                return null;
-            }
             final Source source = code.getSource();
             section = source.createSection(1, 1, source.getLength());
         }
