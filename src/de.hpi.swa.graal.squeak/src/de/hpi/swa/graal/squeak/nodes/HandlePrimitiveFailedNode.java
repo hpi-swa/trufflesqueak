@@ -6,6 +6,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -18,8 +19,6 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
-    @Child protected ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
-
     protected HandlePrimitiveFailedNode(final CompiledCodeObject code) {
         super(code);
     }
@@ -35,15 +34,17 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
      * symbol into the corresponding temporary variable. See
      * StackInterpreter>>#getErrorObjectFromPrimFailCode for more information.
      */
-    @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode < sizeNode.execute(code.image.primitiveErrorTable)"})
+    @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode < sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
     protected final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
+                    @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                     @Cached("create(code)") final FrameStackPushNode pushNode,
                     @Cached final ArrayObjectReadNode readNode) {
         pushNode.execute(frame, readNode.execute(code.image.primitiveErrorTable, reasonCode));
     }
 
-    @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode >= sizeNode.execute(code.image.primitiveErrorTable)"})
+    @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode >= sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
     protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
+                    @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                     @Cached("create(code)") final FrameStackPushNode pushNode) {
         pushNode.execute(frame, reasonCode);
     }
