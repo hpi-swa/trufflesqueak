@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -97,12 +96,12 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         print(TestType.NOT_TERMINATING, counts, AnsiCodes.RED);
         print(TestType.BROKEN_IN_SQUEAK, counts, AnsiCodes.BLUE);
         print(TestType.IGNORED, counts, AnsiCodes.BOLD);
-    }
 
-    @Before
-    public void loadPackagesOnDemand() throws Throwable {
-        if (inGraalSqueakPackage(test.className)) {
-            ensureGraalSqueakPackagesLoaded(test.className);
+        for (final SqueakTest test : TESTS) {
+            if (inGraalSqueakPackage(test.className)) {
+                ensureGraalSqueakPackagesLoaded(test.className);
+                break;
+            }
         }
     }
 
