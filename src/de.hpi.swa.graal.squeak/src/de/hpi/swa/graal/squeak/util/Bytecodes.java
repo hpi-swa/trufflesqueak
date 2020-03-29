@@ -1,0 +1,66 @@
+package de.hpi.swa.graal.squeak.util;
+
+public final class Bytecodes {
+    public static final int PUSH_RECEIVER_VARIABLE_START = 0;
+    public static final int PUSH_RECEIVER_VARIABLE_END = 15;
+    public static final int PUSH_TEMPORARY_LOCATION_START = 16;
+    public static final int PUSH_TEMPORARY_LOCATION_END = 31;
+    public static final int PUSH_LITERAL_CONSTANT_START = 32;
+    public static final int PUSH_LITERAL_CONSTANT_END = 63;
+    public static final int PUSH_LITERAL_VARIABLE_START = 64;
+    public static final int PUSH_LITERAL_VARIABLE_END = 95;
+    public static final int POP_INTO_RECEIVER_VARIABLE_START = 96;
+    public static final int POP_INTO_RECEIVER_VARIABLE_END = 103;
+    public static final int POP_INTO_TEMPORARY_LOCATION_START = 104;
+    public static final int POP_INTO_TEMPORARY_LOCATION_END = 111;
+    public static final int PUSH_RECEIVER = 112;
+    public static final int PUSH_TRUE = 113;
+    public static final int PUSH_FALSE = 114;
+    public static final int PUSH_NIL = 115;
+    public static final int PUSH_MINUS_ONE = 116;
+    public static final int PUSH_ZERO = 117;
+    public static final int PUSH_ONE = 118;
+    public static final int PUSH_TWO = 119;
+    public static final int RETURN_RECEIVER = 120;
+    public static final int RETURN_TRUE = 121;
+    public static final int RETURN_FALSE = 122;
+    public static final int RETURN_NIL = 123;
+    public static final int RETURN_TOP_FROM_METHOD = 124;
+    public static final int RETURN_TOP_FROM_BLOCK = 125;
+
+    public static final int EXTENDED_PUSH = 128;
+    public static final int EXTENDED_STORE = 129;
+    public static final int EXTENDED_POP = 130;
+    public static final int SINGLE_EXTENDED_SEND = 131;
+    public static final int DOUBLE_EXTENDED_DO_ANYTHING = 132;
+    public static final int SINGLE_EXTENDED_SUPER = 133;
+    public static final int SECOND_EXTENDED_SEND = 134;
+    public static final int POP = 135;
+    public static final int DUP = 136;
+    public static final int PUSH_THIS_CONTEXT = 137;
+    public static final int PUSH_NEW_ARRAY = 138;
+    public static final int CALL_PRIMITIVE = 139;
+    public static final int PUSH_REMOTE_TEMP = 140;
+    public static final int STORE_INTO_REMOTE_TEMP = 141;
+    public static final int POP_INTO_REMOTE_TEMP = 142;
+    public static final int PUSH_CLOSURE = 143;
+    public static final int UNCONDITIONAL_JUMP_START = 144;
+    public static final int UNCONDITIONAL_JUMP_END = 151;
+    public static final int CONDITIONAL_JUMP_START = 152;
+    public static final int CONDITIONAL_JUMP_END = 159;
+    public static final int UNCONDITIONAL_JUMP_LONG_START = 160;
+    public static final int UNCONDITIONAL_JUMP_LONG_END = 167;
+    public static final int CONDITIONAL_JUMP_LONG_TRUE_START = 168;
+    public static final int CONDITIONAL_JUMP_LONG_TRUE_END = 171;
+    public static final int CONDITIONAL_JUMP_LONG_FALSE_START = 172;
+    public static final int CONDITIONAL_JUMP_LONG_FALSE_END = 175;
+
+    public static final int SEND_SPECIAL_SELECTOR_START = 176;
+    public static final int SEND_SPECIAL_SELECTOR_END = 207;
+    public static final int SEND_LITERAL_SELECTOR_0_START = 208;
+    public static final int SEND_LITERAL_SELECTOR_0_END = 223;
+    public static final int SEND_LITERAL_SELECTOR_1_START = 224;
+    public static final int SEND_LITERAL_SELECTOR_1_END = 239;
+    public static final int SEND_LITERAL_SELECTOR_2_START = 240;
+    public static final int SEND_LITERAL_SELECTOR_2_END = 255;
+}
