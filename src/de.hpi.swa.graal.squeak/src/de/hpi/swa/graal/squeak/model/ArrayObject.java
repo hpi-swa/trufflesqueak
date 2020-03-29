@@ -361,6 +361,13 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        if (isObjectType()) {
+            pointersBecomeOneWay(getObjectStorage(), from, to, copyHash);
+        }
+    }
+
+    @Override
     public void tracePointers(final ObjectTracer tracer) {
         if (isObjectType()) {
             for (final Object value : getObjectStorage()) {

@@ -20,7 +20,6 @@ import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
@@ -307,27 +306,27 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return false;
     }
 
-    protected final void layoutValuesBecomeOneWay(final UpdateSqueakObjectHashNode updateHashNode, final Object[] from, final Object[] to, final boolean copyHash) {
+    protected final void layoutValuesBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             if (object0 == fromPointer) {
                 object0 = to[i];
-                updateHashNode.executeUpdate(fromPointer, to[i], copyHash);
+                copyHash(fromPointer, to[i], copyHash);
             }
             if (object1 == fromPointer) {
                 object1 = to[i];
-                updateHashNode.executeUpdate(fromPointer, to[i], copyHash);
+                copyHash(fromPointer, to[i], copyHash);
             }
             if (object2 == fromPointer) {
                 object2 = to[i];
-                updateHashNode.executeUpdate(fromPointer, to[i], copyHash);
+                copyHash(fromPointer, to[i], copyHash);
             }
             if (objectExtension != null) {
                 for (int j = 0; j < objectExtension.length; j++) {
                     final Object object = objectExtension[j];
                     if (object == fromPointer) {
                         objectExtension[j] = to[i];
-                        updateHashNode.executeUpdate(fromPointer, to[i], copyHash);
+                        copyHash(fromPointer, to[i], copyHash);
                     }
                 }
             }

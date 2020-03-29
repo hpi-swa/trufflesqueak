@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.util.Collection;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -47,9 +48,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectNewNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -72,25 +71,28 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
-        @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
-        @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
 
         protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        protected final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
+        protected static final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
+            if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            }
+
             final Object[] fromPointers = fromArray.getObjectStorage();
             final Object[] toPointers = toArray.getObjectStorage();
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            ObjectGraphUtils.pointersBecomeOneWay(fromArray.image, pointersBecomeNode, fromPointersClone, toPointers, copyHash);
+            ObjectGraphUtils.pointersBecomeOneWay(fromArray.image, fromPointersClone, toPointers, copyHash);
             patchTruffleFrames(fromPointersClone, toPointers, copyHash);
             return fromArray;
         }
 
         @TruffleBoundary
-        private void patchTruffleFrames(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
+        private static void patchTruffleFrames(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
             final int fromPointersLength = fromPointers.length;
 
             Truffle.getRuntime().iterateFrames((frameInstance) -> {
@@ -106,9 +108,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         if (argument == fromPointer) {
                             final Object toPointer = toPointers[j];
                             arguments[i] = toPointer;
-                            updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
-                        } else {
-                            pointersBecomeNode.execute(argument, fromPointers, toPointers, copyHash);
+                            AbstractSqueakObjectWithHash.copyHash(fromPointer, toPointer, copyHash);
+                        } else if (argument instanceof AbstractSqueakObjectWithHash) {
+                            ((AbstractSqueakObjectWithHash) argument).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
                         }
                     }
                 }
@@ -121,9 +123,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         if (context == fromPointer) {
                             final Object toPointer = toPointers[j];
                             FrameAccess.setContext(current, blockOrMethod, (ContextObject) toPointer);
-                            updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
+                            AbstractSqueakObjectWithHash.copyHash(fromPointer, toPointer, copyHash);
                         } else {
-                            pointersBecomeNode.execute(context, fromPointers, toPointers, copyHash);
+                            context.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
                         }
                     }
                 }
@@ -144,9 +146,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                                 final Object toPointer = toPointers[j];
                                 assert toPointer != null : "Unexpected `null` value";
                                 current.setObject(slot, toPointer);
-                                updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
-                            } else {
-                                pointersBecomeNode.execute(stackObject, fromPointers, toPointers, copyHash);
+                                AbstractSqueakObjectWithHash.copyHash(fromPointer, toPointer, copyHash);
+                            } else if (stackObject instanceof AbstractSqueakObjectWithHash) {
+                                ((AbstractSqueakObjectWithHash) stackObject).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
                             }
                         }
                     }
@@ -275,24 +277,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "fromArray.isTraceable()", "toArray.isTraceable()"}, limit = "1")
-        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
-                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
+        @Specialization
+        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray) {
             return performPointersBecomeOneWay(fromArray, toArray, true);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "!fromArray.isTraceable() || !toArray.isTraceable()"}, limit = "1")
-        protected static final ArrayObject doInapproriateOperation(final ArrayObject fromArray, final ArrayObject toArray,
-                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
-            throw PrimitiveFailed.INAPPROPRIATE_OPERATION;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
-        protected static final ArrayObject doBadArgument(final ArrayObject fromArray, final ArrayObject toArray,
-                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
-            throw PrimitiveFailed.BAD_ARGUMENT;
         }
 
         @SuppressWarnings("unused")
@@ -684,24 +671,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "fromArray.isTraceable()", "toArray.isTraceable()"}, limit = "1")
-        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
-                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
+        @Specialization
+        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             return performPointersBecomeOneWay(fromArray, toArray, copyHash);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"sizeNode.execute(fromArray) == sizeNode.execute(toArray)", "!fromArray.isTraceable() || !toArray.isTraceable()"}, limit = "1")
-        protected static final ArrayObject doInapproriateOperation(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
-                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
-            throw PrimitiveFailed.INAPPROPRIATE_OPERATION;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "sizeNode.execute(fromArray) != sizeNode.execute(toArray)", limit = "1")
-        protected static final ArrayObject doBadArgument(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
-                        @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode) {
-            throw PrimitiveFailed.BAD_ARGUMENT;
         }
 
         @SuppressWarnings("unused")

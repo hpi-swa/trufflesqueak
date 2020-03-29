@@ -564,6 +564,43 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        if (hasTruffleFrame()) {
+            for (int i = 0; i < from.length; i++) {
+                final Object fromPointer = from[i];
+                if (fromPointer == getFrameSender() && to[i] instanceof ContextObject) {
+                    setSender((ContextObject) to[i]);
+                    copyHash(fromPointer, to[i], copyHash);
+                }
+                if (fromPointer == getMethod() && to[i] instanceof CompiledMethodObject) {
+                    setMethod((CompiledMethodObject) to[i]);
+                    copyHash(fromPointer, to[i], copyHash);
+                }
+                if (fromPointer == getClosure() && to[i] instanceof BlockClosureObject) {
+                    setClosure((BlockClosureObject) to[i]);
+                    copyHash(fromPointer, to[i], copyHash);
+                }
+                if (fromPointer == getReceiver()) {
+                    setReceiver(to[i]);
+                    copyHash(fromPointer, to[i], copyHash);
+                }
+                assert getBlockOrMethod().getStackSlotsUnsafe().length == getBlockOrMethod().getNumStackSlots();
+                for (final FrameSlot slot : getBlockOrMethod().getStackSlotsUnsafe()) {
+                    if (slot == null) {
+                        break; /* Done, this and all following slots have not (yet) been used. */
+                    } else if (truffleFrame.isObject(slot)) {
+                        final Object stackValue = FrameUtil.getObjectSafe(truffleFrame, slot);
+                        if (fromPointer == stackValue) {
+                            truffleFrame.setObject(slot, to[i]);
+                            copyHash(fromPointer, to[i], copyHash);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void tracePointers(final ObjectTracer tracer) {
         if (hasTruffleFrame()) {
             tracer.addIfUnmarked(getFrameSender());

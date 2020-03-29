@@ -241,6 +241,28 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        for (int i = 0; i < from.length; i++) {
+            final Object fromPointer = from[i];
+            if (getReceiver() == fromPointer && fromPointer != to[i]) {
+                setReceiver(to[i]);
+                copyHash(fromPointer, to[i], copyHash);
+            }
+            if (getOuterContextOrNull() == fromPointer && fromPointer != to[i] && to[i] instanceof ContextObject) {
+                setOuterContext((ContextObject) to[i]);
+                copyHash(fromPointer, to[i], copyHash);
+            }
+            for (int j = 0; j < getCopied().length; j++) {
+                final Object copiedValue = getCopied()[j];
+                if (copiedValue == fromPointer) {
+                    getCopied()[j] = to[i];
+                    copyHash(fromPointer, to[i], copyHash);
+                }
+            }
+        }
+    }
+
+    @Override
     public void tracePointers(final ObjectTracer tracer) {
         tracer.addIfUnmarked(getReceiver());
         tracer.addIfUnmarked(getOuterContext());

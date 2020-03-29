@@ -113,6 +113,31 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
         }
     }
 
+    @SuppressWarnings("unused")
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        // Do nothing by default.
+    }
+
+    protected static final void pointersBecomeOneWay(final Object[] target, final Object[] from, final Object[] to, final boolean copyHash) {
+        for (int i = 0; i < from.length; i++) {
+            final Object fromPointer = from[i];
+            for (int j = 0; j < target.length; j++) {
+                final Object newPointer = target[j];
+                if (newPointer == fromPointer) {
+                    final Object toPointer = to[i];
+                    target[j] = toPointer;
+                    copyHash(fromPointer, toPointer, copyHash);
+                }
+            }
+        }
+    }
+
+    public static final void copyHash(final Object from, final Object to, final boolean copyHash) {
+        if (copyHash && from instanceof AbstractSqueakObjectWithHash && to instanceof AbstractSqueakObjectWithHash) {
+            ((AbstractSqueakObjectWithHash) to).setSqueakHash(((AbstractSqueakObjectWithHash) from).getSqueakHash());
+        }
+    }
+
     public void tracePointers(@SuppressWarnings("unused") final ObjectTracer objectTracer) {
         // Nothing to trace by default.
     }

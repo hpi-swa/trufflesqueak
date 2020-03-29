@@ -201,6 +201,21 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     }
 
     @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        for (int i = 0; i < from.length; i++) {
+            final Object fromPointer = from[i];
+            for (int j = 0; j < getLiterals().length; j++) {
+                if (fromPointer == getLiterals()[j]) {
+                    final Object toPointer = to[i];
+                    // FIXME: literals are @CompilationFinal, assumption needed
+                    getLiterals()[j] = toPointer;
+                    copyHash(fromPointer, toPointer, copyHash);
+                }
+            }
+        }
+    }
+
+    @Override
     public void tracePointers(final ObjectTracer tracer) {
         for (final Object literal : getLiterals()) {
             tracer.addIfUnmarked(literal);

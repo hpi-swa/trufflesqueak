@@ -22,7 +22,6 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 
 public final class ObjectGraphUtils {
     private static final int ADDITIONAL_SPACE = 10_000;
@@ -52,13 +51,12 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public static void pointersBecomeOneWay(final SqueakImageContext image, final SqueakObjectPointersBecomeOneWayNode pointersBecomeNode, final Object[] fromPointers,
-                    final Object[] toPointers, final boolean copyHash) {
+    public static void pointersBecomeOneWay(final SqueakImageContext image, final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
-                pointersBecomeNode.execute(currentObject, fromPointers, toPointers, copyHash);
+                currentObject.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
                 pending.tracePointers(currentObject);
             }
         }

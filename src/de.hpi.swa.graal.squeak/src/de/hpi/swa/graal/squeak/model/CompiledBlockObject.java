@@ -82,6 +82,15 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     }
 
     @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        /*
+         * This should not be reached, unless GraalSqueak supports FullBlockClosures. Print an error
+         * instead of crashing for now.
+         */
+        image.printToStdErr("Unexpected CompiledBlockObject: " + this);
+    }
+
+    @Override
     public void write(final SqueakImageWriter writerNode) {
         /*
          * This should not be reached, unless GraalSqueak supports FullBlockClosures. Print an error

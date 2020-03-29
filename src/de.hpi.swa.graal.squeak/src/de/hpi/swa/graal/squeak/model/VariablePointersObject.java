@@ -15,7 +15,6 @@ import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
@@ -71,23 +70,6 @@ public final class VariablePointersObject extends AbstractPointersObject {
         return instsize() + variablePart.length;
     }
 
-    public void pointersBecomeOneWay(final UpdateSqueakObjectHashNode updateHashNode, final Object[] from, final Object[] to, final boolean copyHash) {
-        layoutValuesBecomeOneWay(updateHashNode, from, to, copyHash);
-        final int variableSize = variablePart.length;
-        if (variableSize > 0) {
-            for (int i = 0; i < from.length; i++) {
-                final Object fromPointer = from[i];
-                for (int j = 0; j < variableSize; j++) {
-                    final Object object = getFromVariablePart(j);
-                    if (object == fromPointer) {
-                        putIntoVariablePart(j, to[i]);
-                        updateHashNode.executeUpdate(fromPointer, to[i], copyHash);
-                    }
-                }
-            }
-        }
-    }
-
     public boolean pointsTo(final SqueakObjectIdentityNode identityNode, final Object thang) {
         return layoutValuesPointTo(identityNode, thang) || ArrayUtils.contains(variablePart, thang);
     }
@@ -110,6 +92,24 @@ public final class VariablePointersObject extends AbstractPointersObject {
 
     public VariablePointersObject shallowCopy() {
         return new VariablePointersObject(this);
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        layoutValuesBecomeOneWay(from, to, copyHash);
+        final int variableSize = variablePart.length;
+        if (variableSize > 0) {
+            for (int i = 0; i < from.length; i++) {
+                final Object fromPointer = from[i];
+                for (int j = 0; j < variableSize; j++) {
+                    final Object object = getFromVariablePart(j);
+                    if (object == fromPointer) {
+                        putIntoVariablePart(j, to[i]);
+                        copyHash(fromPointer, to[i], copyHash);
+                    }
+                }
+            }
+        }
     }
 
     @Override

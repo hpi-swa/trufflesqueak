@@ -22,7 +22,6 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class PointersObject extends AbstractPointersObject {
@@ -73,10 +72,6 @@ public final class PointersObject extends AbstractPointersObject {
 
     public void become(final PointersObject other) {
         becomeLayout(other);
-    }
-
-    public void pointersBecomeOneWay(final UpdateSqueakObjectHashNode updateHashNode, final Object[] from, final Object[] to, final boolean copyHash) {
-        layoutValuesBecomeOneWay(updateHashNode, from, to, copyHash);
     }
 
     @Override
@@ -140,6 +135,11 @@ public final class PointersObject extends AbstractPointersObject {
 
     public PointersObject shallowCopy() {
         return new PointersObject(this);
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        layoutValuesBecomeOneWay(from, to, copyHash);
     }
 
     @Override
