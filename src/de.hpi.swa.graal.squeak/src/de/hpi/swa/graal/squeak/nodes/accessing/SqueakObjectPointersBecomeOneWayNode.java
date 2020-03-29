@@ -127,9 +127,18 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends AbstractNode 
                     @Cached final AbstractPointersObjectWriteNode writeNode) {
         final ClassObject oldClass = obj.image.compiledMethodClass;
         for (int i = 0; i < from.length; i++) {
-            if (from[i] == oldClass) {
+            final Object fromPointer = from[i];
+            if (fromPointer == oldClass) {
                 final ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject
                 updateHashNode.executeUpdate(oldClass, newClass, copyHash);
+            }
+            for (int j = 0; j < obj.getLiterals().length; j++) {
+                if (fromPointer == obj.getLiterals()[j]) {
+                    final Object toPointer = to[i];
+                    // FIXME: literals are @CompilationFinal, assumption needed
+                    obj.getLiterals()[j] = toPointer;
+                    updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
+                }
             }
         }
         if (obj.hasMethodClass(readNode)) {
