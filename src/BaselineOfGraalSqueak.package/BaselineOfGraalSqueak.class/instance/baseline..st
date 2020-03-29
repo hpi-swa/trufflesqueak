@@ -8,7 +8,7 @@ baseline: spec
 		spec
 			package: 'GraalSqueak-Core';
 			package: 'GraalSqueak-Support' with: [spec requires: #('GraalSqueak-Core')];
-			package: 'GraalSqueak-Tests' with: [spec requires: #('GraalSqueak-Core' 'GraalSqueak-Support')];
+			package: 'GraalSqueak-Tests' with: [spec requires: #('GraalSqueak-Core' 'GraalSqueak-Support' 'GraalSqueak-Utilities')];
 			package: 'GraalSqueak-Tools' with: [spec requires: #('GraalSqueak-Core' 'GraalSqueak-Support'),
 				(needsJSON ifTrue: [#('JSON')] ifFalse: [#()])];
 			package: 'GraalSqueak-Utilities' with: [spec requires: #('GraalSqueak-Core' 'GraalSqueak-Support')].
