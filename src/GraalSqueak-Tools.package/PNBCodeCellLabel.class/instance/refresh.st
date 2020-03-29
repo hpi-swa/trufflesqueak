@@ -1,7 +1,7 @@
 actions
 refresh
-	| color |
+	| cellColor |
 	self label: (self labelFor: self codeCell languageID).
-	color := (PolyglotNotebook colorFor: self codeCell languageID).
-	self color: color.
-	self codeCell borderColor: color
+	cellColor := (PolyglotNotebook colorFor: self codeCell languageID).
+	self color: cellColor.
+	self codeCell borderColor: cellColor
