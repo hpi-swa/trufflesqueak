@@ -365,8 +365,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 93:
                 case 94:
                 case 95:
-                    push(frame, stackPointer++, getAt0Node(pc).execute(code.getLiteral(opcode & 31), ASSOCIATION.VALUE));
-                    pc++;
+                    push(frame, stackPointer++, getAt0Node(pc++).execute(code.getLiteral(opcode & 31), ASSOCIATION.VALUE));
                     continue bytecode_loop;
                 case 96:
                 case 97:
@@ -376,8 +375,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 101:
                 case 102:
                 case 103:
-                    getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), opcode & 7, pop(frame, --stackPointer));
-                    pc++;
+                    getAtPut0Node(pc++).execute(FrameAccess.getReceiver(frame), opcode & 7, pop(frame, --stackPointer));
                     continue bytecode_loop;
                 case 104:
                 case 105:
@@ -423,26 +421,113 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     pc++;
                     continue bytecode_loop;
                 case 120:
-                    returnValue = FrameAccess.getReceiver(frame);
-                    pc = LOCAL_RETURN_PC;
-                    continue bytecode_loop;
+                    if (code instanceof CompiledMethodObject) {
+                        if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                            assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
+                            throw new NonLocalReturn(FrameAccess.getReceiver(frame), FrameAccess.getSender(frame));
+                        } else {
+                            returnValue = FrameAccess.getReceiver(frame);
+                            pc = LOCAL_RETURN_PC;
+                            continue bytecode_loop;
+                        }
+                    } else {
+                        // Target is sender of closure's home context.
+                        final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+                        assert homeContext.getProcess() != null;
+                        final Object caller = homeContext.getFrameSender();
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
+                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), FrameAccess.getReceiver(frame));
+                            throw SqueakException.create("Should not reach");
+                        } else {
+                            throw new NonLocalReturn(FrameAccess.getReceiver(frame), caller);
+                        }
+                    }
                 case 121:
-                    returnValue = BooleanObject.TRUE;
-                    pc = LOCAL_RETURN_PC;
-                    continue bytecode_loop;
+                    if (code instanceof CompiledMethodObject) {
+                        if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                            assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
+                            throw new NonLocalReturn(BooleanObject.TRUE, FrameAccess.getSender(frame));
+                        } else {
+                            returnValue = BooleanObject.TRUE;
+                            pc = LOCAL_RETURN_PC;
+                            continue bytecode_loop;
+                        }
+                    } else {
+                        // Target is sender of closure's home context.
+                        final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+                        assert homeContext.getProcess() != null;
+                        final Object caller = homeContext.getFrameSender();
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
+                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), BooleanObject.TRUE);
+                            throw SqueakException.create("Should not reach");
+                        } else {
+                            throw new NonLocalReturn(BooleanObject.TRUE, caller);
+                        }
+                    }
                 case 122:
-                    returnValue = BooleanObject.FALSE;
-                    pc = LOCAL_RETURN_PC;
-                    continue bytecode_loop;
+                    if (code instanceof CompiledMethodObject) {
+                        if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                            assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
+                            throw new NonLocalReturn(BooleanObject.FALSE, FrameAccess.getSender(frame));
+                        } else {
+                            returnValue = BooleanObject.FALSE;
+                            pc = LOCAL_RETURN_PC;
+                            continue bytecode_loop;
+                        }
+                    } else {
+                        // Target is sender of closure's home context.
+                        final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+                        assert homeContext.getProcess() != null;
+                        final Object caller = homeContext.getFrameSender();
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
+                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), BooleanObject.FALSE);
+                            throw SqueakException.create("Should not reach");
+                        } else {
+                            throw new NonLocalReturn(BooleanObject.FALSE, caller);
+                        }
+                    }
                 case 123:
-                    returnValue = NilObject.SINGLETON;
-                    pc = LOCAL_RETURN_PC;
-                    continue bytecode_loop;
+                    if (code instanceof CompiledMethodObject) {
+                        if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                            assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
+                            throw new NonLocalReturn(NilObject.SINGLETON, FrameAccess.getSender(frame));
+                        } else {
+                            returnValue = NilObject.SINGLETON;
+                            pc = LOCAL_RETURN_PC;
+                            continue bytecode_loop;
+                        }
+                    } else {
+                        // Target is sender of closure's home context.
+                        final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+                        assert homeContext.getProcess() != null;
+                        final Object caller = homeContext.getFrameSender();
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
+                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), NilObject.SINGLETON);
+                            throw SqueakException.create("Should not reach");
+                        } else {
+                            throw new NonLocalReturn(NilObject.SINGLETON, caller);
+                        }
+                    }
                 case 124:
-                    returnValue = pop(frame, --stackPointer);
-                    pc = LOCAL_RETURN_PC;
-                    continue bytecode_loop;
+                    assert code instanceof CompiledMethodObject;
+                    if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                        assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
+                        throw new NonLocalReturn(pop(frame, --stackPointer), FrameAccess.getSender(frame));
+                    } else {
+                        returnValue = pop(frame, --stackPointer);
+                        pc = LOCAL_RETURN_PC;
+                        continue bytecode_loop;
+                    }
                 case 125: {
+                    assert code instanceof CompiledBlockObject;
                     if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
                         // Target is sender of closure's home context.
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
@@ -451,12 +536,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
                         final Object caller = homeContext.getFrameSender();
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                            CompilerDirectives.transferToInterpreter(); // FIXME
                             final ContextObject currentContext = FrameAccess.getContext(frame);
                             assert currentContext != null;
                             getCannotReturnNode().executeSend(frame, currentContext, pop(frame, --stackPointer));
                             throw SqueakException.create("Should not reach");
+                        } else {
+                            throw new NonLocalReturn(pop(frame, --stackPointer), caller);
                         }
-                        throw new NonLocalReturn(pop(frame, --stackPointer), caller);
                     } else {
                         returnValue = pop(frame, --stackPointer);
                         pc = LOCAL_RETURN_PC;
