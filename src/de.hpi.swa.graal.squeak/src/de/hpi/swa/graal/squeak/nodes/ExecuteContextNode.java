@@ -41,7 +41,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
@@ -464,75 +463,75 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 127:
                     throw SqueakException.create("Unknown/uninterpreted bytecode:", opcode);
                 case 128: {
-                    final int nextByte = code.getBytes()[++pc] & 0xFF;
+                    final int nextByte = code.getBytes()[pc + 1] & 0xFF;
                     final int variableIndex = variableIndex(nextByte);
                     switch (variableType(nextByte)) {
                         case 0:
                             push(frame, stackPointer++, getAt0Node().execute(FrameAccess.getReceiver(frame), variableIndex));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         case 1:
                             push(frame, stackPointer++, pop(frame, variableIndex));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         case 2:
                             push(frame, stackPointer++, code.getLiteral(variableIndex));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         case 3:
                             push(frame, stackPointer++, getAt0Node().execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         default:
                             throw SqueakException.create("unexpected type for ExtendedPush");
                     }
                 }
                 case 129: {
-                    final int nextByte = code.getBytes()[++pc] & 0xFF;
+                    final int nextByte = code.getBytes()[pc + 1] & 0xFF;
                     final int variableIndex = variableIndex(nextByte);
                     switch (variableType(nextByte)) {
                         case 0:
                             getAtPut0Node().execute(FrameAccess.getReceiver(frame), variableIndex, top(frame, stackPointer));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         case 1:
                             push(frame, variableIndex, top(frame, stackPointer));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         case 2:
                             throw SqueakException.create("Unknown/uninterpreted bytecode:", nextByte);
                         case 3:
                             getAtPut0Node().execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, top(frame, stackPointer));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         default:
                             throw SqueakException.create("illegal ExtendedStore bytecode");
                     }
                 }
                 case 130: {
-                    final int nextByte = code.getBytes()[++pc] & 0xFF;
+                    final int nextByte = code.getBytes()[pc + 1] & 0xFF;
                     final int variableIndex = variableIndex(nextByte);
                     switch (variableType(nextByte)) {
                         case 0:
                             getAtPut0Node().execute(FrameAccess.getReceiver(frame), variableIndex, pop(frame, --stackPointer));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         case 1:
                             push(frame, variableIndex, pop(frame, --stackPointer));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         case 2:
                             throw SqueakException.create("Unknown/uninterpreted bytecode:", nextByte);
                         case 3:
                             getAtPut0Node().execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, pop(frame, stackPointer));
-                            pc++;
+                            pc += 2;
                             continue bytecode_loop;
                         default:
                             throw SqueakException.create("illegal ExtendedStore bytecode");
                     }
                 }
                 case 131: {
-                    final int nextByte = code.getBytes()[++pc] & 0xFF;
+                    final int nextByte = code.getBytes()[pc + 1] & 0xFF;
                     final NativeObject selector = (NativeObject) code.getLiteral(nextByte & 31);
                     final int numRcvrAndArgs = 1 + (nextByte >> 5);
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
@@ -541,12 +540,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     if (result != AbstractSendNode.NO_RESULT) {
                         push(frame, stackPointer++, result);
                     }
-                    pc++;
+                    pc += 2;
                     continue bytecode_loop;
                 }
                 case 132: {
-                    final int second = code.getBytes()[++pc] & 0xFF;
-                    final int third = code.getBytes()[++pc] & 0xFF;
+                    final int second = code.getBytes()[pc + 1] & 0xFF;
+                    final int third = code.getBytes()[pc + 2] & 0xFF;
                     final int opType = second >> 5;
                     switch (opType) {
                         case 0: {
@@ -558,7 +557,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             if (result != AbstractSendNode.NO_RESULT) {
                                 push(frame, stackPointer++, result);
                             }
-                            pc++;
+                            pc += 3;
                             continue bytecode_loop;
                         }
                         case 1: {
@@ -570,39 +569,39 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             if (result != AbstractSendNode.NO_RESULT) {
                                 push(frame, stackPointer++, result);
                             }
-                            pc++;
+                            pc += 3;
                             continue bytecode_loop;
                         }
                         case 2:
                             push(frame, stackPointer++, getAt0Node().execute(FrameAccess.getReceiver(frame), third));
-                            pc++;
+                            pc += 3;
                             continue bytecode_loop;
                         case 3:
                             push(frame, stackPointer++, code.getLiteral(third));
-                            pc++;
+                            pc += 3;
                             continue bytecode_loop;
                         case 4:
                             push(frame, stackPointer++, getAt0Node().execute(code.getLiteral(third), ASSOCIATION.VALUE));
-                            pc++;
+                            pc += 3;
                             continue bytecode_loop;
                         case 5:
                             getAtPut0Node().execute(FrameAccess.getReceiver(frame), third, top(frame, stackPointer));
-                            pc++;
+                            pc += 3;
                             continue bytecode_loop;
                         case 6:
                             getAtPut0Node().execute(FrameAccess.getReceiver(frame), third, pop(frame, --stackPointer));
-                            pc++;
+                            pc += 3;
                             continue bytecode_loop;
                         case 7:
                             getAtPut0Node().execute(code.getLiteral(third), ASSOCIATION.VALUE, top(frame, stackPointer));
-                            pc++;
+                            pc += 3;
                             continue bytecode_loop;
                         default:
                             throw SqueakException.create("Unknown/uninterpreted bytecode:", opType);
                     }
                 }
                 case 133: {
-                    final int nextByte = code.getBytes()[++pc] & 0xFF;
+                    final int nextByte = code.getBytes()[pc + 1] & 0xFF;
                     final NativeObject selector = (NativeObject) code.getLiteral(nextByte & 31);
                     final int numRcvrAndArgs = 1 + (nextByte >> 5);
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
@@ -611,11 +610,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     if (result != AbstractSendNode.NO_RESULT) {
                         push(frame, stackPointer++, result);
                     }
-                    pc++;
+                    pc += 2;
                     continue bytecode_loop;
                 }
                 case 134: {
-                    final int nextByte = code.getBytes()[++pc] & 0xFF;
+                    final int nextByte = code.getBytes()[pc + 1] & 0xFF;
                     final NativeObject selector = (NativeObject) code.getLiteral(nextByte & 63);
                     final int numRcvrAndArgs = 1 + (nextByte >> 6);
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
@@ -624,7 +623,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     if (result != AbstractSendNode.NO_RESULT) {
                         push(frame, stackPointer++, result);
                     }
-                    pc++;
+                    pc += 2;
                     continue bytecode_loop;
                 }
                 case 135:
@@ -642,14 +641,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     pc++;
                     continue bytecode_loop;
                 case 138: {
-                    final int nextByte = code.getBytes()[++pc] & 0xFF;
+                    final int nextByte = code.getBytes()[pc + 1] & 0xFF;
                     final int arraySize = nextByte & 127;
                     ArrayObject array;
                     if (arraySize == 0) {
                         // TODO: always use same ArrayObject?
                         array = code.image.asArrayOfObjects(ArrayUtils.EMPTY_ARRAY);
                     } else {
-                        if (opcode > 127) {
+                        if (nextByte > 127) {
                             final Object[] values = new Object[arraySize];
                             for (int i = 0; i < arraySize; i++) {
                                 values[i] = pop(frame, stackPointer - 1 - i);
@@ -665,7 +664,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         }
                     }
                     push(frame, stackPointer++, array);
-                    pc++;
+                    pc += 2;
                     continue bytecode_loop;
                 }
                 case 139: {
@@ -673,8 +672,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         assert primitiveNode == null;
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         assert code instanceof CompiledMethodObject && code.hasPrimitive();
-                        final int byte1 = code.getBytes()[++pc] & 0xFF;
-                        final int byte2 = code.getBytes()[++pc] & 0xFF;
+                        final int byte1 = code.getBytes()[pc + 1] & 0xFF;
+                        final int byte2 = code.getBytes()[pc + 2] & 0xFF;
                         final int primitiveIndex = byte1 + (byte2 << 8);
                         primitiveNode = insert(PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex));
                         primitiveNodeInitialized = true;
@@ -697,28 +696,28 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             /* continue with fallback code. */
                         }
                     }
-                    pc = CallPrimitiveNode.NUM_BYTECODES;
+                    pc = 3;
                     continue bytecode_loop;
                 }
                 case 140: {
-                    final int indexInArray = code.getBytes()[++pc] & 0xFF;
-                    final int indexOfArray = code.getBytes()[++pc] & 0xFF;
+                    final int indexInArray = code.getBytes()[pc + 1] & 0xFF;
+                    final int indexOfArray = code.getBytes()[pc + 2] & 0xFF;
                     push(frame, stackPointer++, getAt0Node().execute(peek(frame, indexOfArray), indexInArray));
-                    pc++;
+                    pc += 3;
                     continue bytecode_loop;
                 }
                 case 141: {
-                    final int indexInArray = code.getBytes()[++pc] & 0xFF;
-                    final int indexOfArray = code.getBytes()[++pc] & 0xFF;
+                    final int indexInArray = code.getBytes()[pc + 1] & 0xFF;
+                    final int indexOfArray = code.getBytes()[pc + 2] & 0xFF;
                     getAtPut0Node().execute(peek(frame, indexOfArray), indexInArray, top(frame, stackPointer));
-                    pc++;
+                    pc += 3;
                     continue bytecode_loop;
                 }
                 case 142: {
-                    final int indexInArray = code.getBytes()[++pc] & 0xFF;
-                    final int indexOfArray = code.getBytes()[++pc] & 0xFF;
+                    final int indexInArray = code.getBytes()[pc + 1] & 0xFF;
+                    final int indexOfArray = code.getBytes()[pc + 2] & 0xFF;
                     getAtPut0Node().execute(peek(frame, indexOfArray), indexInArray, pop(frame, --stackPointer));
-                    pc++;
+                    pc += 3;
                     continue bytecode_loop;
                 }
                 case 143: {
