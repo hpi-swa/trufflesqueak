@@ -803,10 +803,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         array = code.image.asArrayOfObjects(ArrayUtils.EMPTY_ARRAY);
                     } else {
                         if (nextByte > 127) {
-                            final Object[] values = new Object[arraySize];
-                            for (int i = 0; i < arraySize; i++) {
-                                values[i] = pop(frame, stackPointer - 1 - i);
-                            }
+                            final Object[] values = createArgumentsForCall(frame, arraySize, stackPointer);
                             stackPointer -= arraySize;
                             array = code.image.asArrayOfObjects(values);
                         } else {
