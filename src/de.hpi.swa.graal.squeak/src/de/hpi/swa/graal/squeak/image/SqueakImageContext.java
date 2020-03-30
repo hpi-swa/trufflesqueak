@@ -456,7 +456,7 @@ public final class SqueakImageContext {
         specialObjectsArray.getObjectStorage()[index] = value;
     }
 
-    private ArrayObject getSpecialSelectors() {
+    public ArrayObject getSpecialSelectors() {
         return (ArrayObject) getSpecialObject(SPECIAL_OBJECT.SPECIAL_SELECTORS);
     }
 

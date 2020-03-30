@@ -17,6 +17,7 @@ import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
@@ -46,7 +47,6 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNod
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -60,25 +60,25 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
     private static final int LOCAL_RETURN_PC = -2;
-    private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
+    private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 64;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
-    @Child private FrameStackInitializationNode frameInitializationNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
     @Child private InterruptHandlerNode interruptHandlerNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
     @Child private AbstractPrimitiveNode primitiveNode;
     @CompilationFinal private boolean primitiveNodeInitialized = false;
 
+    @CompilationFinal(dimensions = 1) private final Object[] specialSelectors;
+
     @Children private FrameSlotReadNode[] slotReadNodes;
     @Children private FrameSlotWriteNode[] slotWriteNodes;
-    @Children private Node[] opcodeNodes;
+    @Children private Node[] pcNodes;
+    @CompilationFinal(dimensions = 1) private final ConditionProfile[] pcProfiles;
 
-    @Child private SqueakObjectAt0Node at0Node;
-    @Child private SqueakObjectAtPut0Node atPut0Node;
     @Child private SendSelectorNode cannotReturnNode;
 
     private SourceSection section;
@@ -90,7 +90,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         } else {
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
-        frameInitializationNode = resume ? null : FrameStackInitializationNode.create(code);
         /*
          * Only check for interrupts if method is relatively large. Also, skip timer interrupts here
          * as they trigger too often, which causes a lot of context switches and therefore
@@ -101,11 +100,13 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
         slotReadNodes = new FrameSlotReadNode[code.getNumStackSlots()];
         slotWriteNodes = new FrameSlotWriteNode[code.getNumStackSlots()];
-        opcodeNodes = new Node[SqueakBytecodeDecoder.trailerPosition(code)];
+        pcNodes = new Node[SqueakBytecodeDecoder.trailerPosition(code)];
+        pcProfiles = new ConditionProfile[pcNodes.length];
+        specialSelectors = code.image.getSpecialSelectors().getObjectStorage();
     }
 
     protected ExecuteContextNode(final ExecuteContextNode executeContextNode) {
-        this(executeContextNode.code, executeContextNode.frameInitializationNode == null);
+        this(executeContextNode.code, executeContextNode.materializeContextOnMethodExitNode == null);
     }
 
     public static ExecuteContextNode create(final CompiledCodeObject code, final boolean resume) {
@@ -127,7 +128,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 context.setProcess(code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached()));
                 throw ProcessSwitch.createWithBoundary(context);
             }
-            frameInitializationNode.executeInitialize(frame);
+            initialize(frame); // TODO
             if (interruptHandlerNode != null) {
                 interruptHandlerNode.executeTrigger(frame);
             }
@@ -149,6 +150,24 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             }
             materializeContextOnMethodExitNode.execute(frame);
         }
+    }
+
+    @ExplodeLoop
+    private void initialize(final VirtualFrame frame) {
+        final int initialSP = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
+        CompilerDirectives.isCompilationConstant(initialSP);
+        final Object[] arguments = frame.getArguments();
+        final int numArgs = code.getNumArgsAndCopied();
+        CompilerDirectives.isCompilationConstant(numArgs);
+        assert arguments.length == FrameAccess.expectedArgumentSize(numArgs);
+        for (int i = 0; i < numArgs; i++) {
+            push(frame, i, arguments[FrameAccess.getArgumentStartIndex() + i]);
+        }
+        // Initialize remaining temporary variables with nil in newContext.
+        for (int i = numArgs; i < initialSP; i++) {
+            push(frame, i, NilObject.SINGLETON);
+        }
+        FrameAccess.setStackPointer(frame, code, initialSP);
     }
 
     public final Object executeResumeAtStart(final VirtualFrame frame) {
@@ -213,22 +232,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         return slotReadNodes[slot];
     }
 
-    private SqueakObjectAt0Node getAt0Node() {
-        if (at0Node == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            at0Node = insert(SqueakObjectAt0Node.create());
-        }
-        return at0Node;
-    }
-
-    private SqueakObjectAtPut0Node getAtPut0Node() {
-        if (atPut0Node == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            atPut0Node = insert(SqueakObjectAtPut0Node.create());
-        }
-        return atPut0Node;
-    }
-
     private SendSelectorNode getCannotReturnNode() {
         if (cannotReturnNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -255,6 +258,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final int opcode = code.getBytes()[pc] & 0xFF;
+            CompilerAsserts.partialEvaluationConstant(opcode);
             switch (opcode) {
                 case 0:
                 case 1:
@@ -272,7 +276,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 13:
                 case 14:
                 case 15:
-                    push(frame, stackPointer++, getAt0Node().execute(FrameAccess.getReceiver(frame), opcode & 15));
+                    push(frame, stackPointer++, getAt0Node(pc).execute(FrameAccess.getReceiver(frame), opcode & 15));
                     pc++;
                     continue bytecode_loop;
                 case 16:
@@ -361,7 +365,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 93:
                 case 94:
                 case 95:
-                    push(frame, stackPointer++, getAt0Node().execute(code.getLiteral(opcode & 31), ASSOCIATION.VALUE));
+                    push(frame, stackPointer++, getAt0Node(pc).execute(code.getLiteral(opcode & 31), ASSOCIATION.VALUE));
                     pc++;
                     continue bytecode_loop;
                 case 96:
@@ -372,7 +376,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 101:
                 case 102:
                 case 103:
-                    getAtPut0Node().execute(FrameAccess.getReceiver(frame), opcode & 7, pop(frame, --stackPointer));
+                    getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), opcode & 7, pop(frame, --stackPointer));
                     pc++;
                     continue bytecode_loop;
                 case 104:
@@ -439,7 +443,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     pc = LOCAL_RETURN_PC;
                     continue bytecode_loop;
                 case 125: {
-                    if (hasModifiedSender(frame)) {
+                    if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
                         // Target is sender of closure's home context.
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
@@ -464,10 +468,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     throw SqueakException.create("Unknown/uninterpreted bytecode:", opcode);
                 case 128: {
                     final int nextByte = code.getBytes()[pc + 1] & 0xFF;
+                    final byte variableType = variableType(nextByte);
+                    CompilerAsserts.partialEvaluationConstant(variableType);
                     final int variableIndex = variableIndex(nextByte);
-                    switch (variableType(nextByte)) {
+                    switch (variableType) {
                         case 0:
-                            push(frame, stackPointer++, getAt0Node().execute(FrameAccess.getReceiver(frame), variableIndex));
+                            push(frame, stackPointer++, getAt0Node(pc).execute(FrameAccess.getReceiver(frame), variableIndex));
                             pc += 2;
                             continue bytecode_loop;
                         case 1:
@@ -479,7 +485,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             pc += 2;
                             continue bytecode_loop;
                         case 3:
-                            push(frame, stackPointer++, getAt0Node().execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE));
+                            push(frame, stackPointer++, getAt0Node(pc).execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE));
                             pc += 2;
                             continue bytecode_loop;
                         default:
@@ -488,10 +494,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 }
                 case 129: {
                     final int nextByte = code.getBytes()[pc + 1] & 0xFF;
+                    final byte variableType = variableType(nextByte);
+                    CompilerAsserts.partialEvaluationConstant(variableType);
                     final int variableIndex = variableIndex(nextByte);
-                    switch (variableType(nextByte)) {
+                    switch (variableType) {
                         case 0:
-                            getAtPut0Node().execute(FrameAccess.getReceiver(frame), variableIndex, top(frame, stackPointer));
+                            getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), variableIndex, top(frame, stackPointer));
                             pc += 2;
                             continue bytecode_loop;
                         case 1:
@@ -501,7 +509,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         case 2:
                             throw SqueakException.create("Unknown/uninterpreted bytecode:", nextByte);
                         case 3:
-                            getAtPut0Node().execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, top(frame, stackPointer));
+                            getAtPut0Node(pc).execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, top(frame, stackPointer));
                             pc += 2;
                             continue bytecode_loop;
                         default:
@@ -510,10 +518,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 }
                 case 130: {
                     final int nextByte = code.getBytes()[pc + 1] & 0xFF;
+                    final byte variableType = variableType(nextByte);
+                    CompilerAsserts.partialEvaluationConstant(variableType);
                     final int variableIndex = variableIndex(nextByte);
-                    switch (variableType(nextByte)) {
+                    switch (variableType) {
                         case 0:
-                            getAtPut0Node().execute(FrameAccess.getReceiver(frame), variableIndex, pop(frame, --stackPointer));
+                            getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), variableIndex, pop(frame, --stackPointer));
                             pc += 2;
                             continue bytecode_loop;
                         case 1:
@@ -523,7 +533,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         case 2:
                             throw SqueakException.create("Unknown/uninterpreted bytecode:", nextByte);
                         case 3:
-                            getAtPut0Node().execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, pop(frame, stackPointer));
+                            getAtPut0Node(pc).execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, pop(frame, stackPointer));
                             pc += 2;
                             continue bytecode_loop;
                         default:
@@ -537,16 +547,20 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
-                    if (result != AbstractSendNode.NO_RESULT) {
+                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
+                        pc += 2;
+                        continue bytecode_loop;
+                    } else {
+                        pc += 2;
+                        continue bytecode_loop;
                     }
-                    pc += 2;
-                    continue bytecode_loop;
                 }
                 case 132: {
                     final int second = code.getBytes()[pc + 1] & 0xFF;
                     final int third = code.getBytes()[pc + 2] & 0xFF;
                     final int opType = second >> 5;
+                    CompilerAsserts.partialEvaluationConstant(opType);
                     switch (opType) {
                         case 0: {
                             final NativeObject selector = (NativeObject) code.getLiteral(third);
@@ -554,11 +568,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                             stackPointer -= numRcvrAndArgs;
                             final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
-                            if (result != AbstractSendNode.NO_RESULT) {
+                            if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                                 push(frame, stackPointer++, result);
+                                pc += 3;
+                                continue bytecode_loop;
+                            } else {
+                                pc += 3;
+                                continue bytecode_loop;
                             }
-                            pc += 3;
-                            continue bytecode_loop;
                         }
                         case 1: {
                             final NativeObject selector = (NativeObject) code.getLiteral(third);
@@ -566,14 +583,17 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                             stackPointer -= numRcvrAndArgs;
                             final Object result = getExecuteSendNode(pc, true).execute(frame, selector, receiverAndArguments);
-                            if (result != AbstractSendNode.NO_RESULT) {
+                            if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                                 push(frame, stackPointer++, result);
+                                pc += 3;
+                                continue bytecode_loop;
+                            } else {
+                                pc += 3;
+                                continue bytecode_loop;
                             }
-                            pc += 3;
-                            continue bytecode_loop;
                         }
                         case 2:
-                            push(frame, stackPointer++, getAt0Node().execute(FrameAccess.getReceiver(frame), third));
+                            push(frame, stackPointer++, getAt0Node(pc).execute(FrameAccess.getReceiver(frame), third));
                             pc += 3;
                             continue bytecode_loop;
                         case 3:
@@ -581,19 +601,19 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             pc += 3;
                             continue bytecode_loop;
                         case 4:
-                            push(frame, stackPointer++, getAt0Node().execute(code.getLiteral(third), ASSOCIATION.VALUE));
+                            push(frame, stackPointer++, getAt0Node(pc).execute(code.getLiteral(third), ASSOCIATION.VALUE));
                             pc += 3;
                             continue bytecode_loop;
                         case 5:
-                            getAtPut0Node().execute(FrameAccess.getReceiver(frame), third, top(frame, stackPointer));
+                            getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), third, top(frame, stackPointer));
                             pc += 3;
                             continue bytecode_loop;
                         case 6:
-                            getAtPut0Node().execute(FrameAccess.getReceiver(frame), third, pop(frame, --stackPointer));
+                            getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), third, pop(frame, --stackPointer));
                             pc += 3;
                             continue bytecode_loop;
                         case 7:
-                            getAtPut0Node().execute(code.getLiteral(third), ASSOCIATION.VALUE, top(frame, stackPointer));
+                            getAtPut0Node(pc).execute(code.getLiteral(third), ASSOCIATION.VALUE, top(frame, stackPointer));
                             pc += 3;
                             continue bytecode_loop;
                         default:
@@ -607,11 +627,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
                     final Object result = getExecuteSendNode(pc, true).execute(frame, selector, receiverAndArguments);
-                    if (result != AbstractSendNode.NO_RESULT) {
+                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
+                        pc += 2;
+                        continue bytecode_loop;
+                    } else {
+                        pc += 2;
+                        continue bytecode_loop;
                     }
-                    pc += 2;
-                    continue bytecode_loop;
                 }
                 case 134: {
                     final int nextByte = code.getBytes()[pc + 1] & 0xFF;
@@ -620,11 +643,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
-                    if (result != AbstractSendNode.NO_RESULT) {
+                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
+                        pc += 2;
+                        continue bytecode_loop;
+                    } else {
+                        pc += 2;
+                        continue bytecode_loop;
                     }
-                    pc += 2;
-                    continue bytecode_loop;
                 }
                 case 135:
                     pop(frame, --stackPointer);
@@ -642,6 +668,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     continue bytecode_loop;
                 case 138: {
                     final int nextByte = code.getBytes()[pc + 1] & 0xFF;
+                    CompilerAsserts.partialEvaluationConstant(nextByte);
                     final int arraySize = nextByte & 127;
                     ArrayObject array;
                     if (arraySize == 0) {
@@ -702,21 +729,21 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 140: {
                     final int indexInArray = code.getBytes()[pc + 1] & 0xFF;
                     final int indexOfArray = code.getBytes()[pc + 2] & 0xFF;
-                    push(frame, stackPointer++, getAt0Node().execute(peek(frame, indexOfArray), indexInArray));
+                    push(frame, stackPointer++, getAt0Node(pc).execute(peek(frame, indexOfArray), indexInArray));
                     pc += 3;
                     continue bytecode_loop;
                 }
                 case 141: {
                     final int indexInArray = code.getBytes()[pc + 1] & 0xFF;
                     final int indexOfArray = code.getBytes()[pc + 2] & 0xFF;
-                    getAtPut0Node().execute(peek(frame, indexOfArray), indexInArray, top(frame, stackPointer));
+                    getAtPut0Node(pc).execute(peek(frame, indexOfArray), indexInArray, top(frame, stackPointer));
                     pc += 3;
                     continue bytecode_loop;
                 }
                 case 142: {
                     final int indexInArray = code.getBytes()[pc + 1] & 0xFF;
                     final int indexOfArray = code.getBytes()[pc + 2] & 0xFF;
-                    getAtPut0Node().execute(peek(frame, indexOfArray), indexInArray, pop(frame, --stackPointer));
+                    getAtPut0Node(pc).execute(peek(frame, indexOfArray), indexInArray, pop(frame, --stackPointer));
                     pc += 3;
                     continue bytecode_loop;
                 }
@@ -768,14 +795,16 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             if (CompilerDirectives.inInterpreter() && offset < 0) {
                                 backJumpCounter++;
                             }
-                            pc += offset;
+                            pc += offset + 1;
+                            continue bytecode_loop;
+                        } else {
+                            pc++;
+                            continue bytecode_loop;
                         }
-                        pc++;
                     } else {
                         // TODO;
                         throw SqueakException.create("not yet implemented");
                     }
-                    continue bytecode_loop;
                 }
                 case 160:
                 case 161:
@@ -803,14 +832,16 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             if (CompilerDirectives.inInterpreter() && offset < 0) {
                                 backJumpCounter++;
                             }
-                            pc += offset;
+                            pc += offset + 2;
+                            continue bytecode_loop;
+                        } else {
+                            pc += 2;
+                            continue bytecode_loop;
                         }
-                        pc += 2;
                     } else {
                         // TODO;
                         throw SqueakException.create("not yet implemented");
                     }
-                    continue bytecode_loop;
                 }
                 case 172:
                 case 173:
@@ -823,14 +854,16 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             if (CompilerDirectives.inInterpreter() && offset < 0) {
                                 backJumpCounter++;
                             }
-                            pc += offset;
+                            pc += offset + 2;
+                            continue bytecode_loop;
+                        } else {
+                            pc += 2;
+                            continue bytecode_loop;
                         }
-                        pc += 2;
                     } else {
                         // TODO;
                         throw SqueakException.create("not yet implemented");
                     }
-                    continue bytecode_loop;
                 }
                 case 176:
                 case 177:
@@ -864,17 +897,20 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 205:
                 case 206:
                 case 207: {
-                    final NativeObject selector = code.image.getSpecialSelector(opcode - 176);
-                    final int numRcvrAndArgs = 1 + code.image.getSpecialSelectorNumArgs(opcode - 176);
+                    final NativeObject selector = (NativeObject) specialSelectors[(opcode - 176) * 2];
+                    final int numRcvrAndArgs = 1 + (int) (long) specialSelectors[(opcode - 176) * 2 + 1];
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    if (result != AbstractSendNode.NO_RESULT) {
+                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
+                        pc++;
+                        continue bytecode_loop;
+                    } else {
+                        pc++;
+                        continue bytecode_loop;
                     }
-                    pc++;
-                    continue bytecode_loop;
                 }
                 case 208:
                 case 209:
@@ -898,11 +934,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     stackPointer -= numRcvrAndArgs;
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    if (result != AbstractSendNode.NO_RESULT) {
+                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
+                        pc++;
+                        continue bytecode_loop;
+                    } else {
+                        pc++;
+                        continue bytecode_loop;
                     }
-                    pc++;
-                    continue bytecode_loop;
                 }
                 case 224:
                 case 225:
@@ -926,11 +965,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     stackPointer -= numRcvrAndArgs;
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    if (result != AbstractSendNode.NO_RESULT) {
+                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
+                        pc++;
+                        continue bytecode_loop;
+                    } else {
+                        pc++;
+                        continue bytecode_loop;
                     }
-                    pc++;
-                    continue bytecode_loop;
                 }
                 case 240:
                 case 241:
@@ -954,11 +996,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     stackPointer -= numRcvrAndArgs;
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    if (result != AbstractSendNode.NO_RESULT) {
+                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
+                        pc++;
+                        continue bytecode_loop;
+                    } else {
+                        pc++;
+                        continue bytecode_loop;
                     }
-                    pc++;
-                    continue bytecode_loop;
                 }
                 default:
                     throw SqueakException.create("Unknown bytecode:", opcode);
@@ -971,12 +1016,36 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         return returnValue;
     }
 
-    private ExecuteSendNode getExecuteSendNode(final int opcode, final boolean isSuper) {
-        if (opcodeNodes[opcode] == null) {
+    private ExecuteSendNode getExecuteSendNode(final int pc, final boolean isSuper) {
+        if (pcNodes[pc] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            opcodeNodes[opcode] = insert(ExecuteSendNode.create(code, isSuper));
+            pcNodes[pc] = insert(ExecuteSendNode.create(code, isSuper));
         }
-        return (ExecuteSendNode) opcodeNodes[opcode];
+        return (ExecuteSendNode) pcNodes[pc];
+    }
+
+    private SqueakObjectAt0Node getAt0Node(final int pc) {
+        if (pcNodes[pc] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pcNodes[pc] = insert(SqueakObjectAt0Node.create());
+        }
+        return (SqueakObjectAt0Node) pcNodes[pc];
+    }
+
+    private SqueakObjectAtPut0Node getAtPut0Node(final int pc) {
+        if (pcNodes[pc] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pcNodes[pc] = insert(SqueakObjectAtPut0Node.create());
+        }
+        return (SqueakObjectAtPut0Node) pcNodes[pc];
+    }
+
+    private ConditionProfile getConditionProfileProfile(final int pc) {
+        if (pcProfiles[pc] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pcProfiles[pc] = ConditionProfile.createBinaryProfile();
+        }
+        return pcProfiles[pc];
     }
 
     @ExplodeLoop
