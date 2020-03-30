@@ -251,7 +251,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         int pc = 0;
         int backJumpCounter = 0;
-        int stackPointer = code.getNumTemps();
+        int stackPointer = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
@@ -645,19 +645,24 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int nextByte = code.getBytes()[++pc] & 0xFF;
                     final int arraySize = nextByte & 127;
                     ArrayObject array;
-                    if (opcode > 127) {
-                        final Object[] values = new Object[arraySize];
-                        for (int i = 0; i < arraySize; i++) {
-                            values[i] = pop(frame, stackPointer - i);
-                        }
-                        stackPointer -= arraySize;
-                        array = code.image.asArrayOfObjects(values);
+                    if (arraySize == 0) {
+                        // TODO: always use same ArrayObject?
+                        array = code.image.asArrayOfObjects(ArrayUtils.EMPTY_ARRAY);
                     } else {
-                        /**
-                         * Pushing an ArrayObject with object strategy. Contents likely to be mixed
-                         * values and therefore unlikely to benefit from storage strategy.
-                         */
-                        array = ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize);
+                        if (opcode > 127) {
+                            final Object[] values = new Object[arraySize];
+                            for (int i = 0; i < arraySize; i++) {
+                                values[i] = pop(frame, stackPointer - 1 - i);
+                            }
+                            stackPointer -= arraySize;
+                            array = code.image.asArrayOfObjects(values);
+                        } else {
+                            /**
+                             * Pushing an ArrayObject with object strategy. Contents likely to be
+                             * mixed values and therefore unlikely to benefit from storage strategy.
+                             */
+                            array = ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize);
+                        }
                     }
                     push(frame, stackPointer++, array);
                     pc++;
@@ -717,21 +722,21 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     continue bytecode_loop;
                 }
                 case 143: {
-                    final int byte1 = code.getBytes()[++pc] & 0xFF;
-                    final int byte2 = code.getBytes()[++pc] & 0xFF;
-                    final int byte3 = code.getBytes()[++pc] & 0xFF;
+                    final int byte1 = code.getBytes()[pc + 1] & 0xFF;
+                    final int byte2 = code.getBytes()[pc + 2] & 0xFF;
+                    final int byte3 = code.getBytes()[pc + 3] & 0xFF;
                     final int numArgs = byte1 & 0xF;
                     final int numCopied = byte1 >> 4 & 0xF;
                     final int blockSize = byte2 << 8 | byte3;
                     final Object receiver = FrameAccess.getReceiver(frame);
-                    final Object[] copiedValues = createArgumentsForCall(frame, numArgs, stackPointer);
-                    stackPointer -= numArgs;
+                    final Object[] copiedValues = createArgumentsForCall(frame, numCopied, stackPointer);
+                    stackPointer -= numCopied;
                     final ContextObject outerContext = getGetOrCreateContextNode().executeGet(frame);
-                    final CompiledBlockObject cachedBlock = code.findBlock(FrameAccess.getMethod(frame), numArgs, numCopied, pc, blockSize);
+                    final CompiledBlockObject cachedBlock = code.findBlock(FrameAccess.getMethod(frame), numArgs, numCopied, pc + 4, blockSize);
                     final int cachedStartPC = cachedBlock.getInitialPC();
                     final BlockClosureObject closure = new BlockClosureObject(code.image, cachedBlock, cachedStartPC, numArgs, receiver, copiedValues, outerContext);
                     push(frame, stackPointer++, closure);
-                    pc++;
+                    pc += 4 + blockSize;
                     continue bytecode_loop;
                 }
                 case 144:
@@ -785,7 +790,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     if (CompilerDirectives.inInterpreter() && offset < 0) {
                         backJumpCounter++;
                     }
-                    pc += offset + 1;
+                    pc += offset + 2;
                     continue bytecode_loop;
                 }
                 case 168:
@@ -794,7 +799,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 171: {
                     final Object value = pop(frame, --stackPointer);
                     if (value instanceof Boolean) {
-                        if (!(boolean) value) {
+                        if ((boolean) value) {
                             final int offset = ((opcode & 3) << 8) + (code.getBytes()[pc + 1] & 0xFF);
                             if (CompilerDirectives.inInterpreter() && offset < 0) {
                                 backJumpCounter++;
@@ -814,7 +819,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 175: {
                     final Object value = pop(frame, --stackPointer);
                     if (value instanceof Boolean) {
-                        if ((boolean) value) {
+                        if (!(boolean) value) {
                             final int offset = ((opcode & 7) - 4 << 8) + (code.getBytes()[pc + 1] & 0xFF);
                             if (CompilerDirectives.inInterpreter() && offset < 0) {
                                 backJumpCounter++;
@@ -978,12 +983,16 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @ExplodeLoop
     private Object[] createArgumentsForCall(final VirtualFrame frame, final int numArgs, final int stackPointerOffset) {
         CompilerAsserts.partialEvaluationConstant(numArgs);
-        final Object[] args = new Object[numArgs];
-        int stackPointer = stackPointerOffset;
-        for (int i = numArgs - 1; i >= 0; --i) {
-            args[i] = pop(frame, --stackPointer);
+        if (numArgs == 0) {
+            return ArrayUtils.EMPTY_ARRAY;
+        } else {
+            final Object[] args = new Object[numArgs];
+            int stackPointer = stackPointerOffset;
+            for (int i = numArgs - 1; i >= 0; --i) {
+                args[i] = pop(frame, --stackPointer);
+            }
+            return args;
         }
-        return args;
     }
 
     private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
