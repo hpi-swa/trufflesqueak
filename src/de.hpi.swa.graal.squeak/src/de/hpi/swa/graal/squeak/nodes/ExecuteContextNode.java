@@ -252,11 +252,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private Object startBytecode(final VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         int pc = 0;
-        int backJumpCounter = 0;
         int stackPointer = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
+        int backJumpCounter = 0;
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
+            CompilerAsserts.partialEvaluationConstant(stackPointer);
             final int opcode = code.getBytes()[pc] & 0xFF;
             CompilerAsserts.partialEvaluationConstant(opcode);
             switch (opcode) {
@@ -550,9 +551,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         continue bytecode_loop;
                     }
                 }
-                case 126:
-                case 127:
-                    throw SqueakException.create("Unknown/uninterpreted bytecode:", opcode);
                 case 128: {
                     final int nextByte = code.getBytes()[pc + 1] & 0xFF;
                     final byte variableType = variableType(nextByte);
@@ -620,7 +618,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         case 2:
                             throw SqueakException.create("Unknown/uninterpreted bytecode:", nextByte);
                         case 3:
-                            getAtPut0Node(pc).execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, pop(frame, stackPointer));
+                            getAtPut0Node(pc).execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, pop(frame, --stackPointer));
                             pc += 2;
                             continue bytecode_loop;
                         default:
@@ -633,13 +631,21 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int numRcvrAndArgs = 1 + (nextByte >> 5);
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
+                    storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
-                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
-                        push(frame, stackPointer++, result);
-                        pc += 2;
-                        continue bytecode_loop;
+                    assert result != null;
+                    if (pc != FrameAccess.getInstructionPointer(frame, code)) {
+                        CompilerDirectives.transferToInterpreter();
+                        pc = FrameAccess.getInstructionPointer(frame, code);
                     } else {
                         pc += 2;
+                    }
+                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
+                        push(frame, stackPointer++, result);
+                        continue bytecode_loop;
+                    } else {
+                        stackPointer++;
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Stack inconsistent";
                         continue bytecode_loop;
                     }
                 }
@@ -654,13 +660,21 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             final int numRcvrAndArgs = 1 + (second & 31);
                             final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                             stackPointer -= numRcvrAndArgs;
+                            storePCandSP(frame, pc, stackPointer);
                             final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
-                            if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
-                                push(frame, stackPointer++, result);
-                                pc += 3;
-                                continue bytecode_loop;
+                            assert result != null;
+                            if (pc != FrameAccess.getInstructionPointer(frame, code)) {
+                                CompilerDirectives.transferToInterpreter();
+                                pc = FrameAccess.getInstructionPointer(frame, code);
                             } else {
                                 pc += 3;
+                            }
+                            if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
+                                push(frame, stackPointer++, result);
+                                continue bytecode_loop;
+                            } else {
+                                stackPointer++;
+                                assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Stack inconsistent";
                                 continue bytecode_loop;
                             }
                         }
@@ -669,13 +683,21 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             final int numRcvrAndArgs = 1 + (second & 31);
                             final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                             stackPointer -= numRcvrAndArgs;
+                            storePCandSP(frame, pc, stackPointer);
                             final Object result = getExecuteSendNode(pc, true).execute(frame, selector, receiverAndArguments);
-                            if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
-                                push(frame, stackPointer++, result);
-                                pc += 3;
-                                continue bytecode_loop;
+                            assert result != null;
+                            if (pc != FrameAccess.getInstructionPointer(frame, code)) {
+                                CompilerDirectives.transferToInterpreter();
+                                pc = FrameAccess.getInstructionPointer(frame, code);
                             } else {
                                 pc += 3;
+                            }
+                            if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
+                                push(frame, stackPointer++, result);
+                                continue bytecode_loop;
+                            } else {
+                                stackPointer++;
+                                assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Stack inconsistent";
                                 continue bytecode_loop;
                             }
                         }
@@ -713,13 +735,22 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int numRcvrAndArgs = 1 + (nextByte >> 5);
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
+                    storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, true).execute(frame, selector, receiverAndArguments);
-                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
-                        push(frame, stackPointer++, result);
-                        pc += 2;
-                        continue bytecode_loop;
+                    assert result != null;
+                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    if (pc != FrameAccess.getInstructionPointer(frame, code)) {
+                        CompilerDirectives.transferToInterpreter();
+                        pc = FrameAccess.getInstructionPointer(frame, code);
                     } else {
                         pc += 2;
+                    }
+                    if (mustPushResult) {
+                        push(frame, stackPointer++, result);
+                        continue bytecode_loop;
+                    } else {
+                        stackPointer++;
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Stack inconsistent";
                         continue bytecode_loop;
                     }
                 }
@@ -729,13 +760,22 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int numRcvrAndArgs = 1 + (nextByte >> 6);
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
+                    storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
-                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
-                        push(frame, stackPointer++, result);
-                        pc += 2;
-                        continue bytecode_loop;
+                    assert result != null;
+                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    if (pc != FrameAccess.getInstructionPointer(frame, code)) {
+                        CompilerDirectives.transferToInterpreter();
+                        pc = FrameAccess.getInstructionPointer(frame, code);
                     } else {
                         pc += 2;
+                    }
+                    if (mustPushResult) {
+                        push(frame, stackPointer++, result);
+                        continue bytecode_loop;
+                    } else {
+                        stackPointer++;
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Stack inconsistent";
                         continue bytecode_loop;
                     }
                 }
@@ -782,6 +822,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     continue bytecode_loop;
                 }
                 case 139: {
+                    assert pc == 0;
                     if (!primitiveNodeInitialized) {
                         assert primitiveNode == null;
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -988,14 +1029,22 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int numRcvrAndArgs = 1 + (int) (long) specialSelectors[(opcode - 176) * 2 + 1];
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
+                    storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
-                        push(frame, stackPointer++, result);
-                        pc++;
-                        continue bytecode_loop;
+                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    if (pc != FrameAccess.getInstructionPointer(frame, code)) {
+                        CompilerDirectives.transferToInterpreter();
+                        pc = FrameAccess.getInstructionPointer(frame, code);
                     } else {
                         pc++;
+                    }
+                    if (mustPushResult) {
+                        push(frame, stackPointer++, result);
+                        continue bytecode_loop;
+                    } else {
+                        stackPointer++;
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Stack inconsistent";
                         continue bytecode_loop;
                     }
                 }
@@ -1019,14 +1068,22 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int numRcvrAndArgs = 1;
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
+                    storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
-                        push(frame, stackPointer++, result);
-                        pc++;
-                        continue bytecode_loop;
+                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    if (pc != FrameAccess.getInstructionPointer(frame, code)) {
+                        CompilerDirectives.transferToInterpreter();
+                        pc = FrameAccess.getInstructionPointer(frame, code);
                     } else {
                         pc++;
+                    }
+                    if (mustPushResult) {
+                        push(frame, stackPointer++, result);
+                        continue bytecode_loop;
+                    } else {
+                        stackPointer++;
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Stack inconsistent";
                         continue bytecode_loop;
                     }
                 }
@@ -1050,14 +1107,22 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int numRcvrAndArgs = 2;
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
+                    storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
-                        push(frame, stackPointer++, result);
-                        pc++;
-                        continue bytecode_loop;
+                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    if (pc != FrameAccess.getInstructionPointer(frame, code)) {
+                        CompilerDirectives.transferToInterpreter();
+                        pc = FrameAccess.getInstructionPointer(frame, code);
                     } else {
                         pc++;
+                    }
+                    if (mustPushResult) {
+                        push(frame, stackPointer++, result);
+                        continue bytecode_loop;
+                    } else {
+                        stackPointer++;
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Stack inconsistent";
                         continue bytecode_loop;
                     }
                 }
@@ -1081,14 +1146,22 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int numRcvrAndArgs = 3;
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
                     stackPointer -= numRcvrAndArgs;
+                    storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
-                        push(frame, stackPointer++, result);
-                        pc++;
-                        continue bytecode_loop;
+                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    if (pc != FrameAccess.getInstructionPointer(frame, code)) {
+                        CompilerDirectives.transferToInterpreter();
+                        pc = FrameAccess.getInstructionPointer(frame, code);
                     } else {
                         pc++;
+                    }
+                    if (mustPushResult) {
+                        push(frame, stackPointer++, result);
+                        continue bytecode_loop;
+                    } else {
+                        stackPointer++;
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Stack inconsistent";
                         continue bytecode_loop;
                     }
                 }
@@ -1133,6 +1206,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             pcProfiles[pc] = ConditionProfile.createBinaryProfile();
         }
         return pcProfiles[pc];
+    }
+
+    private void storePCandSP(final VirtualFrame frame, final int pc, final int sp) {
+        FrameAccess.setInstructionPointer(frame, code, pc);
+        FrameAccess.setStackPointer(frame, code, sp);
     }
 
     @ExplodeLoop
