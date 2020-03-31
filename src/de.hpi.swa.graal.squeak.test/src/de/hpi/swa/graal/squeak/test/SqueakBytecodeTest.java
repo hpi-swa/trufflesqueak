@@ -162,7 +162,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 runMethod(rcvr, bytecode);
                 fail("Exception expected");
             } catch (final SqueakException e) {
-                assertEquals("Unknown/uninterpreted bytecode: " + bytecode, e.getMessage());
+                assertEquals("Unknown bytecode: " + bytecode, e.getMessage());
             }
         }
     }
