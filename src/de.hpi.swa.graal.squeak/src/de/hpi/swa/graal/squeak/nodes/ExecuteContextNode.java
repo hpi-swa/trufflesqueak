@@ -70,7 +70,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
     @Child private InterruptHandlerNode interruptHandlerNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
-    @Child private AbstractPrimitiveNode primitiveNode;
     @CompilationFinal private boolean primitiveNodeInitialized = false;
 
     @CompilationFinal(dimensions = 1) private final Object[] specialSelectors;
@@ -805,7 +804,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final int nextByte = code.getBytes()[pc + 1] & 0xFF;
                     CompilerAsserts.partialEvaluationConstant(nextByte);
                     final int arraySize = nextByte & 127;
-                    ArrayObject array;
+                    final ArrayObject array;
                     if (arraySize == 0) {
                         // TODO: always use same ArrayObject?
                         array = code.image.asArrayOfObjects(ArrayUtils.EMPTY_ARRAY);
@@ -829,18 +828,18 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 139: {
                     assert pc == 0;
                     if (!primitiveNodeInitialized) {
-                        assert primitiveNode == null;
+                        assert pcNodes[pc] == null;
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         assert code instanceof CompiledMethodObject && code.hasPrimitive();
                         final int byte1 = code.getBytes()[pc + 1] & 0xFF;
                         final int byte2 = code.getBytes()[pc + 2] & 0xFF;
                         final int primitiveIndex = byte1 + (byte2 << 8);
-                        primitiveNode = insert(PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex));
+                        pcNodes[pc] = insert(PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex));
                         primitiveNodeInitialized = true;
                     }
-                    if (primitiveNode != null) {
+                    if (pcNodes[pc] != null) {
                         try {
-                            returnValue = primitiveNode.executePrimitive(frame);
+                            returnValue = ((AbstractPrimitiveNode) pcNodes[pc]).executePrimitive(frame);
                             pc = LOCAL_RETURN_PC;
                             continue bytecode_loop;
                         } catch (final PrimitiveFailed e) {
@@ -851,7 +850,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                              * expected and ok for primitive failure logging purposes. Note that
                              * primitives that are not implemented are also not logged.
                              */
-                            LogUtils.PRIMITIVES.fine(() -> primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
+                            LogUtils.PRIMITIVES.fine(() -> code + ": primitive #" + code.primitiveIndex() + " failed (arguments: " +
                                             ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
                             /* continue with fallback code. */
                         }

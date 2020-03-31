@@ -65,7 +65,7 @@ public final class ExecuteSendNode extends AbstractNodeWithCode {
         }
     }
 
-    protected final FrameMarker getMarker(final VirtualFrame frame) {
+    protected FrameMarker getMarker(final VirtualFrame frame) {
         return FrameAccess.getMarker(frame, code);
     }
 
