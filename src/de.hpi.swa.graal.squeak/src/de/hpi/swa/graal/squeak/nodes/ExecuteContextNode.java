@@ -1304,8 +1304,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         CompilerDirectives.transferToInterpreter();
         FrameAccess.setInstructionPointer(frame, code, pc + 1);
         final CompiledMethodObject method = (CompiledMethodObject) LookupMethodNode.getUncached().executeLookup(code.image.methodContextClass, code.image.cannotReturn);
-        final Object[] frameArguments = FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{getGetOrCreateContextNode().executeGet(frame), value});
-        IndirectCallNode.getUncached().call(method.getCallTarget(), frameArguments);
+        method.getCallTarget().call(FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{getGetOrCreateContextNode().executeGet(frame), value}));
         throw SqueakException.create("Should not be reached");
     }
 
@@ -1314,8 +1313,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         FrameAccess.setInstructionPointer(frame, code, pc + 1);
         final ClassObject rcvrClass = SqueakObjectClassNode.getUncached().executeLookup(value);
         final CompiledMethodObject method = (CompiledMethodObject) LookupMethodNode.getUncached().executeLookup(rcvrClass, code.image.mustBeBooleanSelector);
-        final Object[] frameArguments = FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{value});
-        IndirectCallNode.getUncached().call(method.getCallTarget(), frameArguments);
+        method.getCallTarget().call(FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{value}));
         throw SqueakException.create("Should not be reached");
     }
 
