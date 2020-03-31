@@ -347,7 +347,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization(guards = {"rhs != 0", "isIntegralWhenDividedBy(lhs, rhs)"})
+        @Specialization(guards = {"rhs != 0", "isIntegralWhenDividedBy(lhs, rhs)"}, replaces = "doLongNoZeroCheck")
         public final Object doLong(final long lhs, final long rhs,
                         @Cached final BranchProfile isOverflowDivisionProfile) {
             if (SqueakGuards.isOverflowDivision(lhs, rhs)) {
