@@ -649,17 +649,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final NativeObject selector = (NativeObject) code.getLiteral(nextByte & 31);
                     final int numRcvrAndArgs = 1 + (nextByte >> 5);
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
-                    stackPointer -= numRcvrAndArgs;
-                    storePCandSP(frame, pc, stackPointer);
-                    final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
+                    final int currentPC = pc;
+                    storePCandSP(frame, pc += 2, stackPointer -= numRcvrAndArgs);
+                    final Object result = getExecuteSendNode(currentPC, false).execute(frame, selector, receiverAndArguments);
                     assert result != null;
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
-                    } else {
-                        pc += 2;
                     }
-                    if (getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
+                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -678,17 +676,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             final NativeObject selector = (NativeObject) code.getLiteral(third);
                             final int numRcvrAndArgs = 1 + (second & 31);
                             final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
-                            stackPointer -= numRcvrAndArgs;
-                            storePCandSP(frame, pc, stackPointer);
-                            final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
+                            final int currentPC = pc;
+                            storePCandSP(frame, pc += 3, stackPointer -= numRcvrAndArgs);
+                            final Object result = getExecuteSendNode(currentPC, false).execute(frame, selector, receiverAndArguments);
                             assert result != null;
                             if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                                 CompilerDirectives.transferToInterpreter();
                                 pc = FrameAccess.getInstructionPointer(frame, code);
-                            } else {
-                                pc += 3;
                             }
-                            if (getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
+                            if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                                 push(frame, stackPointer++, result);
                                 continue bytecode_loop;
                             } else {
@@ -701,17 +697,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             final NativeObject selector = (NativeObject) code.getLiteral(third);
                             final int numRcvrAndArgs = 1 + (second & 31);
                             final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
-                            stackPointer -= numRcvrAndArgs;
-                            storePCandSP(frame, pc, stackPointer);
-                            final Object result = getExecuteSendNode(pc, true).execute(frame, selector, receiverAndArguments);
+                            final int currentPC = pc;
+                            storePCandSP(frame, pc += 3, stackPointer -= numRcvrAndArgs);
+                            final Object result = getExecuteSendNode(currentPC, true).execute(frame, selector, receiverAndArguments);
                             assert result != null;
                             if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                                 CompilerDirectives.transferToInterpreter();
                                 pc = FrameAccess.getInstructionPointer(frame, code);
-                            } else {
-                                pc += 3;
                             }
-                            if (getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
+                            if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                                 push(frame, stackPointer++, result);
                                 continue bytecode_loop;
                             } else {
@@ -753,18 +747,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final NativeObject selector = (NativeObject) code.getLiteral(nextByte & 31);
                     final int numRcvrAndArgs = 1 + (nextByte >> 5);
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
-                    stackPointer -= numRcvrAndArgs;
-                    storePCandSP(frame, pc, stackPointer);
-                    final Object result = getExecuteSendNode(pc, true).execute(frame, selector, receiverAndArguments);
+                    final int currentPC = pc;
+                    storePCandSP(frame, pc += 2, stackPointer -= numRcvrAndArgs);
+                    final Object result = getExecuteSendNode(currentPC, true).execute(frame, selector, receiverAndArguments);
                     assert result != null;
-                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
-                    } else {
-                        pc += 2;
                     }
-                    if (mustPushResult) {
+                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -778,18 +769,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final NativeObject selector = (NativeObject) code.getLiteral(nextByte & 63);
                     final int numRcvrAndArgs = 1 + (nextByte >> 6);
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
-                    stackPointer -= numRcvrAndArgs;
-                    storePCandSP(frame, pc, stackPointer);
-                    final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
+                    final int currentPC = pc;
+                    storePCandSP(frame, pc += 2, stackPointer -= numRcvrAndArgs);
+                    final Object result = getExecuteSendNode(currentPC, false).execute(frame, selector, receiverAndArguments);
                     assert result != null;
-                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
-                    } else {
-                        pc += 2;
                     }
-                    if (mustPushResult) {
+                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -1044,18 +1032,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final NativeObject selector = (NativeObject) specialSelectors[(opcode - 176) * 2];
                     final int numRcvrAndArgs = 1 + (int) (long) specialSelectors[(opcode - 176) * 2 + 1];
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
-                    stackPointer -= numRcvrAndArgs;
-                    storePCandSP(frame, pc, stackPointer);
-                    final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
+                    final int currentPC = pc;
+                    storePCandSP(frame, pc += 1, stackPointer -= numRcvrAndArgs);
+                    final Object result = getExecuteSendNode(currentPC, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
-                    } else {
-                        pc++;
                     }
-                    if (mustPushResult) {
+                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -1083,18 +1068,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final NativeObject selector = (NativeObject) code.getLiteral(opcode & 0xF);
                     final int numRcvrAndArgs = 1;
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
-                    stackPointer -= numRcvrAndArgs;
-                    storePCandSP(frame, pc, stackPointer);
-                    final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
+                    final int currentPC = pc;
+                    storePCandSP(frame, pc += 1, stackPointer -= numRcvrAndArgs);
+                    final Object result = getExecuteSendNode(currentPC, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
-                    } else {
-                        pc++;
                     }
-                    if (mustPushResult) {
+                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -1122,18 +1104,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final NativeObject selector = (NativeObject) code.getLiteral(opcode & 0xF);
                     final int numRcvrAndArgs = 2;
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
-                    stackPointer -= numRcvrAndArgs;
-                    storePCandSP(frame, pc, stackPointer);
-                    final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
+                    final int currentPC = pc;
+                    storePCandSP(frame, pc += 1, stackPointer -= numRcvrAndArgs);
+                    final Object result = getExecuteSendNode(currentPC, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
-                    } else {
-                        pc++;
                     }
-                    if (mustPushResult) {
+                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -1161,18 +1140,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final NativeObject selector = (NativeObject) code.getLiteral(opcode & 0xF);
                     final int numRcvrAndArgs = 3;
                     final Object[] receiverAndArguments = createArgumentsForCall(frame, numRcvrAndArgs, stackPointer);
-                    stackPointer -= numRcvrAndArgs;
-                    storePCandSP(frame, pc, stackPointer);
-                    final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
+                    final int currentPC = pc;
+                    storePCandSP(frame, pc += 1, stackPointer -= numRcvrAndArgs);
+                    final Object result = getExecuteSendNode(currentPC, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
-                    } else {
-                        pc++;
                     }
-                    if (mustPushResult) {
+                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
