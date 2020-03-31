@@ -8,7 +8,6 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -266,9 +265,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     private Object startBytecode(final VirtualFrame frame) {
-        if (code.toString().contains("MethodContextTest>>privRestartTest")) {
-            Truffle.getRuntime();
-        }
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         int pc = 0;
         int stackPointer = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
