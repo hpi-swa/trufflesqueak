@@ -15,6 +15,7 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -29,6 +30,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -40,6 +42,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -701,12 +704,17 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                                 CompilerDirectives.transferToInterpreter();
                                 pc = FrameAccess.getInstructionPointer(frame, code);
                                 stackPointer = FrameAccess.getStackPointer(frame, code);
+                                if (result != AbstractSendNode.NO_RESULT) {
+                                    push(frame, stackPointer++, result);
+                                }
+                                continue bytecode_loop;
                             }
                             if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                                 push(frame, stackPointer++, result);
                                 continue bytecode_loop;
                             } else {
-                                stackPointer = FrameAccess.getStackPointer(frame, code);
+                                assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
+                                stackPointer++;
                                 continue bytecode_loop;
                             }
                         }
@@ -722,12 +730,17 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                                 CompilerDirectives.transferToInterpreter();
                                 pc = FrameAccess.getInstructionPointer(frame, code);
                                 stackPointer = FrameAccess.getStackPointer(frame, code);
+                                if (result != AbstractSendNode.NO_RESULT) {
+                                    push(frame, stackPointer++, result);
+                                }
+                                continue bytecode_loop;
                             }
                             if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                                 push(frame, stackPointer++, result);
                                 continue bytecode_loop;
                             } else {
-                                stackPointer = FrameAccess.getStackPointer(frame, code);
+                                assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
+                                stackPointer++;
                                 continue bytecode_loop;
                             }
                         }
@@ -772,12 +785,17 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
+                        if (result != AbstractSendNode.NO_RESULT) {
+                            push(frame, stackPointer++, result);
+                        }
+                        continue bytecode_loop;
                     }
                     if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
-                        stackPointer = FrameAccess.getStackPointer(frame, code);
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
+                        stackPointer++;
                         continue bytecode_loop;
                     }
                 }
@@ -799,7 +817,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
-                        stackPointer = FrameAccess.getStackPointer(frame, code);
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
+                        stackPointer++;
                         continue bytecode_loop;
                     }
                 }
@@ -1060,12 +1079,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
                     }
                     if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
-                        stackPointer = FrameAccess.getStackPointer(frame, code);
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
+                        stackPointer++;
                         continue bytecode_loop;
                     }
                 }
@@ -1096,12 +1117,17 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
+                        if (result != AbstractSendNode.NO_RESULT) {
+                            push(frame, stackPointer++, result);
+                        }
+                        continue bytecode_loop;
                     }
                     if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
-                        stackPointer = FrameAccess.getStackPointer(frame, code);
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
+                        stackPointer++;
                         continue bytecode_loop;
                     }
                 }
@@ -1132,12 +1158,17 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
+                        if (result != AbstractSendNode.NO_RESULT) {
+                            push(frame, stackPointer++, result);
+                        }
+                        continue bytecode_loop;
                     }
                     if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
-                        stackPointer = FrameAccess.getStackPointer(frame, code);
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
+                        stackPointer++;
                         continue bytecode_loop;
                     }
                 }
@@ -1168,12 +1199,17 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
+                        if (result != AbstractSendNode.NO_RESULT) {
+                            push(frame, stackPointer++, result);
+                        }
+                        continue bytecode_loop;
                     }
                     if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
-                        stackPointer = FrameAccess.getStackPointer(frame, code);
+                        assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
+                        stackPointer++;
                         continue bytecode_loop;
                     }
                 }
@@ -1265,24 +1301,21 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     }
 
     private SqueakException sendCannotReturn(final VirtualFrame frame, final int pc, final Object value) {
-        if (pcNodes[pc] == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            pcNodes[pc] = insert(SendSelectorNode.create(code, code.image.cannotReturn));
-        }
-        FrameAccess.setInstructionPointer(frame, code, pc);
-        // TODO: slow path send
-        ((SendSelectorNode) pcNodes[pc]).executeSend(frame, getGetOrCreateContextNode().executeGet(frame), value);
+        CompilerDirectives.transferToInterpreter();
+        FrameAccess.setInstructionPointer(frame, code, pc + 1);
+        final CompiledMethodObject method = (CompiledMethodObject) LookupMethodNode.getUncached().executeLookup(code.image.methodContextClass, code.image.cannotReturn);
+        final Object[] frameArguments = FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{getGetOrCreateContextNode().executeGet(frame), value});
+        IndirectCallNode.getUncached().call(method.getCallTarget(), frameArguments);
         throw SqueakException.create("Should not be reached");
     }
 
     private SqueakException sendMustBeBoolean(final VirtualFrame frame, final int pc, final Object value) {
-        if (pcNodes[pc] == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            pcNodes[pc] = insert(SendSelectorNode.create(code, code.image.mustBeBooleanSelector));
-        }
-        FrameAccess.setInstructionPointer(frame, code, pc);
-        // TODO: slow path send
-        ((SendSelectorNode) pcNodes[pc]).executeSend(frame, value);
+        CompilerDirectives.transferToInterpreter();
+        FrameAccess.setInstructionPointer(frame, code, pc + 1);
+        final ClassObject rcvrClass = SqueakObjectClassNode.getUncached().executeLookup(value);
+        final CompiledMethodObject method = (CompiledMethodObject) LookupMethodNode.getUncached().executeLookup(rcvrClass, code.image.mustBeBooleanSelector);
+        final Object[] frameArguments = FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{value});
+        IndirectCallNode.getUncached().call(method.getCallTarget(), frameArguments);
         throw SqueakException.create("Should not be reached");
     }
 
