@@ -64,10 +64,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private static final int LOCAL_RETURN_PC = -2;
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 64;
 
-    private final int initialSP;
+    private final int initialStackPointer;
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
+    @Child private GetOrCreateContextNode getOrCreateContextDifferentProcessNode;
 
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
     @Child private InterruptHandlerNode interruptHandlerNode;
@@ -80,9 +81,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Children private FrameSlotWriteNode[] slotWriteNodes;
     @Children private FrameSlotClearNode[] slotClearNodes;
     @Children private Node[] pcNodes;
+    @Child private GetActiveProcessNode getActiveProcessNode;
     @CompilationFinal(dimensions = 1) private final ConditionProfile[] pcProfiles;
-
-    @Child private SendSelectorNode cannotReturnNode;
 
     private SourceSection section;
 
@@ -99,7 +99,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
          * materialization and deopts. Timer inputs are currently handled in
          * primitiveRelinquishProcessor (#230) only.
          */
-        initialSP = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
+        initialStackPointer = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
         interruptHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? InterruptHandlerNode.create(code, false) : null;
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
         slotReadNodes = new FrameSlotReadNode[code.getNumStackSlots()];
@@ -129,7 +129,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         final boolean enableStackDepthProtection = enableStackDepthProtection();
         try {
             if (enableStackDepthProtection && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
-                final ContextObject context = getGetOrCreateContextNode().executeGet(frame);
+                final ContextObject context = getGetOrCreateContextDifferentProcessNode().executeGet(frame);
                 context.setProcess(code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached()));
                 throw ProcessSwitch.createWithBoundary(context);
             }
@@ -142,12 +142,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } catch (final NonVirtualReturn nvr) {
-            /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame).markEscaped();
+            /** {@link getGetOrCreateContextDifferentProcessNode()} acts as {@link BranchProfile} */
+            getGetOrCreateContextDifferentProcessNode().executeGet(frame).markEscaped();
             throw nvr;
         } catch (final ProcessSwitch ps) {
-            /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame).markEscaped();
+            /** {@link getGetOrCreateContextDifferentProcessNode()} acts as {@link BranchProfile} */
+            getGetOrCreateContextDifferentProcessNode().executeGet(frame).markEscaped();
             throw ps;
         } finally {
             if (enableStackDepthProtection) {
@@ -167,10 +167,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             push(frame, i, arguments[FrameAccess.getArgumentStartIndex() + i]);
         }
         // Initialize remaining temporary variables with nil in newContext.
-        for (int i = numArgs; i < initialSP; i++) {
+        for (int i = numArgs; i < initialStackPointer; i++) {
             push(frame, i, NilObject.SINGLETON);
         }
-        FrameAccess.setStackPointer(frame, code, initialSP);
+        FrameAccess.setStackPointer(frame, code, initialStackPointer);
     }
 
     public final Object executeResumeAtStart(final VirtualFrame frame) {
@@ -203,13 +203,21 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         return getOrCreateContextNode;
     }
 
+    private GetOrCreateContextNode getGetOrCreateContextDifferentProcessNode() {
+        if (getOrCreateContextDifferentProcessNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getOrCreateContextDifferentProcessNode = insert(GetOrCreateContextNode.create(code, false));
+        }
+        return getOrCreateContextDifferentProcessNode;
+    }
+
     private void push(final VirtualFrame frame, final int slot, final Object value) {
         getStackWriteNode(slot).executeWrite(frame, value);
     }
 
     private Object pop(final VirtualFrame frame, final int slot) {
         final Object value = getStackReadNode(slot).executeRead(frame);
-        if (slot >= initialSP) { // never clear temps
+        if (slot >= initialStackPointer) { // never clear temps
             getStackClearNode(slot).executeClear(frame);
         }
         return value;
@@ -247,14 +255,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         return slotClearNodes[slot];
     }
 
-    private SendSelectorNode getCannotReturnNode() {
-        if (cannotReturnNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            cannotReturnNode = insert(SendSelectorNode.create(code, code.image.cannotReturn));
-        }
-        return cannotReturnNode;
-    }
-
     private static byte variableIndex(final int i) {
         return (byte) (i & 63);
     }
@@ -267,7 +267,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private Object startBytecode(final VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         int pc = 0;
-        int stackPointer = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
+        int stackPointer = initialStackPointer;
         int backJumpCounter = 0;
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
@@ -400,10 +400,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 108:
                 case 109:
                 case 110:
-                case 111:
-                    push(frame, opcode & 7, pop(frame, --stackPointer));
+                case 111: {
+                    final Object value = pop(frame, --stackPointer);
+                    if (getConditionProfile(pc).profile(value instanceof ContextObject)) {
+                        ((ContextObject) value).markEscaped();
+                    }
+                    push(frame, opcode & 7, value);
                     pc++;
                     continue bytecode_loop;
+                }
                 case 112:
                     push(frame, stackPointer++, FrameAccess.getReceiver(frame));
                     pc++;
@@ -452,11 +457,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode();
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
-                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), FrameAccess.getReceiver(frame));
-                            throw SqueakException.create("Should not reach");
+                            throw sendCannotReturn(frame, pc, FrameAccess.getReceiver(frame));
                         } else {
                             throw new NonLocalReturn(FrameAccess.getReceiver(frame), caller);
                         }
@@ -477,11 +480,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode();
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
-                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), BooleanObject.TRUE);
-                            throw SqueakException.create("Should not reach");
+                            throw sendCannotReturn(frame, pc, BooleanObject.TRUE);
                         } else {
                             throw new NonLocalReturn(BooleanObject.TRUE, caller);
                         }
@@ -502,11 +503,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode();
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
-                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), BooleanObject.FALSE);
-                            throw SqueakException.create("Should not reach");
+                            throw sendCannotReturn(frame, pc, BooleanObject.FALSE);
                         } else {
                             throw new NonLocalReturn(BooleanObject.FALSE, caller);
                         }
@@ -527,11 +526,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode();
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
-                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), NilObject.SINGLETON);
-                            throw SqueakException.create("Should not reach");
+                            throw sendCannotReturn(frame, pc, NilObject.SINGLETON);
                         } else {
                             throw new NonLocalReturn(NilObject.SINGLETON, caller);
                         }
@@ -552,11 +549,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode();
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
-                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), pop(frame, --stackPointer));
-                            throw SqueakException.create("Should not reach");
+                            throw sendCannotReturn(frame, pc, pop(frame, --stackPointer));
                         } else {
                             throw new NonLocalReturn(pop(frame, --stackPointer), caller);
                         }
@@ -568,14 +563,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         // FIXME
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode();
                         final Object caller = homeContext.getFrameSender();
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                            CompilerDirectives.transferToInterpreter(); // FIXME
-                            final ContextObject currentContext = FrameAccess.getContext(frame);
-                            assert currentContext != null;
-                            getCannotReturnNode().executeSend(frame, currentContext, pop(frame, --stackPointer));
-                            throw SqueakException.create("Should not reach");
+                            throw sendCannotReturn(frame, pc, pop(frame, --stackPointer));
                         } else {
                             throw new NonLocalReturn(pop(frame, --stackPointer), caller);
                         }
@@ -616,19 +607,24 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final byte variableType = variableType(nextByte);
                     CompilerAsserts.partialEvaluationConstant(variableType);
                     final int variableIndex = variableIndex(nextByte);
+                    final Object value = top(frame, stackPointer);
+                    if (getConditionProfile(pc).profile(value instanceof ContextObject)) {
+                        ((ContextObject) value).markEscaped();
+                    }
                     switch (variableType) {
                         case 0:
-                            getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), variableIndex, top(frame, stackPointer));
+                            getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), variableIndex, value);
                             pc += 2;
                             continue bytecode_loop;
-                        case 1:
-                            push(frame, variableIndex, top(frame, stackPointer));
+                        case 1: {
+                            push(frame, variableIndex, value);
                             pc += 2;
                             continue bytecode_loop;
+                        }
                         case 2:
                             throw SqueakException.create("Unknown/uninterpreted bytecode:", nextByte);
                         case 3:
-                            getAtPut0Node(pc).execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, top(frame, stackPointer));
+                            getAtPut0Node(pc).execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, value);
                             pc += 2;
                             continue bytecode_loop;
                         default:
@@ -640,21 +636,27 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final byte variableType = variableType(nextByte);
                     CompilerAsserts.partialEvaluationConstant(variableType);
                     final int variableIndex = variableIndex(nextByte);
+                    final Object value = pop(frame, --stackPointer);
+                    if (getConditionProfile(pc).profile(value instanceof ContextObject)) {
+                        ((ContextObject) value).markEscaped();
+                    }
                     switch (variableType) {
                         case 0:
-                            getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), variableIndex, pop(frame, --stackPointer));
+                            getAtPut0Node(pc).execute(FrameAccess.getReceiver(frame), variableIndex, value);
                             pc += 2;
                             continue bytecode_loop;
-                        case 1:
-                            push(frame, variableIndex, pop(frame, --stackPointer));
+                        case 1: {
+                            push(frame, variableIndex, value);
                             pc += 2;
                             continue bytecode_loop;
+                        }
                         case 2:
                             throw SqueakException.create("Unknown/uninterpreted bytecode:", nextByte);
-                        case 3:
-                            getAtPut0Node(pc).execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, pop(frame, --stackPointer));
+                        case 3: {
+                            getAtPut0Node(pc).execute(code.getLiteral(variableIndex), ASSOCIATION.VALUE, value);
                             pc += 2;
                             continue bytecode_loop;
+                        }
                         default:
                             throw SqueakException.create("illegal ExtendedStore bytecode");
                     }
@@ -803,7 +805,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 }
                 case 135:
                     /* Inlined version of #pop without the read. */
-                    if (--stackPointer >= initialSP) { // never clear temps
+                    if (--stackPointer >= initialStackPointer) { // never clear temps
                         getStackClearNode(stackPointer).executeClear(frame);
                     }
                     pc++;
@@ -886,7 +888,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 141: {
                     final int indexInArray = code.getBytes()[pc + 1] & 0xFF;
                     final int indexOfArray = code.getBytes()[pc + 2] & 0xFF;
-                    getAtPut0Node(pc).execute(peek(frame, indexOfArray), indexInArray, top(frame, stackPointer));
+                    final Object value = peek(frame, indexOfArray);
+                    if (getConditionProfile(pc).profile(value instanceof ContextObject)) {
+                        ((ContextObject) value).markEscaped();
+                    }
+                    getAtPut0Node(pc).execute(value, indexInArray, top(frame, stackPointer));
                     pc += 3;
                     continue bytecode_loop;
                 }
@@ -938,8 +944,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 158:
                 case 159: {
                     final Object value = pop(frame, --stackPointer);
-                    if (value instanceof Boolean) {
-                        if (getConditionProfile(pc, true).profile((boolean) value)) {
+                    try {
+                        if (getCountingConditionProfile(pc).profile((boolean) value)) {
                             pc++;
                             continue bytecode_loop;
                         } else {
@@ -950,9 +956,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             pc += offset + 1;
                             continue bytecode_loop;
                         }
-                    } else {
-                        // TODO;
-                        throw SqueakException.create("not yet implemented");
+                    } catch (final ClassCastException e) {
+                        throw sendMustBeBoolean(frame, ++pc, value);
                     }
                 }
                 case 160:
@@ -976,7 +981,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 171: {
                     final Object value = pop(frame, --stackPointer);
                     if (value instanceof Boolean) {
-                        if (getConditionProfile(pc, true).profile((boolean) value)) {
+                        if (getCountingConditionProfile(pc).profile((boolean) value)) {
                             final int offset = ((opcode & 3) << 8) + (code.getBytes()[pc + 1] & 0xFF);
                             if (CompilerDirectives.inInterpreter() && offset < 0) {
                                 backJumpCounter++;
@@ -988,8 +993,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             continue bytecode_loop;
                         }
                     } else {
-                        // TODO;
-                        throw SqueakException.create("not yet implemented");
+                        throw sendMustBeBoolean(frame, ++pc, value);
                     }
                 }
                 case 172:
@@ -998,7 +1002,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 175: {
                     final Object value = pop(frame, --stackPointer);
                     if (value instanceof Boolean) {
-                        if (getConditionProfile(pc, true).profile((boolean) value)) {
+                        if (getCountingConditionProfile(pc).profile((boolean) value)) {
                             pc += 2;
                             continue bytecode_loop;
                         } else {
@@ -1010,8 +1014,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             continue bytecode_loop;
                         }
                     } else {
-                        // TODO;
-                        throw SqueakException.create("not yet implemented");
+                        throw sendMustBeBoolean(frame, ++pc, value);
                     }
                 }
                 case 176:
@@ -1217,26 +1220,26 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         return (SqueakObjectAtPut0Node) pcNodes[pc];
     }
 
-    private PointersObject getActiveProcessNode(final int pc) {
-        if (pcNodes[pc] == null) {
+    private PointersObject getActiveProcessNode() {
+        if (getActiveProcessNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            pcNodes[pc] = insert(GetActiveProcessNode.create());
+            getActiveProcessNode = insert(GetActiveProcessNode.create());
         }
-        return ((GetActiveProcessNode) pcNodes[pc]).execute();
+        return getActiveProcessNode.execute();
     }
 
     private ConditionProfile getConditionProfile(final int pc) {
-        return getConditionProfile(pc, false);
-    }
-
-    private ConditionProfile getConditionProfile(final int pc, final boolean isCounting) {
         if (pcProfiles[pc] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (isCounting) {
-                pcProfiles[pc] = ConditionProfile.createCountingProfile();
-            } else {
-                pcProfiles[pc] = ConditionProfile.createBinaryProfile();
-            }
+            pcProfiles[pc] = ConditionProfile.createBinaryProfile();
+        }
+        return pcProfiles[pc];
+    }
+
+    private ConditionProfile getCountingConditionProfile(final int pc) {
+        if (pcProfiles[pc] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pcProfiles[pc] = ConditionProfile.createCountingProfile();
         }
         return pcProfiles[pc];
     }
@@ -1259,6 +1262,28 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             }
             return args;
         }
+    }
+
+    private SqueakException sendCannotReturn(final VirtualFrame frame, final int pc, final Object value) {
+        if (pcNodes[pc] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pcNodes[pc] = insert(SendSelectorNode.create(code, code.image.cannotReturn));
+        }
+        FrameAccess.setInstructionPointer(frame, code, pc);
+        // TODO: slow path send
+        ((SendSelectorNode) pcNodes[pc]).executeSend(frame, getGetOrCreateContextNode().executeGet(frame), value);
+        throw SqueakException.create("Should not be reached");
+    }
+
+    private SqueakException sendMustBeBoolean(final VirtualFrame frame, final int pc, final Object value) {
+        if (pcNodes[pc] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pcNodes[pc] = insert(SendSelectorNode.create(code, code.image.mustBeBooleanSelector));
+        }
+        FrameAccess.setInstructionPointer(frame, code, pc);
+        // TODO: slow path send
+        ((SendSelectorNode) pcNodes[pc]).executeSend(frame, value);
+        throw SqueakException.create("Should not be reached");
     }
 
     private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
