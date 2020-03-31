@@ -802,9 +802,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     }
                 }
                 case 135:
-                    // Could use pop, but avoiding a read here instead
-                    getStackClearNode(--stackPointer).executeClear(frame);
-                    assert stackPointer >= initialSP : "Pop below initialSP, temp values are not supported to be cleared";
+                    /* Inlined version of #pop without the read. */
+                    if (--stackPointer >= initialSP) { // never clear temps
+                        getStackClearNode(stackPointer).executeClear(frame);
+                    }
                     pc++;
                     continue bytecode_loop;
                 case 136: {
