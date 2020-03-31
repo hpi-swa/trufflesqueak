@@ -29,9 +29,9 @@ import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.graal.squeak.nodes.ExecuteContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
 
@@ -543,7 +543,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
 
     // The context represents primitive call which needs to be skipped when unwinding call stack.
     public boolean isPrimitiveContext() {
-        return !hasClosure() && getMethod().hasPrimitive() && getInstructionPointerForBytecodeLoop() <= CallPrimitiveNode.NUM_BYTECODES;
+        return !hasClosure() && getMethod().hasPrimitive() && getInstructionPointerForBytecodeLoop() <= ExecuteContextNode.NUM_BYTECODES_CALL_PRIMITIVE;
     }
 
     @TruffleBoundary

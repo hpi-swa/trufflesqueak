@@ -15,7 +15,6 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -43,12 +42,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.Abstr
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotClearNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
@@ -62,13 +55,12 @@ import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 @GenerateWrapper
 public class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
-    private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
     private static final int LOCAL_RETURN_PC = -2;
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 64;
+    public static final Object NO_RESULT = new Object();
 
     private final int initialStackPointer;
-    @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private GetOrCreateContextNode getOrCreateContextDifferentProcessNode;
@@ -87,15 +79,13 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Child private GetActiveProcessNode getActiveProcessNode;
     @CompilationFinal(dimensions = 1) private final ConditionProfile[] pcProfiles;
 
+    public static final int NUM_BYTECODES_CALL_PRIMITIVE = 3;
+    public static final int NUM_BYTECODES_PUSH_CLOSURE = 4;
+
     private SourceSection section;
 
     protected ExecuteContextNode(final CompiledCodeObject code, final boolean resume) {
         super(code);
-        if (DECODE_BYTECODE_ON_DEMAND) {
-            bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
-        } else {
-            bytecodeNodes = SqueakBytecodeDecoder.decode(code);
-        }
         /*
          * Only check for interrupts if method is relatively large. Also, skip timer interrupts here
          * as they trigger too often, which causes a lot of context switches and therefore
@@ -103,13 +93,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
          * primitiveRelinquishProcessor (#230) only.
          */
         initialStackPointer = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
-        interruptHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? InterruptHandlerNode.create(code, false) : null;
+
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
         slotReadNodes = new FrameSlotReadNode[code.getNumStackSlots()];
         slotWriteNodes = new FrameSlotWriteNode[code.getNumStackSlots()];
         slotClearNodes = new FrameSlotClearNode[code.getNumStackSlots()];
         pcNodes = new Node[SqueakBytecodeDecoder.trailerPosition(code)];
         pcProfiles = new ConditionProfile[pcNodes.length];
+        interruptHandlerNode = pcNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? InterruptHandlerNode.create(code, false) : null;
         specialSelectors = code.image.getSpecialSelectors().getObjectStorage();
     }
 
@@ -140,7 +131,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             if (interruptHandlerNode != null) {
                 interruptHandlerNode.executeTrigger(frame);
             }
-            return startBytecode(frame);
+            return startBytecode(frame, 0, initialStackPointer);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -178,7 +169,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
 
     public final Object executeResumeAtStart(final VirtualFrame frame) {
         try {
-            return startBytecode(frame);
+            return startBytecode(frame, 0, initialStackPointer);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -189,7 +180,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
 
     public final Object executeResumeInMiddle(final VirtualFrame frame, final long initialPC) {
         try {
-            return resumeBytecode(frame, initialPC);
+            return startBytecode(frame, (int) initialPC, FrameAccess.getStackPointer(frame, code));
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -258,19 +249,19 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         return slotClearNodes[slot];
     }
 
-    private static byte variableIndex(final int i) {
+    public static byte variableIndex(final int i) {
         return (byte) (i & 63);
     }
 
-    private static byte variableType(final int i) {
+    public static byte variableType(final int i) {
         return (byte) (i >> 6 & 3);
     }
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private Object startBytecode(final VirtualFrame frame) {
-        CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        int pc = 0;
-        int stackPointer = initialStackPointer;
+    private Object startBytecode(final VirtualFrame frame, final int startPC, final int startSP) {
+        CompilerAsserts.compilationConstant(pcNodes.length);
+        int pc = startPC;
+        int stackPointer = startSP;
         int backJumpCounter = 0;
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
@@ -678,7 +669,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
                     }
-                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
+                    if (getConditionProfile(currentPC).profile(result != NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -704,12 +695,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                                 CompilerDirectives.transferToInterpreter();
                                 pc = FrameAccess.getInstructionPointer(frame, code);
                                 stackPointer = FrameAccess.getStackPointer(frame, code);
-                                if (result != AbstractSendNode.NO_RESULT) {
+                                if (result != NO_RESULT) {
                                     push(frame, stackPointer++, result);
                                 }
                                 continue bytecode_loop;
                             }
-                            if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
+                            if (getConditionProfile(currentPC).profile(result != NO_RESULT)) {
                                 push(frame, stackPointer++, result);
                                 continue bytecode_loop;
                             } else {
@@ -730,12 +721,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                                 CompilerDirectives.transferToInterpreter();
                                 pc = FrameAccess.getInstructionPointer(frame, code);
                                 stackPointer = FrameAccess.getStackPointer(frame, code);
-                                if (result != AbstractSendNode.NO_RESULT) {
+                                if (result != NO_RESULT) {
                                     push(frame, stackPointer++, result);
                                 }
                                 continue bytecode_loop;
                             }
-                            if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
+                            if (getConditionProfile(currentPC).profile(result != NO_RESULT)) {
                                 push(frame, stackPointer++, result);
                                 continue bytecode_loop;
                             } else {
@@ -785,12 +776,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
-                        if (result != AbstractSendNode.NO_RESULT) {
+                        if (result != NO_RESULT) {
                             push(frame, stackPointer++, result);
                         }
                         continue bytecode_loop;
                     }
-                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
+                    if (getConditionProfile(currentPC).profile(result != NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -813,7 +804,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
                     }
-                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
+                    if (getConditionProfile(currentPC).profile(result != NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -1081,7 +1072,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         stackPointer = FrameAccess.getStackPointer(frame, code);
                         assert stackPointer == FrameAccess.getStackPointer(frame, code) : "Inconsistent stack pointer";
                     }
-                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
+                    if (getConditionProfile(currentPC).profile(result != NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -1117,12 +1108,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
-                        if (result != AbstractSendNode.NO_RESULT) {
+                        if (result != NO_RESULT) {
                             push(frame, stackPointer++, result);
                         }
                         continue bytecode_loop;
                     }
-                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
+                    if (getConditionProfile(currentPC).profile(result != NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -1158,12 +1149,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
-                        if (result != AbstractSendNode.NO_RESULT) {
+                        if (result != NO_RESULT) {
                             push(frame, stackPointer++, result);
                         }
                         continue bytecode_loop;
                     }
-                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
+                    if (getConditionProfile(currentPC).profile(result != NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -1199,12 +1190,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
                         stackPointer = FrameAccess.getStackPointer(frame, code);
-                        if (result != AbstractSendNode.NO_RESULT) {
+                        if (result != NO_RESULT) {
                             push(frame, stackPointer++, result);
                         }
                         continue bytecode_loop;
                     }
-                    if (getConditionProfile(currentPC).profile(result != AbstractSendNode.NO_RESULT)) {
+                    if (getConditionProfile(currentPC).profile(result != NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -1323,76 +1314,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             handlePrimitiveFailedNode = insert(HandlePrimitiveFailedNode.create(code));
         }
         return handlePrimitiveFailedNode;
-    }
-
-    /*
-     * Non-optimized version of startBytecode used to resume contexts.
-     */
-    private Object resumeBytecode(final VirtualFrame frame, final long initialPC) {
-        assert initialPC > 0 : "Trying to resume a fresh/terminated/illegal context";
-        int pc = (int) initialPC;
-        Object returnValue = null;
-        bytecode_loop_slow: while (pc != LOCAL_RETURN_PC) {
-            final AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
-            if (node instanceof AbstractSendNode) {
-                pc = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, pc);
-                node.executeVoid(frame);
-                final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
-                if (pc != actualNextPc) {
-                    /*
-                     * pc has changed, which can happen if a context is restarted (e.g. as part of
-                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
-                     * the Graal compiler.
-                     */
-                    CompilerDirectives.transferToInterpreter();
-                    pc = actualNextPc;
-                }
-                continue bytecode_loop_slow;
-            } else if (node instanceof ConditionalJumpNode) {
-                final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame)) {
-                    pc = jumpNode.getJumpSuccessorIndex();
-                    continue bytecode_loop_slow;
-                } else {
-                    pc = jumpNode.getSuccessorIndex();
-                    continue bytecode_loop_slow;
-                }
-            } else if (node instanceof UnconditionalJumpNode) {
-                pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
-                continue bytecode_loop_slow;
-            } else if (node instanceof AbstractReturnNode) {
-                returnValue = ((AbstractReturnNode) node).executeReturn(frame);
-                pc = LOCAL_RETURN_PC;
-                continue bytecode_loop_slow;
-            } else if (node instanceof PushClosureNode) {
-                final PushClosureNode pushClosureNode = (PushClosureNode) node;
-                pushClosureNode.executePush(frame);
-                pc = pushClosureNode.getClosureSuccessorIndex();
-                continue bytecode_loop_slow;
-            } else {
-                /* All other bytecode nodes. */
-                node.executeVoid(frame);
-                pc = node.getSuccessorIndex();
-                continue bytecode_loop_slow;
-            }
-        }
-        assert returnValue != null && !hasModifiedSender(frame);
-        FrameAccess.terminate(frame, code);
-        return returnValue;
-    }
-
-    /*
-     * Fetch next bytecode and insert AST nodes on demand if enabled.
-     */
-    @SuppressWarnings("unused")
-    private AbstractBytecodeNode fetchNextBytecodeNode(final int pc) {
-        if (DECODE_BYTECODE_ON_DEMAND && bytecodeNodes[pc] == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
-            notifyInserted(bytecodeNodes[pc]);
-        }
-        return bytecodeNodes[pc];
     }
 
     /* Only use stackDepthProtection in interpreter or once per compilation unit (if at all). */

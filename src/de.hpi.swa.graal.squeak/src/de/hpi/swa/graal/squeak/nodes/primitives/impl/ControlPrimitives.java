@@ -51,6 +51,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
+import de.hpi.swa.graal.squeak.nodes.ExecuteContextNode;
 import de.hpi.swa.graal.squeak.nodes.InheritsFromNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
@@ -62,7 +63,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -215,7 +215,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             signalSemaphoreNode.executeSignal(frame, receiver);
-            return AbstractSendNode.NO_RESULT;
+            return ExecuteContextNode.NO_RESULT;
         }
     }
 
@@ -235,7 +235,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             final long excessSignals = pointersReadNode.executeLong(receiver, SEMAPHORE.EXCESS_SIGNALS);
             writeNode.execute(receiver, SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
-            return AbstractSendNode.NO_RESULT;
+            return ExecuteContextNode.NO_RESULT;
         }
 
         @Specialization(guards = {"receiver.getSqueakClass().isSemaphoreClass()", "!hasExcessSignals(receiver)"})
@@ -246,7 +246,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             linkProcessToListNode.executeLink(method.image.getActiveProcess(pointersReadNode), receiver);
             wakeHighestPriorityNode.executeWake(frame);
-            return AbstractSendNode.NO_RESULT;
+            return ExecuteContextNode.NO_RESULT;
         }
 
         protected final boolean hasExcessSignals(final PointersObject semaphore) {
@@ -276,7 +276,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             // keep receiver on stack before resuming other process
             pushNode.executeWrite(frame, receiver);
             resumeProcessNode.executeResume(frame, receiver);
-            return AbstractSendNode.NO_RESULT;
+            return ExecuteContextNode.NO_RESULT;
         }
     }
 
@@ -295,7 +295,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("create(method)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, NilObject.SINGLETON);
             wakeHighestPriorityNode.executeWake(frame);
-            return AbstractSendNode.NO_RESULT; // result already pushed above
+            return ExecuteContextNode.NO_RESULT; // result already pushed above
         }
 
         @Specialization(guards = {"!receiver.isActiveProcess(readNode)", "!hasNilList(receiver)"})
@@ -682,7 +682,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached final StackPushForPrimitivesNode pushNode) {
             pushNode.executeWrite(frame, scheduler); // keep receiver on stack
             yieldProcessNode.executeYield(frame, scheduler);
-            return AbstractSendNode.NO_RESULT;
+            return ExecuteContextNode.NO_RESULT;
         }
     }
 
@@ -725,7 +725,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode);
             writeNode.execute(mutex, MUTEX.OWNER, owningProcess);
             resumeProcessNode.executeResume(frame, owningProcess);
-            return AbstractSendNode.NO_RESULT;
+            return ExecuteContextNode.NO_RESULT;
         }
     }
 
@@ -759,7 +759,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             pushNode.executeWrite(frame, BooleanObject.FALSE);
             linkProcessToListNode.executeLink(method.image.getActiveProcess(readNode), mutex);
             wakeHighestPriorityNode.executeWake(frame);
-            return AbstractSendNode.NO_RESULT;
+            return ExecuteContextNode.NO_RESULT;
         }
 
         @Specialization(guards = "ownerIsNil(mutex)")
@@ -783,7 +783,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             pushNode.executeWrite(frame, BooleanObject.FALSE);
             linkProcessToListNode.executeLink(effectiveProcess, mutex);
             wakeHighestPriorityNode.executeWake(frame);
-            return AbstractSendNode.NO_RESULT;
+            return ExecuteContextNode.NO_RESULT;
         }
 
         protected final boolean ownerIsNil(final PointersObject mutex) {
@@ -914,7 +914,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * decreases performance for some reason, forcing interrupt check instead.
              */
             interruptNode.executeTrigger(frame);
-            return AbstractSendNode.NO_RESULT;
+            return ExecuteContextNode.NO_RESULT;
         }
     }
 

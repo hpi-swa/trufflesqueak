@@ -6,7 +6,6 @@
 package de.hpi.swa.graal.squeak.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -16,12 +15,6 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushConstantNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 import de.hpi.swa.graal.squeak.util.UnsafeUtils;
 
@@ -108,31 +101,6 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                     "80 <D0> send: 'someSelector'",
                     "81 <E1> send: 'someOtherSelector'",
                     "82 <F0> send: 'someSelector'");
-
-    @Test
-    public void testIfNil() {
-        // (1 ifNil: [true]) class
-        // pushConstant: 1, dup, pushConstant: nil, send: ==, jumpFalse: 24, pop,
-        // pushConstant: true, send: class, pop, returnSelf
-        final int[] bytes = {0x76, 0x88, 0x73, 0xc6, 0x99, 0x87, 0x71, 0xc7, 0x87, 0x78};
-        final CompiledCodeObject code = makeMethod(bytes);
-        final AbstractBytecodeNode[] bytecodeNodes = SqueakBytecodeDecoder.decode(code);
-        assertEquals(bytes.length, bytecodeNodes.length);
-        assertSame(PushConstantNode.class, bytecodeNodes[0].getClass());
-        assertSame(DupNode.class, bytecodeNodes[1].getClass());
-        assertSame(PushConstantNode.class, bytecodeNodes[2].getClass());
-
-        assertEquals("send: ==", bytecodeNodes[3].toString());
-
-        assertSame(ConditionalJumpNode.class, bytecodeNodes[4].getClass());
-        assertSame(PopNode.class, bytecodeNodes[5].getClass());
-        assertSame(PushConstantNode.class, bytecodeNodes[6].getClass());
-
-        assertEquals("send: class", bytecodeNodes[7].toString());
-
-        assertSame(PopNode.class, bytecodeNodes[8].getClass());
-        assertTrue(ReturnReceiverNode.class.isAssignableFrom(bytecodeNodes[9].getClass()));
-    }
 
     @Test
     public void testSource() {
