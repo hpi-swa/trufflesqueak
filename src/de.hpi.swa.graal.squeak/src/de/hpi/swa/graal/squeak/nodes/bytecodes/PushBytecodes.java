@@ -113,7 +113,6 @@ public final class PushBytecodes {
             if (cachedBlock == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 cachedBlock = code.findBlock(FrameAccess.getMethod(frame), numArgs, numCopied, getSuccessorIndex(), blockSize);
-                cachedStartPC = cachedBlock.getInitialPC();
             }
             return cachedBlock;
         }
@@ -139,7 +138,7 @@ public final class PushBytecodes {
             final Object receiver = FrameAccess.getReceiver(frame);
             final Object[] copiedValues = popNNode.execute(frame);
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
-            return new BlockClosureObject(code.image, getBlock(frame), cachedStartPC, numArgs, receiver, copiedValues, outerContext);
+            return new BlockClosureObject(code.image, getBlock(frame), numArgs, receiver, copiedValues, outerContext);
         }
 
         @Override

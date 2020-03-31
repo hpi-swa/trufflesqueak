@@ -46,15 +46,14 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
-    public BlockClosureObject(final SqueakImageContext image, final CompiledBlockObject block, final int startPC, final int numArgs, final Object receiver, final Object[] copied,
-                    final ContextObject outerContext) {
+    public BlockClosureObject(final SqueakImageContext image, final CompiledBlockObject block, final int numArgs, final Object receiver, final Object[] copied, final ContextObject outerContext) {
         super(image);
-        assert block.getInitialPC() == startPC;
+        CompilerAsserts.partialEvaluationConstant(block.getInitialPC());
         this.block = block;
         this.outerContext = outerContext;
         this.receiver = receiver;
         this.copied = copied;
-        this.startPC = startPC;
+        startPC = block.getInitialPC();
         this.numArgs = numArgs;
     }
 

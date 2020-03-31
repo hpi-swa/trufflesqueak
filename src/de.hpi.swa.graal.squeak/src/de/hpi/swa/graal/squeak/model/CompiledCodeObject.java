@@ -375,6 +375,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     }
 
     public CompiledBlockObject findBlock(final CompiledMethodObject method, final int numClosureArgs, final int numCopied, final int successorIndex, final int blockSize) {
+        assert getMethod() == method;
         if (innerBlocks != null) {
             // TODO: Avoid instanceof checks (same code in CompiledBlockObject).
             final int additionalOffset = this instanceof CompiledBlockObject ? ((CompiledBlockObject) this).getOffset() : 0;

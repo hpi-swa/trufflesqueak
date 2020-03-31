@@ -35,6 +35,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -437,7 +438,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
                             /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
                             getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), FrameAccess.getReceiver(frame));
@@ -462,7 +463,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
                             /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
                             getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), BooleanObject.TRUE);
@@ -487,7 +488,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
                             /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
                             getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), BooleanObject.FALSE);
@@ -512,7 +513,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
                             /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
                             getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), NilObject.SINGLETON);
@@ -537,7 +538,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         final Object caller = homeContext.getFrameSender();
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
                             /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
                             getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), pop(frame, --stackPointer));
@@ -553,7 +554,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
                         // FIXME
-                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode(pc);
                         final Object caller = homeContext.getFrameSender();
                         if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
                             CompilerDirectives.transferToInterpreter(); // FIXME
@@ -890,9 +891,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     final Object[] copiedValues = createArgumentsForCall(frame, numCopied, stackPointer);
                     stackPointer -= numCopied;
                     final ContextObject outerContext = getGetOrCreateContextNode().executeGet(frame);
-                    final CompiledBlockObject cachedBlock = code.findBlock(FrameAccess.getMethod(frame), numArgs, numCopied, pc + 4, blockSize);
-                    final int cachedStartPC = cachedBlock.getInitialPC();
-                    final BlockClosureObject closure = new BlockClosureObject(code.image, cachedBlock, cachedStartPC, numArgs, receiver, copiedValues, outerContext);
+                    final CompiledBlockObject cachedBlock = getPushClosureNode(pc).execute(numArgs, numCopied, pc + 4, blockSize);
+                    final BlockClosureObject closure = new BlockClosureObject(code.image, cachedBlock, numArgs, receiver, copiedValues, outerContext);
                     push(frame, stackPointer++, closure);
                     pc += 4 + blockSize;
                     continue bytecode_loop;
@@ -1176,6 +1176,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         return (ExecuteSendNode) pcNodes[pc];
     }
 
+    private GetCachedBlockNode getPushClosureNode(final int pc) {
+        if (pcNodes[pc] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pcNodes[pc] = insert(GetCachedBlockNode.create(code));
+        }
+        return (GetCachedBlockNode) pcNodes[pc];
+    }
+
     private SqueakObjectAt0Node getAt0Node(final int pc) {
         if (pcNodes[pc] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -1190,6 +1198,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             pcNodes[pc] = insert(SqueakObjectAtPut0Node.create());
         }
         return (SqueakObjectAtPut0Node) pcNodes[pc];
+    }
+
+    private PointersObject getActiveProcessNode(final int pc) {
+        if (pcNodes[pc] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pcNodes[pc] = insert(GetActiveProcessNode.create());
+        }
+        return ((GetActiveProcessNode) pcNodes[pc]).execute();
     }
 
     private ConditionProfile getConditionProfile(final int pc) {
