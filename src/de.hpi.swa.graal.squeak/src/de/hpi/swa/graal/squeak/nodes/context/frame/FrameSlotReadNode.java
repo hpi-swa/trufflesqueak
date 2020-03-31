@@ -6,17 +6,14 @@
 package de.hpi.swa.graal.squeak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 
-@ImportStatic(FrameSlotKind.class)
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
     protected final boolean clear;
 
