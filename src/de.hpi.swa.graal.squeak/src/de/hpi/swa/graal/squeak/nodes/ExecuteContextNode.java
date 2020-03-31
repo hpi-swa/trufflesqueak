@@ -195,7 +195,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private GetOrCreateContextNode getGetOrCreateContextNode() {
         if (getOrCreateContextNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code, false));
+            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code, true));
         }
         return getOrCreateContextNode;
     }
@@ -423,7 +423,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     continue bytecode_loop;
                 case 120:
                     if (code instanceof CompiledMethodObject) {
-                        if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                        if (getConditionProfile(pc).profile(hasModifiedSender(frame))) {
                             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
                             throw new NonLocalReturn(FrameAccess.getReceiver(frame), FrameAccess.getSender(frame));
                         } else {
@@ -432,6 +432,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             continue bytecode_loop;
                         }
                     } else {
+                        assert code instanceof CompiledBlockObject;
                         // Target is sender of closure's home context.
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
@@ -447,7 +448,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     }
                 case 121:
                     if (code instanceof CompiledMethodObject) {
-                        if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                        if (getConditionProfile(pc).profile(hasModifiedSender(frame))) {
                             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
                             throw new NonLocalReturn(BooleanObject.TRUE, FrameAccess.getSender(frame));
                         } else {
@@ -456,6 +457,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             continue bytecode_loop;
                         }
                     } else {
+                        assert code instanceof CompiledBlockObject;
                         // Target is sender of closure's home context.
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
@@ -471,7 +473,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     }
                 case 122:
                     if (code instanceof CompiledMethodObject) {
-                        if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                        if (getConditionProfile(pc).profile(hasModifiedSender(frame))) {
                             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
                             throw new NonLocalReturn(BooleanObject.FALSE, FrameAccess.getSender(frame));
                         } else {
@@ -480,6 +482,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             continue bytecode_loop;
                         }
                     } else {
+                        assert code instanceof CompiledBlockObject;
                         // Target is sender of closure's home context.
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
@@ -495,7 +498,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     }
                 case 123:
                     if (code instanceof CompiledMethodObject) {
-                        if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                        if (getConditionProfile(pc).profile(hasModifiedSender(frame))) {
                             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
                             throw new NonLocalReturn(NilObject.SINGLETON, FrameAccess.getSender(frame));
                         } else {
@@ -504,6 +507,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             continue bytecode_loop;
                         }
                     } else {
+                        assert code instanceof CompiledBlockObject;
                         // Target is sender of closure's home context.
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
@@ -518,18 +522,33 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                         }
                     }
                 case 124:
-                    assert code instanceof CompiledMethodObject;
-                    if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
-                        assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
-                        throw new NonLocalReturn(pop(frame, --stackPointer), FrameAccess.getSender(frame));
+                    if (code instanceof CompiledMethodObject) {
+                        if (getConditionProfile(pc).profile(hasModifiedSender(frame))) {
+                            assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
+                            throw new NonLocalReturn(pop(frame, --stackPointer), FrameAccess.getSender(frame));
+                        } else {
+                            returnValue = pop(frame, --stackPointer);
+                            pc = LOCAL_RETURN_PC;
+                            continue bytecode_loop;
+                        }
                     } else {
-                        returnValue = pop(frame, --stackPointer);
-                        pc = LOCAL_RETURN_PC;
-                        continue bytecode_loop;
+                        assert code instanceof CompiledBlockObject;
+                        // Target is sender of closure's home context.
+                        final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+                        assert homeContext.getProcess() != null;
+                        final Object caller = homeContext.getFrameSender();
+                        final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached());
+                        if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                            /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
+                            getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), pop(frame, --stackPointer));
+                            throw SqueakException.create("Should not reach");
+                        } else {
+                            throw new NonLocalReturn(pop(frame, --stackPointer), caller);
+                        }
                     }
                 case 125: {
                     assert code instanceof CompiledBlockObject;
-                    if (getConditionProfileProfile(pc).profile(hasModifiedSender(frame))) {
+                    if (getConditionProfile(pc).profile(hasModifiedSender(frame))) {
                         // Target is sender of closure's home context.
                         final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
                         assert homeContext.getProcess() != null;
@@ -640,7 +659,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     } else {
                         pc += 2;
                     }
-                    if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
+                    if (getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                         push(frame, stackPointer++, result);
                         continue bytecode_loop;
                     } else {
@@ -669,7 +688,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             } else {
                                 pc += 3;
                             }
-                            if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
+                            if (getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                                 push(frame, stackPointer++, result);
                                 continue bytecode_loop;
                             } else {
@@ -692,7 +711,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             } else {
                                 pc += 3;
                             }
-                            if (getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
+                            if (getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT)) {
                                 push(frame, stackPointer++, result);
                                 continue bytecode_loop;
                             } else {
@@ -738,7 +757,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, true).execute(frame, selector, receiverAndArguments);
                     assert result != null;
-                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
@@ -763,7 +782,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null;
-                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
@@ -915,15 +934,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 159: {
                     final Object value = pop(frame, --stackPointer);
                     if (value instanceof Boolean) {
-                        if (!(boolean) value) {
+                        if (getConditionProfile(pc, true).profile((boolean) value)) {
+                            pc++;
+                            continue bytecode_loop;
+                        } else {
                             final int offset = (opcode & 7) + 1;
                             if (CompilerDirectives.inInterpreter() && offset < 0) {
                                 backJumpCounter++;
                             }
                             pc += offset + 1;
-                            continue bytecode_loop;
-                        } else {
-                            pc++;
                             continue bytecode_loop;
                         }
                     } else {
@@ -952,7 +971,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 171: {
                     final Object value = pop(frame, --stackPointer);
                     if (value instanceof Boolean) {
-                        if ((boolean) value) {
+                        if (getConditionProfile(pc, true).profile((boolean) value)) {
                             final int offset = ((opcode & 3) << 8) + (code.getBytes()[pc + 1] & 0xFF);
                             if (CompilerDirectives.inInterpreter() && offset < 0) {
                                 backJumpCounter++;
@@ -974,15 +993,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                 case 175: {
                     final Object value = pop(frame, --stackPointer);
                     if (value instanceof Boolean) {
-                        if (!(boolean) value) {
+                        if (getConditionProfile(pc, true).profile((boolean) value)) {
+                            pc += 2;
+                            continue bytecode_loop;
+                        } else {
                             final int offset = ((opcode & 7) - 4 << 8) + (code.getBytes()[pc + 1] & 0xFF);
                             if (CompilerDirectives.inInterpreter() && offset < 0) {
                                 backJumpCounter++;
                             }
                             pc += offset + 2;
-                            continue bytecode_loop;
-                        } else {
-                            pc += 2;
                             continue bytecode_loop;
                         }
                     } else {
@@ -1029,7 +1048,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
@@ -1068,7 +1087,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
@@ -1107,7 +1126,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
@@ -1146,7 +1165,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                     storePCandSP(frame, pc, stackPointer);
                     final Object result = getExecuteSendNode(pc, false).execute(frame, selector, receiverAndArguments);
                     assert result != null : "Result of a message send should not be null";
-                    final boolean mustPushResult = getConditionProfileProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
+                    final boolean mustPushResult = getConditionProfile(pc).profile(result != AbstractSendNode.NO_RESULT);
                     if (pc != FrameAccess.getInstructionPointer(frame, code)) {
                         CompilerDirectives.transferToInterpreter();
                         pc = FrameAccess.getInstructionPointer(frame, code);
@@ -1197,10 +1216,18 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         return (SqueakObjectAtPut0Node) pcNodes[pc];
     }
 
-    private ConditionProfile getConditionProfileProfile(final int pc) {
+    private ConditionProfile getConditionProfile(final int pc) {
+        return getConditionProfile(pc, false);
+    }
+
+    private ConditionProfile getConditionProfile(final int pc, final boolean isCounting) {
         if (pcProfiles[pc] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            pcProfiles[pc] = ConditionProfile.createBinaryProfile();
+            if (isCounting) {
+                pcProfiles[pc] = ConditionProfile.createCountingProfile();
+            } else {
+                pcProfiles[pc] = ConditionProfile.createBinaryProfile();
+            }
         }
         return pcProfiles[pc];
     }
