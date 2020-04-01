@@ -208,6 +208,13 @@ public final class InterruptHandlerState {
         shutdown();
         interruptPending = false;
         pendingFinalizationSignals = false;
+        clearWeakPointersQueue();
         semaphoresToSignal.clear();
+    }
+
+    private void clearWeakPointersQueue() {
+        while (image.weakPointersQueue.poll() != null) {
+            // Poll until empty.
+        }
     }
 }
