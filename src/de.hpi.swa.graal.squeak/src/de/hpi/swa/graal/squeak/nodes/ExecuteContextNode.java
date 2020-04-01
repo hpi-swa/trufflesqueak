@@ -17,6 +17,7 @@ import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -65,10 +66,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private GetOrCreateContextNode getOrCreateContextDifferentProcessNode;
 
-    @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
     @Child private InterruptHandlerNode interruptHandlerNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
     @CompilationFinal private boolean primitiveNodeInitialized = false;
+    private final BranchProfile primitiveFailedProfile;
 
     @CompilationFinal(dimensions = 1) private final Object[] specialSelectors;
 
@@ -95,6 +96,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         initialStackPointer = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
 
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
+        primitiveFailedProfile = code.hasPrimitive() ? BranchProfile.create() : null;
         slotReadNodes = new FrameSlotReadNode[code.getNumStackSlots()];
         slotWriteNodes = new FrameSlotWriteNode[code.getNumStackSlots()];
         slotClearNodes = new FrameSlotClearNode[code.getNumStackSlots()];
@@ -873,8 +875,16 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
                             pc = LOCAL_RETURN_PC;
                             continue bytecode_loop;
                         } catch (final PrimitiveFailed e) {
-                            /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
-                            getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
+                            primitiveFailedProfile.enter();
+                            // fourth bytecode indicates extended store after callPrimitive
+                            if ((code.getBytes()[3] & 0xFF) == 129) {
+                                final int reason = e.getReasonCode();
+                                if (getConditionProfile(pc).profile(reason < code.image.primitiveErrorTable.getObjectLength())) {
+                                    push(frame, stackPointer++, code.image.primitiveErrorTable.getObjectStorage()[reason]);
+                                } else {
+                                    push(frame, stackPointer++, (long) reason);
+                                }
+                            }
                             /*
                              * Same toString() methods may throw compilation warnings, this is
                              * expected and ok for primitive failure logging purposes. Note that
@@ -1306,14 +1316,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         final CompiledMethodObject method = (CompiledMethodObject) LookupMethodNode.getUncached().executeLookup(rcvrClass, code.image.mustBeBooleanSelector);
         method.getCallTarget().call(FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{value}));
         throw SqueakException.create("Should not be reached");
-    }
-
-    private HandlePrimitiveFailedNode getHandlePrimitiveFailedNode() {
-        if (handlePrimitiveFailedNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            handlePrimitiveFailedNode = insert(HandlePrimitiveFailedNode.create(code));
-        }
-        return handlePrimitiveFailedNode;
     }
 
     /* Only use stackDepthProtection in interpreter or once per compilation unit (if at all). */
