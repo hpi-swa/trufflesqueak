@@ -185,7 +185,7 @@ jobs:
       if: contains(github.ref, 'tags')
 
   windows-java11:
-    name: Windows + JDK11
+    name: Windows + JDK11 + Graal
     runs-on: windows-latest
     steps:
     - name: Clone GraalSqueak repository
@@ -196,7 +196,7 @@ jobs:
       shell: bash
       run: mx.graalsqueak/utils.sh set-up-dependencies java11
     - name: Run gate
-      run: mx gate -B="--no-native" --strict-mode --tags build,test
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test
     - name: Build and install GraalSqueak component
       shell: pwsh
       run: |
@@ -213,7 +213,7 @@ jobs:
       if: contains(github.ref, 'tags')
 
   windows-java8:
-    name: Windows + JDK8
+    name: Windows + JDK8 + Graal
     runs-on: windows-latest
     steps:
     - name: Clone GraalSqueak repository
@@ -224,7 +224,7 @@ jobs:
       shell: bash
       run: mx.graalsqueak/utils.sh set-up-dependencies java8
     - name: Run gate
-      run: mx gate -B="--no-native" --strict-mode --tags build,test
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test
     - name: Build and install GraalSqueak component
       shell: pwsh
       run: |
