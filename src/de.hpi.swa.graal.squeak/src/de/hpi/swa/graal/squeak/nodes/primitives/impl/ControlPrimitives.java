@@ -596,7 +596,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 forceFullGC();
             }
-            if (hasPendingFinalizations()) {
+            final boolean hasPendingFinalizations = LogUtils.GC_IS_LOGGABLE_FINE ? hasPendingFinalizationsWithLogging() : hasPendingFinalizations();
+            if (hasPendingFinalizations) {
                 method.image.interrupt.setPendingFinalizations(true);
             }
             return MiscUtils.runtimeFreeMemory();
@@ -616,6 +617,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         private boolean hasPendingFinalizations() {
+            return method.image.weakPointersQueue.poll() != null;
+        }
+
+        @TruffleBoundary
+        private boolean hasPendingFinalizationsWithLogging() {
             final ReferenceQueue<Object> queue = method.image.weakPointersQueue;
             Reference<? extends Object> element = queue.poll();
             int count = 0;
