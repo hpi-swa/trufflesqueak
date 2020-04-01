@@ -22,6 +22,7 @@ public final class InterruptHandlerNode extends Node {
     private final InterruptHandlerState istate;
     private final boolean enableTimerInterrupts;
 
+    private final BranchProfile isActiveProfile = BranchProfile.create();
     private final BranchProfile nextWakeupTickProfile;
     private final BranchProfile pendingFinalizationSignalsProfile = BranchProfile.create();
     private final BranchProfile hasSemaphoresToSignalProfile = BranchProfile.create();
@@ -39,6 +40,10 @@ public final class InterruptHandlerNode extends Node {
     }
 
     public void executeTrigger(final VirtualFrame frame) {
+        if (!istate.isActive()) {
+            return;
+        }
+        isActiveProfile.enter();
         if (istate.interruptPending()) {
             /* Exclude user interrupt case from compilation. */
             CompilerDirectives.transferToInterpreter();
