@@ -46,7 +46,7 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
                     @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
                     @Cached("create(code)") final FrameStackPushNode pushNode) {
-        pushNode.execute(frame, reasonCode);
+        pushNode.execute(frame, (long) reasonCode);
     }
 
     @Specialization(guards = "!followedByExtendedStore(code)")
