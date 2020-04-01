@@ -15,6 +15,7 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -1305,7 +1306,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         CompilerDirectives.transferToInterpreter();
         FrameAccess.setInstructionPointer(frame, code, pc + 1);
         final CompiledMethodObject method = (CompiledMethodObject) LookupMethodNode.getUncached().executeLookup(code.image.methodContextClass, code.image.cannotReturn);
-        method.getCallTarget().call(FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{getGetOrCreateContextNode().executeGet(frame), value}));
+        IndirectCallNode.getUncached().call(method.getCallTarget(),
+                        FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{getGetOrCreateContextNode().executeGet(frame), value}));
         throw SqueakException.create("Should not be reached");
     }
 
@@ -1314,7 +1316,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
         FrameAccess.setInstructionPointer(frame, code, pc + 1);
         final ClassObject rcvrClass = SqueakObjectClassNode.getUncached().executeLookup(value);
         final CompiledMethodObject method = (CompiledMethodObject) LookupMethodNode.getUncached().executeLookup(rcvrClass, code.image.mustBeBooleanSelector);
-        method.getCallTarget().call(FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{value}));
+        IndirectCallNode.getUncached().call(method.getCallTarget(), FrameAccess.newWith(method, getGetOrCreateContextNode().executeGet(frame), null, new Object[]{value}));
         throw SqueakException.create("Should not be reached");
     }
 
