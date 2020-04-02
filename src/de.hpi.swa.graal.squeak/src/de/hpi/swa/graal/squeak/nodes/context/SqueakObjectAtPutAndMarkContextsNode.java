@@ -5,9 +5,9 @@
  */
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
@@ -18,28 +18,24 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
  * also marks {@link ContextObject}s as escaped when stored.
  */
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode {
-    @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
+public final class SqueakObjectAtPutAndMarkContextsNode extends AbstractNode {
     private final long index;
+    private final BranchProfile isContextObjectProfile = BranchProfile.create();
+    @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
     protected SqueakObjectAtPutAndMarkContextsNode(final long variableIndex) {
         index = variableIndex;
     }
 
     public static SqueakObjectAtPutAndMarkContextsNode create(final long index) {
-        return SqueakObjectAtPutAndMarkContextsNodeGen.create(index);
+        return new SqueakObjectAtPutAndMarkContextsNode(index);
     }
 
-    public abstract void executeWrite(Object object, Object value);
-
-    @Specialization
-    protected final void doContext(final Object object, final ContextObject value) {
-        value.markEscaped();
-        atPut0Node.execute(object, index, value);
-    }
-
-    @Specialization(guards = {"!isContextObject(value)"})
-    protected final void doSqueakObject(final Object object, final Object value) {
+    public void executeWrite(final Object object, final Object value) {
+        if (value instanceof ContextObject) {
+            isContextObjectProfile.enter();
+            ((ContextObject) value).markEscaped();
+        }
         atPut0Node.execute(object, index, value);
     }
 }
