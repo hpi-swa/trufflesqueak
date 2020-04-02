@@ -31,21 +31,21 @@ public abstract class FrameStackPopNNode extends AbstractNodeWithCode {
         }
     }
 
-    public abstract Object[] execute(final VirtualFrame frame);
+    public abstract Object[] execute(VirtualFrame frame);
 
-    private final static class FrameStackPop0Node extends FrameStackPopNNode {
+    private static final class FrameStackPop0Node extends FrameStackPopNNode {
 
         private FrameStackPop0Node(final CompiledCodeObject code) {
             super(code);
         }
 
         @Override
-        public final Object[] execute(final VirtualFrame frame) {
+        public Object[] execute(final VirtualFrame frame) {
             return ArrayUtils.EMPTY_ARRAY;
         }
     }
 
-    private final static class FrameStackPop1Node extends FrameStackPopNNode {
+    private static final class FrameStackPop1Node extends FrameStackPopNNode {
         @CompilationFinal private int stackPointer = -1;
         @Child private FrameSlotReadNode readNode;
 
@@ -66,7 +66,7 @@ public abstract class FrameStackPopNNode extends AbstractNodeWithCode {
         }
     }
 
-    private final static class FrameStackPopMultipleNode extends FrameStackPopNNode {
+    private static final class FrameStackPopMultipleNode extends FrameStackPopNNode {
         @CompilationFinal private int stackPointer = -1;
         @Children private FrameSlotReadNode[] readNodes;
 
