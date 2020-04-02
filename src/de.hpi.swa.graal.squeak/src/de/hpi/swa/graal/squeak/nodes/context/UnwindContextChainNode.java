@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.context;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -48,6 +49,7 @@ public abstract class UnwindContextChainNode extends AbstractNode {
         while (context != targetContext) {
             final AbstractSqueakObject sender = context.getSender();
             if (sender == NilObject.SINGLETON) {
+                CompilerDirectives.transferToInterpreter();
                 image.printToStdErr("Unwind error: sender of", context, "is nil, unwinding towards", targetContext, "with return value:", returnValue);
                 break;
             }
