@@ -159,6 +159,11 @@ set-env() {
 set-up-dependencies() {
   local java_version=$1
 
+  # Repository was shallow copied and Git did not fetch tags, so fetch the tag
+  # of the commit (if any) to make it available for other Git operations.
+  git -c protocol.version=2 fetch --prune --progress --no-recurse-submodules \
+    --depth=1 origin "+$(git rev-parse HEAD):refs/remotes/origin/master"
+
   set-up-mx
   shallow-clone-graalvm-project https://github.com/oracle/graal.git
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
