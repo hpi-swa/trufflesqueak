@@ -43,6 +43,7 @@ jobs:
   linux-java11:
     name: Linux + JDK11 + Coverage
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone GraalSqueak repository
       uses: actions/checkout@v2
@@ -83,6 +84,7 @@ jobs:
   linux-java8:
     name: Linux + JDK8 + Coverage
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone GraalSqueak repository
       uses: actions/checkout@v2
@@ -123,6 +125,7 @@ jobs:
   macos-java11:
     name: macOS + JDK11 + Graal
     runs-on: macos-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone GraalSqueak repository
       uses: actions/checkout@v2
@@ -155,6 +158,7 @@ jobs:
   macos-java8:
     name: macOS + JDK8 + Graal
     runs-on: macos-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone GraalSqueak repository
       uses: actions/checkout@v2
@@ -187,6 +191,7 @@ jobs:
   windows-java11:
     name: Windows + JDK11 + Graal
     runs-on: windows-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone GraalSqueak repository
       uses: actions/checkout@v2
@@ -215,6 +220,7 @@ jobs:
   windows-java8:
     name: Windows + JDK8 + Graal
     runs-on: windows-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
     - name: Clone GraalSqueak repository
       uses: actions/checkout@v2
