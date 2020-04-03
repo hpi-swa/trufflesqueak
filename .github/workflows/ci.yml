@@ -54,16 +54,6 @@ jobs:
       run: |
         sudo apt update -qq && sudo apt install -qq libsdl2-dev
         mx.graalsqueak/utils.sh set-up-dependencies java11
-    - name: Run gate with code coverage
-      run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
-    - name: Report code coverage
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: |
-        bash <(curl -s https://codecov.io/bash)
-        curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
-        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
-      if: success()
     - name: Build and install GraalSqueak component
       run: |
         mx --env graalsqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA11
@@ -79,6 +69,16 @@ jobs:
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and code coverage
+      run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
+    - name: Report code coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+        curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
+        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
+      if: success()
 
   linux-java8:
     name: Linux + JDK8 + Coverage
@@ -94,16 +94,6 @@ jobs:
       run: |
         sudo apt update -qq && sudo apt install -qq libsdl2-dev
         mx.graalsqueak/utils.sh set-up-dependencies java8
-    - name: Run gate with code coverage
-      run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
-    - name: Report code coverage
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: |
-        bash <(curl -s https://codecov.io/bash)
-        curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
-        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
-      if: success()
     - name: Build and install GraalSqueak component
       run: |
         mx --env graalsqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
@@ -119,6 +109,16 @@ jobs:
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and code coverage
+      run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
+    - name: Report code coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+        curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
+        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
+      if: success()
 
   macos-java11:
     name: macOS + JDK11 + Graal
@@ -134,8 +134,6 @@ jobs:
       run: |
         HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
         mx.graalsqueak/utils.sh set-up-dependencies java11
-    - name: Run gate with Graal compiler
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
     - name: Build and install GraalSqueak component
       run: |
         mx --env graalsqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA11
@@ -151,6 +149,8 @@ jobs:
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and Graal compiler
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
 
   macos-java8:
     name: macOS + JDK8 + Graal
@@ -166,8 +166,6 @@ jobs:
       run: |
         HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
         mx.graalsqueak/utils.sh set-up-dependencies java8
-    - name: Run gate with Graal compiler
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
     - name: Build and install GraalSqueak component
       run: |
         mx --env graalsqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
@@ -183,6 +181,8 @@ jobs:
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and Graal compiler
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
 
   windows-java11:
     name: Windows + JDK11 + Graal
@@ -196,8 +196,6 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.graalsqueak/utils.sh set-up-dependencies java11
-    - name: Run gate
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test
     - name: Build and install GraalSqueak component
       shell: pwsh
       run: |
@@ -211,6 +209,8 @@ jobs:
     - name: Upload GraalSqueak component
       shell: bash
       run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and Graal compiler
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test
 
   windows-java8:
     name: Windows + JDK8 + Graal
@@ -224,8 +224,6 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.graalsqueak/utils.sh set-up-dependencies java8
-    - name: Run gate
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test
     - name: Build and install GraalSqueak component
       shell: pwsh
       run: |
@@ -239,3 +237,5 @@ jobs:
     - name: Upload GraalSqueak component
       shell: bash
       run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and Graal compiler
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test
