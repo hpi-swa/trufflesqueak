@@ -37,42 +37,45 @@ add-path() {
 }
 
 deploy-asset() {
-  if ! [[ "$1" =~ ^refs\/tags\/[[:digit:]] ]]; then
-    echo "Skipping deployment step (ref does not start with a digit)"
+  local git_tag=$(git tag --points-at HEAD)
+  if [[ -z "${git_tag}" ]]; then
+    echo "Skipping deployment step (commit not tagged)"
+    exit 0
+  elif ! [[ "${git_tag}" =~ ^[[:digit:]] ]]; then
+    echo "Skipping deployment step (tag ${git_tag} does not start with a digit)"
     exit 0
   fi
-  local git_ref=${1:10} # cut off 'refs/tags/'
-  local filename=$2
-  local auth="Authorization: token $3"
+  local filename=$1
+  local auth="Authorization: token $2"
   local release_id
 
   tag_result=$(curl -L --retry 3 --retry-connrefused --retry-delay 2 -sH "${auth}" \
-    "https://api.github.com/repos/${GITHUB_SLUG}/releases/tags/${git_ref}")
+    "https://api.github.com/repos/${GITHUB_SLUG}/releases/tags/${git_tag}")
   
   if echo "${tag_result}" | grep -q '"id":'; then
     release_id=$(echo "${tag_result}" | grep '"id":' | head -n 1 | sed 's/[^0-9]*//g')
-    echo "Found GitHub release #${release_id} for ${git_ref}"
+    echo "Found GitHub release #${release_id} for ${git_tag}"
   else
     # Retry (in case release was just created by some other worker)
     tag_result=$(curl -L --retry 3 --retry-connrefused --retry-delay 2 -sH "${auth}" \
-    "https://api.github.com/repos/${GITHUB_SLUG}/releases/tags/${git_ref}")
+    "https://api.github.com/repos/${GITHUB_SLUG}/releases/tags/${git_tag}")
   
     if echo "${tag_result}" | grep -q '"id":'; then
       release_id=$(echo "${tag_result}" | grep '"id":' | head -n 1 | sed 's/[^0-9]*//g')
-      echo "Found GitHub release #${release_id} for ${git_ref}"
+      echo "Found GitHub release #${release_id} for ${git_tag}"
     else
       create_result=$(curl -sH "${auth}" \
-        --data "{\"tag_name\": \"${git_ref}\",
-                \"name\": \"${git_ref}\",
+        --data "{\"tag_name\": \"${git_tag}\",
+                \"name\": \"${git_tag}\",
                 \"body\": \"\",
                 \"draft\": false,
                 \"prerelease\": false}" \
         "https://api.github.com/repos/${GITHUB_SLUG}/releases")
       if echo "${create_result}" | grep -q '"id":'; then
         release_id=$(echo "${create_result}" | grep '"id":' | head -n 1 | sed 's/[^0-9]*//g')
-        echo "Created GitHub release #${release_id} for ${git_ref}"
+        echo "Created GitHub release #${release_id} for ${git_tag}"
       else
-        echo "Failed to create GitHub release for ${git_ref}"
+        echo "Failed to create GitHub release for ${git_tag}"
         exit 1
       fi
     fi

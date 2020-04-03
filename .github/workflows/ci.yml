@@ -78,8 +78,7 @@ jobs:
     - name: Run tinyBenchmarks on Native Image
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
-      run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-      if: contains(github.ref, 'tags')
+      run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
 
   linux-java8:
     name: Linux + JDK8 + Coverage
@@ -119,8 +118,7 @@ jobs:
     - name: Run tinyBenchmarks on Native Image
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
-      run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-      if: contains(github.ref, 'tags')
+      run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
 
   macos-java11:
     name: macOS + JDK11 + Graal
@@ -152,8 +150,7 @@ jobs:
     - name: Run tinyBenchmarks on Native Image
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
-      run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-      if: contains(github.ref, 'tags')
+      run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
 
   macos-java8:
     name: macOS + JDK8 + Graal
@@ -185,8 +182,7 @@ jobs:
     - name: Run tinyBenchmarks on Native Image
       run: graalsqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
-      run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-      if: contains(github.ref, 'tags')
+      run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
 
   windows-java11:
     name: Windows + JDK11 + Graal
@@ -214,8 +210,7 @@ jobs:
       run: graalsqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       shell: bash
-      run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-      if: contains(github.ref, 'tags')
+      run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
 
   windows-java8:
     name: Windows + JDK8 + Graal
@@ -243,5 +238,4 @@ jobs:
       run: graalsqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload GraalSqueak component
       shell: bash
-      run: mx.graalsqueak/utils.sh deploy-asset ${{ github.ref }} ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-      if: contains(github.ref, 'tags')
+      run: mx.graalsqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
