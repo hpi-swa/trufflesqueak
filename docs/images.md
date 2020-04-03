@@ -8,7 +8,7 @@ Run the following in a workspace, then save and quit the image:
 Metacello new
     baseline: 'GraalSqueak';
     repository: 'filetree://{path/to/image-branch}/src';
-    load.
+    load: #('tests').
 (Smalltalk at: #GraalSqueakUtilities) setupImage.
 ```
 
@@ -20,6 +20,6 @@ Run the following in a workspace, then save and quit the image:
 Metacello new
     baseline: 'GraalSqueak';
     repository: 'filetree://{path/to/image-branch}/src';
-    load.
+    load: #('tests').
 (Smalltalk at: #GraalSqueakUtilities) setupTestImage.
 ```
