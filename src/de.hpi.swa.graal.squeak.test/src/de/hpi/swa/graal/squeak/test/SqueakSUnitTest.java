@@ -64,8 +64,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     protected static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
 
-    private static boolean graalSqueakPackagesLoaded = false;
-
     @Parameter public SqueakTest test;
 
     private static boolean stopRunningSuite;
@@ -84,9 +82,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     @BeforeClass
-    public static void printStatistics() {
-        final Map<TestType, Long> counts = countByType(TESTS);
+    public static void beforeClass() {
+        printStatistics();
+        ensureGraalSqueakPackagesLoaded();
+    }
 
+    private static void printStatistics() {
+        final Map<TestType, Long> counts = countByType(TESTS);
         print(TestType.PASSING, counts, AnsiCodes.GREEN);
         print(TestType.SLOWLY_PASSING, counts, AnsiCodes.GREEN);
         print(TestType.FLAKY, counts, AnsiCodes.YELLOW);
@@ -96,13 +98,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         print(TestType.NOT_TERMINATING, counts, AnsiCodes.RED);
         print(TestType.BROKEN_IN_SQUEAK, counts, AnsiCodes.BLUE);
         print(TestType.IGNORED, counts, AnsiCodes.BOLD);
-
-        for (final SqueakTest test : TESTS) {
-            if (inGraalSqueakPackage(test.className)) {
-                ensureGraalSqueakPackagesLoaded(test.className);
-                break;
-            }
-        }
     }
 
     @Test
@@ -198,7 +193,17 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         }
     }
 
-    protected static final boolean inGraalSqueakPackage(final String className) {
+    private static void ensureGraalSqueakPackagesLoaded() {
+        for (final SqueakTest test : TESTS) {
+            if (inGraalSqueakPackage(test.className)) {
+                image.getOutput().println("Loading GraalSqueak packages (required by " + test.className + "). This may take a while...");
+                loadGraalSqueakPackages();
+                break;
+            }
+        }
+    }
+
+    private static boolean inGraalSqueakPackage(final String className) {
         for (final String testCaseName : GRAALSQUEAK_TEST_CASE_NAMES) {
             if (testCaseName.equals(className)) {
                 return true;
@@ -207,13 +212,8 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         return false;
     }
 
-    protected static final void ensureGraalSqueakPackagesLoaded(final String className) {
-        if (graalSqueakPackagesLoaded) {
-            return;
-        }
-        graalSqueakPackagesLoaded = true;
+    private static void loadGraalSqueakPackages() {
         final long start = System.currentTimeMillis();
-        image.getOutput().println("Loading GraalSqueak packages (required by " + className + "). This may take a while...");
         evaluate(String.format("[Metacello new\n" +
                         "  baseline: 'GraalSqueak';\n" +
                         "  repository: 'filetree://%s';\n" +
