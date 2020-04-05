@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -51,13 +52,14 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.nodes.DispatchEagerlyNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
+import de.hpi.swa.graal.squeak.nodes.DispatchSendNode.DispatchSendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.InheritsFromNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayWithFirstNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
@@ -100,103 +102,185 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     // primitiveBlockCopy / primitiveBlockValue: (#80, #81, #82) no longer needed.
 
-    private abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
-        @Child protected LookupMethodNode lookupMethodNode = LookupMethodNode.create();
-        @Child protected SqueakObjectClassNode classNode;
-        @Child private DispatchSendNode dispatchSendNode;
-
-        protected AbstractPerformPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs) {
-            return dispatch(frame, selector, lookupClass(rcvrAndArgs[0]), rcvrAndArgs);
-        }
-
-        protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final ClassObject rcvrClass, final Object[] rcvrAndArgs) {
-            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
-            return getDispatchSendNode().executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs);
-        }
-
-        protected final ClassObject lookupClass(final Object object) {
-            if (classNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                classNode = insert(SqueakObjectClassNode.create());
-            }
-            return classNode.executeLookup(object);
-        }
-
-        private DispatchSendNode getDispatchSendNode() {
-            if (dispatchSendNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                dispatchSendNode = insert(DispatchSendNode.create(method));
-            }
-            return dispatchSendNode;
-        }
-    }
-
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerformNode extends AbstractPerformPrimitiveNode implements SeptenaryPrimitive {
+    protected abstract static class PrimPerformNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
+        protected static final int CACHE_LIMIT = 2;
 
         protected PrimPerformNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @SuppressWarnings("unused")
-        @Specialization
-        protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final NotProvided object1, final NotProvided object2, final NotProvided object3,
-                        final NotProvided object4, final NotProvided object5) {
-            return dispatch(frame, selector, new Object[]{receiver});
+        @Specialization(guards = "selector == cachedSelector", limit = "CACHE_LIMIT")
+        protected static final Object perform0Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final NotProvided object1, final NotProvided object2,
+                        final NotProvided object3, final NotProvided object4, final NotProvided object5,
+                        @Cached("selector") final NativeObject cachedSelector,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(cachedSelector, method)") final DispatchSendNode dispatchNode) {
+            return dispatchCached(frame, cachedSelector, new Object[]{receiver}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(object1)"})
-        protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final NotProvided object2, final NotProvided object3,
-                        final NotProvided object4, final NotProvided object5) {
-            return dispatch(frame, selector, new Object[]{receiver, object1});
+        @Specialization(replaces = "perform0Cached")
+        protected static final Object perform0(final VirtualFrame frame, final Object receiver, final NativeObject selector, final NotProvided object1, final NotProvided object2,
+                        final NotProvided object3, final NotProvided object4, final NotProvided object5,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(method)") final DispatchSendSelectorNode dispatchNode) {
+            return dispatchUncached(frame, selector, new Object[]{receiver}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)"})
-        protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final NotProvided object3,
-                        final NotProvided object4, final NotProvided object5) {
-            return dispatch(frame, selector, new Object[]{receiver, object1, object2});
+        @Specialization(guards = {"selector == cachedSelector", "!isNotProvided(object1)"}, limit = "CACHE_LIMIT")
+        protected static final Object perform1Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final NotProvided object2,
+                        final NotProvided object3, final NotProvided object4, final NotProvided object5,
+                        @Cached("selector") final NativeObject cachedSelector,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(cachedSelector, method)") final DispatchSendNode dispatchNode) {
+            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)"})
-        protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
-                        final NotProvided object4, final NotProvided object5) {
-            return dispatch(frame, selector, new Object[]{receiver, object1, object2, object3});
+        @Specialization(guards = {"!isNotProvided(object1)"}, replaces = "perform1Cached")
+        protected static final Object perform1(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final NotProvided object2,
+                        final NotProvided object3, final NotProvided object4, final NotProvided object5,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(method)") final DispatchSendSelectorNode dispatchNode) {
+            return dispatchUncached(frame, selector, new Object[]{receiver, object1}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)", "!isNotProvided(object4)"})
-        protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
-                        final Object object4, final NotProvided object5) {
-            return dispatch(frame, selector, new Object[]{receiver, object1, object2, object3, object4});
+        @Specialization(guards = {"selector == cachedSelector", "!isNotProvided(object1)", "!isNotProvided(object2)"}, limit = "CACHE_LIMIT")
+        protected static final Object perform2Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
+                        final NotProvided object3, final NotProvided object4, final NotProvided object5,
+                        @Cached("selector") final NativeObject cachedSelector,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(cachedSelector, method)") final DispatchSendNode dispatchNode) {
+            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
-        @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)", "!isNotProvided(object4)", "!isNotProvided(object5)"})
-        protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2, final Object object3,
-                        final Object object4, final Object object5) {
-            return dispatch(frame, selector, new Object[]{receiver, object1, object2, object3, object4, object5});
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)"}, replaces = "perform2Cached")
+        protected static final Object perform2(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
+                        final NotProvided object3, final NotProvided object4, final NotProvided object5,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(method)") final DispatchSendSelectorNode dispatchNode) {
+            return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2}, lookupClassNode, lookupMethodNode, dispatchNode);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"selector == cachedSelector", "!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)"}, limit = "CACHE_LIMIT")
+        protected static final Object perform3Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
+                        final Object object3, final NotProvided object4, final NotProvided object5,
+                        @Cached("selector") final NativeObject cachedSelector,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(cachedSelector, method)") final DispatchSendNode dispatchNode) {
+            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3}, lookupClassNode, lookupMethodNode, dispatchNode);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)"}, replaces = "perform3Cached")
+        protected static final Object perform3(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
+                        final Object object3, final NotProvided object4, final NotProvided object5,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(method)") final DispatchSendSelectorNode dispatchNode) {
+            return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2, object3}, lookupClassNode, lookupMethodNode, dispatchNode);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"selector == cachedSelector", "!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)", "!isNotProvided(object4)"}, limit = "CACHE_LIMIT")
+        protected static final Object perform4Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
+                        final Object object3, final Object object4, final NotProvided object5,
+                        @Cached("selector") final NativeObject cachedSelector,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(cachedSelector, method)") final DispatchSendNode dispatchNode) {
+            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3, object4}, lookupClassNode, lookupMethodNode, dispatchNode);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)", "!isNotProvided(object4)"}, replaces = "perform4Cached")
+        protected static final Object perform4(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
+                        final Object object3, final Object object4, final NotProvided object5,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(method)") final DispatchSendSelectorNode dispatchNode) {
+            return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2, object3, object4}, lookupClassNode, lookupMethodNode, dispatchNode);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"selector == cachedSelector", "!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)", "!isNotProvided(object4)",
+                        "!isNotProvided(object5)"}, limit = "CACHE_LIMIT")
+        protected static final Object perform5Cached(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
+                        final Object object3, final Object object4, final Object object5,
+                        @Cached("selector") final NativeObject cachedSelector,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(cachedSelector, method)") final DispatchSendNode dispatchNode) {
+            return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3, object4, object5}, lookupClassNode, lookupMethodNode, dispatchNode);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(object1)", "!isNotProvided(object2)", "!isNotProvided(object3)", "!isNotProvided(object4)", "!isNotProvided(object5)"}, replaces = "perform5Cached")
+        protected static final Object perform5(final VirtualFrame frame, final Object receiver, final NativeObject selector, final Object object1, final Object object2,
+                        final Object object3, final Object object4, final Object object5,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(method)") final DispatchSendSelectorNode dispatchNode) {
+            return dispatchUncached(frame, selector, new Object[]{receiver, object1, object2, object3, object4, object5}, lookupClassNode, lookupMethodNode, dispatchNode);
+        }
+
+        private static Object dispatchCached(final VirtualFrame frame, final NativeObject selector, final Object[] receiverAndArguments, final SqueakObjectClassNode lookupClassNode,
+                        final LookupMethodNode lookupMethodNode, final DispatchSendNode dispatchNode) {
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(receiverAndArguments[0]);
+            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
+            return dispatchNode.executeSend(frame, selector, lookupResult, rcvrClass, receiverAndArguments);
+        }
+
+        private static Object dispatchUncached(final VirtualFrame frame, final NativeObject selector, final Object[] receiverAndArguments, final SqueakObjectClassNode lookupClassNode,
+                        final LookupMethodNode lookupMethodNode, final DispatchSendSelectorNode dispatchNode) {
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(receiverAndArguments[0]);
+            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
+            return dispatchNode.executeSend(frame, selector, lookupResult, rcvrClass, receiverAndArguments);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 84)
-    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode implements TernaryPrimitive {
-        @Child private ArrayObjectToObjectArrayCopyNode getObjectArrayNode = ArrayObjectToObjectArrayCopyNode.create();
+    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        @Child private ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode = ArrayObjectToObjectArrayWithFirstNode.create();
 
         protected PrimPerformWithArgumentsNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
-        protected Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments) {
-            return dispatch(frame, selector, getObjectArrayNode.executeWithFirst(arguments, receiver));
+        @Specialization(guards = "selector == cachedSelector", limit = "2")
+        protected final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
+                        @Cached("selector") final NativeObject cachedSelector,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(cachedSelector, method)") final DispatchSendNode dispatchNode) {
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
+            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, cachedSelector);
+            return dispatchNode.executeSend(frame, cachedSelector, lookupResult, rcvrClass, getObjectArrayNode.execute(receiver, arguments));
+        }
+
+        @Specialization(replaces = "performCached")
+        protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments,
+                        @Cached final SqueakObjectClassNode lookupClassNode,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(method)") final DispatchSendSelectorNode dispatchNode) {
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
+            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
+            return dispatchNode.executeSend(frame, selector, lookupResult, rcvrClass, getObjectArrayNode.execute(receiver, arguments));
         }
     }
 
@@ -335,8 +419,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 100)
-    protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode implements QuinaryPrimitive {
-        @Child private ArrayObjectToObjectArrayCopyNode getObjectArrayNode = ArrayObjectToObjectArrayCopyNode.create();
+    protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
+        @Child private ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode = ArrayObjectToObjectArrayWithFirstNode.create();
         @Child protected InheritsFromNode inheritsFromNode = InheritsFromNode.create();
 
         protected PrimPerformWithArgumentsInSuperclassNode(final CompiledMethodObject method) {
@@ -347,32 +431,66 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
          * Object>>#perform:withArguments:inSuperclass:
          */
 
-        @Specialization(guards = "inheritsFromNode.execute(receiver, superClass)")
-        protected final Object doPerform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
-                        @SuppressWarnings("unused") final NotProvided np) {
-            return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, receiver));
+        @Specialization(guards = "selector == cachedSelector", limit = "2")
+        protected final Object performCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments,
+                        final ClassObject superClass, @SuppressWarnings("unused") final NotProvided np,
+                        @Cached("selector") final NativeObject cachedSelector,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(cachedSelector, method)") final DispatchSendNode dispatchNode) {
+            if (inheritsFromNode.execute(receiver, superClass)) {
+                final Object lookupResult = lookupMethodNode.executeLookup(superClass, cachedSelector);
+                return dispatchNode.executeSend(frame, cachedSelector, lookupResult, superClass, getObjectArrayNode.execute(receiver, arguments));
+            } else {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!inheritsFromNode.execute(receiver, superClass)")
-        protected static final Object doFail(final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass, final NotProvided np) {
-            throw PrimitiveFailed.BAD_RECEIVER;
+        @Specialization(replaces = "performCached")
+        protected final Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
+                        @SuppressWarnings("unused") final NotProvided np,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(method)") final DispatchSendSelectorNode dispatchNode) {
+            if (inheritsFromNode.execute(receiver, superClass)) {
+                final Object lookupResult = lookupMethodNode.executeLookup(superClass, selector);
+                return dispatchNode.executeSend(frame, selector, lookupResult, superClass, getObjectArrayNode.execute(receiver, arguments));
+            } else {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
         }
 
         /*
          * Context>>#object:perform:withArguments:inClass:
          */
 
-        @Specialization(guards = "inheritsFromNode.execute(target, superClass)")
-        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target, final NativeObject selector,
-                        final ArrayObject arguments, final ClassObject superClass) {
-            return dispatch(frame, selector, superClass, getObjectArrayNode.executeWithFirst(arguments, target));
+        @Specialization(guards = "selector == cachedSelector", limit = "2")
+        protected final Object performContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target,
+                        @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
+                        @Cached("selector") final NativeObject cachedSelector,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(cachedSelector, method)") final DispatchSendNode dispatchNode) {
+            if (inheritsFromNode.execute(target, superClass)) {
+                final Object lookupResult = lookupMethodNode.executeLookup(superClass, cachedSelector);
+                return dispatchNode.executeSend(frame, cachedSelector, lookupResult, superClass, getObjectArrayNode.execute(target, arguments));
+            } else {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!inheritsFromNode.execute(target, superClass)")
-        protected static final Object doFail(final Object receiver, final Object target, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass) {
-            throw PrimitiveFailed.BAD_RECEIVER;
+        @Specialization(replaces = "performContextCached")
+        protected final Object performContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object target, final NativeObject selector,
+                        final ArrayObject arguments, final ClassObject superClass,
+                        @Cached final LookupMethodNode lookupMethodNode,
+                        @Cached("create(method)") final DispatchSendSelectorNode dispatchNode) {
+            if (inheritsFromNode.execute(target, superClass)) {
+                final Object lookupResult = lookupMethodNode.executeLookup(superClass, selector);
+                return dispatchNode.executeSend(frame, selector, lookupResult, superClass, getObjectArrayNode.execute(target, arguments));
+            } else {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_RECEIVER;
+            }
         }
     }
 
@@ -507,7 +625,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 118)
     protected abstract static class PrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        @Child private ArrayObjectToObjectArrayCopyNode getObjectArrayNode = ArrayObjectToObjectArrayCopyNode.create();
+        @Child private ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode = ArrayObjectToObjectArrayWithFirstNode.create();
         @Child private CreateEagerArgumentsNode createEagerArgumentsNode = CreateEagerArgumentsNode.create();
 
         public PrimDoPrimitiveWithArgsNode(final CompiledMethodObject method) {
@@ -533,7 +651,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
              * acceptable because primitive is mostly used for debugging anyway.
              */
-            final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, receiver);
+            final Object[] receiverAndArguments = getObjectArrayNode.execute(receiver, argumentArray);
             final AbstractPrimitiveNode primitiveNode = createPrimitiveNode(primitiveIndex);
             if (primFailedProfile.profile(primitiveNode == null)) {
                 throw PrimitiveFailed.GENERIC_ERROR;
@@ -837,9 +955,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 188)
-    protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child private DispatchEagerlyNode dispatchNode;
-        @Child private ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
+        @Child protected ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
         @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
 
         protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method) {
@@ -854,7 +972,20 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return doExecute(frame, null, receiver, argArray, methodObject);
         }
 
-        @Specialization
+        @ExplodeLoop
+        @Specialization(guards = "sizeNode.execute(argArray) == cachedNumArgs", limit = "3")
+        protected final Object doExecuteCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
+                        final CompiledMethodObject methodObject,
+                        @Cached("sizeNode.execute(argArray)") final int cachedNumArgs) {
+            final Object[] dispatchRcvrAndArgs = new Object[1 + cachedNumArgs];
+            dispatchRcvrAndArgs[0] = receiver;
+            for (int i = 0; i < cachedNumArgs; i++) {
+                dispatchRcvrAndArgs[1 + i] = readNode.execute(argArray, i);
+            }
+            return dispatchNode.executeDispatch(frame, methodObject, dispatchRcvrAndArgs);
+        }
+
+        @Specialization(replaces = "doExecuteCached")
         protected final Object doExecute(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
                         final CompiledMethodObject methodObject) {
             final int numArgs = sizeNode.execute(argArray);
@@ -870,7 +1001,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 218)
     protected abstract static class PrimDoNamedPrimitiveWithArgsNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        @Child private ArrayObjectToObjectArrayCopyNode getObjectArrayNode = ArrayObjectToObjectArrayCopyNode.create();
 
         public PrimDoNamedPrimitiveWithArgsNode(final CompiledMethodObject method) {
             super(method);
@@ -878,12 +1008,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doNamedPrimitiveWithArgs(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject receiver, final CompiledMethodObject methodObject,
-                        final Object target, final ArrayObject argumentArray) {
+                        final Object target, final ArrayObject argumentArray,
+                        @Cached final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode) {
             /*
              * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
              * acceptable because primitive is mostly used for debugging anyway.
              */
-            final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, target);
+            final Object[] receiverAndArguments = getObjectArrayNode.execute(target, argumentArray);
             return replace(createPrimitiveNode(methodObject)).executeWithArguments(frame, receiverAndArguments);
         }
 
