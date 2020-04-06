@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -21,6 +22,7 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectInstSizeNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectInstSizeNode extends AbstractNode {
@@ -42,8 +44,9 @@ public abstract class SqueakObjectInstSizeNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final int doPointers(final AbstractPointersObject obj) {
-        return obj.instsize();
+    protected static final int doAbstractPointersObject(final AbstractPointersObject obj,
+                    @Cached final AbstractPointersObjectInstSizeNode instSizeNode) {
+        return instSizeNode.execute(obj);
     }
 
     @Specialization
