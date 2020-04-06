@@ -6,6 +6,7 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
@@ -64,6 +65,15 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
     public final long getSqueakHash() {
         if (needsSqueakHash()) {
             /** Lazily initialize squeakHash and derive value from hashCode. */
+            squeakHash = hashCode() & IDENTITY_HASH_MASK;
+        }
+        return squeakHash;
+    }
+
+    public final long getSqueakHash(final BranchProfile needsHashProfile) {
+        if (needsSqueakHash()) {
+            /** Lazily initialize squeakHash and derive value from hashCode. */
+            needsHashProfile.enter();
             squeakHash = hashCode() & IDENTITY_HASH_MASK;
         }
         return squeakHash;
