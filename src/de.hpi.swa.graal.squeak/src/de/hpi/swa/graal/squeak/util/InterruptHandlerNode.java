@@ -40,7 +40,7 @@ public final class InterruptHandlerNode extends Node {
     }
 
     public void executeTrigger(final VirtualFrame frame) {
-        if (!istate.isActive()) {
+        if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot() || !istate.isActive()) {
             return;
         }
         isActiveProfile.enter();
