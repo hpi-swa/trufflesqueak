@@ -1035,7 +1035,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
                         @Cached final StackPushForPrimitivesNode pushNode,
-                        @Cached("create(method, true)") final InterruptHandlerNode interruptNode) {
+                        @Cached("createOrNull(method, true)") final InterruptHandlerNode interruptNode) {
             MiscUtils.sleep(timeMicroseconds / 1000);
             /* Keep receiver on stack, interrupt handler could trigger. */
             pushNode.executeWrite(frame, receiver);
@@ -1044,7 +1044,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * idleProcess gets stuck. Checking whether the interrupt handler `shouldTrigger()`
              * decreases performance for some reason, forcing interrupt check instead.
              */
-            interruptNode.executeTrigger(frame);
+            if (interruptNode != null) {
+                interruptNode.executeTrigger(frame);
+            }
             return AbstractSendNode.NO_RESULT;
         }
     }

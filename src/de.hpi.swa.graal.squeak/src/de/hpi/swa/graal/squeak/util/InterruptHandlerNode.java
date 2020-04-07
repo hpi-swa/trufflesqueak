@@ -10,6 +10,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
@@ -35,8 +36,12 @@ public final class InterruptHandlerNode extends Node {
         nextWakeupTickProfile = enableTimerInterrupts ? BranchProfile.create() : null;
     }
 
-    public static InterruptHandlerNode create(final CompiledCodeObject code, final boolean enableTimerInterrupts) {
-        return new InterruptHandlerNode(code, enableTimerInterrupts);
+    public static InterruptHandlerNode createOrNull(final CompiledCodeObject code, final boolean enableTimerInterrupts) {
+        if (SqueakLanguage.getContext().interruptHandlerDisabled()) {
+            return null;
+        } else {
+            return new InterruptHandlerNode(code, enableTimerInterrupts);
+        }
     }
 
     public void executeTrigger(final VirtualFrame frame) {

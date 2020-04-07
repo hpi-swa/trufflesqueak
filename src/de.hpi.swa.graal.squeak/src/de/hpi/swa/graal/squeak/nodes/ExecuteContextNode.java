@@ -71,7 +71,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
          * materialization and deopts. Timer inputs are currently handled in
          * primitiveRelinquishProcessor (#230) only.
          */
-        interruptHandlerNode = bytecodeNodes.length >= MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? InterruptHandlerNode.create(code, false) : null;
+        interruptHandlerNode = bytecodeNodes.length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? null : InterruptHandlerNode.createOrNull(code, false);
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
     }
 
