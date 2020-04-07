@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
@@ -38,11 +39,41 @@ public abstract class DispatchEagerlyNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"cachedMethod.hasPrimitive()", "method == cachedMethod", "primitiveNode != null"}, //
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()"}, rewriteOn = PrimitiveFailed.class)
-    protected static final Object doPrimitiveEagerly(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledMethodObject method, final Object[] receiverAndArguments,
+    protected final Object doPrimitiveEagerly(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledMethodObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("forIndex(cachedMethod, cachedMethod.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
-                    @Cached final CreateEagerArgumentsNode createEagerArgumentsNode) {
-        return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
+                    @Cached final CreateEagerArgumentsNode createEagerArgumentsNode,
+                    @Cached final PrimitiveFailedCounter failureCounter) {
+        try {
+            return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
+        } catch (final PrimitiveFailed pf) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (failureCounter.shouldNoLongerSendEagerly()) {
+                throw pf; // Rewrite specialization.
+            } else {
+                // Slow path send to fallback code.
+                return IndirectCallNode.getUncached().call(method.getCallTarget(),
+                                FrameAccess.newWith(cachedMethod, getContextOrMarker(frame), null, receiverAndArguments));
+            }
+        }
+    }
+
+    /*
+     * Counts how often a primitive has failed and indicates whether this node should continue to
+     * send the primitive eagerly or not. This is useful to avoid rewriting primitives that set up
+     * the image and then are retried in their fallback code (e.g. primitiveCopyBits).
+     */
+    protected static final class PrimitiveFailedCounter {
+        private static final int PRIMITIVE_FAILED_THRESHOLD = 3;
+        private int count = 0;
+
+        protected static PrimitiveFailedCounter create() {
+            return new PrimitiveFailedCounter();
+        }
+
+        protected boolean shouldNoLongerSendEagerly() {
+            return ++count > PRIMITIVE_FAILED_THRESHOLD;
+        }
     }
 
     @Specialization(guards = {"method == cachedMethod"}, //
