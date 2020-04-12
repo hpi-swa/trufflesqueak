@@ -23,28 +23,28 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
+import de.hpi.swa.graal.squeak.nodes.DispatchSendFromStackNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
-        public static final Object NO_RESULT = new Object();
-
         protected final NativeObject selector;
         private final int argumentCount;
 
         @Child private AbstractLookupClassNode lookupClassNode;
         @Child private LookupMethodNode lookupMethodNode = LookupMethodNode.create();
-        @Child private DispatchSendNode dispatchSendNode;
+        @Child private DispatchSendFromStackNode dispatchSendNode;
+        @Child private FrameSlotReadNode peekReceiverNode;
         @Child private FrameStackPopNNode popNNode;
         @Child private FrameStackPushNode pushNode;
 
-        private final ConditionProfile noResultProfile = ConditionProfile.createBinaryProfile();
         private final BranchProfile nlrProfile = BranchProfile.create();
         private final BranchProfile nvrProfile = BranchProfile.create();
 
@@ -57,7 +57,7 @@ public final class SendBytecodes {
             selector = sel instanceof NativeObject ? (NativeObject) sel : code.image.doesNotUnderstand;
             argumentCount = argcount;
             this.lookupClassNode = lookupClassNode;
-            dispatchSendNode = DispatchSendNode.create(selector, code);
+            dispatchSendNode = DispatchSendFromStackNode.create(selector, code, argumentCount);
             popNNode = FrameStackPopNNode.create(code, 1 + argumentCount); // receiver + arguments.
         }
 
@@ -67,15 +67,13 @@ public final class SendBytecodes {
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
-            final Object[] rcvrAndArgs = popNNode.execute(frame);
-            final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
+            final Object receiver = getReceiver(frame);
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             try {
-                final Object result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs);
+                final Object result = dispatchSendNode.executeSend(frame, selector, lookupResult, receiver, rcvrClass);
                 assert result != null : "Result of a message send should not be null";
-                if (noResultProfile.profile(result != NO_RESULT)) {
-                    getPushNode().execute(frame, result);
-                }
+                getPushNode().execute(frame, result);
             } catch (final NonLocalReturn nlr) {
                 nlrProfile.enter();
                 if (nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame)) {
@@ -91,6 +89,15 @@ public final class SendBytecodes {
                     throw nvr;
                 }
             }
+        }
+
+        private Object getReceiver(final VirtualFrame frame) {
+            if (peekReceiverNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final int stackPointer = FrameAccess.getStackPointer(frame, code) - 1 - argumentCount;
+                peekReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer)));
+            }
+            return peekReceiverNode.executeRead(frame);
         }
 
         private FrameStackPushNode getPushNode() {

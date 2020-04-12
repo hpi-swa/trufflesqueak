@@ -31,6 +31,10 @@ public final class SqueakGuards {
     private SqueakGuards() {
     }
 
+    public static int add1(final int value) {
+        return value + 1;
+    }
+
     public static boolean between(final long value, final int minIncluded, final int maxIncluded) {
         return minIncluded <= value && value <= maxIncluded;
     }

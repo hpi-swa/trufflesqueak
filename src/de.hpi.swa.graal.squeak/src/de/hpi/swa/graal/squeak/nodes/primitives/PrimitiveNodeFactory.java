@@ -118,43 +118,44 @@ public final class PrimitiveNodeFactory {
     private PrimitiveNodeFactory() {
     }
 
-    public static AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final int primitiveIndex) {
+    public static AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final boolean useStack, final int primitiveIndex) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         assert primitiveIndex >= 0 : "Unexpected negative primitiveIndex";
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
-            return namedFor(method);
+            return namedFor(method, useStack);
         } else if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
-            return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(method, primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX, new AbstractArgumentNode[]{new ArgumentNode(0)});
+            return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(method, primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX,
+                            new AbstractArgumentNode[]{ArgumentNode.create(0, 0, useStack)});
         } else if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PRIMITIVE_TABLE[primitiveIndex - 1];
             if (nodeFactory != null) {
-                return createInstance(method, nodeFactory);
+                return createInstance(method, useStack, nodeFactory);
             }
         }
         return null;
     }
 
-    public static AbstractPrimitiveNode namedFor(final CompiledMethodObject method) {
+    public static AbstractPrimitiveNode namedFor(final CompiledMethodObject method, final boolean useStack) {
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
         if (values[1] == NilObject.SINGLETON) {
             return null;
         } else if (values[0] == NilObject.SINGLETON) {
             final NativeObject functionName = (NativeObject) values[1];
-            return forName(method, NULL_MODULE_NAME, functionName.getByteStorage());
+            return forName(method, useStack, NULL_MODULE_NAME, functionName.getByteStorage());
         } else {
             final NativeObject moduleName = (NativeObject) values[0];
             final NativeObject functionName = (NativeObject) values[1];
-            return forName(method, moduleName.getByteStorage(), functionName.getByteStorage());
+            return forName(method, useStack, moduleName.getByteStorage(), functionName.getByteStorage());
         }
     }
 
-    private static AbstractPrimitiveNode forName(final CompiledMethodObject method, final byte[] moduleName, final byte[] functionName) {
+    private static AbstractPrimitiveNode forName(final CompiledMethodObject method, final boolean useStack, final byte[] moduleName, final byte[] functionName) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         final UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = PLUGIN_MAP.get(new String(moduleName));
         if (functionNameToNodeFactory != null) {
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = functionNameToNodeFactory.get(new String(functionName));
             if (nodeFactory != null) {
-                return createInstance(method, nodeFactory);
+                return createInstance(method, useStack, nodeFactory);
             }
         }
         return null;
@@ -168,11 +169,12 @@ public final class PrimitiveNodeFactory {
         return target.toArray(new String[target.size()]);
     }
 
-    private static AbstractPrimitiveNode createInstance(final CompiledMethodObject method, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
+    private static AbstractPrimitiveNode createInstance(final CompiledMethodObject method, final boolean useStack, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
         final int primitiveArity = nodeFactory.getExecutionSignature().size();
-        final AbstractArgumentNode[] argumentNodes = new AbstractArgumentNode[primitiveArity];
+        final AbstractArgumentNode[] argumentNodes;
+        argumentNodes = new AbstractArgumentNode[primitiveArity];
         for (int i = 0; i < primitiveArity; i++) {
-            argumentNodes[i] = AbstractArgumentNode.create(i, method.getNumArgs());
+            argumentNodes[i] = AbstractArgumentNode.create(i, method.getNumArgs(), useStack);
         }
         final AbstractPrimitiveNode primitiveNode = nodeFactory.createNode(method, argumentNodes);
         assert primitiveArity == primitiveNode.getNumArguments() : "Arities do not match in " + primitiveNode;

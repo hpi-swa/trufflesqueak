@@ -18,6 +18,8 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -29,6 +31,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 
 /**
@@ -254,6 +257,23 @@ public final class FrameAccess {
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
         System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), receiverAndArgumentsLength);
+        return frameArguments;
+    }
+
+    @ExplodeLoop
+    public static Object[] newWith(final VirtualFrame frame, final CompiledMethodObject method, final Object sender, final BlockClosureObject closure,
+                    final FrameSlotReadNode[] receiverAndArgumentsNodes) {
+        final int receiverAndArgumentsLength = receiverAndArgumentsNodes.length;
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
+        assert method != null : "Method should never be null";
+        assert sender != null : "Sender should never be null";
+        assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
+        frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
+            frameArguments[ArgumentIndicies.RECEIVER.ordinal() + i] = receiverAndArgumentsNodes[i].executeRead(frame);
+        }
         return frameArguments;
     }
 

@@ -10,8 +10,9 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.BooleanObject;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-@ImportStatic({SqueakGuards.class, BooleanObject.class})
+@ImportStatic({BooleanObject.class, FrameAccess.class, SqueakGuards.class})
 @TypeSystemReference(SqueakTypes.class)
 public abstract class AbstractNode extends Node {
 

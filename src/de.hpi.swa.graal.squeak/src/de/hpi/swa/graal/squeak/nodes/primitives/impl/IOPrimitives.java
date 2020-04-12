@@ -149,7 +149,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     /** Primitive 96 (primitiveCopyBits) not in use anymore. */
 
-    @ImportStatic(FrameAccess.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 97)
     protected abstract static class PrimSnapshotNode extends AbstractPrimitiveNode implements UnaryPrimitive {

@@ -270,7 +270,6 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    @ImportStatic(FrameAccess.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210)
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
