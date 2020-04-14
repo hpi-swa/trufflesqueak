@@ -14,7 +14,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -271,7 +270,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public void fillin(final SqueakImageChunk chunk) {
         if (methodDict == null) {
             if (needsSqueakHash()) {
-                Truffle.getRuntime();
                 final int hash = chunk.getHash();
                 /* Generate class hashes if unknown. */
                 setSqueakHash(hash != 0 ? hash : image.getNextClassHash());
