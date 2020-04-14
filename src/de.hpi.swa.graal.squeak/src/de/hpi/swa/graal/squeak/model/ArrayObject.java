@@ -380,72 +380,72 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void trace(final SqueakImageWriter writerNode) {
-        super.trace(writerNode);
+    public void trace(final SqueakImageWriter writer) {
+        super.trace(writer);
         if (isObjectType()) {
-            writerNode.traceAllIfNecessary(getObjectStorage());
+            writer.traceAllIfNecessary(getObjectStorage());
         }
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
-        if (!writeHeader(writerNode)) {
+    public void write(final SqueakImageWriter writer) {
+        if (!writeHeader(writer)) {
             return;
         }
         if (isEmptyType()) {
             for (int i = 0; i < getEmptyLength(); i++) {
-                writerNode.writeNil();
+                writer.writeNil();
             }
         } else if (isBooleanType()) {
             for (final byte item : getBooleanStorage()) {
                 if (item == BOOLEAN_FALSE_TAG) {
-                    writerNode.writeFalse();
+                    writer.writeFalse();
                 } else if (item == BOOLEAN_TRUE_TAG) {
-                    writerNode.writeTrue();
+                    writer.writeTrue();
                 } else {
                     assert item == BOOLEAN_NIL_TAG;
-                    writerNode.writeNil();
+                    writer.writeNil();
                 }
             }
         } else if (isCharType()) {
             for (final char item : getCharStorage()) {
                 if (isCharNilTag(item)) {
-                    writerNode.writeNil();
+                    writer.writeNil();
                 } else {
-                    writerNode.writeChar(item);
+                    writer.writeChar(item);
                 }
             }
         } else if (isDoubleType()) {
             for (final double item : getDoubleStorage()) {
                 if (isDoubleNilTag(item)) {
-                    writerNode.writeNil();
+                    writer.writeNil();
                 } else {
-                    writerNode.writeSmallFloat(item);
+                    writer.writeSmallFloat(item);
                 }
             }
         } else if (isLongType()) {
             for (final long item : getLongStorage()) {
                 if (isLongNilTag(item)) {
-                    writerNode.writeNil();
+                    writer.writeNil();
                 } else {
-                    writerNode.writeSmallInteger(item);
+                    writer.writeSmallInteger(item);
                 }
             }
         } else if (isObjectType()) {
-            writerNode.writeObjects(getObjectStorage());
+            writer.writeObjects(getObjectStorage());
         }
     }
 
-    public void writeAsHiddenRoots(final SqueakImageWriter writerNode) {
+    public void writeAsHiddenRoots(final SqueakImageWriter writer) {
         assert isObjectType();
         /* Write header. */
         final long numSlots = getObjectLength();
         assert numSlots >= SqueakImageConstants.OVERFLOW_SLOTS;
-        writerNode.writeLong(numSlots | SqueakImageConstants.SLOTS_MASK);
-        writerNode.writeObjectHeader(SqueakImageConstants.OVERFLOW_SLOTS, 0, getSqueakClass().getInstanceSpecification(), 0, SqueakImageConstants.ARRAY_CLASS_INDEX_PUN);
+        writer.writeLong(numSlots | SqueakImageConstants.SLOTS_MASK);
+        writer.writeObjectHeader(SqueakImageConstants.OVERFLOW_SLOTS, 0, getSqueakClass().getInstanceSpecification(), 0, SqueakImageConstants.ARRAY_CLASS_INDEX_PUN);
         /* Write content. */
         for (final Object item : getObjectStorage()) {
-            writerNode.writeObject(item);
+            writer.writeObject(item);
         }
     }
 

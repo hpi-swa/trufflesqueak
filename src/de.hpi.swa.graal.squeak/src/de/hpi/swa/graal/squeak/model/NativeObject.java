@@ -364,41 +364,41 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
+    public void write(final SqueakImageWriter writer) {
         if (isByteType()) {
             final int numSlots = getNumSlots();
             final int formatOffset = numSlots * BYTE_TO_WORD - getByteLength();
             assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
-            if (writeHeader(writerNode, formatOffset)) {
-                writerNode.writeBytes(getByteStorage());
-                writePaddingIfAny(writerNode, getByteLength());
+            if (writeHeader(writer, formatOffset)) {
+                writer.writeBytes(getByteStorage());
+                writePaddingIfAny(writer, getByteLength());
             }
         } else if (isShortType()) {
             final int numSlots = getNumSlots();
             final int formatOffset = numSlots * SHORT_TO_WORD - getShortLength();
             assert 0 <= formatOffset && formatOffset <= 3 : "too many odd bits (see instSpec)";
-            if (writeHeader(writerNode, formatOffset)) {
+            if (writeHeader(writer, formatOffset)) {
                 for (final short value : getShortStorage()) {
-                    writerNode.writeShort(value);
+                    writer.writeShort(value);
                 }
-                writePaddingIfAny(writerNode, getShortLength() * Short.BYTES);
+                writePaddingIfAny(writer, getShortLength() * Short.BYTES);
             }
         } else if (isIntType()) {
             final int numSlots = getNumSlots();
             final int formatOffset = numSlots * INTEGER_TO_WORD - getIntLength();
             assert 0 <= formatOffset && formatOffset <= 1 : "too many odd bits (see instSpec)";
-            if (writeHeader(writerNode, formatOffset)) {
+            if (writeHeader(writer, formatOffset)) {
                 for (final int value : getIntStorage()) {
-                    writerNode.writeInt(value);
+                    writer.writeInt(value);
                 }
-                writePaddingIfAny(writerNode, getIntLength() * Integer.BYTES);
+                writePaddingIfAny(writer, getIntLength() * Integer.BYTES);
             }
         } else if (isLongType()) {
-            if (!writeHeader(writerNode)) {
+            if (!writeHeader(writer)) {
                 return;
             }
             for (final long value : getLongStorage()) {
-                writerNode.writeLong(value);
+                writer.writeLong(value);
             }
             /* Padding not required. */
         } else {
@@ -406,23 +406,23 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         }
     }
 
-    private static void writePaddingIfAny(final SqueakImageWriter writerNode, final int numberOfBytes) {
+    private static void writePaddingIfAny(final SqueakImageWriter writer, final int numberOfBytes) {
         final int offset = numberOfBytes % SqueakImageConstants.WORD_SIZE;
         if (offset > 0) {
-            writerNode.writePadding(SqueakImageConstants.WORD_SIZE - offset);
+            writer.writePadding(SqueakImageConstants.WORD_SIZE - offset);
         }
     }
 
-    public void writeAsFreeList(final SqueakImageWriter writerNode) {
+    public void writeAsFreeList(final SqueakImageWriter writer) {
         if (isLongType()) {
             /* Write header. */
             final int numSlots = getLongLength();
             assert numSlots < SqueakImageConstants.OVERFLOW_SLOTS;
             /* Free list is of format 9 and pinned. */
-            writerNode.writeLong(SqueakImageConstants.ObjectHeader.getHeader(numSlots, getSqueakHash(), 9, SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN, true));
+            writer.writeLong(SqueakImageConstants.ObjectHeader.getHeader(numSlots, getSqueakHash(), 9, SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN, true));
             /* Write content. */
             for (final long value : getLongStorage()) {
-                writerNode.writeLong(value);
+                writer.writeLong(value);
             }
         } else {
             throw SqueakException.create("Trying to write unexpected hidden native object");

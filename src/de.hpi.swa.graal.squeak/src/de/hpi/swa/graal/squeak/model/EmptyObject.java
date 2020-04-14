@@ -48,8 +48,8 @@ public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
-        if (writeHeader(writerNode)) {
+    public void write(final SqueakImageWriter writer) {
+        if (writeHeader(writer)) {
             throw SqueakException.create("Empty objects should not have any slots:", this);
         }
     }

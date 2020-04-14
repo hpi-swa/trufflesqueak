@@ -223,21 +223,21 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     }
 
     @Override
-    public void trace(final SqueakImageWriter writerNode) {
-        super.trace(writerNode);
-        writerNode.traceAllIfNecessary(getLiterals());
+    public void trace(final SqueakImageWriter writer) {
+        super.trace(writer);
+        writer.traceAllIfNecessary(getLiterals());
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
+    public void write(final SqueakImageWriter writer) {
         final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
         assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
-        if (writeHeader(writerNode, formatOffset)) {
-            writerNode.writeObjects(getLiterals());
-            writerNode.writeBytes(getBytes());
+        if (writeHeader(writer, formatOffset)) {
+            writer.writeObjects(getLiterals());
+            writer.writeBytes(getBytes());
             final int offset = getBytes().length % SqueakImageConstants.WORD_SIZE;
             if (offset > 0) {
-                writerNode.writePadding(SqueakImageConstants.WORD_SIZE - offset);
+                writer.writePadding(SqueakImageConstants.WORD_SIZE - offset);
             }
         }
     }

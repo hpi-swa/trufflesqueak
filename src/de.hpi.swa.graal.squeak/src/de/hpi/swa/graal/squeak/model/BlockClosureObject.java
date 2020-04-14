@@ -272,23 +272,23 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     @Override
-    public void trace(final SqueakImageWriter writerNode) {
-        super.trace(writerNode);
-        writerNode.traceIfNecessary(receiver);
-        writerNode.traceIfNecessary(outerContext);
-        writerNode.traceAllIfNecessary(getCopied());
+    public void trace(final SqueakImageWriter writer) {
+        super.trace(writer);
+        writer.traceIfNecessary(receiver);
+        writer.traceIfNecessary(outerContext);
+        writer.traceAllIfNecessary(getCopied());
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
-        if (!writeHeader(writerNode)) {
+    public void write(final SqueakImageWriter writer) {
+        if (!writeHeader(writer)) {
             throw SqueakException.create("BlockClosureObject must have slots:", this);
         }
-        writerNode.writeObject(getOuterContext());
-        writerNode.writeSmallInteger(getStartPC());
-        writerNode.writeSmallInteger(getNumArgs());
+        writer.writeObject(getOuterContext());
+        writer.writeSmallInteger(getStartPC());
+        writer.writeSmallInteger(getNumArgs());
         for (final Object value : getCopied()) {
-            writerNode.writeObject(value);
+            writer.writeObject(value);
         }
     }
 

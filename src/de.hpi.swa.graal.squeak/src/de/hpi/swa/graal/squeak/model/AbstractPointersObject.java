@@ -345,21 +345,21 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     }
 
     @Override
-    public void trace(final SqueakImageWriter writerNode) {
-        super.trace(writerNode);
-        writerNode.traceIfNecessary(object0);
-        writerNode.traceIfNecessary(object1);
-        writerNode.traceIfNecessary(object2);
+    public void trace(final SqueakImageWriter writer) {
+        super.trace(writer);
+        writer.traceIfNecessary(object0);
+        writer.traceIfNecessary(object1);
+        writer.traceIfNecessary(object2);
         if (objectExtension != null) {
-            writerNode.traceAllIfNecessary(objectExtension);
+            writer.traceAllIfNecessary(objectExtension);
         }
     }
 
-    protected final boolean writeHeaderAndLayoutObjects(final SqueakImageWriter writerNode) {
-        if (writeHeader(writerNode)) {
+    protected final boolean writeHeaderAndLayoutObjects(final SqueakImageWriter writer) {
+        if (writeHeader(writer)) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
             for (int i = 0; i < instsize(); i++) {
-                writerNode.writeObject(readNode.execute(this, i));
+                writer.writeObject(readNode.execute(this, i));
             }
             return true;
         } else {

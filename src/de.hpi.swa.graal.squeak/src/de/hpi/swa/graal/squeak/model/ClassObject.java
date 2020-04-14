@@ -571,26 +571,26 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void trace(final SqueakImageWriter writerNode) {
-        super.trace(writerNode);
-        writerNode.traceIfNecessary(superclass);
-        writerNode.traceIfNecessary(methodDict);
-        writerNode.traceIfNecessary(instanceVariables);
-        writerNode.traceIfNecessary(organization);
-        writerNode.traceAllIfNecessary(pointers);
+    public void trace(final SqueakImageWriter writer) {
+        super.trace(writer);
+        writer.traceIfNecessary(superclass);
+        writer.traceIfNecessary(methodDict);
+        writer.traceIfNecessary(instanceVariables);
+        writer.traceIfNecessary(organization);
+        writer.traceAllIfNecessary(pointers);
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
-        if (!writeHeader(writerNode)) {
+    public void write(final SqueakImageWriter writer) {
+        if (!writeHeader(writer)) {
             throw SqueakException.create("BlockClosureObject must have slots:", this);
         }
-        writerNode.writeObject(getSuperclass());
-        writerNode.writeObject(getMethodDict());
-        writerNode.writeSmallInteger(format);
-        writerNode.writeObject(getInstanceVariables());
-        writerNode.writeObject(getOrganization());
-        writerNode.writeObjects(getOtherPointers());
+        writer.writeObject(getSuperclass());
+        writer.writeObject(getMethodDict());
+        writer.writeSmallInteger(format);
+        writer.writeObject(getInstanceVariables());
+        writer.writeObject(getOrganization());
+        writer.writeObjects(getOtherPointers());
     }
 
     /*

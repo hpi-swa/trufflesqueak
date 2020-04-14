@@ -91,7 +91,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
+    public void write(final SqueakImageWriter writer) {
         /*
          * This should not be reached, unless GraalSqueak supports FullBlockClosures. Print an error
          * instead of crashing for now.

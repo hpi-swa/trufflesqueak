@@ -169,7 +169,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
-        super.writeHeaderAndLayoutObjects(writerNode);
+    public void write(final SqueakImageWriter writer) {
+        super.writeHeaderAndLayoutObjects(writer);
     }
 }

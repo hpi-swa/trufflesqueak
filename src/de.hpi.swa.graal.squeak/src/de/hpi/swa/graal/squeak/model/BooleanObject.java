@@ -27,12 +27,12 @@ public final class BooleanObject {
         return 3L;
     }
 
-    public static void write(final SqueakImageWriter writerNode, final boolean value) {
+    public static void write(final SqueakImageWriter writer, final boolean value) {
         if (value) {
-            writerNode.writeObjectHeader(0, getTrueSqueakHash(), writerNode.getImage().trueClass, 0);
+            writer.writeObjectHeader(0, getTrueSqueakHash(), writer.getImage().trueClass, 0);
         } else {
-            writerNode.writeObjectHeader(0, getFalseSqueakHash(), writerNode.getImage().falseClass, 0);
+            writer.writeObjectHeader(0, getFalseSqueakHash(), writer.getImage().falseClass, 0);
         }
-        writerNode.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
+        writer.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
     }
 }

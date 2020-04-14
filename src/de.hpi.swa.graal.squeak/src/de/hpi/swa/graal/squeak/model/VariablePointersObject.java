@@ -121,15 +121,15 @@ public final class VariablePointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void trace(final SqueakImageWriter writerNode) {
-        super.trace(writerNode);
-        writerNode.traceAllIfNecessary(variablePart);
+    public void trace(final SqueakImageWriter writer) {
+        super.trace(writer);
+        writer.traceAllIfNecessary(variablePart);
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
-        if (super.writeHeaderAndLayoutObjects(writerNode)) {
-            writerNode.writeObjects(variablePart);
+    public void write(final SqueakImageWriter writer) {
+        if (super.writeHeaderAndLayoutObjects(writer)) {
+            writer.writeObjects(variablePart);
         }
     }
 }

@@ -619,47 +619,47 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     }
 
     @Override
-    public void trace(final SqueakImageWriter writerNode) {
-        super.trace(writerNode);
+    public void trace(final SqueakImageWriter writer) {
+        super.trace(writer);
         if (hasTruffleFrame()) {
-            writerNode.traceIfNecessary(getSender()); /* May materialize sender. */
-            writerNode.traceIfNecessary(getMethod());
-            writerNode.traceIfNecessary(getClosure());
-            writerNode.traceIfNecessary(getReceiver());
+            writer.traceIfNecessary(getSender()); /* May materialize sender. */
+            writer.traceIfNecessary(getMethod());
+            writer.traceIfNecessary(getClosure());
+            writer.traceIfNecessary(getReceiver());
             assert getBlockOrMethod().getStackSlotsUnsafe().length == getBlockOrMethod().getNumStackSlots();
             for (final FrameSlot slot : getBlockOrMethod().getStackSlotsUnsafe()) {
                 if (slot == null) {
                     break; /* Done, this and all following slots have not (yet) been used. */
                 } else if (truffleFrame.isObject(slot)) {
-                    writerNode.traceIfNecessary(FrameUtil.getObjectSafe(truffleFrame, slot));
+                    writer.traceIfNecessary(FrameUtil.getObjectSafe(truffleFrame, slot));
                 }
             }
         }
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
-        if (!writeHeader(writerNode)) {
+    public void write(final SqueakImageWriter writer) {
+        if (!writeHeader(writer)) {
             throw SqueakException.create("ContextObject must have slots:", this);
         }
-        writerNode.writeObject(getSender());
-        writerNode.writeObject(getInstructionPointer(ConditionProfile.getUncached()));
-        writerNode.writeSmallInteger(getStackPointer());
-        writerNode.writeObject(getMethod());
-        writerNode.writeObject(NilObject.nullToNil(getClosure()));
-        writerNode.writeObject(getReceiver());
+        writer.writeObject(getSender());
+        writer.writeObject(getInstructionPointer(ConditionProfile.getUncached()));
+        writer.writeSmallInteger(getStackPointer());
+        writer.writeObject(getMethod());
+        writer.writeObject(NilObject.nullToNil(getClosure()));
+        writer.writeObject(getReceiver());
         assert getBlockOrMethod().getStackSlotsUnsafe().length == getBlockOrMethod().getNumStackSlots();
         final FrameSlot[] stackSlots = getBlockOrMethod().getStackSlotsUnsafe();
         for (int i = 0; i < stackSlots.length; i++) {
             final FrameSlot slot = stackSlots[i];
             if (slot == null) {
-                writerNode.writeNil();
+                writer.writeNil();
             } else {
                 final Object stackValue = truffleFrame.getValue(slot);
                 if (stackValue == null) {
-                    writerNode.writeNil();
+                    writer.writeNil();
                 } else {
-                    writerNode.writeObject(stackValue);
+                    writer.writeObject(stackValue);
                 }
             }
         }

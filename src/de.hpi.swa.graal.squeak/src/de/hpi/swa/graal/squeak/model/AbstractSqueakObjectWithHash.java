@@ -152,27 +152,27 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
         // Nothing to trace by default.
     }
 
-    public void trace(final SqueakImageWriter writerNode) {
-        writerNode.traceIfNecessary(getSqueakClass());
+    public void trace(final SqueakImageWriter writer) {
+        writer.traceIfNecessary(getSqueakClass());
     }
 
-    public abstract void write(SqueakImageWriter writerNode);
+    public abstract void write(SqueakImageWriter writer);
 
     /* Returns true if more content is following. */
-    protected final boolean writeHeader(final SqueakImageWriter writerNode) {
-        return writeHeader(writerNode, 0);
+    protected final boolean writeHeader(final SqueakImageWriter writer) {
+        return writeHeader(writer, 0);
     }
 
-    protected final boolean writeHeader(final SqueakImageWriter writerNode, final int formatOffset) {
+    protected final boolean writeHeader(final SqueakImageWriter writer, final int formatOffset) {
         final long numSlots = getNumSlots();
         if (numSlots >= SqueakImageConstants.OVERFLOW_SLOTS) {
-            writerNode.writeLong(numSlots | SqueakImageConstants.SLOTS_MASK);
-            writerNode.writeObjectHeader(SqueakImageConstants.OVERFLOW_SLOTS, getSqueakHash(), getSqueakClass(), formatOffset);
+            writer.writeLong(numSlots | SqueakImageConstants.SLOTS_MASK);
+            writer.writeObjectHeader(SqueakImageConstants.OVERFLOW_SLOTS, getSqueakHash(), getSqueakClass(), formatOffset);
         } else {
-            writerNode.writeObjectHeader(numSlots, getSqueakHash(), getSqueakClass(), formatOffset);
+            writer.writeObjectHeader(numSlots, getSqueakHash(), getSqueakClass(), formatOffset);
         }
         if (numSlots == 0) {
-            writerNode.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
+            writer.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
             return false;
         } else {
             return true;

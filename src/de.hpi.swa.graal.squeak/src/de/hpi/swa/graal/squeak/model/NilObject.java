@@ -66,8 +66,8 @@ public final class NilObject extends AbstractSqueakObject {
         return true;
     }
 
-    public void write(final SqueakImageWriter writerNode) {
-        writerNode.writeObjectHeader(instsize() + size(), getSqueakHash(), writerNode.getImage().nilClass, 0);
-        writerNode.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
+    public void write(final SqueakImageWriter writer) {
+        writer.writeObjectHeader(instsize() + size(), getSqueakHash(), writer.getImage().nilClass, 0);
+        writer.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
     }
 }

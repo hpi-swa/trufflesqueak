@@ -151,14 +151,14 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
-        if (super.writeHeaderAndLayoutObjects(writerNode)) {
+    public void write(final SqueakImageWriter writer) {
+        if (super.writeHeaderAndLayoutObjects(writer)) {
             for (int i = 0; i < variablePart.length; i++) {
                 /*
                  * Since weak pointers are excluded from tracing, ignore (replace with nil) all
                  * objects that have not been traced somewhere else.
                  */
-                writerNode.writeObjectIfTracedElseNil(getFromVariablePart(i));
+                writer.writeObjectIfTracedElseNil(getFromVariablePart(i));
             }
         }
     }

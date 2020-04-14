@@ -138,9 +138,9 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
     }
 
     @Override
-    public void write(final SqueakImageWriter writerNode) {
-        writerNode.writeObjectHeader(getNumSlots(), getSqueakHash(), getSqueakClass(), 0);
-        writerNode.writeLong(Double.doubleToRawLongBits(doubleValue));
+    public void write(final SqueakImageWriter writer) {
+        writer.writeObjectHeader(getNumSlots(), getSqueakHash(), getSqueakClass(), 0);
+        writer.writeLong(Double.doubleToRawLongBits(doubleValue));
     }
 
     @Override
