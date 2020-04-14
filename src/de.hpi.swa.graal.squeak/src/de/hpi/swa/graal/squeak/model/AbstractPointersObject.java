@@ -351,9 +351,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         writerNode.traceIfNecessary(object1);
         writerNode.traceIfNecessary(object2);
         if (objectExtension != null) {
-            for (final Object object : objectExtension) {
-                writerNode.traceIfNecessary(object);
-            }
+            writerNode.traceAllIfNecessary(objectExtension);
         }
     }
 

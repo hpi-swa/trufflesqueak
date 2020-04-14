@@ -573,13 +573,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @Override
     public void trace(final SqueakImageWriter writerNode) {
         super.trace(writerNode);
-        writerNode.traceIfNecessary(getSuperclass());
-        writerNode.traceIfNecessary(getMethodDict());
-        writerNode.traceIfNecessary(getInstanceVariables());
-        writerNode.traceIfNecessary(getOrganization());
-        for (final Object value : getOtherPointers()) {
-            writerNode.traceIfNecessary(value);
-        }
+        writerNode.traceIfNecessary(superclass);
+        writerNode.traceIfNecessary(methodDict);
+        writerNode.traceIfNecessary(instanceVariables);
+        writerNode.traceIfNecessary(organization);
+        writerNode.traceAllIfNecessary(pointers);
     }
 
     @Override
@@ -592,9 +590,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         writerNode.writeSmallInteger(format);
         writerNode.writeObject(getInstanceVariables());
         writerNode.writeObject(getOrganization());
-        for (final Object value : getOtherPointers()) {
-            writerNode.writeObject(value);
-        }
+        writerNode.writeObjects(getOtherPointers());
     }
 
     /*

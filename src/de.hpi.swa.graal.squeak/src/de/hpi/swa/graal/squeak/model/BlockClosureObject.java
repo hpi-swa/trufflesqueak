@@ -274,11 +274,9 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @Override
     public void trace(final SqueakImageWriter writerNode) {
         super.trace(writerNode);
-        writerNode.traceIfNecessary(getReceiver());
-        writerNode.traceIfNecessary(getOuterContext());
-        for (final Object value : getCopied()) {
-            writerNode.traceIfNecessary(value);
-        }
+        writerNode.traceIfNecessary(receiver);
+        writerNode.traceIfNecessary(outerContext);
+        writerNode.traceAllIfNecessary(getCopied());
     }
 
     @Override

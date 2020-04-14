@@ -167,6 +167,12 @@ public final class SqueakImageWriter {
         }
     }
 
+    public void traceAllIfNecessary(final Object[] objects) {
+        for (final Object object : objects) {
+            traceIfNecessary(object);
+        }
+    }
+
     private void writeBody() {
         assert position == SqueakImageConstants.IMAGE_HEADER_SIZE;
         NilObject.SINGLETON.write(this);
@@ -425,6 +431,12 @@ public final class SqueakImageWriter {
 
     public void writeObject(final Object object) {
         writeLong(toWord(object));
+    }
+
+    public void writeObjects(final Object[] objects) {
+        for (final Object object : objects) {
+            writeObject(object);
+        }
     }
 
     public void writeObjectIfTracedElseNil(final Object object) {

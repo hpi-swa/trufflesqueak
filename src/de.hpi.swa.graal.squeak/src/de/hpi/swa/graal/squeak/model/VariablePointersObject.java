@@ -123,17 +123,13 @@ public final class VariablePointersObject extends AbstractPointersObject {
     @Override
     public void trace(final SqueakImageWriter writerNode) {
         super.trace(writerNode);
-        for (final Object object : variablePart) {
-            writerNode.traceIfNecessary(object);
-        }
+        writerNode.traceAllIfNecessary(variablePart);
     }
 
     @Override
     public void write(final SqueakImageWriter writerNode) {
         if (super.writeHeaderAndLayoutObjects(writerNode)) {
-            for (final Object object : variablePart) {
-                writerNode.writeObject(object);
-            }
+            writerNode.writeObjects(variablePart);
         }
     }
 }

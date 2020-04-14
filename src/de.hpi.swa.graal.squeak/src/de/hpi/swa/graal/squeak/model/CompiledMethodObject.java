@@ -225,9 +225,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     @Override
     public void trace(final SqueakImageWriter writerNode) {
         super.trace(writerNode);
-        for (final Object literal : getLiterals()) {
-            writerNode.traceIfNecessary(literal);
-        }
+        writerNode.traceAllIfNecessary(getLiterals());
     }
 
     @Override
@@ -235,9 +233,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
         assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
         if (writeHeader(writerNode, formatOffset)) {
-            for (final Object literal : getLiterals()) {
-                writerNode.writeObject(literal);
-            }
+            writerNode.writeObjects(getLiterals());
             writerNode.writeBytes(getBytes());
             final int offset = getBytes().length % SqueakImageConstants.WORD_SIZE;
             if (offset > 0) {

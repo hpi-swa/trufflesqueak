@@ -383,9 +383,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public void trace(final SqueakImageWriter writerNode) {
         super.trace(writerNode);
         if (isObjectType()) {
-            for (final Object item : getObjectStorage()) {
-                writerNode.traceIfNecessary(item);
-            }
+            writerNode.traceAllIfNecessary(getObjectStorage());
         }
     }
 
@@ -434,9 +432,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
                 }
             }
         } else if (isObjectType()) {
-            for (final Object item : getObjectStorage()) {
-                writerNode.writeObject(item);
-            }
+            writerNode.writeObjects(getObjectStorage());
         }
     }
 
