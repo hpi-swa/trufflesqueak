@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -93,5 +94,12 @@ public abstract class SqueakObjectBecomeNode extends AbstractNode {
     protected static final boolean doWeakPointers(final WeakVariablePointersObject left, final WeakVariablePointersObject right) {
         left.become(right);
         return true;
+    }
+
+    @TruffleBoundary
+    @SuppressWarnings("unused")
+    @Specialization(guards = "left.getClass() != right.getClass()")
+    protected static final boolean doFail(final Object left, final Object right) {
+        return false;
     }
 }
