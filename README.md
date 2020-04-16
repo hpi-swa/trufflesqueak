@@ -8,27 +8,18 @@ A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 1. Find the [latest GraalSqueak release][graalsqueak_latest] and identify the
    supported version of GraalVM.
 2. Download the corresponding [GraalVM][graalvm_download] for your platform.
-3. a) If you are on Linux or macOS, install the pre-compiled GraalSqueak
-  component for your platform attached to the release with the GraalVM Updater:
+3. Use the [GraalVM Updater][graalvm_updater] to install the GraalSqueak
+   component (JAR files are attached to the release) for your platform:
 
 ```bash
 $GRAALVM_HOME/bin/gu install \
   -u https://github.com/hpi-swa/graalsqueak/releases/download/X.Y.Z/graalsqueak-installable-….jar
 ```
 
-3. b) If you are on Windows, download the component, change its file extension
-  to `.zip`, and unzip it into your GraalVM folder:
-
-```powershell
-powershell Expand-Archive graalsqueak-installable-….zip -DestinationPath $GRAALVM_HOME
-```
-
-4. You should now be able to open GraalSqueak:
+4. You should now be able to run GraalSqueak:
 
 ```bash
-$GRAALVM_HOME/bin/graalsqueak      # Linux or macOS
-
-$GRAALVM_HOME\bin\graalsqueak.cmd  # Windows
+$GRAALVM_HOME/bin/graalsqueak
 ```
 
 ## Community Support
@@ -167,6 +158,7 @@ GraalSqueak is released under the [MIT license][graalsqueak_license].
 [graalvm]: http://www.graalvm.org/
 [graalvm_blog]: https://medium.com/graalvm
 [graalvm_download]: http://www.graalvm.org/downloads/
+[graalvm_updater]: https://www.graalvm.org/docs/reference-manual/install-components/
 [graalvm_slack]: https://www.graalvm.org/slack-invitation/
 [graalvm_slack_badge]: https://img.shields.io/badge/slack-%23graalsqueak-active
 [icooolps18]: https://2018.ecoop.org/event/icooolps-2018-papers-graalsqueak-a-fast-smalltalk-bytecode-interpreter-written-in-an-ast-interpreter-framework
