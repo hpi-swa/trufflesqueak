@@ -32,7 +32,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -632,36 +631,47 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
-        protected final Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray,
+        @Specialization(guards = "primitiveIndex == cachedPrimitiveIndex", limit = "1")
+        protected final Object doPrimitiveWithArgsCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
                         @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Cached("createBinaryProfile()") final ConditionProfile primFailedProfile) {
-            return doPrimitiveWithArgs(frame, receiver, primitiveIndex, argumentArray, primFailedProfile);
+                        @SuppressWarnings("unused") @Cached("primitiveIndex") final long cachedPrimitiveIndex,
+                        @Cached("createPrimitiveNode(cachedPrimitiveIndex)") final AbstractPrimitiveNode primitiveNode) {
+            if (primitiveNode == null) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            } else {
+                return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), getObjectArrayNode.execute(receiver, argumentArray)));
+            }
         }
 
-        @Specialization
-        protected final Object doPrimitiveWithArgs(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context, final Object receiver,
-                        final long primitiveIndex, final ArrayObject argumentArray,
-                        @Cached("createBinaryProfile()") final ConditionProfile primFailedProfile) {
-            return doPrimitiveWithArgs(frame, receiver, primitiveIndex, argumentArray, primFailedProfile);
-        }
-
-        private Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray, final ConditionProfile primFailedProfile) {
-            /*
-             * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
-             * acceptable because primitive is mostly used for debugging anyway.
-             */
+        @Specialization(replaces = "doPrimitiveWithArgsCached")
+        protected final Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray,
+                        @SuppressWarnings("unused") final NotProvided notProvided) {
+            /* Deopt might be acceptable because primitive is mostly used for debugging anyway. */
+            CompilerDirectives.transferToInterpreter();
             final Object[] receiverAndArguments = getObjectArrayNode.execute(receiver, argumentArray);
-            final AbstractPrimitiveNode primitiveNode = createPrimitiveNode(primitiveIndex);
-            if (primFailedProfile.profile(primitiveNode == null)) {
+            final AbstractPrimitiveNode primitiveNode = insert(PrimitiveNodeFactory.forIndex(method, (int) primitiveIndex));
+            if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
                 return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
             }
         }
 
-        @TruffleBoundary
-        private AbstractPrimitiveNode createPrimitiveNode(final long primitiveIndex) {
+        @Specialization(guards = "primitiveIndex == cachedPrimitiveIndex", limit = "1")
+        protected final Object doPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
+                        final long primitiveIndex, final ArrayObject argumentArray,
+                        @SuppressWarnings("unused") @Cached("primitiveIndex") final long cachedPrimitiveIndex,
+                        @Cached("createPrimitiveNode(cachedPrimitiveIndex)") final AbstractPrimitiveNode primitiveNode) {
+            return doPrimitiveWithArgsCached(frame, receiver, primitiveIndex, argumentArray, NotProvided.SINGLETON, cachedPrimitiveIndex, primitiveNode);
+        }
+
+        @Specialization(replaces = "doPrimitiveWithArgsContextCached")
+        protected final Object doPrimitiveWithArgsContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
+                        final long primitiveIndex, final ArrayObject argumentArray) {
+            return doPrimitiveWithArgs(frame, receiver, primitiveIndex, argumentArray, NotProvided.SINGLETON);
+        }
+
+        protected final AbstractPrimitiveNode createPrimitiveNode(final long primitiveIndex) {
             return PrimitiveNodeFactory.forIndex(method, (int) primitiveIndex);
         }
     }
