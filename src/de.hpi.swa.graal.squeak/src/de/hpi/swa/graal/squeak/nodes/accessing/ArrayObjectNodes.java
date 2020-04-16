@@ -19,6 +19,7 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectCopyIntoObjectArrayNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectToObjectArrayCopyNodeGen;
@@ -316,54 +317,72 @@ public final class ArrayObjectNodes {
         }
     }
 
-    public abstract static class ArrayObjectCopyIntoFrameArgumentsNode extends AbstractNode {
-        private static final int OFFSET = FrameAccess.getArgumentStartIndex();
+    public abstract static class ArrayObjectCopyIntoObjectArrayNode extends AbstractNode {
+        private static final ArrayObjectCopyIntoObjectArrayNode UNCACHED1 = create(1);
 
-        public abstract void execute(ArrayObject obj, Object[] target);
+        private final int offset;
+
+        public ArrayObjectCopyIntoObjectArrayNode(final int offset) {
+            this.offset = offset;
+        }
+
+        public static ArrayObjectCopyIntoObjectArrayNode create(final int offset) {
+            return ArrayObjectCopyIntoObjectArrayNodeGen.create(offset);
+        }
+
+        public static ArrayObjectCopyIntoObjectArrayNode createForFrameArguments() {
+            return ArrayObjectCopyIntoObjectArrayNodeGen.create(FrameAccess.getArgumentStartIndex());
+        }
+
+        public static ArrayObjectCopyIntoObjectArrayNode getUncached1() {
+            return UNCACHED1;
+        }
+
+        public abstract void execute(Object[] target, ArrayObject obj);
 
         @Specialization(guards = "obj.isObjectType()")
-        protected static final void doArrayOfObjects(final ArrayObject obj, final Object[] target) {
-            System.arraycopy(obj.getObjectStorage(), 0, target, OFFSET, obj.getObjectLength());
+        protected final void doArrayOfObjects(final Object[] target, final ArrayObject obj) {
+            System.arraycopy(obj.getObjectStorage(), 0, target, offset, obj.getObjectLength());
         }
 
         @Specialization(guards = "obj.isEmptyType()")
-        protected static final void doEmptyArray(final ArrayObject obj, final Object[] target) {
-            Arrays.fill(target, OFFSET, OFFSET + obj.getEmptyStorage(), NilObject.SINGLETON);
+        protected final void doEmptyArray(final Object[] target, final ArrayObject obj) {
+            Arrays.fill(target, offset, offset + obj.getEmptyLength(), NilObject.SINGLETON);
         }
 
         @Specialization(guards = "obj.isBooleanType()")
-        protected static final void doArrayOfBooleans(final ArrayObject obj, final Object[] target,
+        protected final void doArrayOfBooleans(final Object[] target, final ArrayObject obj,
                         @Cached final BranchProfile isNilTagProfile) {
             final byte[] booleans = obj.getBooleanStorage();
             for (int i = 0; i < booleans.length; i++) {
-                target[OFFSET + i] = ArrayObject.toObjectFromBoolean(booleans[i], isNilTagProfile);
+                target[offset + i] = ArrayObject.toObjectFromBoolean(booleans[i], isNilTagProfile);
             }
         }
 
         @Specialization(guards = "obj.isCharType()")
-        protected static final void doArrayOfChars(final ArrayObject obj, final Object[] target,
+        protected final void doArrayOfChars(final Object[] target, final ArrayObject obj,
                         @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
             final char[] chars = obj.getCharStorage();
             for (int i = 0; i < chars.length; i++) {
-                target[OFFSET + i] = ArrayObject.toObjectFromChar(chars[i], isNilTagProfile);
+                target[offset + i] = ArrayObject.toObjectFromChar(chars[i], isNilTagProfile);
             }
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final void doArrayOfLongs(final ArrayObject obj, final Object[] target,
+        protected final void doArrayOfLongs(final Object[] target, final ArrayObject obj,
                         @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
             final long[] longs = obj.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
-                target[OFFSET + i] = ArrayObject.toObjectFromLong(longs[i], isNilTagProfile);
+                target[offset + i] = ArrayObject.toObjectFromLong(longs[i], isNilTagProfile);
             }
         }
 
         @Specialization(guards = "obj.isDoubleType()")
-        protected static final void doArrayOfDoubles(final ArrayObject obj, final Object[] target,
+        protected final void doArrayOfDoubles(final Object[] target, final ArrayObject obj,
                         @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
             final double[] doubles = obj.getDoubleStorage();
             for (int i = 0; i < doubles.length; i++) {
-                target[OFFSET + i] = ArrayObject.toObjectFromDouble(doubles[i], isNilTagProfile);
+                target[offset + i] = ArrayObject.toObjectFromDouble(doubles[i], isNilTagProfile);
             }
         }
     }

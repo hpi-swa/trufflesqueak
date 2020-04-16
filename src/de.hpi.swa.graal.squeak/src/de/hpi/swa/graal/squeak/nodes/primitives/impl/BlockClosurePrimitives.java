@@ -20,7 +20,7 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectCopyIntoFrameArgumentsNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectCopyIntoObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -229,20 +229,20 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
-                        @Cached final ArrayObjectCopyIntoFrameArgumentsNode copyIntoNode,
+                        @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarker(frame), sizeNode.execute(argArray));
-            copyIntoNode.execute(argArray, frameArguments);
+            copyIntoNode.execute(frameArguments, argArray);
             return directCallNode.call(frameArguments);
         }
 
         @Specialization(guards = {"closure.getNumArgs() == sizeNode.execute(argArray)"}, replaces = "doValueDirect", limit = "1")
         protected final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
-                        @Cached final ArrayObjectCopyIntoFrameArgumentsNode copyIntoNode,
+                        @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached final IndirectCallNode indirectCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarker(frame), sizeNode.execute(argArray));
-            copyIntoNode.execute(argArray, frameArguments);
+            copyIntoNode.execute(frameArguments, argArray);
             return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), frameArguments);
         }
     }
@@ -302,10 +302,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
                         @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
-                        @Cached final ArrayObjectCopyIntoFrameArgumentsNode copyIntoNode,
+                        @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarker(frame), sizeNode.execute(argArray));
-            copyIntoNode.execute(argArray, frameArguments);
+            copyIntoNode.execute(frameArguments, argArray);
             final boolean wasActive = method.image.interrupt.isActive();
             method.image.interrupt.deactivate();
             try {
@@ -320,10 +320,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"closure.getNumArgs() == sizeNode.execute(argArray)"}, replaces = "doValueDirect", limit = "1")
         protected final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
-                        @Cached final ArrayObjectCopyIntoFrameArgumentsNode copyIntoNode,
+                        @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached final IndirectCallNode indirectCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarker(frame), sizeNode.execute(argArray));
-            copyIntoNode.execute(argArray, frameArguments);
+            copyIntoNode.execute(frameArguments, argArray);
             final boolean wasActive = method.image.interrupt.isActive();
             method.image.interrupt.deactivate();
             try {

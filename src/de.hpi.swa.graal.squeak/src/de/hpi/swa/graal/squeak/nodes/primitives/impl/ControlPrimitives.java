@@ -8,6 +8,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.lang.management.ManagementFactory;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -56,6 +57,7 @@ import de.hpi.swa.graal.squeak.nodes.InheritsFromNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectCopyIntoObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayWithFirstNode;
@@ -64,7 +66,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectChangeClassOfToNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -624,23 +625,23 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 118)
     protected abstract static class PrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        @Child private ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode = ArrayObjectToObjectArrayWithFirstNode.create();
-        @Child private CreateEagerArgumentsNode createEagerArgumentsNode = CreateEagerArgumentsNode.create();
 
         public PrimDoPrimitiveWithArgsNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = "primitiveIndex == cachedPrimitiveIndex", limit = "1")
-        protected final Object doPrimitiveWithArgsCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
+        @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null"}, limit = "2")
+        protected static final Object doPrimitiveWithArgsCached(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
                         @SuppressWarnings("unused") final NotProvided notProvided,
                         @SuppressWarnings("unused") @Cached("primitiveIndex") final long cachedPrimitiveIndex,
-                        @Cached("createPrimitiveNode(cachedPrimitiveIndex)") final AbstractPrimitiveNode primitiveNode) {
-            if (primitiveNode == null) {
-                throw PrimitiveFailed.GENERIC_ERROR;
-            } else {
-                return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), getObjectArrayNode.execute(receiver, argumentArray)));
-            }
+                        @Cached("createPrimitiveNode(cachedPrimitiveIndex)") final AbstractPrimitiveNode primitiveNode,
+                        @Cached final ArrayObjectSizeNode arraySizeNode,
+                        @Cached("create(1)") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode) {
+            final Object[] arguments = new Object[primitiveNode.getNumArguments()];
+            arguments[0] = receiver;
+            copyIntoNode.execute(arguments, argumentArray);
+            Arrays.fill(arguments, 1 + arraySizeNode.execute(argumentArray), primitiveNode.getNumArguments(), NotProvided.SINGLETON);
+            return primitiveNode.executeWithArguments(frame, arguments);
         }
 
         @Specialization(replaces = "doPrimitiveWithArgsCached")
@@ -648,21 +649,26 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") final NotProvided notProvided) {
             /* Deopt might be acceptable because primitive is mostly used for debugging anyway. */
             CompilerDirectives.transferToInterpreter();
-            final Object[] receiverAndArguments = getObjectArrayNode.execute(receiver, argumentArray);
-            final AbstractPrimitiveNode primitiveNode = insert(PrimitiveNodeFactory.forIndex(method, (int) primitiveIndex));
+            final AbstractPrimitiveNode primitiveNode = insert(createPrimitiveNode(primitiveIndex));
             if (primitiveNode == null) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             } else {
-                return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
+                final Object[] arguments = new Object[primitiveNode.getNumArguments()];
+                arguments[0] = receiver;
+                ArrayObjectCopyIntoObjectArrayNode.getUncached1().execute(arguments, argumentArray);
+                Arrays.fill(arguments, 1 + ArrayObjectSizeNode.getUncached().execute(argumentArray), primitiveNode.getNumArguments(), NotProvided.SINGLETON);
+                return primitiveNode.executeWithArguments(frame, arguments);
             }
         }
 
-        @Specialization(guards = "primitiveIndex == cachedPrimitiveIndex", limit = "1")
-        protected final Object doPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
+        @Specialization(guards = {"primitiveIndex == cachedPrimitiveIndex", "primitiveNode != null"}, limit = "2")
+        protected static final Object doPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
                         final long primitiveIndex, final ArrayObject argumentArray,
                         @SuppressWarnings("unused") @Cached("primitiveIndex") final long cachedPrimitiveIndex,
-                        @Cached("createPrimitiveNode(cachedPrimitiveIndex)") final AbstractPrimitiveNode primitiveNode) {
-            return doPrimitiveWithArgsCached(frame, receiver, primitiveIndex, argumentArray, NotProvided.SINGLETON, cachedPrimitiveIndex, primitiveNode);
+                        @Cached("createPrimitiveNode(cachedPrimitiveIndex)") final AbstractPrimitiveNode primitiveNode,
+                        @Cached final ArrayObjectSizeNode arraySizeNode,
+                        @Cached("create(1)") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode) {
+            return doPrimitiveWithArgsCached(frame, receiver, primitiveIndex, argumentArray, NotProvided.SINGLETON, cachedPrimitiveIndex, primitiveNode, arraySizeNode, copyIntoNode);
         }
 
         @Specialization(replaces = "doPrimitiveWithArgsContextCached")
@@ -1016,20 +1022,38 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
-        protected final Object doNamedPrimitiveWithArgs(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject receiver, final CompiledMethodObject methodObject,
-                        final Object target, final ArrayObject argumentArray,
-                        @Cached final ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode) {
-            /*
-             * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
-             * acceptable because primitive is mostly used for debugging anyway.
-             */
-            final Object[] receiverAndArguments = getObjectArrayNode.execute(target, argumentArray);
-            return replace(createPrimitiveNode(methodObject)).executeWithArguments(frame, receiverAndArguments);
+        @Specialization(guards = {"methodObject == cachedMethodObject", "primitiveNode != null"}, limit = "2")
+        protected static final Object doNamedPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context,
+                        @SuppressWarnings("unused") final CompiledMethodObject methodObject, final Object target, final ArrayObject argumentArray,
+                        @SuppressWarnings("unused") @Cached("methodObject") final CompiledMethodObject cachedMethodObject,
+                        @Cached("createPrimitiveNode(methodObject)") final AbstractPrimitiveNode primitiveNode,
+                        @Cached final ArrayObjectSizeNode arraySizeNode,
+                        @Cached("create(1)") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode) {
+            final Object[] arguments = new Object[primitiveNode.getNumArguments()];
+            arguments[0] = target;
+            copyIntoNode.execute(arguments, argumentArray);
+            Arrays.fill(arguments, 1 + arraySizeNode.execute(argumentArray), primitiveNode.getNumArguments(), NotProvided.SINGLETON);
+            return primitiveNode.executeWithArguments(frame, arguments);
         }
 
-        @TruffleBoundary
-        private static AbstractPrimitiveNode createPrimitiveNode(final CompiledMethodObject methodObject) {
+        @Specialization(replaces = "doNamedPrimitiveWithArgsContextCached")
+        protected final Object doNamedPrimitiveWithArgsContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final CompiledMethodObject methodObject,
+                        final Object target, final ArrayObject argumentArray) {
+            /* Deopt might be acceptable because primitive is mostly used for debugging anyway. */
+            CompilerDirectives.transferToInterpreter();
+            final AbstractPrimitiveNode primitiveNode = insert(createPrimitiveNode(methodObject));
+            if (primitiveNode == null) {
+                throw PrimitiveFailed.GENERIC_ERROR;
+            } else {
+                final Object[] arguments = new Object[primitiveNode.getNumArguments()];
+                arguments[0] = target;
+                ArrayObjectCopyIntoObjectArrayNode.getUncached1().execute(arguments, argumentArray);
+                Arrays.fill(arguments, 1 + ArrayObjectSizeNode.getUncached().execute(argumentArray), primitiveNode.getNumArguments(), NotProvided.SINGLETON);
+                return primitiveNode.executeWithArguments(frame, arguments);
+            }
+        }
+
+        protected static final AbstractPrimitiveNode createPrimitiveNode(final CompiledMethodObject methodObject) {
             return PrimitiveNodeFactory.namedFor(methodObject);
         }
     }
