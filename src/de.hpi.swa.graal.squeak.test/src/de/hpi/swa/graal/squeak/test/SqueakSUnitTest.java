@@ -118,7 +118,24 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             stopRunningSuite = true;
             throw e;
         }
-        checkResult(result);
+        RuntimeException exceptionDuringReload = null;
+        if (!(result.passed && result.message.equals(PASSED_VALUE))) {
+            try {
+                image.getError().println("Closing current image context and reloading: " + result.message);
+                reloadImage();
+            } catch (final RuntimeException e) {
+                exceptionDuringReload = e;
+            }
+        }
+        try {
+            checkResult(result);
+        } finally {
+            if (exceptionDuringReload != null) {
+                image.getError().println("Exception during reload: " + exceptionDuringReload);
+                exceptionDuringReload.printStackTrace();
+                stopRunningSuite = true;
+            }
+        }
     }
 
     private void checkTermination() {
@@ -140,16 +157,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             case EXPECTED_FAILURE:
                 if (result.reason != null) {
                     throw result.reason;
-                }
-                if (!result.passed) {
-                    try {
-                        image.getError().println("Passing test failed, reloading image...");
-                        reloadImage();
-                    } catch (final RuntimeException e) {
-                        image.getError().println("Exception during image reload: " + e);
-                        e.printStackTrace();
-                        stopRunningSuite = true;
-                    }
                 }
                 assertTrue(result.message, result.passed);
                 break;
