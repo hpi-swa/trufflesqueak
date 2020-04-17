@@ -12,7 +12,6 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.model.BooleanObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -25,10 +24,6 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveExpandBlock")
     protected abstract static class PrimExpandBlockNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimExpandBlockNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"buf.isByteType()", "expanded.isIntType()", "expanded.getIntLength() == 80", "buf.getByteLength() == 64"})
         protected static final Object doExpand(final Object receiver, final NativeObject buf, final NativeObject expanded) {
             final int[] words = expanded.getIntStorage();
@@ -47,10 +42,6 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHasSecureHashPrimitive")
     protected abstract static class PrimHasSecureHashPrimitiveNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimHasSecureHashPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final boolean doHas(@SuppressWarnings("unused") final Object receiver) {
             return BooleanObject.TRUE;
@@ -60,10 +51,6 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHashBlock")
     protected abstract static class PrimHashBlockNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimHashBlockNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"buf.isIntType()", "state.isIntType()", "state.getIntLength() == 5", "buf.getIntLength() == 80"})
         protected static final Object doHash(final Object receiver, final NativeObject buf, final NativeObject state) {
             final int[] statePtr = state.getIntStorage();

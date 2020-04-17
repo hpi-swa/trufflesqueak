@@ -8,12 +8,14 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 import java.util.Arrays;
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -35,10 +37,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddFloatArray")
     public abstract static class PrimAddFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        public PrimAddFloatArrayNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
                         "receiver.getIntLength() == floatArray.getIntLength()"})
         protected static final NativeObject doAdd(final NativeObject receiver, final NativeObject floatArray) {
@@ -56,10 +54,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddScalar")
     public abstract static class PrimAddScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        public PrimAddScalarNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final NativeObject doAdd(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
@@ -75,10 +69,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAt")
     public abstract static class PrimFloatArrayAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        public PrimFloatArrayAtNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doAt(final NativeObject receiver, final long index) {
             return Float.intBitsToFloat(receiver.getIntStorage()[(int) index - 1]);
@@ -89,10 +79,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAtPut")
     public abstract static class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        public PrimFloatArrayAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doDouble(final NativeObject receiver, final long index, final double value) {
             receiver.getIntStorage()[(int) index - 1] = Float.floatToRawIntBits((float) value);
@@ -100,8 +86,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
-        protected final FloatObject doFloat(final NativeObject receiver, final long index, final FloatObject value) {
-            return FloatObject.valueOf(method.image, doDouble(receiver, index, value.getValue()));
+        protected static final FloatObject doFloat(final NativeObject receiver, final long index, final FloatObject value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return FloatObject.valueOf(image, doDouble(receiver, index, value.getValue()));
         }
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
@@ -113,10 +100,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDivFloatArray")
     public abstract static class PrimDivFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
-        public PrimDivFloatArrayNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
                         "receiver.getIntLength() == floatArray.getIntLength()"})
@@ -136,10 +119,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDivScalar")
     public abstract static class PrimDivScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        public PrimDivScalarNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
@@ -153,10 +132,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDotProduct")
     public abstract static class PrimDotProductNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
-        public PrimDotProductNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"receiver.isIntType()", "aFloatVector.isIntType()", "receiver.getIntLength() == aFloatVector.getIntLength()"})
         protected static final double doDot64bit(final NativeObject receiver, final NativeObject aFloatVector) {
@@ -173,10 +148,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEqual")
     public abstract static class PrimFloatArrayEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
-        public PrimFloatArrayEqualNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"receiver.isIntType()", "other.isIntType()"})
         protected static final boolean doEqual(final NativeObject receiver, final NativeObject other) {
@@ -197,10 +168,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveHashArray")
     public abstract static class PrimHashArrayNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        public PrimHashArrayNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = "receiver.isIntType()")
         protected static final long doHash(final NativeObject receiver) {
             final int[] words = receiver.getIntStorage();
@@ -217,10 +184,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMulFloatArray")
     public abstract static class PrimMulFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
-        public PrimMulFloatArrayNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
                         "receiver.getIntLength() == floatArray.getIntLength()"})
@@ -240,10 +203,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveMulScalar")
     public abstract static class PrimMulScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        public PrimMulScalarNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final NativeObject doMul(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
@@ -259,19 +218,11 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveNormalize") // TODO: implement primitive
     public abstract static class PrimFloatArrayNormalizeNode extends AbstractPrimitiveNode {
 
-        public PrimFloatArrayNormalizeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSubFloatArray")
     public abstract static class PrimSubFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
-        public PrimSubFloatArrayNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
                         "receiver.getIntLength() == floatArray.getIntLength()"})
@@ -291,10 +242,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSubScalar")
     public abstract static class PrimSubScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        public PrimSubScalarNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final NativeObject doSub(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
@@ -308,10 +255,6 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSum")
     public abstract static class PrimFloatArraySumNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-
-        public PrimFloatArraySumNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final double doSum(final NativeObject receiver) {

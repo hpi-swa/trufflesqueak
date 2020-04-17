@@ -183,7 +183,7 @@ public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
     }
 
     private static PointersObject instantiate(final ClassObject dummyClass) {
-        return (PointersObject) SqueakObjectNewNode.create(image).execute(dummyClass);
+        return (PointersObject) SqueakObjectNewNode.getUncached().execute(image, dummyClass);
     }
 
     private static void writeAndValidate(final AbstractPointersObject obj, final int index, final Object value) {

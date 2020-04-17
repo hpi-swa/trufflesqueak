@@ -7,6 +7,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
 
@@ -87,7 +88,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
          * This should not be reached, unless GraalSqueak supports FullBlockClosures. Print an error
          * instead of crashing for now.
          */
-        image.printToStdErr("Unexpected CompiledBlockObject: " + this);
+        SqueakLanguage.getContext().printToStdErr("Unexpected CompiledBlockObject: " + this);
     }
 
     @Override
@@ -96,6 +97,6 @@ public final class CompiledBlockObject extends CompiledCodeObject {
          * This should not be reached, unless GraalSqueak supports FullBlockClosures. Print an error
          * instead of crashing for now.
          */
-        image.printToStdErr("Unexpected CompiledBlockObject: " + this);
+        SqueakLanguage.getContext().printToStdErr("Unexpected CompiledBlockObject: " + this);
     }
 }

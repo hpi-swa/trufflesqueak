@@ -16,7 +16,6 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -28,6 +27,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -72,11 +72,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
-        protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        protected static final ArrayObject performPointersBecomeOneWay(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
+        protected static final ArrayObject performPointersBecomeOneWay(final SqueakImageContext image, final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -86,7 +82,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] toPointers = toArray.getObjectStorage();
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            ObjectGraphUtils.pointersBecomeOneWay(fromArray.image, fromPointersClone, toPointers, copyHash);
+            ObjectGraphUtils.pointersBecomeOneWay(image, fromPointersClone, toPointers, copyHash);
             patchTruffleFrames(fromPointersClone, toPointers, copyHash);
             return fromArray;
         }
@@ -162,10 +158,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 68)
     protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        protected PrimCompiledMethodObjectAtNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final Object literalAt(final CompiledCodeObject receiver, final long index) {
             // Use getLiterals() instead of getLiteral(i), the latter skips the header.
@@ -176,10 +168,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 69)
     protected abstract static class PrimCompiledMethodObjectAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimCompiledMethodObjectAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final Object setLiteral(final CompiledCodeObject code, final long index, final Object value) {
             code.setLiteral(index - 1, value);
@@ -191,33 +179,28 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 70)
     public abstract static class PrimNewNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         public static final int NEW_CACHE_SIZE = 6;
-        @Child private SqueakObjectNewNode newNode;
 
-        protected PrimNewNode(final CompiledMethodObject method) {
-            super(method);
-            newNode = SqueakObjectNewNode.create(method.image);
-        }
-
-        @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
-        protected AbstractSqueakObjectWithHash newDirect(final ClassObject receiver,
+        protected static final AbstractSqueakObjectWithHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
-                        @Cached final BranchProfile outOfMemProfile) {
+                        @Cached final SqueakObjectNewNode newNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
-                return newNode.execute(cachedReceiver);
+                return newNode.execute(image, cachedReceiver);
             } catch (final OutOfMemoryError e) {
-                outOfMemProfile.enter();
+                CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
         }
 
         @Specialization(replaces = "newDirect")
-        protected final AbstractSqueakObjectWithHash newIndirect(final ClassObject receiver,
-                        @Cached final BranchProfile outOfMemProfile) {
+        protected static final AbstractSqueakObjectWithHash newIndirect(final ClassObject receiver,
+                        @Cached final SqueakObjectNewNode newNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
-                return newNode.execute(receiver);
+                return newNode.execute(image, receiver);
             } catch (final OutOfMemoryError e) {
-                outOfMemProfile.enter();
+                CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
         }
@@ -225,35 +208,31 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 71)
-    @ImportStatic(PrimNewNode.class)
     protected abstract static class PrimNewWithArgNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-        @Child private SqueakObjectNewNode newNode;
+        public static final int NEW_CACHE_SIZE = 6;
 
-        protected PrimNewWithArgNode(final CompiledMethodObject method) {
-            super(method);
-            newNode = SqueakObjectNewNode.create(method.image);
-        }
-
-        @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
-        protected final AbstractSqueakObjectWithHash newWithArgDirect(final ClassObject receiver, final long size,
+        protected static final AbstractSqueakObjectWithHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
+                        @Cached("createIdentityProfile()") final IntValueProfile sizeProfile,
                         @Cached("receiver") final ClassObject cachedReceiver,
-                        @Cached final BranchProfile outOfMemProfile) {
+                        @Cached final SqueakObjectNewNode newNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
-                return newNode.execute(cachedReceiver, (int) size);
+                return newNode.execute(image, cachedReceiver, sizeProfile.profile((int) size));
             } catch (final OutOfMemoryError e) {
-                outOfMemProfile.enter();
+                CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
         }
 
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
-        protected final AbstractSqueakObjectWithHash newWithArg(final ClassObject receiver, final long size,
-                        @Cached final BranchProfile outOfMemProfile) {
+        protected static final AbstractSqueakObjectWithHash newWithArg(final ClassObject receiver, final long size,
+                        @Cached final SqueakObjectNewNode newNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
-                return newNode.execute(receiver, (int) size);
+                return newNode.execute(image, receiver, (int) size);
             } catch (final OutOfMemoryError e) {
-                outOfMemProfile.enter();
+                CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.INSUFFICIENT_OBJECT_MEMORY;
             }
         }
@@ -273,13 +252,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 72)
     protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimArrayBecomeOneWayNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
-        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray) {
-            return performPointersBecomeOneWay(fromArray, toArray, true);
+        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return performPointersBecomeOneWay(image, fromArray, toArray, true);
         }
 
         @SuppressWarnings("unused")
@@ -302,10 +278,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
-        protected PrimInstVarAtNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
         protected final Object doAt(final Object receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return at0Node.execute(receiver, index - 1);
@@ -323,10 +295,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimInstVarAtPutNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
-
-        protected PrimInstVarAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
         protected final Object doAtPut(final Object receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
@@ -346,10 +314,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 75)
     protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
-        protected PrimIdentityHashNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final long doHash(final Object receiver, @Cached final SqueakObjectHashNode hashNode) {
             return hashNode.execute(receiver);
@@ -362,19 +326,16 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 79)
     protected abstract static class PrimNewMethodNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimNewMethodNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Instantiating a {@link CompiledMethodObject} allocates a {@link FrameDescriptor} which
          * should never be part of compilation, thus the <code>@TruffleBoundary</code>.
          */
         @TruffleBoundary
         @Specialization(guards = "receiver.isCompiledMethodClass()")
-        protected final CompiledMethodObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
+        protected static final CompiledMethodObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             assert receiver.getBasicInstanceSize() == 0;
-            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(method.image, (int) bytecodeCount);
+            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(image, (int) bytecodeCount);
             newMethod.setHeader(header);
             return newMethod;
         }
@@ -387,10 +348,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakObjectBecomeNode becomeNode = SqueakObjectBecomeNode.create();
         @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
         private final BranchProfile failProfile = BranchProfile.create();
-
-        protected PrimArrayBecomeNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"sizeNode.execute(receiver) == sizeNode.execute(other)"})
         protected final ArrayObject doBecome(final ArrayObject receiver, final ArrayObject other) {
@@ -440,13 +397,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 129)
     protected abstract static class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
-        protected PrimSpecialObjectsArrayNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
-        protected final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.specialObjectsArray;
+        protected static final ArrayObject doGet(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.specialObjectsArray;
         }
     }
 
@@ -455,23 +409,16 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 138)
     protected abstract static class PrimSomeObjectNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
-        protected PrimSomeObjectNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
-        protected final ArrayObject doSome(@SuppressWarnings("unused") final Object receiver) {
-            return method.image.specialObjectsArray;
+        protected static final ArrayObject doSome(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.specialObjectsArray;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 139)
     protected abstract static class PrimNextObjectNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-
-        protected PrimNextObjectNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization
         protected static final AbstractSqueakObject doNext(final AbstractSqueakObjectWithClassAndHash receiver,
@@ -497,10 +444,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 170)
     protected abstract static class PrimCharacterValueNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimCharacterValueNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target,
                         @Shared("isImmediateProfile") @Cached("createBinaryProfile()") final ConditionProfile isImmediateProfile) {
@@ -521,10 +464,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 171)
     protected abstract static class PrimImmediateAsIntegerNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-
-        protected PrimImmediateAsIntegerNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization
         protected static final long doChar(final char receiver) {
@@ -549,10 +488,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
-        protected PrimSlotAtNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
         protected final Object doSlotAt(final Object receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return at0Node.execute(receiver, index - 1);
@@ -570,10 +505,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSlotAtPutNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
-
-        protected PrimSlotAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
         protected final Object doSlotAtPut(final Object receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
@@ -593,10 +524,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 175)
     protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimBehaviorHashNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final long doClass(final ClassObject receiver) {
             return receiver.getSqueakHash();
@@ -606,10 +533,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 178)
     protected abstract static class PrimAllObjectsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-
-        protected PrimAllObjectsNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization
         protected static final ArrayObject doAll(@SuppressWarnings("unused") final Object receiver,
@@ -621,10 +544,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 181)
     protected abstract static class PrimSizeInBytesOfInstanceNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
-        protected PrimSizeInBytesOfInstanceNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization
         protected static final long doBasicSize(final ClassObject receiver, @SuppressWarnings("unused") final NotProvided value) {
@@ -667,13 +586,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 249)
     protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimArrayBecomeOneWayCopyHashNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
-        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
-            return performPointersBecomeOneWay(fromArray, toArray, copyHash);
+        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return performPointersBecomeOneWay(image, fromArray, toArray, copyHash);
         }
 
         @SuppressWarnings("unused")

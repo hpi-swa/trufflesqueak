@@ -10,27 +10,25 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public final class FrameStackPopNode extends AbstractNode {
+public final class FrameStackPointerIncrementNode extends AbstractNode {
     @CompilationFinal private FrameSlot stackPointerSlot;
-    @CompilationFinal private int stackPointer;
+    @CompilationFinal private int stackPointer = -1;
 
-    @Child private FrameSlotReadNode readNode;
-
-    public static FrameStackPopNode create() {
-        return new FrameStackPopNode();
+    public static FrameStackPointerIncrementNode create() {
+        return new FrameStackPointerIncrementNode();
     }
 
-    public Object execute(final VirtualFrame frame) {
+    public void execute(final VirtualFrame frame) {
         if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
-            stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
-            readNode = insert(FrameSlotReadNode.create(frame, stackPointer));
+            stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) + 1;
+            assert stackPointer <= CONTEXT.MAX_STACK_SIZE : "Bad stack pointer";
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
-        return readNode.executeRead(frame);
     }
 }

@@ -33,6 +33,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackInitializationNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
@@ -40,11 +41,13 @@ import de.hpi.swa.graal.squeak.util.LogUtils;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 @GenerateWrapper
-public class ExecuteContextNode extends AbstractNodeWithCode implements InstrumentableNode {
+public class ExecuteContextNode extends AbstractNode implements InstrumentableNode {
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
     private static final int LOCAL_RETURN_PC = -2;
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
+
+    protected final CompiledCodeObject code;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
@@ -58,21 +61,21 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private SourceSection section;
 
     protected ExecuteContextNode(final CompiledCodeObject code, final boolean resume) {
-        super(code);
+        this.code = code;
         if (DECODE_BYTECODE_ON_DEMAND) {
             bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
         } else {
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
-        frameInitializationNode = resume ? null : FrameStackInitializationNode.create(code);
+        frameInitializationNode = resume ? null : FrameStackInitializationNode.create();
         /*
          * Only check for interrupts if method is relatively large. Also, skip timer interrupts here
          * as they trigger too often, which causes a lot of context switches and therefore
          * materialization and deopts. Timer inputs are currently handled in
          * primitiveRelinquishProcessor (#230) only.
          */
-        interruptHandlerNode = bytecodeNodes.length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? null : InterruptHandlerNode.createOrNull(code, false);
-        materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create(code);
+        interruptHandlerNode = bytecodeNodes.length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? null : InterruptHandlerNode.createOrNull(false);
+        materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create();
     }
 
     protected ExecuteContextNode(final ExecuteContextNode executeContextNode) {
@@ -147,7 +150,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
     private GetOrCreateContextNode getGetOrCreateContextNode() {
         if (getOrCreateContextNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code, false));
+            getOrCreateContextNode = insert(GetOrCreateContextNode.create(false));
         }
         return getOrCreateContextNode;
     }
@@ -243,7 +246,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             }
         }
         assert returnValue != null && !hasModifiedSender(frame);
-        FrameAccess.terminate(frame, code);
+        FrameAccess.terminate(frame, code.getInstructionPointerSlot());
         assert backJumpCounter >= 0;
         LoopNode.reportLoopCount(this, backJumpCounter);
         return returnValue;
@@ -310,8 +313,13 @@ public class ExecuteContextNode extends AbstractNodeWithCode implements Instrume
             }
         }
         assert returnValue != null && !hasModifiedSender(frame);
-        FrameAccess.terminate(frame, code);
+        FrameAccess.terminate(frame, code.getInstructionPointerSlot());
         return returnValue;
+    }
+
+    protected final boolean hasModifiedSender(final VirtualFrame frame) {
+        final ContextObject context = FrameAccess.getContext(frame, code);
+        return context != null && context.hasModifiedSender();
     }
 
     /*

@@ -17,7 +17,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -42,10 +41,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveCompareString")
     public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveWithoutFallback {
         @CompilationFinal private NativeObject asciiOrder;
-
-        public PrimCompareStringNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         protected static final class NotAsciiOrderException extends RuntimeException {
             private static final long serialVersionUID = 1L;
@@ -123,10 +118,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCompressToByteArray")
     public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
-        public PrimCompressToByteArrayNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         private static int encodeBytesOf(final int anInt, final byte[] ba, final int i) {
             ba[i - 1] = (byte) (anInt >> (24 & 0xff));
@@ -235,10 +226,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveConvert8BitSigned")
     public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        public PrimConvert8BitSignedNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "aByteArray.getByteLength() > aSoundBuffer.getIntLength()"})
         protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer) {
             final byte[] bytes = aByteArray.getByteStorage();
@@ -259,10 +246,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        public PrimDecompressFromByteArrayNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
         protected static final Object doDecompress(final Object receiver, final NativeObject bm, final NativeObject ba, final long index) {
             /**
@@ -341,10 +324,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFindFirstInString")
     public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
-        public PrimFindFirstInStringNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"})
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             final byte[] stringBytes = string.getByteStorage();
@@ -379,10 +358,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFindSubstring")
     public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
-
-        public PrimFindSubstringNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         public abstract Object executeFindSubstring(VirtualFrame frame);
 
@@ -426,10 +401,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveIndexOfAsciiInString")
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
-        public PrimIndexOfAsciiInStringNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start) {
             final byte[] bytes = string.getByteStorage();
@@ -445,10 +416,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveStringHash")
     public abstract static class PrimStringHashNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
-        public PrimStringHashNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         /* Byte(Array|String|Symbol)>>#hashWithInitialHash: */
 
@@ -497,10 +464,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTranslateStringWithTable")
     public abstract static class PrimTranslateStringWithTableNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
-
-        public PrimTranslateStringWithTableNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"})
         protected static final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {

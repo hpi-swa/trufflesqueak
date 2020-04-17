@@ -8,14 +8,17 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakError;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakSyntaxError;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -28,35 +31,26 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class DispatchSendNode extends AbstractNodeWithCode {
-
-    private DispatchSendNode(final CompiledCodeObject code) {
-        super(code);
-    }
+public abstract class DispatchSendNode extends AbstractNode {
 
     public static DispatchSendNode create(final NativeObject selector, final CompiledCodeObject code) {
         if (code.image.isHeadless()) {
             if (selector.isDebugErrorSelector()) {
-                return new DispatchSendHeadlessErrorNode(code);
+                return new DispatchSendHeadlessErrorNode();
             } else if (selector.isDebugSyntaxErrorSelector()) {
-                return new DispatchSendSyntaxErrorNode(code);
+                return new DispatchSendSyntaxErrorNode();
             }
         }
-        return DispatchSendSelectorNodeGen.create(code);
+        return DispatchSendSelectorNodeGen.create();
     }
 
     public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments);
 
     public abstract static class DispatchSendSelectorNode extends DispatchSendNode {
-        @Child protected DispatchEagerlyNode dispatchNode;
+        @Child protected DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
 
-        protected DispatchSendSelectorNode(final CompiledCodeObject code) {
-            super(code);
-            dispatchNode = DispatchEagerlyNode.create(code);
-        }
-
-        public static DispatchSendSelectorNode create(final CompiledCodeObject code) {
-            return DispatchSendSelectorNodeGen.create(code);
+        public static DispatchSendSelectorNode create() {
+            return DispatchSendSelectorNodeGen.create();
         }
 
         @Specialization(guards = {"lookupResult != null"})
@@ -69,9 +63,10 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
         protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final ClassObject rcvrClass,
                         final Object[] rcvrAndArgs,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final LookupMethodNode lookupNode) {
-            final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) lookupNode.executeLookup(rcvrClass, code.image.doesNotUnderstand);
-            final PointersObject message = code.image.newMessage(writeNode, selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
+                        @Cached final LookupMethodNode lookupNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) lookupNode.executeLookup(rcvrClass, image.doesNotUnderstand);
+            final PointersObject message = image.newMessage(writeNode, selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
             return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message});
         }
 
@@ -81,25 +76,22 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
                         @Cached final SqueakObjectClassNode classNode,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Cached final LookupMethodNode lookupNode,
-                        @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile) {
+                        @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
             final ClassObject targetClass = classNode.executeLookup(targetObject);
-            final Object newLookupResult = lookupNode.executeLookup(targetClass, code.image.runWithInSelector);
+            final Object newLookupResult = lookupNode.executeLookup(targetClass, image.runWithInSelector);
             if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
-                final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, code.image.doesNotUnderstand);
+                final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, image.doesNotUnderstand);
                 return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod,
-                                new Object[]{targetObject, code.image.newMessage(writeNode, selector, targetClass, arguments)});
+                                new Object[]{targetObject, image.newMessage(writeNode, selector, targetClass, arguments)});
             } else {
-                return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, code.image.asArrayOfObjects(arguments), rcvrAndArgs[0]});
+                return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, image.asArrayOfObjects(arguments), rcvrAndArgs[0]});
             }
         }
     }
 
     private static final class DispatchSendHeadlessErrorNode extends DispatchSendNode {
-        private DispatchSendHeadlessErrorNode(final CompiledCodeObject code) {
-            super(code);
-        }
-
         @Override
         public Object executeSend(final VirtualFrame frame, final NativeObject selector, final Object lookupResult, final ClassObject rcvrClass, final Object[] receiverAndArguments) {
             CompilerDirectives.transferToInterpreter();
@@ -108,10 +100,6 @@ public abstract class DispatchSendNode extends AbstractNodeWithCode {
     }
 
     private static final class DispatchSendSyntaxErrorNode extends DispatchSendNode {
-        private DispatchSendSyntaxErrorNode(final CompiledCodeObject code) {
-            super(code);
-        }
-
         @Override
         public Object executeSend(final VirtualFrame frame, final NativeObject selector, final Object lookupResult, final ClassObject rcvrClass, final Object[] receiverAndArguments) {
             CompilerDirectives.transferToInterpreter();

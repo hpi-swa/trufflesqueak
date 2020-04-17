@@ -206,7 +206,7 @@ public final class DebugUtils {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final StringBuilder b = new StringBuilder();
         printSqMaterializedStackTraceOn(b, context);
-        context.image.getOutput().println(b.toString());
+        SqueakLanguage.getContext().getOutput().println(b.toString());
     }
 
     public static String stackFor(final VirtualFrame frame, final CompiledCodeObject code) {

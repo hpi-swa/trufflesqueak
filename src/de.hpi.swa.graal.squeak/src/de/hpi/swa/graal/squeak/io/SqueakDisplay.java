@@ -50,7 +50,6 @@ import de.hpi.swa.graal.squeak.io.SqueakIOConstants.WINDOW;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
-import de.hpi.swa.graal.squeak.nodes.plugins.DropPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
@@ -335,7 +334,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     private void addDragEvent(final long type, final Point location) {
-        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, (long) location.getX(), (long) location.getY(), buttons >> 3, DropPlugin.getFileListSize(image));
+        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, (long) location.getX(), (long) location.getY(), buttons >> 3, image.dropPluginFileList.length);
     }
 
     private void addWindowEvent(final long type) {
@@ -433,7 +432,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                         while (iter.hasNext()) {
                             fileList[i++] = iter.next().getCanonicalPath();
                         }
-                        DropPlugin.updateFileList(image, fileList);
+                        image.dropPluginFileList = fileList;
                         addDragEvent(DRAG.DROP, dtde.getLocation());
                         dtde.getDropTargetContext().dropComplete(true);
                         return;

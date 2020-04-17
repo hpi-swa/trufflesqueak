@@ -11,8 +11,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
@@ -28,19 +28,20 @@ public final class InterruptHandlerNode extends Node {
     private final BranchProfile pendingFinalizationSignalsProfile = BranchProfile.create();
     private final BranchProfile hasSemaphoresToSignalProfile = BranchProfile.create();
 
-    protected InterruptHandlerNode(final CompiledCodeObject code, final boolean enableTimerInterrupts) {
-        specialObjects = code.image.specialObjectsArray.getObjectStorage();
-        istate = code.image.interrupt;
-        signalSemaporeNode = SignalSemaphoreNode.create(code);
+    protected InterruptHandlerNode(final SqueakImageContext image, final boolean enableTimerInterrupts) {
+        specialObjects = image.specialObjectsArray.getObjectStorage();
+        istate = image.interrupt;
+        signalSemaporeNode = SignalSemaphoreNode.create();
         this.enableTimerInterrupts = enableTimerInterrupts;
         nextWakeupTickProfile = enableTimerInterrupts ? BranchProfile.create() : null;
     }
 
-    public static InterruptHandlerNode createOrNull(final CompiledCodeObject code, final boolean enableTimerInterrupts) {
-        if (SqueakLanguage.getContext().interruptHandlerDisabled()) {
+    public static InterruptHandlerNode createOrNull(final boolean enableTimerInterrupts) {
+        final SqueakImageContext image = SqueakLanguage.getContext();
+        if (image.interruptHandlerDisabled()) {
             return null;
         } else {
-            return new InterruptHandlerNode(code, enableTimerInterrupts);
+            return new InterruptHandlerNode(image, enableTimerInterrupts);
         }
     }
 

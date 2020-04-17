@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -24,6 +25,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -268,6 +270,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
      */
     @Override
     public void fillin(final SqueakImageChunk chunk) {
+        final SqueakImageContext image = chunk.getImage();
         if (methodDict == null) {
             if (needsSqueakHash()) {
                 final int hash = chunk.getHash();
@@ -606,16 +609,17 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @ExportMessage
     protected Object instantiate(final Object[] arguments,
                     @CachedLibrary(limit = "2") final InteropLibrary functions,
-                    @Cached(value = "create(this.image)", allowUncached = true) final SqueakObjectNewNode newObjectNode)
+                    @Cached final SqueakObjectNewNode newObjectNode,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext theImage)
                     throws UnsupportedTypeException, ArityException {
         final int numArguments = arguments.length;
         switch (numArguments) {
             case 0:
-                return newObjectNode.execute(this);
+                return newObjectNode.execute(theImage, this);
             case 1:
                 if (functions.fitsInInt(arguments[0])) {
                     try {
-                        return newObjectNode.execute(this, functions.asInt(arguments[0]));
+                        return newObjectNode.execute(theImage, this, functions.asInt(arguments[0]));
                     } catch (final UnsupportedMessageException e) {
                         throw SqueakException.illegalState(e);
                     }

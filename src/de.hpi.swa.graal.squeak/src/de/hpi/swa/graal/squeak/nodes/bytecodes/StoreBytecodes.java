@@ -107,11 +107,10 @@ public final class StoreBytecodes {
     }
 
     public static final class PopIntoAssociationNode extends AbstractStoreIntoAssociationNode {
-        @Child private FrameStackPopNode popNode;
+        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
         public PopIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes, variableIndex);
-            popNode = FrameStackPopNode.create(code);
         }
 
         @Override
@@ -126,11 +125,10 @@ public final class StoreBytecodes {
     }
 
     public static final class PopIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
-        @Child private FrameStackPopNode popNode;
+        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
         public PopIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes, receiverIndex);
-            popNode = FrameStackPopNode.create(code);
         }
 
         @Override
@@ -145,11 +143,10 @@ public final class StoreBytecodes {
     }
 
     public static final class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
-        @Child private FrameStackPopNode popNode;
+        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
         public PopIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int indexInArray, final int indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
-            popNode = FrameStackPopNode.create(code);
         }
 
         @Override
@@ -164,11 +161,10 @@ public final class StoreBytecodes {
     }
 
     public static final class PopIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
-        @Child private FrameStackPopNode popNode;
+        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
         public PopIntoTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes, tempIndex);
-            popNode = FrameStackPopNode.create(code);
         }
 
         @Override
@@ -183,11 +179,10 @@ public final class StoreBytecodes {
     }
 
     public static final class StoreIntoAssociationNode extends AbstractStoreIntoAssociationNode {
-        @Child private FrameStackTopNode topNode;
+        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
         public StoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes, variableIndex);
-            topNode = FrameStackTopNode.create(code);
         }
 
         @Override
@@ -202,11 +197,10 @@ public final class StoreBytecodes {
     }
 
     public static final class StoreIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
-        @Child private FrameStackTopNode topNode;
+        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
         public StoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes, receiverIndex);
-            topNode = FrameStackTopNode.create(code);
         }
 
         @Override
@@ -221,11 +215,10 @@ public final class StoreBytecodes {
     }
 
     public static final class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
-        @Child private FrameStackTopNode topNode;
+        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
         public StoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int indexInArray, final int indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
-            topNode = FrameStackTopNode.create(code);
         }
 
         @Override
@@ -240,11 +233,10 @@ public final class StoreBytecodes {
     }
 
     public static final class StoreIntoTempNode extends AbstractStoreIntoTempNode {
-        @Child private FrameStackTopNode topNode;
+        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
         public StoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes, tempIndex);
-            topNode = FrameStackTopNode.create(code);
         }
 
         @Override

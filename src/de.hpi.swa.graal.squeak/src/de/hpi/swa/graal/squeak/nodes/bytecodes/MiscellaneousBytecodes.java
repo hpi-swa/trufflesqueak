@@ -88,13 +88,11 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class DupNode extends AbstractInstrumentableBytecodeNode {
-        @Child private FrameStackPushNode pushNode;
-        @Child private FrameStackTopNode topNode;
+        @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
+        @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
         public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            pushNode = FrameStackPushNode.create(code);
-            topNode = FrameStackTopNode.create(code);
         }
 
         @Override
@@ -169,11 +167,10 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class PopNode extends AbstractInstrumentableBytecodeNode {
-        @Child private FrameStackPopNode popNode;
+        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
         public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            popNode = FrameStackPopNode.create(code);
         }
 
         @Override

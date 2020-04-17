@@ -10,13 +10,15 @@ import java.util.List;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
@@ -35,30 +37,22 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetEnvironmentStrings")
     protected abstract static class PrimGetEnvironmentStringNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimGetEnvironmentStringNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary
-        protected final Object doGet(@SuppressWarnings("unused") final Object receiver) {
-            final Map<String, String> envMap = method.image.env.getEnvironment();
+        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            final Map<String, String> envMap = image.env.getEnvironment();
             final List<String> strings = new ArrayList<>();
             for (final Map.Entry<String, String> entry : envMap.entrySet()) {
                 strings.add(entry.getKey() + "=" + entry.getValue());
             }
-            return method.image.asByteString(String.join("\n", strings));
+            return image.asByteString(String.join("\n", strings));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetMainThreadID")
     protected abstract static class PrimGetMainThreadIDNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitive {
-
-        protected PrimGetMainThreadIDNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = "supportsNFI")
         protected final long doGetMainThreadID(@SuppressWarnings("unused") final Object receiver,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {

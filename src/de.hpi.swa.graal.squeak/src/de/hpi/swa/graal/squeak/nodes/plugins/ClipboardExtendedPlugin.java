@@ -12,7 +12,6 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -26,9 +25,6 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(names = "ioAddClipboardData")
     protected abstract static class PrimIOAddClipboardDataNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        protected PrimIOAddClipboardDataNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @SuppressWarnings("unused")
         @Specialization
@@ -40,9 +36,6 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(names = "ioClearClipboard")
     protected abstract static class PrimIOClearClipboardNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        protected PrimIOClearClipboardNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @SuppressWarnings("unused")
         @Specialization
@@ -54,9 +47,6 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(names = "ioCreateClipboard")
     protected abstract static class PrimIOCreateClipboardNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimIOCreateClipboardNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization
         protected static final long doCreate(@SuppressWarnings("unused") final Object receiver) {
@@ -67,9 +57,6 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(names = "ioGetClipboardFormat")
     protected abstract static class PrimIOGetClipboardFormatNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimIOGetClipboardFormatNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @SuppressWarnings("unused")
         @Specialization
@@ -81,9 +68,6 @@ public final class ClipboardExtendedPlugin extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(names = "ioReadClipboardData")
     protected abstract static class PrimIOReadClipboardDataNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimIOReadClipboardDataNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @SuppressWarnings("unused")
         @Specialization

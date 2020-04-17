@@ -5090,9 +5090,9 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        PointersObject pointOop = receiver.image.asPoint(writeNode, clipMinXGet(), clipMinYGet());
+        PointersObject pointOop = image.asPoint(writeNode, clipMinXGet(), clipMinYGet());
         storeValue(0, rectOop, pointOop);
-        pointOop = receiver.image.asPoint(writeNode, clipMaxXGet(), clipMaxYGet());
+        pointOop = image.asPoint(writeNode, clipMaxXGet(), clipMaxYGet());
         storeValue(1, rectOop, pointOop);
         return rectOop;
     }
@@ -5150,7 +5150,7 @@ public final class B2D {
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        return receiver.image.asPoint(writeNode, destOffsetXGet(), destOffsetYGet());
+        return image.asPoint(writeNode, destOffsetXGet(), destOffsetYGet());
     }
 
     /* BalloonEngineBase>>#primitiveGetTimes */

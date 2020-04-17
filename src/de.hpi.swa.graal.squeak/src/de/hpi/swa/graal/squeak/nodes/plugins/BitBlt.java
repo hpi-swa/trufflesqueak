@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -29,6 +30,9 @@ import de.hpi.swa.graal.squeak.util.UnsafeUtils;
  */
 
 public final class BitBlt {
+
+    private final SqueakImageContext image;
+
     /* Constants */
     private static final long ALL_ONES = 0xFFFFFFFFL;
     private static final int ALPHA_INDEX = 3;
@@ -211,7 +215,8 @@ public final class BitBlt {
 
     private boolean successFlag = false;
 
-    public BitBlt() {
+    public BitBlt(final SqueakImageContext image) {
+        this.image = image;
         initialiseModule();
     }
 
@@ -2563,8 +2568,8 @@ public final class BitBlt {
             showDisplayBits();
             assert !failed();
         } catch (final AssertionError e) {
-            bbObj.image.printToStdErr(e.getMessage());
             PrimitiveFailed.andTransferToInterpreter();
+            image.printToStdErr(e.getMessage());
         }
         if (combinationRule == 22 || combinationRule == 32) {
             return bitCount;
@@ -3444,8 +3449,8 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#showDisplayBits */
     private void showDisplayBits() {
-        if (destForm.image.hasDisplay()) {
-            destForm.image.getDisplay().showDisplayBitsLeftTopRightBottom(destForm, affectedL, affectedT, affectedR, affectedB);
+        if (image.hasDisplay()) {
+            image.getDisplay().showDisplayBitsLeftTopRightBottom(destForm, affectedL, affectedT, affectedR, affectedB);
         }
     }
 

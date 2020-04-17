@@ -9,7 +9,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
@@ -23,15 +22,14 @@ public final class SendSelectorNode extends Node {
 
     @Child private SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
     @Child private LookupMethodNode lookupMethodNode = LookupMethodNode.create();
-    @Child private DispatchEagerlyNode dispatchNode;
+    @Child private DispatchEagerlyNode dispatchNode = DispatchEagerlyNode.create();
 
-    private SendSelectorNode(final CompiledCodeObject code, final NativeObject selector) {
-        dispatchNode = DispatchEagerlyNode.create(code);
+    private SendSelectorNode(final NativeObject selector) {
         this.selector = selector;
     }
 
-    public static SendSelectorNode create(final CompiledCodeObject code, final NativeObject selector) {
-        return new SendSelectorNode(code, selector);
+    public static SendSelectorNode create(final NativeObject selector) {
+        return new SendSelectorNode(selector);
     }
 
     public Object executeSend(final VirtualFrame frame, final Object... receiverAndArguments) {

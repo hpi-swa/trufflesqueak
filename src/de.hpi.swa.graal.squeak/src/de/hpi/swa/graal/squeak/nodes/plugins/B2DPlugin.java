@@ -9,13 +9,15 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
@@ -43,14 +45,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddActiveEdgeEntry")
     protected abstract static class PrimAddActiveEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimAddActiveEdgeEntryNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final PointersObject edgeEntry) {
-            return method.image.b2d.primitiveAddActiveEdgeEntry(receiver, edgeEntry);
+        protected static final Object doAdd(final PointersObject receiver, final PointersObject edgeEntry,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddActiveEdgeEntry(receiver, edgeEntry);
         }
     }
 
@@ -58,15 +57,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddBezier")
     protected abstract static class PrimAddBezierNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
-        protected PrimAddBezierNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"start.isPoint()", "stop.isPoint()", "via.isPoint()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject stop, final PointersObject via, final long leftFillIndex,
-                        final long rightFillIndex) {
-            return method.image.b2d.primitiveAddBezier(receiver, start, stop, via, leftFillIndex, rightFillIndex);
+        protected static final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject stop, final PointersObject via, final long leftFillIndex,
+                        final long rightFillIndex,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddBezier(receiver, start, stop, via, leftFillIndex, rightFillIndex);
         }
     }
 
@@ -74,15 +70,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddBezierShape")
     protected abstract static class PrimAddBezierShapeNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
-        protected PrimAddBezierShapeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth,
-                        final long lineFill) {
-            return method.image.b2d.primitiveAddBezierShape(receiver, points, nSegments, fillStyle, lineWidth, lineFill);
+        protected static final Object doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth,
+                        final long lineFill,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddBezierShape(receiver, points, nSegments, fillStyle, lineWidth, lineFill);
         }
     }
 
@@ -90,15 +83,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddBitmapFill")
     protected abstract static class PrimAddBitmapFillNode extends AbstractPrimitiveNode implements OctonaryPrimitive {
 
-        protected PrimAddBitmapFillNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"xIndex > 0", "origin.isPoint()", "direction.isPoint()", "normal.isPoint()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final PointersObject form, final AbstractSqueakObject cmap, final boolean tileFlag, final PointersObject origin,
-                        final PointersObject direction, final PointersObject normal, final long xIndex) {
-            return method.image.b2d.primitiveAddBitmapFill(receiver, form, cmap, tileFlag, origin, direction, normal, xIndex);
+        protected static final Object doAdd(final PointersObject receiver, final PointersObject form, final AbstractSqueakObject cmap, final boolean tileFlag, final PointersObject origin,
+                        final PointersObject direction, final PointersObject normal, final long xIndex,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddBitmapFill(receiver, form, cmap, tileFlag, origin, direction, normal, xIndex);
         }
     }
 
@@ -106,15 +96,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddCompressedShape")
     protected abstract static class PrimAddCompressedShapeNode extends AbstractPrimitiveNode implements OctonaryPrimitive {
 
-        protected PrimAddCompressedShapeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final NativeObject points, final long nSegments, final NativeObject leftFills, final NativeObject rightFills,
-                        final NativeObject lineWidths, final NativeObject lineFills, final NativeObject fillIndexList) {
-            return method.image.b2d.primitiveAddCompressedShape(receiver, points, nSegments, leftFills, rightFills, lineWidths, lineFills, fillIndexList);
+        protected static final Object doAdd(final PointersObject receiver, final NativeObject points, final long nSegments, final NativeObject leftFills, final NativeObject rightFills,
+                        final NativeObject lineWidths, final NativeObject lineFills, final NativeObject fillIndexList,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddCompressedShape(receiver, points, nSegments, leftFills, rightFills, lineWidths, lineFills, fillIndexList);
         }
     }
 
@@ -122,15 +109,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddGradientFill")
     protected abstract static class PrimAddGradientFillNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
-        protected PrimAddGradientFillNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"colorRamp.getSqueakClass().isBitmapClass()", "origin.isPoint()", "direction.isPoint()", "normal.isPoint()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final NativeObject colorRamp, final PointersObject origin, final PointersObject direction, final PointersObject normal,
-                        final boolean isRadial) {
-            return method.image.b2d.primitiveAddGradientFill(receiver, colorRamp, origin, direction, normal, isRadial);
+        protected static final Object doAdd(final PointersObject receiver, final NativeObject colorRamp, final PointersObject origin, final PointersObject direction, final PointersObject normal,
+                        final boolean isRadial,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddGradientFill(receiver, colorRamp, origin, direction, normal, isRadial);
         }
     }
 
@@ -138,14 +122,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddLine")
     protected abstract static class PrimAddLineNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
-        protected PrimAddLineNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"start.isPoint()", "end.isPoint()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long leftFill, final long rightFill) {
-            return method.image.b2d.primitiveAddLine(receiver, start, end, leftFill, rightFill);
+        protected static final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long leftFill, final long rightFill,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddLine(receiver, start, end, leftFill, rightFill);
         }
     }
 
@@ -153,15 +134,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddOval")
     protected abstract static class PrimAddOvalNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
-        protected PrimAddOvalNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"start.isPoint()", "end.isPoint()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
-                        final long pixelValue32) {
-            return method.image.b2d.primitiveAddOval(receiver, start, end, fillIndex, width, pixelValue32);
+        protected static final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
+                        final long pixelValue32,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddOval(receiver, start, end, fillIndex, width, pixelValue32);
         }
     }
 
@@ -169,15 +147,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddPolygon")
     protected abstract static class PrimAddPolygonNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
-        protected PrimAddPolygonNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth,
-                        final long lineFill) {
-            return method.image.b2d.primitiveAddPolygon(receiver, points, nSegments, fillStyle, lineWidth, lineFill);
+        protected static final Object doAdd(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillStyle, final long lineWidth,
+                        final long lineFill,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddPolygon(receiver, points, nSegments, fillStyle, lineWidth, lineFill);
         }
     }
 
@@ -185,15 +160,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveAddRect")
     protected abstract static class PrimAddRectNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
-        protected PrimAddRectNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"start.isPoint()", "end.isPoint()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
-                        final long pixelValue32) {
-            return method.image.b2d.primitiveAddRect(receiver, start, end, fillIndex, width, pixelValue32);
+        protected static final Object doAdd(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndex, final long width,
+                        final long pixelValue32,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveAddRect(receiver, start, end, fillIndex, width, pixelValue32);
         }
     }
 
@@ -201,14 +173,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveChangedActiveEdgeEntry")
     protected abstract static class PrimChangedActiveEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimChangedActiveEdgeEntryNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doChange(final PointersObject receiver, final PointersObject edgeEntry) {
-            return method.image.b2d.primitiveChangedActiveEdgeEntry(receiver, edgeEntry);
+        protected static final Object doChange(final PointersObject receiver, final PointersObject edgeEntry,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveChangedActiveEdgeEntry(receiver, edgeEntry);
         }
     }
 
@@ -216,14 +185,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveCopyBuffer")
     protected abstract static class PrimCopyBufferNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimCopyBufferNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"oldBuffer.isIntType()", "newBuffer.isIntType()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doCopy(final PointersObject receiver, final NativeObject oldBuffer, final NativeObject newBuffer) {
-            return method.image.b2d.primitiveCopyBuffer(receiver, oldBuffer, newBuffer);
+        protected static final Object doCopy(final PointersObject receiver, final NativeObject oldBuffer, final NativeObject newBuffer,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveCopyBuffer(receiver, oldBuffer, newBuffer);
         }
     }
 
@@ -231,14 +197,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDisplaySpanBuffer")
     protected abstract static class PrimDisplaySpanBufferNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimDisplaySpanBufferNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doDisplay(final PointersObject receiver) {
-            return method.image.b2d.primitiveDisplaySpanBuffer(receiver);
+        protected static final Object doDisplay(final PointersObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveDisplaySpanBuffer(receiver);
         }
     }
 
@@ -246,14 +209,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDoProfileStats")
     protected abstract static class PrimDoProfileStatsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimDoProfileStatsNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doProfile(final Object receiver, final boolean aBoolean) {
-            return method.image.b2d.primitiveDoProfileStats(receiver, aBoolean);
+        protected static final Object doProfile(final Object receiver, final boolean aBoolean,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveDoProfileStats(receiver, aBoolean);
         }
     }
 
@@ -261,14 +221,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFinishedProcessing")
     protected abstract static class PrimFinishedProcessingNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimFinishedProcessingNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doCopy(final PointersObject receiver) {
-            return method.image.b2d.primitiveFinishedProcessing(receiver);
+        protected static final Object doCopy(final PointersObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveFinishedProcessing(receiver);
         }
     }
 
@@ -276,14 +233,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetAALevel")
     protected abstract static class PrimGetAALevelNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimGetAALevelNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(final PointersObject receiver) {
-            return method.image.b2d.primitiveGetAALevel(receiver);
+        protected static final Object doGet(final PointersObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveGetAALevel(receiver);
         }
     }
 
@@ -291,14 +245,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetBezierStats")
     protected abstract static class PrimGetBezierStatsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimGetBezierStatsNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"statsArray.isIntType()", "statsArray.getIntLength() >= 4"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(final PointersObject receiver, final NativeObject statsArray) {
-            return method.image.b2d.primitiveGetBezierStats(receiver, statsArray);
+        protected static final Object doGet(final PointersObject receiver, final NativeObject statsArray,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveGetBezierStats(receiver, statsArray);
         }
     }
 
@@ -306,15 +257,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetClipRect")
     protected abstract static class PrimGetClipRectNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimGetClipRectNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"rect.size() >= 2"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(final PointersObject receiver, final PointersObject rect,
+        protected static final Object doGet(final PointersObject receiver, final PointersObject rect,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return method.image.b2d.primitiveGetClipRect(writeNode, receiver, rect);
+            return image.b2d.primitiveGetClipRect(writeNode, receiver, rect);
         }
     }
 
@@ -322,14 +270,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetCounts")
     protected abstract static class PrimGetCountsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimGetCountsNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"statsArray.isIntType()", "statsArray.getIntLength() >= 9"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(final PointersObject receiver, final NativeObject statsArray) {
-            return method.image.b2d.primitiveGetCounts(receiver, statsArray);
+        protected static final Object doGet(final PointersObject receiver, final NativeObject statsArray,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveGetCounts(receiver, statsArray);
         }
     }
 
@@ -337,14 +282,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetDepth")
     protected abstract static class PrimGetDepthNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimGetDepthNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(final PointersObject receiver) {
-            return method.image.b2d.primitiveGetDepth(receiver);
+        protected static final Object doGet(final PointersObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveGetDepth(receiver);
         }
     }
 
@@ -352,14 +294,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetFailureReason")
     protected abstract static class PrimGetFailureReasonNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimGetFailureReasonNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(final PointersObject receiver) {
-            return method.image.b2d.primitiveGetFailureReason(receiver);
+        protected static final Object doGet(final PointersObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveGetFailureReason(receiver);
         }
     }
 
@@ -367,15 +306,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetOffset")
     protected abstract static class PrimGetOffsetNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimGetOffsetNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(final PointersObject receiver,
+        protected static final Object doGet(final PointersObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            return method.image.b2d.primitiveGetOffset(writeNode, receiver);
+            return image.b2d.primitiveGetOffset(writeNode, receiver);
         }
     }
 
@@ -383,14 +319,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetTimes")
     protected abstract static class PrimGetTimesNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimGetTimesNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"statsArray.isIntType()", "statsArray.getIntLength() >= 9"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doGet(final PointersObject receiver, final NativeObject statsArray) {
-            return method.image.b2d.primitiveGetTimes(receiver, statsArray);
+        protected static final Object doGet(final PointersObject receiver, final NativeObject statsArray,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveGetTimes(receiver, statsArray);
         }
     }
 
@@ -398,14 +331,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveInitializeBuffer")
     protected abstract static class PrimInitializeBufferNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimInitializeBufferNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"buffer.isIntType()", "hasMinimalSize(buffer)"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doInit(final Object receiver, final NativeObject buffer) {
-            return method.image.b2d.primitiveInitializeBuffer(receiver, buffer);
+        protected static final Object doInit(final Object receiver, final NativeObject buffer,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveInitializeBuffer(receiver, buffer);
         }
 
         protected static final boolean hasMinimalSize(final NativeObject buffer) {
@@ -417,14 +347,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveInitializeProcessing")
     protected abstract static class PrimInitializeProcessingNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimInitializeProcessingNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doCopy(final PointersObject receiver) {
-            return method.image.b2d.primitiveInitializeProcessing(receiver);
+        protected static final Object doCopy(final PointersObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveInitializeProcessing(receiver);
         }
     }
 
@@ -432,14 +359,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveMergeFillFrom")
     protected abstract static class PrimMergeFillFromNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimMergeFillFromNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"fillBitmap.getSqueakClass().isBitmapClass()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doCopy(final PointersObject receiver, final NativeObject fillBitmap, final PointersObject fill) {
-            return method.image.b2d.primitiveMergeFillFrom(receiver, fillBitmap, fill);
+        protected static final Object doCopy(final PointersObject receiver, final NativeObject fillBitmap, final PointersObject fill,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveMergeFillFrom(receiver, fillBitmap, fill);
         }
     }
 
@@ -447,14 +371,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveNeedsFlush")
     protected abstract static class PrimNeedsFlushNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimNeedsFlushNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doNeed(final PointersObject receiver) {
-            return method.image.b2d.primitiveNeedsFlush(receiver);
+        protected static final Object doNeed(final PointersObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveNeedsFlush(receiver);
         }
     }
 
@@ -462,14 +383,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveNeedsFlushPut")
     protected abstract static class PrimNeedsFlushPutNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimNeedsFlushPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doNeed(final PointersObject receiver, final boolean aBoolean) {
-            return method.image.b2d.primitiveNeedsFlushPut(receiver, aBoolean);
+        protected static final Object doNeed(final PointersObject receiver, final boolean aBoolean,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveNeedsFlushPut(receiver, aBoolean);
         }
     }
 
@@ -477,14 +395,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveNextActiveEdgeEntry")
     protected abstract static class PrimNextActiveEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimNextActiveEdgeEntryNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doNext(final PointersObject receiver, final PointersObject edgeEntry) {
-            return method.image.b2d.primitiveNextActiveEdgeEntry(receiver, edgeEntry);
+        protected static final Object doNext(final PointersObject receiver, final PointersObject edgeEntry,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveNextActiveEdgeEntry(receiver, edgeEntry);
         }
     }
 
@@ -492,14 +407,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveNextFillEntry")
     protected abstract static class PrimNextFillEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimNextFillEntryNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doNext(final PointersObject receiver, final PointersObject fillEntry) {
-            return method.image.b2d.primitiveNextFillEntry(receiver, fillEntry);
+        protected static final Object doNext(final PointersObject receiver, final PointersObject fillEntry,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveNextFillEntry(receiver, fillEntry);
         }
     }
 
@@ -507,14 +419,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveNextGlobalEdgeEntry")
     protected abstract static class PrimNextGlobalEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimNextGlobalEdgeEntryNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doNext(final PointersObject receiver, final PointersObject edgeEntry) {
-            return method.image.b2d.primitiveNextGlobalEdgeEntry(receiver, edgeEntry);
+        protected static final Object doNext(final PointersObject receiver, final PointersObject edgeEntry,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveNextGlobalEdgeEntry(receiver, edgeEntry);
         }
     }
 
@@ -522,15 +431,12 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveRegisterExternalEdge")
     protected abstract static class PrimRegisterExternalEdgeNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
 
-        protected PrimRegisterExternalEdgeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doRegister(final PointersObject receiver, final long index, final long initialX, final long initialY, final long initialZ, final long leftFillIndex,
-                        final long rightFillIndex) {
-            return method.image.b2d.primitiveRegisterExternalEdge(receiver, index, initialX, initialY, initialZ, leftFillIndex, rightFillIndex);
+        protected static final Object doRegister(final PointersObject receiver, final long index, final long initialX, final long initialY, final long initialZ, final long leftFillIndex,
+                        final long rightFillIndex,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveRegisterExternalEdge(receiver, index, initialX, initialY, initialZ, leftFillIndex, rightFillIndex);
         }
     }
 
@@ -538,14 +444,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveRegisterExternalFill")
     protected abstract static class PrimRegisterExternalFillNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimRegisterExternalFillNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doRegister(final PointersObject receiver, final long index) {
-            return method.image.b2d.primitiveRegisterExternalFill(receiver, index);
+        protected static final Object doRegister(final PointersObject receiver, final long index,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveRegisterExternalFill(receiver, index);
         }
     }
 
@@ -553,14 +456,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveRenderImage")
     protected abstract static class PrimRenderImageNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimRenderImageNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doRender(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
-            return method.image.b2d.primitiveRenderImage(receiver, edge, fill);
+        protected static final Object doRender(final PointersObject receiver, final PointersObject edge, final PointersObject fill,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveRenderImage(receiver, edge, fill);
         }
     }
 
@@ -568,14 +468,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveRenderScanline")
     protected abstract static class PrimRenderScanlineNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimRenderScanlineNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doRender(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
-            return method.image.b2d.primitiveRenderScanline(receiver, edge, fill);
+        protected static final Object doRender(final PointersObject receiver, final PointersObject edge, final PointersObject fill,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveRenderScanline(receiver, edge, fill);
         }
     }
 
@@ -583,24 +480,17 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSetAALevel")
     protected abstract static class PrimSetAALevelNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimSetAALevelNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doSet(final PointersObject receiver, final long level) {
-            return method.image.b2d.primitiveSetAALevel(receiver, level);
+        protected static final Object doSet(final PointersObject receiver, final long level,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveSetAALevel(receiver, level);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetBitBltPlugin")
     protected abstract static class PrimSetBitBltPluginNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
-        protected PrimSetBitBltPluginNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"pluginName.isByteType()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
@@ -613,14 +503,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSetClipRect")
     protected abstract static class PrimSetClipRectNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimSetClipRectNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"rect.size() >= 2"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doSet(final PointersObject receiver, final PointersObject rect) {
-            return method.image.b2d.primitiveSetClipRect(receiver, rect);
+        protected static final Object doSet(final PointersObject receiver, final PointersObject rect,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveSetClipRect(receiver, rect);
         }
     }
 
@@ -628,14 +515,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSetColorTransform")
     protected abstract static class PrimSetColorTransformNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimSetColorTransformNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doSet(final PointersObject receiver, final AbstractSqueakObject transform) {
-            return method.image.b2d.primitiveSetColorTransform(receiver, transform);
+        protected static final Object doSet(final PointersObject receiver, final AbstractSqueakObject transform,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveSetColorTransform(receiver, transform);
         }
     }
 
@@ -643,14 +527,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSetDepth")
     protected abstract static class PrimSetDepthNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimSetDepthNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doSet(final PointersObject receiver, final long depth) {
-            return method.image.b2d.primitiveSetDepth(receiver, depth);
+        protected static final Object doSet(final PointersObject receiver, final long depth,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveSetDepth(receiver, depth);
         }
     }
 
@@ -658,14 +539,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSetEdgeTransform")
     protected abstract static class PrimSetEdgeTransformNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimSetEdgeTransformNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doSet(final PointersObject receiver, final AbstractSqueakObject transform) {
-            return method.image.b2d.primitiveSetEdgeTransform(receiver, transform);
+        protected static final Object doSet(final PointersObject receiver, final AbstractSqueakObject transform,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveSetEdgeTransform(receiver, transform);
         }
     }
 
@@ -673,14 +551,11 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSetOffset")
     protected abstract static class PrimSetOffsetNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimSetOffsetNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"point.isPoint()"})
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doSet(final PointersObject receiver, final PointersObject point) {
-            return method.image.b2d.primitiveSetOffset(receiver, point);
+        protected static final Object doSet(final PointersObject receiver, final PointersObject point,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.b2d.primitiveSetOffset(receiver, point);
         }
     }
 }

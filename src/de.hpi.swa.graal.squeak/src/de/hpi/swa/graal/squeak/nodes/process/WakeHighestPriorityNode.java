@@ -5,41 +5,42 @@
  */
 package de.hpi.swa.graal.squeak.nodes.process;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
-import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.GetOrCreateContextNode;
 
-public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
-    @Child private ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.create();
-    @Child private ArrayObjectSizeNode arraySizeNode = ArrayObjectSizeNode.create();
-    @Child private AbstractPointersObjectReadNode pointersReadNode = AbstractPointersObjectReadNode.create();
-    @Child private AbstractPointersObjectWriteNode pointersWriteNode = AbstractPointersObjectWriteNode.create();
-    private final BranchProfile errorProfile = BranchProfile.create();
-    @Child private GetOrCreateContextNode contextNode;
+public abstract class WakeHighestPriorityNode extends AbstractNode {
 
-    private WakeHighestPriorityNode(final CompiledCodeObject code) {
-        super(code.image);
-        contextNode = GetOrCreateContextNode.create(code, true);
+    public static WakeHighestPriorityNode create() {
+        return WakeHighestPriorityNodeGen.create();
     }
 
-    public static WakeHighestPriorityNode create(final CompiledCodeObject code) {
-        return new WakeHighestPriorityNode(code);
-    }
+    public abstract void executeWake(VirtualFrame frame);
 
-    public void executeWake(final VirtualFrame frame) {
+    @Specialization
+    protected static final void doWake(final VirtualFrame frame,
+                    @Cached final ArrayObjectReadNode arrayReadNode,
+                    @Cached final ArrayObjectSizeNode arraySizeNode,
+                    @Cached final AbstractPointersObjectReadNode pointersReadNode,
+                    @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
+                    @Cached("create(true)") final GetOrCreateContextNode contextNode,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
         final ArrayObject schedLists = pointersReadNode.executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
@@ -54,7 +55,6 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
                 }
             }
         }
-        errorProfile.enter();
         throw SqueakException.create("scheduler could not find a runnable process");
     }
 }

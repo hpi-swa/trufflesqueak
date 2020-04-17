@@ -7,36 +7,37 @@ package de.hpi.swa.graal.squeak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public final class CreateFrameArgumentsNode extends AbstractNodeWithCode {
-    @CompilationFinal private int stackPointer = -1;
+public final class CreateFrameArgumentsNode extends AbstractNode {
+    @CompilationFinal private FrameSlot stackPointerSlot;
+    @CompilationFinal private int stackPointer;
     @Children FrameSlotReadNode[] receiverAndArgumentsNodes;
 
-    private CreateFrameArgumentsNode(final CompiledCodeObject code, final int argumentCount) {
-        super(code);
+    private CreateFrameArgumentsNode(final int argumentCount) {
         receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
     }
 
-    public static CreateFrameArgumentsNode create(final CompiledCodeObject code, final int argumentCount) {
-        return new CreateFrameArgumentsNode(code, argumentCount);
+    public static CreateFrameArgumentsNode create(final int argumentCount) {
+        return new CreateFrameArgumentsNode(argumentCount);
     }
 
     public Object[] execute(final VirtualFrame frame, final CompiledMethodObject method, final Object sender) {
-        if (stackPointer == -1) {
+        if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackPointer = FrameAccess.getStackPointer(frame, code) - receiverAndArgumentsNodes.length;
+            stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+            stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - receiverAndArgumentsNodes.length;
             assert stackPointer >= 0 : "Bad stack pointer";
             for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(code, stackPointer + i));
+                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
             }
         }
-        FrameAccess.setStackPointer(frame, code, stackPointer);
+        FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
         return FrameAccess.newWith(frame, method, sender, null, receiverAndArgumentsNodes);
     }
 }

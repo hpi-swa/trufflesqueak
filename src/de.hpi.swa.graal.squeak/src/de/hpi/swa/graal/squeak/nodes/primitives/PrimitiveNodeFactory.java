@@ -124,7 +124,7 @@ public final class PrimitiveNodeFactory {
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
             return namedFor(method, useStack);
         } else if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
-            return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(method, primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX,
+            return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX,
                             new AbstractArgumentNode[]{ArgumentNode.create(0, 0, useStack)});
         } else if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
             final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PRIMITIVE_TABLE[primitiveIndex - 1];
@@ -176,7 +176,7 @@ public final class PrimitiveNodeFactory {
         for (int i = 0; i < primitiveArity; i++) {
             argumentNodes[i] = AbstractArgumentNode.create(i, method.getNumArgs(), useStack);
         }
-        final AbstractPrimitiveNode primitiveNode = nodeFactory.createNode(method, argumentNodes);
+        final AbstractPrimitiveNode primitiveNode = nodeFactory.createNode((Object) argumentNodes);
         assert primitiveArity == primitiveNode.getNumArguments() : "Arities do not match in " + primitiveNode;
         return primitiveNode;
     }

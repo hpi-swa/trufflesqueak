@@ -8,26 +8,21 @@ package de.hpi.swa.graal.squeak.nodes.context.frame;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.Frame;
 
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public final class FrameStackTopNode extends AbstractNodeWithCode {
+public final class FrameStackTopNode extends AbstractNode {
     @Child private FrameSlotReadNode readNode;
 
-    protected FrameStackTopNode(final CompiledCodeObject code) {
-        super(code);
-    }
-
-    public static FrameStackTopNode create(final CompiledCodeObject code) {
-        return new FrameStackTopNode(code);
+    public static FrameStackTopNode create() {
+        return new FrameStackTopNode();
     }
 
     public Object execute(final Frame frame) {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final int stackPointer = FrameAccess.getStackPointer(frame, code) - 1;
-            readNode = FrameSlotReadNode.create(code.getStackSlot(stackPointer));
+            final int stackPointer = FrameAccess.getStackPointerSlow(frame) - 1;
+            readNode = FrameSlotReadNode.create(FrameAccess.getStackSlot(frame, stackPointer));
         }
         return readNode.executeRead(frame);
     }

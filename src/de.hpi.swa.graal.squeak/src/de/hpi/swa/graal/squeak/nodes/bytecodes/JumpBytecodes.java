@@ -7,17 +7,16 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNode;
@@ -30,23 +29,21 @@ public final class JumpBytecodes {
         private final boolean isIfTrue;
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
-        @Child private FrameStackPopNode popNode;
+        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
         @Child private HandleConditionResultNode handleConditionResultNode;
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);
             offset = (bytecode & 7) + 1;
             isIfTrue = false;
-            popNode = FrameStackPopNode.create(code);
-            handleConditionResultNode = HandleConditionResultNode.create(code, getSuccessorIndex());
+            handleConditionResultNode = HandleConditionResultNode.create(getSuccessorIndex());
         }
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter, final boolean condition) {
             super(code, index, numBytecodes);
             offset = ((bytecode & 3) << 8) + parameter;
             isIfTrue = condition;
-            popNode = FrameStackPopNode.create(code);
-            handleConditionResultNode = HandleConditionResultNode.create(code, getSuccessorIndex());
+            handleConditionResultNode = HandleConditionResultNode.create(getSuccessorIndex());
         }
 
         @Override
@@ -73,17 +70,16 @@ public final class JumpBytecodes {
             }
         }
 
-        protected abstract static class HandleConditionResultNode extends AbstractNodeWithCode {
+        protected abstract static class HandleConditionResultNode extends AbstractNode {
             @Child private SendSelectorNode sendMustBeBooleanNode;
             private final int successorIndex;
 
-            protected HandleConditionResultNode(final CompiledCodeObject code, final int successorIndex) {
-                super(code);
+            protected HandleConditionResultNode(final int successorIndex) {
                 this.successorIndex = successorIndex;
             }
 
-            protected static HandleConditionResultNode create(final CompiledCodeObject code, final int successorIndex) {
-                return HandleConditionResultNodeGen.create(code, successorIndex);
+            protected static HandleConditionResultNode create(final int successorIndex) {
+                return HandleConditionResultNodeGen.create(successorIndex);
             }
 
             protected abstract boolean execute(VirtualFrame frame, boolean expected, Object result);
@@ -93,18 +89,10 @@ public final class JumpBytecodes {
                 return expected == result;
             }
 
-            @Specialization(guards = "resultLib.isBoolean(result)", limit = "2")
-            protected static final boolean doBoolean(final boolean expected, final Object result, @CachedLibrary("result") final InteropLibrary resultLib) {
-                try {
-                    return expected == resultLib.asBoolean(result);
-                } catch (final UnsupportedMessageException e) {
-                    throw SqueakException.illegalState(e);
-                }
-            }
-
-            @Fallback
-            protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result) {
-                FrameAccess.setInstructionPointer(frame, code, successorIndex);
+            @Specialization(guards = "!isBoolean(result)")
+            protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result,
+                            @Cached("getInstructionPointerSlot(frame)") final FrameSlot instructionPointerSlot) {
+                FrameAccess.setInstructionPointer(frame, instructionPointerSlot, successorIndex);
                 getSendMustBeBooleanNode().executeSend(frame, result);
                 throw SqueakException.create("Should not be reached");
             }
@@ -112,7 +100,7 @@ public final class JumpBytecodes {
             private SendSelectorNode getSendMustBeBooleanNode() {
                 if (sendMustBeBooleanNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    sendMustBeBooleanNode = insert(SendSelectorNode.create(code, code.image.mustBeBooleanSelector));
+                    sendMustBeBooleanNode = insert(SendSelectorNode.create(SqueakLanguage.getContext().mustBeBooleanSelector));
                 }
                 return sendMustBeBooleanNode;
             }

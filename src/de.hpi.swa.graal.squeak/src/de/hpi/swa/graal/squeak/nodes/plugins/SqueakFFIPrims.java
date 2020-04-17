@@ -10,13 +10,15 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -31,10 +33,6 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFFIIntegerAt")
     protected abstract static class PrimFFIIntegerAtNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        protected PrimFFIIntegerAtNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "isSigned"})
         protected static final long doAt2Signed(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned) {
@@ -68,12 +66,13 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned"})
         protected static final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
-                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile) {
+                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final long signedLong = doAt8Signed(byteArray, byteOffsetLong, byteSize, isSigned);
             if (positiveProfile.profile(signedLong >= 0)) {
                 return signedLong;
             } else {
-                return LargeIntegerObject.toUnsigned(byteArray.image, signedLong);
+                return LargeIntegerObject.toUnsigned(image, signedLong);
             }
         }
     }
@@ -88,10 +87,6 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         protected static final long MAX_VALUE_UNSIGNED_1 = 1L << 8 * 1;
         protected static final long MAX_VALUE_UNSIGNED_2 = 1L << 8 * 2;
         protected static final long MAX_VALUE_UNSIGNED_4 = 1L << 8 * 4;
-
-        protected PrimFFIIntegerAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 2", "isSigned", "inSignedBounds(value, MAX_VALUE_SIGNED_2)"})

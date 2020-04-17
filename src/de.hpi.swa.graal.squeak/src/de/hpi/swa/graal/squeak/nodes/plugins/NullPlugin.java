@@ -10,12 +10,14 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -30,14 +32,11 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveUtcWithOffset")
     protected abstract static class PrimUtcWithOffsetNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        protected PrimUtcWithOffsetNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         @SuppressWarnings("unused")
-        protected final ArrayObject doUTC(final Object receiver, final NotProvided np) {
-            return method.image.asArrayOfLongs(getUTCMicroseconds(), getOffsetFromGTMInSeconds());
+        protected static final ArrayObject doUTC(final Object receiver, final NotProvided np,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.asArrayOfLongs(getUTCMicroseconds(), getOffsetFromGTMInSeconds());
         }
 
         @Specialization(guards = "objectWithTwoSlots.size() == 2")

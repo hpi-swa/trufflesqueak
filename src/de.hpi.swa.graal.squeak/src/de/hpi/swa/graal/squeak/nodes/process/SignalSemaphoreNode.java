@@ -10,7 +10,6 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SEMAPHORE;
@@ -19,14 +18,9 @@ import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.Abstr
 import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 
 public abstract class SignalSemaphoreNode extends AbstractNode {
-    @Child private ResumeProcessNode resumeProcessNode;
 
-    protected SignalSemaphoreNode(final CompiledCodeObject code) {
-        resumeProcessNode = ResumeProcessNode.create(code);
-    }
-
-    public static SignalSemaphoreNode create(final CompiledCodeObject code) {
-        return SignalSemaphoreNodeGen.create(code);
+    public static SignalSemaphoreNode create() {
+        return SignalSemaphoreNodeGen.create();
     }
 
     public abstract void executeSignal(VirtualFrame frame, Object semaphore);
@@ -39,9 +33,10 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
     }
 
     @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "!semaphore.isEmptyList(readNode)"}, limit = "1")
-    public final void doSignal(final VirtualFrame frame, final PointersObject semaphore,
+    public static final void doSignal(final VirtualFrame frame, final PointersObject semaphore,
                     @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
-                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
+                    @Cached final ResumeProcessNode resumeProcessNode) {
         resumeProcessNode.executeResume(frame, semaphore.removeFirstLinkOfList(readNode, writeNode));
     }
 

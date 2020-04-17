@@ -10,16 +10,18 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BooleanObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -41,10 +43,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
         private final BranchProfile startLargerThanStopProfile = BranchProfile.create();
         private final BranchProfile firstAndLastDigitIndexIdenticalProfile = BranchProfile.create();
-
-        protected PrimAnyBitFromToNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"start >= 1", "stopArg >= 1"})
         protected final boolean doLong(final long receiver, final long start, final long stopArg) {
@@ -129,10 +127,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitAdd")
     protected abstract static class PrimDigitAddNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimDigitAddNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
                         @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
@@ -144,12 +138,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+        protected static final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             if (differentSignProfile.profile(differentSign(lhs, rhs))) {
-                return LargeIntegerObject.subtract(method.image, lhs, rhs);
+                return LargeIntegerObject.subtract(image, lhs, rhs);
             } else {
-                return LargeIntegerObject.add(method.image, lhs, rhs);
+                return LargeIntegerObject.add(image, lhs, rhs);
             }
         }
 
@@ -187,10 +182,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitSubtract")
     protected abstract static class PrimDigitSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimDigitSubtractNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
                         @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
@@ -202,12 +193,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs,
-                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile) {
+        protected static final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @Cached("createBinaryProfile()") final ConditionProfile differentSignProfile,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             if (differentSignProfile.profile(differentSign(lhs, rhs))) {
-                return LargeIntegerObject.add(method.image, lhs, rhs);
+                return LargeIntegerObject.add(image, lhs, rhs);
             } else {
-                return LargeIntegerObject.subtract(method.image, lhs, rhs);
+                return LargeIntegerObject.subtract(image, lhs, rhs);
             }
         }
 
@@ -245,18 +237,15 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitMultiplyNegative")
     protected abstract static class PrimDigitMultiplyNegativeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimDigitMultiplyNegativeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs) {
             return Math.multiplyExact(lhs, rhs);
         }
 
         @Specialization(replaces = "doLong")
-        protected final Object doLongWithOverflow(final long lhs, final long rhs) {
-            return LargeIntegerObject.multiply(method.image, lhs, rhs);
+        protected static final Object doLongWithOverflow(final long lhs, final long rhs,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return LargeIntegerObject.multiply(image, lhs, rhs);
         }
 
         @Specialization
@@ -278,10 +267,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitAnd")
     protected abstract static class PrimDigitBitAndNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimDigitBitAndNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final long doLong(final long receiver, final long arg) {
             return receiver & arg;
@@ -316,10 +301,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitOr")
     protected abstract static class PrimDigitBitOrNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimDigitBitOrNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final long bitOr(final long receiver, final long arg) {
             return receiver | arg;
@@ -344,10 +325,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitShiftMagnitude")
     public abstract static class PrimDigitBitShiftMagnitudeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimDigitBitShiftMagnitudeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
             return receiver.shiftLeft((int) arg);
@@ -357,10 +334,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitXor")
     protected abstract static class PrimBitXorNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimBitXorNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final long doLong(final long lhs, final long rhs) {
             return lhs ^ rhs;
@@ -385,10 +358,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitCompare")
     protected abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimDigitCompareNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final long doLong(final long lhs, final long rhs,
                         @Cached("createBinaryProfile()") final ConditionProfile smallerProfile,
@@ -433,114 +402,107 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitDivNegative")
     protected abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
-        protected PrimDigitDivNegativeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
-        protected final ArrayObject doLong(final long rcvr, final long arg, final boolean negative,
-                        @Cached final BranchProfile signProfile) {
+        protected static final ArrayObject doLong(final long rcvr, final long arg, final boolean negative,
+                        @Cached final BranchProfile signProfile,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             long divide = rcvr / arg;
             if (negative && divide >= 0 || !negative && divide < 0) {
                 signProfile.enter();
                 if (divide == Long.MIN_VALUE) {
-                    return createArrayWithLongMinOverflowResult(rcvr, arg);
+                    return createArrayWithLongMinOverflowResult(image, rcvr, arg);
                 }
                 divide = -divide;
             }
-            return method.image.asArrayOfLongs(divide, rcvr % arg);
+            return image.asArrayOfLongs(divide, rcvr % arg);
         }
 
         @TruffleBoundary
-        private ArrayObject createArrayWithLongMinOverflowResult(final long rcvr, final long arg) {
-            return method.image.asArrayOfObjects(LargeIntegerObject.createLongMinOverflowResult(method.image), rcvr % arg);
+        private static ArrayObject createArrayWithLongMinOverflowResult(final SqueakImageContext image, final long rcvr, final long arg) {
+            return image.asArrayOfObjects(LargeIntegerObject.createLongMinOverflowResult(image), rcvr % arg);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
+        protected static final ArrayObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(arg.getBigInteger());
             final Object[] result = new Object[2];
             if (negative != divide[0].signum() < 0) {
                 if (divide[0].bitLength() < Long.SIZE) {
                     final long lresult = divide[0].longValue();
                     if (lresult == Long.MIN_VALUE) {
-                        result[0] = LargeIntegerObject.createLongMinOverflowResult(method.image);
+                        result[0] = LargeIntegerObject.createLongMinOverflowResult(image);
                     } else {
                         result[0] = -lresult;
                     }
                 } else {
-                    result[0] = new LargeIntegerObject(method.image, divide[0].negate());
+                    result[0] = new LargeIntegerObject(image, divide[0].negate());
                 }
             } else {
                 if (divide[0].bitLength() < Long.SIZE) {
                     result[0] = divide[0].longValue();
                 } else {
-                    result[0] = new LargeIntegerObject(method.image, divide[0]);
+                    result[0] = new LargeIntegerObject(image, divide[0]);
                 }
             }
             if (divide[1].bitLength() < Long.SIZE) {
                 result[1] = divide[1].longValue();
             } else {
-                result[1] = new LargeIntegerObject(method.image, divide[1]);
+                result[1] = new LargeIntegerObject(image, divide[1]);
             }
-            return method.image.asArrayOfObjects(result);
+            return image.asArrayOfObjects(result);
         }
 
         @Specialization
-        protected final ArrayObject doLongLargeInteger(final long rcvr, final LargeIntegerObject arg, @SuppressWarnings("unused") final boolean negative) {
+        protected static final ArrayObject doLongLargeInteger(final long rcvr, final LargeIntegerObject arg, @SuppressWarnings("unused") final boolean negative,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             assert !arg.fitsIntoLong() : "non-reduced large integer!";
-            return method.image.asArrayOfLongs(0L, rcvr);
+            return image.asArrayOfLongs(0L, rcvr);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final ArrayObject doLargeIntegerLong(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
+        protected static final ArrayObject doLargeIntegerLong(final LargeIntegerObject rcvr, final long arg, final boolean negative,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final BigInteger[] divide = rcvr.getBigInteger().divideAndRemainder(BigInteger.valueOf(arg));
             final Object[] result = new Object[2];
             if (negative != divide[0].signum() < 0) {
                 if (divide[0].bitLength() < Long.SIZE) {
                     final long lresult = divide[0].longValue();
                     if (lresult == Long.MIN_VALUE) {
-                        result[0] = LargeIntegerObject.createLongMinOverflowResult(method.image);
+                        result[0] = LargeIntegerObject.createLongMinOverflowResult(image);
                     } else {
                         result[0] = -lresult;
                     }
                 } else {
-                    result[0] = new LargeIntegerObject(method.image, divide[0].negate());
+                    result[0] = new LargeIntegerObject(image, divide[0].negate());
                 }
             } else {
                 if (divide[0].bitLength() < Long.SIZE) {
                     result[0] = divide[0].longValue();
                 } else {
-                    result[0] = new LargeIntegerObject(method.image, divide[0]);
+                    result[0] = new LargeIntegerObject(image, divide[0]);
                 }
             }
             result[1] = divide[1].longValue();
-            return method.image.asArrayOfObjects(result);
+            return image.asArrayOfObjects(result);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primGetModuleName")
     protected abstract static class PrimGetModuleNameNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimGetModuleNameNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
-        protected final Object doGet(@SuppressWarnings("unused") final Object rcvr) {
-            return method.image.asByteString(MODULE_NAME);
+        protected static final Object doGet(@SuppressWarnings("unused") final Object rcvr,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.asByteString(MODULE_NAME);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primMontgomeryDigitLength")
     protected abstract static class PrimMontgomeryDigitLengthNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimMontgomeryDigitLengthNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final long doDigitLength(@SuppressWarnings("unused") final Object receiver) {
             return 32L;
@@ -550,10 +512,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primMontgomeryTimesModulo")
     protected abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode implements QuaternaryPrimitive {
-        protected PrimMontgomeryTimesModuloNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /*
          * Optimized version of montgomeryTimesModulo for integer-sized arguments.
          */
@@ -580,50 +538,58 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doLongQuick")
         @TruffleBoundary
-        protected final Object doLong(final long receiver, final long a, final long m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        protected static final Object doLong(final long receiver, final long a, final long m, final long mInv,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final Object doLong(final long receiver, final LargeIntegerObject a, final long m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        protected static final Object doLong(final long receiver, final LargeIntegerObject a, final long m, final long mInv,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final Object doLong(final long receiver, final long a, final LargeIntegerObject m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        protected static final Object doLong(final long receiver, final long a, final LargeIntegerObject m, final long mInv,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final Object doLong(final long receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        protected static final Object doLong(final long receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final long m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final long m, final long mInv,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final long m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final long m, final long mInv,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final LargeIntegerObject m, final long mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv);
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final LargeIntegerObject m, final long mInv,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final LargeIntegerObject mInv) {
-            return doLargeInteger(toInts(receiver), toInts(a), toInts(m), mInv.longValueExact());
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final LargeIntegerObject mInv,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv.longValueExact());
         }
 
         private static int[] toInts(final LargeIntegerObject value) {
@@ -638,7 +604,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected final Object doLargeInteger(final int[] firstInts, final int[] secondInts, final int[] thirdInts, final long mInv) {
+        private static Object doLargeInteger(final SqueakImageContext image, final int[] firstInts, final int[] secondInts, final int[] thirdInts, final long mInv) {
             final int firstLen = firstInts.length;
             final int secondLen = secondInts.length;
             final int thirdLen = thirdInts.length;
@@ -703,7 +669,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 }
             }
             final byte[] resultBytes = UnsafeUtils.toBytes(result);
-            return new LargeIntegerObject(method.image, method.image.largePositiveIntegerClass, resultBytes).reduceIfPossible(); // normalize
+            return new LargeIntegerObject(image, image.largePositiveIntegerClass, resultBytes).reduceIfPossible(); // normalize
         }
 
         private static int cDigitComparewithlen(final int[] first, final int[] second, final int len) {
@@ -727,10 +693,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = {"primNormalizePositive", "primNormalizeNegative"})
     protected abstract static class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
-
-        protected PrimNormalizeNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization
         protected static final Object doLargeInteger(final LargeIntegerObject value) {

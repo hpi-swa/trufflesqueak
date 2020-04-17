@@ -54,11 +54,11 @@ public final class SendBytecodes {
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount, final AbstractLookupClassNode lookupClassNode) {
             super(code, index, numBytecodes);
-            selector = sel instanceof NativeObject ? (NativeObject) sel : code.image.doesNotUnderstand;
+            selector = (NativeObject) sel;
             argumentCount = argcount;
             this.lookupClassNode = lookupClassNode;
             dispatchSendNode = DispatchSendFromStackNode.create(selector, code, argumentCount);
-            popNNode = FrameStackPopNNode.create(code, 1 + argumentCount); // receiver + arguments.
+            popNNode = FrameStackPopNNode.create(1 + argumentCount); // receiver + arguments.
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
@@ -103,7 +103,7 @@ public final class SendBytecodes {
         private FrameStackPushNode getPushNode() {
             if (pushNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                pushNode = insert(FrameStackPushNode.create(code));
+                pushNode = insert(FrameStackPushNode.create());
             }
             return pushNode;
         }

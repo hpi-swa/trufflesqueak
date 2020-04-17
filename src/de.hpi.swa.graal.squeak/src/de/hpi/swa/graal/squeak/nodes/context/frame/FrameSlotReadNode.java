@@ -13,10 +13,11 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 
-import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
+import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNodeGen.FrameSlotReadClearNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNodeGen.FrameSlotReadNoClearNodeGen;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ImportStatic(FrameSlotKind.class)
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
@@ -25,9 +26,18 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         return FrameSlotReadNoClearNodeGen.create(frameSlot);
     }
 
-    public static FrameSlotReadNode create(final CompiledCodeObject code, final int index) {
+    public static FrameSlotReadNode create(final Frame frame, final int index) {
         // Only clear stack values, not receiver, arguments, or temporary variables.
-        final int initialSP = code instanceof CompiledBlockObject ? code.getNumArgsAndCopied() : code.getNumTemps();
+        final CompiledCodeObject code;
+        final int initialSP;
+        final BlockClosureObject closure = FrameAccess.getClosure(frame);
+        if (closure == null) {
+            code = FrameAccess.getMethod(frame);
+            initialSP = code.getNumTemps();
+        } else {
+            code = closure.getCompiledBlock();
+            initialSP = code.getNumArgsAndCopied();
+        }
         if (index >= initialSP) {
             return FrameSlotReadClearNodeGen.create(code.getStackSlot(index));
         } else {

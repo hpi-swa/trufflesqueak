@@ -24,13 +24,15 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -111,7 +113,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
  * Linux, indeed the custom certificate is written to disk in the test setup.
  * </p>
  *
- * @see sun.security.ssl.Debug
  */
 public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     private static final ByteBuffer EMPTY_BUFFER = createEmptyImmutableBuffer();
@@ -234,8 +235,8 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     }
 
     @TruffleBoundary
-    private static SqSSL getSSL(final CompiledMethodObject method, final long handle) {
-        return method.image.squeakSSLHandles.get(handle);
+    private static SqSSL getSSL(final SqueakImageContext image, final long handle) {
+        return image.squeakSSLHandles.get(handle);
     }
 
     private static int getBufferSize(final SqSSL ssl) {
@@ -360,10 +361,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAccept")
     protected abstract static class PrimAcceptNode extends AbstractPrimitiveNode implements SenaryPrimitive {
-        protected PrimAcceptNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Starts or continues a server handshake using the provided data. Will eventually produce
          * output to be sent to the client.
@@ -386,14 +383,15 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return see numeric return type convention from plugin Javadoc
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        protected final long doAccept(@SuppressWarnings("unused") final Object receiver,
+        protected static final long doAccept(@SuppressWarnings("unused") final Object receiver,
                         final long sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
-                        final NativeObject targetBuffer) {
+                        final NativeObject targetBuffer,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
-            final SqSSL ssl = getSSL(method, sslHandle);
+            final SqSSL ssl = getSSL(image, sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -404,7 +402,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             try {
                 return process(ssl, source, target);
             } catch (final SSLException e) {
-                e.printStackTrace(method.image.getError());
+                e.printStackTrace(image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -461,10 +459,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveConnect")
     protected abstract static class PrimConnectNode extends AbstractPrimitiveNode implements SenaryPrimitive {
-        protected PrimConnectNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Starts or continues a client handshake using the provided data. Will eventually produce
          * output to be sent to the server.
@@ -492,14 +486,15 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return see numeric return type convention from plugin Javadoc
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        protected final long doConnect(@SuppressWarnings("unused") final Object receiver,
+        protected static final long doConnect(@SuppressWarnings("unused") final Object receiver,
                         final long sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
-                        final NativeObject targetBuffer) {
+                        final NativeObject targetBuffer,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
-            final SqSSL ssl = getSSL(method, sslHandle);
+            final SqSSL ssl = getSSL(image, sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -510,7 +505,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             try {
                 return processHandshake(ssl, source, target);
             } catch (final SSLException e) {
-                e.printStackTrace(method.image.getError());
+                e.printStackTrace(image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -641,10 +636,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDecrypt")
     protected abstract static class PrimDecryptNode extends AbstractPrimitiveNode implements SenaryPrimitive {
-        protected PrimDecryptNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Takes incoming data for decryption and continues to decrypt data.
          *
@@ -668,14 +659,15 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the number of bytes produced in the output buffer
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        protected final long doDecrypt(@SuppressWarnings("unused") final Object receiver,
+        protected static final long doDecrypt(@SuppressWarnings("unused") final Object receiver,
                         final long sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
-                        final NativeObject targetBuffer) {
+                        final NativeObject targetBuffer,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
-            final SqSSL ssl = getSSL(method, sslHandle);
+            final SqSSL ssl = getSSL(image, sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -688,7 +680,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 decryptOne(ssl, target);
                 return target.position();
             } catch (final SSLException e) {
-                e.printStackTrace(method.image.getError());
+                e.printStackTrace(image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -718,10 +710,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEncrypt")
     protected abstract static class PrimEncryptNode extends AbstractPrimitiveNode implements SenaryPrimitive {
-        protected PrimEncryptNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Encrypt the incoming buffer into the result buffer.
          *
@@ -734,14 +722,15 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the number of bytes produced as a result
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        protected final long doEncrypt(@SuppressWarnings("unused") final Object receiver,
+        protected static final long doEncrypt(@SuppressWarnings("unused") final Object receiver,
                         final long sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
-                        final NativeObject targetBuffer) {
+                        final NativeObject targetBuffer,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
-            final SqSSL ssl = getSSL(method, sslHandle);
+            final SqSSL ssl = getSSL(image, sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -753,7 +742,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 encrypt(ssl, source, target);
                 return target.position();
             } catch (final SSLException e) {
-                e.printStackTrace(method.image.getError());
+                e.printStackTrace(image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
             }
         }
@@ -767,10 +756,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetIntProperty")
     protected abstract static class PrimGetIntPropertyNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimGetIntPropertyNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Returns an integer property from an SSL session.
          *
@@ -780,8 +765,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization
-        protected long doGet(@SuppressWarnings("unused") final Object receiver, final long sslHandle, final long propertyId) {
-            final SqSSL ssl = getSSL(method, sslHandle);
+        protected static final long doGet(@SuppressWarnings("unused") final Object receiver, final long sslHandle, final long propertyId,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            final SqSSL ssl = getSSL(image, sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
 
             if (ssl == null || property == null) {
@@ -805,10 +791,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetIntProperty")
     protected abstract static class PrimSetIntPropertyNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        protected PrimSetIntPropertyNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Sets an integer property in a SSL session.
          *
@@ -819,11 +801,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite the return code convention, non-zero if successful
          */
         @Specialization
-        protected long doSet(@SuppressWarnings("unused") final Object receiver,
+        protected static final long doSet(@SuppressWarnings("unused") final Object receiver,
                         final long sslHandle,
                         final long propertyId,
-                        final long anInteger) {
-            final SqSSL ssl = getSSL(method, sslHandle);
+                        final long anInteger,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            final SqSSL ssl = getSSL(image, sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
             if (ssl == null || property == null) {
                 return 0L;
@@ -840,10 +823,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetStringProperty")
     protected abstract static class PrimGetStringPropertyNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        protected PrimGetStringPropertyNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Returns a string property from a SSL session.
          *
@@ -853,15 +832,16 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the property value or {@code nil}
          */
         @Specialization
-        protected final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final long sslHandle, final long propertyId) {
-            final SqSSL impl = getSSL(method, sslHandle);
+        protected static final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final long sslHandle, final long propertyId,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            final SqSSL impl = getSSL(image, sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (impl == null || property == null) {
                 return NilObject.SINGLETON;
             }
 
             final String value = getStringPropertyValue(impl, property);
-            return value == null ? NilObject.SINGLETON : method.image.asByteString(value);
+            return value == null ? NilObject.SINGLETON : image.asByteString(value);
         }
 
         private static String getStringPropertyValue(final SqSSL impl, final StringProperty property) {
@@ -881,10 +861,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSetStringProperty")
     protected abstract static class PrimSetStringPropertyNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        protected PrimSetStringPropertyNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Sets a string property in a SSL session.
          *
@@ -895,12 +871,13 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization(guards = "aString.isByteType()")
-        protected long doSet(@SuppressWarnings("unused") final Object receiver,
+        protected static final long doSet(@SuppressWarnings("unused") final Object receiver,
                         final long sslHandle,
                         final long propertyId,
-                        final NativeObject aString) {
+                        final NativeObject aString,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
-            final SqSSL ssl = getSSL(method, sslHandle);
+            final SqSSL ssl = getSSL(image, sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (ssl == null || property == null) {
                 return 0L;
@@ -928,10 +905,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCreate")
     protected abstract static class PrimCreateNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimCreateNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Creates and returns a new SSL handle.
          *
@@ -940,10 +913,11 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         @TruffleBoundary
-        protected long doCreate(@SuppressWarnings("unused") final Object receiver) {
+        protected static final long doCreate(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final SqSSL ssl = new SqSSL();
             final long handle = ssl.hashCode();
-            method.image.squeakSSLHandles.put(handle, ssl);
+            image.squeakSSLHandles.put(handle, ssl);
             return handle;
         }
     }
@@ -951,10 +925,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDestroy")
     protected abstract static class PrimDestroyNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        protected PrimDestroyNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         /**
          * Destroys the SSL session handle.
          *
@@ -964,8 +934,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         @TruffleBoundary
-        protected long doDestroy(@SuppressWarnings("unused") final Object receiver, final long sslHandle) {
-            final SqSSL ssl = method.image.squeakSSLHandles.removeKey(sslHandle);
+        protected static final long doDestroy(@SuppressWarnings("unused") final Object receiver, final long sslHandle,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            final SqSSL ssl = image.squeakSSLHandles.removeKey(sslHandle);
             if (ssl == null) {
                 return 0L;
             } else {

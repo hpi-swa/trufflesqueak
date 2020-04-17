@@ -26,6 +26,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -146,7 +147,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     }
 
     protected final void initializeCallTargetUnsafe() {
-        callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
+        callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(SqueakLanguage.getContext().getLanguage(), this));
     }
 
     public final Assumption getCallTargetStable() {
@@ -157,7 +158,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     public final RootCallTarget getResumptionCallTarget(final ContextObject context) {
         if (resumptionCallTarget == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            resumptionCallTarget = Truffle.getRuntime().createCallTarget(ResumeContextRootNode.create(image.getLanguage(), context));
+            resumptionCallTarget = Truffle.getRuntime().createCallTarget(ResumeContextRootNode.create(SqueakLanguage.getContext().getLanguage(), context));
         } else {
             final ResumeContextRootNode resumeNode = (ResumeContextRootNode) resumptionCallTarget.getRootNode();
             if (resumeNode.getActiveContext() != context) {

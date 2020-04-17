@@ -117,6 +117,7 @@ public final class SqueakImageContext {
     public final SqueakContextOptions options;
 
     /* System */
+    public NativeObject clipboardTextHeadless = asByteString("");
     private boolean currentMarkingFlag;
     private ArrayObject hiddenRoots;
     private long globalClassCounter = -1;
@@ -147,7 +148,7 @@ public final class SqueakImageContext {
 
     /* Plugins */
     public final B2D b2d = new B2D(this);
-    public final BitBlt bitblt = new BitBlt();
+    public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = new String[0];
     public final EconomicMap<Long, SeekableByteChannel> filePluginHandles = EconomicMap.create();
     public final JPEGReader jpegReader = new JPEGReader();

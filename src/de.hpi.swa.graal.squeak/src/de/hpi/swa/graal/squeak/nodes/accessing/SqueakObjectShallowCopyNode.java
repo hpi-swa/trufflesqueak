@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -23,21 +24,14 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.VariablePointersObject;
 import de.hpi.swa.graal.squeak.model.WeakVariablePointersObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectShallowCopyNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectShallowCopyNode;
 
-public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage {
+public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
-    protected SqueakObjectShallowCopyNode(final SqueakImageContext image) {
-        super(image);
-    }
-
-    public static SqueakObjectShallowCopyNode create(final SqueakImageContext image) {
-        return SqueakObjectShallowCopyNodeGen.create(image);
-    }
-
-    public final Object execute(final Object object) {
+    public final Object execute(final SqueakImageContext image, final Object object) {
+        CompilerAsserts.partialEvaluationConstant(image);
         image.reportNewAllocationRequest();
         return image.reportNewAllocationResult(executeAllocation(object));
     }

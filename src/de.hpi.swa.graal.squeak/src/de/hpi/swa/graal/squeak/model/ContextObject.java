@@ -20,6 +20,7 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
@@ -168,9 +169,10 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // Method is unknown, use dummy frame instead
             final Object[] dummyArguments = FrameAccess.newDummyWith(null, NilObject.SINGLETON, null, new Object[2]);
-            truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, image.dummyMethod.getFrameDescriptor());
-            FrameAccess.setInstructionPointer(truffleFrame, image.dummyMethod, 0);
-            FrameAccess.setStackPointer(truffleFrame, image.dummyMethod, 1);
+            final CompiledMethodObject dummyMethod = SqueakLanguage.getContext().dummyMethod;
+            truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, dummyMethod.getFrameDescriptor());
+            FrameAccess.setInstructionPointer(truffleFrame, dummyMethod, 0);
+            FrameAccess.setStackPointer(truffleFrame, dummyMethod, 1);
         }
         return truffleFrame;
     }

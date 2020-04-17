@@ -7,55 +7,61 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.nodes.HandlePrimitiveFailedNodeFactory.HandlePrimitiveFailedImplNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
 
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
-    protected HandlePrimitiveFailedNode(final CompiledCodeObject code) {
-        super(code);
-    }
-
+public abstract class HandlePrimitiveFailedNode extends AbstractNode {
     public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
-        return HandlePrimitiveFailedNodeGen.create(code);
+        // Fourth bytecode indicates extended store after callPrimitive.
+        if (code.getBytes()[3] == (byte) 0x81) {
+            return HandlePrimitiveFailedImplNodeGen.create();
+        } else {
+            return new HandlePrimitiveFailedNoopNode();
+        }
     }
 
     public abstract void executeHandle(VirtualFrame frame, int reasonCode);
 
-    /*
-     * Look up error symbol in error table and push it to stack. The fallback code pops the error
-     * symbol into the corresponding temporary variable. See
-     * StackInterpreter>>#getErrorObjectFromPrimFailCode for more information.
-     */
-    @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode < sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
-    protected final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
-                    @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
-                    @Cached("create(code)") final FrameStackPushNode pushNode,
-                    @Cached final ArrayObjectReadNode readNode) {
-        pushNode.execute(frame, readNode.execute(code.image.primitiveErrorTable, reasonCode));
+    protected abstract static class HandlePrimitiveFailedImplNode extends HandlePrimitiveFailedNode {
+        /*
+         * Look up error symbol in error table and push it to stack. The fallback code pops the
+         * error symbol into the corresponding temporary variable. See
+         * StackInterpreter>>#getErrorObjectFromPrimFailCode for more information.
+         */
+        @Specialization(guards = {"reasonCode < sizeNode.execute(image.primitiveErrorTable)"}, limit = "1")
+        protected static final void doHandleWithLookup(final VirtualFrame frame, final int reasonCode,
+                        @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
+                        @Cached final FrameStackPushNode pushNode,
+                        @Cached final ArrayObjectReadNode readNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            pushNode.execute(frame, readNode.execute(image.primitiveErrorTable, reasonCode));
+        }
+
+        @Specialization(guards = {"reasonCode >= sizeNode.execute(image.primitiveErrorTable)"}, limit = "1")
+        protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
+                        @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
+                        @Cached final FrameStackPushNode pushNode,
+                        @SuppressWarnings("unused") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            pushNode.execute(frame, (long) reasonCode);
+        }
     }
 
-    @Specialization(guards = {"followedByExtendedStore(code)", "reasonCode >= sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
-    protected static final void doHandleRawValue(final VirtualFrame frame, final int reasonCode,
-                    @SuppressWarnings("unused") @Shared("sizeNode") @Cached final ArrayObjectSizeNode sizeNode,
-                    @Cached("create(code)") final FrameStackPushNode pushNode) {
-        pushNode.execute(frame, (long) reasonCode);
-    }
-
-    @Specialization(guards = "!followedByExtendedStore(code)")
-    protected static final void doNothing(@SuppressWarnings("unused") final int reasonCode) {
-        // nothing to do
-    }
-
-    protected static final boolean followedByExtendedStore(final CompiledCodeObject codeObject) {
-        // fourth bytecode indicates extended store after callPrimitive
-        return codeObject.getBytes()[3] == (byte) 0x81;
+    private static final class HandlePrimitiveFailedNoopNode extends HandlePrimitiveFailedNode {
+        @Override
+        public void executeHandle(final VirtualFrame frame, final int reasonCode) {
+            // nothing to do
+        }
     }
 }

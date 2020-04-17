@@ -20,19 +20,20 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject.SLOT_IDENTIFIER;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.GetContextOrMarkerNode;
 
 /**
  * GraalSqueak frame argument layout.
@@ -151,38 +152,44 @@ public final class FrameAccess {
         return Arrays.copyOfRange(frame.getArguments(), ArgumentIndicies.RECEIVER.ordinal(), frame.getArguments().length);
     }
 
+    public static FrameSlot getMarkerSlot(final Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.THIS_MARKER);
+    }
+
     public static FrameMarker getMarker(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return getMarker(frame, getBlockOrMethod(frame));
     }
 
+    public static FrameMarker getMarker(final Frame frame, final FrameSlot thisMarkerSlot) {
+        return (FrameMarker) FrameUtil.getObjectSafe(frame, thisMarkerSlot);
+    }
+
     public static FrameMarker getMarker(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        return (FrameMarker) FrameUtil.getObjectSafe(frame, blockOrMethod.getThisMarkerSlot());
+        return getMarker(frame, blockOrMethod.getThisMarkerSlot());
+    }
+
+    public static void setMarker(final Frame frame, final FrameSlot thisMarkerSlot, final FrameMarker marker) {
+        frame.setObject(thisMarkerSlot, marker);
     }
 
     public static void setMarker(final Frame frame, final CompiledCodeObject code, final FrameMarker marker) {
-        frame.setObject(code.getThisMarkerSlot(), marker);
+        setMarker(frame, code.getThisMarkerSlot(), marker);
     }
 
     public static void initializeMarker(final Frame frame, final CompiledCodeObject code) {
         setMarker(frame, code, new FrameMarker());
     }
 
-    /* Gets context or marker, lazily initializes the latter if necessary. */
-    public static Object getContextOrMarker(final Frame frame, final CompiledCodeObject blockOrMethod, final ConditionProfile hasContextProfile, final ConditionProfile hasMarkerProfile) {
-        final ContextObject context = getContext(frame, blockOrMethod);
-        if (hasContextProfile.profile(context != null)) {
-            return context;
-        } else {
-            final FrameMarker marker = getMarker(frame, blockOrMethod);
-            if (hasMarkerProfile.profile(marker != null)) {
-                return marker;
-            } else {
-                final FrameMarker newMarker = new FrameMarker();
-                setMarker(frame, blockOrMethod, newMarker);
-                return newMarker;
-            }
-        }
+    public static Object getContextOrMarkerSlow(final VirtualFrame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        return GetContextOrMarkerNode.getNotProfiled(frame);
+    }
+
+    public static FrameSlot getContextSlot(final Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT);
     }
 
     public static ContextObject getContext(final Frame frame) {
@@ -190,8 +197,12 @@ public final class FrameAccess {
         return getContext(frame, getBlockOrMethod(frame));
     }
 
+    public static ContextObject getContext(final Frame frame, final FrameSlot thisContextSlot) {
+        return (ContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
+    }
+
     public static ContextObject getContext(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        return (ContextObject) FrameUtil.getObjectSafe(frame, blockOrMethod.getThisContextSlot());
+        return getContext(frame, blockOrMethod.getThisContextSlot());
     }
 
     public static void setContext(final Frame frame, final CompiledCodeObject blockOrMethod, final ContextObject context) {
@@ -201,20 +212,52 @@ public final class FrameAccess {
         frame.setObject(thisContextSlot, context);
     }
 
+    public static FrameSlot getInstructionPointerSlot(final Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER);
+    }
+
     public static int getInstructionPointer(final Frame frame, final CompiledCodeObject code) {
         return FrameUtil.getIntSafe(frame, code.getInstructionPointerSlot());
     }
 
+    public static void setInstructionPointer(final Frame frame, final FrameSlot instructionPointerSlot, final int value) {
+        frame.setInt(instructionPointerSlot, value);
+    }
+
     public static void setInstructionPointer(final Frame frame, final CompiledCodeObject code, final int value) {
-        frame.setInt(code.getInstructionPointerSlot(), value);
+        setInstructionPointer(frame, code.getInstructionPointerSlot(), value);
+    }
+
+    public static FrameSlot getStackPointerSlot(final Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.STACK_POINTER);
+    }
+
+    public static int getStackPointerSlow(final Frame frame) {
+        return getStackPointer(frame, getStackPointerSlot(frame));
+    }
+
+    public static int getStackPointer(final Frame frame, final FrameSlot stackPointerSlot) {
+        return FrameUtil.getIntSafe(frame, stackPointerSlot);
     }
 
     public static int getStackPointer(final Frame frame, final CompiledCodeObject code) {
-        return FrameUtil.getIntSafe(frame, code.getStackPointerSlot());
+        return getStackPointer(frame, code.getStackPointerSlot());
+    }
+
+    public static void setStackPointer(final Frame frame, final FrameSlot stackPointerSlot, final int value) {
+        frame.setInt(stackPointerSlot, value);
     }
 
     public static void setStackPointer(final Frame frame, final CompiledCodeObject code, final int value) {
-        frame.setInt(code.getStackPointerSlot(), value);
+        setStackPointer(frame, code.getStackPointerSlot(), value);
+    }
+
+    public static FrameSlot getStackSlot(final Frame frame, final int index) {
+        CompilerAsserts.neverPartOfCompilation();
+        // TODO: frame.getFrameDescriptor().findFrameSlot(index + 1);
+        return getBlockOrMethod(frame).getStackSlot(index);
     }
 
     /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */
@@ -238,9 +281,9 @@ public final class FrameAccess {
         }
     }
 
-    public static void terminate(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        FrameAccess.setInstructionPointer(frame, blockOrMethod, -1);
-        FrameAccess.setSender(frame, NilObject.SINGLETON);
+    public static void terminate(final Frame frame, final FrameSlot instructionPointerSlot) {
+        setInstructionPointer(frame, instructionPointerSlot, -1);
+        setSender(frame, NilObject.SINGLETON);
     }
 
     public static boolean isGraalSqueakFrame(final Frame frame) {

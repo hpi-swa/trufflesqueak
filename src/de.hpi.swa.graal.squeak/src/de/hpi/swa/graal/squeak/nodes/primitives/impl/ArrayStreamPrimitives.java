@@ -20,7 +20,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -47,10 +46,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Child protected SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
 
-        protected AbstractBasicAtOrAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         protected final boolean inBoundsOfSqueakObject(final Object target, final long index) {
             return SqueakGuards.inBounds1(index + instSizeNode.execute(target), sizeNode.execute(target));
         }
@@ -60,10 +55,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAtNode extends AbstractBasicAtOrAtPutNode implements TernaryPrimitive {
-        protected PrimBasicAtNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected final Object doSqueakObject(final Object receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("at0Node") @Cached final SqueakObjectAt0Node at0Node,
@@ -89,10 +80,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 61)
     protected abstract static class PrimBasicAtPutNode extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitive {
-        protected PrimBasicAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
                         @SuppressWarnings("unused") final NotProvided notProvided,
@@ -120,10 +107,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSizeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        protected PrimSizeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final long doSqueakObject(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
@@ -144,10 +127,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 63)
     protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimStringAtNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())"})
         protected static final char doNativeObjectBytes(final NativeObject obj, final long index) {
             return (char) (obj.getByte(index - 1) & 0xFF);
@@ -163,10 +142,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 64)
     protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
-        protected PrimStringAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())", "inByteRange(value)"})
         protected static final char doNativeObjectBytes(final NativeObject obj, final long index, final char value) {
@@ -195,10 +170,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 143)
     protected abstract static class PrimShortAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimShortAtNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength(), 2)"})
         protected static final long doNativeInts(final NativeObject receiver, final long index) {
             return UnsafeUtils.getShort(receiver.getIntStorage(), index - 1);
@@ -208,10 +179,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 144)
     protected abstract static class PrimShortAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
-        protected PrimShortAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength(), 2)", "inShortRange(value)"})
         protected static final long doNativeInts(final NativeObject receiver, final long index, final long value) {
@@ -228,10 +195,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 165)
     protected abstract static class PrimIntegerAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimIntegerAtNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())"})
         protected static final long doNativeInt(final NativeObject receiver, final long index) {
             return UnsafeUtils.getInt(receiver.getIntStorage(), index - 1);
@@ -241,10 +204,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 166)
     protected abstract static class PrimIntegerAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
-        protected PrimIntegerAtPutNode(final CompiledMethodObject method) {
-            super(method);
-        }
 
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())", "fitsIntoInt(value)"})
         protected static final long doNativeInt(final NativeObject receiver, final long index, final long value) {

@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -22,7 +21,6 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.JavaObjectWrapper;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
@@ -45,19 +43,14 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "debugPrint")
     protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-        protected PrimPrintArgsNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(guards = "value.isByteType()")
-        protected Object printArgs(final Object receiver, final NativeObject value) {
-            method.image.printToStdOut(value.asStringUnsafe());
-            return receiver;
-        }
-
-        @Fallback
-        protected Object printArgs(final Object receiver, final Object value) {
-            method.image.printToStdOut(value);
+        @Specialization
+        protected static final Object printArgs(final Object receiver, final Object value,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            if (value instanceof NativeObject && ((NativeObject) value).isByteType()) {
+                image.printToStdOut(((NativeObject) value).asStringUnsafe());
+            } else {
+                image.printToStdOut(value);
+            }
             return receiver;
         }
     }
@@ -65,10 +58,6 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetTruffleRuntime")
     protected abstract static class PrimGetTruffleRuntimeNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        protected PrimGetTruffleRuntimeNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver) {
             return JavaObjectWrapper.wrap(Truffle.getRuntime());
@@ -78,10 +67,6 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetCallTarget")
     protected abstract static class PrimGetCallTargetNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        protected PrimGetCallTargetNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final CompiledCodeObject code) {
             return JavaObjectWrapper.wrap(code.getCallTarget());
@@ -91,10 +76,6 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetVMObject")
     protected abstract static class PrimGetVMObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-        protected PrimGetVMObjectNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final Object target) {
             return JavaObjectWrapper.wrap(target);
@@ -105,10 +86,6 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(FORM.class)
     @SqueakPrimitive(names = "primitiveFormToBufferedImage")
     protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        protected PrimFormToBufferedImageNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
         @Specialization(guards = "form.instsize() > OFFSET")
         protected static final Object doFormToBufferedImage(@SuppressWarnings("unused") final Object receiver, final PointersObject form,
                         @Cached final AbstractPointersObjectReadNode readNode,

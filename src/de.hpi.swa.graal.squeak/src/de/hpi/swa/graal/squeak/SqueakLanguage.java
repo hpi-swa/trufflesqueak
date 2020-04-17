@@ -11,6 +11,7 @@ import java.util.Collections;
 import org.graalvm.options.OptionDescriptors;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Scope;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
@@ -116,6 +117,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     public static SqueakImageContext getContext() {
+        CompilerAsserts.neverPartOfCompilation();
         return getCurrentContext(SqueakLanguage.class);
     }
 
