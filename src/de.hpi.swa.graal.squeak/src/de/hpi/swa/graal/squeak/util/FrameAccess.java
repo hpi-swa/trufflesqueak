@@ -152,6 +152,7 @@ public final class FrameAccess {
     }
 
     public static FrameMarker getMarker(final Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         return getMarker(frame, getBlockOrMethod(frame));
     }
 
@@ -185,6 +186,7 @@ public final class FrameAccess {
     }
 
     public static ContextObject getContext(final Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         return getContext(frame, getBlockOrMethod(frame));
     }
 

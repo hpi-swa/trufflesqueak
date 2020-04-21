@@ -182,7 +182,7 @@ public final class ReturnBytecodes {
             final boolean homeContextNotOnTheStack = homeContext.getProcess() != code.image.getActiveProcess(readNode);
             final Object caller = homeContext.getFrameSender();
             if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                final ContextObject currentContext = FrameAccess.getContext(frame);
+                final ContextObject currentContext = FrameAccess.getContext(frame, code);
                 assert currentContext != null;
                 getCannotReturnNode().executeSend(frame, currentContext, getReturnValue(frame));
                 throw SqueakException.create("Should not reach");

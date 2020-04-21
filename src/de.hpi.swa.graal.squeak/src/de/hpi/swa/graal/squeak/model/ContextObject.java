@@ -537,6 +537,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return !(FrameAccess.getSender(truffleFrame) instanceof FrameMarker);
     }
 
+    @TruffleBoundary
     public FrameMarker getFrameMarker() {
         return FrameAccess.getMarker(truffleFrame);
     }
