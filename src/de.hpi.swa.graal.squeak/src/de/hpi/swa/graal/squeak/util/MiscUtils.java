@@ -5,6 +5,14 @@
  */
 package de.hpi.swa.graal.squeak.util;
 
+import java.awt.color.ColorSpace;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferInt;
+import java.awt.image.DirectColorModel;
+import java.awt.image.Raster;
+import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
@@ -29,6 +37,16 @@ public final class MiscUtils {
     private static final MemoryMXBean MEMORY_BEAN = ManagementFactory.getMemoryMXBean();
     private static final RuntimeMXBean RUNTIME_BEAN = ManagementFactory.getRuntimeMXBean();
     private static final List<GarbageCollectorMXBean> GC_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
+
+    private static final DirectColorModel COLOR_MODEL_32BIT = new DirectColorModel(
+                    ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                    32,
+                    0x00ff0000,  // Red
+                    0x0000ff00,  // Green
+                    0x000000ff,  // Blue
+                    0xff000000,  // Alpha
+                    true,        // Alpha Premultiplied
+                    DataBuffer.TYPE_INT);
 
     // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
     public static final long EPOCH_DELTA_SECONDS = (69L * 365 + 17) * 24 * 3600;
@@ -170,6 +188,15 @@ public final class MiscUtils {
     public static String getVMPath() {
         final String binaryName = OSDetector.SINGLETON.isWindows() ? "java.exe" : "java";
         return System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + binaryName;
+    }
+
+    /* Wraps bitmap in a BufferedImage for efficient drawing. */
+    @TruffleBoundary
+    public static BufferedImage new32BitBufferedImage(final int[] words, final int width, final int height) {
+        final DataBufferInt db = new DataBufferInt(words, words.length);
+        final SampleModel sm = COLOR_MODEL_32BIT.createCompatibleSampleModel(width, height);
+        final WritableRaster raster = Raster.createWritableRaster(sm, db, null);
+        return new BufferedImage(COLOR_MODEL_32BIT, raster, true, null);
     }
 
     @TruffleBoundary

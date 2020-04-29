@@ -10,7 +10,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Toolkit;
-import java.awt.color.ColorSpace;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -26,12 +25,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferInt;
-import java.awt.image.DirectColorModel;
-import java.awt.image.Raster;
-import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -60,6 +53,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.nodes.plugins.DropPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
@@ -67,15 +61,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
     @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = new int[]{0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
-    private static final DirectColorModel COLOR_MODEL_32BIT = new DirectColorModel(
-                    ColorSpace.getInstance(ColorSpace.CS_sRGB),
-                    32,
-                    0x00ff0000,  // Red
-                    0x0000ff00,  // Green
-                    0x000000ff,  // Blue
-                    0xff000000,  // Alpha
-                    true,        // Alpha Premultiplied
-                    DataBuffer.TYPE_INT);
 
     public final SqueakImageContext image;
     private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
@@ -164,18 +149,10 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             final int height = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
             assert (long) sqDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
-                bufferedImage = new32BitBufferedImage(bitmap.getIntStorage(), width, height);
+                bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height);
                 repaint();
             }
         }
-    }
-
-    /* Wraps bitmap in a BufferedImage for efficient drawing. */
-    private static BufferedImage new32BitBufferedImage(final int[] words, final int width, final int height) {
-        final DataBufferInt db = new DataBufferInt(words, words.length);
-        final SampleModel sm = COLOR_MODEL_32BIT.createCompatibleSampleModel(width, height);
-        final WritableRaster raster = Raster.createWritableRaster(sm, db, new Point(0, 0));
-        return new BufferedImage(COLOR_MODEL_32BIT, raster, true, null);
     }
 
     @Override
@@ -313,7 +290,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             }
             final BufferedImage bufferedImage;
             if (depth == 32) {
-                bufferedImage = new32BitBufferedImage(cursorWords, width, height);
+                bufferedImage = MiscUtils.new32BitBufferedImage(cursorWords, width, height);
             } else {
                 bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                 for (int y = 0; y < height; y++) {

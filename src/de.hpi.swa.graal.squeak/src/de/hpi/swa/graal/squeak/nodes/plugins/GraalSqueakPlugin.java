@@ -7,22 +7,33 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.interop.JavaObjectWrapper;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -87,6 +98,37 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final Object target) {
             return JavaObjectWrapper.wrap(target);
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(FORM.class)
+    @SqueakPrimitive(names = "primitiveFormToBufferedImage")
+    protected abstract static class PrimFormToBufferedImageNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimFormToBufferedImageNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "form.instsize() > OFFSET")
+        protected static final Object doFormToBufferedImage(@SuppressWarnings("unused") final Object receiver, final PointersObject form,
+                        @Cached final AbstractPointersObjectReadNode readNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            try {
+                /* Extract information from form. */
+                final NativeObject bits = (NativeObject) readNode.execute(form, FORM.BITS);
+                final int width = (int) (long) readNode.execute(form, FORM.WIDTH);
+                final int height = (int) (long) readNode.execute(form, FORM.HEIGHT);
+                final long depth = (long) readNode.execute(form, FORM.DEPTH);
+                if (!bits.isIntType() || depth != 32) {
+                    CompilerDirectives.transferToInterpreter();
+                    throw PrimitiveFailed.GENERIC_ERROR;
+                }
+                /* Use bitmap's storage as backend for BufferedImage. */
+                return image.env.asGuestValue(MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height));
+            } catch (final ClassCastException e) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.GENERIC_ERROR;
+            }
         }
     }
 }
