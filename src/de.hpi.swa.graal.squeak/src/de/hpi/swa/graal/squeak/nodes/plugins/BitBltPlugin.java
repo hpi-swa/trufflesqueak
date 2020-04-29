@@ -28,8 +28,8 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.graal.squeak.util.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.NotProvided;
 
 public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -171,9 +171,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary(transferToInterpreterOnException = false)
-        protected final Object doValueAt(final PointersObject receiver, final long n, final NilObject nil) {
+        protected final Object doValueAt(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NilObject nil) {
             method.image.bitblt.resetSuccessFlag();
-            return method.image.bitblt.primitiveWarpBits(receiver, n, nil);
+            return method.image.bitblt.primitiveWarpBits(receiver, n, NilObject.SINGLETON);
         }
 
         @Specialization

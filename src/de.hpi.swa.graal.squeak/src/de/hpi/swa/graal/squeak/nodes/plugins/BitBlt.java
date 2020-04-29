@@ -2674,30 +2674,17 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#primitivePixelValueAtX:y: */
     public long primitivePixelValueAt(final PointersObject bbObj, final long xVal, final long yVal) {
-        final NativeObject bitmap;
-        final long bitsSize;
-        final long depth;
-        final long mask;
-        final long pixel;
-        final long ppW;
-        final long shift;
-        final long stride;
-        final long word;
+        assert !(xVal < 0 || yVal < 0) : "Precondition not checked in guard";
+        assert isPointers(bbObj) && slotSizeOf(bbObj) >= FORM.OFFSET : "Precondition not checked in guard";
 
-        if (xVal < 0 || yVal < 0) {
-            return 0L;
-        }
-        if (!(isPointers(bbObj) && slotSizeOf(bbObj) >= 4)) {
-            PrimitiveFailed.andTransferToInterpreter();
-        }
-        bitmap = fetchNativeofObjectOrNull(FORM.BITS, bbObj);
+        final NativeObject bitmap = fetchNativeofObjectOrNull(FORM.BITS, bbObj);
         if (!isWordsOrBytes(bitmap)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         width = fetchIntegerofObject(FORM.WIDTH, bbObj);
         height = fetchIntegerofObject(FORM.HEIGHT, bbObj);
         /* if width/height/depth are not integer, fail */
-        depth = fetchIntegerofObject(FORM.DEPTH, bbObj);
+        final int depth = fetchIntegerofObject(FORM.DEPTH, bbObj);
         assert !failed();
         if (xVal >= width || yVal >= height) {
             return 0L;
@@ -2706,9 +2693,10 @@ public final class BitBlt {
             PrimitiveFailed.andTransferToInterpreter();
         }
         /* pixels in each word */
-        ppW = div(32, depth);
+        final int ppW = div(32, depth);
         /* how many words per row of pixels */
-        stride = div(width + (ppW - 1), ppW);
+        final int stride = div(width + ppW - 1, ppW);
+        final int bitsSize;
         if (isWords(bitmap)) {
             bitsSize = bitmap.getIntLength() * Integer.SIZE;
         } else {
@@ -2720,21 +2708,21 @@ public final class BitBlt {
         }
         /* load the word that contains our target */
         final long index = yVal * stride + div(xVal, ppW);
+        final long word;
         if (isWords(bitmap)) {
             word = Integer.toUnsignedLong(bitmap.getIntStorage()[(int) index]);
         } else {
             word = Integer.toUnsignedLong(UnsafeUtils.getInt(bitmap.getByteStorage(), index));
         }
         /* make a mask to isolate the pixel within that word */
-        mask = shr(0xFFFFFFFFL, 32 - depth);
+        final long mask = shr(0xFFFFFFFFL, 32 - depth);
         /*
          * this is the tricky MSB part - we mask the xVal to find how far into the word we need,
          * then add 1 for the pixel we're looking for, then * depth to get the bit shift
          */
-        shift = 32 - ((xVal & ppW - 1) + 1) * depth;
+        final long shift = 32 - ((xVal & ppW - 1) + 1) * depth;
         /* shift, mask and dim the lights */
-        pixel = shr(word, shift) & mask;
-        return pixel;
+        return shr(word, shift) & mask;
     }
 
     /*
@@ -3621,9 +3609,6 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#unlockSurfaces */
     private void unlockSurfaces() {
-        if (!hasSurfaceLock) {
-            return;
-        }
         // Actual unlocking code not needed for GraalSqueak.
         hasSurfaceLock = false;
     }
@@ -4159,6 +4144,10 @@ public final class BitBlt {
 
     private static int slotSizeOf(final PointersObject object) {
         return object.size();
+    }
+
+    private static boolean isPointers(final PointersObject object) {
+        return object != null;
     }
 
     private static boolean isPointers(final Object object) {
