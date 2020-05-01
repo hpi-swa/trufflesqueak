@@ -61,7 +61,6 @@ public final class LogHandlerAccessor {
                 }
                 output = System.err;
                 break;
-            case "out":
             default:
                 if (firstTime) {
                     firstTime = false;
@@ -228,7 +227,7 @@ public final class LogHandlerAccessor {
         private static Method attachmentMethod;
         private static Object theUnsafe;
 
-        static void getCleanMethodPrivileged() {
+        private static void getCleanMethodPrivileged() {
             if (PRE_JAVA_9) {
                 try {
                     cleanMethod = Class.forName("sun.misc.Cleaner").getMethod("clean");

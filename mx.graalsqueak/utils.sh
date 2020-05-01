@@ -33,7 +33,7 @@ readonly OS_NAME JAVA_HOME_SUFFIX
 
 
 add-path() {
-  echo "::add-path::$(resolve-path $1)"
+  echo "::add-path::$(resolve-path "$1")"
 }
 
 deploy-asset() {
@@ -112,7 +112,7 @@ download-graalsqueak-image() {
 
 enable-jdk() {
   add-path "$1/bin"
-  set-env "JAVA_HOME" "$(resolve-path $1)"
+  set-env "JAVA_HOME" "$(resolve-path "$1")"
 }
 
 ensure-test-image() {
@@ -146,9 +146,9 @@ installable-filename() {
 resolve-path() {
   if [[ "${OS_NAME}" == "windows" ]]; then
     # Convert Unix path to Windows path
-    echo $1 | sed 's/\/c/C:/g' | sed 's/\//\\/g'
+    echo "$1" | sed 's/\/c/C:/g' | sed 's/\//\\/g'
   else
-    echo $1
+    echo "$1"
   fi
 }
 
@@ -196,7 +196,7 @@ set-up-graalvm-ce() {
 
   graalvm_home="${target_dir}/graalvm-ce-${java_version}-${DEP_GRAALVM}${JAVA_HOME_SUFFIX}"
   add-path "${graalvm_home}/bin"
-  set-env "GRAALVM_HOME" "$(resolve-path ${graalvm_home})"
+  set-env "GRAALVM_HOME" "$(resolve-path "${graalvm_home}")"
   
   echo "[${file} set up successfully]"
 }

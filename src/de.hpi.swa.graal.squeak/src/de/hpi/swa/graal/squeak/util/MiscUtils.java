@@ -54,7 +54,7 @@ public final class MiscUtils {
     public static final long TIME_ZONE_OFFSET_MICROSECONDS = (Calendar.getInstance().get(Calendar.ZONE_OFFSET) + Calendar.getInstance().get(Calendar.DST_OFFSET)) * 1000L;
     public static final long TIME_ZONE_OFFSET_SECONDS = TIME_ZONE_OFFSET_MICROSECONDS / 1000 / 1000;
 
-    @CompilationFinal static SecureRandom random;
+    @CompilationFinal private static SecureRandom random;
 
     private MiscUtils() {
     }

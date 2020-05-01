@@ -6,6 +6,7 @@
 package de.hpi.swa.graal.squeak.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -63,7 +64,7 @@ public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
 
         writeAndValidate(obj1, 1, dummyClass);
         assertTrue("Write produces valid layout", obj1.getLayout().isValid());
-        assertTrue("Write invalidates older layouts", !obj2.getLayout().isValid());
+        assertFalse("Write invalidates older layouts", obj2.getLayout().isValid());
         assertTrue("Layouts should be out of sync", obj1.getLayout() != obj2.getLayout());
         assertTrue(obj1.object0 == dummyClass);
 

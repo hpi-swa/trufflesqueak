@@ -43,7 +43,7 @@ import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
  * Helper functions for debugging purposes.
  */
 public final class DebugUtils {
-    public static final boolean UNDER_DEBUG = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
+    public static final boolean UNDER_DEBUG = ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
 
     public static void dumpState() {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");

@@ -17,7 +17,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public final class CreateFrameArgumentsNode extends AbstractNode {
     @CompilationFinal private FrameSlot stackPointerSlot;
     @CompilationFinal private int stackPointer;
-    @Children FrameSlotReadNode[] receiverAndArgumentsNodes;
+    @Children private FrameSlotReadNode[] receiverAndArgumentsNodes;
 
     private CreateFrameArgumentsNode(final int argumentCount) {
         receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];

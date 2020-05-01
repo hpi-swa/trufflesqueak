@@ -362,13 +362,13 @@ public final class JavaObjectWrapper implements TruffleObject {
 
         @Specialization(guards = "!receiver.isClass()")
         @SuppressWarnings("unused")
-        static Object doUnsupported(final JavaObjectWrapper receiver, final Object[] args) throws UnsupportedMessageException {
+        protected static final Object doUnsupported(final JavaObjectWrapper receiver, final Object[] args) throws UnsupportedMessageException {
             throw UnsupportedMessageException.create();
         }
 
         @TruffleBoundary
         @Specialization(guards = "receiver.isArrayClass()")
-        static Object doArrayCached(final JavaObjectWrapper receiver, final Object[] args,
+        protected static final Object doArrayCached(final JavaObjectWrapper receiver, final Object[] args,
                         @CachedLibrary(limit = "1") final InteropLibrary lib) throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
             if (args.length != 1) {
                 throw ArityException.create(1, args.length);
@@ -385,7 +385,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
         @TruffleBoundary
         @Specialization(guards = "receiver.isDefaultClass()")
-        static Object doObjectCached(final JavaObjectWrapper receiver, final Object[] args) throws UnsupportedTypeException {
+        protected static final Object doObjectCached(final JavaObjectWrapper receiver, final Object[] args) throws UnsupportedTypeException {
             assert !receiver.isArrayClass();
             iterateConstructors: for (final Constructor<?> constructor : receiver.asClass().getConstructors()) {
                 if (constructor.getParameterCount() == args.length) {
