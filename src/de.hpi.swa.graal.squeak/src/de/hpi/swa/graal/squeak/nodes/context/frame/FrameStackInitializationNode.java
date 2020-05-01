@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.graal.squeak.nodes.context.frame;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -47,8 +48,7 @@ public final class FrameStackInitializationNode extends AbstractNode {
                 writeNodes[i] = insert(FrameSlotWriteNode.create(code.getStackSlot(i)));
             }
         }
-
-        CompilerDirectives.isCompilationConstant(writeNodes.length);
+        CompilerAsserts.partialEvaluationConstant(writeNodes.length);
         final Object[] arguments = frame.getArguments();
         assert arguments.length == FrameAccess.expectedArgumentSize(numArgs);
         for (int i = 0; i < numArgs; i++) {

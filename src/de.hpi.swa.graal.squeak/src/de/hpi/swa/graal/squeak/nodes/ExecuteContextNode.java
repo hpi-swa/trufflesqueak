@@ -160,7 +160,7 @@ public class ExecuteContextNode extends AbstractNode implements InstrumentableNo
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     private Object startBytecode(final VirtualFrame frame) {
-        CompilerAsserts.compilationConstant(bytecodeNodes.length);
+        CompilerAsserts.partialEvaluationConstant(bytecodeNodes.length);
         int pc = 0;
         int backJumpCounter = 0;
         Object returnValue = null;
