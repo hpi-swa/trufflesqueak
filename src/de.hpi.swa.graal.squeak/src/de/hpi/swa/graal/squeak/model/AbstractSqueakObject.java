@@ -25,6 +25,7 @@ import com.oracle.truffle.api.nodes.ControlFlowException;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.interop.BoundMethod;
 import de.hpi.swa.graal.squeak.interop.InteropArray;
 import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
 import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
@@ -77,10 +78,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                     @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
                     @Shared("classNode") @Cached final SqueakObjectClassNode classNode) throws UnknownIdentifierException {
         final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(this), toSelector(member));
-        if (methodObject == null) {
-            throw UnknownIdentifierException.create(member);
+        if (methodObject instanceof CompiledMethodObject) {
+            return new BoundMethod((CompiledMethodObject) methodObject, this);
         } else {
-            return methodObject;
+            throw UnknownIdentifierException.create(member);
         }
     }
 
