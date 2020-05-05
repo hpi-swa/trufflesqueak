@@ -23,11 +23,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 BASE_VM_ARGS = [
     # RUNTIME
     '-Xss64M',  # Increase stack size (`-XX:ThreadStackSize=64M` not working)
-
-    # GARBAGE COLLECTOR (optimized for GraalSqueak image)
-    '-XX:OldSize=256M',         # Initial tenured generation size
-    '-XX:NewSize=1G',           # Initial new generation size
-    '-XX:MetaspaceSize=32M',    # Initial size of Metaspaces
 ]
 BASE_VM_ARGS_TESTING = [
     # RUNTIME
@@ -46,6 +41,11 @@ if IS_JDK9_AND_LATER:
     # Make Truffle.getRuntime() accessible for VM introspection
     BASE_VM_ARGS.append('--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED')
     BASE_VM_ARGS_TESTING.append('--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED')
+else:
+    # Tweaks for Java 8's Parallel GC (optimized for GraalSqueak image)
+    BASE_VM_ARGS.append('-XX:OldSize=256M')       # Initial tenured generation size
+    BASE_VM_ARGS.append('-XX:NewSize=1G')         # Initial new generation size
+    BASE_VM_ARGS.append('-XX:MetaspaceSize=32M')  # Initial size of Metaspaces
 
 _suite = mx.suite('graalsqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
