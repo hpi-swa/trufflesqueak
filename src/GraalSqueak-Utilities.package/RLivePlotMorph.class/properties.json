@@ -6,9 +6,9 @@
 		 ],
 	"commentStamp" : "",
 	"instvars" : [
-		"samples" ],
-	"name" : "GraalInfoMorph",
+		"collection" ],
+	"name" : "RLivePlotMorph",
 	"pools" : [
 		 ],
-	"super" : "StringMorph",
+	"super" : "RPlotMorph",
 	"type" : "normal" }

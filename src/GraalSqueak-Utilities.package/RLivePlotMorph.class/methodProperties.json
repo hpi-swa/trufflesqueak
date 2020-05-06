@@ -1,0 +1,9 @@
+{
+	"class" : {
+		"example" : "fn 5/1/2020 13:21",
+		"on:with:" : "fn 5/1/2020 13:57" },
+	"instance" : {
+		"initialize" : "fn 5/1/2020 13:24",
+		"on:with:" : "fn 5/1/2020 19:13",
+		"step" : "fn 5/1/2020 13:41",
+		"stepTime" : "fn 4/29/2020 16:02" } }

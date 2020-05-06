@@ -1,14 +1,14 @@
 {
-	"category" : "GraalSqueak-Tools-Notebooks",
+	"category" : "GraalSqueak-Utilities",
 	"classinstvars" : [
 		 ],
 	"classvars" : [
 		 ],
 	"commentStamp" : "",
 	"instvars" : [
-		"fileName" ],
-	"name" : "PNBImageMorph",
+		"plotCode" ],
+	"name" : "RPlotMorph",
 	"pools" : [
 		 ],
-	"super" : "ImageMorph",
+	"super" : "JavaImageMorph",
 	"type" : "normal" }

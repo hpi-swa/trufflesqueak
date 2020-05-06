@@ -14,7 +14,11 @@ displayResult: anObject
 		self
 			vResizing: #shrinkWrap;
 			layoutPolicy: TableLayout new.
-		self addMorph: (anObject addFlexShell hResizing: #spaceFill; yourself).
+		(anObject isKindOf: RPlotMorph)
+			ifTrue: [
+				"RPlotMorph does not need flex shell, it redraws itself on resize"
+				self addMorph: (anObject hResizing: #spaceFill; yourself) ]
+			ifFalse: [ self addMorph: (anObject addFlexShell hResizing: #spaceFill; yourself) ].
 		^ self ].
 	"Add support for images, ..."
 	self addMorph: (PolyglotNotebook explorerMorphFor: anObject) fullFrame: (LayoutFrame fractions: (0@0 corner: 1@1)).

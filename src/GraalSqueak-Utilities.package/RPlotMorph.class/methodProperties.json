@@ -1,0 +1,13 @@
+{
+	"class" : {
+		"example" : "fn 5/1/2020 12:57",
+		"extent:plotCode:" : "fn 4/29/2020 15:46" },
+	"instance" : {
+		"copy" : "fn 4/30/2020 12:43",
+		"exportSVG" : "fn 4/30/2020 09:54",
+		"exportSVG:width:height:" : "fn 4/30/2020 10:19",
+		"form" : "fn 4/29/2020 15:42",
+		"handlesMouseDown:" : "fn 4/30/2020 09:39",
+		"plotCode:" : "fn 4/29/2020 15:40",
+		"renderIntoForm" : "fn 4/29/2020 15:42",
+		"yellowButtonActivity:" : "fn 4/30/2020 12:44" } }

@@ -4,13 +4,7 @@ evaluateExpression:	aText
 	self codeCell isMarkdown ifTrue: [ ^ nil ].
 	code := aText asString.
 	^ (code beginsWith: '%ggplot2')
-		ifTrue: [	 | codeWithoutFirstLine |
-				codeWithoutFirstLine := code lines allButFirst joinSeparatedBy: String cr.
-				(PNBImageMorph for: (Polyglot eval: 'R' string: 
-('library(ggplot2);
-bindings <- import("bindings")', String cr,
-codeWithoutFirstLine, String cr,
-'file <- tempfile(fileext = ".png")
-ggsave(file, device = "png", dpi = 72)
-print(file)')) asString ) ]
+		ifTrue: [ RPlotMorph
+					extent: (self width - 10)@(self width)
+					plotCode: (code allButFirst: 9) ]
 		ifFalse: [ Polyglot eval: self codeCell languageID string: code withBindingsNamed: 'bindings' ]

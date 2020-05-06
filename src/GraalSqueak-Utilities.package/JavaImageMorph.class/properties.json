@@ -6,9 +6,11 @@
 		 ],
 	"commentStamp" : "",
 	"instvars" : [
-		"samples" ],
-	"name" : "GraalInfoMorph",
+		"bufferedImage",
+		"graphics2D",
+		"form" ],
+	"name" : "JavaImageMorph",
 	"pools" : [
 		 ],
-	"super" : "StringMorph",
+	"super" : "Morph",
 	"type" : "normal" }
