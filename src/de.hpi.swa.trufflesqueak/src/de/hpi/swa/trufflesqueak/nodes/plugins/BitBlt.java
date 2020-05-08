@@ -170,7 +170,6 @@ public final class BitBlt {
     private AbstractSqueakObject halftoneForm;
     private int[] halftoneBits;
     private long halftoneHeight;
-    private boolean hasSurfaceLock;
     private long hDir;
     private int height;
     @SuppressWarnings("unused") private boolean isWarping;
@@ -1995,8 +1994,6 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#lockSurfaces */
     private boolean lockSurfaces() {
-        hasSurfaceLock = false;
-
         // Actual locking code not needed for TruffleSqueak.
         assert destBits != null || destBytes != null : "Unexpected `null` value";
         assert sourceBits != null || noSource;
@@ -3615,7 +3612,6 @@ public final class BitBlt {
     /* BitBltSimulation>>#unlockSurfaces */
     private void unlockSurfaces() {
         // Actual unlocking code not needed for TruffleSqueak.
-        hasSurfaceLock = false;
     }
 
     /* BitBltSimulation>>#warpBits */
