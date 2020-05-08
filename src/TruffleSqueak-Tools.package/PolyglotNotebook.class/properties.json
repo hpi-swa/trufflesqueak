@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"cellContainer" ],
+	"name" : "PolyglotNotebook",
+	"pools" : [
+		 ],
+	"super" : "Model",
+	"type" : "normal" }

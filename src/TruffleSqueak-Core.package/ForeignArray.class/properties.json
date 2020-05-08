@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"foreignObject" ],
+	"name" : "ForeignArray",
+	"pools" : [
+		 ],
+	"super" : "ArrayedCollection",
+	"type" : "normal" }

@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools-Notebooks",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"codeCell" ],
+	"name" : "PNBCodeCellEditor",
+	"pools" : [
+		 ],
+	"super" : "TextMorph",
+	"type" : "normal" }

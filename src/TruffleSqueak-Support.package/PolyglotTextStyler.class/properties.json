@@ -1,0 +1,17 @@
+{
+	"category" : "TruffleSqueak-Support",
+	"classinstvars" : [
+		"Default" ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"formatter",
+		"lexers",
+		"rubyUnbox",
+		"stStyler" ],
+	"name" : "PolyglotTextStyler",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

@@ -1,0 +1,14 @@
+{
+	"category" : "BaselineOfTruffleSqueak",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "BaselineOfTruffleSqueak",
+	"pools" : [
+		 ],
+	"super" : "BaselineOf",
+	"type" : "normal" }

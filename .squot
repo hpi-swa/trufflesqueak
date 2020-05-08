@@ -1,8 +1,8 @@
 OrderedDictionary {
-	'src\/GraalSqueak-Core.package' : #SquotCypressCodeSerializer,
-	'src\/GraalSqueak-Tools.package' : #SquotCypressCodeSerializer,
-	'src\/GraalSqueak-Support.package' : #SquotCypressCodeSerializer,
-	'src\/GraalSqueak-Tests.package' : #SquotCypressCodeSerializer,
-	'src\/BaselineOfGraalSqueak.package' : #SquotCypressCodeSerializer,
-	'src\/GraalSqueak-Utilities.package' : #SquotCypressCodeSerializer
+	'src\/BaselineOfTruffleSqueak.package' : #SquotCypressCodeSerializer,
+	'src\/TruffleSqueak-Core.package' : #SquotCypressCodeSerializer,
+	'src\/TruffleSqueak-Support.package' : #SquotCypressCodeSerializer,
+	'src\/TruffleSqueak-Tests.package' : #SquotCypressCodeSerializer,
+	'src\/TruffleSqueak-Tools.package' : #SquotCypressCodeSerializer,
+	'src\/TruffleSqueak-Utilities.package' : #SquotCypressCodeSerializer
 }

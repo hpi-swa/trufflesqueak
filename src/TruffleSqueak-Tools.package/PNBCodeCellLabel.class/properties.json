@@ -1,0 +1,15 @@
+{
+	"category" : "TruffleSqueak-Tools-Notebooks",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"codeCell",
+		"colorForLanguageID" ],
+	"name" : "PNBCodeCellLabel",
+	"pools" : [
+		 ],
+	"super" : "PluggableButtonMorph",
+	"type" : "normal" }

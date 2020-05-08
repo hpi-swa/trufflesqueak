@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "InteropTest",
+	"pools" : [
+		 ],
+	"super" : "TestCase",
+	"type" : "normal" }

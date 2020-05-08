@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "PolyglotToolSet",
+	"pools" : [
+		 ],
+	"super" : "StandardToolSet",
+	"type" : "normal" }
