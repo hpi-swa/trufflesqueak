@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.interop;
+package de.hpi.swa.trufflesqueak.interop;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
@@ -12,11 +12,11 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.DispatchUneagerlyNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class BoundMethod implements TruffleObject {

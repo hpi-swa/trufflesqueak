@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.model.layout;
+package de.hpi.swa.trufflesqueak.model.layout;
 
 import java.util.Arrays;
 
@@ -13,10 +13,10 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class ObjectLayout {
     @CompilationFinal(dimensions = 1) private final SlotLocation[] locations;

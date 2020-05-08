@@ -3,22 +3,22 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.bytecodes;
+package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
-import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteMarkContextsNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackTopNode;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.trufflesqueak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
+import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class StoreBytecodes {
 

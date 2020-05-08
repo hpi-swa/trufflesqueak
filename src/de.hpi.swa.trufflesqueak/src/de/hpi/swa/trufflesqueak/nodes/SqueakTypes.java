@@ -3,13 +3,13 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes;
+package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
-import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 
 @TypeSystem
 public class SqueakTypes {

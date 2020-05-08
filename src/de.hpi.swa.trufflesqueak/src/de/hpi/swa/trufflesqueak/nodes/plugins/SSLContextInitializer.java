@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.plugins;
+package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import static java.util.Arrays.asList;
 

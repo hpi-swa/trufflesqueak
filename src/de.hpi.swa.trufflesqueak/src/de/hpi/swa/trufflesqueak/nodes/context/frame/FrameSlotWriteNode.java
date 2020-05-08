@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.context.frame;
+package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -66,7 +66,7 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
     }
 
     private static boolean isNullOrIllegalPrimitive(final Object value) {
-        /* `null` and all primitive types not globally used/allowed in GraalSqueak. */
+        /* `null` and all primitive types not globally used/allowed in TruffleSqueak. */
         return value == null || value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Float;
     }
 }

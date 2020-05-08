@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.test;
+package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -21,23 +21,23 @@ import org.junit.rules.ExpectedException;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
-import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.BlockClosureObject;
-import de.hpi.swa.graal.squeak.model.BooleanObject;
-import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 
 public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Rule public ExpectedException exceptions = ExpectedException.none();

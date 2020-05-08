@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.aot;
+package de.hpi.swa.trufflesqueak.aot;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -22,34 +22,34 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.aot.SDL.Cursor;
-import de.hpi.swa.graal.squeak.aot.SDL.Event;
-import de.hpi.swa.graal.squeak.aot.SDL.KeyboardEvent;
-import de.hpi.swa.graal.squeak.aot.SDL.MouseButtonEvent;
-import de.hpi.swa.graal.squeak.aot.SDL.MouseMotionEvent;
-import de.hpi.swa.graal.squeak.aot.SDL.MouseWheelEvent;
-import de.hpi.swa.graal.squeak.aot.SDL.Rect;
-import de.hpi.swa.graal.squeak.aot.SDL.Renderer;
-import de.hpi.swa.graal.squeak.aot.SDL.TextInputEvent;
-import de.hpi.swa.graal.squeak.aot.SDL.Texture;
-import de.hpi.swa.graal.squeak.aot.SDL.Window;
-import de.hpi.swa.graal.squeak.aot.SDL.WindowEvent;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.io.DisplayPoint;
-import de.hpi.swa.graal.squeak.io.SqueakDisplayInterface;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEY;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD_EVENT;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
-import de.hpi.swa.graal.squeak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.aot.SDL.Cursor;
+import de.hpi.swa.trufflesqueak.aot.SDL.Event;
+import de.hpi.swa.trufflesqueak.aot.SDL.KeyboardEvent;
+import de.hpi.swa.trufflesqueak.aot.SDL.MouseButtonEvent;
+import de.hpi.swa.trufflesqueak.aot.SDL.MouseMotionEvent;
+import de.hpi.swa.trufflesqueak.aot.SDL.MouseWheelEvent;
+import de.hpi.swa.trufflesqueak.aot.SDL.Rect;
+import de.hpi.swa.trufflesqueak.aot.SDL.Renderer;
+import de.hpi.swa.trufflesqueak.aot.SDL.TextInputEvent;
+import de.hpi.swa.trufflesqueak.aot.SDL.Texture;
+import de.hpi.swa.trufflesqueak.aot.SDL.Window;
+import de.hpi.swa.trufflesqueak.aot.SDL.WindowEvent;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakQuit;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.io.DisplayPoint;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplayInterface;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEY;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD_EVENT;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.trufflesqueak.util.OSDetector;
 
-final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDisplayInterface {
-    private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak + SubstrateVM + SDL2";
+final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDisplayInterface {
+    private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak + SubstrateVM + SDL2";
 
     private final SqueakImageContext image;
     private final Rect flipRect = UnmanagedMemory.malloc(SizeOf.unsigned(SDL.Rect.class));
@@ -78,7 +78,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     private int key = 0;
     private boolean isKeyDown = false;
 
-    Target_de_hpi_swa_graal_squeak_io_SqueakDisplay(final SqueakImageContext image) {
+    Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
         sdlAssert(SDL.init(SDL.initVideo()) == 0);
 

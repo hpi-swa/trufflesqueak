@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.image;
+package de.hpi.swa.trufflesqueak.image;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -14,23 +14,23 @@ import java.util.Map;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.BooleanObject;
-import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
-import de.hpi.swa.graal.squeak.util.UnsafeUtils;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakAbortException;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT_TAG;
+import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakImageReader {
     protected SqueakImageChunk hiddenRootsChunk;
@@ -72,7 +72,7 @@ public final class SqueakImageReader {
     }
 
     /*
-     * Image reading happens only once per GraalSqueak instance and should therefore be excluded
+     * Image reading happens only once per TruffleSqueak instance and should therefore be excluded
      * from Truffle compilation.
      */
     @TruffleBoundary

@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.context.frame;
+package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -13,11 +13,11 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 
-import de.hpi.swa.graal.squeak.model.BlockClosureObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNodeGen.FrameSlotReadClearNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNodeGen.FrameSlotReadNoClearNodeGen;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeGen.FrameSlotReadClearNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeGen.FrameSlotReadNoClearNodeGen;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ImportStatic(FrameSlotKind.class)
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {

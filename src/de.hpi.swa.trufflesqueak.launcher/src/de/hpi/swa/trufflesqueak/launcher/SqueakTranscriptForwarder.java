@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.launcher;
+package de.hpi.swa.trufflesqueak.launcher;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,7 +16,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 public final class SqueakTranscriptForwarder extends PrintStream {
     private static final String TRANSCRIPT_BLOCK_CODE = "[ :s | Transcript nextPutAll: s; flush ]";

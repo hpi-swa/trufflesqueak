@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.tck;
+package de.hpi.swa.trufflesqueak.tck;
 
 import static org.graalvm.polyglot.tck.TypeDescriptor.ANY;
 import static org.graalvm.polyglot.tck.TypeDescriptor.BOOLEAN;
@@ -27,7 +27,7 @@ import org.graalvm.polyglot.tck.LanguageProvider;
 import org.graalvm.polyglot.tck.Snippet;
 import org.graalvm.polyglot.tck.TypeDescriptor;
 
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 public final class SqueakLanguageProvider implements LanguageProvider {
     private static final TypeDescriptor NUMBER_AND_OBJECT = union(NUMBER, OBJECT);

@@ -17,7 +17,7 @@ readonly BASE_DIRECTORY="$(dirname "${SCRIPT_DIRECTORY}")"
 readonly py_export=$(cat <<-END
 from suite import suite;
 vars= ' '.join(['DEP_%s=%s' % (k.upper(), v)
-  for k, v in suite['graalsqueak:dependencyMap'].items()]);
+  for k, v in suite['trufflesqueak:dependencyMap'].items()]);
 slug = '/'.join(suite['url'].split('/')[-2:]);
 print('export %s GITHUB_SLUG=%s' % (vars, slug))
 END
@@ -96,7 +96,7 @@ download-asset() {
     "https://github.com/${GITHUB_SLUG}/releases/download/${git_tag}/${filename}"
 }
 
-download-graalsqueak-image() {
+download-trufflesqueak-image() {
   local target_dir="${BASE_DIRECTORY}/src/resources"
 
   pushd "${target_dir}" > /dev/null
@@ -140,7 +140,7 @@ installable-filename() {
   local git_describe=$(git describe --tags --always)
   local git_short_commit=$(git log -1 --format="%h")
   local git_description="${git_describe:-${git_short_commit}}"
-  echo "graalsqueak-installable-${java_version}-${OS_NAME}-amd64-${git_description}-for-GraalVM-${DEP_GRAALVM}.jar"
+  echo "trufflesqueak-installable-${java_version}-${OS_NAME}-amd64-${git_description}-for-GraalVM-${DEP_GRAALVM}.jar"
 }
 
 resolve-path() {
@@ -167,7 +167,7 @@ set-up-dependencies() {
   set-up-mx
   shallow-clone-graalvm-project https://github.com/oracle/graal.git
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
-  download-graalsqueak-image
+  download-trufflesqueak-image
   ensure-test-image
 
   if [[ "${java_version}" == "java8" ]]; then

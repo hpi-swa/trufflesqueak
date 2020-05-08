@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.trufflesqueak.util;
 
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
@@ -30,7 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakInterrupt;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakInterrupt;
 
 public final class MiscUtils {
     private static final CompilationMXBean COMPILATION_BEAN = ManagementFactory.getCompilationMXBean();

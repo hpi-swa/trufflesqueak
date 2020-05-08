@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.primitives;
+package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

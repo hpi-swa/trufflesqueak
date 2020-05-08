@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.trufflesqueak.util;
 
 /*
  * Represents not provided values to enable optional arguments in specializations.

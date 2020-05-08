@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.trufflesqueak.util;
 
 public final class OSDetector {
     public static final OSDetector SINGLETON = new OSDetector();

@@ -3,13 +3,13 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.model;
+package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
-import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
-import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
+import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 
 public final class CompiledBlockObject extends CompiledCodeObject {
     private final int offset;
@@ -85,8 +85,8 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
         /*
-         * This should not be reached, unless GraalSqueak supports FullBlockClosures. Print an error
-         * instead of crashing for now.
+         * This should not be reached, unless TruffleSqueak supports FullBlockClosures. Print an
+         * error instead of crashing for now.
          */
         SqueakLanguage.getContext().printToStdErr("Unexpected CompiledBlockObject: " + this);
     }
@@ -94,8 +94,8 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     @Override
     public void write(final SqueakImageWriter writer) {
         /*
-         * This should not be reached, unless GraalSqueak supports FullBlockClosures. Print an error
-         * instead of crashing for now.
+         * This should not be reached, unless TruffleSqueak supports FullBlockClosures. Print an
+         * error instead of crashing for now.
          */
         SqueakLanguage.getContext().printToStdErr("Unexpected CompiledBlockObject: " + this);
     }

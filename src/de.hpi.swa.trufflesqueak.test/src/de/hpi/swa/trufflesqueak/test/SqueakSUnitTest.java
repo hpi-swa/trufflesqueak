@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.test;
+package de.hpi.swa.trufflesqueak.test;
 
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
@@ -25,8 +25,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
-import de.hpi.swa.graal.squeak.test.SqueakTests.TestType;
+import de.hpi.swa.trufflesqueak.test.SqueakTests.SqueakTest;
+import de.hpi.swa.trufflesqueak.test.SqueakTests.TestType;
 
 /**
  * Run tests from the Squeak image.
@@ -84,7 +84,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     @BeforeClass
     public static void beforeClass() {
         printStatistics();
-        ensureGraalSqueakPackagesLoaded();
+        ensureTruffleSqueakPackagesLoaded();
     }
 
     private static void printStatistics() {
@@ -193,18 +193,18 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         }
     }
 
-    private static void ensureGraalSqueakPackagesLoaded() {
+    private static void ensureTruffleSqueakPackagesLoaded() {
         for (final SqueakTest test : TESTS) {
-            if (inGraalSqueakPackage(test.className)) {
-                image.getOutput().println("Loading GraalSqueak packages (required by " + test.className + "). This may take a while...");
-                loadGraalSqueakPackages();
+            if (inTruffleSqueakPackage(test.className)) {
+                image.getOutput().println("Loading TruffleSqueak packages (required by " + test.className + "). This may take a while...");
+                loadTruffleSqueakPackages();
                 break;
             }
         }
     }
 
-    private static boolean inGraalSqueakPackage(final String className) {
-        for (final String testCaseName : GRAALSQUEAK_TEST_CASE_NAMES) {
+    private static boolean inTruffleSqueakPackage(final String className) {
+        for (final String testCaseName : TRUFFLESQUEAK_TEST_CASE_NAMES) {
             if (testCaseName.equals(className)) {
                 return true;
             }
@@ -212,10 +212,10 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         return false;
     }
 
-    private static void loadGraalSqueakPackages() {
+    private static void loadTruffleSqueakPackages() {
         final long start = System.currentTimeMillis();
         evaluate(String.format("[Metacello new\n" +
-                        "  baseline: 'GraalSqueak';\n" +
+                        "  baseline: 'TruffleSqueak';\n" +
                         "  repository: 'filetree://%s';\n" +
                         "  onConflict: [:ex | ex allow];\n" +
                         "  load: #('tests')] on: ProgressInitiationException do: [:e |\n" +
@@ -224,7 +224,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
                         "                ifFalse: [e rearmHandlerDuring:\n" +
                         "                    [[e sendNotificationsTo: [:min :max :current | \"silence\"]]\n" +
                         "                        on: ProgressNotification do: [:notification | notification resume]]]]", getPathToInImageCode()));
-        image.getOutput().println("GraalSqueak packages loaded in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
+        image.getOutput().println("TruffleSqueak packages loaded in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
     }
 
     private static Map<TestType, Long> countByType(final Collection<SqueakTest> tests) {

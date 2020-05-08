@@ -3,17 +3,17 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.trufflesqueak.util;
 
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.TruffleLogger;
 
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 /**
- * Logging infrastructure for GraalSqueak. All loggers are consistently defined here, so that it is
- * clear which loggers are available.
+ * Logging infrastructure for TruffleSqueak. All loggers are consistently defined here, so that it
+ * is clear which loggers are available.
  */
 public final class LogUtils {
     public static final TruffleLogger GC = TruffleLogger.getLogger(SqueakLanguageConfig.ID, "gc");

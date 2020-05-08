@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.model;
+package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
@@ -26,17 +26,17 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
-import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
-import de.hpi.swa.graal.squeak.image.SqueakImageConstants;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
-import de.hpi.swa.graal.squeak.nodes.ResumeContextNode.ResumeContextRootNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
-import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
+import de.hpi.swa.trufflesqueak.nodes.ResumeContextNode.ResumeContextRootNode;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 @ExportLibrary(InteropLibrary.class)
 public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {

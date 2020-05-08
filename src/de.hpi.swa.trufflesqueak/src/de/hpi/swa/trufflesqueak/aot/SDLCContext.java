@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.aot;
+package de.hpi.swa.trufflesqueak.aot;
 
 import java.util.Collections;
 import java.util.List;

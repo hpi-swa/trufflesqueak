@@ -3,21 +3,21 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.test;
+package de.hpi.swa.trufflesqueak.test;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSqueakTestCase {
 

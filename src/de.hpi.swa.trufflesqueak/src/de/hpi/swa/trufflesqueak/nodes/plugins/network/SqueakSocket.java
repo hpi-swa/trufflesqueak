@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.plugins.network;
+package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -18,8 +18,8 @@ import java.util.Set;
 
 import com.oracle.truffle.api.TruffleLogger;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 public abstract class SqueakSocket {
 

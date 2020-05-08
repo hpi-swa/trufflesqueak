@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.interop;
+package de.hpi.swa.trufflesqueak.interop;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

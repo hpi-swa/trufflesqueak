@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.test;
+package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -13,8 +13,8 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import de.hpi.swa.graal.squeak.model.BooleanObject;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {

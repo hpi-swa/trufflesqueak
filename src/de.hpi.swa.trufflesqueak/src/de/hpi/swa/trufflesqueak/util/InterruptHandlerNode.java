@@ -3,18 +3,18 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 
 public final class InterruptHandlerNode extends Node {
     @Child private SignalSemaphoreNode signalSemaporeNode;

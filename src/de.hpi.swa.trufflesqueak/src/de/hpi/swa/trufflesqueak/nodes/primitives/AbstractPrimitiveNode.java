@@ -3,14 +3,14 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.primitives;
+package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.context.ArgumentNodes.AbstractArgumentNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.AbstractPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.AbstractPrimitive;
 
 @NodeChild(value = "arguments", type = AbstractArgumentNode[].class)
 public abstract class AbstractPrimitiveNode extends AbstractNode implements AbstractPrimitive {

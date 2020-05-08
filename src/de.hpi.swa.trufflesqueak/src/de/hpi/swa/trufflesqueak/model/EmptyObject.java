@@ -3,12 +3,12 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.model;
+package de.hpi.swa.trufflesqueak.model;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 
 public final class EmptyObject extends AbstractSqueakObjectWithClassAndHash {
 

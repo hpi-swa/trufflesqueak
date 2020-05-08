@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.model;
+package de.hpi.swa.trufflesqueak.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,20 +25,20 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
-import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.SqueakImageReader;
-import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.CLASS_TRAIT;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.METACLASS;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectNewNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.image.SqueakImageReader;
+import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_TRAIT;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 /*
  * Represents all subclasses of ClassDescription (Class, Metaclass, TraitBehavior, ...).

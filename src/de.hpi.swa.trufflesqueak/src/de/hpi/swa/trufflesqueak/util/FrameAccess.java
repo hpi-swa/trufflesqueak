@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.trufflesqueak.util;
 
 import java.util.Arrays;
 
@@ -21,22 +21,22 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.BlockClosureObject;
-import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject.SLOT_IDENTIFIER;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.GetContextOrMarkerNode;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject.SLOT_IDENTIFIER;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 
 /**
- * GraalSqueak frame argument layout.
+ * TruffleSqueak frame argument layout.
  *
  * <pre>
  *                            +-------------------------------+
@@ -61,7 +61,7 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.GetContextOrMarkerNode;
  *                            +-------------------------------+
  * </pre>
  *
- * GraalSqueak frame slot layout.
+ * TruffleSqueak frame slot layout.
  *
  * <pre>
  *                       +-------------------------------+
@@ -286,7 +286,7 @@ public final class FrameAccess {
         setSender(frame, NilObject.SINGLETON);
     }
 
-    public static boolean isGraalSqueakFrame(final Frame frame) {
+    public static boolean isTruffleSqueakFrame(final Frame frame) {
         final Object[] arguments = frame.getArguments();
         return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()] instanceof CompiledMethodObject;
     }
@@ -373,7 +373,7 @@ public final class FrameAccess {
         LogUtils.ITERATE_FRAMES.fine("Iterating frames to find a marker...");
         final Frame frame = Truffle.getRuntime().iterateFrames(frameInstance -> {
             final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-            if (!isGraalSqueakFrame(current)) {
+            if (!isTruffleSqueakFrame(current)) {
                 return null;
             }
             LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getMethod(current).toString());

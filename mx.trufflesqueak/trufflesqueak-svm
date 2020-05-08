@@ -1,2 +1,2 @@
-DEFAULT_DYNAMIC_IMPORTS=/graalsqueak,/substratevm,/vm
-COMPONENTS=GraalSqueak,SubstrateVM
+DEFAULT_DYNAMIC_IMPORTS=/trufflesqueak,/substratevm,/vm
+COMPONENTS=TruffleSqueak,SubstrateVM

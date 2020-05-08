@@ -24,11 +24,11 @@ build.xml
 
 # mx
 /.mx
-/mx.graalsqueak/.pydevproject
-/mx.graalsqueak/env
-/mx.graalsqueak/eclipse-launches
+/mx.trufflesqueak/.pydevproject
+/mx.trufflesqueak/env
+/mx.trufflesqueak/eclipse-launches
 /mxbuild
-/GRAALSQUEAK*.dist
+/TRUFFLESQUEAK*.dist
 /coverage
 jacoco.exec
 
@@ -41,5 +41,5 @@ profiles/
 
 # GraalSqueak
 images
-graalsqueak*.zip
-graalsqueak*.jar
+trufflesqueak*.zip
+trufflesqueak*.jar

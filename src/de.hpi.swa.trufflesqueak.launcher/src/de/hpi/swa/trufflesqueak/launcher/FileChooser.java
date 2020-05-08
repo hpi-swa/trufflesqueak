@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.launcher;
+package de.hpi.swa.trufflesqueak.launcher;
 
 import java.io.File;
 
@@ -14,7 +14,7 @@ public final class FileChooser {
     public static String run() {
         final JFileChooser squeakImageChooser = new JFileChooser();
         squeakImageChooser.setFileFilter(new SqueakImageFilter());
-        squeakImageChooser.setApproveButtonToolTipText("Open selected image with GraalSqueak");
+        squeakImageChooser.setApproveButtonToolTipText("Open selected image with TruffleSqueak");
         final long result = squeakImageChooser.showOpenDialog(null);
         if (result == JFileChooser.APPROVE_OPTION) {
             return squeakImageChooser.getSelectedFile().getAbsolutePath();

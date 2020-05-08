@@ -3,14 +3,14 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.io;
+package de.hpi.swa.trufflesqueak.io;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD_EVENT;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD_EVENT;
 
 public final class SqueakKeyboard implements KeyListener {
     private final SqueakDisplay display;

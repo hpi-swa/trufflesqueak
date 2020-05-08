@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.image;
+package de.hpi.swa.trufflesqueak.image;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -23,52 +23,52 @@ import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
-import de.hpi.swa.graal.squeak.SqueakImage;
-import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.SqueakOptions.SqueakContextOptions;
-import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakSyntaxError;
-import de.hpi.swa.graal.squeak.interop.InteropMap;
-import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
-import de.hpi.swa.graal.squeak.io.DisplayPoint;
-import de.hpi.swa.graal.squeak.io.SqueakDisplay;
-import de.hpi.swa.graal.squeak.io.SqueakDisplayInterface;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.BlockClosureObject;
-import de.hpi.swa.graal.squeak.model.BooleanObject;
-import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ENVIRONMENT;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.MESSAGE;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SMALLTALK_IMAGE;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.graal.squeak.model.layout.SlotLocation;
-import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.graal.squeak.nodes.plugins.B2D;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBlt;
-import de.hpi.swa.graal.squeak.nodes.plugins.JPEGReader;
-import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
-import de.hpi.swa.graal.squeak.nodes.plugins.Zip;
-import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
-import de.hpi.swa.graal.squeak.shared.SqueakImageLocator;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.tools.SqueakMessageInterceptor;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.SqueakImage;
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
+import de.hpi.swa.trufflesqueak.interop.InteropMap;
+import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
+import de.hpi.swa.trufflesqueak.io.DisplayPoint;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
+import de.hpi.swa.trufflesqueak.io.SqueakDisplayInterface;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ENVIRONMENT;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MESSAGE;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SMALLTALK_IMAGE;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
+import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.B2D;
+import de.hpi.swa.trufflesqueak.nodes.plugins.BitBlt;
+import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReader;
+import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakSSL.SqSSL;
+import de.hpi.swa.trufflesqueak.nodes.plugins.Zip;
+import de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocket;
+import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.InterruptHandlerState;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakImageContext {
     /* Special objects */
@@ -193,8 +193,8 @@ public final class SqueakImageContext {
                 e.printStackTrace();
             }
             // Set author information.
-            evaluate("Utilities authorName: 'GraalSqueak'");
-            evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
+            evaluate("Utilities authorName: 'TruffleSqueak'");
+            evaluate("Utilities setAuthorInitials: 'TruffleSqueak'");
             // Initialize fresh MorphicUIManager.
             evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
         }
@@ -619,7 +619,7 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public void printToStdOut(final String string) {
         if (!options.isQuiet) {
-            getOutput().println("[graalsqueak] " + string);
+            getOutput().println("[trufflesqueak] " + string);
         }
     }
 
@@ -630,7 +630,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public void printToStdErr(final String string) {
-        getError().println("[graalsqueak] " + string);
+        getError().println("[trufflesqueak] " + string);
     }
 
     @TruffleBoundary

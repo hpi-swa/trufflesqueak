@@ -3,9 +3,9 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.io;
+package de.hpi.swa.trufflesqueak.io;
 
-import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 
 public interface SqueakDisplayInterface {
 

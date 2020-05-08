@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.shared;
+package de.hpi.swa.trufflesqueak.shared;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -13,7 +13,7 @@ import org.graalvm.home.HomeFinder;
 
 public final class SqueakImageLocator {
 
-    /* Returns path to image file in GraalSqueak's resources directory. */
+    /* Returns path to image file in TruffleSqueak's resources directory. */
     public static String findImage() {
         final Path resourcesDirectory = HomeFinder.getInstance().getLanguageHomes().get(SqueakLanguageConfig.ID).resolve("resources");
         final File resourcesDirectoryFile = resourcesDirectory.toFile();
@@ -23,7 +23,7 @@ public final class SqueakImageLocator {
             Arrays.sort(imageFiles);
             return resourcesDirectory.resolve(imageFiles[imageFiles.length - 1]).toString();
         } else {
-            throw new RuntimeException("Unable to locate an image file in GraalSqueak's resources directory.");
+            throw new RuntimeException("Unable to locate an image file in TruffleSqueak's resources directory.");
         }
     }
 }

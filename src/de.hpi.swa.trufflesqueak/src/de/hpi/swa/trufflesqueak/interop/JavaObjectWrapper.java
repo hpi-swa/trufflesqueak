@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.interop;
+package de.hpi.swa.trufflesqueak.interop;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -31,7 +31,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.graal.squeak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 
 @ExportLibrary(InteropLibrary.class)
 public final class JavaObjectWrapper implements TruffleObject {

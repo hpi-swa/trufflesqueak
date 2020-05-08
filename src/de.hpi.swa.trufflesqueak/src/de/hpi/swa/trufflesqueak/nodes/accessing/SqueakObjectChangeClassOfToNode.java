@@ -3,24 +3,24 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.accessing;
+package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetIntsNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetLongsNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetShortsNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectByteSizeNode;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeGetIntsNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeGetLongsNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeGetShortsNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectByteSizeNode;
 
 /** This node should only be used in primitive nodes as it may throw a PrimitiveFailed exception. */
 public abstract class SqueakObjectChangeClassOfToNode extends AbstractNode {

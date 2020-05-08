@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak;
+package de.hpi.swa.trufflesqueak;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,18 +23,18 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.interop.ContextObjectInfo;
-import de.hpi.swa.graal.squeak.interop.InteropArray;
-import de.hpi.swa.graal.squeak.interop.SqueakFileDetector;
-import de.hpi.swa.graal.squeak.interop.WrapToSqueakNode;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.interop.ContextObjectInfo;
+import de.hpi.swa.trufflesqueak.interop.InteropArray;
+import de.hpi.swa.trufflesqueak.interop.SqueakFileDetector;
+import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @TruffleLanguage.Registration(//
                 byteMimeTypes = SqueakLanguageConfig.MIME_TYPE, //
@@ -78,7 +78,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected boolean isThreadAccessAllowed(final Thread thread, final boolean singleThreaded) {
-        return true; // TODO: Experimental, make GraalSqueak work in multiple threads.
+        return true; // TODO: Experimental, make TruffleSqueak work in multiple threads.
     }
 
     @Override
@@ -99,7 +99,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     @Override
     protected Iterable<Scope> findLocalScopes(final SqueakImageContext context, final Node node, final Frame frame) {
         // TODO: support access at parse time (frame == null).
-        if (!FrameAccess.isGraalSqueakFrame(frame)) {
+        if (!FrameAccess.isTruffleSqueakFrame(frame)) {
             return super.findLocalScopes(context, node, frame);
         }
         final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(frame);

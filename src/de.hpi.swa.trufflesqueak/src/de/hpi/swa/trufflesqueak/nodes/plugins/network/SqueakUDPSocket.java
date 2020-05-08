@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.plugins.network;
+package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

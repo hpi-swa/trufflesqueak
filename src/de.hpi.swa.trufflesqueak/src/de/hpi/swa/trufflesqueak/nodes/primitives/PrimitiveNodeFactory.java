@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes.primitives;
+package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import java.util.HashSet;
 import java.util.List;
@@ -16,49 +16,49 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
-import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.context.ArgumentNodes.AbstractArgumentNode;
-import de.hpi.swa.graal.squeak.nodes.context.ArgumentNodes.ArgumentNode;
-import de.hpi.swa.graal.squeak.nodes.plugins.B2DPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.BMPReadWriterPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.ClipboardExtendedPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.CroquetPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.DSAPrims;
-import de.hpi.swa.graal.squeak.nodes.plugins.DropPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.FilePlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.FloatArrayPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.GraalSqueakPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.HostWindowPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.JPEGReaderPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers;
-import de.hpi.swa.graal.squeak.nodes.plugins.LocalePlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.NullPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.SecurityPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.SoundCodecPrims;
-import de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrims;
-import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL;
-import de.hpi.swa.graal.squeak.nodes.plugins.UUIDPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.UnixOSProcessPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.Win32OSProcessPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.ZipPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.network.SocketPlugin;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArithmeticPrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArrayStreamPrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.BlockClosurePrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ContextPrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
-import de.hpi.swa.graal.squeak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.ArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.B2DPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.BMPReadWriterPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.BitBltPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.ClipboardExtendedPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.CroquetPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.DSAPrims;
+import de.hpi.swa.trufflesqueak.nodes.plugins.DropPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.FloatArrayPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReaderPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
+import de.hpi.swa.trufflesqueak.nodes.plugins.LocalePlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.Matrix2x3Plugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.MiscPrimitivePlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.NullPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.PolyglotPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.SecurityPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.SoundCodecPrims;
+import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims;
+import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakSSL;
+import de.hpi.swa.trufflesqueak.nodes.plugins.UUIDPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.UnixOSProcessPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.Win32OSProcessPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.ZipPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.network.SocketPlugin;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArrayStreamPrimitives;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitives;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ContextPrimitives;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
+import de.hpi.swa.trufflesqueak.util.OSDetector;
 
 public final class PrimitiveNodeFactory {
     private static final int PRIMITIVE_EXTERNAL_CALL_INDEX = 117;
@@ -94,7 +94,7 @@ public final class PrimitiveNodeFactory {
                         new DSAPrims(),
                         new FilePlugin(),
                         new FloatArrayPlugin(),
-                        new GraalSqueakPlugin(),
+                        new TruffleSqueakPlugin(),
                         new HostWindowPlugin(),
                         new JPEGReaderPlugin(),
                         new LargeIntegers(),

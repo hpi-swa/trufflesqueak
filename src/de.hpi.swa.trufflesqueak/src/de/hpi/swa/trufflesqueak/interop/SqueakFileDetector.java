@@ -3,14 +3,14 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.interop;
+package de.hpi.swa.trufflesqueak.interop;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 
 import com.oracle.truffle.api.TruffleFile;
 
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 public class SqueakFileDetector implements TruffleFile.FileTypeDetector {
 

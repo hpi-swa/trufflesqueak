@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.test;
+package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertNotEquals;
 
@@ -24,17 +24,17 @@ import org.junit.BeforeClass;
 
 import com.oracle.truffle.api.Truffle;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
-import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
-import de.hpi.swa.graal.squeak.util.DebugUtils;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int SQUEAK_TIMEOUT_SECONDS = 60 * 2 * (DebugUtils.UNDER_DEBUG ? 1000 : 1);
@@ -43,7 +43,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int PRIORITY_10_LIST_INDEX = 9;
     protected static final String PASSED_VALUE = "passed";
 
-    protected static final String[] GRAALSQUEAK_TEST_CASE_NAMES = graalSqueakTestCaseNames();
+    protected static final String[] TRUFFLESQUEAK_TEST_CASE_NAMES = truffleSqueakTestCaseNames();
 
     private static PointersObject idleProcess;
     // For now we are single-threaded, so the flag can be static.
@@ -266,7 +266,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    private static String[] graalSqueakTestCaseNames() {
+    private static String[] truffleSqueakTestCaseNames() {
         final File[] srcDirectories = new File(getPathToInImageCode()).listFiles(File::isDirectory);
         final ArrayList<String> testCaseNames = new ArrayList<>();
         for (final File subDirectory : srcDirectories) {

@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.tools;
+package de.hpi.swa.trufflesqueak.tools;
 
 import org.graalvm.polyglot.Context;
 
@@ -15,8 +15,8 @@ import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.StandardTags.CallTag;
 import com.oracle.truffle.api.instrumentation.TruffleInstrument;
 
-import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.SqueakOptions;
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.SqueakOptions;
 
 @TruffleInstrument.Registration(id = SqueakMessageInterceptor.ID, services = SqueakMessageInterceptor.class)
 public final class SqueakMessageInterceptor extends TruffleInstrument {

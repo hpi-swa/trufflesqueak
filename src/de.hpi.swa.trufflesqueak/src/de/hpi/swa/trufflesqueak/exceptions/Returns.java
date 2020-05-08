@@ -3,13 +3,13 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.exceptions;
+package de.hpi.swa.trufflesqueak.exceptions;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
-import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.FrameMarker;
 
 public final class Returns {
     private abstract static class AbstractReturn extends ControlFlowException {

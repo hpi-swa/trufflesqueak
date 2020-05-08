@@ -3,10 +3,10 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.image;
+package de.hpi.swa.trufflesqueak.image;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObjectWithHash;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakImageConstants {
 

@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.shared;
+package de.hpi.swa.trufflesqueak.shared;
 
 public final class SqueakLanguageOptions {
     public static final String CODE_FLAG = "--code";

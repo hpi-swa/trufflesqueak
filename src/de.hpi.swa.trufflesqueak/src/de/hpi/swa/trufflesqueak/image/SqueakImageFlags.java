@@ -3,12 +3,12 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.image;
+package de.hpi.swa.trufflesqueak.image;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.io.DisplayPoint;
+import de.hpi.swa.trufflesqueak.io.DisplayPoint;
 
 public final class SqueakImageFlags {
     @CompilationFinal private long oldBaseAddress = -1;

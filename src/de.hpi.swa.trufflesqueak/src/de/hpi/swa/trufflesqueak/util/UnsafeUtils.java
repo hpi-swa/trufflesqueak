@@ -3,12 +3,12 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.trufflesqueak.util;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
-import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
+import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import sun.misc.Unsafe;
 
 public final class UnsafeUtils {

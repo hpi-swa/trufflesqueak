@@ -3,26 +3,26 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.model;
+package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.SqueakImageWriter;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayout;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ASSOCIATION;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.BINDING;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FRACTION;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.LINKED_LIST;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.POINT;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectIdentityNode;
-import de.hpi.swa.graal.squeak.util.ObjectGraphUtils.ObjectTracer;
+import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BINDING;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FRACTION;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
+import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class PointersObject extends AbstractPointersObject {
 

@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.io;
+package de.hpi.swa.trufflesqueak.io;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -11,10 +11,10 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.swing.event.MouseInputAdapter;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE_EVENT;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE_EVENT;
 
 public final class SqueakMouse extends MouseInputAdapter {
     private final SqueakDisplay display;

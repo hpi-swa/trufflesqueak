@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.io;
+package de.hpi.swa.trufflesqueak.io;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 

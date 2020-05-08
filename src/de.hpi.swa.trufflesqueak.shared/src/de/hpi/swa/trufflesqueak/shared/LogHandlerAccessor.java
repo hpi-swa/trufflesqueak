@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.shared;
+package de.hpi.swa.trufflesqueak.shared;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.READ;
@@ -45,26 +45,26 @@ public final class LogHandlerAccessor {
             case "mapped":
                 if (firstTime) {
                     firstTime = false;
-                    println("GraalSqueak log handler logging to memory-mapped file in " + LOG_FOLDER);
+                    println("TruffleSqueak log handler logging to memory-mapped file in " + LOG_FOLDER);
                 }
                 return new MappedHandler();
             case "file":
                 if (firstTime) {
                     firstTime = false;
-                    println("GraalSqueak log handler logging to log file in " + LOG_FOLDER);
+                    println("TruffleSqueak log handler logging to log file in " + LOG_FOLDER);
                 }
                 return new FileStreamHandler();
             case "err":
                 if (firstTime) {
                     firstTime = false;
-                    println("GraalSqueak log handler logging to standard err");
+                    println("TruffleSqueak log handler logging to standard err");
                 }
                 output = System.err;
                 break;
             default:
                 if (firstTime) {
                     firstTime = false;
-                    println("GraalSqueak log handler logging to standard out");
+                    println("TruffleSqueak log handler logging to standard out");
                 }
                 output = System.out;
         }

@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.io;
+package de.hpi.swa.trufflesqueak.io;
 
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -41,21 +41,21 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.DRAG;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants.WINDOW;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.FORM;
-import de.hpi.swa.graal.squeak.nodes.plugins.HostWindowPlugin;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.DRAG;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.EVENT_TYPE;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.KEYBOARD;
+import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.WINDOW;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakDisplay implements SqueakDisplayInterface {
-    private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
+    private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
     private static final boolean REPAINT_AUTOMATICALLY = false; // For debugging purposes.
     private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
@@ -300,7 +300,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                     }
                 }
             }
-            cursor = TOOLKIT.createCustomCursor(bufferedImage, new Point(0, 0), "GraalSqueak Cursor");
+            cursor = TOOLKIT.createCustomCursor(bufferedImage, new Point(0, 0), "TruffleSqueak Cursor");
         }
         canvas.setCursor(cursor);
     }

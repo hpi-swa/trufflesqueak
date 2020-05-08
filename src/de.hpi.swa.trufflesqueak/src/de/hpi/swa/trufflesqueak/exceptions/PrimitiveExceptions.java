@@ -3,12 +3,12 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.exceptions;
+package de.hpi.swa.trufflesqueak.exceptions;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
-import de.hpi.swa.graal.squeak.model.layout.ObjectLayouts.ERROR_TABLE;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ERROR_TABLE;
 
 public final class PrimitiveExceptions {
 

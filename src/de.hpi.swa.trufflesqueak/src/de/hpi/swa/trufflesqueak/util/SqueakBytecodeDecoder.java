@@ -3,47 +3,47 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.CompilerAsserts;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.DoubleExtendedDoAnythingNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.ExtendedBytecodes;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.UnknownBytecodeNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushActiveContextNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushConstantNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushNewArrayNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushReceiverNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushRemoteTempNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushTemporaryLocationNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnConstantNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromBlockNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromMethodNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SecondExtendedSendNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendLiteralSelectorNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSpecialSelectorNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SingleExtendedSendNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SingleExtendedSuperNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoReceiverVariableNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoRemoteTempNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLocationNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTempNode;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DoubleExtendedDoAnythingNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.ExtendedBytecodes;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.UnknownBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushActiveContextNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushClosureNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushNewArrayNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushRemoteTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushTemporaryLocationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromBlockNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SecondExtendedSendNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendLiteralSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSpecialSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SingleExtendedSendNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SingleExtendedSuperNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoRemoteTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLocationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTempNode;
 
 public final class SqueakBytecodeDecoder {
     private SqueakBytecodeDecoder() {

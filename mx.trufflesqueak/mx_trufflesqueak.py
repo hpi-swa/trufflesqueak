@@ -18,7 +18,7 @@ import mx_unittest
 
 
 LANGUAGE_ID = 'smalltalk'
-PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
+PACKAGE_NAME = 'de.hpi.swa.trufflesqueak'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 BASE_VM_ARGS = [
     # RUNTIME
@@ -42,12 +42,12 @@ if IS_JDK9_AND_LATER:
     BASE_VM_ARGS.append('--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED')
     BASE_VM_ARGS_TESTING.append('--add-opens=jdk.internal.vm.compiler/org.graalvm.compiler.truffle.runtime=ALL-UNNAMED')
 else:
-    # Tweaks for Java 8's Parallel GC (optimized for GraalSqueak image)
+    # Tweaks for Java 8's Parallel GC (optimized for TruffleSqueak image)
     BASE_VM_ARGS.append('-XX:OldSize=256M')       # Initial tenured generation size
     BASE_VM_ARGS.append('-XX:NewSize=1G')         # Initial new generation size
     BASE_VM_ARGS.append('-XX:MetaspaceSize=32M')  # Initial size of Metaspaces
 
-_suite = mx.suite('graalsqueak')
+_suite = mx.suite('trufflesqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
 
 
@@ -139,7 +139,7 @@ def _graal_vm_args(args):
 
 
 def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
-    """run GraalSqueak"""
+    """run TruffleSqueak"""
 
     env = env if env else os.environ
 
@@ -304,7 +304,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.code:
         vm_args.append('-Djava.awt.headless=true')
 
-    vm_args.append('%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME)
+    vm_args.append('%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME)
 
     squeak_arguments = []
     if parsed_args.disable_interrupts:
@@ -361,7 +361,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 
 def _get_runtime_jvm_args(jdk):
-    dists = ['GRAALSQUEAK', 'GRAALSQUEAK_LAUNCHER']
+    dists = ['TRUFFLESQUEAK', 'TRUFFLESQUEAK_LAUNCHER']
 
     is_graalvm = mx_truffle._is_graalvm(jdk or mx.get_jdk())
 
@@ -374,20 +374,20 @@ def _get_runtime_jvm_args(jdk):
 
 
 def _squeak_graalvm_launcher(args):
-    """Build and run a GraalVM graalsqueak launcher"""
+    """Build and run a GraalVM TruffleSqueak launcher"""
 
     dy = ['--dynamicimports', '/vm']
-    mx.run_mx(dy + ['--env', 'ce-graalsqueak', 'build'])
+    mx.run_mx(dy + ['--env', 'ce-trufflesqueak', 'build'])
     out = mx.OutputCapture()
     mx.run_mx(dy + ["graalvm-home"], out=mx.TeeOutputCapture(out))
-    launcher = os.path.join(out.data.strip(), "bin", "graalsqueak").split("\n")[-1].strip()
+    launcher = os.path.join(out.data.strip(), "bin", "trufflesqueak").split("\n")[-1].strip()
     mx.log(launcher)
     if args:
         mx.run([launcher] + args)
     return launcher
 
 
-def _graalsqueak_gate_runner(args, tasks):
+def _trufflesqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
     supports_coverage = '--jacocout' in sys.argv
 
@@ -435,13 +435,13 @@ def _add_copyright_checks(tasks):
 
 
 def _add_unit_tests(tasks, supports_coverage):
-    with mx_gate.Task('GraalSqueak JUnit and SUnit tests',
+    with mx_gate.Task('TruffleSqueak JUnit and SUnit tests',
                       tasks, tags=['test']) as t:
         if t:
             unittest_args = BASE_VM_ARGS_TESTING[:]
             if supports_coverage:
                 unittest_args.extend(_get_jacoco_agent_args())
-            unittest_args.extend(['--suite', 'graalsqueak', '--very-verbose',
+            unittest_args.extend(['--suite', 'trufflesqueak', '--very-verbose',
                                   '--color', '--enable-timing'])
 
             # Ensure Truffle TCK disabled (workaround needed since GraalVM 19.2.0)
@@ -479,7 +479,7 @@ mx_unittest.add_config_participant(_unittest_config_participant)
 
 
 def _add_tck_tests(tasks, supports_coverage):
-    with mx_gate.Task('GraalSqueak TCK tests', tasks, tags=['test']) as t:
+    with mx_gate.Task('TruffleSqueak TCK tests', tasks, tags=['test']) as t:
         if t:
             unittest_args = BASE_VM_ARGS_TESTING[:]
             if supports_coverage:
@@ -518,24 +518,24 @@ def _get_path_to_test_image():
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,
-    name='GraalSqueak',
+    name='TruffleSqueak',
     short_name='st',
     dir_name=LANGUAGE_ID,
-    license_files=[],  # already included in `GRAALSQUEAK_GRAALVM_SUPPORT`.
+    license_files=[],  # already included in `TRUFFLESQUEAK_GRAALVM_SUPPORT`.
     third_party_license_files=[],
     truffle_jars=[
-        'graalsqueak:GRAALSQUEAK',
-        'graalsqueak:GRAALSQUEAK_SHARED',
+        'trufflesqueak:TRUFFLESQUEAK',
+        'trufflesqueak:TRUFFLESQUEAK_SHARED',
     ],
     support_distributions=[
-        'graalsqueak:GRAALSQUEAK_GRAALVM_SUPPORT',
+        'trufflesqueak:TRUFFLESQUEAK_GRAALVM_SUPPORT',
     ],
     launcher_configs=[
         mx_sdk.LanguageLauncherConfig(
             language=LANGUAGE_ID,
-            destination='bin/<exe:graalsqueak>',
-            jar_distributions=['graalsqueak:GRAALSQUEAK_LAUNCHER'],
-            main_class='%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME,
+            destination='bin/<exe:trufflesqueak>',
+            jar_distributions=['trufflesqueak:TRUFFLESQUEAK_LAUNCHER'],
+            main_class='%s.launcher.TruffleSqueakLauncher' % PACKAGE_NAME,
             extra_jvm_args=BASE_VM_ARGS,
             build_args=[
                 # '--pgo-instrument',  # (uncomment to enable profiling)
@@ -552,7 +552,7 @@ mx.update_commands(_suite, {
     'squeak-gvm': [_squeak_graalvm_launcher, '[options]'],
 })
 
-mx_gate.add_gate_runner(_suite, _graalsqueak_gate_runner)
+mx_gate.add_gate_runner(_suite, _trufflesqueak_gate_runner)
 
 if mx.is_windows():
     # This patch works around "SSL: CERTIFICATE_VERIFY_FAILED" errors (See

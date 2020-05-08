@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.launcher;
+package de.hpi.swa.trufflesqueak.launcher;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,12 +24,12 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
-import de.hpi.swa.graal.squeak.shared.LogHandlerAccessor;
-import de.hpi.swa.graal.squeak.shared.SqueakImageLocator;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.shared.SqueakLanguageOptions;
+import de.hpi.swa.trufflesqueak.shared.LogHandlerAccessor;
+import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 
-public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
+public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private boolean headless = false;
     private boolean quiet = false;
     private String[] imageArguments = new String[0];
@@ -39,7 +39,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     private String logHandlerMode = null;
 
     public static void main(final String[] arguments) throws RuntimeException {
-        new GraalSqueakLauncher().launch(arguments);
+        new TruffleSqueakLauncher().launch(arguments);
     }
 
     @Override
@@ -100,13 +100,13 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         }
         try (Context context = contextBuilder.build()) {
             if (!quiet) {
-                println(String.format("[graalsqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName()));
+                println(String.format("[trufflesqueak] Running %s on %s...", SqueakLanguageConfig.NAME, getRuntimeName()));
             }
             if (sourceCode != null) {
                 final Value result = context.eval(
                                 Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).cached(false).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
                 if (!quiet) {
-                    println("[graalsqueak] Result: " + (result.isString() ? result.asString() : result.toString()));
+                    println("[trufflesqueak] Result: " + (result.isString() ? result.asString() : result.toString()));
                 }
                 return 0;
             } else {
@@ -122,7 +122,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             if (e.getMessage().contains("Could not find option with name " + SqueakLanguageConfig.ID)) {
                 final String thisPackageName = getClass().getPackage().getName();
                 final String parentPackageName = thisPackageName.substring(0, thisPackageName.lastIndexOf("."));
-                throw abort(String.format("Failed to load GraalSqueak. Please ensure '%s' is on the Java class path.", parentPackageName));
+                throw abort(String.format("Failed to load TruffleSqueak. Please ensure '%s' is on the Java class path.", parentPackageName));
             } else {
                 throw e;
             }
@@ -147,12 +147,12 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected String getMainClass() {
-        return GraalSqueakLauncher.class.getName();
+        return TruffleSqueakLauncher.class.getName();
     }
 
     @Override
     protected void printHelp(final OptionCategory maxCategory) {
-        println("Usage: graalsqueak [options] <image file> [image arguments]\n");
+        println("Usage: trufflesqueak [options] <image file> [image arguments]\n");
         println("Basic options:");
         launcherOption(SqueakLanguageOptions.CODE_FLAG + " \"<code>\", " + SqueakLanguageOptions.CODE_FLAG_SHORT + " \"<code>\"", SqueakLanguageOptions.CODE_HELP);
         launcherOption(SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.HEADLESS_HELP);

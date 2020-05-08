@@ -3,16 +3,16 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.model;
+package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.interop.LookupMethodByStringNode;
-import de.hpi.swa.graal.squeak.nodes.DispatchUneagerlyNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
+import de.hpi.swa.trufflesqueak.nodes.DispatchUneagerlyNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSqueakObjectWithHash {
     private ClassObject squeakClass;

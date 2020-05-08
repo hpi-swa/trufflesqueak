@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.test;
+package de.hpi.swa.trufflesqueak.test;
 
 import static java.util.stream.Collectors.toList;
 
@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import de.hpi.swa.graal.squeak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.OSDetector;
 
 public final class SqueakTests {
 
@@ -110,7 +110,7 @@ public final class SqueakTests {
 
     /**
      * Test names in the order they appear in the file - useful for testing properties such as
-     * sorting, duplication (see GraalSqueakTest in image).
+     * sorting, duplication (see TruffleSqueakTest in image).
      */
     public static String[] rawTestNames() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(SqueakTests.class.getResourceAsStream(FILENAME)))) {

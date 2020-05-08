@@ -3,7 +3,7 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.graal.squeak.nodes;
+package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -15,15 +15,15 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.nodes.context.frame.CreateFrameArgumentsNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackPopNNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.GetContextOrMarkerNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.GetOrCreateContextNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.CreateFrameArgumentsNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ReportPolymorphism
 @ImportStatic({PrimitiveNodeFactory.class, FrameAccess.class})
