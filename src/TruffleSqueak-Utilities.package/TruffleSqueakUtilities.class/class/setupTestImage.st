@@ -44,8 +44,8 @@ setupTestImage
 				do: [:ex| ex resume]]]
 			valueWithArguments: tuple].
 
-	"Patch VMMaker classes for GraalSqueak"
-	Utilities authorInitials: 'GraalSqueak'.
+	"Patch VMMaker classes for TruffleSqueak"
+	Utilities authorInitials: 'TruffleSqueak'.
 	(Smalltalk at: #InterpreterProxy) compile: 'stringOf: oop
 		^ self cStringOrNullFor: oop'.
 	(Smalltalk at: #BitBltSimulation) compile: 'assert: aBlock "disable #assert:"'.

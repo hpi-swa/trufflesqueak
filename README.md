@@ -1,2 +1,2 @@
-# GraalSqueak Packages for Squeak/Smalltalk
+# TruffleSqueak Packages for Squeak/Smalltalk
 Smalltalk code base to turn Squeak/Smaltalk into a polyglot programming system.

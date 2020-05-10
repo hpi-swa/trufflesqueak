@@ -3,17 +3,17 @@ baseline: spec
 	<baseline>
 
 	spec for: #'common' do: [ | needsJSON |
-		"Hack: depend on JSON only if not present to avoid updates (quite slow on GraalSqueak)"
+		"Hack: depend on JSON only if not present to avoid updates (quite slow on TruffleSqueak)"
 		needsJSON := (Smalltalk at: #Json ifAbsent: [nil]) isNil.
 		spec
-			package: 'GraalSqueak-Core';
-			package: 'GraalSqueak-Support' with: [spec requires: #('GraalSqueak-Core')];
-			package: 'GraalSqueak-Tests' with: [spec requires: #('GraalSqueak-Core' 'GraalSqueak-Support' 'GraalSqueak-Utilities')];
-			package: 'GraalSqueak-Tools' with: [spec requires: #('GraalSqueak-Core' 'GraalSqueak-Support'),
+			package: 'TruffleSqueak-Core';
+			package: 'TruffleSqueak-Support' with: [spec requires: #('TruffleSqueak-Core')];
+			package: 'TruffleSqueak-Tests' with: [spec requires: #('TruffleSqueak-Core' 'TruffleSqueak-Support' 'TruffleSqueak-Utilities')];
+			package: 'TruffleSqueak-Tools' with: [spec requires: #('TruffleSqueak-Core' 'TruffleSqueak-Support'),
 				(needsJSON ifTrue: [#('JSON')] ifFalse: [#()])];
-			package: 'GraalSqueak-Utilities' with: [spec requires: #('GraalSqueak-Core' 'GraalSqueak-Support')].
+			package: 'TruffleSqueak-Utilities' with: [spec requires: #('TruffleSqueak-Core' 'TruffleSqueak-Support')].
 		needsJSON ifTrue: [
 			spec package: 'JSON' with: [spec repository: 'http://www.squeaksource.com/JSON']].
 		spec
-			group: 'default' with: #('GraalSqueak-Core' 'GraalSqueak-Support' 'GraalSqueak-Tools' 'GraalSqueak-Utilities');
-			group: 'tests' with: #('default' 'GraalSqueak-Tests')]
+			group: 'default' with: #('TruffleSqueak-Core' 'TruffleSqueak-Support' 'TruffleSqueak-Tools' 'TruffleSqueak-Utilities');
+			group: 'tests' with: #('default' 'TruffleSqueak-Tests')]

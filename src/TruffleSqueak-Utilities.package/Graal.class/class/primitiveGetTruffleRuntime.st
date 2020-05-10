@@ -1,4 +1,4 @@
 primitives
 primitiveGetTruffleRuntime
-	<primitive: 'primitiveGetTruffleRuntime' module: 'GraalSqueakPlugin'>
+	<primitive: 'primitiveGetTruffleRuntime' module: 'TruffleSqueakPlugin'>
 	^ nil

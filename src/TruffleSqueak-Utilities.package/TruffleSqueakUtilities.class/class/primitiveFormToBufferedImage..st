@@ -1,4 +1,4 @@
 primitives
 primitiveFormToBufferedImage: aForm
-	<primitive: 'primitiveFormToBufferedImage' module: 'GraalSqueakPlugin'>
+	<primitive: 'primitiveFormToBufferedImage' module: 'TruffleSqueakPlugin'>
 	^ nil
