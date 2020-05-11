@@ -183,7 +183,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     }
 
     @Override
-    public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth) {
+    public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
         if (window.isNull()) {
             return;
         }
@@ -195,7 +195,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
         final byte[] maskBytes = cursorWordsToBytes(nCursorBytes, mask);
         try (PinnedObject pinnedCursorBytes = PinnedObject.create(cursorBytes)) {
             try (PinnedObject pinnedMaskBytes = PinnedObject.create(maskBytes)) {
-                cursor = SDL.createCursor(pinnedCursorBytes.addressOfArrayElement(0), pinnedMaskBytes.addressOfArrayElement(0), 16, 16, 0, 0);
+                cursor = SDL.createCursor(pinnedCursorBytes.addressOfArrayElement(0), pinnedMaskBytes.addressOfArrayElement(0), 16, 16, offsetX, offsetY);
             }
         }
         if (!sdlError(cursor.isNonNull())) {

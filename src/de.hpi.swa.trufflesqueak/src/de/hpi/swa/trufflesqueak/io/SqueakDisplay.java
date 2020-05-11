@@ -257,7 +257,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     @Override
     @TruffleBoundary
-    public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth) {
+    public void setCursor(final int[] cursorWords, final int[] mask, final int width, final int height, final int depth, final int offsetX, final int offsetY) {
         final Dimension bestCursorSize = TOOLKIT.getBestCursorSize(width, height);
         final Cursor cursor;
         if (bestCursorSize.width == 0 || bestCursorSize.height == 0) {
@@ -300,7 +300,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                     }
                 }
             }
-            cursor = TOOLKIT.createCustomCursor(bufferedImage, new Point(0, 0), "TruffleSqueak Cursor");
+            cursor = TOOLKIT.createCustomCursor(bufferedImage, new Point(offsetX, offsetY), "TruffleSqueak Cursor");
         }
         canvas.setCursor(cursor);
     }

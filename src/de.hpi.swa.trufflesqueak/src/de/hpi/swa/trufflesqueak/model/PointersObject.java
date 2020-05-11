@@ -115,6 +115,10 @@ public final class PointersObject extends AbstractPointersObject {
         return (int) readNode.executeLong(this, FORM.HEIGHT);
     }
 
+    public PointersObject getFormOffset(final AbstractPointersObjectReadNode readNode) {
+        return readNode.executePointers(this, FORM.OFFSET);
+    }
+
     public int getFormWidth(final AbstractPointersObjectReadNode readNode) {
         return (int) readNode.executeLong(this, FORM.WIDTH);
     }

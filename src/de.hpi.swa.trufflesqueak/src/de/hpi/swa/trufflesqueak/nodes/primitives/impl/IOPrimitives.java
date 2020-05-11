@@ -45,6 +45,7 @@ import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CHARACTER_SCANNER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectInstSizeNode;
@@ -192,13 +193,18 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 101)
     protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
+        @Child private AbstractPointersObjectReadNode cursorReadNode = AbstractPointersObjectReadNode.create();
+        @Child private AbstractPointersObjectReadNode offsetReadNode = AbstractPointersObjectReadNode.create();
 
         @Specialization
         protected final PointersObject doCursor(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided mask,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             if (image.hasDisplay()) {
-                image.getDisplay().setCursor(receiver.getFormBits(readNode), null, receiver.getFormWidth(readNode), receiver.getFormHeight(readNode), receiver.getFormDepth(readNode));
+                final PointersObject offset = receiver.getFormOffset(cursorReadNode);
+                final int offsetX = Math.abs((int) offsetReadNode.executeLong(offset, POINT.X));
+                final int offsetY = Math.abs((int) offsetReadNode.executeLong(offset, POINT.Y));
+                image.getDisplay().setCursor(receiver.getFormBits(cursorReadNode), null, receiver.getFormWidth(cursorReadNode), receiver.getFormHeight(cursorReadNode),
+                                receiver.getFormDepth(cursorReadNode), offsetX, offsetY);
             }
             return receiver;
         }
@@ -208,13 +214,18 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached("createBinaryProfile()") final ConditionProfile depthProfile) {
             if (image.hasDisplay()) {
-                final int[] words = receiver.getFormBits(readNode);
-                final int depth = receiver.getFormDepth(readNode);
+                final int[] words = receiver.getFormBits(cursorReadNode);
+                final int depth = receiver.getFormDepth(cursorReadNode);
+                final int height = receiver.getFormHeight(cursorReadNode);
+                final int width = receiver.getFormWidth(cursorReadNode);
+                final PointersObject offset = receiver.getFormOffset(cursorReadNode);
+                final int offsetX = Math.abs((int) offsetReadNode.executeLong(offset, POINT.X));
+                final int offsetY = Math.abs((int) offsetReadNode.executeLong(offset, POINT.Y));
                 if (depthProfile.profile(depth == 1)) {
-                    final int[] mask = readNode.executeNative(maskObject, FORM.BITS).getIntStorage();
-                    image.getDisplay().setCursor(words, mask, receiver.getFormWidth(readNode), receiver.getFormHeight(readNode), 2);
+                    final int[] mask = cursorReadNode.executeNative(maskObject, FORM.BITS).getIntStorage();
+                    image.getDisplay().setCursor(words, mask, width, height, 2, offsetX, offsetY);
                 } else {
-                    image.getDisplay().setCursor(words, null, receiver.getFormWidth(readNode), receiver.getFormHeight(readNode), depth);
+                    image.getDisplay().setCursor(words, null, width, height, depth, offsetX, offsetY);
                 }
             }
             return receiver;
