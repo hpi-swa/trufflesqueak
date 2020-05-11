@@ -603,7 +603,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     @SuppressWarnings("static-method")
     @ExportMessage
     protected boolean isInstantiable() {
-        return true;
+        return !isImmediateClassType();
     }
 
     @ExportMessage
