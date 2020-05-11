@@ -705,8 +705,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
          */
         @TruffleBoundary
         @Specialization(guards = {"receiver.isByteType()", "receiver.getSqueakClass().isLargeIntegerClass()"})
-        protected static final Object doNativeObject(final NativeObject receiver) {
-            return new LargeIntegerObject(receiver.image, receiver.getSqueakClass(), receiver.getByteStorage().clone()).reduceIfPossible();
+        protected static final Object doNativeObject(final NativeObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return new LargeIntegerObject(image, receiver.getSqueakClass(), receiver.getByteStorage().clone()).reduceIfPossible();
         }
     }
 
