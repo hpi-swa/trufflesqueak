@@ -30,7 +30,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -160,7 +159,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
             try {
                 return image.asByteString(resultLib.asString(lib.execute(sysCallObject, (int) index)));
             } catch (final UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
-                throw SqueakException.illegalState(e);
+                throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
         }
 

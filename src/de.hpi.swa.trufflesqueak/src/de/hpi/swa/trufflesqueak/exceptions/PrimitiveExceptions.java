@@ -48,6 +48,12 @@ public final class PrimitiveExceptions {
             CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed(reason);
         }
+
+        public static PrimitiveFailed andTransferToInterpreterWithError(final Exception e) {
+            CompilerDirectives.transferToInterpreter();
+            e.printStackTrace();
+            throw GENERIC_ERROR;
+        }
     }
 
     private PrimitiveExceptions() {

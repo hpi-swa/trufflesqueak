@@ -621,7 +621,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                     try {
                         return newObjectNode.execute(theImage, this, functions.asInt(arguments[0]));
                     } catch (final UnsupportedMessageException e) {
-                        throw SqueakException.illegalState(e);
+                        throw UnsupportedTypeException.create(arguments, "Second argument violates interop contract.");
                     }
                 } else {
                     throw UnsupportedTypeException.create(arguments, "Second argument must be the size as an integer.");

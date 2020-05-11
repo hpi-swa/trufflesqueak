@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.trufflesqueak.interop;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -13,7 +14,6 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -32,7 +32,9 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
         try {
             return lib.asBoolean(value);
         } catch (final UnsupportedMessageException e) {
-            throw SqueakException.illegalState(e);
+            CompilerDirectives.transferToInterpreter();
+            e.printStackTrace();
+            return false;
         }
     }
 
@@ -43,7 +45,9 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
         try {
             return image.asByteString(lib.asString(value));
         } catch (final UnsupportedMessageException e) {
-            throw SqueakException.illegalState(e);
+            CompilerDirectives.transferToInterpreter();
+            e.printStackTrace();
+            return image.asByteString("");
         }
     }
 
@@ -60,7 +64,9 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
         try {
             return lib.asLong(value);
         } catch (final UnsupportedMessageException e) {
-            throw SqueakException.illegalState(e);
+            CompilerDirectives.transferToInterpreter();
+            e.printStackTrace();
+            return 0L;
         }
     }
 
@@ -70,7 +76,9 @@ public abstract class ConvertToSqueakNode extends AbstractNode {
         try {
             return lib.asDouble(value);
         } catch (final UnsupportedMessageException e) {
-            throw SqueakException.illegalState(e);
+            CompilerDirectives.transferToInterpreter();
+            e.printStackTrace();
+            return 0D;
         }
     }
 

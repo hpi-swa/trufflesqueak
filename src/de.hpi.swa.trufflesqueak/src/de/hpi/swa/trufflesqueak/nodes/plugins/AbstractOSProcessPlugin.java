@@ -22,7 +22,6 @@ import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -69,7 +68,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
                     final Object symbol = lib.readMember(defaultLibrary, getFunctionName());
                     sysCallObject = lib.invokeMember(symbol, "bind", getFunctionSignature());
                 } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
-                    throw SqueakException.illegalState(e);
+                    throw PrimitiveFailed.andTransferToInterpreterWithError(e);
                 }
             }
             return sysCallObject;
@@ -79,7 +78,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
             try {
                 return (int) lib.execute(sysCallObject);
             } catch (final UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
-                throw SqueakException.illegalState(e);
+                throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
         }
 
@@ -87,7 +86,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
             try {
                 return (int) lib.execute(sysCallObject, (int) id);
             } catch (final UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
-                throw SqueakException.illegalState(e);
+                throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
         }
 
@@ -95,7 +94,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
             try {
                 return (int) lib.execute(sysCallObject, (int) id, (int) value);
             } catch (final UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
-                throw SqueakException.illegalState(e);
+                throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
         }
     }

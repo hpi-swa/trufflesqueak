@@ -688,7 +688,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 try {
                     OBJECT_NAME = new ObjectName("com.sun.management:type=DiagnosticCommand");
                 } catch (final MalformedObjectNameException e) {
-                    throw SqueakException.illegalState(e);
+                    throw SqueakException.create(e);
                 }
             }
         }
@@ -717,7 +717,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 SERVER.invoke(OBJECT_NAME, OPERATION_NAME, PARAMS, SIGNATURE);
             } catch (InstanceNotFoundException | ReflectionException | MBeanException e) {
-                throw SqueakException.illegalState(e);
+                e.printStackTrace();
             }
         }
 

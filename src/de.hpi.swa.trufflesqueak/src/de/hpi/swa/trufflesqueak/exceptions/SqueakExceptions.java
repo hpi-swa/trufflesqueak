@@ -16,7 +16,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SYNTAX_ERROR_NOTIFICATION;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
@@ -46,11 +45,6 @@ public final class SqueakExceptions {
         public static SqueakException create(final Object... messageParts) {
             CompilerDirectives.transferToInterpreter();
             return new SqueakException(messageParts);
-        }
-
-        public static SqueakException illegalState(final Throwable cause) {
-            CompilerDirectives.transferToInterpreter();
-            return new SqueakException("Illegal state in " + SqueakLanguageConfig.NAME, cause);
         }
     }
 

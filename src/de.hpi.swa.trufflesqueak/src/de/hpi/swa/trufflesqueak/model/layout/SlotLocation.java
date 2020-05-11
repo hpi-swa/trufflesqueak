@@ -16,7 +16,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -104,7 +103,8 @@ public abstract class SlotLocation {
         try {
             write(obj, value);
         } catch (final IllegalWriteException e) {
-            throw SqueakException.illegalState(e);
+            CompilerDirectives.transferToInterpreter();
+            e.printStackTrace();
         }
     }
 

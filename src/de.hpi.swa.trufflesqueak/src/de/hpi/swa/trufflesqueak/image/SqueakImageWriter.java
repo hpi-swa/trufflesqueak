@@ -21,7 +21,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakAbortException;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.io.DisplayPoint;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
@@ -63,15 +62,10 @@ public final class SqueakImageWriter {
     private long freeListOop;
     private long hiddenRootsOop;
 
-    private SqueakImageWriter(final SqueakImageContext image) {
+    private SqueakImageWriter(final SqueakImageContext image) throws IOException {
         this.image = image;
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
-        try {
-            stream = new BufferedOutputStream(truffleFile.newOutputStream());
-        } catch (final IOException e) {
-            e.printStackTrace();
-            throw SqueakException.illegalState(e);
-        }
+        stream = new BufferedOutputStream(truffleFile.newOutputStream());
         freeList = NativeObject.newNativeLongs(image, image.nilClass /* ignored */, SqueakImageConstants.NUM_FREE_LISTS);
     }
 
@@ -80,7 +74,11 @@ public final class SqueakImageWriter {
      */
     @TruffleBoundary
     public static void write(final SqueakImageContext image, final ContextObject thisContext) {
-        new SqueakImageWriter(image).run(thisContext);
+        try {
+            new SqueakImageWriter(image).run(thisContext);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public SqueakImageContext getImage() {
@@ -229,7 +227,6 @@ public final class SqueakImageWriter {
             }
         } catch (final IOException e) {
             e.printStackTrace();
-            throw SqueakException.illegalState(e);
         }
     }
 

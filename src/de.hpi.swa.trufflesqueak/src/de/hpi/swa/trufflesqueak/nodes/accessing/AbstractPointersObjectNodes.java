@@ -17,7 +17,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -124,7 +123,8 @@ public class AbstractPointersObjectNodes {
             try {
                 accessorNode.executeWrite(object, value);
             } catch (final IllegalWriteException e) {
-                throw SqueakException.illegalState(e);
+                CompilerDirectives.transferToInterpreter();
+                e.printStackTrace();
             }
         }
 

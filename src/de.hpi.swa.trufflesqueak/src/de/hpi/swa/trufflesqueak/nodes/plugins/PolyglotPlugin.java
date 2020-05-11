@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.TruffleLanguage.Env;
@@ -39,7 +40,6 @@ import com.oracle.truffle.api.source.Source.SourceBuilder;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.ConvertToSqueakNode;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
@@ -354,7 +354,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
@@ -393,7 +393,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
@@ -430,7 +430,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return BooleanObject.wrap(lib.asBoolean(object));
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -457,7 +457,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return image.asByteString(lib.asString(object));
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -483,7 +483,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return lib.asLong(object);
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -509,7 +509,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return lib.asDouble(object);
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -557,7 +557,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return lib.asPointer(object);
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -576,7 +576,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return lib.getArraySize(object);
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -662,7 +662,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return wrapNode.executeWrap(lib.readArrayElement(object, index - 1));
             } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -677,7 +677,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 lib.removeArrayElement(object, index - 1);
                 return object;
             } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -696,7 +696,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -724,7 +724,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 return image.asArrayOfObjects(byteStrings);
             } catch (final UnsupportedMessageException | InvalidArrayIndexException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -739,7 +739,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return sizeLib.getArraySize(lib.getMembers(object, includeInternal));
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -870,7 +870,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
@@ -893,7 +893,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return wrapNode.executeWrap(lib.readMember(object, member.asStringUnsafe()));
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
 
@@ -918,7 +918,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 lib.removeMember(object, identifier);
                 return object;
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -937,7 +937,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter();
                 throw primitiveFailedCapturing(e);
             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -968,7 +968,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return image.env.asGuestValue(lib.asDate(object));
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -995,7 +995,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return image.env.asGuestValue(lib.asDuration(object));
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -1022,7 +1022,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return image.env.asGuestValue(lib.asInstant(object));
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -1049,7 +1049,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return image.env.asGuestValue(lib.asTime(object));
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -1076,7 +1076,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return image.env.asGuestValue(lib.asTimeZone(object));
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -1106,7 +1106,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 throw lib.throwException(object);
             } catch (final UnsupportedMessageException e) {
-                throw SqueakException.illegalState(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -1241,6 +1241,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     /*
      * Helper functions.
      */
+
+    private static PrimitiveFailed primitiveFailedInInterpreterCapturing(final Exception e) {
+        CompilerDirectives.transferToInterpreter();
+        return primitiveFailedCapturing(e);
+    }
 
     private static PrimitiveFailed primitiveFailedCapturing(final Exception e) {
         PrimGetLastErrorNode.setLastError(e);
