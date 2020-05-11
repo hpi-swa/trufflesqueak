@@ -66,7 +66,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         private void ensureAsciiOrder(final NativeObject orderValue) {
             if (orderValue != asciiOrder) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (asciiOrder == null) { /* Haven't seen asciiOrder yet. */
                     if (!orderValue.isByteType()) {
                         throw new NotAsciiOrderException();
@@ -81,7 +81,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                             throw new NotAsciiOrderException();
                         }
                     }
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     asciiOrder = orderValue;
                 } else {
                     throw new NotAsciiOrderException();
