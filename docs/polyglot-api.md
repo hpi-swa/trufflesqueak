@@ -1,6 +1,6 @@
 # Polyglot API Reference
 
-GraalSqueak provides access to all languages supported by GraalVM through its
+TruffleSqueak provides access to all languages supported by GraalVM through its
 Polyglot API.
 This document describes how this API can be used to interact with different
 languages from Smalltalk.
@@ -49,7 +49,7 @@ As an example, here is how to interact with an image from Python:
 ```python
 import polyglot
 image = polyglot.eval(                  # Load an image file
-    language='smalltalk', path='/path/to/graalsqueak.image')
+    language='smalltalk', path='/path/to/trufflesqueak.image')
 dir(image)                              # Returns a list of all Smalltalk globals
 image.Compiler                          # Returns the `Compiler` class object
 image.Compiler.evaluate_('1 + 2 * 3')   # Equivalent to `Compiler evaluate: '<string>'`
@@ -61,7 +61,7 @@ To be able to evaluate Smalltalk code with a polyglot evaluation request,
 `smalltalk.ImagePath` must be specified.
 The polyglot shell, for example, can be started with the following options:
 ```bash
-polyglot --shell --jvm --smalltalk.ImagePath=/path/to/graalsqueak.image
+polyglot --shell --jvm --smalltalk.ImagePath=/path/to/trufflesqueak.image
 ```
 
 Then, it is possible to directly evaluate Smalltalk code, the provided image
@@ -83,9 +83,9 @@ The [`Interop`][interop_class] class exposes the underlying [Truffle API for
 language interoperability][truffle_interop_library].
 
 *Please note that the Polyglot API may change with newer releases of
-GraalSqueak.*
+TruffleSqueak.*
 
-[interop_class]: https://github.com/hpi-swa/graalsqueak/tree/image/src/GraalSqueak-Core.package/Interop.class
-[polyglot_class]: https://github.com/hpi-swa/graalsqueak/tree/image/src/GraalSqueak-Core.package/Polyglot.class
+[interop_class]: https://github.com/hpi-swa/trufflesqueak/tree/image/src/TruffleSqueak-Core.package/Interop.class
+[polyglot_class]: https://github.com/hpi-swa/trufflesqueak/tree/image/src/TruffleSqueak-Core.package/Polyglot.class
 [truffle_interop_library]: https://www.graalvm.org/truffle/javadoc/com/oracle/truffle/api/interop/InteropLibrary.html
-[truffle_object_class]: https://github.com/hpi-swa/graalsqueak/tree/image/src/GraalSqueak-Core.package/TruffleObject.class
+[truffle_object_class]: https://github.com/hpi-swa/trufflesqueak/tree/image/src/TruffleSqueak-Core.package/TruffleObject.class

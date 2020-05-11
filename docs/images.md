@@ -1,25 +1,25 @@
-# Images for GraalSqueak
+# Images for TruffleSqueak
 
-## GraalSqueak Image Creation
+## TruffleSqueak Image Creation
 
 Run the following in a workspace, then save and quit the image:
 
 ```smalltalk
 Metacello new
-    baseline: 'GraalSqueak';
-    repository: 'filetree://{path/to/image-branch}/src';
+    baseline: 'TruffleSqueak';
+    repository: 'github://hpi-swa/trufflesqueak:image/src';
     load: #('tests').
-(Smalltalk at: #GraalSqueakUtilities) setupImage.
+(Smalltalk at: #TruffleSqueakUtilities) setupImage.
 ```
 
-## GraalSqueak Test Image Creation
+## TruffleSqueak Test Image Creation
 
 Run the following in a workspace, then save and quit the image:
 
 ```smalltalk
 Metacello new
-    baseline: 'GraalSqueak';
-    repository: 'filetree://{path/to/image-branch}/src';
+    baseline: 'TruffleSqueak';
+    repository: 'github://hpi-swa/trufflesqueak:image/src';
     load: #('tests').
-(Smalltalk at: #GraalSqueakUtilities) setupTestImage.
+(Smalltalk at: #TruffleSqueakUtilities) setupTestImage.
 ```

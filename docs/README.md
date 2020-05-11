@@ -1,4 +1,4 @@
-# GraalSqueak Documentation
+# TruffleSqueak Documentation
 
 - [Polyglot API Reference](polyglot-api.md)
 - [Image Creation](images.md)
