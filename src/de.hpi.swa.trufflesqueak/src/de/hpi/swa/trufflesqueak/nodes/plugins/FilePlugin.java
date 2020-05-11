@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileSystems;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
@@ -186,18 +187,25 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDirectoryEntry")
     protected abstract static class PrimDirectoryEntryNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
 
+        @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"fullPath.isByteType()", "fName.isByteType()"})
         protected static final Object doEntry(@SuppressWarnings("unused") final Object receiver, final NativeObject fullPath, final NativeObject fName,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final String pathName = fullPath.asStringUnsafe();
             final String fileName = fName.asStringUnsafe();
-            final TruffleFile file;
+            final String path;
             if (".".equals(fileName)) {
-                file = asPublicTruffleFile(image, pathName);
+                path = pathName;
             } else if (OSDetector.SINGLETON.isWindows() && pathName.isEmpty() && fileName.endsWith(":")) {
-                file = asPublicTruffleFile(image, fileName + "\\");
+                path = fileName + "\\";
             } else {
-                file = asPublicTruffleFile(image, pathName + image.env.getFileNameSeparator() + fileName);
+                path = pathName + image.env.getFileNameSeparator() + fileName;
+            }
+            final TruffleFile file;
+            try {
+                file = asPublicTruffleFile(image, path);
+            } catch (final InvalidPathException e) {
+                return NilObject.SINGLETON;
             }
             if (file.exists()) {
                 return newFileEntry(image, file, fileName);
