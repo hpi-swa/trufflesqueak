@@ -6,4 +6,5 @@
 		"testJSBasic" : "fn 12/13/2019 12:37",
 		"testJSDate" : "fn 12/13/2019 12:37",
 		"testJSExecutable" : "fn 2/4/2020 00:41",
-		"testJSObject" : "fn 12/13/2019 12:37" } }
+		"testJSObject" : "fn 12/13/2019 12:37",
+		"testSmalltalkFromJS" : "fn 5/11/2020 18:27" } }
