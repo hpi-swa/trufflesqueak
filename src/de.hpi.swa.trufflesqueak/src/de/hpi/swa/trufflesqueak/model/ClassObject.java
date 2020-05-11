@@ -15,9 +15,12 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -607,27 +610,48 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @ExportMessage
-    protected Object instantiate(final Object[] arguments,
-                    @CachedLibrary(limit = "2") final InteropLibrary functions,
-                    @Cached final SqueakObjectNewNode newObjectNode,
-                    @CachedContext(SqueakLanguage.class) final SqueakImageContext theImage)
-                    throws UnsupportedTypeException, ArityException {
-        final int numArguments = arguments.length;
-        switch (numArguments) {
-            case 0:
-                return newObjectNode.execute(theImage, this);
-            case 1:
-                if (functions.fitsInInt(arguments[0])) {
-                    try {
-                        return newObjectNode.execute(theImage, this, functions.asInt(arguments[0]));
-                    } catch (final UnsupportedMessageException e) {
-                        throw UnsupportedTypeException.create(arguments, "Second argument violates interop contract.");
-                    }
-                } else {
-                    throw UnsupportedTypeException.create(arguments, "Second argument must be the size as an integer.");
+    protected static class Instantiate {
+        @Specialization(guards = "arguments.length == 0")
+        protected static final Object doNoArguments(final ClassObject receiver, final Object[] arguments,
+                        @Shared("newObjectNode") @Cached final SqueakObjectNewNode newObjectNode,
+                        @CachedLibrary(limit = "2") final InteropLibrary initializer,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext theImage) throws UnsupportedTypeException {
+            final AbstractSqueakObjectWithHash newObject = newObjectNode.execute(theImage, receiver);
+            initializeObject(arguments, initializer, newObject);
+            return newObject;
+        }
+
+        @Specialization(guards = "arguments.length == 1")
+        protected static final Object doOneArgument(final ClassObject receiver, final Object[] arguments,
+                        @Shared("newObjectNode") @Cached final SqueakObjectNewNode newObjectNode,
+                        @CachedLibrary(limit = "2") final InteropLibrary functions,
+                        @CachedLibrary(limit = "2") final InteropLibrary initializer,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext theImage) throws UnsupportedTypeException {
+            if (functions.fitsInInt(arguments[0])) {
+                final AbstractSqueakObjectWithHash newObject;
+                try {
+                    newObject = newObjectNode.execute(theImage, receiver, functions.asInt(arguments[0]));
+                } catch (final UnsupportedMessageException e) {
+                    throw UnsupportedTypeException.create(arguments, "Second argument violates interop contract.");
                 }
-            default:
-                throw ArityException.create(1, numArguments);
+                initializeObject(arguments, initializer, newObject);
+                return newObject;
+            } else {
+                throw UnsupportedTypeException.create(arguments, "Second argument must be the size as an integer.");
+            }
+        }
+
+        @Specialization(guards = "arguments.length > 1")
+        protected static final Object doMultipleArguments(@SuppressWarnings("unused") final ClassObject receiver, final Object[] arguments) throws ArityException {
+            throw ArityException.create(1, arguments.length);
+        }
+
+        private static void initializeObject(final Object[] arguments, final InteropLibrary initializer, final AbstractSqueakObjectWithHash newObject) throws UnsupportedTypeException {
+            try {
+                initializer.invokeMember(newObject, "initialize");
+            } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
+                throw UnsupportedTypeException.create(arguments, "Failed to initialize new object");
+            }
         }
     }
 }
