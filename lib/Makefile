@@ -1,3 +1,9 @@
+#
+# Copyright (c) 2017-2020 Software Architecture Group, Hasso Plattner Institute
+#
+# Licensed under the MIT License.
+#
+
 TARGET = SqueakFFIPrims
 
 UNAME_S := $(shell uname -s)
