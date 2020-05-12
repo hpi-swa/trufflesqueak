@@ -121,6 +121,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Child private AbstractPointersObjectReadNode readExternalLibNode = AbstractPointersObjectReadNode.create();
         @Child private AbstractPointersObjectReadNode readArgumentTypeNode = AbstractPointersObjectReadNode.create();
 
+        @TruffleBoundary
         protected final Object doCallout(final SqueakImageContext image, final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
             if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
                 throw PrimitiveFailed.andTransferToInterpreter(FFI_ERROR.NOT_FUNCTION);
@@ -241,21 +242,17 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimLoadSymbolFromModuleNode extends AbstractFFIPrimitiveNode implements TernaryPrimitive {
         @Specialization(guards = {"moduleSymbol.isByteType()", "module.isByteType()"})
         protected static final Object doLoadSymbol(final ClassObject receiver, final NativeObject moduleSymbol, final NativeObject module,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
             final String moduleSymbolName = moduleSymbol.asStringUnsafe();
             final String moduleName = module.asStringUnsafe();
-            final String ffiExtension = OSDetector.SINGLETON.getFFIExtension();
-            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + moduleName + ffiExtension;
-            final String nfiCode = String.format("load \"%s\"", libPath);
-            final Source source = Source.newBuilder("nfi", nfiCode, "native").build();
-            final CallTarget target = image.env.parseInternal(source);
+            final CallTarget target = image.env.parseInternal(generateNFILoadSource(moduleName));
             final Object library;
             try {
                 library = target.call();
             } catch (final Throwable e) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
-            final InteropLibrary lib = InteropLibrary.getFactory().getUncached();
             final Object symbol;
             try {
                 symbol = lib.readMember(library, moduleSymbolName);
@@ -268,22 +265,22 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             } catch (final UnsupportedMessageException e) {
                 CompilerDirectives.transferToInterpreter();
                 e.printStackTrace();
-                return newExternalAddress(receiver, 0);
+                return newExternalAddress(image, receiver, 0L);
             }
-            return newExternalAddress(receiver, pointer);
+            return newExternalAddress(image, receiver, pointer);
         }
 
-        private static NativeObject newExternalAddress(final ClassObject externalAddressClass, final long pointer) {
-            final byte[] bytes = new byte[8];
-            bytes[0] = (byte) pointer;
-            bytes[1] = (byte) (pointer >> 8);
-            bytes[2] = (byte) (pointer >> 16);
-            bytes[3] = (byte) (pointer >> 24);
-            bytes[4] = (byte) (pointer >> 32);
-            bytes[5] = (byte) (pointer >> 40);
-            bytes[6] = (byte) (pointer >> 48);
-            bytes[7] = (byte) (pointer >> 56);
-            return NativeObject.newNativeBytes(externalAddressClass.image, externalAddressClass, bytes);
+        @TruffleBoundary
+        private static Source generateNFILoadSource(final String moduleName) {
+            final String ffiExtension = OSDetector.SINGLETON.getFFIExtension();
+            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + moduleName + ffiExtension;
+            return Source.newBuilder("nfi", String.format("load \"%s\"", libPath), "native").build();
+        }
+
+        private static NativeObject newExternalAddress(final SqueakImageContext image, final ClassObject externalAddressClass, final long pointer) {
+            return NativeObject.newNativeBytes(image, externalAddressClass,
+                            new byte[]{(byte) pointer, (byte) (pointer >> 8), (byte) (pointer >> 16), (byte) (pointer >> 24), (byte) (pointer >> 32), (byte) (pointer >> 40),
+                                            (byte) (pointer >> 48), (byte) (pointer >> 56)});
         }
     }
 
