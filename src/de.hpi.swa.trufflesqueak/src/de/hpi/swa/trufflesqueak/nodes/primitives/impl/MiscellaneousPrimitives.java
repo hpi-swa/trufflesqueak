@@ -121,109 +121,124 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 120)
     public abstract static class PrimCalloutToFFINode extends AbstractFFIPrimitiveNode implements DuodecimaryPrimitive {
-        protected final CompiledMethodObject method;
-
-        public PrimCalloutToFFINode() {
-            method = ((EnterCodeNode) getRootNode()).getMethod();
-        }
+        @CompilationFinal private CompiledMethodObject method;
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0"})
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0"})
         protected final Object doArg0(final AbstractSqueakObject receiver, final NotProvided n1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
-                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver);
+                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)"})
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)"})
         protected final Object doArg1(final AbstractSqueakObject receiver, final Object arg1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
-                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver, arg1);
+                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)"})
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)"})
         protected final Object doArg2(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final NotProvided n3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver, arg1, arg2);
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
         protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver, arg1, arg2, arg3);
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
         protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final NotProvided n5, final NotProvided n6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4);
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
         protected final Object doArg5(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final NotProvided n6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5);
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
                         "!isNotProvided(arg6)"})
         protected final Object doArg6(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6);
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
                         "!isNotProvided(arg6)", "!isNotProvided(arg7)"})
         protected final Object doArg7(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                        final Object arg7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
                         "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)"})
         protected final Object doArg8(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final NotProvided n9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                        final Object arg7, final Object arg8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
                         "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)"})
         protected final Object doArg9(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final NotProvided n10, final NotProvided n11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                        final Object arg7, final Object arg8, final Object arg9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
                         "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)"})
         protected final Object doArg10(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final NotProvided n11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"method.getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
+        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
                         "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)", "!isNotProvided(arg11)"})
         protected final Object doArg11(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11) {
-            return doCallout(receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
         }
 
-        private Object doCallout(final AbstractSqueakObject receiver, final Object... arguments) {
-            final Object literal1 = method.getLiterals()[1];
+        protected final CompiledMethodObject getMethod() {
+            if (method == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                method = ((EnterCodeNode) getRootNode()).getMethod();
+            }
+            return method;
+        }
+
+        private Object doCallout(final SqueakImageContext image, final AbstractSqueakObject receiver, final Object... arguments) {
+            final Object literal1 = getMethod().getLiterals()[1];
             if (!(literal1 instanceof PointersObject)) {
                 throw PrimitiveFailed.andTransferToInterpreter(FFI_ERROR.NOT_FUNCTION);
             }
-            final PointersObject externalLibraryFunction = (PointersObject) literal1;
-            return doCallout(externalLibraryFunction, receiver, arguments);
+            return doCallout(image, (PointersObject) literal1, receiver, arguments);
         }
     }
 
