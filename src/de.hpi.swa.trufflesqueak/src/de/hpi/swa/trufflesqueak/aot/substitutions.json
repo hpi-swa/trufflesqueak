@@ -1,0 +1,13 @@
+[
+  {
+    "annotatedClass": "de.hpi.swa.trufflesqueak.aot.Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay",
+    "originalClass": "de.hpi.swa.trufflesqueak.io.SqueakDisplay",
+    "substitute": true,
+    "methods": [
+      {
+        "annotatedName": "<init>",
+        "substitute": true
+      }
+    ]
+  }
+]

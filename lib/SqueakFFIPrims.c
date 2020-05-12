@@ -1,3 +1,5 @@
+/* Forked from https://git.io/Jf8oa */
+
 /*****************************************************************************/
 /*****************************************************************************/
 /*****************************************************************************/
@@ -39,10 +41,10 @@ typedef struct ffiTestBiggerStruct {
 	long long y;
 	long long z;
 	long long w;
-  	long long r;
+	long long r;
 	long long s;
-  	long long t;
-  	long long u;
+	long long t;
+	long long u;
 } ffiTestBiggerStruct;
 
 EXPORT(char) ffiTestChars(char c1, char c2, char c3, char c4);
@@ -169,7 +171,7 @@ EXPORT(double) ffiTestDoubles14(double f1, double f2, double f3, double f4, doub
 
 EXPORT(double) ffiTestMixedFloatsAndDouble(float f1, double d1, float f2, float f3)
 {
-  printf("The four floats are %f %f %f %f\n", f1, d1, f2, f3);   
+  printf("The four floats are %f %f %f %f\n", f1, d1, f2, f3);
   return f1 + d1 + f2 + f3;
 }
 
@@ -225,10 +227,10 @@ EXPORT(ffiTestBiggerStruct) ffiTestStructBigger(ffiTestPoint4 pt1, ffiTestPoint4
 	result.z = pt1.z;
 	result.w = pt1.w;
 	result.r = pt2.x;
-	result.s = pt2.y;	
+	result.s = pt2.y;
 	result.t = pt2.z;
 	result.u = pt2.w;
-	
+
 	return( result );
 }
 
@@ -285,7 +287,7 @@ EXPORT(double) ffiTestMixedDoublesIntAndStruct(double f1, double f2, double f3, 
 	printf("The 9 doubles are %f %f %f %f %f %f %f %f %f\n", f1, f2, f3, f4, f5, f6, f7, f8, f9);
    printf("int1 = %d\n", i1);
    printf("pt.x = %d\npt.y = %d\npt.z = %d\npt.w = %d\n",
-           pt.x, pt.y, pt.z, pt.w);   
+           pt.x, pt.y, pt.z, pt.w);
 	return (double) (f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8 + f9 + i1 + pt.x + pt.y + pt.z + pt.w);
 }
 

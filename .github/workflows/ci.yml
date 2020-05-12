@@ -1,0 +1,241 @@
+name: CI
+
+on:
+  push:
+    branches-ignore:
+      - 'experiements/**'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  style_and_build_config:
+    name: Code Style + Build Config
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v2
+    - name: Set up dependencies
+      run: |
+        # Install pylint
+        sudo apt update -qq && sudo apt install -qq python-pip python-virtualenv
+        virtualenv ~/venv
+        source ~/venv/bin/activate
+        pip install --quiet astroid==1.1.0 pylint==1.1.0
+        # Download Eclipse SDK
+        eclipse_tar="ci-dep-eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz"
+        eclipse_tar_path="${HOME}/${eclipse_tar}"
+        mx.trufflesqueak/utils.sh download-asset "${eclipse_tar}" 0.8.0 "${eclipse_tar_path}"
+        tar -xzf ${eclipse_tar_path} -C ${HOME}
+        echo "::set-env name=ECLIPSE_EXE::${HOME}/eclipse/eclipse" # required by mx
+        # Download ECJ
+        mx.trufflesqueak/utils.sh download-asset "ci-dep-ecj-4.5.2.jar" 0.8.0 "${HOME}/ecj.jar"
+        echo "::set-env name=JDT::${HOME}/ecj.jar" # required by mx
+        # Set up mx, oracle/graal, and LabsJDK11
+        mx.trufflesqueak/utils.sh set-up-mx
+        mx.trufflesqueak/utils.sh shallow-clone-graalvm-project https://github.com/oracle/graal.git
+        mx.trufflesqueak/utils.sh set-up-labsjdk11 ~/
+    - name: Check style and perform full build
+      run: |
+        source ~/venv/bin/activate
+        mx gate --strict-mode --tags style,fullbuild
+
+  linux-java11:
+    name: Linux + JDK11 + Coverage
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up dependencies
+      shell: bash
+      run: |
+        sudo apt update -qq && sudo apt install -qq libsdl2-dev
+        mx.trufflesqueak/utils.sh set-up-dependencies java11
+    - name: Build and install TruffleSqueak component
+      run: |
+        mx --env trufflesqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA11
+        cp $(mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA11) "${INSTALLABLE_TARGET}"
+        gu install -L "${INSTALLABLE_TARGET}"
+    - name: Run SystemReporter on GraalVM
+      run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+    - name: Run SystemReporter on Native Image
+      run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+    - name: Run tinyBenchmarks on GraalVM
+      run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Run tinyBenchmarks on Native Image
+      run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Upload TruffleSqueak component
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and code coverage
+      run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
+    - name: Report code coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+        curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
+        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
+      if: success()
+
+  linux-java8:
+    name: Linux + JDK8 + Coverage
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up dependencies
+      shell: bash
+      run: |
+        sudo apt update -qq && sudo apt install -qq libsdl2-dev
+        mx.trufflesqueak/utils.sh set-up-dependencies java8
+    - name: Build and install TruffleSqueak component
+      run: |
+        mx --env trufflesqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
+        cp $(mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
+        gu install -L "${INSTALLABLE_TARGET}"
+    - name: Run SystemReporter on GraalVM
+      run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+    - name: Run SystemReporter on Native Image
+      run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+    - name: Run tinyBenchmarks on GraalVM
+      run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Run tinyBenchmarks on Native Image
+      run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Upload TruffleSqueak component
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and code coverage
+      run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
+    - name: Report code coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+        curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
+        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
+      if: success()
+
+  macos-java11:
+    name: macOS + JDK11 + Graal
+    runs-on: macos-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up dependencies
+      shell: bash
+      run: |
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
+        mx.trufflesqueak/utils.sh set-up-dependencies java11
+    - name: Build and install TruffleSqueak component
+      run: |
+        mx --env trufflesqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA11
+        cp $(mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA11) "${INSTALLABLE_TARGET}"
+        gu install -L "${INSTALLABLE_TARGET}"
+    - name: Run SystemReporter on GraalVM
+      run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+    - name: Run SystemReporter on Native Image
+      run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+    - name: Run tinyBenchmarks on GraalVM
+      run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Run tinyBenchmarks on Native Image
+      run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Upload TruffleSqueak component
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and Graal compiler
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+
+  macos-java8:
+    name: macOS + JDK8 + Graal
+    runs-on: macos-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up dependencies
+      shell: bash
+      run: |
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
+        mx.trufflesqueak/utils.sh set-up-dependencies java8
+    - name: Build and install TruffleSqueak component
+      run: |
+        mx --env trufflesqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
+        cp $(mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
+        gu install -L "${INSTALLABLE_TARGET}"
+    - name: Run SystemReporter on GraalVM
+      run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+    - name: Run SystemReporter on Native Image
+      run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+    - name: Run tinyBenchmarks on GraalVM
+      run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Run tinyBenchmarks on Native Image
+      run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Upload TruffleSqueak component
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and Graal compiler
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+
+  windows-java11:
+    name: Windows + JDK11 + Graal
+    runs-on: windows-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up dependencies
+      shell: bash
+      run: mx.trufflesqueak/utils.sh set-up-dependencies java11
+    - name: Build and install TruffleSqueak component
+      shell: pwsh
+      run: |
+        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_BTRUFFLESQUEAK.EXE_JAVA11
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_BTRUFFLESQUEAK.EXE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
+        gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
+    - name: Run SystemReporter on GraalVM
+      run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
+    - name: Run tinyBenchmarks on GraalVM
+      run: trufflesqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Upload TruffleSqueak component
+      shell: bash
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and Graal compiler
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test
+
+  windows-java8:
+    name: Windows + JDK8 + Graal
+    runs-on: windows-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+    - name: Clone TruffleSqueak repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up dependencies
+      shell: bash
+      run: mx.trufflesqueak/utils.sh set-up-dependencies java8
+    - name: Build and install TruffleSqueak component
+      shell: pwsh
+      run: |
+        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_BTRUFFLESQUEAK.EXE_JAVA8
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_BTRUFFLESQUEAK.EXE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
+        gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
+    - name: Run SystemReporter on GraalVM
+      run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
+    - name: Run tinyBenchmarks on GraalVM
+      run: trufflesqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+    - name: Upload TruffleSqueak component
+      shell: bash
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Run gate with Graal.js and Graal compiler
+      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test

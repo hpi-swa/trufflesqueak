@@ -19,14 +19,16 @@ build.xml
 .idea
 *.iml
 
+# Python
+*.pyc
+
 # mx
 /.mx
-/mx.graalsqueak/.pydevproject
-/mx.graalsqueak/*.pyc
-/mx.graalsqueak/env
-/mx.graalsqueak/eclipse-launches
+/mx.trufflesqueak/.pydevproject
+/mx.trufflesqueak/env
+/mx.trufflesqueak/eclipse-launches
 /mxbuild
-/GRAALSQUEAK*.dist
+/TRUFFLESQUEAK*.dist
 /coverage
 jacoco.exec
 
@@ -37,11 +39,10 @@ graal_dumps/
 # Profile output directory
 profiles/
 
-# GraalSqueak
-graalsqueak*.zip
-graalsqueak*.jar
-graalsqueak-svm
+# TruffleSqueak
 images
 lib/**/*.dll
 lib/**/*.dylib
 lib/**/*.so
+trufflesqueak*.zip
+trufflesqueak*.jar
