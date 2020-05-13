@@ -9,11 +9,13 @@ baseline: spec
 			package: 'TruffleSqueak-Core';
 			package: 'TruffleSqueak-Support' with: [spec requires: #('TruffleSqueak-Core')];
 			package: 'TruffleSqueak-Tests' with: [spec requires: #('TruffleSqueak-Core' 'TruffleSqueak-Support' 'TruffleSqueak-Utilities')];
-			package: 'TruffleSqueak-Tools' with: [spec requires: #('TruffleSqueak-Core' 'TruffleSqueak-Support'),
+			package: 'TruffleSqueak-Tools-Core' with: [spec requires: #('TruffleSqueak-Core' 'TruffleSqueak-Tools-Support')];
+			package: 'TruffleSqueak-Tools-Notebook-Core' with: [spec requires: #('TruffleSqueak-Core' 'TruffleSqueak-Utilities'),
 				(needsJSON ifTrue: [#('JSON')] ifFalse: [#()])];
+			package: 'TruffleSqueak-Tools-Support' with: [spec requires: #('TruffleSqueak-Core')];
 			package: 'TruffleSqueak-Utilities' with: [spec requires: #('TruffleSqueak-Core' 'TruffleSqueak-Support')].
 		needsJSON ifTrue: [
 			spec package: 'JSON' with: [spec repository: 'http://www.squeaksource.com/JSON']].
 		spec
-			group: 'default' with: #('TruffleSqueak-Core' 'TruffleSqueak-Support' 'TruffleSqueak-Tools' 'TruffleSqueak-Utilities');
+			group: 'default' with: #('TruffleSqueak-Core' 'TruffleSqueak-Support' 'TruffleSqueak-Tools-Core' 'TruffleSqueak-Tools-Notebook-Core' 'TruffleSqueak-Utilities');
 			group: 'tests' with: #('default' 'TruffleSqueak-Tests')]

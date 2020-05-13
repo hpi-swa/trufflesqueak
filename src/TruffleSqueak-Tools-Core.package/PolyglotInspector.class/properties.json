@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"languageID" ],
+	"name" : "PolyglotInspector",
+	"pools" : [
+		 ],
+	"super" : "Inspector",
+	"type" : "normal" }

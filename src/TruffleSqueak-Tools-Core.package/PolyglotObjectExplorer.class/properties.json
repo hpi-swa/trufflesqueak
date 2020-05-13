@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "PolyglotObjectExplorer",
+	"pools" : [
+		 ],
+	"super" : "ObjectExplorer",
+	"type" : "normal" }
