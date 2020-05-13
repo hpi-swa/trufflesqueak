@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools-Notebooks",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "PNBRPlotMorph",
+	"pools" : [
+		 ],
+	"super" : "RPlotMorph",
+	"type" : "normal" }

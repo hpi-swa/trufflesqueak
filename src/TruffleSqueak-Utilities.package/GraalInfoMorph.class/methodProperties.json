@@ -4,7 +4,7 @@
 	"instance" : {
 		"handlesMouseDown:" : "fn 4/26/2020 17:48",
 		"initialize" : "fn 4/29/2020 15:58",
-		"mouseDown:" : "fn 5/1/2020 14:06",
+		"mouseDown:" : "fn 5/12/2020 16:45",
 		"samples" : "fn 4/26/2020 17:49",
 		"step" : "fn 4/26/2020 17:51",
 		"stepTime" : "fn 2/25/2020 11:38" } }
