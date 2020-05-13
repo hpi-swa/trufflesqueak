@@ -1,0 +1,1 @@
+I am a text editor that allows you to set the lineEndings to use when hitting CR.

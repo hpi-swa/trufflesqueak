@@ -1,0 +1,15 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"addEditArea:" : "cmfcmf 8/4/2019 19:17",
+		"frameFractions:" : "lp 6/25/2019 15:54",
+		"handleKeystroke:" : "cmfcmf 6/26/2019 08:55",
+		"initialize" : "fn 5/13/2020 12:00",
+		"isVisibleEditAreaActive" : "cmfcmf 6/24/2019 21:23",
+		"makeEditAreaActive:" : "cmfcmf 6/26/2019 08:33",
+		"newSnippetDirectory:" : "cmfcmf 8/4/2019 19:17",
+		"openFile:" : "fn 5/13/2020 12:01",
+		"removeEditArea:" : "cmfcmf 7/9/2019 08:08",
+		"setAllTabsToNonActive" : "cmfcmf 6/24/2019 18:02",
+		"visibleEditArea" : "cmfcmf 6/24/2019 16:42" } }

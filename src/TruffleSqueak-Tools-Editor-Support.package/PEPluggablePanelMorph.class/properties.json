@@ -1,0 +1,15 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"getColorSelector",
+		"onClickSelector" ],
+	"name" : "PEPluggablePanelMorph",
+	"pools" : [
+		 ],
+	"super" : "PluggablePanelMorph",
+	"type" : "normal" }

@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "cf 5/11/2019 11:14",
+	"instvars" : [
+		 ],
+	"name" : "PEFileEntry",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

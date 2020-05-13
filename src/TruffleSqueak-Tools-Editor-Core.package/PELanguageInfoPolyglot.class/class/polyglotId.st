@@ -1,0 +1,4 @@
+polyglot
+polyglotId
+
+	self subclassResponsibility

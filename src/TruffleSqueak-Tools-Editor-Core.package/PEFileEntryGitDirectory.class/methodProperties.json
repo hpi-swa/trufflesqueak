@@ -1,0 +1,18 @@
+{
+	"class" : {
+		"on:path:" : "cf 5/13/2019 22:36" },
+	"instance" : {
+		"children" : "fn 5/13/2020 12:05",
+		"createDirectory:" : "cmfcmf 6/11/2019 11:53",
+		"createFile:" : "cmfcmf 6/11/2019 12:00",
+		"delete" : "cf 5/13/2019 22:54",
+		"fullPath" : "cmfcmf 7/23/2019 14:18",
+		"hasChildren" : "cf 5/11/2019 10:43",
+		"name" : "cf 5/11/2019 10:52",
+		"path" : "cf 5/13/2019 22:35",
+		"path:" : "cf 5/13/2019 22:35",
+		"rename:" : "cf 5/13/2019 21:12",
+		"supportsPolyglot" : "cmfcmf 7/30/2019 19:00",
+		"treeEntry" : "cf 5/11/2019 10:39",
+		"treeEntry:" : "cf 5/11/2019 10:39",
+		"withFSDo:" : "cf 5/13/2019 22:51" } }

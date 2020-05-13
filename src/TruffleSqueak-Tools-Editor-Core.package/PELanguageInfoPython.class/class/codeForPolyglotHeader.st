@@ -1,0 +1,4 @@
+polyglot
+codeForPolyglotHeader
+
+	^ 'import polyglot'

@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Tests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"Active" ],
+	"commentStamp" : "",
+	"instvars" : [
+		"informed" ],
+	"name" : "PEMockUIManager",
+	"pools" : [
+		 ],
+	"super" : "MorphicUIManager",
+	"type" : "normal" }

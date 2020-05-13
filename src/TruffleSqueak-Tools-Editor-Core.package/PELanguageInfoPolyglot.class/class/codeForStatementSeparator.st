@@ -1,0 +1,4 @@
+polyglot
+codeForStatementSeparator
+
+	self subclassResponsibility

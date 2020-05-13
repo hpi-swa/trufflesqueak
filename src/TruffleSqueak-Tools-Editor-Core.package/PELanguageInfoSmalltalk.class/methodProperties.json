@@ -1,0 +1,25 @@
+{
+	"class" : {
+		"codeForAssignmentOf:to:" : "cmfcmf 7/22/2019 20:16",
+		"codeForComment:" : "cmfcmf 8/4/2019 15:53",
+		"codeForEscapedString:" : "cmfcmf 7/22/2019 20:18",
+		"codeForPolyglotEvaluate:in:" : "cmfcmf 7/22/2019 20:19",
+		"codeForPolyglotEvaluateFile:in:" : "cmfcmf 7/22/2019 20:19",
+		"codeForPolyglotExportOf:to:" : "cmfcmf 7/22/2019 20:20",
+		"codeForPolyglotHeader" : "cmfcmf 7/22/2019 20:16",
+		"codeForPolyglotImport:" : "cmfcmf 8/4/2019 16:24",
+		"codeForPredeclaringVariables:" : "cmfcmf 8/4/2019 17:06",
+		"codeForStatementSeparator" : "cmfcmf 7/22/2019 20:20",
+		"color" : "cmfcmf 7/22/2019 20:20",
+		"customCodeAfterCodeBoxExports" : "cmfcmf 8/4/2019 17:45",
+		"customCodeBeforeCodeBoxContent" : "cmfcmf 8/4/2019 17:45",
+		"defaultLineEndings" : "cmfcmf 7/22/2019 20:20",
+		"extensions" : "cmfcmf 7/22/2019 20:20",
+		"id" : "cmfcmf 7/22/2019 20:16",
+		"isSmalltalk" : "cmfcmf 8/4/2019 17:08",
+		"languageName" : "cmfcmf 7/22/2019 20:20",
+		"polyglotId" : "cmfcmf 8/4/2019 14:54",
+		"rougeLexerName" : "cmfcmf 7/22/2019 20:20",
+		"unescapedCommentContent:" : "cmfcmf 8/4/2019 16:21" },
+	"instance" : {
+		 } }

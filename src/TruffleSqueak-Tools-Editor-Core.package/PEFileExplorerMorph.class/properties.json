@@ -1,0 +1,16 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"realModel",
+		"getRealRootsSelector",
+		"setRealSelectedFileEntrySelector" ],
+	"name" : "PEFileExplorerMorph",
+	"pools" : [
+		 ],
+	"super" : "PluggableTreeMorph",
+	"type" : "normal" }

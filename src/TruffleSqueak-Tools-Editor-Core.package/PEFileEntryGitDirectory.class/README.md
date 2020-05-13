@@ -1,0 +1,1 @@
+I represent a directory entry in a squit repo.

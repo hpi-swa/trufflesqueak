@@ -1,0 +1,1 @@
+I am a polyglot code editor. I can display files of several languages (with syntax highlighting), run them, and display the result.

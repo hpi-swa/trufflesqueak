@@ -1,0 +1,4 @@
+private
+openFile
+
+	self subclassResponsibility

@@ -1,0 +1,19 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Tests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"lastModified",
+		"parent",
+		"size",
+		"content",
+		"children",
+		"fullPath" ],
+	"name" : "PEFileEntryTestFile",
+	"pools" : [
+		 ],
+	"super" : "PEFileEntryFile",
+	"type" : "normal" }

@@ -1,0 +1,19 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "cf 5/10/2019 15:15",
+	"instvars" : [
+		"setSelectionSelector",
+		"setEditTextSelector",
+		"setLineEndingsSelector",
+		"autoHeight",
+		"onFocusSelector",
+		"onKeyStrokeSelector" ],
+	"name" : "PEPluggableCodeMorph",
+	"pools" : [
+		 ],
+	"super" : "PluggableTextMorphPlus",
+	"type" : "normal" }

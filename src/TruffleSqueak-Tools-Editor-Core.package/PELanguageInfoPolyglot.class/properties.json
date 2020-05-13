@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "PELanguageInfoPolyglot",
+	"pools" : [
+		 ],
+	"super" : "PELanguageInfo",
+	"type" : "normal" }

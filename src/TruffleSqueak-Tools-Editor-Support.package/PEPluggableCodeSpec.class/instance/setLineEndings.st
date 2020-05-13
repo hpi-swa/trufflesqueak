@@ -1,0 +1,4 @@
+accessing
+setLineEndings
+
+	^ setLineEndings

@@ -1,0 +1,4 @@
+public
+ensurePolyglotIsImported
+
+	self subclassResponsibility

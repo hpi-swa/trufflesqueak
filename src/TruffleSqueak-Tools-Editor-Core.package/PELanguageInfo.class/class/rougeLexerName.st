@@ -1,0 +1,4 @@
+accessing
+rougeLexerName
+
+	self subclassResponsibility

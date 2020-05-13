@@ -1,0 +1,4 @@
+accessing
+defaultLineEndings
+
+	^ String cr

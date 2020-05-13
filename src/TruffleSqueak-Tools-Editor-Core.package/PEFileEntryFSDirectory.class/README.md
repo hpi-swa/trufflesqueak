@@ -1,0 +1,1 @@
+I represent a directory entry in the filesystem.

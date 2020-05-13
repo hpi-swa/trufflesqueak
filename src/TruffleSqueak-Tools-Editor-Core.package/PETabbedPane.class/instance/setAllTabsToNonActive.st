@@ -1,0 +1,4 @@
+public
+setAllTabsToNonActive
+
+	tabs setAllTabsToNonActive

@@ -1,0 +1,15 @@
+{
+	"class" : {
+		"forPath:" : "cmfcmf 8/4/2019 19:20",
+		"on:" : "cf 5/11/2019 10:09" },
+	"instance" : {
+		"children" : "fn 5/13/2020 12:05",
+		"createDirectory:" : "fn 5/13/2020 12:05",
+		"createFile:" : "fn 5/13/2020 12:04",
+		"delete" : "cf 5/13/2019 22:20",
+		"fileDirectory" : "cf 5/11/2019 10:09",
+		"fileDirectory:" : "cf 5/11/2019 10:09",
+		"fullPath" : "cmfcmf 7/23/2019 14:18",
+		"hasChildren" : "cf 5/11/2019 10:15",
+		"name" : "cf 5/11/2019 10:13",
+		"rename:" : "cf 5/13/2019 22:19" } }

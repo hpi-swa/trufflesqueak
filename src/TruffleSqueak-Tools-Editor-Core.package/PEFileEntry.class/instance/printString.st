@@ -1,0 +1,4 @@
+accessing
+printString
+
+	^ self fullPath

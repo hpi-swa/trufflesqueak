@@ -1,0 +1,19 @@
+{
+	"class" : {
+		"all" : "fn 5/13/2020 12:07",
+		"allWithPolyglotSupport" : "cmfcmf 7/22/2019 21:07",
+		"color" : "cmfcmf 7/22/2019 19:17",
+		"defaultExtension" : "cmfcmf 7/22/2019 20:32",
+		"defaultLineEndings" : "cmfcmf 7/22/2019 19:17",
+		"extensions" : "cmfcmf 7/22/2019 19:17",
+		"forExtension:" : "cmfcmf 7/22/2019 20:37",
+		"forExtension:ifNone:" : "cmfcmf 7/22/2019 20:37",
+		"forId:" : "cmfcmf 7/22/2019 20:35",
+		"hasPolyglotSupport" : "cmfcmf 7/22/2019 20:23",
+		"id" : "cmfcmf 7/22/2019 19:18",
+		"isPython" : "cmfcmf 8/4/2019 14:56",
+		"isSmalltalk" : "cmfcmf 8/4/2019 17:08",
+		"languageName" : "cmfcmf 7/22/2019 19:17",
+		"rougeLexerName" : "cmfcmf 7/22/2019 19:17" },
+	"instance" : {
+		 } }

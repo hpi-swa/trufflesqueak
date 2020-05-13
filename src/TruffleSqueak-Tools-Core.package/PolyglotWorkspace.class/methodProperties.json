@@ -4,7 +4,7 @@
 		"open" : "fn 2/15/2020 14:41",
 		"registerInWorldMenu" : "fn 4/14/2019 00:00" },
 	"instance" : {
-		"addModelItemsToWindowMenu:" : "fn 11/25/2018 16:26",
+		"addModelItemsToWindowMenu:" : "fn 5/13/2020 16:23",
 		"buildCodePaneWith:" : "fn 1/27/2020 11:06",
 		"evaluateExpression:" : "fn 12/19/2018 11:50",
 		"helpText" : "fn 1/27/2020 11:19",

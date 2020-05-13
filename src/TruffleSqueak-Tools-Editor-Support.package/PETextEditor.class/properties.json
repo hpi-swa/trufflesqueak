@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "cmfcmf 6/19/2019 11:08",
+	"instvars" : [
+		"lineEndings" ],
+	"name" : "PETextEditor",
+	"pools" : [
+		 ],
+	"super" : "SmalltalkEditor",
+	"type" : "normal" }

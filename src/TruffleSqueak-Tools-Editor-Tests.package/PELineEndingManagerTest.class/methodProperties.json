@@ -1,0 +1,8 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"testDetectLineEndings" : "fn 5/13/2020 11:52",
+		"testWithCr" : "fn 5/13/2020 11:52",
+		"testWithCrlf" : "fn 5/13/2020 11:52",
+		"testWithLf" : "fn 5/13/2020 11:53" } }

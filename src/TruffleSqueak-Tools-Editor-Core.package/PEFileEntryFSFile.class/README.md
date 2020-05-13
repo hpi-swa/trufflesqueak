@@ -1,0 +1,1 @@
+I represent a file entry in the filesystem.

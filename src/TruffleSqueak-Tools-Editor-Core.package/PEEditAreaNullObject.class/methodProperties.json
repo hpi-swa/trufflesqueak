@@ -1,0 +1,10 @@
+{
+	"class" : {
+		"supports:" : "cmfcmf 6/23/2019 18:54" },
+	"instance" : {
+		"children" : "cmfcmf 6/23/2019 17:49",
+		"convertLineEndings:" : "cmfcmf 6/23/2019 14:42",
+		"ensurePolyglotIsImported" : "cmfcmf 6/23/2019 15:42",
+		"lineEndingsName" : "cmfcmf 6/23/2019 15:19",
+		"openFile" : "cmfcmf 6/23/2019 17:12",
+		"replaceSelectionWith:" : "cmfcmf 6/23/2019 15:43" } }

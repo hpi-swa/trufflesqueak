@@ -1,0 +1,4 @@
+file operations
+read
+
+	^ content

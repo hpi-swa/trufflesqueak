@@ -1,0 +1,4 @@
+accessing
+hasChildren
+
+	self subclassResponsibility

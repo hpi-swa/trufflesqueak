@@ -1,0 +1,15 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"labelSelector",
+		"model" ],
+	"name" : "PEPluggableStringMorph",
+	"pools" : [
+		 ],
+	"super" : "StringMorph",
+	"type" : "normal" }

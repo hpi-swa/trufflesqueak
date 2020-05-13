@@ -1,0 +1,15 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "ek 6/18/2019 14:56",
+	"instvars" : [
+		"selectedEntry",
+		"rootDirectory" ],
+	"name" : "PEFileExplorerModel",
+	"pools" : [
+		 ],
+	"super" : "Model",
+	"type" : "normal" }

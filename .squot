@@ -3,8 +3,11 @@ OrderedDictionary {
 	'src\/TruffleSqueak-Core.package' : #SquotCypressCodeSerializer,
 	'src\/TruffleSqueak-Support.package' : #SquotCypressCodeSerializer,
 	'src\/TruffleSqueak-Tests.package' : #SquotCypressCodeSerializer,
+	'src\/TruffleSqueak-Utilities.package' : #SquotCypressCodeSerializer,
 	'src\/TruffleSqueak-Tools-Core.package' : #SquotCypressCodeSerializer,
-	'src\/TruffleSqueak-Tools-Notebook-Core.package' : #SquotCypressCodeSerializer,
 	'src\/TruffleSqueak-Tools-Support.package' : #SquotCypressCodeSerializer,
-	'src\/TruffleSqueak-Utilities.package' : #SquotCypressCodeSerializer
+	'src\/TruffleSqueak-Tools-Notebook-Core.package' : #SquotCypressCodeSerializer,
+	'src\/TruffleSqueak-Tools-Editor-Support.package' : #SquotCypressCodeSerializer,
+	'src\/TruffleSqueak-Tools-Editor-Core.package' : #SquotCypressCodeSerializer,
+	'src\/TruffleSqueak-Tools-Editor-Tests.package' : #SquotCypressCodeSerializer
 }

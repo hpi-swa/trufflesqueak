@@ -1,0 +1,4 @@
+accessing
+fullPath
+
+	self subclassResponsibility

@@ -1,0 +1,15 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"tabHolder",
+		"scrollPane" ],
+	"name" : "PETabsMorph",
+	"pools" : [
+		 ],
+	"super" : "Morph",
+	"type" : "normal" }

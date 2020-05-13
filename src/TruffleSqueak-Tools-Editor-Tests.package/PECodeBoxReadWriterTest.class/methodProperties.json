@@ -1,0 +1,18 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"assertCodeBoxAt:in:" : "fn 5/13/2020 11:56",
+		"testAddCodeBoxesToSnippetFolder1" : "fn 5/13/2020 12:04",
+		"testAddCodeBoxesToSnippetFolder2" : "fn 5/13/2020 11:58",
+		"testBaseNameOf" : "fn 5/13/2020 11:58",
+		"testCodeBoxForSnippet_normal" : "fn 5/13/2020 12:03",
+		"testCodeBoxForSnippet_recursive" : "fn 5/13/2020 12:04",
+		"testGetFilesToSaveFromFileIdLineEndings_noCodebox" : "fn 5/13/2020 12:03",
+		"testGetFilesToSaveFromFileIdLineEndings_oneExistingCodebox" : "fn 5/13/2020 12:04",
+		"testGetFilesToSaveFromFileIdLineEndings_oneNewCodebox" : "fn 5/13/2020 12:04",
+		"testGetFilesToSaveFromFileIdLineEndings_twoNewCodeboxes" : "fn 5/13/2020 12:04",
+		"testGetJsonForBox" : "fn 5/13/2020 11:58",
+		"testMakeRelativeTo" : "fn 5/13/2020 11:58",
+		"testParentFolderOf" : "fn 5/13/2020 11:58",
+		"withoutAbsolutePathsInSnippets:" : "fn 5/13/2020 11:40" } }

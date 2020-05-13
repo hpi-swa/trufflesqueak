@@ -1,0 +1,2 @@
+public
+convertLineEndings: newLineEndings

@@ -1,0 +1,1 @@
+I am an entry in the editor's file tree. I either represent a file or a directory and can be asked about my name and children.

@@ -1,0 +1,9 @@
+{
+	"class" : {
+		"initialize" : "cmfcmf 7/30/2019 13:48",
+		"isActiveManager" : "cmfcmf 7/30/2019 13:39",
+		"useDuring:" : "cmfcmf 7/30/2019 13:51" },
+	"instance" : {
+		"hasInformed" : "cmfcmf 7/30/2019 13:41",
+		"inform:" : "cmfcmf 7/30/2019 13:37",
+		"initialize" : "cmfcmf 7/30/2019 13:38" } }

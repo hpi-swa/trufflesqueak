@@ -1,0 +1,4 @@
+accessing
+fullPath
+
+	^ fullPath

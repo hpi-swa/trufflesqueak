@@ -1,0 +1,19 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"changeLanguage:" : "fn 5/13/2020 12:06",
+		"createAnnotationMorph:" : "ek 6/28/2019 18:02",
+		"createSemicolonAnnotationMorph" : "ek 6/28/2019 18:02",
+		"createWrongForAnnotationMorph" : "ek 6/28/2019 18:03",
+		"languageInfo" : "cf 5/14/2019 19:26",
+		"languageInfo:" : "cf 5/14/2019 19:26",
+		"privateAddPythonHelp:" : "cmfcmf 8/4/2019 14:55",
+		"privateFormat:" : "ek 6/28/2019 17:48",
+		"privateStyle:" : "ek 6/28/2019 17:48",
+		"privateStyleHighlighting:" : "fn 5/13/2020 12:10",
+		"removePreviousAnnotationMorphs:" : "fn 5/13/2020 11:56",
+		"reset" : "cmfcmf 6/4/2019 16:41",
+		"rubyHighlightCode" : "fn 5/13/2020 12:10",
+		"toTextColor:" : "cf 5/22/2019 20:27",
+		"unstyledTextFrom:" : "cmfcmf 6/11/2019 15:26" } }

@@ -1,0 +1,4 @@
+public
+visibleEditArea
+
+	^ editArea

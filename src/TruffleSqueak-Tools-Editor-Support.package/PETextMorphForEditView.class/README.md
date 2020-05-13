@@ -1,0 +1,1 @@
+I am a custom text morph that resizes all embedded morphs to my width whenever my width changes or they are added.

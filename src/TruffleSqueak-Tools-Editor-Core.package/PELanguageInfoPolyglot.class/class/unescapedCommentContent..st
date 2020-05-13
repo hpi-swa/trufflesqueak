@@ -1,0 +1,4 @@
+polyglot
+unescapedCommentContent: aString
+
+	self subclassResponsibility

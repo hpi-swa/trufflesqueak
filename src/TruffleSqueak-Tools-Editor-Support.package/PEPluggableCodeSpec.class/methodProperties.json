@@ -1,0 +1,20 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"autoHeight" : "cmfcmf 6/23/2019 12:56",
+		"autoHeight:" : "cmfcmf 6/23/2019 12:56",
+		"buildWith:" : "cf 5/10/2019 14:59",
+		"initialize" : "cmfcmf 6/23/2019 12:56",
+		"onFocus" : "cmfcmf 6/23/2019 16:02",
+		"onFocus:" : "cmfcmf 6/23/2019 16:02",
+		"onKeyStroke" : "cmfcmf 7/22/2019 21:56",
+		"onKeyStroke:" : "cmfcmf 7/22/2019 21:56",
+		"setEditText" : "lp 7/7/2019 14:43",
+		"setEditText:" : "cf 5/10/2019 15:07",
+		"setLineEndings" : "cmfcmf 6/23/2019 21:49",
+		"setLineEndings:" : "ek 6/23/2019 21:25",
+		"setSelection" : "cf 5/10/2019 14:05",
+		"setSelection:" : "cf 5/10/2019 14:05",
+		"styler" : "cf 5/14/2019 19:36",
+		"styler:" : "cf 5/14/2019 19:37" } }

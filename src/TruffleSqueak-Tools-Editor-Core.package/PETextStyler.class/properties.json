@@ -1,0 +1,14 @@
+{
+	"category" : "TruffleSqueak-Tools-Editor-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "ek 7/5/2019 14:46",
+	"instvars" : [
+		"languageInfo" ],
+	"name" : "PETextStyler",
+	"pools" : [
+		 ],
+	"super" : "SHTextStyler",
+	"type" : "normal" }

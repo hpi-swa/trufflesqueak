@@ -1,0 +1,4 @@
+markers
+snippetCodeBeginMarker
+
+	^ 'CODE BEGIN'

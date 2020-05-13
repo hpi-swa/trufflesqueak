@@ -1,0 +1,4 @@
+accessing
+lineNumberWidth
+
+	^ 30

@@ -1,0 +1,4 @@
+private
+fileEntry
+
+	^ fileEntry

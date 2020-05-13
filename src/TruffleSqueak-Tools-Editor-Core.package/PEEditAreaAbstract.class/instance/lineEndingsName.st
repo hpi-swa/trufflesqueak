@@ -1,0 +1,4 @@
+public
+lineEndingsName
+
+	self subclassResponsibility

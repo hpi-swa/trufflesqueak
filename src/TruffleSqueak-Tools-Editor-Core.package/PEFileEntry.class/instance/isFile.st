@@ -1,0 +1,3 @@
+accessing
+isFile
+	self subclassResponsibility

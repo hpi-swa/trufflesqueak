@@ -1,0 +1,4 @@
+public
+isCodeEntry
+
+	^ false
