@@ -1,0 +1,11 @@
+SmalltalkCISpec {
+  #loading : [
+    SCIMetacelloLoadSpec {
+      #baseline : 'TruffleSqueak',
+      #directory : 'src',
+      #load : [ 'tests' ],
+      #platforms : [ #squeak ],
+      #useLatestMetacello : true
+    }
+  ]
+}
