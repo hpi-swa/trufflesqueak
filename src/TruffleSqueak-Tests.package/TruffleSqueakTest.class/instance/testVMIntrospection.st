@@ -1,6 +1,8 @@
 testing
 testVMIntrospection
 	| testObject |
+	Polyglot isPolyglotEvalAllowed ifFalse: [ ^self ].
+
 	testObject := (TruffleSqueakUtilities primitiveGetVMObject: SmalltalkImage).
 	"Every Java object understands hashCode"
 	self assert: (Interop fitsInLong: testObject hashCode).

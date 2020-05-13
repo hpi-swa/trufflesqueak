@@ -1,5 +1,7 @@
 testing
 testMetadataAPIs
+	(Polyglot isPolyglotEvalAllowed) ifFalse: [ ^self ].
+
 	"All boxed objects have a language"
 	self assert: (Interop hasLanguage: Smalltalk).
 	self assert: (Interop getLanguage: Smalltalk) equals: (Interop getLanguage: Smalltalk).

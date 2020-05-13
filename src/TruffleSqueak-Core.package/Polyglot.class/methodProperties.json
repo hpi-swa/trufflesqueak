@@ -24,6 +24,7 @@
 		"importStatementFor:named:" : "fn 5/28/2020 10:00",
 		"initialize" : "fn 1/24/2020 14:41",
 		"isPermitted:" : "fn 11/28/2019 14:56",
+		"isPolyglotEvalAllowed" : "fn 5/13/2020 17:37",
 		"languageDefaultMimeTypeOf:" : "fn 11/25/2018 16:20",
 		"languageIdJS" : "fn 4/13/2019 13:50",
 		"languageIdJava" : "fn 6/20/2019 17:21",

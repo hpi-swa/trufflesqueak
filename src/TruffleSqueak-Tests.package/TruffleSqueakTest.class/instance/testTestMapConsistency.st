@@ -1,6 +1,8 @@
 testing
 testTestMapConsistency
 	| mapTestNames mapTestNamesSize imageTestNames imageTestNamesSize testNamesDifference allTestsDifference |
+	Polyglot isPolyglotEvalAllowed ifFalse: [ ^self ].
+
 	mapTestNames := (Java type: 'de.hpi.swa.graal.squeak.test.SqueakTests') rawTestNames asCollection.
 	self assertSorted: mapTestNames name: 'test.properties'.
 	mapTestNamesSize := mapTestNames size.
