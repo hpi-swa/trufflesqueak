@@ -40,4 +40,4 @@ baseline: spec
 			group: 'core' with: #('TruffleSqueak-Core');
 			group: 'default' with: #('TruffleSqueak-Core' 'TruffleSqueak-Support' 'TruffleSqueak-Tools-Core'
 									'TruffleSqueak-Tools-Editor-Core' 'TruffleSqueak-Tools-Notebook-Core' 'TruffleSqueak-Utilities');
-			group: 'tests' with: #('default' 'TruffleSqueak-Tests')]
+			group: 'tests' with: #('default' 'TruffleSqueak-Tests' 'TruffleSqueak-Tools-Editor-Tests')]
