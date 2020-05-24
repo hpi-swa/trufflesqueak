@@ -26,14 +26,13 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimExpandBlockNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Specialization(guards = {"buf.isByteType()", "expanded.isIntType()", "expanded.getIntLength() == 80", "buf.getByteLength() == 64"})
         protected static final Object doExpand(final Object receiver, final NativeObject buf, final NativeObject expanded) {
-            final int[] words = expanded.getIntStorage();
             final byte[] bytes = buf.getByteStorage();
             for (int i = 0; i <= 15; i++) {
-                words[i] = UnsafeUtils.getIntReversed(bytes, i);
+                expanded.setInt(i, UnsafeUtils.getIntReversed(bytes, i));
             }
             for (int i = 16; i <= 79; i += 1) {
-                final long value = Integer.toUnsignedLong(words[i - 3] ^ words[i - 8] ^ words[i - 14] ^ words[i - 16]);
-                words[i] = (int) (value << 1 | value >> 31); // leftRotate:by:.
+                final long value = Integer.toUnsignedLong(expanded.getInt(i - 3) ^ expanded.getInt(i - 8) ^ expanded.getInt(i - 14) ^ expanded.getInt(i - 16));
+                expanded.setInt(i, (int) (value << 1 | value >> 31)); // leftRotate:by:.
             }
             return receiver;
         }

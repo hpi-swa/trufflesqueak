@@ -17,7 +17,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -31,12 +30,11 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimMakeUUIDNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Specialization(guards = {"receiver.isByteType()", "receiver.getByteLength() == 16"})
         protected static final Object doUUID(final NativeObject receiver) {
-            final byte[] bytes = receiver.getByteStorage();
-            ArrayUtils.fillRandomly(bytes);
+            ArrayUtils.fillRandomly(receiver.getByteStorage());
             // Version 4
-            UnsafeUtils.putByte(bytes, 6, (byte) (UnsafeUtils.getByte(bytes, 6) & 0x0F | 0x40));
+            receiver.setByte(6, (byte) (receiver.getByte(6) & 0x0F | 0x40));
             // Fixed 8..b value
-            UnsafeUtils.putByte(bytes, 8, (byte) (UnsafeUtils.getByte(bytes, 8) & 0x3F | 0x80));
+            receiver.setByte(8, (byte) (receiver.getByte(8) & 0x3F | 0x80));
             return receiver;
         }
     }

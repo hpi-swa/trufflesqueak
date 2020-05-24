@@ -405,9 +405,15 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "value.lessThanOrEqualTo(INTEGER_MAX)"})
+        @Specialization(guards = {"receiver.isIntType()"}, rewriteOn = ArithmeticException.class)
         protected static final NativeObject doNativeInts(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getIntStorage(), (int) value.longValueExact());
+            Arrays.fill(receiver.getIntStorage(), value.intValueExact());
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.isIntType()", "value.lessThanOrEqualTo(INTEGER_MAX)"}, replaces = "doNativeInts")
+        protected static final NativeObject doNativeIntsFallback(final NativeObject receiver, final LargeIntegerObject value) {
+            Arrays.fill(receiver.getIntStorage(), value.intValueExact());
             return receiver;
         }
 
@@ -417,8 +423,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver;
         }
 
-        @Specialization(guards = {"receiver.isLongType()", "value.fitsIntoLong()"})
+        @Specialization(guards = {"receiver.isLongType()"}, rewriteOn = ArithmeticException.class)
         protected static final NativeObject doNativeLongs(final NativeObject receiver, final LargeIntegerObject value) {
+            Arrays.fill(receiver.getLongStorage(), value.longValueExact());
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.isLongType()", "value.fitsIntoLong()"}, replaces = "doNativeLongs")
+        protected static final NativeObject doNativeLongsFallback(final NativeObject receiver, final LargeIntegerObject value) {
             Arrays.fill(receiver.getLongStorage(), value.longValueExact());
             return receiver;
         }
