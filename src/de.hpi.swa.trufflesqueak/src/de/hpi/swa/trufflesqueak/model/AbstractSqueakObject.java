@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -42,6 +43,12 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     public abstract int instsize();
 
     public abstract int size();
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        return "a " + getClass().getSimpleName() + " @" + Integer.toHexString(hashCode());
+    }
 
     /*
      * INTEROPERABILITY
@@ -152,10 +159,33 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         }
     }
 
-    @Override
-    public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return "a " + getClass().getSimpleName() + " @" + Integer.toHexString(hashCode());
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public final boolean hasMetaObject() {
+        return true;
+    }
+
+    @ExportMessage
+    public final Object getMetaObject(@Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+        return classNode.executeLookup(this);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public final boolean hasLanguage() {
+        return true;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public final Class<? extends TruffleLanguage<?>> getLanguage() {
+        return SqueakLanguage.class;
+    }
+
+    @ExportMessage
+    @TruffleBoundary
+    public final Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
+        return toString();
     }
 
     /**

@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -39,6 +38,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_TRAIT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -120,8 +120,8 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
+    @TruffleBoundary
     public String getClassName() {
-        CompilerAsserts.neverPartOfCompilation();
         if (isAMetaClass()) {
             final Object classInstance = pointers[METACLASS.THIS_CLASS - CLASS_DESCRIPTION.SIZE];
             if (classInstance != NilObject.SINGLETON && ((ClassObject) classInstance).pointers[CLASS.NAME] != NilObject.SINGLETON) {
@@ -653,5 +653,38 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                 throw UnsupportedTypeException.create(arguments, "Failed to initialize new object");
             }
         }
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected boolean isMetaObject() {
+        return true;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected Object getMetaQualifiedName() {
+        return getClassName();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected Object getMetaSimpleName() {
+        return getClassName();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    protected boolean isMetaInstance(final Object instance,
+                    @Cached final SqueakObjectClassNode classNode) {
+        final ClassObject clazz = classNode.executeLookup(instance);
+        ClassObject currentClass = this;
+        while (currentClass != null) {
+            if (currentClass == clazz) {
+                return true;
+            }
+            currentClass = currentClass.getSuperclassOrNull();
+        }
+        return false;
     }
 }
