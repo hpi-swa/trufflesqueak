@@ -46,17 +46,15 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             private static final long serialVersionUID = 1L;
         }
 
-        @Specialization(guards = {"string1Value.isByteType()", "string2Value.isByteType()"}, rewriteOn = NotAsciiOrderException.class)
-        protected final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1Value, final NativeObject string2Value, final NativeObject orderValue) {
+        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()"}, rewriteOn = NotAsciiOrderException.class)
+        protected final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
             ensureAsciiOrder(orderValue);
-            final byte[] string1 = string1Value.getByteStorage();
-            final byte[] string2 = string2Value.getByteStorage();
-            final int len1 = string1.length;
-            final int len2 = string2.length;
+            final int len1 = string1.getByteLength();
+            final int len2 = string2.getByteLength();
             final int min = Math.min(len1, len2);
             for (int i = 0; i < min; i++) {
-                final byte c1 = UnsafeUtils.getByte(string1, i);
-                final byte c2 = UnsafeUtils.getByte(string2, i);
+                final byte c1 = string1.getByte(i);
+                final byte c2 = string2.getByte(i);
                 if (c1 != c2) {
                     return (c1 & 0xff) < (c2 & 0xff) ? 1L : 3L;
                 }
@@ -88,18 +86,15 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization(guards = {"string1Value.isByteType()", "string2Value.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, replaces = "doCompareAsciiOrder")
-        protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1Value, final NativeObject string2Value,
+        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "orderValue.isByteType()", "orderValue.getByteLength() >= 256"}, replaces = "doCompareAsciiOrder")
+        protected static final long doCompare(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2,
                         final NativeObject orderValue) {
-            final byte[] string1 = string1Value.getByteStorage();
-            final byte[] string2 = string2Value.getByteStorage();
-            final byte[] order = orderValue.getByteStorage();
-            final int len1 = string1.length;
-            final int len2 = string2.length;
+            final int len1 = string1.getByteLength();
+            final int len2 = string2.getByteLength();
             final int min = Math.min(len1, len2);
             for (int i = 0; i < min; i++) {
-                final byte c1 = UnsafeUtils.getByte(order, UnsafeUtils.getByte(string1, i) & 0xff);
-                final byte c2 = UnsafeUtils.getByte(order, UnsafeUtils.getByte(string2, i) & 0xff);
+                final byte c1 = orderValue.getByte(string1.getByte(i) & 0xff);
+                final byte c2 = orderValue.getByte(string2.getByte(i) & 0xff);
                 if (c1 != c2) {
                     return (c1 & 0xff) < (c2 & 0xff) ? 1L : 3L;
                 }
@@ -325,11 +320,9 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"})
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
-            final byte[] stringBytes = string.getByteStorage();
-            final byte[] inclusionMapBytes = inclusionMap.getByteStorage();
-            final int stringSize = stringBytes.length;
+            final int stringSize = string.getByteLength();
             long index = start - 1;
-            while (index < stringSize && UnsafeUtils.getByte(inclusionMapBytes, UnsafeUtils.getByte(stringBytes, index) & 0xff) == 0) {
+            while (index < stringSize && inclusionMap.getByte(string.getByte(index) & 0xff) == 0) {
                 index++;
             }
             return index >= stringSize ? 0L : index + 1;
@@ -466,10 +459,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"})
         protected static final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
-            final byte[] stringBytes = string.getByteStorage();
-            final byte[] tableBytes = table.getByteStorage();
-            for (int i = (int) start - 1; i < stop; i++) {
-                stringBytes[i] = UnsafeUtils.getByte(tableBytes, UnsafeUtils.getByte(stringBytes, i) & 0xff);
+            for (long i = start - 1; i < stop; i++) {
+                string.setByte(i, table.getByte(string.getByte(i) & 0xff));
             }
             return receiver;
         }
@@ -477,10 +468,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isIntType()", "table.getIntLength() >= 256"})
         protected static final Object doNativeObjectIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
                         final NativeObject table) {
-            final byte[] stringBytes = string.getByteStorage();
-            final int[] tableBytes = table.getIntStorage();
-            for (int i = (int) start - 1; i < stop; i++) {
-                stringBytes[i] = (byte) UnsafeUtils.getInt(tableBytes, UnsafeUtils.getByte(stringBytes, i) & 0xff);
+            for (long i = start - 1; i < stop; i++) {
+                string.setByte(i, (byte) table.getInt(string.getByte(i) & 0xff));
             }
             return receiver;
         }

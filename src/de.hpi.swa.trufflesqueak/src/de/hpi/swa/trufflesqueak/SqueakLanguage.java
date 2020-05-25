@@ -21,17 +21,12 @@ import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.ContextObjectInfo;
 import de.hpi.swa.trufflesqueak.interop.InteropArray;
 import de.hpi.swa.trufflesqueak.interop.SqueakFileDetector;
-import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
-import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
-import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -73,22 +68,8 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     @Override
-    protected boolean isObjectOfLanguage(final Object object) {
-        return SqueakGuards.isAbstractSqueakObject(object);
-    }
-
-    @Override
     protected boolean isThreadAccessAllowed(final Thread thread, final boolean singleThreaded) {
         return true; // TODO: Experimental, make TruffleSqueak work in multiple threads.
-    }
-
-    @Override
-    protected Object findMetaObject(final SqueakImageContext image, final Object value) {
-        // TODO: return ContextObject instead?
-        if (value instanceof FrameMarker) {
-            return image.nilClass;
-        }
-        return SqueakObjectClassNode.getUncached().executeLookup(WrapToSqueakNode.getUncached().executeWrap(value));
     }
 
     @Override
@@ -109,12 +90,6 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         final ContextObjectInfo variables = new ContextObjectInfo(frame);
         final InteropArray arguments = new InteropArray(frame.getArguments());
         return Collections.singletonList(Scope.newBuilder(name, variables).node(node).receiver(receiver.toString(), receiver).arguments(arguments).build());
-    }
-
-    @Override
-    protected SourceSection findSourceLocation(final SqueakImageContext context, final Object value) {
-        // TODO Implement for LSP -> "go-to-definition within same workspace window"
-        return super.findSourceLocation(context, value);
     }
 
     public static SqueakImageContext getContext() {

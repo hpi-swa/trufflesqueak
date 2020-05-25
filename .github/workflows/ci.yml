@@ -199,8 +199,8 @@ jobs:
     - name: Build and install TruffleSqueak component
       shell: pwsh
       run: |
-        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_BTRUFFLESQUEAK.EXE_JAVA11
-        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_BTRUFFLESQUEAK.EXE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
+        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
         gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
@@ -227,8 +227,8 @@ jobs:
     - name: Build and install TruffleSqueak component
       shell: pwsh
       run: |
-        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_BTRUFFLESQUEAK.EXE_JAVA8
-        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_BTRUFFLESQUEAK.EXE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
+        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA8
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
         gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'

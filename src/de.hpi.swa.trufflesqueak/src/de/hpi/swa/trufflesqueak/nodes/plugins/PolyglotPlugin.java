@@ -16,6 +16,7 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -58,6 +59,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimi
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -1075,6 +1077,118 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
                 return image.env.asGuestValue(lib.asTimeZone(object));
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    /* Meta-data APIs */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasLanguage")
+    protected abstract static class PrimHasLanguageNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean hasLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return lib.hasLanguage(object);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetLanguage")
+    protected abstract static class PrimGetLanguageNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization(guards = "lib.hasLanguage(object)")
+        protected static final Class<? extends TruffleLanguage<?>> getLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getLanguage(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveToDisplayString")
+    protected abstract static class PrimToDisplayStringNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final Object toDisplayString(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return lib.toDisplayString(object);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasMetaObject")
+    protected abstract static class PrimHasMetaObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean hasMetaObject(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return lib.hasMetaObject(object);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMetaObject")
+    protected abstract static class PrimIsMetaObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean isMetaObject(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return lib.isMetaObject(object);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsMetaInstance")
+    protected abstract static class PrimIsMetaInstanceNode extends AbstractPrimitiveNode implements TernaryPrimitiveWithoutFallback {
+        @Specialization(guards = "lib.isMetaObject(object)")
+        protected static final boolean isMetaInstance(@SuppressWarnings("unused") final Object receiver, final Object object, final Object instance,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.isMetaInstance(object, instance);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetMetaObject")
+    protected abstract static class PrimGetMetaObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization(guards = "lib.hasMetaObject(object)")
+        protected static final Object getMetaObject(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getMetaObject(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetMetaQualifiedName")
+    protected abstract static class PrimGetMetaQualifiedNameNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization(guards = "lib.isMetaObject(object)")
+        protected static final Object getMetaQualifiedName(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getMetaQualifiedName(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetMetaSimpleName")
+    protected abstract static class PrimGetMetaSimpleNameNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization(guards = "lib.isMetaObject(object)")
+        protected static final Object getMetaSimpleName(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getMetaSimpleName(object);
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }

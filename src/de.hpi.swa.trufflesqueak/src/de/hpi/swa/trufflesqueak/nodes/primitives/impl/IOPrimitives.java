@@ -70,7 +70,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimit
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.NotProvided;
-import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -266,13 +265,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         final ArrayObject stops, final long kernData) {
             final ArrayObject scanXTable = pointersReadNode.executeArray(receiver, CHARACTER_SCANNER.XTABLE);
             final ArrayObject scanMap = pointersReadNode.executeArray(receiver, CHARACTER_SCANNER.MAP);
-            final byte[] sourceBytes = sourceString.getByteStorage();
 
             final int maxGlyph = arraySizeNode.execute(scanXTable) - 2;
             long scanDestX = pointersReadNode.executeLong(receiver, CHARACTER_SCANNER.DEST_X);
             long scanLastIndex = startIndex;
             while (scanLastIndex <= stopIndex) {
-                final long ascii = UnsafeUtils.getByte(sourceBytes, scanLastIndex - 1) & 0xFF;
+                final long ascii = sourceString.getByte(scanLastIndex - 1) & 0xFF;
                 final Object stopReason = arrayReadNode.execute(stops, ascii);
                 if (stopReason != NilObject.SINGLETON) {
                     storeStateInReceiver(receiver, scanDestX, scanLastIndex);
@@ -395,8 +393,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 errorProfile.enter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            rcvr.setHigh(repl.getIntStorage()[1]);
-            rcvr.setLow(repl.getIntStorage()[0]);
+            rcvr.setHigh(repl.getInt(1));
+            rcvr.setLow(repl.getInt(0));
             return rcvr;
         }
 

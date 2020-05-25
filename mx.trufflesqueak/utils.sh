@@ -191,8 +191,9 @@ set-up-dependencies() {
 set-up-graalvm-ce() {
   local java_version=$1
   local target_dir=$2
+  local graalvm_name="graalvm-ce-${java_version}-${OS_NAME}-amd64-${DEP_GRAALVM}"
   local file_suffix=".tar.gz" && [[ "${OS_NAME}" == "windows" ]]  && file_suffix=".zip"
-  local file="graalvm-ce-${java_version}-${OS_NAME}-amd64-${DEP_GRAALVM}${file_suffix}"
+  local file="${graalvm_name}${file_suffix}"
 
   pushd "${target_dir}" > /dev/null
 
@@ -205,24 +206,24 @@ set-up-graalvm-ce() {
   add-path "${graalvm_home}/bin"
   set-env "GRAALVM_HOME" "$(resolve-path "${graalvm_home}")"
   
-  echo "[${file} set up successfully]"
+  echo "[${graalvm_name} set up successfully]"
 }
 
 set-up-labsjdk11() {
   local target_dir=$1
   local jdk_tar=${target_dir}/jdk.tar.gz
-  local file="labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64.tar.gz"
+  local jdk_name="labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64"
 
   pushd "${target_dir}" > /dev/null
 
-  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/labs-openjdk-11/releases/download/${DEP_JVMCI}/${file}"
+  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/labs-openjdk-11/releases/download/${DEP_JVMCI}/${jdk_name}.tar.gz"
   tar xzf "${jdk_tar}"
 
   popd > /dev/null
 
   enable-jdk "${target_dir}/labsjdk-ce-${DEP_JDK11}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 
-  echo "[${file} set up successfully]"
+  echo "[${jdk_name} set up successfully]"
 }
 
 set-up-mx() {
@@ -234,24 +235,24 @@ set-up-mx() {
 set-up-openjdk8-jvmci() {
   local target_dir=$1
   local jdk_tar=${target_dir}/jdk.tar.gz
-  local file="openjdk-8u${DEP_JDK8_UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64.tar.gz"
+  local jdk_name="openjdk-8u${DEP_JDK8}+${DEP_JDK8_UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64"
 
   pushd "${target_dir}" > /dev/null
 
-  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${DEP_JVMCI}/${file}"
+  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${DEP_JVMCI}/${jdk_name}.tar.gz"
   tar xzf "${jdk_tar}"
 
   popd > /dev/null
 
-  enable-jdk "${target_dir}/openjdk1.8.0_${DEP_JDK8_UPDATE}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
+  enable-jdk "${target_dir}/openjdk1.8.0_${DEP_JDK8}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}"
 
   # Workaround for Windows (can be removed when https://git.io/Jv9IQ is available)
   if [[ "${OS_NAME}" == "windows" ]]; then
     # Remove empty lines
-    sed -i '/^$/d' "${target_dir}/openjdk1.8.0_${DEP_JDK8_UPDATE}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}/release"
+    sed -i '/^$/d' "${target_dir}/openjdk1.8.0_${DEP_JDK8}-${DEP_JVMCI}${JAVA_HOME_SUFFIX}/release"
   fi
 
-  echo "[openjdk1.8.0_${DEP_JDK8_UPDATE}-${DEP_JVMCI} set up successfully]"
+  echo "[${jdk_name} set up successfully]"
 }
 
 shallow-clone() {
