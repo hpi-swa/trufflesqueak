@@ -357,11 +357,6 @@ public final class SqueakImageReader {
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_PROCESS, image.processClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_BLOCK_CLOSURE, image.blockClosureClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_NEGATIVE_INTEGER, image.largeNegativeIntegerClass);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_ADDRESS, image.externalAddressClass);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_STRUCTURE, image.externalStructureClass);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_DATA, image.externalDataClass);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION, image.externalFunctionClass);
-        setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_EXTERNAL_LIBRARY, image.externalLibraryClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_ABOUT_TO_RETURN, image.aboutToReturnSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_RUN_WITHIN, image.runWithInSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.PRIM_ERR_TABLE_INDEX, image.primitiveErrorTable);

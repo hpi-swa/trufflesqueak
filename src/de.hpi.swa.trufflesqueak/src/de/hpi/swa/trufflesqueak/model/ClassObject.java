@@ -39,6 +39,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_TRAIT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -279,7 +280,12 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public boolean includesExternalFunctionBehavior() {
-        return includesBehavior(image.externalFunctionClass);
+        final Object externalFunctionClass = image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
+        if (externalFunctionClass instanceof ClassObject) {
+            return includesBehavior((ClassObject) image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
+        } else {
+            return false;
+        }
     }
 
     /**
