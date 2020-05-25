@@ -30,6 +30,7 @@ import de.hpi.swa.trufflesqueak.model.layout.SlotLocation.IllegalWriteException;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectReadNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodesFactory.AbstractPointersObjectWriteNodeGen;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public class AbstractPointersObjectNodes {
     protected static final int CACHE_LIMIT = 6;
@@ -57,6 +58,10 @@ public class AbstractPointersObjectNodes {
         public abstract NativeObject executeNative(AbstractPointersObject obj, int index);
 
         public abstract PointersObject executePointers(AbstractPointersObject obj, int index);
+
+        public final int executeInt(final AbstractPointersObject obj, final int index) {
+            return MiscUtils.toIntExact(executeLong(obj, index));
+        }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"cachedIndex == index", "object.getLayout() == cachedLayout"}, //

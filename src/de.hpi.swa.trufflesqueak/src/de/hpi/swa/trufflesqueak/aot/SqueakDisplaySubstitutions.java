@@ -46,6 +46,7 @@ import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
 
 final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDisplayInterface {
@@ -143,18 +144,19 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     @Override
     @TruffleBoundary
     public void open(final PointersObject sqDisplay) {
-        bitmap = (NativeObject) sqDisplay.instVarAt0Slow(FORM.BITS);
+        final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
+        bitmap = readNode.executeNative(sqDisplay, FORM.BITS);
         if (!bitmap.isIntType()) {
             throw SqueakException.create("Display bitmap expected to be a words object");
         }
 
-        final int depth = (int) (long) sqDisplay.instVarAt0Slow(FORM.DEPTH);
+        final int depth = readNode.executeInt(sqDisplay, FORM.DEPTH);
         if (depth != 32) {
             throw SqueakException.create("Expected 32bit display");
         }
         if (window.isNull()) {
-            width = (int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH);
-            height = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
+            width = readNode.executeInt(sqDisplay, FORM.WIDTH);
+            height = readNode.executeInt(sqDisplay, FORM.HEIGHT);
             try (CCharPointerHolder title = CTypeConversion.toCString(DEFAULT_WINDOW_TITLE)) {
                 window = SDL.createWindow(
                                 title.get(),
@@ -172,7 +174,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
             fullDamage();
             getNextEvent(); // Poll and drop fix events for faster window initialization.
         } else {
-            resizeTo((int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH), (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT));
+            resizeTo(readNode.executeInt(sqDisplay, FORM.WIDTH), readNode.executeInt(sqDisplay, FORM.HEIGHT));
         }
     }
 

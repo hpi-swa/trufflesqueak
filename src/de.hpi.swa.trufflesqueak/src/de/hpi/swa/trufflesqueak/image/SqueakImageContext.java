@@ -490,7 +490,7 @@ public final class SqueakImageContext {
     }
 
     public int getSpecialSelectorNumArgs(final int index) {
-        return (int) (long) getSpecialSelectors().getObjectStorage()[index * 2 + 1];
+        return MiscUtils.toIntExact((long) getSpecialSelectors().getObjectStorage()[index * 2 + 1]);
     }
 
     public void setSemaphore(final int index, final AbstractSqueakObject semaphore) {

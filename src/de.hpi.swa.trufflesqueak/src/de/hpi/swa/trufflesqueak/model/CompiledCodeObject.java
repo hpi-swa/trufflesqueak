@@ -255,7 +255,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     }
 
     private int getHeader() {
-        return (int) (long) literals[0];
+        return MiscUtils.toIntExact((long) literals[0]);
     }
 
     protected final void decodeHeader() {

@@ -51,6 +51,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -147,12 +148,13 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
         private void setSqDisplay(final PointersObject sqDisplay) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final NativeObject bitmap = (NativeObject) sqDisplay.instVarAt0Slow(FORM.BITS);
+            final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
+            final NativeObject bitmap = readNode.executeNative(sqDisplay, FORM.BITS);
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            final int width = (int) (long) sqDisplay.instVarAt0Slow(FORM.WIDTH);
-            final int height = (int) (long) sqDisplay.instVarAt0Slow(FORM.HEIGHT);
+            final int width = readNode.executeInt(sqDisplay, FORM.WIDTH);
+            final int height = readNode.executeInt(sqDisplay, FORM.HEIGHT);
             assert (long) sqDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
                 bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height);

@@ -199,8 +199,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 final PointersObject offset = receiver.getFormOffset(cursorReadNode);
-                final int offsetX = Math.abs((int) offsetReadNode.executeLong(offset, POINT.X));
-                final int offsetY = Math.abs((int) offsetReadNode.executeLong(offset, POINT.Y));
+                final int offsetX = Math.abs(offsetReadNode.executeInt(offset, POINT.X));
+                final int offsetY = Math.abs(offsetReadNode.executeInt(offset, POINT.Y));
                 image.getDisplay().setCursor(receiver.getFormBits(cursorReadNode), null, receiver.getFormWidth(cursorReadNode), receiver.getFormHeight(cursorReadNode),
                                 receiver.getFormDepth(cursorReadNode), offsetX, offsetY);
             }
@@ -217,8 +217,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 final int height = receiver.getFormHeight(cursorReadNode);
                 final int width = receiver.getFormWidth(cursorReadNode);
                 final PointersObject offset = receiver.getFormOffset(cursorReadNode);
-                final int offsetX = Math.abs((int) offsetReadNode.executeLong(offset, POINT.X));
-                final int offsetY = Math.abs((int) offsetReadNode.executeLong(offset, POINT.Y));
+                final int offsetX = Math.abs(offsetReadNode.executeInt(offset, POINT.X));
+                final int offsetY = Math.abs(offsetReadNode.executeInt(offset, POINT.Y));
                 if (depthProfile.profile(depth == 1)) {
                     final int[] mask = cursorReadNode.executeNative(maskObject, FORM.BITS).getIntStorage();
                     image.getDisplay().setCursor(words, mask, width, height, 2, offsetX, offsetY);

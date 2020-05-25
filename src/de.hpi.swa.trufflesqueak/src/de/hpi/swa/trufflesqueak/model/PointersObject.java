@@ -123,11 +123,11 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public int getFormDepth(final AbstractPointersObjectReadNode readNode) {
-        return (int) readNode.executeLong(this, FORM.DEPTH);
+        return readNode.executeInt(this, FORM.DEPTH);
     }
 
     public int getFormHeight(final AbstractPointersObjectReadNode readNode) {
-        return (int) readNode.executeLong(this, FORM.HEIGHT);
+        return readNode.executeInt(this, FORM.HEIGHT);
     }
 
     public PointersObject getFormOffset(final AbstractPointersObjectReadNode readNode) {
@@ -135,7 +135,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public int getFormWidth(final AbstractPointersObjectReadNode readNode) {
-        return (int) readNode.executeLong(this, FORM.WIDTH);
+        return readNode.executeInt(this, FORM.WIDTH);
     }
 
     public PointersObject removeFirstLinkOfList(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode) {

@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 public final class ContextObject extends AbstractSqueakObjectWithHash {
@@ -152,9 +153,9 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         if (pc == NilObject.SINGLETON) {
             removeInstructionPointer();
         } else {
-            setInstructionPointer((int) (long) pc);
+            setInstructionPointer(MiscUtils.toIntExact((long) pc));
         }
-        setStackPointer((int) (long) pointers[CONTEXT.STACKPOINTER]);
+        setStackPointer(MiscUtils.toIntExact((long) pointers[CONTEXT.STACKPOINTER]));
         for (int i = CONTEXT.TEMP_FRAME_START; i < pointers.length; i++) {
             atTempPut(i - CONTEXT.TEMP_FRAME_START, pointers[i]);
         }

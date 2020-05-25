@@ -93,8 +93,8 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 /* Extract information from form. */
                 final NativeObject bits = (NativeObject) readNode.execute(form, FORM.BITS);
-                final int width = (int) (long) readNode.execute(form, FORM.WIDTH);
-                final int height = (int) (long) readNode.execute(form, FORM.HEIGHT);
+                final int width = readNode.executeInt(form, FORM.WIDTH);
+                final int height = readNode.executeInt(form, FORM.HEIGHT);
                 final long depth = (long) readNode.execute(form, FORM.DEPTH);
                 if (!bits.isIntType() || depth != 32) {
                     CompilerDirectives.transferToInterpreter();

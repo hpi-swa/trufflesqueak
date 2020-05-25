@@ -251,6 +251,12 @@ public final class MiscUtils {
         return value.getBytes();
     }
 
+    /** Similar to {@link Math#toIntExact(long)}, but uses an assertion. */
+    public static int toIntExact(final long value) {
+        assert (int) value == value;
+        return (int) value;
+    }
+
     public static long toJavaMicrosecondsUTC(final long microseconds) {
         return microseconds - EPOCH_DELTA_MICROSECONDS;
     }
