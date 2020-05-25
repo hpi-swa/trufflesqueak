@@ -5,7 +5,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.plugins.ffi;
 
-public class FFIConstants {
+public final class FFIConstants {
     /** See FFIConstants>>initializeErrorConstants. */
     public static final class FFI_ERROR {
         /** "No callout mechanism available". */
@@ -85,16 +85,16 @@ public class FFIConstants {
         private String truffleType;
         private int integerValue;
 
-        FFI_TYPES(final int integerValue) {
+        private FFI_TYPES(final int integerValue) {
             this.integerValue = integerValue;
         }
 
-        FFI_TYPES(final String squeakType, final int integerValue) {
+        private FFI_TYPES(final String squeakType, final int integerValue) {
             this.squeakType = squeakType;
             this.integerValue = integerValue;
         }
 
-        FFI_TYPES(final String squeakType, final String truffleType, final int integerValue) {
+        private FFI_TYPES(final String squeakType, final String truffleType, final int integerValue) {
             this.squeakType = squeakType;
             this.truffleType = truffleType;
             this.integerValue = integerValue;
@@ -125,10 +125,11 @@ public class FFIConstants {
             }
             if (FFI_TYPES.VOID.integerValue == atomicType && isPointerType(headerWord)) {
                 // TODO: if we have an pointer type this has to be implemented here
+                return null;
             }
             if (FFI_TYPES.VOID.integerValue == atomicType && isStructType(headerWord)) {
-                return "SINT32"; // TODO: this is just a test return, we don't know yet what we
-                                 // should return here
+                // TODO: this is just a test return, we don't know yet what we should return here
+                return "SINT32";
             }
             for (final FFI_TYPES type : FFI_TYPES.values()) {
                 if (type.integerValue == atomicType) {

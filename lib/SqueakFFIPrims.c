@@ -4,7 +4,11 @@
  * Licensed under the MIT License.
  */
  
-/* Forked from https://git.io/Jf8oa */
+/*
+ * Copyright (c) 2013-2020 Eliot Miranda and OpenSmalltalkVM contributors
+ *
+ * Forked from https://git.io/Jf8oa
+ */
 
 /*****************************************************************************/
 /*****************************************************************************/

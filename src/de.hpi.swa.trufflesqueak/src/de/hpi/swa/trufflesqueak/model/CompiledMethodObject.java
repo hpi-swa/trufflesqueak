@@ -163,11 +163,6 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         writeNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE, newClass);
     }
 
-    public PointersObject getExternalLibraryFunction() {
-        return (PointersObject) literals[1]; // ExternalLibraryFunction has to be the first
-                                             // parameter
-    }
-
     public void setHeader(final long header) {
         literals = new Object[]{header};
         decodeHeader();

@@ -43,6 +43,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrimsFactory.ArgTypeConversionNodeGen;
@@ -120,6 +121,13 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Child private WrapToSqueakNode wrapNode = WrapToSqueakNode.create();
         @Child private AbstractPointersObjectReadNode readExternalLibNode = AbstractPointersObjectReadNode.create();
         @Child private AbstractPointersObjectReadNode readArgumentTypeNode = AbstractPointersObjectReadNode.create();
+
+        protected static final PointersObject asExternalFunctionOrFail(final SqueakImageContext image, final Object object) {
+            if (!(object instanceof PointersObject && ((PointersObject) object).getSqueakClass() == image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION))) {
+                throw PrimitiveFailed.andTransferToInterpreter(FFI_ERROR.NOT_FUNCTION);
+            }
+            return (PointersObject) object;
+        }
 
         @TruffleBoundary
         protected final Object doCallout(final SqueakImageContext image, final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
@@ -233,7 +241,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, receiver, getObjectArrayNode.execute(argArray));
+            return doCallout(image, asExternalFunctionOrFail(image, receiver), receiver, getObjectArrayNode.execute(argArray));
         }
     }
 

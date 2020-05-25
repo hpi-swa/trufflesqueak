@@ -57,7 +57,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.plugins.ffi.FFIConstants.FFI_ERROR;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -234,11 +233,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         private Object doCallout(final SqueakImageContext image, final AbstractSqueakObject receiver, final Object... arguments) {
-            final Object literal1 = getMethod().getLiterals()[1];
-            if (!(literal1 instanceof PointersObject)) {
-                throw PrimitiveFailed.andTransferToInterpreter(FFI_ERROR.NOT_FUNCTION);
-            }
-            return doCallout(image, (PointersObject) literal1, receiver, arguments);
+            return doCallout(image, asExternalFunctionOrFail(image, getMethod().getLiterals()[1]), receiver, arguments);
         }
     }
 
