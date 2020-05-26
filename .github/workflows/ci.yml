@@ -196,10 +196,14 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java11
-    - name: Build and install TruffleSqueak component
+    - name: Build TruffleSqueak component
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
+    - name: Copy and install TruffleSqueak component
       shell: pwsh
       run: |
-        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
         Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
         gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
     - name: Run SystemReporter on GraalVM
@@ -210,7 +214,10 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
 
   windows-java8:
     name: Windows + JDK8 + Graal
@@ -224,10 +231,14 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java8
-    - name: Build and install TruffleSqueak component
+    - name: Build TruffleSqueak component
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA8
+    - name: Copy and install TruffleSqueak component
       shell: pwsh
       run: |
-        mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA8
         Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
         gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
     - name: Run SystemReporter on GraalVM
@@ -238,4 +249,7 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate -B="--no-native" --strict-mode --tags build,test
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
