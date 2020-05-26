@@ -201,8 +201,11 @@ jobs:
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
+        echo %INSTALLABLE_TARGET%
         for /f "usebackq tokens=*" %%a in (`mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11`) do set INSTALLABLE_SOURCE=%%a
+        echo %INSTALLABLE_SOURCE%
         copy "%INSTALLABLE_SOURCE%" "%cd%\%INSTALLABLE_TARGET%"
+        echo "%cd%\%INSTALLABLE_TARGET%"
         gu.cmd install -L "%cd%\%INSTALLABLE_TARGET%"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
