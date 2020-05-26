@@ -196,17 +196,16 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java11
-    - name: Build and install TruffleSqueak component
+    - name: Build TruffleSqueak component
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
-        echo %INSTALLABLE_TARGET%
-        for /f "usebackq tokens=*" %%a in (`mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11`) do set INSTALLABLE_SOURCE=%%a
-        echo %INSTALLABLE_SOURCE%
-        copy "%INSTALLABLE_SOURCE%" "%cd%\%INSTALLABLE_TARGET%"
-        echo "%cd%\%INSTALLABLE_TARGET%"
-        gu.cmd install -L "%cd%\%INSTALLABLE_TARGET%"
+    - name: Copy and install TruffleSqueak component
+      shell: pwsh
+      run: |
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
+        gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
     - name: Run tinyBenchmarks on GraalVM
@@ -234,9 +233,11 @@ jobs:
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA8
-        for /f "usebackq tokens=*" %%a in (`mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA8`) do set INSTALLABLE_SOURCE=%%a
-        copy "%INSTALLABLE_SOURCE%" "%cd%\%INSTALLABLE_TARGET%"
-        gu.cmd install -L "%cd%\%INSTALLABLE_TARGET%"
+    - name: Copy and install TruffleSqueak component
+      shell: pwsh
+      run: |
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
+        gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
     - name: Run tinyBenchmarks on GraalVM
