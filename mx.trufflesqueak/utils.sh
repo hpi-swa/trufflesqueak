@@ -176,6 +176,11 @@ set-up-dependencies() {
     set-up-labsjdk11 "${HOME}"
   fi
 
+  if [[ "${OS_NAME}" == "windows" ]]; then
+    # Make cl available
+    add-path "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin"
+  fi
+
   set-up-graalvm-ce "${java_version}" "${HOME}"
 
   set-env "INSTALLABLE_TARGET" "$(installable-filename "${java_version}")"
