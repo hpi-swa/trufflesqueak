@@ -85,16 +85,16 @@ public final class FFIConstants {
         private String truffleType;
         private int integerValue;
 
-        private FFI_TYPES(final int integerValue) {
+        FFI_TYPES(final int integerValue) {
             this.integerValue = integerValue;
         }
 
-        private FFI_TYPES(final String squeakType, final int integerValue) {
+        FFI_TYPES(final String squeakType, final int integerValue) {
             this.squeakType = squeakType;
             this.integerValue = integerValue;
         }
 
-        private FFI_TYPES(final String squeakType, final String truffleType, final int integerValue) {
+        FFI_TYPES(final String squeakType, final String truffleType, final int integerValue) {
             this.squeakType = squeakType;
             this.truffleType = truffleType;
             this.integerValue = integerValue;

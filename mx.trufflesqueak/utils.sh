@@ -36,12 +36,6 @@ add-path() {
   echo "::add-path::$(resolve-path "$1")"
 }
 
-build-libraries() {
-  pushd "${BASE_DIRECTORY}/lib" > /dev/null
-  make
-  popd > /dev/null
-}
-
 deploy-asset() {
   local git_tag=$(git tag --points-at HEAD)
   if [[ -z "${git_tag}" ]]; then
@@ -175,7 +169,6 @@ set-up-dependencies() {
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
   download-trufflesqueak-image
   ensure-test-image
-  build-libraries
 
   if [[ "${java_version}" == "java8" ]]; then
     set-up-openjdk8-jvmci "${HOME}"
