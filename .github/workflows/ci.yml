@@ -199,6 +199,7 @@ jobs:
     - name: Build and install TruffleSqueak component
       shell: pwsh
       run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
         Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
         gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
@@ -227,6 +228,7 @@ jobs:
     - name: Build and install TruffleSqueak component
       shell: pwsh
       run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA8
         Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
         gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
