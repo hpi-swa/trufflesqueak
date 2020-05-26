@@ -7,7 +7,6 @@
 from __future__ import print_function
 
 import argparse
-import contextlib
 import os
 import sys
 
@@ -358,8 +357,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if not jdk:
         jdk = mx.get_jdk(tag='jvmci' if _compiler else None)
 
-    with _home_context():
-        return mx.run_java(vm_args + squeak_arguments, jdk=jdk, **kwargs)
+    return mx.run_java(vm_args + squeak_arguments, jdk=jdk, **kwargs)
 
 
 def _get_runtime_jvm_args(jdk):
@@ -450,8 +448,7 @@ def _add_unit_tests(tasks, supports_coverage):
             # import mx_truffle
             # mx_unittest._config_participants.remove(
             #     mx_truffle._unittest_config_participant_tck)
-            with _home_context():
-                mx_unittest.unittest(unittest_args)
+            mx_unittest.unittest(unittest_args)
 
 
 # Extend `vmArgs` with `_get_runtime_jvm_args` when running `mx unittest`
@@ -519,34 +516,19 @@ def _get_path_to_test_image():
     mx.abort('Unable to locate test image.')
 
 
-def _home_context():
-    return _set_env(TRUFFLESQUEAK_HOME=mx.dependency("TRUFFLESQUEAK_GRAALVM_SUPPORT").get_output())
-
-
-@contextlib.contextmanager
-def _set_env(**environ):
-    "Temporarily set the process environment variables"
-    old_environ = dict(os.environ)
-    os.environ.update(environ)
-    try:
-        yield
-    finally:
-        os.environ.clear()
-        os.environ.update(old_environ)
-
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,
     name='TruffleSqueak',
     short_name='st',
     dir_name=LANGUAGE_ID,
-    license_files=[],  # already included in `TRUFFLESQUEAK_GRAALVM_SUPPORT`.
+    license_files=[],  # already included in `TRUFFLESQUEAK_HOME`.
     third_party_license_files=[],
     truffle_jars=[
         'trufflesqueak:TRUFFLESQUEAK',
         'trufflesqueak:TRUFFLESQUEAK_SHARED',
     ],
     support_distributions=[
-        'trufflesqueak:TRUFFLESQUEAK_GRAALVM_SUPPORT',
+        'trufflesqueak:TRUFFLESQUEAK_HOME',
     ],
     launcher_configs=[
         mx_sdk.LanguageLauncherConfig(

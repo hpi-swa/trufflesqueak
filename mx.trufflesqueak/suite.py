@@ -180,19 +180,32 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
             ],
+            "javaProperties" : {
+                "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",
+            },
             "exclude": ["mx:JUNIT"],
         },
 
-        "TRUFFLESQUEAK_SHARED": {
-            "dependencies": [
-                "de.hpi.swa.trufflesqueak.shared",
-            ],
-            "distDependencies": [
-                "sdk:GRAAL_SDK",
-            ],
+        "TRUFFLESQUEAK_HOME": {
+            "native": True,
+            "platformDependent": True,
+            "description": "TruffleSqueak home distribution",
+            "layout": {
+                "LICENSE_TRUFFLESQUEAK.txt": "file:LICENSE",
+                "README_TRUFFLESQUEAK.md": "file:README.md",
+                "lib/" : "dependency:de.hpi.swa.trufflesqueak.ffi.native",
+                "resources": {
+                    "source_type": "file",
+                    "path": "src/resources",
+                    "exclude": ["src/resources/.gitignore"],
+                },
+                "native-image.properties": "file:mx.trufflesqueak/native-image.properties",
+            },
+            "maven": False,
         },
 
         "TRUFFLESQUEAK_LAUNCHER": {
+            "description": "TruffleSqueak launcher",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.launcher",
             ],
@@ -203,8 +216,18 @@ suite = {
             ],
         },
 
+        "TRUFFLESQUEAK_SHARED": {
+            "description": "TruffleSqueak shared distribution",
+            "dependencies": [
+                "de.hpi.swa.trufflesqueak.shared",
+            ],
+            "distDependencies": [
+                "sdk:GRAAL_SDK",
+            ],
+        },
+
         "TRUFFLESQUEAK_TCK": {
-            "description": "TCK-based interoperability tests",
+            "description": "TruffleSqueak TCK-based interoperability tests",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.tck",
             ],
@@ -220,26 +243,8 @@ suite = {
             "testDistribution": True,
         },
 
-        "TRUFFLESQUEAK_GRAALVM_SUPPORT": {
-            "native": True,
-            "platformDependent": True,
-            "description": "TruffleSqueak support distribution for the GraalVM",
-            "layout": {
-                "LICENSE_TRUFFLESQUEAK.txt": "file:LICENSE",
-                "README_TRUFFLESQUEAK.md": "file:README.md",
-                "lib/" : "dependency:de.hpi.swa.trufflesqueak.ffi.native",
-                "resources": {
-                    "source_type": "file",
-                    "path": "src/resources",
-                    "exclude": ["src/resources/.gitignore"],
-                },
-                "native-image.properties": "file:mx.trufflesqueak/native-image.properties",
-            },
-            "maven": False,
-        },
-
         "TRUFFLESQUEAK_TEST": {
-            "description": "JUnit and SUnit tests",
+            "description": "TruffleSqueak JUnit and SUnit tests",
             "javaCompliance": "8+",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.test",
