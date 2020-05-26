@@ -177,8 +177,8 @@ set-up-dependencies() {
   fi
 
   if [[ "${OS_NAME}" == "windows" ]]; then
-    # Make cl available
-    add-path "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin"
+    # Make cl.exe available for native projects
+    add-path "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.22.27905\bin"
   fi
 
   set-up-graalvm-ce "${java_version}" "${HOME}"
