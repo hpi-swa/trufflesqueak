@@ -559,3 +559,6 @@ if mx.is_windows():
     # https://www.python.org/dev/peps/pep-0476/).
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
+
+print(os.environ)
+os.system('dir "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.22.27905\bin\HostX64\x64"')
