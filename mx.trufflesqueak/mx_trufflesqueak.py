@@ -141,7 +141,7 @@ def _graal_vm_args(args):
 def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     """run TruffleSqueak"""
 
-    env = env if env else os.environ
+    env = env if env else os.environ.copy()
 
     vm_args, raw_args = mx.extract_VM_args(
         args, useDoubleDash=True, defaultAllVMArgs=False)
@@ -521,14 +521,14 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     name='TruffleSqueak',
     short_name='st',
     dir_name=LANGUAGE_ID,
-    license_files=[],  # already included in `TRUFFLESQUEAK_GRAALVM_SUPPORT`.
+    license_files=[],  # already included in `TRUFFLESQUEAK_HOME`.
     third_party_license_files=[],
     truffle_jars=[
         'trufflesqueak:TRUFFLESQUEAK',
         'trufflesqueak:TRUFFLESQUEAK_SHARED',
     ],
     support_distributions=[
-        'trufflesqueak:TRUFFLESQUEAK_GRAALVM_SUPPORT',
+        'trufflesqueak:TRUFFLESQUEAK_HOME',
     ],
     launcher_configs=[
         mx_sdk.LanguageLauncherConfig(

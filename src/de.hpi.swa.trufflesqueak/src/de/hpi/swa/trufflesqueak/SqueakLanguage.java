@@ -35,6 +35,7 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
                 byteMimeTypes = SqueakLanguageConfig.MIME_TYPE, //
                 characterMimeTypes = SqueakLanguageConfig.ST_MIME_TYPE, //
                 defaultMimeType = SqueakLanguageConfig.ST_MIME_TYPE, //
+                dependentLanguages = {"nfi"}, //
                 fileTypeDetectors = SqueakFileDetector.class, //
                 id = SqueakLanguageConfig.ID, //
                 implementationName = SqueakLanguageConfig.IMPLEMENTATION_NAME, //

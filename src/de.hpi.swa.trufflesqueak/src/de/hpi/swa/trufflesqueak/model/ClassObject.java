@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_TRAIT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -265,6 +266,26 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     /** WideString. */
     public boolean isWideStringClass() {
         return this == image.getWideStringClass();
+    }
+
+    private boolean includesBehavior(final ClassObject squeakClass) {
+        ClassObject current = this;
+        while (current != null) {
+            if (current == squeakClass) {
+                return true;
+            }
+            current = current.getSuperclassOrNull();
+        }
+        return false;
+    }
+
+    public boolean includesExternalFunctionBehavior(final SqueakImageContext theImage) {
+        final Object externalFunctionClass = theImage.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
+        if (externalFunctionClass instanceof ClassObject) {
+            return includesBehavior((ClassObject) theImage.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
+        } else {
+            return false;
+        }
     }
 
     /**

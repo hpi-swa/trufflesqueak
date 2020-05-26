@@ -15,9 +15,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -31,6 +33,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -41,6 +44,7 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -54,9 +58,11 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
+import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.DuodecimaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
@@ -110,6 +116,130 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             } catch (final IndexOutOfBoundsException e) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFINode extends AbstractFFIPrimitiveNode implements DuodecimaryPrimitive {
+        @CompilationFinal private PointersObject externalFunction;
+
+        @Override
+        public final boolean acceptsMethod(final CompiledMethodObject method) {
+            CompilerAsserts.neverPartOfCompilation();
+            if (method.getNumLiterals() > 0) {
+                final Object literal1 = method.getLiterals()[1];
+                if (literal1 instanceof PointersObject && ((PointersObject) literal1).getSqueakClass().includesExternalFunctionBehavior(SqueakLanguage.getContext())) {
+                    externalFunction = (PointersObject) literal1;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final Object doArg0(final AbstractSqueakObject receiver, final NotProvided n1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
+                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)"})
+        protected final Object doArg1(final AbstractSqueakObject receiver, final Object arg1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
+                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)"})
+        protected final Object doArg2(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final NotProvided n3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
+        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
+        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final NotProvided n5, final NotProvided n6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
+        protected final Object doArg5(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final NotProvided n6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)"})
+        protected final Object doArg6(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)"})
+        protected final Object doArg7(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)", "!isNotProvided(arg8)"})
+        protected final Object doArg8(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)"})
+        protected final Object doArg9(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final Object arg9, final NotProvided n10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)"})
+        protected final Object doArg10(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final NotProvided n11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)", "!isNotProvided(arg11)"})
+        protected final Object doArg11(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+        }
+
+        private Object doCallout(final SqueakImageContext image, final AbstractSqueakObject receiver, final Object... arguments) {
+            return doCallout(image, externalFunction, receiver, arguments);
         }
     }
 
@@ -374,11 +504,30 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 142)
     protected abstract static class PrimVMPathNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        @CompilationFinal private String resourcesPath;
 
         @Specialization
-        protected static final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver,
+        protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asByteString(image.getResourcesDirectory());
+            return image.asByteString(getResourcesDirectory(image));
+        }
+
+        public String getResourcesDirectory(final SqueakImageContext image) {
+            if (resourcesPath == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final String languageHome = image.getLanguage().getTruffleLanguageHome();
+                final TruffleFile path;
+                if (languageHome != null) {
+                    path = image.getHomePath().resolve("resources");
+                } else { /* Fallback to image directory. */
+                    path = image.env.getInternalTruffleFile(image.getImagePath()).getParent();
+                    if (path == null) {
+                        throw SqueakException.create("`parent` should not be `null`.");
+                    }
+                }
+                resourcesPath = path.getAbsoluteFile().getPath();
+            }
+            return resourcesPath;
         }
     }
 

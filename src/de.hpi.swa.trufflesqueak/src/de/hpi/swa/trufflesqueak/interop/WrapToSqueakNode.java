@@ -22,6 +22,10 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 @GenerateUncached
 public abstract class WrapToSqueakNode extends AbstractNode {
 
+    public static WrapToSqueakNode create() {
+        return WrapToSqueakNodeGen.create();
+    }
+
     public static WrapToSqueakNode getUncached() {
         return WrapToSqueakNodeGen.getUncached();
     }

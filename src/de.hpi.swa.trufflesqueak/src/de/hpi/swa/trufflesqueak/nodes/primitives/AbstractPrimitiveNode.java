@@ -5,9 +5,11 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.AbstractPrimitive;
@@ -18,4 +20,9 @@ public abstract class AbstractPrimitiveNode extends AbstractNode implements Abst
     public abstract Object executeWithArguments(VirtualFrame frame, Object... arguments);
 
     public abstract Object executePrimitive(VirtualFrame frame);
+
+    public boolean acceptsMethod(@SuppressWarnings("unused") final CompiledMethodObject method) {
+        CompilerAsserts.neverPartOfCompilation();
+        return true;
+    }
 }

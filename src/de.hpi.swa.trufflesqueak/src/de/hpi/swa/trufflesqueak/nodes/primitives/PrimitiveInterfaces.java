@@ -124,4 +124,18 @@ public final class PrimitiveInterfaces {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
     }
+
+    public interface DuodecimaryPrimitive extends AbstractPrimitive {
+        @Override
+        default int getNumArguments() {
+            return 12;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        default Object doPrimitiveFail(final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6, final Object arg7, final Object arg,
+                        final Object arg9, final Object arg10, final Object arg11, final Object arg12) {
+            throw PrimitiveFailed.GENERIC_ERROR;
+        }
+    }
 }

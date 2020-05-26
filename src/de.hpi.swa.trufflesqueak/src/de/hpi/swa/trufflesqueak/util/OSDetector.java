@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+
 public final class OSDetector {
     public static final OSDetector SINGLETON = new OSDetector();
 
@@ -53,5 +55,18 @@ public final class OSDetector {
 
     public boolean isLinux() {
         return currentOS == OSType.Linux;
+    }
+
+    public String getFFIExtension() {
+        switch (currentOS) {
+            case MacOS:
+                return ".dylib";
+            case Windows:
+                return ".dll";
+            case Linux:
+                return ".so";
+            default:
+                throw SqueakException.create("Unsupported Platform.");
+        }
     }
 }

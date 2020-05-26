@@ -39,7 +39,10 @@ graal_dumps/
 # Profile output directory
 profiles/
 
-# GraalSqueak
+# TruffleSqueak
 images
+lib/**/*.dll
+lib/**/*.dylib
+lib/**/*.so
 trufflesqueak*.zip
 trufflesqueak*.jar
