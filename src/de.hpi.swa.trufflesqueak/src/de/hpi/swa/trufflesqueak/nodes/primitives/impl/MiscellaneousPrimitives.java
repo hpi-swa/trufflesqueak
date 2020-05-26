@@ -122,13 +122,19 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 120)
     public abstract static class PrimCalloutToFFINode extends AbstractFFIPrimitiveNode implements DuodecimaryPrimitive {
-        @CompilationFinal private CompiledMethodObject method;
+        @CompilationFinal private PointersObject externalFunction;
 
         @Override
-        public final boolean acceptsMethod(final CompiledMethodObject theMethod) {
+        public final boolean acceptsMethod(final CompiledMethodObject method) {
             CompilerAsserts.neverPartOfCompilation();
-            method = theMethod;
-            return method.getNumLiterals() > 0;
+            if (method.getNumLiterals() > 0) {
+                final Object literal1 = method.getLiterals()[1];
+                if (literal1 instanceof PointersObject && ((PointersObject) literal1).getSqueakClass().includesExternalFunctionBehavior(SqueakLanguage.getContext())) {
+                    externalFunction = (PointersObject) literal1;
+                    return true;
+                }
+            }
+            return false;
         }
 
         @SuppressWarnings("unused")
@@ -233,7 +239,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         private Object doCallout(final SqueakImageContext image, final AbstractSqueakObject receiver, final Object... arguments) {
-            return doCallout(image, asExternalFunctionOrFail(image, method.getLiterals()[1]), receiver, arguments);
+            return doCallout(image, externalFunction, receiver, arguments);
         }
     }
 

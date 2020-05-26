@@ -228,7 +228,7 @@ jobs:
     - name: Set up dependencies
       shell: bash
       run: mx.trufflesqueak/utils.sh set-up-dependencies java8
-    - name: Build and install TruffleSqueak component
+    - name: Build TruffleSqueak component
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
