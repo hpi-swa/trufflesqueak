@@ -279,10 +279,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return false;
     }
 
-    public boolean includesExternalFunctionBehavior() {
-        final Object externalFunctionClass = image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
+    public boolean includesExternalFunctionBehavior(final SqueakImageContext theImage) {
+        final Object externalFunctionClass = theImage.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
         if (externalFunctionClass instanceof ClassObject) {
-            return includesBehavior((ClassObject) image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
+            return includesBehavior((ClassObject) theImage.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
         } else {
             return false;
         }

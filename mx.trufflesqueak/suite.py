@@ -104,6 +104,30 @@ suite = {
             "javaCompliance": "8+",
             "workingSets": "TruffleSqueak",
         },
+        "de.hpi.swa.trufflesqueak.ffi.native": {
+            "subDir" : "src",
+            "native" : "shared_lib",
+            "deliverable" : "SqueakFFIPrims",
+            "os_arch" : {
+                "windows" : {
+                    "<others>" : {
+                        "cflags" : []
+                    }
+                },
+                "linux" : {
+                    "<others>" : {
+                        "cflags" : ["-g", "-Wall", "-Werror", "-D_GNU_SOURCE"],
+                        "ldlibs" : ["-ldl"],
+                    },
+                },
+                "<others>" : {
+                    "<others>" : {
+                        "cflags" : ["-g", "-Wall", "-Werror"],
+                        "ldlibs" : ["-ldl"],
+                    },
+                },
+            },
+        },
         "de.hpi.swa.trufflesqueak.shared": {
             "subDir": "src",
             "sourceDirs": ["src"],
@@ -203,6 +227,7 @@ suite = {
             "layout": {
                 "LICENSE_TRUFFLESQUEAK.txt": "file:LICENSE",
                 "README_TRUFFLESQUEAK.md": "file:README.md",
+                "lib/" : "dependency:de.hpi.swa.trufflesqueak.ffi.native",
                 "resources": {
                     "source_type": "file",
                     "path": "src/resources",

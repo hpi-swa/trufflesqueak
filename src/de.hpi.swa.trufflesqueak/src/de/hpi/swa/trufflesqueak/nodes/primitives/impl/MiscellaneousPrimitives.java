@@ -15,9 +15,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -31,6 +33,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -50,7 +53,6 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
@@ -122,8 +124,15 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     public abstract static class PrimCalloutToFFINode extends AbstractFFIPrimitiveNode implements DuodecimaryPrimitive {
         @CompilationFinal private CompiledMethodObject method;
 
+        @Override
+        public final boolean acceptsMethod(final CompiledMethodObject theMethod) {
+            CompilerAsserts.neverPartOfCompilation();
+            method = theMethod;
+            return method.getNumLiterals() > 0;
+        }
+
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0"})
+        @Specialization
         protected final Object doArg0(final AbstractSqueakObject receiver, final NotProvided n1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
                         final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -131,7 +140,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)"})
+        @Specialization(guards = {"!isNotProvided(arg1)"})
         protected final Object doArg1(final AbstractSqueakObject receiver, final Object arg1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
                         final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -139,7 +148,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)"})
         protected final Object doArg2(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final NotProvided n3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
                         final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -147,7 +156,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
         protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
                         final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -155,7 +164,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
         protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final NotProvided n5, final NotProvided n6,
                         final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -163,7 +172,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
         protected final Object doArg5(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final NotProvided n6,
                         final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -171,8 +180,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
-                        "!isNotProvided(arg6)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)"})
         protected final Object doArg6(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                         final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -180,8 +188,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
-                        "!isNotProvided(arg6)", "!isNotProvided(arg7)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)"})
         protected final Object doArg7(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                         final Object arg7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -189,8 +197,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
-                        "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)", "!isNotProvided(arg8)"})
         protected final Object doArg8(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                         final Object arg7, final Object arg8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -198,8 +206,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
-                        "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)"})
         protected final Object doArg9(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                         final Object arg7, final Object arg8, final Object arg9, final NotProvided n10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -207,8 +215,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
-                        "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)"})
         protected final Object doArg10(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                         final Object arg7, final Object arg8, final Object arg9, final Object arg10, final NotProvided n11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -216,24 +224,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"getMethod().getNumLiterals() > 0", "!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)",
-                        "!isNotProvided(arg6)", "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)", "!isNotProvided(arg11)"})
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)", "!isNotProvided(arg11)"})
         protected final Object doArg11(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
                         final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
         }
 
-        protected final CompiledMethodObject getMethod() {
-            if (method == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                method = ((EnterCodeNode) getRootNode()).getMethod();
-            }
-            return method;
-        }
-
         private Object doCallout(final SqueakImageContext image, final AbstractSqueakObject receiver, final Object... arguments) {
-            return doCallout(image, asExternalFunctionOrFail(image, getMethod().getLiterals()[1]), receiver, arguments);
+            return doCallout(image, asExternalFunctionOrFail(image, method.getLiterals()[1]), receiver, arguments);
         }
     }
 
@@ -498,11 +498,30 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 142)
     protected abstract static class PrimVMPathNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        @CompilationFinal private String resourcesPath;
 
         @Specialization
-        protected static final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver,
+        protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asByteString(image.getResourcesDirectory());
+            return image.asByteString(getResourcesDirectory(image));
+        }
+
+        public String getResourcesDirectory(final SqueakImageContext image) {
+            if (resourcesPath == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final String languageHome = image.getLanguage().getTruffleLanguageHome();
+                final TruffleFile path;
+                if (languageHome != null) {
+                    path = image.getHomePath().resolve("resources");
+                } else { /* Fallback to image directory. */
+                    path = image.env.getInternalTruffleFile(image.getImagePath()).getParent();
+                    if (path == null) {
+                        throw SqueakException.create("`parent` should not be `null`.");
+                    }
+                }
+                resourcesPath = path.getAbsoluteFile().getPath();
+            }
+            return resourcesPath;
         }
     }
 

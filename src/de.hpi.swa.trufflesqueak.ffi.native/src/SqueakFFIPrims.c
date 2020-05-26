@@ -93,7 +93,7 @@ typedef union  UdSi2 {double a; struct Si2 b;} ffiTestUdSi2;
 typedef struct SUfdUfi {union Ufd a; union Ufi b;} ffiTestSUfdUfi;
 typedef struct SUfdUdSi2 {union Ufd a; union UdSi2 b;} ffiTestSUfdUdSi2;
 
-#pragma export on
+// #pragma export on
 
 EXPORT(ffiTestSd2)  ffiTestInitSd2  (double    a,double    b) { ffiTestSd2 v = {a,b}; return v; }
 EXPORT(ffiTestSf2)  ffiTestInitSf2  (float     a,float     b) { ffiTestSf2 v = {a,b}; return v; }
@@ -199,7 +199,7 @@ EXPORT(LONGLONG) ffiTestLongLong8a2(char c1, char c2, char c3, char c4, char c5,
 EXPORT(LONGLONG) ffiTestLongLonga1(char c1, LONGLONG i1, LONGLONG i2);
 EXPORT(LONGLONG) ffiTestLongLonga2(char c1, char c2, LONGLONG i1, LONGLONG i2);
 EXPORT(LONGLONG) ffiTestLongLonga3(char c1, LONGLONG i1, char c2);
-#pragma export off
+// #pragma export off
 
 
 /* test passing characters */

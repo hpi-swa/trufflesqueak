@@ -19,6 +19,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
@@ -112,7 +113,7 @@ public final class SqueakImageContext {
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
     private String imagePath;
-    private String resourcesPath;
+    private final TruffleFile homePath;
     @CompilationFinal private boolean isHeadless;
     public final SqueakContextOptions options;
 
@@ -170,6 +171,23 @@ public final class SqueakImageContext {
         interrupt = InterruptHandlerState.create(this);
         allocationReporter = env.lookup(AllocationReporter.class);
         SqueakMessageInterceptor.enableIfRequested(environment);
+        homePath = findHome();
+    }
+
+    private TruffleFile findHome() {
+        /* $TRUFFLESQUEAK_HOME can be used to override language home. */
+        try {
+            final String envHome = System.getenv("TRUFFLESQUEAK_HOME");
+            if (envHome != null) {
+                final TruffleFile envHomeFile = env.getInternalTruffleFile(envHome);
+                if (envHomeFile.isDirectory()) {
+                    return envHomeFile;
+                }
+            }
+        } catch (final SecurityException e) {
+        }
+        /* Fall back to default language home. */
+        return env.getInternalTruffleFile(language.getTruffleLanguageHome());
     }
 
     public void ensureLoaded() {
@@ -313,6 +331,10 @@ public final class SqueakImageContext {
 
     public ArrayObject getHiddenRoots() {
         return hiddenRoots;
+    }
+
+    public TruffleFile getHomePath() {
+        return homePath;
     }
 
     public long getGlobalClassCounter() {
@@ -480,24 +502,6 @@ public final class SqueakImageContext {
 
     public SqueakDisplayInterface getDisplay() {
         return display;
-    }
-
-    public String getResourcesDirectory() {
-        if (resourcesPath == null) {
-            CompilerDirectives.transferToInterpreter();
-            final String languageHome = language.getTruffleLanguageHome();
-            final Path path;
-            if (languageHome != null) {
-                path = Paths.get(language.getTruffleLanguageHome()).resolve("resources");
-            } else { /* Fallback to image directory. */
-                path = Paths.get(getImagePath()).getParent();
-                if (path == null) {
-                    throw SqueakException.create("`parent` should not be `null`.");
-                }
-            }
-            resourcesPath = path.toAbsolutePath().toString();
-        }
-        return resourcesPath;
     }
 
     public String imageRelativeFilePathFor(final String fileName) {

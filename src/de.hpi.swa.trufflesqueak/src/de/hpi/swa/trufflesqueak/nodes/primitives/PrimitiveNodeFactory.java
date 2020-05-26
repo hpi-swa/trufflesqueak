@@ -31,7 +31,6 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.DSAPrims;
 import de.hpi.swa.trufflesqueak.nodes.plugins.DropPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FloatArrayPlugin;
-import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReaderPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
@@ -44,6 +43,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.SecurityPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SoundCodecPrims;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakSSL;
+import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Win32OSProcessPlugin;
@@ -178,7 +178,11 @@ public final class PrimitiveNodeFactory {
         }
         final AbstractPrimitiveNode primitiveNode = nodeFactory.createNode((Object) argumentNodes);
         assert primitiveArity == primitiveNode.getNumArguments() : "Arities do not match in " + primitiveNode;
-        return primitiveNode;
+        if (primitiveNode.acceptsMethod(method)) {
+            return primitiveNode;
+        } else {
+            return null;
+        }
     }
 
     private static void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {

@@ -13,6 +13,7 @@ import java.util.List;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -43,7 +44,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrimsFactory.ArgTypeConversionNodeGen;
@@ -123,7 +123,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Child private AbstractPointersObjectReadNode readArgumentTypeNode = AbstractPointersObjectReadNode.create();
 
         protected static final PointersObject asExternalFunctionOrFail(final SqueakImageContext image, final Object object) {
-            if (!(object instanceof PointersObject && ((PointersObject) object).getSqueakClass() == image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION))) {
+            if (!(object instanceof PointersObject && ((PointersObject) object).getSqueakClass().includesExternalFunctionBehavior(image))) {
                 throw PrimitiveFailed.andTransferToInterpreter(FFI_ERROR.NOT_FUNCTION);
             }
             return (PointersObject) object;
@@ -131,10 +131,6 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         protected final Object doCallout(final SqueakImageContext image, final PointersObject externalLibraryFunction, final AbstractSqueakObject receiver, final Object... arguments) {
-            if (!externalLibraryFunction.getSqueakClass().includesExternalFunctionBehavior()) {
-                throw PrimitiveFailed.andTransferToInterpreter(FFI_ERROR.NOT_FUNCTION);
-            }
-
             final List<Integer> headerWordList = new ArrayList<>();
 
             final ArrayObject argTypes = readExternalLibNode.executeArray(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.ARG_TYPES);
@@ -145,8 +141,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                 for (final Object argumentType : argTypesValues) {
                     if (argumentType instanceof PointersObject) {
                         final NativeObject compiledSpec = readArgumentTypeNode.executeNative((PointersObject) argumentType, ObjectLayouts.EXTERNAL_TYPE.COMPILED_SPEC);
-                        final int headerWord = compiledSpec.getIntStorage()[0];
-                        headerWordList.add(headerWord);
+                        headerWordList.add(compiledSpec.getInt(0));
                     }
                 }
             }
@@ -157,19 +152,19 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             final String name = readExternalLibNode.executeNative(externalLibraryFunction, ObjectLayouts.EXTERNAL_LIBRARY_FUNCTION.NAME).asStringUnsafe();
             final String moduleName = getModuleName(receiver, externalLibraryFunction);
             final String nfiCodeParams = generateNfiCodeParamsString(nfiArgTypeList);
+            final String nfiCode = String.format("load \"%s\" {%s%s}", getPathOrFail(image, moduleName), name, nfiCodeParams);
             try {
-                final String nfiCode = generateNfiCode(name, moduleName, nfiCodeParams);
                 final Object value = calloutToLib(image, name, argumentsConverted, nfiCode);
                 assert value != null;
                 return wrapNode.executeWrap(conversionNode.execute(headerWordList.get(0), value));
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
                 e.printStackTrace();
                 // TODO: return correct error code.
-                throw PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.GENERIC_ERROR;
             } catch (final Exception e) {
                 e.printStackTrace();
                 // TODO: handle exception
-                throw PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
         }
 
@@ -209,10 +204,17 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private static String generateNfiCode(final String name, final String module, final String nfiCodeParams) {
+        protected static final String getPathOrFail(final SqueakImageContext image, final String moduleName) {
             final String ffiExtension = OSDetector.SINGLETON.getFFIExtension();
-            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + module + ffiExtension;
-            return String.format("load \"%s\" {%s%s}", libPath, name, nfiCodeParams);
+            final TruffleFile home = image.getHomePath();
+            TruffleFile libPath = home.resolve("lib" + File.separatorChar + moduleName + ffiExtension);
+            if (!libPath.exists()) {
+                libPath = home.resolve("lib" + File.separatorChar + "lib" + moduleName + ffiExtension);
+                if (!libPath.exists()) {
+                    throw PrimitiveFailed.GENERIC_ERROR;
+                }
+            }
+            return libPath.getAbsoluteFile().getPath();
         }
 
         private static String generateNfiCodeParamsString(final List<String> argumentList) {
@@ -254,7 +256,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             final String moduleSymbolName = moduleSymbol.asStringUnsafe();
             final String moduleName = module.asStringUnsafe();
-            final CallTarget target = image.env.parseInternal(generateNFILoadSource(moduleName));
+            final CallTarget target = image.env.parseInternal(generateNFILoadSource(image, moduleName));
             final Object library;
             try {
                 library = target.call();
@@ -279,10 +281,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private static Source generateNFILoadSource(final String moduleName) {
-            final String ffiExtension = OSDetector.SINGLETON.getFFIExtension();
-            final String libPath = System.getProperty("user.dir") + File.separatorChar + "lib" + File.separatorChar + moduleName + ffiExtension;
-            return Source.newBuilder("nfi", String.format("load \"%s\"", libPath), "native").build();
+        private static Source generateNFILoadSource(final SqueakImageContext image, final String moduleName) {
+            return Source.newBuilder("nfi", String.format("load \"%s\"", getPathOrFail(image, moduleName)), "native").build();
         }
 
         private static NativeObject newExternalAddress(final SqueakImageContext image, final ClassObject externalAddressClass, final long pointer) {

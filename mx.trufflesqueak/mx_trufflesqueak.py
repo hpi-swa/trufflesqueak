@@ -7,6 +7,7 @@
 from __future__ import print_function
 
 import argparse
+import contextlib
 import os
 import sys
 
@@ -141,7 +142,7 @@ def _graal_vm_args(args):
 def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     """run TruffleSqueak"""
 
-    env = env if env else os.environ
+    env = env if env else os.environ.copy()
 
     vm_args, raw_args = mx.extract_VM_args(
         args, useDoubleDash=True, defaultAllVMArgs=False)
@@ -357,7 +358,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if not jdk:
         jdk = mx.get_jdk(tag='jvmci' if _compiler else None)
 
-    return mx.run_java(vm_args + squeak_arguments, jdk=jdk, **kwargs)
+    with _home_context():
+        return mx.run_java(vm_args + squeak_arguments, jdk=jdk, **kwargs)
 
 
 def _get_runtime_jvm_args(jdk):
@@ -448,7 +450,8 @@ def _add_unit_tests(tasks, supports_coverage):
             # import mx_truffle
             # mx_unittest._config_participants.remove(
             #     mx_truffle._unittest_config_participant_tck)
-            mx_unittest.unittest(unittest_args)
+            with _home_context():
+                mx_unittest.unittest(unittest_args)
 
 
 # Extend `vmArgs` with `_get_runtime_jvm_args` when running `mx unittest`
@@ -515,6 +518,21 @@ def _get_path_to_test_image():
         return image_32bit
     mx.abort('Unable to locate test image.')
 
+
+def _home_context():
+    return _set_env(TRUFFLESQUEAK_HOME=mx.dependency("TRUFFLESQUEAK_GRAALVM_SUPPORT").get_output())
+
+
+@contextlib.contextmanager
+def _set_env(**environ):
+    "Temporarily set the process environment variables"
+    old_environ = dict(os.environ)
+    os.environ.update(environ)
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(old_environ)
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,

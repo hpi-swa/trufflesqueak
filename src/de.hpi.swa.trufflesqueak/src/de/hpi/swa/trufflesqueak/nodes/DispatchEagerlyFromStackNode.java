@@ -42,7 +42,7 @@ public abstract class DispatchEagerlyFromStackNode extends AbstractNode {
 
     public abstract Object executeDispatch(VirtualFrame frame, CompiledMethodObject method);
 
-    @Specialization(guards = {"cachedMethod.hasPrimitive()", "method == cachedMethod", "primitiveNode != null", "cachedMethod.primitiveIndex() != 120"}, //
+    @Specialization(guards = {"cachedMethod.hasPrimitive()", "method == cachedMethod", "primitiveNode != null"}, //
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()"}, rewriteOn = PrimitiveFailed.class)
     protected final Object doPrimitiveEagerly(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledMethodObject method,
                     @SuppressWarnings("unused") @Cached("method") final CompiledMethodObject cachedMethod,
