@@ -214,7 +214,10 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
 
   windows-java8:
     name: Windows + JDK8 + Graal
@@ -246,4 +249,7 @@ jobs:
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
