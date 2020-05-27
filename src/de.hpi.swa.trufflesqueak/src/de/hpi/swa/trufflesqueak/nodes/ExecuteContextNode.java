@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
@@ -69,12 +70,13 @@ public class ExecuteContextNode extends AbstractNode implements InstrumentableNo
         }
         frameInitializationNode = resume ? null : FrameStackInitializationNode.create();
         /*
-         * Only check for interrupts if method is relatively large. Also, skip timer interrupts here
-         * as they trigger too often, which causes a lot of context switches and therefore
-         * materialization and deopts. Timer inputs are currently handled in
+         * Only check for interrupts if method is relatively large. Avoid check if a closure is
+         * activated (effectively what #primitiveClosureValueNoContextSwitch is for). Also, skip
+         * timer interrupts here as they trigger too often, which causes a lot of context switches
+         * and therefore materialization and deopts. Timer inputs are currently handled in
          * primitiveRelinquishProcessor (#230) only.
          */
-        interruptHandlerNode = bytecodeNodes.length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? null : InterruptHandlerNode.createOrNull(false);
+        interruptHandlerNode = code instanceof CompiledBlockObject || bytecodeNodes.length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? null : InterruptHandlerNode.createOrNull(false);
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create();
     }
 
