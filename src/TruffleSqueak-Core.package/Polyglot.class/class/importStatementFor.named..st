@@ -9,4 +9,6 @@ importStatementFor: aLanguage named: aName
 			self languageIdR. [:name | '{1} <- import("bindings")' format: {name}].
 			self languageIdRuby. [:name | '{1} = Polyglot.import("bindings")' format: {name}].
 			self languageIdSmalltalk. [:name | '{1} := Polyglot import: ''bindings''.' format: {name}]}
-		]) at: aLanguage ifAbsent: [self error: 'unsupported language: ', aLanguage]) value: aName
+		]) at: aLanguage ifAbsent: [
+			Transcript show: 'Bindings import statement not supported for language: ', aLanguage; cr.
+			^ nil ]) value: aName
