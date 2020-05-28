@@ -64,6 +64,7 @@ suite = {
     # ==========================================================================
     "libraries": {
         "BOUNCY_CASTLE_CRYPTO_LIB":  {
+            "moduleName": "org.bouncycastle",
             "sha1": "bd47ad3bd14b8e82595c7adaa143501e60842a84",
             "maven": {
                 "groupId": "org.bouncycastle",
@@ -105,25 +106,25 @@ suite = {
             "workingSets": "TruffleSqueak",
         },
         "de.hpi.swa.trufflesqueak.ffi.native": {
-            "subDir" : "src",
-            "native" : "shared_lib",
-            "deliverable" : "SqueakFFIPrims",
-            "os_arch" : {
-                "windows" : {
-                    "<others>" : {
-                        "cflags" : []
+            "subDir": "src",
+            "native": "shared_lib",
+            "deliverable": "SqueakFFIPrims",
+            "os_arch": {
+                "windows": {
+                    "<others>": {
+                        "cflags": []
                     }
                 },
-                "linux" : {
-                    "<others>" : {
-                        "cflags" : ["-g", "-Wall", "-Werror", "-D_GNU_SOURCE"],
-                        "ldlibs" : ["-ldl"],
+                "linux": {
+                    "<others>": {
+                        "cflags": ["-g", "-Wall", "-Werror", "-D_GNU_SOURCE"],
+                        "ldlibs": ["-ldl"],
                     },
                 },
-                "<others>" : {
-                    "<others>" : {
-                        "cflags" : ["-g", "-Wall", "-Werror"],
-                        "ldlibs" : ["-ldl"],
+                "<others>": {
+                    "<others>": {
+                        "cflags": ["-g", "-Wall", "-Werror"],
+                        "ldlibs": ["-ldl"],
                     },
                 },
             },
@@ -173,6 +174,21 @@ suite = {
     "distributions": {
         "TRUFFLESQUEAK": {
             "description": "TruffleSqueak engine",
+            "moduleInfo": {
+                "name": "de.hpi.swa.trufflesqueak",
+                "requiresConcealed": {
+                    "org.graalvm.truffle": [
+                        "com.oracle.truffle.api",
+                        "com.oracle.truffle.api.instrumentation",
+                    ],
+                },
+                "exports": [
+                    "de.hpi.swa.trufflesqueak to org.graalvm.truffle",
+                ],
+                "requires": [
+                    "jdk.unsupported" # sun.misc.Unsafe
+                ],
+            },
             "dependencies": [
                 "de.hpi.swa.trufflesqueak",
             ],
@@ -180,10 +196,10 @@ suite = {
                 "TRUFFLESQUEAK_SHARED",
                 "truffle:TRUFFLE_API",
             ],
-            "javaProperties" : {
+            "javaProperties": {
                 "org.graalvm.language.smalltalk.home": "<path:TRUFFLESQUEAK_HOME>",
             },
-            "exclude": ["mx:JUNIT"],
+            "exclude": ["mx:JUNIT", "mx:HAMCREST"],
         },
 
         "TRUFFLESQUEAK_HOME": {
@@ -193,7 +209,7 @@ suite = {
             "layout": {
                 "LICENSE_TRUFFLESQUEAK.txt": "file:LICENSE",
                 "README_TRUFFLESQUEAK.md": "file:README.md",
-                "lib/" : "dependency:de.hpi.swa.trufflesqueak.ffi.native",
+                "lib/": "dependency:de.hpi.swa.trufflesqueak.ffi.native",
                 "resources": {
                     "source_type": "file",
                     "path": "src/resources",
@@ -206,6 +222,9 @@ suite = {
 
         "TRUFFLESQUEAK_LAUNCHER": {
             "description": "TruffleSqueak launcher",
+            "moduleInfo": {
+                "name": "de.hpi.swa.trufflesqueak.launcher",
+            },
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.launcher",
             ],
@@ -218,6 +237,9 @@ suite = {
 
         "TRUFFLESQUEAK_SHARED": {
             "description": "TruffleSqueak shared distribution",
+            "moduleInfo": {
+                "name": "de.hpi.swa.trufflesqueak.shared",
+            },
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.shared",
             ],
@@ -231,7 +253,7 @@ suite = {
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.tck",
             ],
-            "exclude": ["mx:JUNIT"],
+            "exclude": ["mx:JUNIT", "mx:HAMCREST"],
             "distDependencies": [
                 # <workaround>TCK does not load languages correctly in 19.3
                 # https://github.com/oracle/graal/commit/d5de10b9cc889104ac4c381fc17e8e92ff9cd186
@@ -249,7 +271,7 @@ suite = {
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.test",
             ],
-            "exclude": ["mx:JUNIT"],
+            "exclude": ["mx:JUNIT", "mx:HAMCREST"],
             "distDependencies": ["TRUFFLESQUEAK"],
             "testDistribution": True,
         },
