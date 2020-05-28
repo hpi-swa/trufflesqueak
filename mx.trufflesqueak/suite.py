@@ -23,8 +23,8 @@ suite = {
         "jdk11": "11.0.7",
         "jdk11_update": "10",
         "jvmci": "jvmci-20.1-b02",
-        "test_image": "GraalSqueakTestImage-19329-64bit.zip",
-        "test_image_tag": "1.0.0-rc6",
+        "test_image": "TruffleSqueakTestImage-5.3-19438-64bit.zip",
+        "test_image_tag": "1.0.0-rc9",
     },
 
     "release": False,

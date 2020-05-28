@@ -16,7 +16,6 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -1057,10 +1056,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetLanguage")
     protected abstract static class PrimGetLanguageNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
         @Specialization(guards = "lib.hasLanguage(object)")
-        protected static final Class<? extends TruffleLanguage<?>> getLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
+        protected static final Object getLanguage(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
-                return lib.getLanguage(object);
+                return image.env.asGuestValue(lib.getLanguage(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }

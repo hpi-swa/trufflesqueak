@@ -66,6 +66,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     @Parameter public SqueakTest test;
 
+    private static boolean truffleSqueakPackagesLoaded = false;
     private static boolean stopRunningSuite;
 
     @Parameters(name = "{0} (#{index})")
@@ -84,7 +85,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     @BeforeClass
     public static void beforeClass() {
         printStatistics();
-        ensureTruffleSqueakPackagesLoaded();
     }
 
     private static void printStatistics() {
@@ -103,6 +103,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     @Test
     public void runSqueakTest() throws Throwable {
         checkTermination();
+        ensureTruffleSqueakPackagesLoaded(test);
 
         TestResult result = null;
         try {
@@ -117,6 +118,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
             try {
                 image.getError().println("Closing current image context and reloading: " + result.message);
                 reloadImage();
+                truffleSqueakPackagesLoaded = false;
             } catch (final RuntimeException e) {
                 exceptionDuringReload = e;
             }
@@ -193,13 +195,10 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         }
     }
 
-    private static void ensureTruffleSqueakPackagesLoaded() {
-        for (final SqueakTest test : TESTS) {
-            if (inTruffleSqueakPackage(test.className)) {
-                image.getOutput().println("Loading TruffleSqueak packages (required by " + test.className + "). This may take a while...");
-                loadTruffleSqueakPackages();
-                break;
-            }
+    private static void ensureTruffleSqueakPackagesLoaded(final SqueakTest test) {
+        if (!truffleSqueakPackagesLoaded && inTruffleSqueakPackage(test.className)) {
+            image.getOutput().println("\nLoading TruffleSqueak packages (required by " + test.className + "). This may take a while...");
+            loadTruffleSqueakPackages();
         }
     }
 
@@ -224,6 +223,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
                         "                ifFalse: [e rearmHandlerDuring:\n" +
                         "                    [[e sendNotificationsTo: [:min :max :current | \"silence\"]]\n" +
                         "                        on: ProgressNotification do: [:notification | notification resume]]]]", getPathToInImageCode()));
+        truffleSqueakPackagesLoaded = true;
         image.getOutput().println("TruffleSqueak packages loaded in " + ((double) System.currentTimeMillis() - start) / 1000 + "s.");
     }
 
