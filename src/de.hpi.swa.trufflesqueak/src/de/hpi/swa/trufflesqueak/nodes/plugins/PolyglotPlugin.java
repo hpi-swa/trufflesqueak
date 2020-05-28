@@ -24,7 +24,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -34,7 +33,6 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.LiteralBuilder;
 import com.oracle.truffle.api.source.Source.SourceBuilder;
@@ -114,30 +112,28 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"!inInnerContext", "languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected static final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         @SuppressWarnings("unused") final boolean inInnerContext,
-                        @Cached final BranchProfile errorProfile,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return wrapNode.executeWrap(evalString(image, languageIdOrMimeTypeObj, sourceObject, errorProfile));
+            return wrapNode.executeWrap(evalString(image, languageIdOrMimeTypeObj, sourceObject));
         }
 
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"inInnerContext", "languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
         protected static final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject,
                         @SuppressWarnings("unused") final boolean inInnerContext,
-                        @Cached final BranchProfile errorProfile,
                         @Cached final ConvertToSqueakNode convertNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final TruffleContext innerContext = image.env.newContextBuilder().build();
             final Object p = innerContext.enter();
             try {
-                return convertNode.executeConvert(evalString(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, sourceObject, errorProfile));
+                return convertNode.executeConvert(evalString(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, sourceObject));
             } finally {
                 innerContext.leave(p);
                 innerContext.close();
             }
         }
 
-        private static Object evalString(final SqueakImageContext image, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject, final BranchProfile errorProfile) {
+        private static Object evalString(final SqueakImageContext image, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String sourceText = sourceObject.asStringUnsafe();
             try {
@@ -150,8 +146,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 final Source source = newBuilder.build();
                 return image.env.parsePublic(source).call();
             } catch (final RuntimeException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -164,30 +159,28 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"!inInnerContext", "languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected static final Object doEval(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
                         @SuppressWarnings("unused") final boolean inInnerContext,
-                        @Cached final BranchProfile errorProfile,
                         @Cached final WrapToSqueakNode wrapNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return wrapNode.executeWrap(evalFile(image, languageIdOrMimeTypeObj, path, errorProfile));
+            return wrapNode.executeWrap(evalFile(image, languageIdOrMimeTypeObj, path));
         }
 
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"inInnerContext", "languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
         protected static final Object doEvalInInnerContext(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path,
                         @SuppressWarnings("unused") final boolean inInnerContext,
-                        @Cached final BranchProfile errorProfile,
                         @Cached final ConvertToSqueakNode convertNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final TruffleContext innerContext = image.env.newContextBuilder().build();
             final Object p = innerContext.enter();
             try {
-                return convertNode.executeConvert(evalFile(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, path, errorProfile));
+                return convertNode.executeConvert(evalFile(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, path));
             } finally {
                 innerContext.leave(p);
                 innerContext.close();
             }
         }
 
-        private static Object evalFile(final SqueakImageContext image, final NativeObject languageIdOrMimeTypeObj, final NativeObject path, final BranchProfile errorProfile) {
+        private static Object evalFile(final SqueakImageContext image, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asStringUnsafe();
             final String pathString = path.asStringUnsafe();
             try {
@@ -199,8 +192,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 }
                 return image.env.parsePublic(newBuilder.name(pathString).build()).call();
             } catch (IOException | RuntimeException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -216,7 +208,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"receiver.isByteType()", "memberToCall.isByteType()"})
         protected final Object doEvaluate(final VirtualFrame frame, final NativeObject receiver, final NativeObject memberToCall,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @Cached final BranchProfile errorProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final String foreignCode = receiver.asStringUnsafe();
             final String cFile = image.imageRelativeFilePathFor(C_FILENAME);
@@ -229,8 +220,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 final Object result = executeNode.executeWithArguments(frame, cFunction);
                 return wrapNode.executeWrap(result);
             } catch (final Exception e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
 
@@ -308,13 +298,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary
         public static final Object importSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name,
-                        @Cached final BranchProfile errorProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
                 return NilObject.nullToNil(image.env.importSymbol(name.asStringUnsafe()));
             } catch (final SecurityException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -325,14 +313,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "name.isByteType()")
         @TruffleBoundary
         public static final Object exportSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject name, final Object value,
-                        @Cached final BranchProfile errorProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
                 image.env.exportSymbol(name.asStringUnsafe(), value);
                 return value;
             } catch (final SecurityException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -348,22 +334,15 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doExecute(@SuppressWarnings("unused") final Object receiver, final Object object, final ArrayObject argumentArray,
                         @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("object") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("object") final InteropLibrary lib) {
             try {
                 return wrapNode.executeWrap(lib.execute(object, getObjectArrayNode.execute(argumentArray)));
-            } catch (UnsupportedTypeException | ArityException | RuntimeException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            } catch (final UnsupportedMessageException e) {
-                throw primitiveFailedInInterpreterCapturing(e);
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
                  * https://github.com/oracle/truffleruby/issues/1864).
                  */
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -387,22 +366,15 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doIsInstantiable(@SuppressWarnings("unused") final Object receiver, final Object object, final ArrayObject argumentArray,
                         @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary(limit = "2") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
                 return wrapNode.executeWrap(lib.instantiate(object, getObjectArrayNode.execute(argumentArray)));
-            } catch (UnsupportedTypeException | ArityException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            } catch (final UnsupportedMessageException e) {
-                throw primitiveFailedInInterpreterCapturing(e);
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
                  * https://github.com/oracle/truffleruby/issues/1864).
                  */
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -689,15 +661,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimWriteArrayElementNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Specialization(guards = {"lib.isArrayElementWritable(object, index)"}, limit = "2")
         protected static final Object doWrite(@SuppressWarnings("unused") final Object receiver, final Object object, final long index, final Object value,
-                        @CachedLibrary("object") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("object") final InteropLibrary lib) {
             try {
                 lib.writeArrayElement(object, index - 1, value);
                 return value;
-            } catch (UnsupportedTypeException | InvalidArrayIndexException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            } catch (final UnsupportedMessageException e) {
+            } catch (InvalidArrayIndexException | UnsupportedMessageException | UnsupportedTypeException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
         }
@@ -716,6 +684,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @CachedLibrary(limit = "2") final InteropLibrary membersLib,
                         @CachedLibrary(limit = "2") final InteropLibrary memberNameLib,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            // TODO: is unpacking really necessary?
             try {
                 final Object members = lib.getMembers(object, includeInternal);
                 final int size = (int) membersLib.getArraySize(members);
@@ -864,22 +833,15 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doInvokeMember(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member, final ArrayObject argumentArray,
                         @Cached final ArrayObjectToObjectArrayCopyNode getObjectArrayNode,
                         @Cached final WrapToSqueakNode wrapNode,
-                        @CachedLibrary("object") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("object") final InteropLibrary lib) {
             try {
                 return wrapNode.executeWrap(lib.invokeMember(object, member.asStringUnsafe(), getObjectArrayNode.execute(argumentArray)));
-            } catch (UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            } catch (final UnsupportedMessageException e) {
-                throw primitiveFailedInInterpreterCapturing(e);
             } catch (final Exception e) {
                 /*
                  * Workaround: catch all exceptions raised by other languages to avoid crashes (see
                  * https://github.com/oracle/truffleruby/issues/1864).
                  */
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -930,15 +892,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimWriteMemberNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Specialization(guards = {"member.isByteType()", "lib.isMemberWritable(object, member.asStringUnsafe())"}, limit = "2")
         protected static final Object doWrite(@SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject member, final Object value,
-                        @CachedLibrary("object") final InteropLibrary lib,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedLibrary("object") final InteropLibrary lib) {
             try {
                 lib.writeMember(object, member.asStringUnsafe(), value);
                 return value;
-            } catch (final UnsupportedTypeException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
-            } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+            } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
         }
@@ -1234,15 +1192,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimAddToHostClassPathNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization(guards = {"value.isByteType()"})
         protected static final Object doAddToHostClassPath(final Object receiver, final NativeObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final String path = value.asStringUnsafe();
             try {
                 image.env.addToHostClassPath(image.env.getPublicTruffleFile(path));
                 return receiver;
             } catch (final SecurityException e) {
-                errorProfile.enter();
-                throw primitiveFailedCapturing(e);
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
     }
@@ -1262,14 +1218,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimLookupHostSymbolNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization(guards = {"isHostLookupAllowed(image)", "value.isByteType()"})
         protected static final Object doLookupHostSymbol(@SuppressWarnings("unused") final Object receiver, final NativeObject value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
-                        @Cached final BranchProfile errorProfile) {
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final String symbolName = value.asStringUnsafe();
             try {
                 return NilObject.nullToNil(image.env.lookupHostSymbol(symbolName));
             } catch (final RuntimeException e) {
-                errorProfile.enter();
-                throw PrimitiveFailed.GENERIC_ERROR;
+                throw primitiveFailedInInterpreterCapturing(e);
             }
         }
 
@@ -1358,10 +1312,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     private static PrimitiveFailed primitiveFailedInInterpreterCapturing(final Exception e) {
         CompilerDirectives.transferToInterpreter();
-        return primitiveFailedCapturing(e);
-    }
-
-    private static PrimitiveFailed primitiveFailedCapturing(final Exception e) {
         PrimGetLastErrorNode.setLastError(e);
         return PrimitiveFailed.GENERIC_ERROR;
     }
