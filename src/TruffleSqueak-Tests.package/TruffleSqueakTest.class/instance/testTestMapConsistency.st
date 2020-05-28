@@ -11,7 +11,7 @@ testTestMapConsistency
 		description: 'test.properties contains duplicates'.
 
 	imageTestNames := (TestCase buildSuite tests collect: [:test | test class asString, '>>', test selector]).
-	imageTestNamesSize := mapTestNames size.
+	imageTestNamesSize := imageTestNames size.
 	imageTestNames := imageTestNames withoutDuplicates. "returns a Set"
 	self assert: imageTestNamesSize equals: imageTestNames size
 		description: 'imageTestNames contains duplicates'.
