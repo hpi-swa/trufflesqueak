@@ -1,7 +1,9 @@
 comparing
 = anObject
-	(Interop isBoolean: self) ifTrue: [ ^ (Interop asBoolean: self) = anObject ].
-	(Interop fitsInLong: self) ifTrue: [ ^ (Interop asLong: self) = anObject ].
-	(Interop fitsInDouble: self) ifTrue: [ ^ (Interop asDouble: self) = anObject ].
-	(Interop isString: self) ifTrue: [ ^ (Interop asString: self) = anObject ].
-	^ super = anObject
+	super = anObject ifTrue: [ ^ true ].
+	(Interop isBoolean: self) ifTrue: [ ^ anObject = (Interop asBoolean: self) ].
+	(Interop fitsInLong: self) ifTrue: [ ^ anObject = (Interop asLong: self) ].
+	(Interop fitsInDouble: self) ifTrue: [ ^ anObject = (Interop asDouble: self) ].
+	(Interop isString: self) ifTrue: [ ^ anObject = (Interop asString: self) ].
+	(Interop isHostObject: self) ifTrue: [ ^ anObject = (Interop asHostObject: self) ].
+	^ false
