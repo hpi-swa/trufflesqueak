@@ -3,7 +3,7 @@ testJSObject
 	| jsObject |
 	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
 
-	jsObject := (Polyglot eval: Polyglot languageIdJS string: 'new Object({a: "Foo"})').
+	jsObject := (self jsEval: 'new Object({a: "Foo"})').
 	
 	self deny: (Interop isBoolean: jsObject).
 	self should: [ Interop asBoolean: jsObject ] raise: Error.

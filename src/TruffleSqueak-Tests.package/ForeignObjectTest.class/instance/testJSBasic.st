@@ -1,8 +1,8 @@
 testing
 testJSBasic
 	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
-	self assert: (Interop isNull: (Polyglot eval: Polyglot languageIdJS string: 'null')).
+	self assert: (Interop isNull: (self jsEval: 'null')).
 	
-	self assert: (Interop isInstantiable: (Polyglot eval: Polyglot languageIdJS string: 'Object')).
+	self assert: (Interop isInstantiable: (self jsEval: 'Object')).
 	self assert: 0 equals: (Interop getMemberSize:
-		(Interop instantiate: (Polyglot eval: Polyglot languageIdJS string: 'Object') with: #()))
+		(Interop instantiate: (self jsEval: 'Object') with: #()))

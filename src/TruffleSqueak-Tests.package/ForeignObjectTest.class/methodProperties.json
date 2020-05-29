@@ -2,10 +2,11 @@
 	"class" : {
 		 },
 	"instance" : {
-		"testJSArray" : "fn 12/17/2019 10:58",
-		"testJSBasic" : "fn 12/13/2019 12:37",
-		"testJSDate" : "fn 12/13/2019 12:37",
-		"testJSExecutable" : "fn 2/4/2020 00:41",
-		"testJSMetadataAPIs" : "fn 5/6/2020 18:54",
-		"testJSObject" : "fn 12/13/2019 12:37",
-		"testSmalltalkFromJS" : "fn 5/11/2020 18:27" } }
+		"jsEval:" : "fn 5/29/2020 10:45",
+		"testJSArray" : "fn 5/29/2020 10:45",
+		"testJSBasic" : "fn 5/29/2020 10:46",
+		"testJSDate" : "fn 5/29/2020 10:46",
+		"testJSExecutable" : "fn 5/29/2020 10:46",
+		"testJSMetadataAPIs" : "fn 5/29/2020 16:06",
+		"testJSObject" : "fn 5/29/2020 10:46",
+		"testSmalltalkFromJS" : "fn 5/29/2020 16:36" } }

@@ -4,7 +4,8 @@ testMetadataAPIs
 
 	"All boxed objects have a language"
 	self assert: (Interop hasLanguage: Smalltalk).
-	self assert: (Interop getLanguage: Smalltalk) equals: (Interop getLanguage: Smalltalk).
+	self assert: (Interop getLanguage: Smalltalk) equals: (Interop getLanguage: Smalltalk)
+		 description: 'Languages not equal'.
 	"Immediate values have no language"
 	self deny: (Interop hasLanguage: 42).
 

@@ -3,7 +3,7 @@ testJSDate
 	| jsDate dateAndTime |
 	(Polyglot isPermitted: Polyglot languageIdJS) ifFalse: [ ^self ].
 
-	jsDate := (Polyglot eval: Polyglot languageIdJS string: 'new Date(949322096000)').
+	jsDate := (self jsEval: 'new Date(949322096000)').
 	
 	self assert: (Interop isInstant: jsDate).
 	dateAndTime := DateAndTime fromUnixTime: 949322096.
