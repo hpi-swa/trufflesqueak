@@ -31,6 +31,7 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 
 public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     private boolean headless = false;
+    private boolean printImagePath = false;
     private boolean quiet = false;
     private String[] imageArguments = new String[0];
     private String imagePath = null;
@@ -57,6 +58,8 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
                 headless = true;
             } else if (SqueakLanguageOptions.HEADLESS_FLAG.equals(arg)) {
                 headless = true;
+            } else if (SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG.equals(arg)) {
+                printImagePath = true;
             } else if (SqueakLanguageOptions.QUIET_FLAG.equals(arg)) {
                 quiet = true;
             } else if (SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG.equals(arg)) {
@@ -78,6 +81,10 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
     protected int execute(final Context.Builder contextBuilder) {
         if (imagePath == null) {
             imagePath = SqueakImageLocator.findImage();
+        }
+        if (printImagePath) {
+            println(imagePath);
+            return 0;
         }
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.IMAGE_PATH, imagePath);
         contextBuilder.option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, Boolean.toString(headless));
@@ -155,17 +162,17 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         println("Usage: trufflesqueak [options] <image file> [image arguments]\n");
         println("Basic options:");
         launcherOption(SqueakLanguageOptions.CODE_FLAG + " \"<code>\", " + SqueakLanguageOptions.CODE_FLAG_SHORT + " \"<code>\"", SqueakLanguageOptions.CODE_HELP);
+        launcherOption(SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_HELP);
         launcherOption(SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.HEADLESS_HELP);
         launcherOption(SqueakLanguageOptions.LOG_HANDLER_FLAG, SqueakLanguageOptions.LOG_HANDLER_HELP);
+        launcherOption(SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_HELP);
         launcherOption(SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.QUIET_HELP);
-        launcherOption(SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_HELP);
     }
 
     @Override
     protected void collectArguments(final Set<String> options) {
         options.addAll(Arrays.asList(SqueakLanguageOptions.CODE_FLAG, SqueakLanguageOptions.CODE_FLAG_SHORT, SqueakLanguageOptions.HEADLESS_FLAG, SqueakLanguageOptions.LOG_HANDLER_FLAG,
-                        SqueakLanguageOptions.QUIET_FLAG,
-                        SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
+                        SqueakLanguageOptions.QUIET_FLAG, SqueakLanguageOptions.PRINT_IMAGE_PATH_FLAG, SqueakLanguageOptions.TRANSCRIPT_FORWARDING_FLAG));
     }
 
     @Override

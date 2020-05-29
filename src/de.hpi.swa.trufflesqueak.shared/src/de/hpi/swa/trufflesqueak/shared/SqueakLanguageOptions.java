@@ -25,6 +25,8 @@ public final class SqueakLanguageOptions {
     public static final String INTERRUPTS_HELP = "Disable interrupt handler";
     public static final String LOG_HANDLER_FLAG = "--log-handler";
     public static final String LOG_HANDLER_HELP = "Enable log handler (supported modes are 'mapped', 'file', 'err', 'out')";
+    public static final String PRINT_IMAGE_PATH_FLAG = "--print-image-path";
+    public static final String PRINT_IMAGE_PATH_HELP = "Print the path to default Squeak/Smalltalk image";
     public static final String QUIET = "quiet";
     public static final String QUIET_FLAG = "--" + QUIET;
     public static final String QUIET_HELP = "Operate quietly";
