@@ -1,6 +1,6 @@
 # TruffleSqueak [![Latest Release][trufflesqueak_latest_badge]][trufflesqueak_latest] [![Slack][graalvm_slack_badge]][graalvm_slack] [![Build Status][gh_action_badge]][gh_action] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy] [![License][trufflesqueak_license_badge]][trufflesqueak_license]
 
-A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
+A [Squeak/Smalltalk][squeak] VM and Polyglot Programming Environment for the [GraalVM][graalvm].
 
 
 ## Getting Started
