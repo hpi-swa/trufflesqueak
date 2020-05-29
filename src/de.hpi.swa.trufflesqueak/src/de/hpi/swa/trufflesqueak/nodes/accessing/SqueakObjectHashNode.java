@@ -19,31 +19,31 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectHashNode extends AbstractNode {
 
-    public abstract long execute(Object obj);
+    public abstract long execute(Object object);
 
     @Specialization
-    protected static final long doNil(@SuppressWarnings("unused") final NilObject receiver) {
+    protected static final long doNil(@SuppressWarnings("unused") final NilObject object) {
         return NilObject.getSqueakHash();
     }
 
-    @Specialization(guards = "obj == FALSE")
-    protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean obj) {
+    @Specialization(guards = "object == FALSE")
+    protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean object) {
         return BooleanObject.getFalseSqueakHash();
     }
 
-    @Specialization(guards = "obj != FALSE")
-    protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean obj) {
+    @Specialization(guards = "object != FALSE")
+    protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean object) {
         return BooleanObject.getTrueSqueakHash();
     }
 
     @Specialization
-    protected static final long doLong(final long obj) {
-        return obj;
+    protected static final long doLong(final long object) {
+        return object;
     }
 
     @Specialization
-    protected static final long doAbstractSqueakObjectWithHash(final AbstractSqueakObjectWithHash obj,
+    protected static final long doAbstractSqueakObjectWithHash(final AbstractSqueakObjectWithHash object,
                     @Cached final BranchProfile needsHashProfile) {
-        return obj.getSqueakHash(needsHashProfile);
+        return object.getSqueakHash(needsHashProfile);
     }
 }
