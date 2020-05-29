@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
@@ -24,8 +25,8 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class WeakVariablePointersObject extends AbstractPointersObject {
-    private static final WeakReference<?> NIL_REFERENCE = new WeakReference<>(NilObject.SINGLETON);
-    @CompilationFinal(dimensions = 0) private WeakReference<?>[] variablePart;
+    private static final WeakRef NIL_REF = new WeakRef(NilObject.SINGLETON);
+    @CompilationFinal(dimensions = 0) private WeakRef[] variablePart;
 
     public WeakVariablePointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
@@ -33,14 +34,14 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
 
     public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
         super(image, classObject, layout);
-        variablePart = new WeakReference<?>[variableSize];
-        Arrays.fill(variablePart, NIL_REFERENCE);
+        variablePart = new WeakRef[variableSize];
+        Arrays.fill(variablePart, NIL_REF);
     }
 
     public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final int variableSize) {
         super(image, classObject);
-        variablePart = new WeakReference<?>[variableSize];
-        Arrays.fill(variablePart, NIL_REFERENCE);
+        variablePart = new WeakRef[variableSize];
+        Arrays.fill(variablePart, NIL_REF);
     }
 
     private WeakVariablePointersObject(final WeakVariablePointersObject original) {
@@ -57,9 +58,9 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         for (int i = 0; i < instSize; i++) {
             writeNode.execute(this, i, pointersObject[i]);
         }
-        variablePart = new WeakReference<?>[pointersObject.length - instSize];
+        variablePart = new WeakRef[pointersObject.length - instSize];
         for (int i = instSize; i < pointersObject.length; i++) {
-            putIntoVariablePart(i - instSize, pointersObject[i]);
+            putIntoVariablePartSlow(i - instSize, pointersObject[i]);
         }
         assert size() == pointersObject.length;
     }
@@ -89,23 +90,23 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     public Object getFromVariablePart(final int index) {
-        return NilObject.nullToNil(UnsafeUtils.getWeakReference(variablePart, index).get());
+        return NilObject.nullToNil(UnsafeUtils.getWeakRef(variablePart, index).get());
     }
 
     public Object getFromVariablePart(final int index, final ConditionProfile nilProfile) {
-        return NilObject.nullToNil(UnsafeUtils.getWeakReference(variablePart, index).get(), nilProfile);
+        return NilObject.nullToNil(UnsafeUtils.getWeakRef(variablePart, index).get(), nilProfile);
     }
 
-    private void putIntoVariablePart(final int index, final Object value) {
+    private void putIntoVariablePartSlow(final int index, final Object value) {
         putIntoVariablePart(index, value, BranchProfile.getUncached(), ConditionProfile.getUncached());
     }
 
     public void putIntoVariablePart(final int index, final Object value, final BranchProfile nilProfile, final ConditionProfile primitiveProfile) {
         if (value == NilObject.SINGLETON) {
             nilProfile.enter();
-            UnsafeUtils.putWeakReference(variablePart, index, NIL_REFERENCE);
+            UnsafeUtils.putWeakRef(variablePart, index, NIL_REF);
         } else {
-            UnsafeUtils.putWeakReference(variablePart, index, new WeakReference<>(value, primitiveProfile.profile(SqueakGuards.isUsedJavaPrimitive(value)) ? null : image.weakPointersQueue));
+            UnsafeUtils.putWeakRef(variablePart, index, new WeakRef(value, primitiveProfile.profile(SqueakGuards.isUsedJavaPrimitive(value)) ? null : image.weakPointersQueue));
         }
     }
 
@@ -114,7 +115,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     private boolean variablePartPointsTo(final Object thang) {
-        for (final WeakReference<?> weakRef : variablePart) {
+        for (final WeakRef weakRef : variablePart) {
             if (weakRef.get() == thang) {
                 return true;
             }
@@ -136,7 +137,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
                 for (int j = 0; j < variableSize; j++) {
                     final Object object = getFromVariablePart(j);
                     if (object == fromPointer) {
-                        putIntoVariablePart(j, to[i]);
+                        putIntoVariablePartSlow(j, to[i]);
                         copyHash(fromPointer, to[i], copyHash);
                     }
                 }
@@ -181,4 +182,17 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
         return prefix + " a " + getSqueakClassName() + " @" + Integer.toHexString(hashCode()) + " of size " + variablePart.length;
     }
 
+    /*
+     * Final subclass for TruffleSqueak to help Graal's inlining (and to avoid corresponding
+     * performance warnings.
+     */
+    public static final class WeakRef extends WeakReference<Object> {
+        public WeakRef(final Object referent) {
+            super(referent);
+        }
+
+        public WeakRef(final Object referent, final ReferenceQueue<Object> q) {
+            super(referent, q);
+        }
+    }
 }

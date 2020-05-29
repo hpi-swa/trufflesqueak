@@ -9,18 +9,19 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
+import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject.WeakRef;
 import sun.misc.Unsafe;
 
 public final class UnsafeUtils {
 
     private static final Unsafe UNSAFE = initUnsafe();
 
-    private static final long ARRAY_WEAK_REFERENCE_BASE_OFFSET;
-    private static final long ARRAY_WEAK_REFERENCE_INDEX_SCALE;
+    private static final long ARRAY_WEAK_REF_BASE_OFFSET;
+    private static final long ARRAY_WEAK_REF_INDEX_SCALE;
 
     static {
-        ARRAY_WEAK_REFERENCE_BASE_OFFSET = UNSAFE.arrayBaseOffset(WeakReference[].class);
-        ARRAY_WEAK_REFERENCE_INDEX_SCALE = UNSAFE.arrayIndexScale(WeakReference[].class);
+        ARRAY_WEAK_REF_BASE_OFFSET = UNSAFE.arrayBaseOffset(WeakReference[].class);
+        ARRAY_WEAK_REF_INDEX_SCALE = UNSAFE.arrayIndexScale(WeakReference[].class);
     }
 
     private UnsafeUtils() {
@@ -156,9 +157,9 @@ public final class UnsafeUtils {
         return Short.reverseBytes(getShort(bytes, index));
     }
 
-    public static WeakReference<?> getWeakReference(final WeakReference<?>[] storage, final long index) {
+    public static WeakRef getWeakRef(final WeakRef[] storage, final long index) {
         assert 0 <= index && index < storage.length;
-        return (WeakReference<?>) UNSAFE.getObject(storage, ARRAY_WEAK_REFERENCE_BASE_OFFSET + index * ARRAY_WEAK_REFERENCE_INDEX_SCALE);
+        return (WeakRef) UNSAFE.getObject(storage, ARRAY_WEAK_REF_BASE_OFFSET + index * ARRAY_WEAK_REF_INDEX_SCALE);
     }
 
     public static Unsafe initUnsafe() {
@@ -297,9 +298,9 @@ public final class UnsafeUtils {
         putShort(bytes, index, Short.reverseBytes(value));
     }
 
-    public static void putWeakReference(final WeakReference<?>[] storage, final long index, final WeakReference<?> value) {
+    public static void putWeakRef(final WeakRef[] storage, final long index, final WeakRef value) {
         assert 0 <= index && index < storage.length;
-        UNSAFE.putObject(storage, ARRAY_WEAK_REFERENCE_BASE_OFFSET + index * ARRAY_WEAK_REFERENCE_INDEX_SCALE, value);
+        UNSAFE.putObject(storage, ARRAY_WEAK_REF_BASE_OFFSET + index * ARRAY_WEAK_REF_INDEX_SCALE, value);
     }
 
     public static byte[] toBytes(final int[] ints) {
