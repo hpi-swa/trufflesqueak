@@ -22,6 +22,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.ControlFlowException;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
@@ -66,29 +67,38 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return new InteropArray(classNode.executeLookup(this).listInteropMembers());
     }
 
-    @ExportMessage(name = "isMemberReadable")
-    public boolean isMemberReadable(final String member,
-                    @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
-                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
-        return lookupNode.executeLookup(classNode.executeLookup(this), toSelector(member)) != null;
-    }
-
     @ExportMessage(name = "isMemberInvocable")
+    @ExportMessage(name = "isMemberReadable")
     public boolean isMemberInvocable(final String member,
                     @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
-                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
-        return lookupNode.executeLookup(classNode.executeLookup(this), toSelector(member)) instanceof CompiledMethodObject;
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
+                    @Exclusive @Cached("createBinaryProfile()") final ConditionProfile alternativeProfile) {
+        final String selectorString = toSelector(member);
+        final ClassObject classObject = classNode.executeLookup(this);
+        if (alternativeProfile.profile(lookupNode.executeLookup(classObject, selectorString) instanceof CompiledMethodObject)) {
+            return true;
+        } else {
+            return lookupNode.executeLookup(classObject, toAlternativeSelector(selectorString)) instanceof CompiledMethodObject;
+        }
     }
 
     @ExportMessage
     public Object readMember(final String member,
                     @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
-                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode) throws UnknownIdentifierException {
-        final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(this), toSelector(member));
-        if (methodObject instanceof CompiledMethodObject) {
+                    @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
+                    @Exclusive @Cached("createBinaryProfile()") final ConditionProfile alternativeProfile) throws UnknownIdentifierException {
+        final ClassObject classObject = classNode.executeLookup(this);
+        final String selectorString = toSelector(member);
+        final Object methodObject = lookupNode.executeLookup(classObject, selectorString);
+        if (alternativeProfile.profile(methodObject instanceof CompiledMethodObject)) {
             return new BoundMethod((CompiledMethodObject) methodObject, this);
         } else {
-            throw UnknownIdentifierException.create(member);
+            final Object methodObjectAlternative = lookupNode.executeLookup(classObject, toAlternativeSelector(selectorString));
+            if (methodObjectAlternative instanceof CompiledMethodObject) {
+                return new BoundMethod((CompiledMethodObject) methodObjectAlternative, this);
+            } else {
+                throw UnknownIdentifierException.create(member);
+            }
         }
     }
 
@@ -100,14 +110,14 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                         @Exclusive @Cached final WrapToSqueakNode wrapNode,
                         @Exclusive @Cached final DispatchUneagerlyNode dispatchNode) throws ArityException {
-            final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(receiver), toSelector(member));
+            final int actualArity = arguments.length;
+            final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(receiver), toSelector(member, actualArity));
             if (methodObject == null) {
                 CompilerDirectives.transferToInterpreter();
                 /* DoesNotUnderstand, rewrite this specialization. */
                 throw new RespecializeException();
             }
             final CompiledMethodObject method = (CompiledMethodObject) methodObject;
-            final int actualArity = arguments.length;
             final int expectedArity = method.getNumArgs();
             if (actualArity == expectedArity) {
                 return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), receiver), NilObject.SINGLETON);
@@ -127,11 +137,14 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Exclusive @Cached final WrapToSqueakNode wrapNode,
                         @Exclusive @Cached final DispatchUneagerlyNode dispatchNode,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
+                        @Exclusive @Cached("createBinaryProfile()") final ConditionProfile hasMethodProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) throws UnsupportedMessageException, ArityException {
-            final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(receiver), toSelector(member));
-            if (methodObject instanceof CompiledMethodObject) {
+            final int actualArity = arguments.length;
+            final String selector = toSelector(member, actualArity);
+            final ClassObject classObject = classNode.executeLookup(receiver);
+            final Object methodObject = lookupNode.executeLookup(classObject, selector);
+            if (hasMethodProfile.profile(methodObject instanceof CompiledMethodObject)) {
                 final CompiledMethodObject method = (CompiledMethodObject) methodObject;
-                final int actualArity = arguments.length;
                 final int expectedArity = method.getNumArgs();
                 if (actualArity == expectedArity) {
                     return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), receiver), NilObject.SINGLETON);
@@ -139,12 +152,13 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                     throw ArityException.create(1 + expectedArity, 1 + actualArity);
                 }
             } else {
-                final CompiledMethodObject doesNotUnderstandMethodObject = (CompiledMethodObject) lookupNode.executeLookup(classNode.executeLookup(receiver), "doesNotUnderstand:");
-                final NativeObject symbol = (NativeObject) image.asByteString(toSelector(member)).send("asSymbol");
-                final PointersObject message = image.newMessage(writeNode, symbol, classNode.executeLookup(receiver), arguments);
+                final CompiledMethodObject doesNotUnderstandMethodObject = (CompiledMethodObject) lookupNode.executeLookup(classObject, "doesNotUnderstand:");
+                final NativeObject symbol = (NativeObject) image.asByteString(selector).send("asSymbol");
+                final PointersObject message = image.newMessage(writeNode, symbol, classObject, arguments);
                 try {
                     return dispatchNode.executeDispatch(doesNotUnderstandMethodObject, new Object[]{receiver, message}, NilObject.SINGLETON);
                 } catch (final ProcessSwitch ps) {
+                    CompilerDirectives.transferToInterpreter();
                     /*
                      * A ProcessSwitch exception is thrown in case Squeak/Smalltalk wants to open
                      * the debugger. This needs to be avoided in headless mode.
@@ -193,10 +207,38 @@ public abstract class AbstractSqueakObject implements TruffleObject {
      * identifiers, so treat underscores as colons as well.
      *
      * @param identifier for interop
-     * @return Smalltalk selector
+     * @return String for Smalltalk selector
      */
     @TruffleBoundary
     private static String toSelector(final String identifier) {
         return identifier.replace('_', ':');
+    }
+
+    /**
+     * The same as {@link #toSelector(String)}, but may return alternative selector depending on
+     * actualArity.
+     *
+     * @param identifier for interop
+     * @param actualArity of selector
+     * @return String for Smalltalk selector
+     */
+    @TruffleBoundary
+    private static String toSelector(final String identifier, final int actualArity) throws ArityException {
+        final String selector = identifier.replace('_', ':');
+        final int expectedArity = (int) selector.chars().filter(ch -> ch == ':').count();
+        if (expectedArity == actualArity) {
+            return selector;
+        } else {
+            if (expectedArity + 1 == actualArity && !selector.endsWith(":")) {
+                return selector + ":";
+            } else {
+                throw ArityException.create(1 + expectedArity, 1 + actualArity);
+            }
+        }
+    }
+
+    @TruffleBoundary
+    private static String toAlternativeSelector(final String selector) {
+        return selector + ":";
     }
 }
