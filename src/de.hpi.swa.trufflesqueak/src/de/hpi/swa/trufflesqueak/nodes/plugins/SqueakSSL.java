@@ -565,7 +565,11 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
         private static void handshakeCompleted(final SqSSL ssl) {
             ssl.state = State.CONNECTED;
-            ssl.peerName = ssl.engine.getPeerHost();
+            final String peerHost = ssl.engine.getPeerHost();
+            /*
+             * Hack: if peer host is not available, use "*" to avoid certificate validation errors.
+             */
+            ssl.peerName = peerHost == null ? "*" : peerHost;
         }
 
         private static void writeHandshakeResponse(final SqSSL ssl, final ByteBuffer target) throws SSLException {
@@ -840,20 +844,19 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                 return NilObject.SINGLETON;
             }
 
-            final String value = getStringPropertyValue(impl, property);
-            return value == null ? NilObject.SINGLETON : image.asByteString(value);
+            return getStringPropertyValue(image, impl, property);
         }
 
-        private static String getStringPropertyValue(final SqSSL impl, final StringProperty property) {
+        private static AbstractSqueakObject getStringPropertyValue(final SqueakImageContext image, final SqSSL impl, final StringProperty property) {
             switch (property) {
                 case PEER_NAME:
-                    return impl.peerName == null ? "" : impl.peerName;
+                    return image.asByteString(impl.peerName);
                 case CERTIFICATE_NAME:
-                    return null; // FIXME
+                    return NilObject.SINGLETON; // FIXME
                 case SERVER_NAME:
-                    return impl.serverName;
+                    return image.asByteString(impl.serverName);
                 default:
-                    return null;
+                    return NilObject.SINGLETON;
             }
         }
     }
