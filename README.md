@@ -189,7 +189,7 @@ TruffleSqueak is released under the [MIT license][ts_license].
 [ts_issues]: https://github.com/hpi-swa/trufflesqueak/issues/new
 [ts_latest]: https://github.com/hpi-swa/trufflesqueak/releases/latest
 [ts_latest_badge]: https://img.shields.io/github/v/release/hpi-swa/trufflesqueak
-[ts_launcher]: https://github.com/hpi-swa/trufflesqueak/blob/master/src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/TruffleSqueakLauncher.java
+[ts_launcher]: https://github.com/hpi-swa/trufflesqueak/blob/master/src/de.hpi.swa.trufflesqueak.launcher/src/de/hpi/swa/trufflesqueak/launcher/TruffleSqueakLauncher.java
 [ts_license]: https://github.com/hpi-swa/trufflesqueak/blob/master/LICENSE
 [ts_license_badge]: https://img.shields.io/github/license/hpi-swa/trufflesqueak
 [ts_master]: https://github.com/hpi-swa/trufflesqueak/tree/master
