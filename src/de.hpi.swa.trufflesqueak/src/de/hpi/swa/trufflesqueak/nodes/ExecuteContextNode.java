@@ -80,8 +80,12 @@ public class ExecuteContextNode extends AbstractNode implements InstrumentableNo
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create();
     }
 
-    protected ExecuteContextNode(final ExecuteContextNode executeContextNode) {
-        this(executeContextNode.code, executeContextNode.frameInitializationNode == null);
+    protected ExecuteContextNode(final ExecuteContextNode original) {
+        code = original.code;
+        bytecodeNodes = original.bytecodeNodes;
+        frameInitializationNode = original.frameInitializationNode;
+        interruptHandlerNode = original.interruptHandlerNode;
+        materializeContextOnMethodExitNode = original.materializeContextOnMethodExitNode;
     }
 
     public static ExecuteContextNode create(final CompiledCodeObject code, final boolean resume) {
