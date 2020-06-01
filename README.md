@@ -1,11 +1,13 @@
-# TruffleSqueak [![Latest Release][trufflesqueak_latest_badge]][trufflesqueak_latest] [![Slack][graalvm_slack_badge]][graalvm_slack] [![Build Status][gh_action_badge]][gh_action] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy] [![License][trufflesqueak_license_badge]][trufflesqueak_license]
+# TruffleSqueak
+
+[![Latest Release][ts_latest_badge]][ts_latest] [![Slack][graalvm_slack_badge]][graalvm_slack] [![Twitter][ts_twitter_badge]][ts_twitter] [![Build Status][ts_gh_action_badge]][ts_gh_action] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy] [![License][ts_license_badge]][ts_license]
 
 A [Squeak/Smalltalk][squeak] VM and Polyglot Programming Environment for the [GraalVM][graalvm].
 
 
 ## Getting Started
 
-1. Find the [latest TruffleSqueak release][trufflesqueak_latest] and identify the
+1. Find the [latest TruffleSqueak release][ts_latest] and identify the
    supported version of GraalVM.
 2. Download the corresponding [GraalVM][graalvm_download] for your platform.
 3. Use the [GraalVM Updater][graalvm_updater] to install the TruffleSqueak
@@ -25,18 +27,18 @@ $GRAALVM_HOME/bin/trufflesqueak
 ## Community Support
 
 If you have a question, need some help, or want to discuss a new feature, feel
-free to open an [issue][issues] or join the `#trufflesqueak` channel on the
+free to open an [issue][ts_issues] or join the `#trufflesqueak` channel on the
 [GraalVM Slack][graalvm_slack].
 
 
 ## Documentation
 
-Documentation is available in [`docs`](docs).
+Documentation is available in [`docs/`][ts_docs].
 
 
 ## Development
 
-Active development is done in the [`master` branch][master].
+Active development is done in the [`master` branch][ts_master].
 Please feel free to open a [pull request][pull_request] if you'd like to
 contribute a bug-fix, documentation, or a new feature.
 
@@ -44,8 +46,8 @@ contribute a bug-fix, documentation, or a new feature.
 ### Building from Source
 
 The [mx] tool is required to build TruffleSqueak.
-Running `mx build` in TruffleSqueak's root directory checks out all dependencies
-and builds all JAR files for running and testing TruffleSqueak.
+Running `mx --dy /compiler build` in TruffleSqueak's root directory checks out all dependencies
+and builds all JAR files for running and testing TruffleSqueak with the Graal compiler.
 It can also be used to run TruffleSqueak via the `mx squeak` command.
 As an example, `mx --dy /compiler squeak path/to/a/squeaksmalltalk.image` opens
 the image and enables the Graal compiler.
@@ -64,12 +66,12 @@ It is recommended to use [Eclipse][eclipse_downloads] with the
    already cloned into the parent directory of your TruffleSqueak checkout during
    the build process.
 3. Import all projects from TruffleSqueak's root directory.
-4. Run [`TruffleSqueakLauncher`][trufflesqueak_launcher] to start TruffleSqueak.
+4. Run [`TruffleSqueakLauncher`][ts_launcher] to start TruffleSqueak.
 
 
 ## Contributing
 
-Please [report any issues here on GitHub][issues] and open
+Please [report any issues here on GitHub][ts_issues] and open
 [pull requests][pull_request] if you'd like to contribute code or documentation.
 
 
@@ -134,7 +136,7 @@ Amsterdam, Netherlands, July 17, 2018, ACM DL.
 
 ## License
 
-TruffleSqueak is released under the [MIT license][trufflesqueak_license].
+TruffleSqueak is released under the [MIT license][ts_license].
 
 
 [codacy]: https://app.codacy.com/gh/hpi-swa/trufflesqueak/dashboard
@@ -144,20 +146,13 @@ TruffleSqueak is released under the [MIT license][trufflesqueak_license].
 [dls19_doi]: https://img.shields.io/badge/doi-10.1145/3359619.3359746-blue.svg
 [dls19_paper]: https://doi.org/10.1145/3359619.3359746
 [dls19_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/StolpeFelgentreffHumerNiephausHirschfeld_2019_LanguageIndependentDevelopmentEnvironmentSupportForDynamicRuntimes_AcmDL.pdf
-[eclipse_cs]: http://checkstyle.org/eclipse-cs/
+[eclipse_cs]: https://checkstyle.org/eclipse-cs/
 [eclipse_downloads]: https://www.eclipse.org/downloads/
-[gh_action]: https://github.com/hpi-swa/trufflesqueak/actions
-[gh_action_badge]: https://img.shields.io/github/workflow/status/hpi-swa/trufflesqueak/CI
 [github_releases]: https://help.github.com/en/github/administering-a-repository/about-releases
 [graal]: https://github.com/oracle/graal
-[trufflesqueak_latest]: https://github.com/hpi-swa/trufflesqueak/releases/latest
-[trufflesqueak_latest_badge]: https://img.shields.io/github/v/release/hpi-swa/trufflesqueak
-[trufflesqueak_launcher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/TruffleSqueakLauncher.java
-[trufflesqueak_license]: LICENSE
-[trufflesqueak_license_badge]: https://img.shields.io/github/license/hpi-swa/trufflesqueak
-[graalvm]: http://www.graalvm.org/
+[graalvm]: https://www.graalvm.org/
 [graalvm_blog]: https://medium.com/graalvm
-[graalvm_download]: http://www.graalvm.org/downloads/
+[graalvm_download]: https://www.graalvm.org/downloads/
 [graalvm_updater]: https://www.graalvm.org/docs/reference-manual/install-components/
 [graalvm_slack]: https://www.graalvm.org/slack-invitation/
 [graalvm_slack_badge]: https://img.shields.io/badge/slack-%23trufflesqueak-active
@@ -165,9 +160,7 @@ TruffleSqueak is released under the [MIT license][trufflesqueak_license].
 [icooolps18_doi]: https://img.shields.io/badge/doi-10.1145/3242947.3242948-blue.svg
 [icooolps18_paper]: https://doi.org/10.1145/3242947.3242948
 [icooolps18_pdf]: https://fniephaus.com/2018/icooolps18-graalsqueak.pdf
-[issues]: ../../issues/new
 [javaadvent19]: https://www.javaadvent.com/2019/12/smalltalk-with-the-graalvm.html
-[master]: ../../tree/master
 [morevms19]: https://2019.programming-conference.org/track/MoreVMs-2019
 [morevms19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3328440-blue.svg
 [morevms19_paper]: https://doi.org/10.1145/3328433.3328440
@@ -190,3 +183,15 @@ TruffleSqueak is released under the [MIT license][trufflesqueak_license].
 [sdr19_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/PapeFelgentreffNiephausHirschfeld_2019_LetThemFailTowardsVmBuiltInBehaviorThatFallsBackToTheProgram_AcmDL.pdf
 [squeak]: https://squeak.org
 [squeak_downloads]: https://squeak.org/downloads/
+[ts_docs]: https://github.com/hpi-swa/trufflesqueak/tree/master/docs
+[ts_gh_action]: https://github.com/hpi-swa/trufflesqueak/actions
+[ts_gh_action_badge]: https://img.shields.io/github/workflow/status/hpi-swa/trufflesqueak/CI
+[ts_issues]: https://github.com/hpi-swa/trufflesqueak/issues/new
+[ts_latest]: https://github.com/hpi-swa/trufflesqueak/releases/latest
+[ts_latest_badge]: https://img.shields.io/github/v/release/hpi-swa/trufflesqueak
+[ts_launcher]: https://github.com/hpi-swa/trufflesqueak/blob/master/src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/TruffleSqueakLauncher.java
+[ts_license]: https://github.com/hpi-swa/trufflesqueak/blob/master/LICENSE
+[ts_license_badge]: https://img.shields.io/github/license/hpi-swa/trufflesqueak
+[ts_master]: https://github.com/hpi-swa/trufflesqueak/tree/master
+[ts_twitter]: https://twitter.com/TruffleSqueak
+[ts_twitter_badge]: https://img.shields.io/badge/twitter-%40TruffleSqueak-active
