@@ -19,7 +19,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -33,7 +32,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -504,30 +502,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 142)
     protected abstract static class PrimVMPathNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
-        @CompilationFinal private String resourcesPath;
 
         @Specialization
-        protected final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver,
+        protected static final NativeObject doVMPath(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asByteString(getResourcesDirectory(image));
-        }
-
-        public String getResourcesDirectory(final SqueakImageContext image) {
-            if (resourcesPath == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                final String languageHome = image.getLanguage().getTruffleLanguageHome();
-                final TruffleFile path;
-                if (languageHome != null) {
-                    path = image.getHomePath().resolve("resources");
-                } else { /* Fallback to image directory. */
-                    path = image.env.getInternalTruffleFile(image.getImagePath()).getParent();
-                    if (path == null) {
-                        throw SqueakException.create("`parent` should not be `null`.");
-                    }
-                }
-                resourcesPath = path.getAbsoluteFile().getPath();
-            }
-            return resourcesPath;
+            return image.getResourcesDirectory();
         }
     }
 

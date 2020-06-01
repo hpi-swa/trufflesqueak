@@ -16,6 +16,7 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
@@ -54,8 +55,9 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveGetUntrustedUserDirectory")
     protected abstract static class PrimGetUntrustedUserDirectoryNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver) {
-            throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
+        protected static final NativeObject doGet(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.getResourcesDirectory();
         }
     }
 

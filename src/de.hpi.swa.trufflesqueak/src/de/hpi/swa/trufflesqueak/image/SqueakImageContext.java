@@ -114,6 +114,7 @@ public final class SqueakImageContext {
     public final SqueakImageFlags flags = new SqueakImageFlags();
     private String imagePath;
     private final TruffleFile homePath;
+    @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;
     @CompilationFinal private boolean isHeadless;
     public final SqueakContextOptions options;
 
@@ -320,6 +321,24 @@ public final class SqueakImageContext {
 
     public TruffleFile getHomePath() {
         return homePath;
+    }
+
+    public NativeObject getResourcesDirectory() {
+        if (resourcesPathBytes == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            final String languageHome = getLanguage().getTruffleLanguageHome();
+            final TruffleFile path;
+            if (languageHome != null) {
+                path = getHomePath().resolve("resources");
+            } else { /* Fallback to image directory. */
+                path = env.getInternalTruffleFile(getImagePath()).getParent();
+                if (path == null) {
+                    throw SqueakException.create("`parent` should not be `null`.");
+                }
+            }
+            resourcesPathBytes = MiscUtils.stringToBytes(path.getAbsoluteFile().getPath());
+        }
+        return NativeObject.newNativeBytes(this, byteStringClass, resourcesPathBytes.clone());
     }
 
     public long getGlobalClassCounter() {
