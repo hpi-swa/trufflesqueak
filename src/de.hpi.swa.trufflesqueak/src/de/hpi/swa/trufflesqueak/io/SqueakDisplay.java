@@ -149,7 +149,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             assert (long) sqDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
                 bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height);
-                repaint();
             }
         }
     }
