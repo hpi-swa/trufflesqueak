@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.DropPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FloatArrayPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReadWriter2Plugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReaderPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LocalePlugin;
@@ -97,6 +98,7 @@ public final class PrimitiveNodeFactory {
                         new TruffleSqueakPlugin(),
                         new HostWindowPlugin(),
                         new JPEGReaderPlugin(),
+                        new JPEGReadWriter2Plugin(),
                         new LargeIntegers(),
                         new LocalePlugin(),
                         new Matrix2x3Plugin(),
