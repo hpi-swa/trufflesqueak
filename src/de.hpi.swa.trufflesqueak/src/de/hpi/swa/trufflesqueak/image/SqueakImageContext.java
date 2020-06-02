@@ -172,7 +172,12 @@ public final class SqueakImageContext {
         interrupt = InterruptHandlerState.create(this);
         allocationReporter = env.lookup(AllocationReporter.class);
         SqueakMessageInterceptor.enableIfRequested(environment);
-        homePath = env.getInternalTruffleFile(language.getTruffleLanguageHome());
+        final String truffleLanguageHome = language.getTruffleLanguageHome();
+        if (truffleLanguageHome != null) {
+            homePath = env.getInternalTruffleFile(truffleLanguageHome);
+        } else { /* Fall back to image directory if language home is not set. */
+            homePath = env.getInternalTruffleFile(options.imagePath).getParent();
+        }
         assert homePath.exists() : "Home directory does not exist: " + homePath;
     }
 
