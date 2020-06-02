@@ -115,8 +115,8 @@ public final class SqueakImageWriter {
         writeLong(image.flags.getOldBaseAddress()); // oldBaseAddress
         writeLong(specialObjectOop);
         writeLong(0xffee); // last hash
-        final DisplayPoint displaySize = image.getDisplay().getWindowSize();
-        writeLong(displaySize.getWidth() << 16 | displaySize.getHeight());
+        final DisplayPoint windowSize = image.getWindowSize();
+        writeLong(windowSize.getWidth() << 16 | windowSize.getHeight());
         writeLong(SqueakImageConstants.IMAGE_HEADER_FLAGS);
         writeInt(0); // extra VM memory
         /* Continue with Spur header. */

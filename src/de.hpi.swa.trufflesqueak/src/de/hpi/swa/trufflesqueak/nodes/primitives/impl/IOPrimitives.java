@@ -28,7 +28,6 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
-import de.hpi.swa.trufflesqueak.io.DisplayPoint;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplayInterface;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -816,13 +815,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final PointersObject doSize(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
-            final DisplayPoint windowSize;
-            if (image.hasDisplay() && image.getDisplay().isVisible()) {
-                windowSize = image.getDisplay().getWindowSize();
-            } else {
-                windowSize = image.flags.getLastWindowSize();
-            }
-            return image.asPoint(writeNode, windowSize);
+            return image.asPoint(writeNode, image.getWindowSize());
         }
     }
 

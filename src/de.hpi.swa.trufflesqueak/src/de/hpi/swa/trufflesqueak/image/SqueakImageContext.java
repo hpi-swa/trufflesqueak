@@ -551,6 +551,14 @@ public final class SqueakImageContext {
         return lastParseRequestSource;
     }
 
+    public DisplayPoint getWindowSize() {
+        if (hasDisplay() && getDisplay().isVisible()) {
+            return getDisplay().getWindowSize();
+        } else {
+            return flags.getLastWindowSize();
+        }
+    }
+
     public boolean interruptHandlerDisabled() {
         return options.disableInterruptHandler;
     }
