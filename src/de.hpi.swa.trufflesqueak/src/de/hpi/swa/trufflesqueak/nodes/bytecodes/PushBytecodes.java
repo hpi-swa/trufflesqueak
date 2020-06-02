@@ -16,6 +16,7 @@ import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -29,9 +30,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushReceiverNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushReceiverVariableNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.ArrayFromStackNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.CreateNewArrayNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
@@ -227,69 +227,99 @@ public final class PushBytecodes {
         }
     }
 
-    public abstract static class PushNewArrayNode extends AbstractPushNode {
-        @Child protected FrameStackPopNNode popNNode;
-        private final int arraySize;
+    public static final class PushNewArrayNode extends AbstractPushNode {
+        @Child protected ArrayNode arrayNode;
 
         protected PushNewArrayNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
             super(code, index, numBytecodes);
-            arraySize = param & 127;
-            popNNode = param > 127 ? FrameStackPopNNode.create(arraySize) : null;
+            final int arraySize = param & 127;
+            arrayNode = param > 127 ? ArrayFromStackNodeGen.create(arraySize) : CreateNewArrayNodeGen.create(arraySize);
         }
 
         public static PushNewArrayNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
-            return PushNewArrayNodeGen.create(code, index, numBytecodes, param);
+            return new PushNewArrayNode(code, index, numBytecodes, param);
         }
 
-        @Specialization(guards = {"popNNode != null"})
-        protected final void doPushArray(final VirtualFrame frame,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            pushNode.execute(frame, image.asArrayOfObjects(popNNode.execute(frame)));
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            pushNode.execute(frame, arrayNode.execute(frame));
         }
 
-        @Specialization(guards = {"popNNode == null"})
-        protected final void doPushNewArray(final VirtualFrame frame,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            /**
-             * Pushing an ArrayObject with object strategy. Contents likely to be mixed values and
-             * therefore unlikely to benefit from storage strategy.
-             */
-            pushNode.execute(frame, ArrayObject.createObjectStrategy(image, image.arrayClass, arraySize));
+        protected abstract static class ArrayNode extends Node {
+            protected final int arraySize;
+
+            public ArrayNode(final int arraySize) {
+                this.arraySize = arraySize;
+            }
+
+            protected abstract ArrayObject execute(VirtualFrame frame);
+        }
+
+        protected abstract static class ArrayFromStackNode extends ArrayNode {
+            @Child protected FrameStackPopNNode popNNode;
+
+            public ArrayFromStackNode(final int arraySize) {
+                super(arraySize);
+                popNNode = FrameStackPopNNode.create(arraySize);
+            }
+
+            @Specialization
+            protected final ArrayObject doPopN(final VirtualFrame frame, @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                /**
+                 * Pushing an ArrayObject with object strategy. Contents likely to be mixed values
+                 * and therefore unlikely to benefit from storage strategy.
+                 */
+                return image.asArrayOfObjects(popNNode.execute(frame));
+            }
+        }
+
+        protected abstract static class CreateNewArrayNode extends ArrayNode {
+            public CreateNewArrayNode(final int arraySize) {
+                super(arraySize);
+            }
+
+            @Specialization
+            protected final ArrayObject doFresh(@CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                /**
+                 * Pushing an ArrayObject with object strategy. Contents likely to be mixed values
+                 * and therefore unlikely to benefit from storage strategy.
+                 */
+                return ArrayObject.createObjectStrategy(image, image.arrayClass, arraySize);
+            }
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "push: (Array new: " + arraySize + ")";
+            return "push: (Array new: " + arrayNode.arraySize + ")";
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public abstract static class PushReceiverNode extends AbstractPushNode {
+    public static final class PushReceiverNode extends AbstractPushNode {
 
         protected PushReceiverNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
         public static PushReceiverNode create(final CompiledCodeObject code, final int index) {
-            return PushReceiverNodeGen.create(code, index);
+            return new PushReceiverNode(code, index);
         }
 
-        @Specialization
-        protected final void doReceiverVirtualized(final VirtualFrame frame) {
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
             pushNode.execute(frame, FrameAccess.getReceiver(frame));
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-
             return "self";
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public abstract static class PushReceiverVariableNode extends AbstractPushNode {
+    public static final class PushReceiverVariableNode extends AbstractPushNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         private final int variableIndex;
 
@@ -299,16 +329,16 @@ public final class PushBytecodes {
         }
 
         public static PushReceiverVariableNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int varIndex) {
-            return PushReceiverVariableNodeGen.create(code, index, numBytecodes, varIndex);
+            return new PushReceiverVariableNode(code, index, numBytecodes, varIndex);
         }
 
-        @Specialization
-        protected final void doReceiverVirtualized(final VirtualFrame frame) {
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
             pushNode.execute(frame, at0Node.execute(FrameAccess.getReceiver(frame), variableIndex));
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "pushRcvr: " + variableIndex;
         }
