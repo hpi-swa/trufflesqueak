@@ -9,9 +9,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.attribute.FileTime;
+
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+
+import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -123,5 +128,26 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
                         "[ result := [thisContext yourself. ^'bla1'] on: BlockCannotReturn do: [:e | 'bla2' ]] fork. \n" +
                         "Processor yield.\n" +
                         "result").toString());
+    }
+
+    /**
+     * Snapshot the test image. Note that from now on, the new snapshot will be used for testing.
+     */
+    @Test
+    public void test14ImageSnapshot() {
+        final TruffleFile imageFile = image.env.getInternalTruffleFile(image.getImagePath());
+        assertTrue(imageFile.exists());
+        final FileTime lastModifiedTime = getLastModifiedTimeOrFail(imageFile);
+        evaluate("Smalltalk snapshot: true andQuit: false");
+        assertTrue(imageFile.exists());
+        assertTrue("Image file was not modified", lastModifiedTime.compareTo(getLastModifiedTimeOrFail(imageFile)) < 0);
+    }
+
+    private static FileTime getLastModifiedTimeOrFail(final TruffleFile imageFile) {
+        try {
+            return imageFile.getLastModifiedTime();
+        } catch (final IOException e) {
+            throw new AssertionError(e);
+        }
     }
 }
