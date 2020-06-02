@@ -8,9 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.GenerateWrapper;
-import com.oracle.truffle.api.instrumentation.InstrumentableNode;
-import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -41,8 +38,7 @@ import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
-@GenerateWrapper
-public class ExecuteContextNode extends AbstractNode implements InstrumentableNode {
+public final class ExecuteContextNode extends AbstractExecuteContextNode {
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int STACK_DEPTH_LIMIT = 25000;
     private static final int LOCAL_RETURN_PC = -2;
@@ -80,24 +76,17 @@ public class ExecuteContextNode extends AbstractNode implements InstrumentableNo
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create();
     }
 
-    protected ExecuteContextNode(final ExecuteContextNode original) {
-        code = original.code;
-        bytecodeNodes = original.bytecodeNodes;
-        frameInitializationNode = original.frameInitializationNode;
-        interruptHandlerNode = original.interruptHandlerNode;
-        materializeContextOnMethodExitNode = original.materializeContextOnMethodExitNode;
-    }
-
     public static ExecuteContextNode create(final CompiledCodeObject code, final boolean resume) {
         return new ExecuteContextNode(code, resume);
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return code.toString();
     }
 
+    @Override
     public Object executeFresh(final VirtualFrame frame) {
         FrameAccess.setInstructionPointer(frame, code, 0);
         final boolean enableStackDepthProtection = enableStackDepthProtection();
@@ -131,7 +120,8 @@ public class ExecuteContextNode extends AbstractNode implements InstrumentableNo
         }
     }
 
-    public final Object executeResumeAtStart(final VirtualFrame frame) {
+    @Override
+    public Object executeResumeAtStart(final VirtualFrame frame) {
         try {
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
@@ -142,7 +132,8 @@ public class ExecuteContextNode extends AbstractNode implements InstrumentableNo
         }
     }
 
-    public final Object executeResumeInMiddle(final VirtualFrame frame, final long initialPC) {
+    @Override
+    public Object executeResumeInMiddle(final VirtualFrame frame, final long initialPC) {
         try {
             return resumeBytecode(frame, initialPC);
         } catch (final NonLocalReturn nlr) {
@@ -323,7 +314,7 @@ public class ExecuteContextNode extends AbstractNode implements InstrumentableNo
         return returnValue;
     }
 
-    protected final boolean hasModifiedSender(final VirtualFrame frame) {
+    protected boolean hasModifiedSender(final VirtualFrame frame) {
         final ContextObject context = FrameAccess.getContext(frame, code);
         return context != null && context.hasModifiedSender();
     }
@@ -347,17 +338,12 @@ public class ExecuteContextNode extends AbstractNode implements InstrumentableNo
     }
 
     @Override
-    public final boolean isInstrumentable() {
+    public boolean isInstrumentable() {
         return true;
     }
 
     @Override
-    public final WrapperNode createWrapper(final ProbeNode probe) {
-        return new ExecuteContextNodeWrapper(this, this, probe);
-    }
-
-    @Override
-    public final boolean hasTag(final Class<? extends Tag> tag) {
+    public boolean hasTag(final Class<? extends Tag> tag) {
         return StandardTags.RootTag.class == tag;
     }
 

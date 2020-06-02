@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 public final class EnterCodeNode extends RootNode {
     private final CompiledCodeObject code;
 
-    @Child private ExecuteContextNode executeContextNode;
+    @Child private AbstractExecuteContextNode executeContextNode;
 
     protected EnterCodeNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());

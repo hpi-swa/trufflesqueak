@@ -20,7 +20,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class ResumeContextNode extends Node {
-    @Child private ExecuteContextNode executeContextNode;
+    @Child private AbstractExecuteContextNode executeContextNode;
 
     protected ResumeContextNode(final CompiledCodeObject code) {
         executeContextNode = ExecuteContextNode.create(code, true);
