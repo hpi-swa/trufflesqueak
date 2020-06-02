@@ -8,9 +8,9 @@ package de.hpi.swa.trufflesqueak.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.nio.file.attribute.FileTime;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -130,24 +130,20 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
                         "result").toString());
     }
 
-    /**
-     * Snapshot the test image. Note that from now on, the new snapshot will be used for testing.
-     */
     @Test
     public void test14ImageSnapshot() {
-        final TruffleFile imageFile = image.env.getInternalTruffleFile(image.getImagePath());
-        assertTrue(imageFile.exists());
-        final FileTime lastModifiedTime = getLastModifiedTimeOrFail(imageFile);
-        evaluate("Smalltalk snapshot: true andQuit: false");
-        assertTrue(imageFile.exists());
-        assertTrue("Image file was not modified", lastModifiedTime.compareTo(getLastModifiedTimeOrFail(imageFile)) < 0);
-    }
-
-    private static FileTime getLastModifiedTimeOrFail(final TruffleFile imageFile) {
+        final String newImageName = "test14ImageSnapshot.image";
+        final String newChangesName = "test14ImageSnapshot.changes";
+        evaluate(String.format("Smalltalk saveAs: '%s'", newImageName));
+        final TruffleFile newImageFile = image.env.getInternalTruffleFile(image.getImagePath()).getParent().resolve(newImageName);
+        final TruffleFile newChangesFile = image.env.getInternalTruffleFile(image.getImagePath()).getParent().resolve(newChangesName);
+        assertTrue(newImageFile.exists());
+        assertTrue(newChangesFile.exists());
         try {
-            return imageFile.getLastModifiedTime();
+            newImageFile.delete();
+            newChangesFile.delete();
         } catch (final IOException e) {
-            throw new AssertionError(e);
+            fail(e.getMessage());
         }
     }
 }
