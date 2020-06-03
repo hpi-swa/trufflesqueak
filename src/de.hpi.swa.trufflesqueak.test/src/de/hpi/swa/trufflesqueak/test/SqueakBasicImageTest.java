@@ -12,6 +12,8 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -20,6 +22,7 @@ import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
@@ -139,11 +142,22 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
         final TruffleFile newChangesFile = image.env.getInternalTruffleFile(image.getImagePath()).getParent().resolve(newChangesName);
         assertTrue(newImageFile.exists());
         assertTrue(newChangesFile.exists());
+        /* Open the saved image and run code in it. */
+        final Context newContext = Context.newBuilder(SqueakLanguageConfig.ID).allowAllAccess(true).option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.IMAGE_PATH,
+                        newImageFile.getPath()).option(SqueakLanguageConfig.ID + "." + SqueakLanguageOptions.HEADLESS, "true").build();
+        newContext.enter();
         try {
-            newImageFile.delete();
-            newChangesFile.delete();
-        } catch (final IOException e) {
-            fail(e.getMessage());
+            final Value result = newContext.eval(SqueakLanguageConfig.ID, "1 + 2 * 3");
+            assertTrue(result.fitsInInt());
+            assertEquals(9, result.asInt());
+        } finally { /* Cleanup */
+            newContext.leave();
+            try {
+                newImageFile.delete();
+                newChangesFile.delete();
+            } catch (final IOException e) {
+                fail(e.getMessage());
+            }
         }
     }
 }
