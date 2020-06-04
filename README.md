@@ -1,4 +1,4 @@
-# ![TruffleSqueak][ts_logo]
+![TruffleSqueak][ts_logo]
 
 [![Latest Release][ts_latest_badge]][ts_latest] [![Slack][graalvm_slack_badge]][graalvm_slack] [![Twitter][ts_twitter_badge]][ts_twitter] [![Build Status][ts_gh_action_badge]][ts_gh_action] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy] [![License][ts_license_badge]][ts_license]
 
