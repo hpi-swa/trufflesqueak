@@ -1,4 +1,4 @@
-# TruffleSqueak
+# ![TruffleSqueak][ts_logo]
 
 [![Latest Release][ts_latest_badge]][ts_latest] [![Slack][graalvm_slack_badge]][graalvm_slack] [![Twitter][ts_twitter_badge]][ts_twitter] [![Build Status][ts_gh_action_badge]][ts_gh_action] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy] [![License][ts_license_badge]][ts_license]
 
@@ -192,6 +192,7 @@ TruffleSqueak is released under the [MIT license][ts_license].
 [ts_launcher]: https://github.com/hpi-swa/trufflesqueak/blob/master/src/de.hpi.swa.trufflesqueak.launcher/src/de/hpi/swa/trufflesqueak/launcher/TruffleSqueakLauncher.java
 [ts_license]: https://github.com/hpi-swa/trufflesqueak/blob/master/LICENSE
 [ts_license_badge]: https://img.shields.io/github/license/hpi-swa/trufflesqueak
+[ts_logo]: https://user-images.githubusercontent.com/2368856/83736775-67f72280-a652-11ea-9785-35c2a688c0fc.png
 [ts_master]: https://github.com/hpi-swa/trufflesqueak/tree/master
 [ts_twitter]: https://twitter.com/TruffleSqueak
 [ts_twitter_badge]: https://img.shields.io/badge/twitter-%40TruffleSqueak-active
