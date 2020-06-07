@@ -50,6 +50,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ENVIRONMENT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MESSAGE;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SMALLTALK_IMAGE;
@@ -613,7 +614,10 @@ public final class SqueakImageContext {
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final Object xPos, final Object yPos) {
-        return PointersObject.create(writeNode, pointClass, xPos, yPos);
+        final PointersObject point = new PointersObject(this, pointClass);
+        writeNode.execute(point, POINT.X, xPos);
+        writeNode.execute(point, POINT.Y, yPos);
+        return point;
     }
 
     public PointersObject asPoint(final AbstractPointersObjectWriteNode writeNode, final DisplayPoint point) {
