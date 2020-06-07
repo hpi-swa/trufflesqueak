@@ -13,6 +13,8 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.NetworkChannel;
 import java.nio.channels.SelectionKey;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
 final class SqueakUDPSocket extends SqueakSocket {
 
     private final DatagramChannel channel;
@@ -29,6 +31,7 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected byte[] getLocalAddress() throws IOException {
         if (listening) {
             return Resolver.getLoopbackAddress();
@@ -38,12 +41,14 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected long getLocalPort() throws IOException {
         final SocketAddress address = channel.getLocalAddress();
         return castAddress(address).getPort();
     }
 
     @Override
+    @TruffleBoundary
     protected byte[] getRemoteAddress() throws IOException {
         final SocketAddress address = channel.getRemoteAddress();
         if (channel.isConnected()) {
@@ -53,6 +58,7 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected long getRemotePort() throws IOException {
         if (listening) {
             return 0L;
@@ -66,6 +72,7 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected Status getStatus() {
         if (listening) {
             return Status.WaitingForConnection;
@@ -79,12 +86,14 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected void connectTo(final String address, final long port) throws IOException {
         channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
         channel.connect(new InetSocketAddress(address, (int) port));
     }
 
     @Override
+    @TruffleBoundary
     protected void listenOn(final long port, final long backlogSize) throws IOException {
         listening = true;
         channel.bind(new InetSocketAddress((int) port));
@@ -92,6 +101,7 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected SqueakSocket accept() {
         throw new UnsupportedOperationException("accept() on UDP socket");
     }
@@ -102,6 +112,7 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected long sendDataTo(final ByteBuffer data, final SelectionKey key) throws IOException {
         final DatagramChannel to = (DatagramChannel) key.channel();
         return to.send(data, to.getRemoteAddress());
@@ -115,6 +126,7 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected void close() throws IOException {
         super.close();
         channel.close();

@@ -8,12 +8,12 @@ package de.hpi.swa.trufflesqueak.nodes.plugins.network;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -21,6 +21,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -95,7 +96,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * primNameLookupResult.
          */
         @Specialization(guards = "hostName.isByteType()")
-        @TruffleBoundary
         protected static final Object doWork(final Object receiver, final NativeObject hostName) {
             try {
                 LOG.finer(() -> "Starting lookup for host name " + hostName);
@@ -117,7 +117,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * primAddressLookupResult.
          */
         @Specialization(guards = "address.isByteType()")
-        @TruffleBoundary
         protected static final Object doWork(final Object receiver, final NativeObject address) {
             try {
                 LOG.finer(() -> "Starting lookup for address " + address);
@@ -138,12 +137,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * lookup was unsuccessful.
          */
         @Specialization
-        @TruffleBoundary
         protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
+                        @Cached("createBinaryProfile()") final ConditionProfile hasResultProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
             LOG.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
-            return lastNameLookup == null ? NilObject.SINGLETON : image.asByteArray(lastNameLookup);
+            return hasResultProfile.profile(lastNameLookup == null) ? NilObject.SINGLETON : image.asByteArray(lastNameLookup);
         }
     }
 
@@ -167,7 +166,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveResolverLocalAddress")
     protected abstract static class PrimResolverLocalAddressNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        @TruffleBoundary
         protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final byte[] address = Resolver.getLoopbackAddress();
@@ -201,7 +199,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSocketLocalPortNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         /** Return the local port for this socket, or zero if no port has yet been assigned. */
         @Specialization
-        @TruffleBoundary
         protected static final long doLocalPort(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
                 return getSocketOrPrimFail(sd).getLocalPort();
@@ -220,18 +217,17 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * status to discover if and when the connection is actually completed.
          */
         @Specialization
-        @TruffleBoundary
         protected static final Object doListen(final Object receiver,
                         final PointersObject sd,
                         final long port,
                         @SuppressWarnings("unused") final NotProvided backlogSize) {
             try {
                 getSocketOrPrimFail(sd).listenOn(port, 0L);
-                return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Listen failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+            return receiver;
         }
 
         /**
@@ -239,18 +235,17 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * only.
          */
         @Specialization
-        @TruffleBoundary
         protected static final Object doListen(final Object receiver,
                         final PointersObject sd,
                         final long port,
                         @SuppressWarnings("unused") final long backlogSize) {
             try {
                 getSocketOrPrimFail(sd).listenOn(port, backlogSize);
-                return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Listen failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+            return receiver;
         }
     }
 
@@ -262,7 +257,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * only.
          */
         @Specialization(guards = "interfaceAddress.isByteType()")
-        @TruffleBoundary
         protected static final Object doListen(final Object receiver,
                         final PointersObject sd,
                         final long port,
@@ -270,11 +264,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") final NativeObject interfaceAddress) {
             try {
                 getSocketOrPrimFail(sd).listenOn(port, backlogSize);
-                return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Listen failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+            return receiver;
         }
     }
 
@@ -282,18 +276,17 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketSetOptions")
     protected abstract static class PrimSocketSetOptionsNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Specialization(guards = "option.isByteType()")
-        @TruffleBoundary
         protected static final ArrayObject doSet(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option, final NativeObject value,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
-                final SqueakSocket socket = getSocketOrPrimFail(sd);
-                return setSocketOption(image, socket, option.asStringUnsafe(), value.asStringUnsafe());
+                return setSocketOption(image, getSocketOrPrimFail(sd), option.asStringUnsafe(), value.asStringUnsafe());
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Set socket option failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
 
+        @TruffleBoundary
         private static ArrayObject setSocketOption(final SqueakImageContext image, final SqueakSocket socket, final String option, final String value) throws IOException {
             if (socket.supportsOption(option)) {
                 socket.setOption(option, value);
@@ -307,7 +300,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketConnectToPort")
     protected abstract static class PrimSocketConnectToPortNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Specialization(guards = "hostAddress.isByteType()")
-        @TruffleBoundary
         protected static final long doConntext(
                         @SuppressWarnings("unused") final Object receiver, final PointersObject sd,
                         final NativeObject hostAddress, final long port) {
@@ -327,11 +319,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketConnectionStatus")
     protected abstract static class PrimSocketConnectionStatusNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         protected static final long doStatus(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
-                final SqueakSocket socket = getSocketOrPrimFail(sd);
-                return socket.getStatus().id();
+                return getSocketOrPrimFail(sd).getStatus().id();
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving socket status failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -343,7 +333,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketRemoteAddress")
     protected abstract static class PrimSocketRemoteAddressNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         protected static final AbstractSqueakObject doAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
@@ -359,7 +348,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketRemotePort")
     protected abstract static class PrimSocketRemotePortNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         protected static final long doRemotePort(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
                 return getSocketOrPrimFail(sd).getRemotePort();
@@ -380,12 +368,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * the option value.
          */
         @Specialization(guards = "option.isByteType()")
-        @TruffleBoundary
         protected static final Object doGetOption(@SuppressWarnings("unused") final Object receiver, final PointersObject sd, final NativeObject option,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
-                final SqueakSocket socket = getSocketOrPrimFail(sd);
-                final String value = socket.getOption(option.asStringUnsafe());
+                final String value = getSocketOrPrimFail(sd).getOption(option.asStringUnsafe());
                 return image.asArrayOfObjects(0L, image.asByteString(value));
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving socket option failed", e);
@@ -398,7 +384,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketReceiveDataAvailable")
     protected abstract static class PrimSocketReceiveDataAvailableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         protected static final boolean doDataAvailable(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
                 return getSocketOrPrimFail(sd).isDataAvailable();
@@ -413,7 +398,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketError")
     protected abstract static class PrimSocketErrorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         @SuppressWarnings("unused")
         protected static long doWork(final Object receiver, final PointersObject sd) {
             return 0L;
@@ -424,12 +408,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketLocalAddress")
     protected abstract static class PrimSocketLocalAddressNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         protected static final AbstractSqueakObject doLocalAddress(@SuppressWarnings("unused") final Object receiver, final PointersObject sd,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
-                final SqueakSocket socket = getSocketOrPrimFail(sd);
-                return image.asByteArray(socket.getLocalAddress());
+                return image.asByteArray(getSocketOrPrimFail(sd).getLocalAddress());
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving local address failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -449,7 +431,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * The size of the send buffer is determined when the socket is created.
          */
         @Specialization(guards = "buffer.isByteType()")
-        @TruffleBoundary
         protected static final long doCount(
                         @SuppressWarnings("unused") final Object receiver,
                         final PointersObject sd,
@@ -458,8 +439,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long count) {
 
             try {
-                final SqueakSocket socket = getSocketOrPrimFail(sd);
-                return socket.sendData(ByteBuffer.wrap(buffer.getByteStorage(), (int) startIndex - 1, (int) count));
+                return getSocketOrPrimFail(sd).sendData(buffer.getByteStorage(), (int) startIndex - 1, (int) count);
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Sending data failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -471,15 +451,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketCloseConnection")
     protected abstract static class PrimSocketCloseConnectionNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         protected static final Object doClose(final Object receiver, final PointersObject sd) {
             try {
                 getSocketOrPrimFail(sd).close();
-                return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Closing socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+            return receiver;
         }
     }
 
@@ -487,15 +466,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketAbortConnection")
     protected abstract static class PrimSocketAbortConnectionNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         protected static final Object doAbort(final Object receiver, final PointersObject sd) {
             try {
                 getSocketOrPrimFail(sd).close();
-                return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Closing socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+            return receiver;
         }
     }
 
@@ -503,7 +481,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketSendDone")
     protected abstract static class PrimSocketSendDoneNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         protected static final Object doSendDone(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
                 return BooleanObject.wrap(getSocketOrPrimFail(sd).isSendDone());
@@ -522,13 +499,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          * Return the number of bytes read or zero if no data is available.
          */
         @Specialization(guards = "buffer.isByteType()")
-        @TruffleBoundary
         protected static final long doCount(
                         @SuppressWarnings("unused") final Object receiver, final PointersObject sd,
                         final NativeObject buffer, final long startIndex, final long count) {
             try {
-                final SqueakSocket socket = getSocketOrPrimFail(sd);
-                return socket.receiveData(ByteBuffer.wrap(buffer.getByteStorage(), (int) startIndex - 1, (int) count));
+                return getSocketOrPrimFail(sd).receiveData(buffer.getByteStorage(), (int) startIndex - 1, (int) count);
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Receiving data failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
@@ -540,15 +515,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketDestroy")
     protected abstract static class PrimSocketDestroyNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        @TruffleBoundary
         protected static final long doDestroy(@SuppressWarnings("unused") final Object receiver, final PointersObject sd) {
             try {
                 getSocketOrPrimFail(sd).close();
-                return 0L;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Destroying socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+            return 0L;
         }
     }
 
@@ -556,7 +530,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketCreate3Semaphores")
     protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
         @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization
         protected static final PointersObject doWork(final PointersObject receiver,
                         final long netType,
@@ -565,15 +538,21 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long semaphoreIndex,
                         final long aReadSemaphore,
                         final long aWriteSemaphore,
+                        @Cached("createBinaryProfile()") final ConditionProfile socketTypeProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
+            final SqueakSocket socket;
             try {
-                final SqueakSocket.Type type = SqueakSocket.Type.fromId(socketType);
-                final SqueakSocket socket = SqueakSocket.create(type);
-                return PointersObject.newHandleWithHiddenObject(image, socket);
+                if (socketTypeProfile.profile(socketType == 1)) {
+                    socket = new SqueakUDPSocket();
+                } else {
+                    assert socketType == 0;
+                    socket = new SqueakTCPSocket();
+                }
             } catch (final IOException e) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
+            return PointersObject.newHandleWithHiddenObject(image, socket);
         }
     }
 
@@ -581,7 +560,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveSocketAccept3Semaphores")
     protected abstract static class PrimSocketAccept3SemaphoresNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
         @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization
         protected static final PointersObject doWork(final Object receiver,
                         final PointersObject sd,

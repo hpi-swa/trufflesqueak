@@ -9,6 +9,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
 final class Resolver {
 
     enum Status {
@@ -44,6 +46,7 @@ final class Resolver {
         return anyLocalAddress.getAddress();
     }
 
+    @TruffleBoundary
     protected static byte[] getLoopbackAddress() {
         if (loopbackAddress == null) {
             loopbackAddress = InetAddress.getLoopbackAddress();
@@ -51,6 +54,7 @@ final class Resolver {
         return loopbackAddress.getAddress();
     }
 
+    @TruffleBoundary
     protected static void startHostNameLookUp(final String hostName) throws UnknownHostException {
         try {
             if ("localhost".equals(hostName)) {
@@ -70,6 +74,7 @@ final class Resolver {
         return lastNameLookup;
     }
 
+    @TruffleBoundary
     protected static void startAddressLookUp(final byte[] address) throws UnknownHostException {
         try {
             lastAddressLookup = InetAddress.getByAddress(address).getHostName();
@@ -83,6 +88,7 @@ final class Resolver {
         return lastAddressLookup;
     }
 
+    @TruffleBoundary
     protected static String addressBytesToString(final byte[] address) {
         try {
             return InetAddress.getByAddress(address).getHostAddress();

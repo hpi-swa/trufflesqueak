@@ -16,8 +16,8 @@ import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -40,27 +40,6 @@ public abstract class SqueakSocket {
 
         long id() {
             return id;
-        }
-    }
-
-    enum Type {
-        TCP(0),
-        UDP(1);
-
-        private long id;
-
-        Type(final long id) {
-            this.id = id;
-        }
-
-        @ExplodeLoop
-        static Type fromId(final long id) {
-            for (final Type type : values()) {
-                if (type.id == id) {
-                    return type;
-                }
-            }
-            throw SqueakException.create("Unknown SocketType: " + id);
         }
     }
 
@@ -95,7 +74,9 @@ public abstract class SqueakSocket {
 
     protected abstract boolean isSendDone() throws IOException;
 
-    protected final long sendData(final ByteBuffer buffer) throws IOException {
+    @TruffleBoundary
+    protected final long sendData(final byte[] data, final int start, final int count) throws IOException {
+        final ByteBuffer buffer = ByteBuffer.wrap(data, start, count);
         selector.selectNow();
         final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
         while (keys.hasNext()) {
@@ -113,6 +94,7 @@ public abstract class SqueakSocket {
 
     protected abstract long sendDataTo(ByteBuffer data, SelectionKey key) throws IOException;
 
+    @TruffleBoundary
     protected final boolean isDataAvailable() throws IOException {
         selector.selectNow();
         final Set<SelectionKey> keys = selector.selectedKeys();
@@ -127,7 +109,9 @@ public abstract class SqueakSocket {
         return false;
     }
 
-    protected final long receiveData(final ByteBuffer buffer) throws IOException {
+    @TruffleBoundary
+    protected final long receiveData(final byte[] data, final int start, final int count) throws IOException {
+        final ByteBuffer buffer = ByteBuffer.wrap(data, start, count);
         selector.selectNow();
         final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
         while (keys.hasNext()) {
@@ -149,6 +133,7 @@ public abstract class SqueakSocket {
         return asNetworkChannel().supportedOptions().stream().anyMatch(o -> o.name().equals(name));
     }
 
+    @TruffleBoundary
     protected final String getOption(final String name) throws IOException {
         final SocketOption<?> option = socketOptionFromString(name);
         final Object value = asNetworkChannel().getOption(option);
@@ -173,6 +158,7 @@ public abstract class SqueakSocket {
         asNetworkChannel().setOption(opt, (T) value);
     }
 
+    @TruffleBoundary
     protected void close() throws IOException {
         selector.close();
     }
@@ -186,16 +172,5 @@ public abstract class SqueakSocket {
             return (InetSocketAddress) address;
         }
         throw SqueakException.create("Unknown address type");
-    }
-
-    protected static SqueakSocket create(final SqueakSocket.Type socketType) throws IOException {
-        switch (socketType) {
-            case TCP:
-                return new SqueakTCPSocket();
-            case UDP:
-                return new SqueakUDPSocket();
-            default:
-                throw SqueakException.create("Unknown SocketType");
-        }
     }
 }

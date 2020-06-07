@@ -16,6 +16,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -44,6 +45,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected byte[] getLocalAddress() throws IOException {
         if (listening) {
             return Resolver.getLoopbackAddress();
@@ -53,12 +55,14 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected long getLocalPort() throws IOException {
         final SocketAddress address = (listening ? serverChannel : clientChannel).getLocalAddress();
         return castAddress(address).getPort();
     }
 
     @Override
+    @TruffleBoundary
     protected byte[] getRemoteAddress() throws IOException {
         return listening ? getServerRemoteAddress() : getClientRemoteAddress();
     }
@@ -77,6 +81,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected long getRemotePort() throws IOException {
         if (clientChannel != null && clientChannel.isConnected()) {
             return castAddress(clientChannel.getRemoteAddress()).getPort();
@@ -85,6 +90,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected Status getStatus() throws IOException {
         if (selector.isOpen()) {
             selector.selectNow();
@@ -148,6 +154,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected void connectTo(final String address, final long port) throws IOException {
         clientChannel = SocketChannel.open();
         clientChannel.configureBlocking(false);
@@ -156,6 +163,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected void listenOn(final long port, final long backlogSize) throws IOException {
         listening = true;
         serverChannel = ServerSocketChannel.open();
@@ -165,6 +173,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected SqueakSocket accept() throws IOException {
         if (listening && clientChannel != null) {
             clientChannel.keyFor(selector).cancel();
@@ -177,12 +186,14 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected boolean isSendDone() throws IOException {
         selector.selectNow();
         return selector.selectedKeys().stream().anyMatch(SelectionKey::isWritable);
     }
 
     @Override
+    @TruffleBoundary
     protected long sendDataTo(final ByteBuffer data, final SelectionKey key) throws IOException {
         final SocketChannel channel = (SocketChannel) key.channel();
         if (!channel.isConnected()) {
@@ -206,6 +217,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected void close() throws IOException {
         super.close();
         if (serverChannel != null) {
