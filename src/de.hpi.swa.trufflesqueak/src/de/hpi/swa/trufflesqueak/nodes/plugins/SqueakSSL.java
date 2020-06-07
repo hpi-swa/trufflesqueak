@@ -24,10 +24,12 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -774,11 +776,13 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization
-        protected static final long doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId) {
+        protected static final long doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId,
+                        @Cached final BranchProfile errorProfile) {
             final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
 
             if (ssl == null || property == null) {
+                errorProfile.enter();
                 return 0L;
             }
 
@@ -812,10 +816,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         protected static final long doSet(@SuppressWarnings("unused") final Object receiver,
                         final PointersObject sslHandle,
                         final long propertyId,
-                        final long anInteger) {
+                        final long anInteger,
+                        @Cached final BranchProfile errorProfile) {
             final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
             if (ssl == null || property == null) {
+                errorProfile.enter();
                 return 0L;
             }
 
