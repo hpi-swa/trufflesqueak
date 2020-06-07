@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -441,21 +442,20 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @ImportStatic(Integer.class)
     @SqueakPrimitive(indices = 170)
     protected abstract static class PrimCharacterValueNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        @Specialization
+        @Specialization(guards = {"0 <= receiver", "receiver <= MAX_VALUE"})
         protected static final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target,
                         @Shared("isImmediateProfile") @Cached("createBinaryProfile()") final ConditionProfile isImmediateProfile) {
-            assert (int) receiver == receiver;
             return CharacterObject.valueOf(receiver, isImmediateProfile);
         }
 
         /* Character class>>#value: */
-        @Specialization
+        @Specialization(guards = {"0 <= target", "target <= MAX_VALUE"})
         protected static final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target,
                         @Shared("isImmediateProfile") @Cached("createBinaryProfile()") final ConditionProfile isImmediateProfile) {
-            assert (int) target == target;
             return CharacterObject.valueOf(target, isImmediateProfile);
         }
     }
