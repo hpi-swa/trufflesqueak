@@ -49,6 +49,11 @@ public abstract class SqueakSocket {
 
     protected boolean listening;
 
+    /*
+     * TODO: Boundary does not seem to be needed on JDK11 and macOS/Linux. Split once TruffleSqueak
+     * has JDK-specific packages.
+     */
+    @TruffleBoundary
     protected SqueakSocket() throws IOException {
         selector = Selector.open();
         listening = false;

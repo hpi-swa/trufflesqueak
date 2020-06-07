@@ -203,6 +203,7 @@ final class SqueakTCPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected long receiveDataFrom(final SelectionKey key, final ByteBuffer data) throws IOException {
         final SocketChannel channel = (SocketChannel) key.channel();
         final long read = channel.read(data);

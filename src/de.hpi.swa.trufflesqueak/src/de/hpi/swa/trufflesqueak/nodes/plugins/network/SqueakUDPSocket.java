@@ -119,6 +119,7 @@ final class SqueakUDPSocket extends SqueakSocket {
     }
 
     @Override
+    @TruffleBoundary
     protected long receiveDataFrom(final SelectionKey key, final ByteBuffer data) throws IOException {
         final DatagramChannel from = (DatagramChannel) key.channel();
         from.receive(data);
