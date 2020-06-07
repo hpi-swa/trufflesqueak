@@ -9,11 +9,13 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
@@ -222,15 +224,13 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "aByteArray.getByteLength() > aSoundBuffer.getIntLength()"})
         protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer) {
-            final byte[] bytes = aByteArray.getByteStorage();
-            final int[] ints = aSoundBuffer.getIntStorage();
-            for (int i = 0; i < bytes.length; i++) {
+            for (int i = 0; i < aByteArray.getByteLength(); i++) {
                 final int wordIndex = i / 2;
-                final long value = (bytes[i] & 0xff) << 8;
+                final long value = (aByteArray.getByte(i) & 0xff) << 8;
                 if (i % 2 == 0) {
-                    ints[wordIndex] = ints[wordIndex] & 0xffff0000 | (int) value & 0xffff;
+                    aSoundBuffer.setInt(wordIndex, aSoundBuffer.getInt(wordIndex) & 0xffff0000 | (int) value & 0xffff);
                 } else {
-                    ints[wordIndex] = (int) value << 16 | ints[wordIndex] & 0xffff;
+                    aSoundBuffer.setInt(wordIndex, (int) value << 16 | aSoundBuffer.getInt(wordIndex) & 0xffff);
                 }
             }
             return receiver;
@@ -318,74 +318,58 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveFindFirstInString")
     public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
-        @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"})
-        protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+        @Specialization
+        protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
+                        @Cached("createBinaryProfile()") final ConditionProfile notFoundProfile) {
+            if (start < 1 || !string.isByteType() || !inclusionMap.isByteType()) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            }
+            if (inclusionMap.getByteLength() != 256) {
+                CompilerDirectives.transferToInterpreter();
+                return 0L;
+            }
             final int stringSize = string.getByteLength();
             long index = start - 1;
             while (index < stringSize && inclusionMap.getByte(string.getByte(index) & 0xff) == 0) {
                 index++;
             }
-            return index >= stringSize ? 0L : index + 1;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() != 256"})
-        protected static final long doFindNot256(final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
-            return 0L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"start >= 1", "!string.isByteType() || !inclusionMap.isByteType()"})
-        protected static final long doFailBadArgument(final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
-            throw PrimitiveFailed.BAD_ARGUMENT;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"start < 1"})
-        protected static final long doFailBadIndex(final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
-            throw PrimitiveFailed.BAD_ARGUMENT;
+            return notFoundProfile.profile(index >= stringSize) ? 0L : index + 1;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFindSubstring")
     public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
-
-        public abstract Object executeFindSubstring(VirtualFrame frame);
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"key.isByteType()", "key.getByteLength() == 0"})
-        protected static final long doFindQuick(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
-                        final NativeObject matchTable) {
-            return 0L;
-        }
-
-        @Specialization(guards = {"key.isByteType()", "key.getByteLength() > 0", "body.isByteType()", "matchTable.isByteType()", "matchTable.getByteLength() >= 256"})
+        @Specialization
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
-                        final NativeObject matchTable) {
-            final byte[] keyBytes = key.getByteStorage();
-            final int keyBytesLength = keyBytes.length;
-            assert keyBytesLength != 0;
-            final byte[] bodyBytes = body.getByteStorage();
-            final int bodyBytesLength = bodyBytes.length;
-            final byte[] matchTableBytes = matchTable.getByteStorage();
-            for (int startIndex = Math.max((int) start - 1, 0); startIndex <= bodyBytesLength - keyBytesLength; startIndex++) {
-                int index = 0;
-                while (matchTableBytes[bodyBytes[startIndex + index] & 0xff] == matchTableBytes[keyBytes[index] & 0xff]) {
-                    if (index == keyBytesLength - 1) {
-                        return startIndex + 1;
-                    } else {
-                        index++;
+                        final NativeObject matchTable,
+                        @Cached("createBinaryProfile()") final ConditionProfile quickReturnProfile,
+                        @Cached final BranchProfile foundProfile,
+                        @Cached final BranchProfile notFoundProfile) {
+            if (!key.isByteType() || !body.isByteType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {
+                CompilerDirectives.transferToInterpreter();
+                throw PrimitiveFailed.BAD_ARGUMENT;
+            }
+            final int keyLength = key.getByteLength();
+            if (quickReturnProfile.profile(keyLength == 0)) {
+                return 0L;
+            } else {
+                final int bodyLength = body.getByteLength();
+                for (long startIndex = Math.max(start - 1, 0); startIndex <= bodyLength - keyLength; startIndex++) {
+                    int index = 0;
+                    while (matchTable.getByte(body.getByte(startIndex + index) & 0xff) == matchTable.getByte(key.getByte(index) & 0xff)) {
+                        if (index == keyLength - 1) {
+                            foundProfile.enter();
+                            return startIndex + 1;
+                        } else {
+                            index++;
+                        }
                     }
                 }
+                notFoundProfile.enter();
+                return 0L;
             }
-            return 0L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!key.isByteType() || (!body.isByteType() || !matchTable.isByteType())")
-        protected static final long doInvalidKey(final Object receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
-            throw PrimitiveFailed.BAD_ARGUMENT;
         }
     }
 
@@ -394,13 +378,16 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start) {
-            final byte[] bytes = string.getByteStorage();
-            for (int i = (int) (start - 1); i < bytes.length; i++) {
-                if ((bytes[i] & 0xff) == value) {
+        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
+                        @Cached final BranchProfile foundProfile,
+                        @Cached final BranchProfile notFoundProfile) {
+            for (long i = start - 1; i < string.getByteLength(); i++) {
+                if ((string.getByte(i) & 0xff) == value) {
+                    foundProfile.enter();
                     return i + 1;
                 }
             }
+            notFoundProfile.enter();
             return 0L;
         }
     }
@@ -472,12 +459,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 string.setByte(i, (byte) table.getInt(string.getByte(i) & 0xff));
             }
             return receiver;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"start >= 1", "!string.isByteType()"})
-        protected static final AbstractSqueakObject doFailBadArguments(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
-            throw PrimitiveFailed.BAD_ARGUMENT;
         }
 
         @SuppressWarnings("unused")
