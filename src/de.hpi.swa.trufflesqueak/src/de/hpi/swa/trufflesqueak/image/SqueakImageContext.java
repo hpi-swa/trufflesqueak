@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.image;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.ref.ReferenceQueue;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -153,7 +152,6 @@ public final class SqueakImageContext {
     public final B2D b2d = new B2D(this);
     public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = new String[0];
-    public final EconomicMap<Long, SeekableByteChannel> filePluginHandles = EconomicMap.create();
     public final JPEGReader jpegReader = new JPEGReader();
     public final EconomicMap<Long, SqueakSocket> socketPluginHandles = EconomicMap.create();
     public final EconomicMap<Long, SqSSL> squeakSSLHandles = EconomicMap.create();

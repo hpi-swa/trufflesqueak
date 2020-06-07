@@ -35,6 +35,8 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin.STDIO_HANDLES;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
@@ -323,8 +325,9 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveGetStdErrHandle")
     protected abstract static class PrimGetStdErrHandleNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        protected static final long doGet(@SuppressWarnings("unused") final Object receiver) {
-            return FilePlugin.STDIO_HANDLES.ERROR;
+        protected static final PointersObject doGet(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return FilePlugin.createStdioFileHandle(image, STDIO_HANDLES.ERROR);
         }
     }
 
@@ -333,8 +336,9 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveGetStdInHandle")
     protected abstract static class PrimGetStdInHandleNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        protected static final long doGet(@SuppressWarnings("unused") final Object receiver) {
-            return FilePlugin.STDIO_HANDLES.IN;
+        protected static final PointersObject doGet(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return FilePlugin.createStdioFileHandle(image, STDIO_HANDLES.IN);
         }
     }
 
@@ -343,8 +347,9 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveGetStdOutHandle")
     protected abstract static class PrimGetStdOutHandleNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        protected static final long doGet(@SuppressWarnings("unused") final Object receiver) {
-            return FilePlugin.STDIO_HANDLES.OUT;
+        protected static final PointersObject doGet(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return FilePlugin.createStdioFileHandle(image, STDIO_HANDLES.OUT);
         }
     }
 

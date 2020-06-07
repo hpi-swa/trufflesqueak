@@ -54,6 +54,17 @@ public final class PointersObject extends AbstractPointersObject {
         return object;
     }
 
+    public static PointersObject newHandleWithHiddenObject(final SqueakImageContext image, final Object hiddenObject) {
+        final PointersObject handle = new PointersObject(image, image.pointClass);
+        handle.object2 = hiddenObject;
+        return handle;
+    }
+
+    public Object getHiddenObject() {
+        assert getSqueakClass() == image.pointClass && object2 != NilObject.SINGLETON : "Object not a handle with hidden object";
+        return object2;
+    }
+
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();
