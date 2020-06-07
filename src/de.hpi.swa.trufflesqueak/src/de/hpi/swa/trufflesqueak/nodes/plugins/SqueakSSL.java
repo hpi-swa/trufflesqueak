@@ -35,6 +35,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -234,9 +235,13 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused" /* TODO */) private long logLevel;
     }
 
-    @TruffleBoundary
-    private static SqSSL getSSL(final SqueakImageContext image, final long handle) {
-        return image.squeakSSLHandles.get(handle);
+    private static SqSSL getSSLOrNull(final PointersObject handle) {
+        final Object sqSSL = handle.getHiddenObject();
+        if (sqSSL instanceof SqSSL) {
+            return (SqSSL) sqSSL;
+        } else {
+            return null;
+        }
     }
 
     private static int getBufferSize(final SqSSL ssl) {
@@ -384,14 +389,14 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
         protected static final long doAccept(@SuppressWarnings("unused") final Object receiver,
-                        final long sslHandle,
+                        final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
                         final NativeObject targetBuffer,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
-            final SqSSL ssl = getSSL(image, sslHandle);
+            final SqSSL ssl = getSSLOrNull(sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -487,14 +492,14 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
         protected static final long doConnect(@SuppressWarnings("unused") final Object receiver,
-                        final long sslHandle,
+                        final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
                         final NativeObject targetBuffer,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
-            final SqSSL ssl = getSSL(image, sslHandle);
+            final SqSSL ssl = getSSLOrNull(sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -664,14 +669,14 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
         protected static final long doDecrypt(@SuppressWarnings("unused") final Object receiver,
-                        final long sslHandle,
+                        final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
                         final NativeObject targetBuffer,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
-            final SqSSL ssl = getSSL(image, sslHandle);
+            final SqSSL ssl = getSSLOrNull(sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -727,14 +732,14 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
         protected static final long doEncrypt(@SuppressWarnings("unused") final Object receiver,
-                        final long sslHandle,
+                        final PointersObject sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
                         final long length,
                         final NativeObject targetBuffer,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
-            final SqSSL ssl = getSSL(image, sslHandle);
+            final SqSSL ssl = getSSLOrNull(sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -769,9 +774,8 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization
-        protected static final long doGet(@SuppressWarnings("unused") final Object receiver, final long sslHandle, final long propertyId,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final SqSSL ssl = getSSL(image, sslHandle);
+        protected static final long doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId) {
+            final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
 
             if (ssl == null || property == null) {
@@ -806,11 +810,10 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         protected static final long doSet(@SuppressWarnings("unused") final Object receiver,
-                        final long sslHandle,
+                        final PointersObject sslHandle,
                         final long propertyId,
-                        final long anInteger,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final SqSSL ssl = getSSL(image, sslHandle);
+                        final long anInteger) {
+            final SqSSL ssl = getSSLOrNull(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
             if (ssl == null || property == null) {
                 return 0L;
@@ -836,9 +839,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the property value or {@code nil}
          */
         @Specialization
-        protected static final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final long sslHandle, final long propertyId,
+        protected static final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle, final long propertyId,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final SqSSL impl = getSSL(image, sslHandle);
+            final SqSSL impl = getSSLOrNull(sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (impl == null || property == null) {
                 return NilObject.SINGLETON;
@@ -875,12 +878,11 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization(guards = "aString.isByteType()")
         protected static final long doSet(@SuppressWarnings("unused") final Object receiver,
-                        final long sslHandle,
+                        final PointersObject sslHandle,
                         final long propertyId,
-                        final NativeObject aString,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        final NativeObject aString) {
 
-            final SqSSL ssl = getSSL(image, sslHandle);
+            final SqSSL ssl = getSSLOrNull(sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (ssl == null || property == null) {
                 return 0L;
@@ -915,13 +917,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return a pointer to the newly created SSL instance
          */
         @Specialization
-        @TruffleBoundary
-        protected static final long doCreate(@SuppressWarnings("unused") final Object receiver,
+        protected static final PointersObject doCreate(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final SqSSL ssl = new SqSSL();
-            final long handle = ssl.hashCode();
-            image.squeakSSLHandles.put(handle, ssl);
-            return handle;
+            return PointersObject.newHandleWithHiddenObject(image, new SqSSL());
         }
     }
 
@@ -936,13 +934,11 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization
-        @TruffleBoundary
-        protected static final long doDestroy(@SuppressWarnings("unused") final Object receiver, final long sslHandle,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final SqSSL ssl = image.squeakSSLHandles.removeKey(sslHandle);
-            if (ssl == null) {
+        protected static final long doDestroy(@SuppressWarnings("unused") final Object receiver, final PointersObject sslHandle) {
+            if (getSSLOrNull(sslHandle) == null) {
                 return 0L;
             } else {
+                sslHandle.setHiddenObject(null);
                 return 1L;
             }
         }

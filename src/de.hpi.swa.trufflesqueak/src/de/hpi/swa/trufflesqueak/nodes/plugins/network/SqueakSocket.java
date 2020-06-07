@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -52,6 +53,7 @@ public abstract class SqueakSocket {
             this.id = id;
         }
 
+        @ExplodeLoop
         static Type fromId(final long id) {
             for (final Type type : values()) {
                 if (type.id == id) {
@@ -64,19 +66,13 @@ public abstract class SqueakSocket {
 
     private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqueakSocket.class);
 
-    protected final long handle;
     protected final Selector selector;
 
     protected boolean listening;
 
     protected SqueakSocket() throws IOException {
-        handle = System.identityHashCode(this);
         selector = Selector.open();
         listening = false;
-    }
-
-    protected final long handle() {
-        return handle;
     }
 
     protected abstract NetworkChannel asNetworkChannel();
@@ -106,7 +102,7 @@ public abstract class SqueakSocket {
             final SelectionKey key = keys.next();
             if (key.isWritable()) {
                 final long written = sendDataTo(buffer, key);
-                LOG.finer(() -> handle + " written: " + written);
+                LOG.finer(() -> this + " written: " + written);
                 keys.remove();
                 return written;
             }
@@ -122,12 +118,12 @@ public abstract class SqueakSocket {
         final Set<SelectionKey> keys = selector.selectedKeys();
         for (final SelectionKey key : keys) {
             if (key.isReadable()) {
-                LOG.finer(() -> handle + " data available");
+                LOG.finer(() -> this + " data available");
                 return true;
             }
         }
 
-        LOG.finer(() -> handle + " no data available");
+        LOG.finer(() -> this + " no data available");
         return false;
     }
 
@@ -139,7 +135,7 @@ public abstract class SqueakSocket {
 
             if (key.isReadable()) {
                 final long received = receiveDataFrom(key, buffer);
-                LOG.finer(() -> handle + " received: " + received);
+                LOG.finer(() -> this + " received: " + received);
                 keys.remove();
                 return received;
             }

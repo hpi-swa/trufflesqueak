@@ -65,6 +65,10 @@ public final class PointersObject extends AbstractPointersObject {
         return object2;
     }
 
+    public void setHiddenObject(final Object value) {
+        object2 = value;
+    }
+
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         final AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.getUncached();

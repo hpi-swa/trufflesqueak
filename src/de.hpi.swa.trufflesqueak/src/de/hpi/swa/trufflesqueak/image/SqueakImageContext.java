@@ -11,8 +11,6 @@ import java.lang.ref.ReferenceQueue;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.graalvm.collections.EconomicMap;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -61,9 +59,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.plugins.B2D;
 import de.hpi.swa.trufflesqueak.nodes.plugins.BitBlt;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReader;
-import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakSSL.SqSSL;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Zip;
-import de.hpi.swa.trufflesqueak.nodes.plugins.network.SqueakSocket;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
@@ -153,8 +149,6 @@ public final class SqueakImageContext {
     public final BitBlt bitblt = new BitBlt(this);
     public String[] dropPluginFileList = new String[0];
     public final JPEGReader jpegReader = new JPEGReader();
-    public final EconomicMap<Long, SqueakSocket> socketPluginHandles = EconomicMap.create();
-    public final EconomicMap<Long, SqSSL> squeakSSLHandles = EconomicMap.create();
     public final Zip zip = new Zip();
 
     /* Error detection for headless execution */

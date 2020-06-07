@@ -91,7 +91,7 @@ final class SqueakTCPSocket extends SqueakSocket {
         }
 
         final Status status = listening ? serverStatus() : clientStatus();
-        LOG.finer(() -> handle + " " + status);
+        LOG.finer(() -> this + " " + status);
         return status;
     }
 
