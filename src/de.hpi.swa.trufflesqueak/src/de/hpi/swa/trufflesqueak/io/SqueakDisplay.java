@@ -50,6 +50,7 @@ import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.WINDOW;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -63,7 +64,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     public final SqueakImageContext image;
     private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
-    private final Canvas canvas = new Canvas();
+    private final Canvas canvas;
     private boolean hasVisibleHardwareCursor;
     private final SqueakMouse mouse;
     private final SqueakKeyboard keyboard;
@@ -80,6 +81,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     public SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
+        canvas = new Canvas(image);
         mouse = new SqueakMouse(this);
         keyboard = new SqueakKeyboard(this);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -129,13 +131,18 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     private final class Canvas extends JComponent {
         private static final long serialVersionUID = 1L;
-        @CompilationFinal private BufferedImage bufferedImage;
+        private BufferedImage bufferedImage;
+
+        private Canvas(final SqueakImageContext image) {
+            final Object display = image.getSpecialObject(SPECIAL_OBJECT.THE_DISPLAY);
+            if (display instanceof PointersObject) {
+                setSqDisplay((PointersObject) display);
+            }
+        }
 
         @Override
         public void paintComponent(final Graphics g) {
-            if (bufferedImage != null) {
-                g.drawImage(bufferedImage, 0, 0, null);
-            }
+            g.drawImage(bufferedImage, 0, 0, null);
         }
 
         private void setSqDisplay(final PointersObject sqDisplay) {
