@@ -95,8 +95,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final int len2 = string2.getByteLength();
             final int min = Math.min(len1, len2);
             for (int i = 0; i < min; i++) {
-                final byte c1 = orderValue.getByte(string1.getByte(i) & 0xff);
-                final byte c2 = orderValue.getByte(string2.getByte(i) & 0xff);
+                final byte c1 = orderValue.getByte(string1.getByteUnsigned(i));
+                final byte c2 = orderValue.getByte(string2.getByteUnsigned(i));
                 if (c1 != c2) {
                     return (c1 & 0xff) < (c2 & 0xff) ? 1L : 3L;
                 }
@@ -115,26 +115,26 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveCompressToByteArray")
     public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        private static int encodeBytesOf(final int anInt, final byte[] ba, final int i) {
-            ba[i - 1] = (byte) (anInt >> (24 & 0xff));
-            ba[i + 0] = (byte) (anInt >> (16 & 0xff));
-            ba[i + 1] = (byte) (anInt >> (8 & 0xff));
-            ba[i + 2] = (byte) (anInt >> (0 & 0xff));
+        private static int encodeBytesOf(final int anInt, final NativeObject ba, final int i) {
+            ba.setByte(i - 1, anInt >> 24);
+            ba.setByte(i + 0, anInt >> 16);
+            ba.setByte(i + 1, anInt >> 8);
+            ba.setByte(i + 2, anInt);
             return i + 4;
         }
 
         // expects i to be a 1-based (Squeak) index
-        private static int encodeInt(final int anInt, final byte[] ba, final int i) {
+        private static int encodeInt(final int anInt, final NativeObject ba, final int i) {
             if (anInt <= 223) {
-                ba[i - 1] = (byte) anInt;
+                ba.setByte(i - 1, anInt);
                 return i + 1;
             }
             if (anInt <= 7935) {
-                ba[i - 1] = (byte) (anInt / 256 + 224);
-                ba[i] = (byte) (anInt % 256);
+                ba.setByte(i - 1, anInt / 256 + 224);
+                ba.setByte(i, anInt % 256);
                 return i + 2;
             }
-            ba[i - 1] = (byte) 255;
+            ba.setByte(i - 1, 255);
             return encodeBytesOf(anInt, ba, i + 1);
         }
 
@@ -155,55 +155,53 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             // 0-223 0-223
             // 224-254 (0-30)*256 + next byte (0-7935)
             // 255 next 4 bytes"
-            final byte[] baBytes = ba.getByteStorage();
-            final int[] bmInts = bm.getIntStorage();
-            final int size = bmInts.length;
-            int i = encodeInt(size, baBytes, 1);
+            final int size = bm.getIntLength();
+            int i = encodeInt(size, ba, 1);
             int k = 0;
             while (k < size) {
-                final int word = bmInts[k];
+                final int word = bm.getInt(k);
                 final int lowByte = word & 0xFF;
                 final boolean eqBytes = (word >> 8 & 0xFF) == lowByte &&
                                 (word >> 16 & 0xFF) == lowByte && (word >> 24 & 0xFF) == lowByte;
 
                 int j = k;
                 // scan for equal words...
-                while (j + 1 < size && word == bmInts[j + 1]) {
+                while (j + 1 < size && word == bm.getInt(j + 1)) {
                     j++;
                 }
                 if (j > k) {
                     // We have two or more equal words, ending at j
                     if (eqBytes) {
                         // Actually words of equal bytes
-                        i = encodeInt((j - k + 1) * 4 + 1, baBytes, i);
-                        baBytes[i - 1] = (byte) lowByte;
+                        i = encodeInt((j - k + 1) * 4 + 1, ba, i);
+                        ba.setByte(i - 1, lowByte);
                         i++;
                     } else {
-                        i = encodeInt((j - k + 1) * 4 + 2, baBytes, i);
-                        i = encodeBytesOf(word, baBytes, i);
+                        i = encodeInt((j - k + 1) * 4 + 2, ba, i);
+                        i = encodeBytesOf(word, ba, i);
                     }
                     k = j + 1;
                 } else {
                     // Check for word of 4 == bytes
                     if (eqBytes) {
                         // Note 1 word of 4 == bytes
-                        i = encodeInt(1 * 4 + 1, baBytes, i);
-                        baBytes[i - 1] = (byte) lowByte;
+                        i = encodeInt(1 * 4 + 1, ba, i);
+                        ba.setByte(i - 1, lowByte);
                         i++;
                         k++;
                     } else {
                         // Finally, check for junk
                         // scan for unequal words...
-                        while (j + 1 < size && bmInts[j] != bmInts[j + 1]) {
+                        while (j + 1 < size && bm.getInt(j) != bm.getInt(j + 1)) {
                             j++;
                         }
                         if (j + 1 == size) {
                             j++;
                         }
                         // We have one or more unmatching words, ending at j-1
-                        i = encodeInt((j - k) * 4 + 3, baBytes, i);
+                        i = encodeInt((j - k) * 4 + 3, ba, i);
                         for (int m = k; m < j; m++) {
-                            i = encodeBytesOf(bmInts[m], baBytes, i);
+                            i = encodeBytesOf(bm.getInt(m), ba, i);
                         }
                         k = j;
                     }
@@ -226,7 +224,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer) {
             for (int i = 0; i < aByteArray.getByteLength(); i++) {
                 final int wordIndex = i / 2;
-                final long value = (aByteArray.getByte(i) & 0xff) << 8;
+                final long value = aByteArray.getByteUnsigned(i) << 8;
                 if (i % 2 == 0) {
                     aSoundBuffer.setInt(wordIndex, aSoundBuffer.getInt(wordIndex) & 0xffff0000 | (int) value & 0xffff);
                 } else {
@@ -261,20 +259,18 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
              * </pre>
              */
 
-            final byte[] baBytes = ba.getByteStorage();
-            final int[] bmInts = bm.getIntStorage();
             int i = (int) index - 1;
-            final int end = baBytes.length;
+            final int end = ba.getByteLength();
             int k = 0;
-            final int pastEnd = bmInts.length + 1;
+            final int pastEnd = bm.getIntLength() + 1;
             while (i < end) {
                 // Decode next run start N
-                int anInt = baBytes[i++] & 0xff;
+                int anInt = ba.getByteUnsigned(i++);
                 if (anInt > 223) {
                     if (anInt <= 254) {
-                        anInt = (anInt - 224) * 256 + (baBytes[i++] & 0xff);
+                        anInt = (anInt - 224) * 256 + ba.getByteUnsigned(i++);
                     } else {
-                        anInt = (baBytes[i++] & 0xff) << 24 | (baBytes[i++] & 0xff) << 16 | (baBytes[i++] & 0xff) << 8 | baBytes[i++] & 0xff;
+                        anInt = ba.getByteUnsigned(i++) << 24 | ba.getByteUnsigned(i++) << 16 | ba.getByteUnsigned(i++) << 8 | ba.getByteUnsigned(i++);
                     }
                 }
                 final long n = anInt >> 2;
@@ -286,27 +282,28 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     case 0: // skip
                         break;
                     case 1: { // n consecutive words of 4 bytes = the following byte
-                        final int data = (baBytes[i] & 0xff) << 24 | (baBytes[i] & 0xff) << 16 | (baBytes[i] & 0xff) << 8 | baBytes[i++] & 0xff;
+                        final int data = ba.getByteUnsigned(i) << 24 | ba.getByteUnsigned(i) << 16 | ba.getByteUnsigned(i) << 8 | ba.getByteUnsigned(i++);
                         for (int j = 0; j < n; j++) {
-                            bmInts[k++] = data;
+                            bm.setInt(k++, data);
                         }
                         break;
                     }
                     case 2: { // n consecutive words = 4 following bytes
-                        final int data = (baBytes[i++] & 0xff) << 24 | (baBytes[i++] & 0xff) << 16 | (baBytes[i++] & 0xff) << 8 | baBytes[i++] & 0xff;
+                        final int data = ba.getByteUnsigned(i++) << 24 | ba.getByteUnsigned(i++) << 16 | ba.getByteUnsigned(i++) << 8 | ba.getByteUnsigned(i++);
                         for (int j = 0; j < n; j++) {
-                            bmInts[k++] = data;
+                            bm.setInt(k++, data);
                         }
                         break;
                     }
 
                     case 3: { // n consecutive words from the data
                         for (int m = 0; m < n; m++) {
-                            bmInts[k++] = (baBytes[i++] & 0xff) << 24 | (baBytes[i++] & 0xff) << 16 | (baBytes[i++] & 0xff) << 8 | baBytes[i++] & 0xff;
+                            bm.setInt(k++, ba.getByteUnsigned(i++) << 24 | ba.getByteUnsigned(i++) << 16 | ba.getByteUnsigned(i++) << 8 | ba.getByteUnsigned(i++));
                         }
                         break;
                     }
                     default:
+                        CompilerDirectives.transferToInterpreter();
                         break; // cannot happen
                 }
             }
@@ -331,7 +328,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             }
             final int stringSize = string.getByteLength();
             long index = start - 1;
-            while (index < stringSize && inclusionMap.getByte(string.getByte(index) & 0xff) == 0) {
+            while (index < stringSize && inclusionMap.getByte(string.getByteUnsigned(index)) == 0) {
                 index++;
             }
             return notFoundProfile.profile(index >= stringSize) ? 0L : index + 1;
@@ -358,7 +355,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                 final int bodyLength = body.getByteLength();
                 for (long startIndex = Math.max(start - 1, 0); startIndex <= bodyLength - keyLength; startIndex++) {
                     int index = 0;
-                    while (matchTable.getByte(body.getByte(startIndex + index) & 0xff) == matchTable.getByte(key.getByte(index) & 0xff)) {
+                    while (matchTable.getByte(body.getByteUnsigned(startIndex + index)) == matchTable.getByte(key.getByteUnsigned(index))) {
                         if (index == keyLength - 1) {
                             foundProfile.enter();
                             return startIndex + 1;
@@ -382,7 +379,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final BranchProfile foundProfile,
                         @Cached final BranchProfile notFoundProfile) {
             for (long i = start - 1; i < string.getByteLength(); i++) {
-                if ((string.getByte(i) & 0xff) == value) {
+                if (string.getByteUnsigned(i) == value) {
                     foundProfile.enter();
                     return i + 1;
                 }
@@ -447,7 +444,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"})
         protected static final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             for (long i = start - 1; i < stop; i++) {
-                string.setByte(i, table.getByte(string.getByte(i) & 0xff));
+                string.setByte(i, table.getByte(string.getByteUnsigned(i)));
             }
             return receiver;
         }
@@ -456,7 +453,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doNativeObjectIntTable(final Object receiver, final NativeObject string, final long start, final long stop,
                         final NativeObject table) {
             for (long i = start - 1; i < stop; i++) {
-                string.setByte(i, (byte) table.getInt(string.getByte(i) & 0xff));
+                string.setByte(i, table.getInt(string.getByteUnsigned(i)));
             }
             return receiver;
         }
