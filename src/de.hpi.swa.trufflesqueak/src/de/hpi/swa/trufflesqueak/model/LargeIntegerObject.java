@@ -124,6 +124,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         bitLength = integer.bitLength();
     }
 
+    @TruffleBoundary
     public byte[] getBytes() {
         return toBytes(integer);
     }
