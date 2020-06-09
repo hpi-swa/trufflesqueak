@@ -17,10 +17,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLogger;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public abstract class SqueakSocket {
 
@@ -42,8 +41,6 @@ public abstract class SqueakSocket {
             return id;
         }
     }
-
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqueakSocket.class);
 
     protected final Selector selector;
 
@@ -88,7 +85,7 @@ public abstract class SqueakSocket {
             final SelectionKey key = keys.next();
             if (key.isWritable()) {
                 final long written = sendDataTo(buffer, key);
-                LOG.finer(() -> this + " written: " + written);
+                LogUtils.SOCKET.finer(() -> this + " written: " + written);
                 keys.remove();
                 return written;
             }
@@ -105,12 +102,12 @@ public abstract class SqueakSocket {
         final Set<SelectionKey> keys = selector.selectedKeys();
         for (final SelectionKey key : keys) {
             if (key.isReadable()) {
-                LOG.finer(() -> this + " data available");
+                LogUtils.SOCKET.finer(() -> this + " data available");
                 return true;
             }
         }
 
-        LOG.finer(() -> this + " no data available");
+        LogUtils.SOCKET.finer(() -> this + " no data available");
         return false;
     }
 
@@ -124,7 +121,7 @@ public abstract class SqueakSocket {
 
             if (key.isReadable()) {
                 final long received = receiveDataFrom(key, buffer);
-                LOG.finer(() -> this + " received: " + received);
+                LogUtils.SOCKET.finer(() -> this + " received: " + received);
                 keys.remove();
                 return received;
             }

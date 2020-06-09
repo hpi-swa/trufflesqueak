@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -42,12 +41,10 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SeptenaryPr
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.NotProvided;
 
 public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SocketPlugin.class);
-
     protected static final byte[] LOCAL_HOST_NAME = getLocalHostName().getBytes();
 
     private static String getLocalHostName() {
@@ -98,10 +95,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "hostName.isByteType()")
         protected static final Object doWork(final Object receiver, final NativeObject hostName) {
             try {
-                LOG.finer(() -> "Starting lookup for host name " + hostName);
+                LogUtils.SOCKET.finer(() -> "Starting lookup for host name " + hostName);
                 Resolver.startHostNameLookUp(hostName.asStringUnsafe());
             } catch (final UnknownHostException e) {
-                LOG.log(Level.FINE, "Host name lookup failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Host name lookup failed", e);
             }
             return receiver;
         }
@@ -119,10 +116,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "address.isByteType()")
         protected static final Object doWork(final Object receiver, final NativeObject address) {
             try {
-                LOG.finer(() -> "Starting lookup for address " + address);
+                LogUtils.SOCKET.finer(() -> "Starting lookup for address " + address);
                 Resolver.startAddressLookUp(address.getByteStorage());
             } catch (final UnknownHostException e) {
-                LOG.log(Level.FINE, "Address lookup failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Address lookup failed", e);
             }
             return receiver;
         }
@@ -141,7 +138,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached("createBinaryProfile()") final ConditionProfile hasResultProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
-            LOG.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
+            LogUtils.SOCKET.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
             return hasResultProfile.profile(lastNameLookup == null) ? NilObject.SINGLETON : image.asByteArray(lastNameLookup);
         }
     }
@@ -157,7 +154,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final String lastAddressLookup = Resolver.lastAddressLookUpResult();
-            LOG.finer(() -> ">> Address Lookup Result: " + lastAddressLookup);
+            LogUtils.SOCKET.finer(() -> ">> Address Lookup Result: " + lastAddressLookup);
             return lastAddressLookup == null ? NilObject.SINGLETON : image.asByteString(lastAddressLookup);
         }
     }
@@ -169,7 +166,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final byte[] address = Resolver.getLoopbackAddress();
-            LOG.finer(() -> "Local Address: " + Resolver.addressBytesToString(address));
+            LogUtils.SOCKET.finer(() -> "Local Address: " + Resolver.addressBytesToString(address));
             return image.asByteArray(address);
         }
     }
@@ -203,7 +200,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getSocketOrPrimFail(sd).getLocalPort();
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Retrieving local port failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Retrieving local port failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -224,7 +221,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(sd).listenOn(port, 0L);
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Listen failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Listen failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return receiver;
@@ -242,7 +239,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(sd).listenOn(port, backlogSize);
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Listen failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Listen failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return receiver;
@@ -265,7 +262,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(sd).listenOn(port, backlogSize);
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Listen failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Listen failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return receiver;
@@ -281,7 +278,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return setSocketOption(image, getSocketOrPrimFail(sd), option.asStringUnsafe(), value.asStringUnsafe());
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Set socket option failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Set socket option failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -308,7 +305,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final String host = Resolver.addressBytesToString(hostAddress.getByteStorage());
                 socket.connectTo(host, (int) port);
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Socket connect failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Socket connect failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return 0L;
@@ -323,7 +320,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getSocketOrPrimFail(sd).getStatus().id();
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Retrieving socket status failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Retrieving socket status failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -338,7 +335,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return image.asByteArray(getSocketOrPrimFail(sd).getRemoteAddress());
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Retrieving remote address failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Retrieving remote address failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -352,7 +349,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getSocketOrPrimFail(sd).getRemotePort();
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Retrieving remote port failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Retrieving remote port failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -374,7 +371,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final String value = getSocketOrPrimFail(sd).getOption(option.asStringUnsafe());
                 return image.asArrayOfObjects(0L, image.asByteString(value));
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Retrieving socket option failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Retrieving socket option failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -388,7 +385,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getSocketOrPrimFail(sd).isDataAvailable();
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Checking for available data failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Checking for available data failed", e);
                 return BooleanObject.FALSE;
             }
         }
@@ -413,7 +410,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return image.asByteArray(getSocketOrPrimFail(sd).getLocalAddress());
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Retrieving local address failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Retrieving local address failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -441,7 +438,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getSocketOrPrimFail(sd).sendData(buffer.getByteStorage(), (int) startIndex - 1, (int) count);
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Sending data failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Sending data failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -455,7 +452,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(sd).close();
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Closing socket failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Closing socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return receiver;
@@ -470,7 +467,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(sd).close();
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Closing socket failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Closing socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return receiver;
@@ -485,7 +482,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return BooleanObject.wrap(getSocketOrPrimFail(sd).isSendDone());
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Checking completed send failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Checking completed send failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -505,7 +502,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getSocketOrPrimFail(sd).receiveData(buffer.getByteStorage(), (int) startIndex - 1, (int) count);
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Receiving data failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Receiving data failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
@@ -519,7 +516,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(sd).close();
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Destroying socket failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Destroying socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             return 0L;
@@ -572,7 +569,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return PointersObject.newHandleWithHiddenObject(image, getSocketOrPrimFail(sd).accept());
             } catch (final IOException e) {
-                LOG.log(Level.FINE, "Accepting socket failed", e);
+                LogUtils.SOCKET.log(Level.FINE, "Accepting socket failed", e);
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
         }

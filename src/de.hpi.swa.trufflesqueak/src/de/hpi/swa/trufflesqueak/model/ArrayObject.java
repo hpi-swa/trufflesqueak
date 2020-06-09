@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -27,8 +26,8 @@ import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -41,7 +40,6 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     public static final long LONG_NIL_TAG = Long.MIN_VALUE + 42; // Rather unlikely long.
     public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L); // NaN+1.
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, ArrayObject.class);
 
     private Object storage;
 
@@ -297,7 +295,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromBooleansToObjects(final BranchProfile isNilTagProfile) {
-        LOG.finer("transition from Booleans to Objects");
+        LogUtils.ARRAY_STATEGIES.finer("transition from Booleans to Objects");
         final byte[] booleans = getBooleanStorage();
         final Object[] objects = new Object[booleans.length];
         for (int i = 0; i < booleans.length; i++) {
@@ -307,7 +305,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromCharsToObjects(final ConditionProfile isNilTagProfile) {
-        LOG.finer("transition from Chars to Objects");
+        LogUtils.ARRAY_STATEGIES.finer("transition from Chars to Objects");
         final char[] chars = getCharStorage();
         final Object[] objects = new Object[chars.length];
         for (int i = 0; i < chars.length; i++) {
@@ -317,7 +315,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromDoublesToObjects(final ConditionProfile isNilTagProfile) {
-        LOG.finer("transition from Doubles to Objects");
+        LogUtils.ARRAY_STATEGIES.finer("transition from Doubles to Objects");
         final double[] doubles = getDoubleStorage();
         final Object[] objects = new Object[doubles.length];
         for (int i = 0; i < doubles.length; i++) {
@@ -354,7 +352,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public void transitionFromLongsToObjects(final ConditionProfile isNilTagProfile) {
-        LOG.finer("transition from Longs to Objects");
+        LogUtils.ARRAY_STATEGIES.finer("transition from Longs to Objects");
         final long[] longs = getLongStorage();
         final Object[] objects = new Object[longs.length];
         for (int i = 0; i < longs.length; i++) {

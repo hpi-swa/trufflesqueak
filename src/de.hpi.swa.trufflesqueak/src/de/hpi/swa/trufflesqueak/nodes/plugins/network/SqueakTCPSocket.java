@@ -17,14 +17,10 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLogger;
 
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 final class SqueakTCPSocket extends SqueakSocket {
-
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqueakTCPSocket.class);
-
     private SocketChannel clientChannel;
     private ServerSocketChannel serverChannel;
 
@@ -97,7 +93,7 @@ final class SqueakTCPSocket extends SqueakSocket {
         }
 
         final Status status = listening ? serverStatus() : clientStatus();
-        LOG.finer(() -> this + " " + status);
+        LogUtils.SOCKET.finer(() -> this + " " + status);
         return status;
     }
 
