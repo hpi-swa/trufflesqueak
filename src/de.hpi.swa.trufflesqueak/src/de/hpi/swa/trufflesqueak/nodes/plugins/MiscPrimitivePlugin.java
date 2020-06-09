@@ -116,10 +116,10 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         private static int encodeBytesOf(final int anInt, final NativeObject ba, final int i) {
-            ba.setByte(i - 1, anInt >> 24);
-            ba.setByte(i + 0, anInt >> 16);
-            ba.setByte(i + 1, anInt >> 8);
-            ba.setByte(i + 2, anInt);
+            ba.setByte(i - 1, (byte) (anInt >> 24));
+            ba.setByte(i + 0, (byte) (anInt >> 16));
+            ba.setByte(i + 1, (byte) (anInt >> 8));
+            ba.setByte(i + 2, (byte) anInt);
             return i + 4;
         }
 
