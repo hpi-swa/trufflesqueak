@@ -171,6 +171,7 @@ public final class ArrayObjectNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class ArrayObjectToObjectArrayCopyNode extends AbstractNode {
 
         public static ArrayObjectToObjectArrayCopyNode create() {
