@@ -177,6 +177,10 @@ public final class ArrayObjectNodes {
             return ArrayObjectToObjectArrayCopyNodeGen.create();
         }
 
+        public static ArrayObjectToObjectArrayCopyNode getUncached() {
+            return ArrayObjectToObjectArrayCopyNodeGen.getUncached();
+        }
+
         public abstract Object[] execute(ArrayObject obj);
 
         @Specialization(guards = "obj.isObjectType()")

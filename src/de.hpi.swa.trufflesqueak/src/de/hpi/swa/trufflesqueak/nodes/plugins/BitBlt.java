@@ -9,6 +9,7 @@ import java.util.function.LongBinaryOperator;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -220,7 +221,7 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#addWord:with: */
-    private long addWordwith(final long sourceWord, final long destinationWord) {
+    private static long addWordwith(final long sourceWord, final long destinationWord) {
         return sourceWord + destinationWord;
     }
 
@@ -1613,7 +1614,7 @@ public final class BitBlt {
         opTable[0 + 1] = BitBlt::clearWordwith;
         opTable[1 + 1] = BitBlt::bitAndwith;
         opTable[2 + 1] = BitBlt::bitAndInvertwith;
-        opTable[3 + 1] = this::sourceWordwith;
+        opTable[3 + 1] = BitBlt::sourceWordwith;
         opTable[4 + 1] = BitBlt::bitInvertAndwith;
         opTable[5 + 1] = BitBlt::destinationWordwith;
         opTable[6 + 1] = BitBlt::bitXorwith;
@@ -1628,8 +1629,8 @@ public final class BitBlt {
         opTable[15 + 1] = BitBlt::destinationWordwith;
         opTable[16 + 1] = BitBlt::destinationWordwith;
         opTable[17 + 1] = BitBlt::destinationWordwith;
-        opTable[18 + 1] = this::addWordwith;
-        opTable[19 + 1] = this::subWordwith;
+        opTable[18 + 1] = BitBlt::addWordwith;
+        opTable[19 + 1] = BitBlt::subWordwith;
         opTable[20 + 1] = this::rgbAddwith;
         opTable[21 + 1] = this::rgbSubwith;
         opTable[22 + 1] = this::oLDrgbDiffwith;
@@ -2080,13 +2081,8 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#OLDtallyIntoMap:with: */
     private long oLDtallyIntoMapwith(@SuppressWarnings("unused") final long sourceWord, final long destinationWord) {
-        long mapIndex;
         final long pixMask;
         long shiftWord;
-        long value;
-        final int value1;
-        final int value2;
-        final int value3;
 
         if ((cmFlags & (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) != (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) {
             return destinationWord;
@@ -2096,34 +2092,20 @@ public final class BitBlt {
             pixMask = MASK_TABLE[destDepth] & cmMask;
             shiftWord = destinationWord;
             for (int i = 1; i <= destPPW; i++) {
-                mapIndex = shiftWord & pixMask;
-                /* begin tallyMapAt:put: */
-                final int index = (int) (mapIndex & cmMask);
-                value = cmLookupTable[index] + 1;
-                cmLookupTable[index] = (int) value;
+                tallyMapAtput(shiftWord & pixMask);
                 shiftWord = shr(shiftWord, destDepth);
             }
             return destinationWord;
         }
         if (destDepth == 16) {
             /* Two pixels Tally the right half... */
-            mapIndex = rgbMapfromto(destinationWord & 0xFFFF, 5, cmBitsPerColor);
-            /* begin tallyMapAt:put: */
-            final int index = (int) (mapIndex & cmMask);
-            value1 = cmLookupTable[index] + 1;
-            cmLookupTable[index] = value1;
+            long mapIndex = rgbMapfromto(destinationWord & 0xFFFF, 5, cmBitsPerColor);
+            tallyMapAtput(mapIndex);
             mapIndex = rgbMapfromto(destinationWord >>> 16, 5, cmBitsPerColor);
-            /* begin tallyMapAt:put: */
-            final int index2 = (int) (mapIndex & cmMask);
-            value2 = cmLookupTable[index2] + 1;
-            cmLookupTable[index2] = value2;
+            tallyMapAtput(mapIndex);
         } else {
             /* Just one pixel. */
-            mapIndex = rgbMapfromto(destinationWord, 8, cmBitsPerColor);
-            /* begin tallyMapAt:put: */
-            final int index = (int) (mapIndex & cmMask);
-            value3 = cmLookupTable[index] + 1;
-            cmLookupTable[index] = value3;
+            tallyMapAtput(rgbMapfromto(destinationWord, 8, cmBitsPerColor));
         }
         return destinationWord;
     }
@@ -2555,7 +2537,8 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitiveCopyBits */
-    public Object primitiveCopyBits(final PointersObject bbObj, final long factor) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public long primitiveCopyBits(final PointersObject bbObj, final long factor) {
         if (!loadBitBltFromwarping(bbObj, false)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -2571,12 +2554,13 @@ public final class BitBlt {
         if (combinationRule == 22 || combinationRule == 32) {
             return bitCount;
         } else {
-            return bbObj;
+            return -1; // return receiver
         }
     }
 
     /* BitBltSimulation>>#primitiveDisplayString */
-    public Object primitiveDisplayString(final PointersObject bbObj, final NativeObject sourceString, final long startIndex, final long stopIndex, final long[] glyphMap,
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveDisplayString(final PointersObject bbObj, final NativeObject sourceString, final long startIndex, final long stopIndex, final long[] glyphMap,
                     final long[] xTable, final int kernDelta) {
         int ascii;
         int glyphIndex;
@@ -2651,13 +2635,13 @@ public final class BitBlt {
         }
         showDisplayBits();
         storeIntegerofObjectwithValue(BB_DEST_X_INDEX, bbObj, destX);
-        return bbObj;
     }
 
     /* Invoke the line drawing primitive. */
 
     /* BitBltSimulation>>#primitiveDrawLoop */
-    public Object primitiveDrawLoop(final PointersObject bbObj, final long xDelta, final long yDelta) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveDrawLoop(final PointersObject bbObj, final long xDelta, final long yDelta) {
         if (!loadBitBltFromwarping(bbObj, false)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -2665,7 +2649,6 @@ public final class BitBlt {
             drawLoopXY(xDelta, yDelta);
             showDisplayBits();
         }
-        return bbObj;
     }
 
     /*
@@ -2675,6 +2658,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitivePixelValueAtX:y: */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long primitivePixelValueAt(final PointersObject bbObj, final long xVal, final long yVal) {
         assert !(xVal < 0 || yVal < 0) : "Precondition not checked in guard";
         assert isPointers(bbObj) && slotSizeOf(bbObj) >= FORM.OFFSET : "Precondition not checked in guard";
@@ -2732,7 +2716,8 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitiveWarpBits */
-    public PointersObject primitiveWarpBits(final PointersObject bbObj, final long n, final AbstractSqueakObject sourceMap) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveWarpBits(final PointersObject bbObj, final long n, final AbstractSqueakObject sourceMap) {
         if (!loadWarpBltFrom(bbObj)) {
             PrimitiveFailed.andTransferToInterpreter();
         }
@@ -2740,7 +2725,6 @@ public final class BitBlt {
         assert !failed();
         showDisplayBits();
         assert !failed();
-        return bbObj;
     }
 
     /* BitBltSimulation>>#rgbAdd:with: */
@@ -3486,12 +3470,12 @@ public final class BitBlt {
     }
 
     /* BitBltSimulation>>#sourceWord:with: */
-    private long sourceWordwith(final long sourceWord, @SuppressWarnings("unused") final long destinationWord) {
+    private static long sourceWordwith(final long sourceWord, @SuppressWarnings("unused") final long destinationWord) {
         return sourceWord;
     }
 
     /* BitBltSimulation>>#subWord:with: */
-    private long subWordwith(final long sourceWord, final long destinationWord) {
+    private static long subWordwith(final long sourceWord, final long destinationWord) {
         return sourceWord - destinationWord;
     }
 
@@ -3508,7 +3492,6 @@ public final class BitBlt {
         long maskShifted;
         final long pixMask;
         long pixVal;
-        long value;
 
         if ((cmFlags & (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) != (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) {
             return destinationWord;
@@ -3529,15 +3512,16 @@ public final class BitBlt {
                         mapIndex = rgbMapfromto(pixVal, 8, cmBitsPerColor);
                     }
                 }
-                /* begin tallyMapAt:put: */
-                final int index = (int) (mapIndex & cmMask);
-                value = cmLookupTable[index] + 1;
-                cmLookupTable[index] = (int) value;
+                tallyMapAtput(mapIndex);
             }
             maskShifted = maskShifted >>> destDepth;
             destShifted = destShifted >>> destDepth;
         }
         return destinationWord;
+    }
+
+    private void tallyMapAtput(final long mapIndex) {
+        cmLookupTable[(int) (mapIndex & cmMask)] += 1;
     }
 
     /*
@@ -4164,23 +4148,23 @@ public final class BitBlt {
     }
 
     private static int div(final long a, final long b) {
-        return (int) Math.floor(a / b);
+        return (int) (a / b);
     }
 
     private static int mod(final long a, final long b) {
-        return (int) (a - div(a, b) * b);
+        return (int) (a % b);
     }
 
     private static long shl(final long a, final long b) {
-        return b > 31 ? 0 : a << b;
+        return a << b;
     }
 
     private static long shr(final long a, final long b) {
-        return b > 31 ? 0 : a >>> b;
+        return a >>> b;
     }
 
     private static long shift(final long a, final long b) {
-        return b < 0 ? b < -31 ? 0 : a >>> 0 - b : b > 31 ? 0 : a << b;
+        return b < 0 ? a >>> -b : a << b;
     }
 
     private static void storeIntegerofObjectwithValue(final int index, final PointersObject target, final long value) {

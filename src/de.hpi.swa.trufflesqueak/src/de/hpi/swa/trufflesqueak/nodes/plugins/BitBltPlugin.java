@@ -7,23 +7,25 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
-import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -45,20 +47,19 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         @Specialization
-        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final Object doCopy(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
+                        @Cached("createBinaryProfile()") final ConditionProfile resultProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            image.bitblt.resetSuccessFlag();
-            // Not provided represented by `-1L` factor.
-            return image.bitblt.primitiveCopyBits(receiver, -1L);
+            return doCopyTranslucent(receiver, -1L, resultProfile, image);
         }
 
         @Specialization
-        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final Object doCopyTranslucent(final PointersObject receiver, final long factor,
+                        @Cached("createBinaryProfile()") final ConditionProfile resultProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             image.bitblt.resetSuccessFlag();
-            return image.bitblt.primitiveCopyBits(receiver, factor);
+            final long result = image.bitblt.primitiveCopyBits(receiver, factor);
+            return resultProfile.profile(result == -1) ? receiver : result;
         }
     }
 
@@ -66,43 +67,38 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDisplayString")
     protected abstract static class PrimDisplayStringNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
 
-        @Specialization(guards = {"startIndex >= 1", "stopIndex > 0", "aString.isByteType()", "aString.getByteLength() > 0",
-                        "stopIndex <= aString.getByteLength()", "glyphMap.isLongType()", "glyphMap.getLongLength() == 256", "xTable.isLongType()"})
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doDisplayLongArrays(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
+        @Specialization(guards = {"startIndex >= 1", "stopIndex > 0", "aString.isByteType()", "aString.getByteLength() > 0", "stopIndex <= aString.getByteLength()"})
+        protected static final PointersObject doDisplayString(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
                         final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            if (!glyphMap.isLongType()) {
+                CompilerDirectives.transferToInterpreter();
+                respecializeArrayToLongOrPrimFail(glyphMap);
+            }
+            if (glyphMap.getLongLength() != 256) {
+                throw PrimitiveFailed.andTransferToInterpreter();
+            }
+            if (!xTable.isLongType()) {
+                CompilerDirectives.transferToInterpreter();
+                respecializeArrayToLongOrPrimFail(xTable);
+            }
             image.bitblt.resetSuccessFlag();
-            return image.bitblt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMap.getLongStorage(), xTable.getLongStorage(), (int) kernDelta);
+            image.bitblt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMap.getLongStorage(), xTable.getLongStorage(), (int) kernDelta);
+            return receiver;
         }
 
-        @Specialization(guards = {"startIndex >= 1", "stopIndex > 0", "aString.isByteType()", "aString.getByteLength() > 0",
-                        "stopIndex <= aString.getByteLength()", "!glyphMap.isLongType() || !xTable.isLongType()", "sizeNode.execute(glyphMap) == 256"}, limit = "1")
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doDisplayGeneric(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
-                        final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
-                        @SuppressWarnings("unused") @Cached final ArrayObjectSizeNode sizeNode,
-                        @Cached final ArrayObjectToObjectArrayCopyNode toObjectArrayNode) {
-            image.bitblt.resetSuccessFlag();
-            final long[] glyphMapValues = toLongArray(toObjectArrayNode.execute(glyphMap));
-            glyphMap.setStorage(glyphMapValues); // re-specialize.
-            final long[] xTableValues = toLongArray(toObjectArrayNode.execute(xTable));
-            xTable.setStorage(xTableValues); // re-specialize.
-            return image.bitblt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMapValues, xTableValues, (int) kernDelta);
-        }
-
-        // TODO: Find good replacement for `toLongArray`.
-        private static long[] toLongArray(final Object[] values) {
+        private static void respecializeArrayToLongOrPrimFail(final ArrayObject array) {
+            CompilerAsserts.neverPartOfCompilation();
+            final Object[] values = ArrayObjectToObjectArrayCopyNode.getUncached().execute(array);
             final long[] longs = new long[values.length];
             try {
                 for (int i = 0; i < values.length; i++) {
                     longs[i] = ((Number) values[i]).longValue();
                 }
             } catch (final ClassCastException e) {
-                throw PrimitiveFailed.andTransferToInterpreter();
+                throw PrimitiveFailed.GENERIC_ERROR;
             }
-            return longs;
+            array.setStorage(longs);
         }
 
         @SuppressWarnings("unused")
@@ -118,11 +114,11 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDrawLoopNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         @Specialization
-        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final Object doDrawLoop(final PointersObject receiver, final long xDelta, final long yDelta,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             image.bitblt.resetSuccessFlag();
-            return image.bitblt.primitiveDrawLoop(receiver, xDelta, yDelta);
+            image.bitblt.primitiveDrawLoop(receiver, xDelta, yDelta);
+            return receiver;
         }
     }
 
@@ -138,7 +134,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"xValue >= 0", "yValue >= 0", "receiver.size() > OFFSET"})
-        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final long doValueAt(final PointersObject receiver, final long xValue, final long yValue,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             image.bitblt.resetSuccessFlag();
@@ -151,27 +146,27 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimWarpBitsNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         @Specialization
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doValueAt(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NotProvided notProvided,
+        protected static final PointersObject doWarpBits(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NotProvided notProvided,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            image.bitblt.resetSuccessFlag();
-            return image.bitblt.primitiveWarpBits(receiver, n, null);
+            return warpBits(receiver, n, null, image);
         }
 
         @Specialization
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doValueAt(final PointersObject receiver, final long n, final NilObject nil,
+        protected static final PointersObject doWarpBits(final PointersObject receiver, final long n, final NilObject nil,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            image.bitblt.resetSuccessFlag();
-            return image.bitblt.primitiveWarpBits(receiver, n, nil);
+            return warpBits(receiver, n, nil, image);
         }
 
         @Specialization
-        @TruffleBoundary(transferToInterpreterOnException = false)
-        protected static final Object doValueAt(final PointersObject receiver, final long n, final NativeObject sourceMap,
+        protected static final PointersObject doWarpBits(final PointersObject receiver, final long n, final NativeObject sourceMap,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return warpBits(receiver, n, sourceMap, image);
+        }
+
+        private static PointersObject warpBits(final PointersObject receiver, final long n, final AbstractSqueakObject sourceMap, final SqueakImageContext image) {
             image.bitblt.resetSuccessFlag();
-            return image.bitblt.primitiveWarpBits(receiver, n, sourceMap);
+            image.bitblt.primitiveWarpBits(receiver, n, sourceMap);
+            return receiver;
         }
     }
 }
