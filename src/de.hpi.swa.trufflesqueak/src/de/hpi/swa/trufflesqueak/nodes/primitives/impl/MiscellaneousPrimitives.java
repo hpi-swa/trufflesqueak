@@ -791,47 +791,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = 183)
-    protected abstract static class PrimIsPinnedNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-
-        @Specialization
-        protected static final boolean isPinned(final AbstractSqueakObjectWithClassAndHash receiver,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            PrimPinNode.printWarningIfNotTesting(image);
-            return BooleanObject.wrap(receiver.isPinned());
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 184)
-    protected abstract static class PrimPinNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
-        @Specialization(guards = "enable")
-        protected static final boolean doPinEnable(final AbstractSqueakObjectWithClassAndHash receiver, @SuppressWarnings("unused") final boolean enable,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            printWarningIfNotTesting(image);
-            final boolean wasPinned = receiver.isPinned();
-            receiver.setPinned();
-            return BooleanObject.wrap(wasPinned);
-        }
-
-        @Specialization(guards = "!enable")
-        protected static final boolean doPinDisable(final AbstractSqueakObjectWithClassAndHash receiver, @SuppressWarnings("unused") final boolean enable,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            printWarningIfNotTesting(image);
-            final boolean wasPinned = receiver.isPinned();
-            receiver.unsetPinned();
-            return BooleanObject.wrap(wasPinned);
-        }
-
-        private static void printWarningIfNotTesting(final SqueakImageContext image) {
-            if (!image.isTesting()) {
-                image.printToStdErr("Object pinning is not supported by this vm, but requested from Squeak/Smalltalk.");
-            }
-        }
-    }
-
-    @GenerateNodeFactory
     @SqueakPrimitive(indices = 240)
     protected abstract static class PrimUTCClockNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 

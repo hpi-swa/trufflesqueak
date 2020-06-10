@@ -18,8 +18,6 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
     public static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     /* Generate new hash if hash is 0 (see SpurMemoryManager>>#hashBitsOf:). */
     public static final long HASH_UNINITIALIZED = 0;
-    public static final int PINNED_BIT_SHIFT = 30;
-    private static final int PINNED_BIT_MASK = 1 << PINNED_BIT_SHIFT;
 
     public final SqueakImageContext image;
     private long squeakHash;
@@ -83,24 +81,12 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
         return squeakHash == HASH_UNINITIALIZED;
     }
 
-    public final boolean isPinned() {
-        return (squeakHash >> PINNED_BIT_SHIFT & 1) == 1;
-    }
-
     public String getClassName() {
         return "???NotAClass";
     }
 
-    public final void setPinned() {
-        setSqueakHash(getSqueakHash() | PINNED_BIT_MASK);
-    }
-
     public final void setSqueakHash(final long newHash) {
         squeakHash = newHash;
-    }
-
-    public final void unsetPinned() {
-        setSqueakHash(getSqueakHash() & ~PINNED_BIT_MASK);
     }
 
     public final boolean getMarkingFlag() {
