@@ -122,7 +122,7 @@ public class AbstractPointersObjectNodes {
                  */
                 CompilerDirectives.transferToInterpreter();
                 object.updateLayout(index, value);
-                object.getLayout().getLocation(index).write(object, value);
+                object.getLayout().getLocation(index).writeMustSucceed(object, value);
                 return;
             }
             try {

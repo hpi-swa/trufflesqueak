@@ -13,6 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.SlowPathException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 
@@ -81,23 +82,22 @@ public abstract class SlotLocation {
         return location;
     }
 
-    public static final class IllegalWriteException extends RuntimeException {
+    public static final class IllegalWriteException extends SlowPathException {
         private static final long serialVersionUID = 1L;
         private static final IllegalWriteException SINGLETON = new IllegalWriteException();
 
         private IllegalWriteException() {
-            super(null, null);
         }
     }
 
-    private static void transferToInterpreterAndThrowIllegalWriteException() {
+    private static void transferToInterpreterAndThrowIllegalWriteException() throws IllegalWriteException {
         CompilerDirectives.transferToInterpreter();
         throw IllegalWriteException.SINGLETON;
     }
 
     public abstract Object read(AbstractPointersObject obj);
 
-    public abstract void write(AbstractPointersObject obj, Object value);
+    public abstract void write(AbstractPointersObject obj, Object value) throws IllegalWriteException;
 
     public final void writeMustSucceed(final AbstractPointersObject obj, final Object value) {
         try {
@@ -164,7 +164,7 @@ public abstract class SlotLocation {
 
         public abstract Object executeRead(AbstractPointersObject object);
 
-        public abstract void executeWrite(AbstractPointersObject object, Object value);
+        public abstract void executeWrite(AbstractPointersObject object, Object value) throws IllegalWriteException;
 
         public abstract boolean canStore(Object value);
     }
@@ -182,7 +182,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void executeWrite(final AbstractPointersObject object, final Object value) {
+        public void executeWrite(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             location.write(object, value);
         }
 
@@ -205,7 +205,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void executeWrite(final AbstractPointersObject object, final Object value) {
+        public void executeWrite(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             location.write(object, value);
         }
 
@@ -231,7 +231,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void executeWrite(final AbstractPointersObject object, final Object value) {
+        public void executeWrite(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             location.writeProfiled(object, value, primitiveUsedMapProfile);
         }
 
@@ -248,7 +248,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void write(final AbstractPointersObject obj, final Object value) {
+        public void write(final AbstractPointersObject obj, final Object value) throws IllegalWriteException {
             if (value != NilObject.SINGLETON) {
                 transferToInterpreterAndThrowIllegalWriteException();
             }
@@ -285,7 +285,7 @@ public abstract class SlotLocation {
 
         public abstract Object readProfiled(AbstractPointersObject object, IntValueProfile primitiveUsedMapProfile, BranchProfile nilProfile);
 
-        public abstract void writeProfiled(AbstractPointersObject object, Object value, IntValueProfile primitiveUsedMapProfile);
+        public abstract void writeProfiled(AbstractPointersObject object, Object value, IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException;
 
         @Override
         public final boolean isPrimitive() {
@@ -392,7 +392,7 @@ public abstract class SlotLocation {
         @Override
         public final void unset(final AbstractPointersObject object) {
             CompilerAsserts.neverPartOfCompilation();
-            write(object, NilObject.SINGLETON);
+            writeMustSucceed(object, NilObject.SINGLETON);
         }
     }
 
@@ -438,7 +438,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
+        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (value instanceof Boolean) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putBoolAt(object, address, (boolean) value);
@@ -448,7 +448,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void write(final AbstractPointersObject object, final Object value) {
+        public void write(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             CompilerAsserts.neverPartOfCompilation();
             if (value instanceof Boolean) {
                 setMask(object);
@@ -500,7 +500,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
+        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putBoolIntoLongs(object.primitiveExtension, index, (boolean) value);
@@ -510,7 +510,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void write(final AbstractPointersObject object, final Object value) {
+        public void write(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
@@ -569,7 +569,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
+        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putCharAt(object, address, (char) value);
@@ -579,7 +579,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void write(final AbstractPointersObject object, final Object value) {
+        public void write(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
@@ -631,7 +631,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
+        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putCharIntoLongs(object.primitiveExtension, index, (char) value);
@@ -641,7 +641,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void write(final AbstractPointersObject object, final Object value) {
+        public void write(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
@@ -700,7 +700,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
+        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putLongAt(object, address, (long) value);
@@ -710,7 +710,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void write(final AbstractPointersObject object, final Object value) {
+        public void write(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
@@ -762,7 +762,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
+        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putLong(object.primitiveExtension, index, (long) value);
@@ -772,7 +772,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void write(final AbstractPointersObject object, final Object value) {
+        public void write(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
@@ -831,7 +831,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
+        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putDoubleAt(object, address, (double) value);
@@ -841,7 +841,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void write(final AbstractPointersObject object, final Object value) {
+        public void write(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
@@ -893,7 +893,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) {
+        public void writeProfiled(final AbstractPointersObject object, final Object value, final IntValueProfile primitiveUsedMapProfile) throws IllegalWriteException {
             if (canStore(value)) {
                 setMask(object, primitiveUsedMapProfile);
                 UnsafeUtils.putDoubleIntoLongs(object.primitiveExtension, index, (double) value);
@@ -903,7 +903,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        public void write(final AbstractPointersObject object, final Object value) {
+        public void write(final AbstractPointersObject object, final Object value) throws IllegalWriteException {
             CompilerAsserts.neverPartOfCompilation();
             if (canStore(value)) {
                 setMask(object);
