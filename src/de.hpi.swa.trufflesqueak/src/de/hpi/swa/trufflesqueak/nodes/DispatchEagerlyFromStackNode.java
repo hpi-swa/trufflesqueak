@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -14,6 +15,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -110,19 +112,25 @@ public abstract class DispatchEagerlyFromStackNode extends AbstractNode {
         return callNode.call(argumentsNode.execute(frame, cachedMethod, getOrCreateContextNode.executeGet(frame)));
     }
 
-    @Specialization(guards = "method.getDoesNotNeedSenderAssumption().isValid()", replaces = {"doDirect", "doDirectWithSender"})
+    @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
     protected static final Object doIndirect(final VirtualFrame frame, final CompiledMethodObject method,
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                     @Cached("create(argumentCount)") final CreateFrameArgumentsNode argumentsNode,
+                    @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
                     @Cached final IndirectCallNode callNode) {
         return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, method, getContextOrMarkerNode.execute(frame)));
     }
 
-    @Specialization(guards = "!method.getDoesNotNeedSenderAssumption().isValid()", replaces = {"doDirect", "doDirectWithSender"})
+    @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
     protected static final Object doIndirectWithSender(final VirtualFrame frame, final CompiledMethodObject method,
                     @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode,
                     @Cached("create(argumentCount)") final CreateFrameArgumentsNode argumentsNode,
+                    @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
                     @Cached final IndirectCallNode callNode) {
         return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, method, getOrCreateContextNode.executeGet(frame)));
+    }
+
+    protected static final boolean doesNotNeedSender(final CompiledMethodObject method, final ValueProfile assumptionProfile) {
+        return assumptionProfile.profile(method.getDoesNotNeedSenderAssumption()).isValid();
     }
 }
