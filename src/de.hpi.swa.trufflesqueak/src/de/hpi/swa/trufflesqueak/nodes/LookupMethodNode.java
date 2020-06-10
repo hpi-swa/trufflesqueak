@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -15,12 +16,17 @@ import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 
+@GenerateUncached
 @ReportPolymorphism
 public abstract class LookupMethodNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 6;
 
     public static LookupMethodNode create() {
         return LookupMethodNodeGen.create();
+    }
+
+    public static LookupMethodNode getUncached() {
+        return LookupMethodNodeGen.getUncached();
     }
 
     public abstract Object executeLookup(ClassObject sqClass, NativeObject selector);

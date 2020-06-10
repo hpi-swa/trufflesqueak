@@ -51,7 +51,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
                 throw pf; // Rewrite specialization.
             } else {
                 // Slow path send to fallback code.
-                return IndirectCallNode.getUncached().call(method.getCallTarget(),
+                return IndirectCallNode.getUncached().call(cachedMethod.getCallTarget(),
                                 FrameAccess.newWith(cachedMethod, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
             }
         }

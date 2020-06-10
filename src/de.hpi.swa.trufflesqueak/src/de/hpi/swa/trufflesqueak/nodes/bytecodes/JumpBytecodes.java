@@ -13,11 +13,9 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -71,7 +69,6 @@ public final class JumpBytecodes {
         }
 
         protected abstract static class HandleConditionResultNode extends AbstractNode {
-            @Child private SendSelectorNode sendMustBeBooleanNode;
             private final int successorIndex;
 
             protected HandleConditionResultNode(final int successorIndex) {
@@ -92,17 +89,10 @@ public final class JumpBytecodes {
             @Specialization(guards = "!isBoolean(result)")
             protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result,
                             @Cached("getInstructionPointerSlot(frame)") final FrameSlot instructionPointerSlot) {
+                CompilerDirectives.transferToInterpreter();
                 FrameAccess.setInstructionPointer(frame, instructionPointerSlot, successorIndex);
-                getSendMustBeBooleanNode().executeSend(frame, result);
+                lookupContext().mustBeBooleanSelector.executeAsSymbolSlow(frame, result);
                 throw SqueakException.create("Should not be reached");
-            }
-
-            private SendSelectorNode getSendMustBeBooleanNode() {
-                if (sendMustBeBooleanNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    sendMustBeBooleanNode = insert(SendSelectorNode.create(SqueakLanguage.getContext().mustBeBooleanSelector));
-                }
-                return sendMustBeBooleanNode;
             }
         }
     }

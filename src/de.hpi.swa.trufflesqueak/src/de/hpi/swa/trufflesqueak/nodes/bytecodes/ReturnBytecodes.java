@@ -17,7 +17,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
@@ -57,8 +56,6 @@ public final class ReturnBytecodes {
     }
 
     protected abstract static class AbstractReturnWithSpecializationsNode extends AbstractReturnNode {
-        @Child private SendSelectorNode cannotReturnNode;
-        @Child private GetOrCreateContextNode getOrCreateContextNode;
 
         protected AbstractReturnWithSpecializationsNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -84,27 +81,12 @@ public final class ReturnBytecodes {
             final Object caller = homeContext.getFrameSender();
             final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode.execute();
             if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
-                getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), getReturnValue(frame));
+                CompilerDirectives.transferToInterpreter();
+                final ContextObject contextObject = GetOrCreateContextNode.getOrCreateFromActiveProcessUncached(frame);
+                lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
                 throw SqueakException.create("Should not reach");
             }
             throw new NonLocalReturn(getReturnValue(frame), caller);
-        }
-
-        private GetOrCreateContextNode getGetOrCreateContextNode() {
-            if (getOrCreateContextNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getOrCreateContextNode = insert(GetOrCreateContextNode.create(true));
-            }
-            return getOrCreateContextNode;
-        }
-
-        private SendSelectorNode getCannotReturnNode() {
-            if (cannotReturnNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cannotReturnNode = insert(SendSelectorNode.create(lookupContext().cannotReturn));
-            }
-            return cannotReturnNode;
         }
     }
 
@@ -156,7 +138,6 @@ public final class ReturnBytecodes {
 
     public abstract static class ReturnTopFromBlockNode extends AbstractReturnNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
-        @Child private SendSelectorNode cannotReturnNode;
 
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
@@ -181,20 +162,12 @@ public final class ReturnBytecodes {
             final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode.execute();
             final Object caller = homeContext.getFrameSender();
             if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                final ContextObject currentContext = FrameAccess.getContext(frame, code);
-                assert currentContext != null;
-                getCannotReturnNode().executeSend(frame, currentContext, getReturnValue(frame));
+                CompilerDirectives.transferToInterpreter();
+                final ContextObject contextObject = GetOrCreateContextNode.getOrCreateFromActiveProcessUncached(frame);
+                lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
                 throw SqueakException.create("Should not reach");
             }
             throw new NonLocalReturn(getReturnValue(frame), caller);
-        }
-
-        private SendSelectorNode getCannotReturnNode() {
-            if (cannotReturnNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cannotReturnNode = insert(SendSelectorNode.create(lookupContext().cannotReturn));
-            }
-            return cannotReturnNode;
         }
 
         @Override

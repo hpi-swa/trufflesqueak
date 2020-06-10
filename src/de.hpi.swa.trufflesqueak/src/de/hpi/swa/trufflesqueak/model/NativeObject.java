@@ -17,6 +17,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -33,8 +34,12 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.DispatchUneagerlyNode;
+import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -362,6 +367,17 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean isDoesNotUnderstand() {
         return this == image.doesNotUnderstand;
+    }
+
+    public Object executeAsSymbolSlow(final VirtualFrame frame, final Object... receiverAndArguments) {
+        CompilerAsserts.neverPartOfCompilation();
+        assert getSqueakClass().isSymbolClass();
+        final Object method = LookupMethodNode.getUncached().executeLookup(SqueakObjectClassNode.getUncached().executeLookup(receiverAndArguments[0]), this);
+        if (method instanceof CompiledMethodObject) {
+            return DispatchUneagerlyNode.getUncached().executeDispatch((CompiledMethodObject) method, receiverAndArguments, GetOrCreateContextNode.getOrCreateFromActiveProcessUncached(frame));
+        } else {
+            throw SqueakException.create("Illegal uncached message send");
+        }
     }
 
     public static boolean needsWideString(final String s) {

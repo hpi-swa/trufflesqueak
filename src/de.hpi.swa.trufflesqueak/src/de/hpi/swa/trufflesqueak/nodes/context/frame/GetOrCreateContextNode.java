@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -27,6 +28,19 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
             return GetOrCreateContextFromActiveProcessNodeGen.create();
         } else {
             return GetOrCreateContextNotFromActiveProcessNodeGen.create();
+        }
+    }
+
+    public static final ContextObject getOrCreateFromActiveProcessUncached(final Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        final CompiledCodeObject code = FrameAccess.getBlockOrMethod(frame);
+        final ContextObject context = FrameAccess.getContext(frame, code);
+        if (context != null) {
+            return context;
+        } else {
+            final ContextObject result = ContextObject.create(frame.materialize(), code);
+            result.setProcess(GetActiveProcessNode.getUncached().execute());
+            return result;
         }
     }
 
