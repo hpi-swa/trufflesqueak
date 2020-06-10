@@ -40,6 +40,7 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
                     @Cached final AbstractPointersObjectReadNode pointersReadNode,
                     @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
                     @Cached("create(true)") final GetOrCreateContextNode contextNode,
+                    @Cached final GetActiveProcessNode getActiveProcessNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
@@ -50,7 +51,7 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
                 final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
                 final Object newContext = pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
                 if (newContext instanceof ContextObject) {
-                    contextNode.executeGet(frame).transferTo(pointersReadNode, pointersWriteNode, newProcess);
+                    contextNode.executeGet(frame).transferTo(newProcess, pointersReadNode, pointersWriteNode, getActiveProcessNode);
                     throw SqueakException.create("Should not be reached");
                 }
             }

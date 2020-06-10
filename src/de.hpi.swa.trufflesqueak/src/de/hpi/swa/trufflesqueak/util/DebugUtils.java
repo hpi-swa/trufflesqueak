@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 
 /**
  * Helper functions for debugging purposes.
@@ -143,7 +144,7 @@ public final class DebugUtils {
         final SqueakImageContext image = SqueakLanguage.getContext();
         final StringBuilder b = new StringBuilder();
         b.append("\nImage processes state\n");
-        final PointersObject activeProcess = image.getActiveProcessSlow();
+        final PointersObject activeProcess = GetActiveProcessNode.getSlow(image);
         final long activePriority = (long) activeProcess.instVarAt0Slow(PROCESS.PRIORITY);
         b.append("*Active process @");
         b.append(Integer.toHexString(activeProcess.hashCode()));

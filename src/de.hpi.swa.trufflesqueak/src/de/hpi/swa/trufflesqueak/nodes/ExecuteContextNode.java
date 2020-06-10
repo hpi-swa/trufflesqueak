@@ -22,7 +22,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -32,6 +31,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNo
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
@@ -93,7 +93,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         try {
             if (enableStackDepthProtection && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
                 final ContextObject context = getGetOrCreateContextNode().executeGet(frame);
-                context.setProcess(code.image.getActiveProcess(AbstractPointersObjectReadNode.getUncached()));
+                context.setProcess(GetActiveProcessNode.getUncached().execute());
                 throw ProcessSwitch.createWithBoundary(context);
             }
             frameInitializationNode.executeInitialize(frame);

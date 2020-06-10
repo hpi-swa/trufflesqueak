@@ -98,10 +98,6 @@ public final class PointersObject extends AbstractPointersObject {
         return layoutValuesPointTo(identityNode, thang);
     }
 
-    public boolean isActiveProcess(final AbstractPointersObjectReadNode readNode) {
-        return this == image.getActiveProcess(readNode);
-    }
-
     public boolean isEmptyList(final AbstractPointersObjectReadNode readNode) {
         return readNode.execute(this, LINKED_LIST.FIRST_LINK) == NilObject.SINGLETON;
     }

@@ -33,6 +33,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -509,12 +510,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return arguments;
     }
 
-    public void transferTo(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode, final PointersObject newProcess) {
+    public void transferTo(final PointersObject newProcess, final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode,
+                    final GetActiveProcessNode getActiveProcessNode) {
         // Record a process to be awakened on the next interpreter cycle.
         final PointersObject scheduler = newProcess.image.getScheduler();
-        assert newProcess != newProcess.image.getActiveProcess(readNode) : "trying to switch to already active process";
+        assert newProcess != getActiveProcessNode.execute() : "trying to switch to already active process";
         // overwritten in next line.
-        final PointersObject currentProcess = newProcess.image.getActiveProcess(readNode);
+        final PointersObject currentProcess = getActiveProcessNode.execute();
         writeNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         writeNode.execute(currentProcess, PROCESS.SUSPENDED_CONTEXT, this);
         final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);

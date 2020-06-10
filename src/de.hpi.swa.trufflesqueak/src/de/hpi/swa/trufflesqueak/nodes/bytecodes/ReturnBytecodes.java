@@ -8,26 +8,23 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.SendSelectorNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ReturnBytecodes {
@@ -80,16 +77,15 @@ public final class ReturnBytecodes {
 
         @Specialization(guards = {"isCompiledBlockObject(code)"})
         protected final Object doClosureReturnFromMaterialized(final VirtualFrame frame,
-                        @Cached final AbstractPointersObjectReadNode readNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Cached final GetActiveProcessNode getActiveProcessNode) {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             assert homeContext.getProcess() != null;
             final Object caller = homeContext.getFrameSender();
-            final boolean homeContextNotOnTheStack = homeContext.getProcess() != image.getActiveProcess(readNode);
+            final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode.execute();
             if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
                 /** {@link getCannotReturnNode()} acts as {@link BranchProfile} */
-                getCannotReturnNode(image).executeSend(frame, getGetOrCreateContextNode().executeGet(frame), getReturnValue(frame));
+                getCannotReturnNode().executeSend(frame, getGetOrCreateContextNode().executeGet(frame), getReturnValue(frame));
                 throw SqueakException.create("Should not reach");
             }
             throw new NonLocalReturn(getReturnValue(frame), caller);
@@ -103,10 +99,10 @@ public final class ReturnBytecodes {
             return getOrCreateContextNode;
         }
 
-        private SendSelectorNode getCannotReturnNode(final SqueakImageContext image) {
+        private SendSelectorNode getCannotReturnNode() {
             if (cannotReturnNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                cannotReturnNode = insert(SendSelectorNode.create(image.cannotReturn));
+                cannotReturnNode = insert(SendSelectorNode.create(lookupContext().cannotReturn));
             }
             return cannotReturnNode;
         }
@@ -178,26 +174,25 @@ public final class ReturnBytecodes {
 
         @Specialization(guards = {"hasModifiedSender(frame)"})
         protected final Object doNonLocalReturnClosure(final VirtualFrame frame,
-                        @Cached final AbstractPointersObjectReadNode readNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Cached final GetActiveProcessNode getActiveProcessNode) {
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             assert homeContext.getProcess() != null;
-            final boolean homeContextNotOnTheStack = homeContext.getProcess() != image.getActiveProcess(readNode);
+            final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode.execute();
             final Object caller = homeContext.getFrameSender();
             if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
                 final ContextObject currentContext = FrameAccess.getContext(frame, code);
                 assert currentContext != null;
-                getCannotReturnNode(image).executeSend(frame, currentContext, getReturnValue(frame));
+                getCannotReturnNode().executeSend(frame, currentContext, getReturnValue(frame));
                 throw SqueakException.create("Should not reach");
             }
             throw new NonLocalReturn(getReturnValue(frame), caller);
         }
 
-        private SendSelectorNode getCannotReturnNode(final SqueakImageContext image) {
+        private SendSelectorNode getCannotReturnNode() {
             if (cannotReturnNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                cannotReturnNode = insert(SendSelectorNode.create(image.cannotReturn));
+                cannotReturnNode = insert(SendSelectorNode.create(lookupContext().cannotReturn));
             }
             return cannotReturnNode;
         }

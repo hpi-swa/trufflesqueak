@@ -84,6 +84,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimit
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.LinkProcessToListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
@@ -341,8 +342,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doWait(final VirtualFrame frame, final PointersObject receiver,
                         @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            linkProcessToListNode.executeLink(image.getActiveProcess(pointersReadNode), receiver);
+                        @Cached final GetActiveProcessNode getActiveProcessNode) {
+            linkProcessToListNode.executeLink(getActiveProcessNode.execute(), receiver);
             try {
                 wakeHighestPriorityNode.executeWake(frame);
             } catch (final ProcessSwitch ps) {
@@ -390,10 +391,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 88)
     protected abstract static class PrimSuspendNode extends AbstractPrimitiveStackPushNode implements UnaryPrimitive {
-        @Child protected AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
-        @Specialization(guards = "receiver.isActiveProcess(readNode)")
+        @Specialization(guards = "receiver == getActiveProcessNode.execute()", limit = "1")
         protected final Object doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final WakeHighestPriorityNode wakeHighestPriorityNode) {
             try {
                 wakeHighestPriorityNode.executeWake(frame);
@@ -405,9 +406,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return NilObject.SINGLETON;
         }
 
-        @Specialization(guards = {"!receiver.isActiveProcess(readNode)"})
-        protected final PointersObject doSuspendOtherProcess(final PointersObject receiver,
+        @Specialization(guards = {"receiver != getActiveProcessNode.execute()"}, limit = "1")
+        protected static final PointersObject doSuspendOtherProcess(final PointersObject receiver,
+                        @SuppressWarnings("unused") @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final RemoveProcessFromListNode removeProcessNode,
+                        @Cached final AbstractPointersObjectReadNode readNode,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {
             if (readNode.execute(receiver, PROCESS.LIST) == NilObject.SINGLETON) {
                 CompilerDirectives.transferToInterpreter();
@@ -773,10 +776,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final ArrayObjectReadNode arrayReadNode,
+                        @Cached final GetActiveProcessNode getActiveProcessNode,
                         @Cached final AbstractPointersObjectReadNode pointersReadNode) {
-            final PointersObject activeProcess = image.getActiveProcess(pointersReadNode);
+            final PointersObject activeProcess = getActiveProcessNode.execute();
             final long priority = pointersReadNode.executeLong(activeProcess, PROCESS.PRIORITY);
             final ArrayObject processLists = pointersReadNode.executeArray(scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
             final PointersObject processList = (PointersObject) arrayReadNode.execute(processLists, priority - 1);
@@ -861,26 +864,26 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         @Specialization(guards = "ownerIsNil(mutex)")
-        protected final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided,
+        protected static final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            writeNode.execute(mutex, MUTEX.OWNER, image.getActiveProcess(readNode));
+                        @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
+            writeNode.execute(mutex, MUTEX.OWNER, getActiveProcessNode.execute());
             return BooleanObject.FALSE;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "activeProcessMutexOwner(image, mutex)")
+        @Specialization(guards = "activeProcessMutexOwner(mutex, getActiveProcessNode)", limit = "1")
         protected static final boolean doEnterActiveProcessOwner(final PointersObject mutex, final NotProvided notProvided,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
             return BooleanObject.TRUE;
         }
 
-        @Specialization(guards = {"!ownerIsNil(mutex)", "!activeProcessMutexOwner(image, mutex)"})
+        @Specialization(guards = {"!ownerIsNil(mutex)", "!activeProcessMutexOwner(mutex, getActiveProcessNode)"}, limit = "1")
         protected final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("linkProcessToListNode") @Cached final LinkProcessToListNode linkProcessToListNode,
                         @Shared("wakeHighestPriorityNode") @Cached final WakeHighestPriorityNode wakeHighestPriorityNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            linkProcessToListNode.executeLink(image.getActiveProcess(readNode), mutex);
+                        @Shared("getActiveProcessNode") @Cached final GetActiveProcessNode getActiveProcessNode) {
+            linkProcessToListNode.executeLink(getActiveProcessNode.execute(), mutex);
             try {
                 wakeHighestPriorityNode.executeWake(frame);
             } catch (final ProcessSwitch ps) {
@@ -923,8 +926,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return readNode.execute(mutex, MUTEX.OWNER) == NilObject.SINGLETON;
         }
 
-        protected final boolean activeProcessMutexOwner(final SqueakImageContext image, final PointersObject mutex) {
-            return readNode.execute(mutex, MUTEX.OWNER) == image.getActiveProcess(readNode);
+        protected final boolean activeProcessMutexOwner(final PointersObject mutex, final GetActiveProcessNode getActiveProcessNode) {
+            return readNode.execute(mutex, MUTEX.OWNER) == getActiveProcessNode.execute();
         }
 
         protected final boolean isMutexOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
@@ -936,25 +939,23 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 187)
     protected abstract static class PrimTestAndSetOwnershipOfCriticalSectionNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        @Child private GetActiveProcessNode getActiveProcessNode = GetActiveProcessNode.create();
         @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         @Specialization(guards = {"ownerIsNil(rcvrMutex)"})
         protected final boolean doNilOwner(final PointersObject rcvrMutex,
-                        @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            writeNode.execute(rcvrMutex, MUTEX.OWNER, image.getActiveProcess(readNode));
+                        @Cached final AbstractPointersObjectWriteNode writeNode) {
+            writeNode.execute(rcvrMutex, MUTEX.OWNER, getActiveProcessNode.execute());
             return BooleanObject.FALSE;
         }
 
-        @Specialization(guards = {"ownerIsActiveProcess(image, rcvrMutex)"})
-        protected static final boolean doOwnerIsActiveProcess(@SuppressWarnings("unused") final PointersObject rcvrMutex,
-                        @SuppressWarnings("unused") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        @Specialization(guards = {"ownerIsActiveProcess(rcvrMutex)"})
+        protected static final boolean doOwnerIsActiveProcess(@SuppressWarnings("unused") final PointersObject rcvrMutex) {
             return BooleanObject.TRUE;
         }
 
-        @Specialization(guards = {"!ownerIsNil(rcvrMutex)", "!ownerIsActiveProcess(image, rcvrMutex)"})
-        protected static final Object doFallback(@SuppressWarnings("unused") final PointersObject rcvrMutex,
-                        @SuppressWarnings("unused") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        @Specialization(guards = {"!ownerIsNil(rcvrMutex)", "!ownerIsActiveProcess(rcvrMutex)"})
+        protected static final Object doFallback(@SuppressWarnings("unused") final PointersObject rcvrMutex) {
             return NilObject.SINGLETON;
         }
 
@@ -962,8 +963,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return readNode.execute(mutex, MUTEX.OWNER) == NilObject.SINGLETON;
         }
 
-        protected final boolean ownerIsActiveProcess(final SqueakImageContext image, final PointersObject mutex) {
-            return readNode.execute(mutex, MUTEX.OWNER) == image.getActiveProcess(readNode);
+        protected final boolean ownerIsActiveProcess(final PointersObject mutex) {
+            return readNode.execute(mutex, MUTEX.OWNER) == getActiveProcessNode.execute();
         }
     }
 
