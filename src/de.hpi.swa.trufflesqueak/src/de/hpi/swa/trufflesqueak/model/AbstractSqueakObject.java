@@ -113,7 +113,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             final int actualArity = arguments.length;
             final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(receiver), toSelector(member, actualArity));
             if (methodObject == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 /* DoesNotUnderstand, rewrite this specialization. */
                 throw new RespecializeException();
             }

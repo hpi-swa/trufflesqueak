@@ -483,7 +483,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         becomeOtherClass(other);
 
         if (instancesAreClasses != other.getSqueakClass().isMetaClass()) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             instancesAreClasses = other.getSqueakClass().isMetaClass();
         }
 

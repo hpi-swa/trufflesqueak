@@ -503,7 +503,7 @@ public final class SqueakImageContext {
 
     public String getImagePath() {
         if (imagePath == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             setImagePath(options.imagePath.isEmpty() ? SqueakImageLocator.findImage() : options.imagePath);
         }
         return imagePath;

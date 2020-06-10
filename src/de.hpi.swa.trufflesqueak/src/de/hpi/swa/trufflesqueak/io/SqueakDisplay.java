@@ -444,10 +444,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                         addDragEvent(DRAG.DROP, dtde.getLocation());
                         dtde.getDropTargetContext().dropComplete(true);
                         return;
-                    } catch (final UnsupportedFlavorException e) {
-                        CompilerDirectives.transferToInterpreter();
-                        e.printStackTrace();
-                    } catch (final IOException e) {
+                    } catch (final IOException | UnsupportedFlavorException e) {
                         CompilerDirectives.transferToInterpreter();
                         e.printStackTrace();
                     }

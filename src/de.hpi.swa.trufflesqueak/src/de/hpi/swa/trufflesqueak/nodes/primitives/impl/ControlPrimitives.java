@@ -108,7 +108,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected final FrameStackPointerIncrementNode getFrameStackPointerIncrementNode() {
             if (frameStackPointerIncrementNode == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 frameStackPointerIncrementNode = insert(FrameStackPointerIncrementNode.create());
             }
             return frameStackPointerIncrementNode;
@@ -120,7 +120,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected final FrameStackPushNode getFrameStackPushNode() {
             if (frameStackPushNode == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 frameStackPushNode = insert(FrameStackPushNode.create());
             }
             return frameStackPushNode;
