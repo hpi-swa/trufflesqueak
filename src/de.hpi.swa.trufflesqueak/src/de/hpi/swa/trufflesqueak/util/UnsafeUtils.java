@@ -88,7 +88,7 @@ public final class UnsafeUtils {
         return UNSAFE.getInt(storage, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_INT_INDEX_SCALE);
     }
 
-    public static int getIntAt(final AbstractPointersObject object, final long address) {
+    public static int getIntAt(final Object object, final long address) {
         return UNSAFE.getInt(object, address);
     }
 
@@ -229,8 +229,8 @@ public final class UnsafeUtils {
         UNSAFE.putInt(storage, Unsafe.ARRAY_INT_BASE_OFFSET + index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
     }
 
-    public static void putIntAt(final AbstractPointersObject object, final long address, final int value) {
-        UNSAFE.putInt(object, address, value);
+    public static void putIntAt(final Object object, final long offset, final int value) {
+        UNSAFE.putInt(object, offset, value);
     }
 
     public static void putIntIntoBytes(final byte[] bytes, final long index, final int value) {
