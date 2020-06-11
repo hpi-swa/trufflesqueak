@@ -931,27 +931,16 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#copyLoop */
     private void copyLoop() {
-        long destWord;
         long halftoneWord;
-        final long hInc;
-        long mergeWord;
-        final long notSkewMask;
-        long prevWord;
         final long skewMask;
-        long skewWord;
-        long thisWord;
         final long unskew;
-        long word;
-        int y;
 
         /* unskew is a bitShift and MUST remain signed, while skewMask is unsigned. */
-        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
-        assert mergeFnwith != null : "Unexpected `null` value";
         assert !(preload && skew == 0);
         assert -32 <= skew && skew <= 32; // Modified (image uses 31 instead of 32).
 
         /* Byte delta */
-        hInc = hDir * 4;
+        final long hInc = hDir * 4;
         if (skew < 0) {
             unskew = skew + 32;
             skewMask = shl(ALL_ONES, 0 - skew);
@@ -964,7 +953,7 @@ public final class BitBlt {
                 skewMask = shr(ALL_ONES, skew);
             }
         }
-        notSkewMask = ~skewMask;
+        final long notSkewMask = ~skewMask;
         if (noHalftone) {
             halftoneWord = ALL_ONES;
             halftoneHeight = 0;
@@ -976,148 +965,173 @@ public final class BitBlt {
          * Here is the vertical loop, in two versions, one for the combinationRule = 3 copy mode,
          * one for the general case.
          */
-        y = dy;
         if (combinationRule == 3) {
-            for (int i = 1; i <= bbH; i++) {
-                /*
-                 * here is the vertical loop for combinationRule = 3 copy mode; no need to call
-                 * merge
-                 */
-                if (halftoneHeight > 1) {
-                    /* Otherwise, its always the same */
-                    halftoneWord = halftoneLongAt(y);
-                    y += vDir;
-                }
-                if (preload) {
-                    /* load the 64-bit shifter */
-                    prevWord = srcLongAt(sourceIndex);
-                    sourceIndex += hInc;
-                } else {
-                    prevWord = 0;
-                }
-                destMask = mask1;
-                /* pick up next word */
-                thisWord = srcLongAt(sourceIndex);
+            copyLoopCombinationRule3(halftoneWord, hInc, notSkewMask, skewMask, unskew);
+        } else {
+            copyLoopGeneralCase(halftoneWord, hInc, notSkewMask, skewMask, unskew);
+        }
+    }
+
+    private void copyLoopCombinationRule3(final long initialHalftoneWord, final long hInc, final long notSkewMask, final long skewMask, final long unskew) {
+        long halftoneWord = initialHalftoneWord;
+        long destWord;
+        long prevWord;
+        long skewWord;
+        long thisWord;
+        long word;
+        int y = dy;
+        for (int i = 1; i <= bbH; i++) {
+            /*
+             * here is the vertical loop for combinationRule = 3 copy mode; no need to call merge
+             */
+            if (halftoneHeight > 1) {
+                /* Otherwise, its always the same */
+                halftoneWord = halftoneLongAt(y);
+                y += vDir;
+            }
+            if (preload) {
+                /* load the 64-bit shifter */
+                prevWord = srcLongAt(sourceIndex);
                 sourceIndex += hInc;
-                /* 32-bit rotate */
-                skewWord = shift(prevWord & notSkewMask, unskew) | shift(thisWord & skewMask, skew);
-                prevWord = thisWord;
-                destWord = dstLongAt(destIndex);
-                destWord = destMask & skewWord & halftoneWord | destWord & ~destMask;
-                dstLongAtput(destIndex, destWord);
-                destIndex += hInc;
-                destMask = ALL_ONES;
-                if (skew == 0 && halftoneWord == ALL_ONES) {
-                    /* Very special inner loop for STORE mode with no skew -- just move words */
-                    if (preload && hDir == 1) {
-                        for (word = 2; word < nWords; word++) {
-                            /* Note loop starts with prevWord loaded (due to preload) */
-                            dstLongAtput(destIndex, prevWord);
-                            destIndex += hInc;
-                            prevWord = srcLongAt(sourceIndex);
-                            sourceIndex += hInc;
-                        }
-                    } else {
-                        for (word = 2; word < nWords; word++) {
-                            thisWord = srcLongAt(sourceIndex);
-                            sourceIndex += hInc;
-                            dstLongAtput(destIndex, thisWord);
-                            destIndex += hInc;
-                        }
-                        prevWord = thisWord;
+            } else {
+                prevWord = 0;
+            }
+            destMask = mask1;
+            /* pick up next word */
+            thisWord = srcLongAt(sourceIndex);
+            sourceIndex += hInc;
+            /* 32-bit rotate */
+            skewWord = shift(prevWord & notSkewMask, unskew) | shift(thisWord & skewMask, skew);
+            prevWord = thisWord;
+            destWord = dstLongAt(destIndex);
+            destWord = destMask & skewWord & halftoneWord | destWord & ~destMask;
+            dstLongAtput(destIndex, destWord);
+            destIndex += hInc;
+            destMask = ALL_ONES;
+            if (skew == 0 && halftoneWord == ALL_ONES) {
+                /* Very special inner loop for STORE mode with no skew -- just move words */
+                if (preload && hDir == 1) {
+                    for (word = 2; word < nWords; word++) {
+                        /* Note loop starts with prevWord loaded (due to preload) */
+                        dstLongAtput(destIndex, prevWord);
+                        destIndex += hInc;
+                        prevWord = srcLongAt(sourceIndex);
+                        sourceIndex += hInc;
                     }
                 } else {
                     for (word = 2; word < nWords; word++) {
                         thisWord = srcLongAt(sourceIndex);
                         sourceIndex += hInc;
-                        /* 32-bit rotate */
-                        skewWord = shift(prevWord & notSkewMask, unskew) | shift(thisWord & skewMask, skew);
-                        prevWord = thisWord;
-                        dstLongAtput(destIndex, skewWord & halftoneWord);
+                        dstLongAtput(destIndex, thisWord);
                         destIndex += hInc;
                     }
+                    prevWord = thisWord;
                 }
-                if (nWords > 1) {
-                    destMask = mask2;
-                    if (((skew < 0 ? skewMask >> -skew : skewMask << skew) & mask2) == 0) {
-                        /* we don't need more bits, they will all come from prevWord */
-                        thisWord = 0;
-                    } else {
-                        thisWord = srcLongAt(sourceIndex);
-                    }
+            } else {
+                for (word = 2; word < nWords; word++) {
+                    thisWord = srcLongAt(sourceIndex);
                     sourceIndex += hInc;
                     /* 32-bit rotate */
                     skewWord = shift(prevWord & notSkewMask, unskew) | shift(thisWord & skewMask, skew);
-                    destWord = dstLongAt(destIndex);
-                    destWord = destMask & skewWord & halftoneWord | destWord & ~destMask;
-                    dstLongAtput(destIndex, destWord);
+                    prevWord = thisWord;
+                    dstLongAtput(destIndex, skewWord & halftoneWord);
                     destIndex += hInc;
                 }
-                sourceIndex += sourceDelta;
-                destIndex += destDelta;
             }
-        } else {
-            for (int i = 1; i <= bbH; i++) {
-                /* here is the vertical loop for the general case (combinationRule ~= 3) */
-                if (halftoneHeight > 1) {
-                    /* Otherwise, its always the same */
-                    halftoneWord = halftoneLongAt(y);
-                    y += vDir;
-                }
-                if (preload) {
-                    /* load the 64-bit shifter */
-                    prevWord = srcLongAt(sourceIndex);
-                    sourceIndex += hInc;
+            if (nWords > 1) {
+                destMask = mask2;
+                if (((skew < 0 ? skewMask >> -skew : skewMask << skew) & mask2) == 0) {
+                    /* we don't need more bits, they will all come from prevWord */
+                    thisWord = 0;
                 } else {
-                    prevWord = 0;
+                    thisWord = srcLongAt(sourceIndex);
                 }
-                destMask = mask1;
+                sourceIndex += hInc;
+                /* 32-bit rotate */
+                skewWord = shift(prevWord & notSkewMask, unskew) | shift(thisWord & skewMask, skew);
+                destWord = dstLongAt(destIndex);
+                destWord = destMask & skewWord & halftoneWord | destWord & ~destMask;
+                dstLongAtput(destIndex, destWord);
+                destIndex += hInc;
+            }
+            sourceIndex += sourceDelta;
+            destIndex += destDelta;
+        }
+    }
+
+    private void copyLoopGeneralCase(final long initialHalftoneWord, final long hInc, final long notSkewMask, final long skewMask, final long unskew) {
+        long halftoneWord = initialHalftoneWord;
+        long destWord;
+        long mergeWord;
+        long prevWord;
+        long skewWord;
+        long thisWord;
+        long word;
+
+        int y = dy;
+        final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
+        assert mergeFnwith != null : "Unexpected `null` value";
+
+        for (int i = 1; i <= bbH; i++) {
+            /* here is the vertical loop for the general case (combinationRule ~= 3) */
+            if (halftoneHeight > 1) {
+                /* Otherwise, its always the same */
+                halftoneWord = halftoneLongAt(y);
+                y += vDir;
+            }
+            if (preload) {
+                /* load the 64-bit shifter */
+                prevWord = srcLongAt(sourceIndex);
+                sourceIndex += hInc;
+            } else {
+                prevWord = 0;
+            }
+            destMask = mask1;
+            /* pick up next word */
+            thisWord = srcLongAt(sourceIndex);
+            sourceIndex += hInc;
+            /* 32-bit rotate */
+            skewWord = shift(prevWord & notSkewMask, unskew) | shift(thisWord & skewMask, skew);
+            prevWord = thisWord;
+            destWord = dstLongAt(destIndex);
+            mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord);
+            destWord = destMask & mergeWord | destWord & ~destMask;
+            dstLongAtput(destIndex, destWord);
+            destIndex += hInc;
+            destMask = ALL_ONES;
+            for (word = 2; word < nWords; word++) {
+                /* Normal inner loop does merge: */
                 /* pick up next word */
                 thisWord = srcLongAt(sourceIndex);
                 sourceIndex += hInc;
                 /* 32-bit rotate */
-                skewWord = shift(prevWord & notSkewMask, unskew) | shift(thisWord & skewMask, skew);
+                skewWord = (unskew < 0 ? (prevWord & notSkewMask) >>> -unskew : (prevWord & notSkewMask) << unskew) |
+                                (skew < 0 ? (thisWord & skewMask) >>> -skew : (thisWord & skewMask) << skew);
                 prevWord = thisWord;
+                mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, dstLongAt(destIndex));
+                dstLongAtput(destIndex, mergeWord);
+                destIndex += hInc;
+            }
+            if (nWords > 1) {
+                destMask = mask2;
+                if (((skew < 0 ? skewMask >> -skew : skewMask << skew) & mask2) == 0) {
+                    /* we don't need more bits, they will all come from prevWord */
+                    thisWord = 0;
+                } else {
+                    thisWord = srcLongAt(sourceIndex);
+                }
+                sourceIndex += hInc;
+                /* 32-bit rotate */
+                skewWord = (unskew < 0 ? (prevWord & notSkewMask) >>> -unskew : (prevWord & notSkewMask) << unskew) |
+                                (skew < 0 ? (thisWord & skewMask) >>> -skew : (thisWord & skewMask) << skew);
                 destWord = dstLongAt(destIndex);
                 mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord);
                 destWord = destMask & mergeWord | destWord & ~destMask;
                 dstLongAtput(destIndex, destWord);
                 destIndex += hInc;
-                destMask = ALL_ONES;
-                for (word = 2; word < nWords; word++) {
-                    /* Normal inner loop does merge: */
-                    /* pick up next word */
-                    thisWord = srcLongAt(sourceIndex);
-                    sourceIndex += hInc;
-                    /* 32-bit rotate */
-                    skewWord = (unskew < 0 ? (prevWord & notSkewMask) >>> -unskew : (prevWord & notSkewMask) << unskew) |
-                                    (skew < 0 ? (thisWord & skewMask) >>> -skew : (thisWord & skewMask) << skew);
-                    prevWord = thisWord;
-                    mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, dstLongAt(destIndex));
-                    dstLongAtput(destIndex, mergeWord);
-                    destIndex += hInc;
-                }
-                if (nWords > 1) {
-                    destMask = mask2;
-                    if (((skew < 0 ? skewMask >> -skew : skewMask << skew) & mask2) == 0) {
-                        /* we don't need more bits, they will all come from prevWord */
-                        thisWord = 0;
-                    } else {
-                        thisWord = srcLongAt(sourceIndex);
-                    }
-                    sourceIndex += hInc;
-                    /* 32-bit rotate */
-                    skewWord = (unskew < 0 ? (prevWord & notSkewMask) >>> -unskew : (prevWord & notSkewMask) << unskew) |
-                                    (skew < 0 ? (thisWord & skewMask) >>> -skew : (thisWord & skewMask) << skew);
-                    destWord = dstLongAt(destIndex);
-                    mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord);
-                    destWord = destMask & mergeWord | destWord & ~destMask;
-                    dstLongAtput(destIndex, destWord);
-                    destIndex += hInc;
-                }
-                sourceIndex += sourceDelta;
-                destIndex += destDelta;
             }
+            sourceIndex += sourceDelta;
+            destIndex += destDelta;
         }
     }
 
