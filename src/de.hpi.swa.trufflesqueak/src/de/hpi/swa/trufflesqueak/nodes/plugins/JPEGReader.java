@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -400,7 +401,8 @@ public final class JPEGReader {
      */
 
     /* JPEGReaderPlugin>>#primitiveColorConvertGrayscaleMCU */
-    public Object primitiveColorConvertGrayscaleMCU(final Object receiver, final ArrayObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveColorConvertGrayscaleMCU(final ArrayObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask) {
         ditherMask = (int) mask;
         residuals = residualArray.getIntStorage();
         jpegBits = bits.getIntStorage();
@@ -421,7 +423,6 @@ public final class JPEGReader {
             y = y < 1 ? 1 : y;
             jpegBits[i] = 0xFF000000 + (int) ((long) y << 16) + (int) ((long) y << 8) + y;
         }
-        return receiver;
     }
 
     /*
@@ -430,7 +431,8 @@ public final class JPEGReader {
      */
 
     /* JPEGReaderPlugin>>#primitiveColorConvertMCU */
-    public Object primitiveColorConvertMCU(final Object receiver, final PointersObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveColorConvertMCU(final PointersObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask) {
         int blockIndex;
         int blue;
         int cb;
@@ -511,7 +513,6 @@ public final class JPEGReader {
             blue = blue < 1 ? 1 : blue;
             jpegBits[i] = (int) (0xFF000000 + (Integer.toUnsignedLong(red) << 16) + (Integer.toUnsignedLong(green) << 8) + blue);
         }
-        return receiver;
     }
 
     /*
@@ -520,7 +521,8 @@ public final class JPEGReader {
      */
 
     /* JPEGReaderPlugin>>#primitiveDecodeMCU */
-    public Object primitiveDecodeMCU(final Object receiver, final NativeObject sampleBuffer, final PointersObject comp, final NativeObject dcTableValue, final NativeObject acTableValue,
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveDecodeMCU(final NativeObject sampleBuffer, final PointersObject comp, final NativeObject dcTableValue, final NativeObject acTableValue,
                     final PointersObject jpegStream) {
         if (!loadJPEGStreamFrom(jpegStream)) {
             throw PrimitiveFailed.GENERIC_ERROR;
@@ -534,11 +536,10 @@ public final class JPEGReader {
         }
         decodeBlockIntocomponent(sampleBuffer.getIntStorage(), yComponent);
         if (failed()) {
-            return null;
+            return;
         }
         storeJPEGStreamOn(jpegStream);
         storeIntegerofObjectwithValue(PriorDCValueIndex, comp, yComponent[PriorDCValueIndex]);
-        return receiver;
     }
 
     /*
@@ -546,7 +547,8 @@ public final class JPEGReader {
      */
 
     /* JPEGReaderPlugin>>#primitiveIdctInt */
-    public static Object primitiveIdctInt(final Object receiver, final NativeObject anArrayValue, final NativeObject qtValue) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public static void primitiveIdctInt(final NativeObject anArrayValue, final NativeObject qtValue) {
         int anACTerm;
         final int[] anArray;
         int dcval;
@@ -699,7 +701,6 @@ public final class JPEGReader {
             v = v < 0 ? 0 : v;
             anArray[i + 4] = v;
         }
-        return receiver;
     }
 
     /* JPEGReaderPlugin>>#scaleAndSignExtend:inFieldWidth: */
