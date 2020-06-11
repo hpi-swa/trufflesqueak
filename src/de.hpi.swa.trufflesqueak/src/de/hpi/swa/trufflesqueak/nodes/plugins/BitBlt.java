@@ -1208,7 +1208,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#copyLoopPixMap */
-    private long copyLoopPixMap() {
+    private void copyLoopPixMap() {
         final long destPixMask;
         long destWord;
         long dstShift;
@@ -1307,7 +1307,6 @@ public final class BitBlt {
             sourceIndex += sourceDelta;
             destIndex += destDelta;
         }
-        return 0;
     }
 
     /* Utility routine for computing Warp increments. */
@@ -3036,7 +3035,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#rgbComponentAlpha8 */
-    private long rgbComponentAlpha8() {
+    private void rgbComponentAlpha8() {
         long adjust;
         int deltaX;
         int deltaY;
@@ -3128,7 +3127,6 @@ public final class BitBlt {
             srcY++;
             dstY++;
         }
-        return 0;
     }
 
     /*
@@ -3658,7 +3656,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#warpLoop */
-    private long warpLoop(final long smoothingCountValue, final AbstractSqueakObject sourceMapOopValue) {
+    private void warpLoop(final long smoothingCountValue, final AbstractSqueakObject sourceMapOopValue) {
         final int deltaP12x;
         final int deltaP12y;
         final int deltaP43x;
@@ -3719,7 +3717,7 @@ public final class BitBlt {
             pBy = words - nSteps * deltaP43y;
         }
         if (failed()) {
-            return 0;
+            return;
         }
         if (sourceMapOopValue != null) {
             smoothingCount = smoothingCountValue;
@@ -3866,7 +3864,6 @@ public final class BitBlt {
             /* begin incDestIndex: */
             destIndex += destDelta;
         }
-        return 0;
     }
 
     /* Setup values for faster pixel fetching. */
