@@ -50,7 +50,6 @@ public final class ZipPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveInflateDecompressBlock")
     protected abstract static class PrimInflateDecompressBlockNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Specialization(guards = {"hasValidArguments(image, receiver, llTable, dTable)"})
-        @TruffleBoundary(transferToInterpreterOnException = false)
         protected static final PointersObject doInflateDecompressBlock(final PointersObject receiver, final NativeObject llTable, final NativeObject dTable,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             image.zip.primitiveInflateDecompressBlock(receiver, llTable, dTable);

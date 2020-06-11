@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -214,40 +215,32 @@ public final class Zip {
 
     /* DeflatePlugin>>#deflateBlock:chainLength:goodMatch: */
     private boolean deflateBlockchainLengthgoodMatch(final int lastIndex, final int chainLength, final int goodMatch) {
-        boolean flushNeeded;
-        int hasMatch;
-        int here;
-        int hereLength;
-        int hereMatch;
-        int matchResult;
-        int newLength;
-        int newMatch;
-
-        hereLength = 0;
-        hereMatch = 0;
+        int hereLength = 0;
+        int hereMatch = 0;
         if (zipBlockPos > lastIndex) {
             return false;
         }
         if (zipLiteralCount >= zipLiteralSize) {
             return true;
         }
-        hasMatch = 0;
-        here = zipBlockPos;
+        int hasMatch = 0;
+        int here = zipBlockPos;
         while (here <= lastIndex) {
             if (hasMatch == 0) {
                 /* Find the first match */
-                matchResult = findMatchlastLengthlastMatchchainLengthgoodMatch(here, DeflateMinMatch - 1, here, chainLength, goodMatch);
+                final int matchResult = findMatchlastLengthlastMatchchainLengthgoodMatch(here, DeflateMinMatch - 1, here, chainLength, goodMatch);
                 insertStringAt(here);
                 hereMatch = matchResult & 0xFFFF;
                 hereLength = matchResult >> 16;
             }
-            matchResult = findMatchlastLengthlastMatchchainLengthgoodMatch(here + 1, hereLength, hereMatch, chainLength, goodMatch);
-            newMatch = matchResult & 0xFFFF;
+            final int matchResult = findMatchlastLengthlastMatchchainLengthgoodMatch(here + 1, hereLength, hereMatch, chainLength, goodMatch);
+            final int newMatch = matchResult & 0xFFFF;
             /*
              * Now check if the next match is better than the current one. If not, output the
              * current match (provided that the current match is at least MinMatch long)
              */
-            newLength = matchResult >> 16;
+            final int newLength = matchResult >> 16;
+            final boolean flushNeeded;
             if (hereLength >= newLength && hereLength >= DeflateMinMatch) {
                 /* Encode the current match */
                 flushNeeded = encodeMatchdistance(hereLength, here - hereMatch);
@@ -359,42 +352,35 @@ public final class Zip {
 
     /* DeflatePlugin>>#findMatch:lastLength:lastMatch:chainLength:goodMatch: */
     private int findMatchlastLengthlastMatchchainLengthgoodMatch(final int here, final int lastLength, final int lastMatch, final int maxChainLength, final int goodMatch) {
-        int bestLength;
-        int chainLength;
-        final int distance;
-        int length;
-        final int limit;
-        int matchPos; // This should be unsigned int
-        int matchResult;
-
         /* Compute the default match result */
 
         /* There is no way to find a better match than MaxMatch */
-        matchResult = lastLength << 16 | lastMatch;
+        int matchResult = lastLength << 16 | lastMatch;
         if (lastLength >= DeflateMaxMatch) {
             return matchResult;
         }
         /* Compute the distance to the (possible) match */
-        matchPos = zipHashHead[updateHashAt(here + DeflateMinMatch - 1)];
+        int matchPos = zipHashHead[updateHashAt(here + DeflateMinMatch - 1)];
         /* Note: It is required that 0 < distance < MaxDistance */
-        distance = here - matchPos;
+        final int distance = here - matchPos;
         if (!(distance > 0 && distance < DeflateMaxDistance)) {
             return matchResult;
         }
         /* Max. nr of match chain to search */
-        chainLength = maxChainLength;
+        int chainLength = maxChainLength;
+        final int limit;
         if (here > DeflateMaxDistance) {
             /* Limit for matches that are too old */
             limit = here - DeflateMaxDistance;
         } else {
             limit = 0;
         }
-        bestLength = lastLength;
+        int bestLength = lastLength;
         while (true) {
             /* Compare the current string with the string at match position */
 
             /* Truncate accidental matches beyound stream position */
-            length = comparewithmin(here, matchPos, bestLength);
+            int length = comparewithmin(here, matchPos, bestLength);
             if (here + length > zipPosition) {
                 length = zipPosition - here;
             }
@@ -511,14 +497,10 @@ public final class Zip {
 
     /* DeflatePlugin>>#primitiveDeflateUpdateHashTable */
     public static void primitiveDeflateUpdateHashTable(final NativeObject table, final int delta) {
-        int entry;
-        final int tableSize;
-        final int[] tableInts;
-
-        tableInts = table.getIntStorage();
-        tableSize = tableInts.length;
+        final int[] tableInts = table.getIntStorage();
+        final int tableSize = tableInts.length;
         for (int i = 0; i < tableSize; i++) {
-            entry = tableInts[i];
+            final int entry = tableInts[i];
             if (entry >= delta) {
                 tableInts[i] = entry - delta;
             } else {
@@ -530,6 +512,7 @@ public final class Zip {
     /* Primitive. Inflate a single block. */
 
     /* InflatePlugin>>#primitiveInflateDecompressBlock */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public void primitiveInflateDecompressBlock(final PointersObject rcvr, final NativeObject llTable, final NativeObject dTable) {
         zipDistTable = dTable.getIntStorage();
         /* literal table */
@@ -565,21 +548,15 @@ public final class Zip {
 
     /* DeflatePlugin>>#primitiveUpdateAdler32 */
     public static long primitiveUpdateAdler32(final long adler32, final int startIndex, final int stopIndex, final NativeObject collection) {
-        int b;
-        int s1;
-        int s2;
-        final int result;
-
         final byte[] bytes = collection.getByteStorage();
-        s1 = (int) (adler32 & 0xFFFF);
-        s2 = (int) (adler32 >> 16 & 0xFFFF);
+        int s1 = (int) (adler32 & 0xFFFF);
+        int s2 = (int) (adler32 >> 16 & 0xFFFF);
         for (int i = startIndex - 1; i <= stopIndex - 1; i++) {
-            b = Byte.toUnsignedInt(bytes[i]);
+            final int b = Byte.toUnsignedInt(bytes[i]);
             s1 = mod(s1 + b, 65521);
             s2 = mod(s2 + s1, 65521);
         }
-        result = (s2 << 16) + s1;
-        return Integer.toUnsignedLong(result);
+        return Integer.toUnsignedLong((s2 << 16) + s1);
     }
 
     /* Primitive. Update a 32bit CRC value. */
@@ -587,7 +564,6 @@ public final class Zip {
     /* DeflatePlugin>>#primitiveUpdateGZipCrc32 */
     public static long primitiveUpdateGZipCrc32(final NativeObject collection, final int startIndex, final int stopIndex, final long crc) {
         long result = crc;
-
         final byte[] bytes = collection.getByteStorage();
         for (int i = startIndex - 1; i <= stopIndex - 1; i++) {
             result = zipCrcTable[(int) ((result ^ Byte.toUnsignedInt(bytes[i])) & 0xFF)] ^ result >> 8;
@@ -620,43 +596,27 @@ public final class Zip {
     /* DeflatePlugin>>#sendBlock:with:with:with: */
     private int sendBlockwithwithwith(final PointersObject literalStream, final PointersObject distanceStream, final PointersObject litTree,
                     final PointersObject distTree) {
-        int code;
-        int dist;
-        final int[] distArray;
-        final int[] distBitLengths;
-        final int distBlCount;
-        final int[] distCodes;
-        int extra;
-        byte lit;
-        final byte[] litArray;
-        final int litBlCount;
-        final int litLimit;
-        int litPos;
-        final int[] llBitLengths;
-        final int[] llCodes;
-        int sum;
-
-        litPos = fetchIntegerofObject(1, literalStream);
-        litLimit = fetchIntegerofObject(2, literalStream);
-        litArray = fetchBytePointerOfObject(literalStream, 0);
+        int litPos = fetchIntegerofObject(1, literalStream);
+        final int litLimit = fetchIntegerofObject(2, literalStream);
+        final byte[] litArray = fetchBytePointerOfObject(literalStream, 0);
         if (!(litPos <= litLimit && litLimit <= litArray.length)) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
-        distArray = fetchNativePointerOfObject(distanceStream, 0);
+        final int[] distArray = fetchNativePointerOfObject(distanceStream, 0);
         if (!(litLimit <= distArray.length && fetchIntegerofObject(1, distanceStream) == litPos && fetchIntegerofObject(2, distanceStream) == litLimit)) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
-        llBitLengths = fetchNativePointerOfObject(litTree, 0);
-        litBlCount = llBitLengths.length;
-        llCodes = fetchNativePointerOfObjectWithExpectedLength(litTree, 1, litBlCount);
-        distBitLengths = fetchNativePointerOfObject(distTree, 0);
-        distBlCount = distBitLengths.length;
-        distCodes = fetchNativePointerOfObjectWithExpectedLength(distTree, 1, distBlCount);
+        final int[] llBitLengths = fetchNativePointerOfObject(litTree, 0);
+        final int litBlCount = llBitLengths.length;
+        final int[] llCodes = fetchNativePointerOfObjectWithExpectedLength(litTree, 1, litBlCount);
+        final int[] distBitLengths = fetchNativePointerOfObject(distTree, 0);
+        final int distBlCount = distBitLengths.length;
+        final int[] distCodes = fetchNativePointerOfObjectWithExpectedLength(distTree, 1, distBlCount);
         nextZipBitsput(0, 0);
-        sum = 0;
+        int sum = 0;
         while (litPos < litLimit && zipPosition + 4 < zipCollectionSize) {
-            lit = litArray[litPos];
-            dist = distArray[litPos];
+            byte lit = litArray[litPos];
+            int dist = distArray[litPos];
             litPos++;
             if (dist == 0) {
                 /* literal */
@@ -671,12 +631,12 @@ public final class Zip {
                 if (Byte.toUnsignedInt(lit) >= 256) {
                     throw PrimitiveFailed.GENERIC_ERROR;
                 }
-                code = zipMatchLengthCodes[Byte.toUnsignedInt(lit)];
+                int code = zipMatchLengthCodes[Byte.toUnsignedInt(lit)];
                 if (code >= litBlCount) {
                     throw PrimitiveFailed.GENERIC_ERROR;
                 }
                 nextZipBitsput(llBitLengths[code], llCodes[code]);
-                extra = zipExtraLengthBits[code - 257];
+                int extra = zipExtraLengthBits[code - 257];
                 if (extra != 0) {
                     lit -= zipBaseLength[code - 257];
                     nextZipBitsput(extra, Byte.toUnsignedInt(lit));
@@ -755,28 +715,22 @@ public final class Zip {
 
     /* InflatePlugin>>#zipDecodeValueFrom:size: */
     private int zipDecodeValueFromsize(final int[] table /* unsigned */, final int tableSize) {
-        int bits;
-        int bitsNeeded;
-        int index;
-        int tableIndex;
-        int value;
-
         /* Initial bits needed */
-        bitsNeeded = (int) (Integer.toUnsignedLong(table[0]) >> 24);
+        int bitsNeeded = (int) (Integer.toUnsignedLong(table[0]) >> 24);
         if (bitsNeeded > MaxBits) {
             throw PrimitiveFailed.GENERIC_ERROR;
         }
         /* First real table */
-        tableIndex = 2;
+        int tableIndex = 2;
         while (true) {
             /* Get bits */
-            bits = zipNextBits(bitsNeeded);
-            index = tableIndex + bits - 1;
+            final int bits = zipNextBits(bitsNeeded);
+            final int index = tableIndex + bits - 1;
             if (index >= tableSize) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
             /* Lookup entry in table */
-            value = table[index];
+            final int value = table[index];
             if ((value & 0x3F000000) == 0) {
                 return value;
             }
@@ -792,23 +746,13 @@ public final class Zip {
 
     /* InflatePlugin>>#zipDecompressBlock */
     private void zipDecompressBlock() {
-        int distance;
-        int dstPos;
-        int extra;
-        int length;
-        int oldBitPos;
-        int oldBits;
-        int oldPos;
-        int srcPos;
-        int value;
-
         final int max = zipCollectionSize - 1;
         while (zipReadLimit < max && zipSourcePos <= zipSourceLimit) {
             /* Back up stuff if we're running out of space */
-            oldBits = zipBitBuf;
-            oldBitPos = zipBitPos;
-            oldPos = zipSourcePos;
-            value = zipDecodeValueFromsize(zipLitTable, zipLitTableSize);
+            final int oldBits = zipBitBuf;
+            final int oldBitPos = zipBitPos;
+            final int oldPos = zipSourcePos;
+            int value = zipDecodeValueFromsize(zipLitTable, zipLitTableSize);
             if (value < 256) {
                 /* A literal */
                 zipCollection[++zipReadLimit] = (byte) value;
@@ -817,14 +761,14 @@ public final class Zip {
                 zipState = zipState & StateNoMoreData;
                 return;
             } else {
-                extra = (value >> 16) - 1;
-                length = value & 0xFFFF;
+                int extra = (value >> 16) - 1;
+                int length = value & 0xFFFF;
                 if (extra > 0) {
                     length += zipNextBits(extra);
                 }
                 value = zipDecodeValueFromsize(zipDistTable, zipDistTableSize);
                 extra = value >> 16;
-                distance = value & 0xFFFF;
+                int distance = value & 0xFFFF;
                 if (extra > 0) {
                     distance += zipNextBits(extra);
                 }
@@ -834,8 +778,8 @@ public final class Zip {
                     zipSourcePos = oldPos;
                     return;
                 } else {
-                    dstPos = zipReadLimit;
-                    srcPos = zipReadLimit - distance;
+                    final int dstPos = zipReadLimit;
+                    final int srcPos = zipReadLimit - distance;
                     for (int i = 1; i <= length; i += 1) {
                         zipCollection[dstPos + i] = zipCollection[srcPos + i];
                     }
@@ -847,10 +791,8 @@ public final class Zip {
 
     /* InflatePlugin>>#zipNextBits: */
     private int zipNextBits(final int n) {
-        int byteValue;
-
         while (zipBitPos < n) {
-            byteValue = Byte.toUnsignedInt(zipSource[++zipSourcePos]);
+            final int byteValue = Byte.toUnsignedInt(zipSource[++zipSourcePos]);
             zipBitBuf += shl(byteValue, zipBitPos);
             zipBitPos += 8;
         }
