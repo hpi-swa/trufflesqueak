@@ -4513,7 +4513,8 @@ public final class B2D {
     /* Note: No need to load either bitBlt or spanBuffer */
 
     /* BalloonEngineBase>>#primitiveAddActiveEdgeEntry */
-    public PointersObject primitiveAddActiveEdgeEntry(final PointersObject receiver, final PointersObject edgeEntry) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveAddActiveEdgeEntry(final PointersObject receiver, final PointersObject edgeEntry) {
         if (doProfileStats) {
             geProfileTime = ioMicroMSecs();
         }
@@ -4537,11 +4538,11 @@ public final class B2D {
             incrementStatby(GW_COUNT_ADD_AET_ENTRY, 1);
             incrementStatby(GW_TIME_ADD_AET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
-        return receiver;
     }
 
     /* BalloonEnginePlugin>>#primitiveAddBezier */
-    public PointersObject primitiveAddBezier(final PointersObject receiver, final PointersObject start, final PointersObject end, final PointersObject via, final long leftFillValue,
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveAddBezier(final PointersObject receiver, final PointersObject start, final PointersObject end, final PointersObject via, final long leftFillValue,
                     final long rightFillValue) {
         final long nSegments;
         long leftFill = leftFillValue;
@@ -4582,11 +4583,11 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEnginePlugin>>#primitiveAddBezierShape */
-    public PointersObject primitiveAddBezierShape(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillIndexValue, final long lineWidthValue,
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveAddBezierShape(final PointersObject receiver, final AbstractSqueakObject points, final long nSegments, final long fillIndexValue, final long lineWidthValue,
                     final long lineFillValue) {
         final long length;
         final boolean pointsIsArray;
@@ -4632,7 +4633,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if ((lineFill == 0 || lineWidth == 0) && fillIndex == 0) {
-            return receiver;
+            return;
         }
         if (lineWidth != 0) {
             lineWidth = transformWidth(lineWidth);
@@ -4653,10 +4654,10 @@ public final class B2D {
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEnginePlugin>>#primitiveAddBitmapFill */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long primitiveAddBitmapFill(final PointersObject receiver, final PointersObject formOop, final AbstractSqueakObject cmOop, final boolean tileFlag, final PointersObject origin,
                     final PointersObject direction, final PointersObject normal, final long xIndex) {
         final long fill;
@@ -4684,7 +4685,8 @@ public final class B2D {
     }
 
     /* BalloonEnginePlugin>>#primitiveAddCompressedShape */
-    public PointersObject primitiveAddCompressedShape(final PointersObject receiver, final NativeObject points, final long nSegments, final NativeObject leftFills,
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveAddCompressedShape(final PointersObject receiver, final NativeObject points, final long nSegments, final NativeObject leftFills,
                     final NativeObject rightFills, final NativeObject lineWidths, final NativeObject lineFills, final NativeObject fillIndexList) {
         final boolean pointsShort;
 
@@ -4714,14 +4716,12 @@ public final class B2D {
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEnginePlugin>>#primitiveAddGradientFill */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long primitiveAddGradientFill(final PointersObject receiver, final NativeObject colorRamp, final PointersObject origin, final PointersObject direction, final PointersObject normal,
                     final boolean isRadial) {
-        final long fill;
-
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -4732,9 +4732,8 @@ public final class B2D {
         if (failed()) {
             PrimitiveFailed.andTransferToInterpreter(GEF_BAD_POINT);
         }
-        fill = loadGradientFillfromalongnormalisRadial(colorRamp, isRadial);
+        final long fill = loadGradientFillfromalongnormalisRadial(colorRamp, isRadial);
         if (engineStopped) {
-
             /* Make sure the stack is okay */
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
@@ -4746,7 +4745,8 @@ public final class B2D {
     }
 
     /* BalloonEnginePlugin>>#primitiveAddLine */
-    public PointersObject primitiveAddLine(final PointersObject receiver, final PointersObject start, final PointersObject end, final long leftFillValue, final long rightFillValue) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveAddLine(final PointersObject receiver, final PointersObject start, final PointersObject end, final long leftFillValue, final long rightFillValue) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -4773,11 +4773,11 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENTITY_LOAD_FAILED);
         }
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEnginePlugin>>#primitiveAddOval */
-    public PointersObject primitiveAddOval(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndexValue, final long borderWidthValue,
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveAddOval(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndexValue, final long borderWidthValue,
                     final long borderIndexValue) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
@@ -4792,7 +4792,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (fillIndex == 0 && (borderIndex == 0 || borderWidthValue <= 0)) {
-            return receiver;
+            return;
         }
         if (!needAvailableSpace(16 * GB_BASE_SIZE)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
@@ -4818,11 +4818,11 @@ public final class B2D {
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEnginePlugin>>#primitiveAddPolygon */
-    public PointersObject primitiveAddPolygon(final PointersObject receiver, final AbstractSqueakObject points, final long nPoints, final long fillIndexValue, final long lineWidthValue,
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveAddPolygon(final PointersObject receiver, final AbstractSqueakObject points, final long nPoints, final long fillIndexValue, final long lineWidthValue,
                     final long lineFillValue) {
         final long length;
         final boolean pointsIsArray;
@@ -4868,7 +4868,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if ((lineFill == 0 || lineWidth == 0) && fillIndex == 0) {
-            return receiver;
+            return;
         }
         if (lineWidth != 0) {
             lineWidth = transformWidth(lineWidth);
@@ -4886,11 +4886,11 @@ public final class B2D {
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEnginePlugin>>#primitiveAddRect */
-    public PointersObject primitiveAddRect(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndexValue, final long borderWidthValue,
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveAddRect(final PointersObject receiver, final PointersObject start, final PointersObject end, final long fillIndexValue, final long borderWidthValue,
                     final long borderIndexValue) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
@@ -4905,7 +4905,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(GEF_ENGINE_STOPPED);
         }
         if (fillIndex == 0 && (borderIndex == 0 || borderWidthValue == 0)) {
-            return receiver;
+            return;
         }
         if (!needAvailableSpace(4 * GL_BASE_SIZE)) {
             PrimitiveFailed.andTransferToInterpreter(GEF_WORK_TOO_BIG);
@@ -4932,13 +4932,13 @@ public final class B2D {
         }
         needsFlushPut(1);
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* Note: No need to load either bitBlt or spanBuffer */
 
     /* BalloonEngineBase>>#primitiveChangedActiveEdgeEntry */
-    public PointersObject primitiveChangedActiveEdgeEntry(final PointersObject receiver, final PointersObject edgeEntry) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveChangedActiveEdgeEntry(final PointersObject receiver, final PointersObject edgeEntry) {
         final long edge;
 
         if (doProfileStats) {
@@ -4961,11 +4961,11 @@ public final class B2D {
             incrementStatby(GW_COUNT_CHANGE_AET_ENTRY, 1);
             incrementStatby(GW_TIME_CHANGE_AET_ENTRY, ioMicroMSecs() - geProfileTime);
         }
-        return receiver;
     }
 
     /* BalloonEngineBase>>#primitiveCopyBuffer */
-    public PointersObject primitiveCopyBuffer(final PointersObject receiver, final NativeObject buf1, final NativeObject buf2) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveCopyBuffer(final NativeObject buf1, final NativeObject buf2) {
         final int diff;
 
         /* Make sure the old buffer is properly initialized */
@@ -4996,13 +4996,13 @@ public final class B2D {
         if (failureCode2 != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode2);
         }
-        return receiver;
     }
 
     /* Note: Must load bitBlt and spanBuffer */
 
     /* BalloonEngineBase>>#primitiveDisplaySpanBuffer */
-    public PointersObject primitiveDisplaySpanBuffer(final PointersObject receiver) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveDisplaySpanBuffer(final PointersObject receiver) {
         if (doProfileStats) {
             geProfileTime = ioMicroMSecs();
         }
@@ -5031,20 +5031,20 @@ public final class B2D {
             incrementStatby(GW_COUNT_DISPLAY_SPAN, 1);
             incrementStatby(GW_TIME_DISPLAY_SPAN, ioMicroMSecs() - geProfileTime);
         }
-        return receiver;
     }
 
     /* Turn on/off profiling. Return the old value of the flag. */
 
     /* BalloonEngineBase>>#primitiveDoProfileStats */
-    public boolean primitiveDoProfileStats(@SuppressWarnings("unused") final Object receiver, final boolean newValue) {
+    public boolean primitiveDoProfileStats(final boolean newValue) {
         final boolean oldValue = doProfileStats;
         doProfileStats = newValue;
         return BooleanObject.wrap(oldValue);
     }
 
     /* BalloonEngineBase>>#primitiveFinishedProcessing */
-    public Object primitiveFinishedProcessing(final PointersObject receiver) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public boolean primitiveFinishedProcessing(final PointersObject receiver) {
         if (doProfileStats) {
             geProfileTime = ioMicroMSecs();
         }
@@ -5071,21 +5071,20 @@ public final class B2D {
     }
 
     /* BalloonEnginePlugin>>#primitiveGetBezierStats */
-    public Object primitiveGetBezierStats(final PointersObject receiver, final NativeObject statOop) {
+    public void primitiveGetBezierStats(final PointersObject receiver, final NativeObject statOop) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final int[] stats = statOop.getIntStorage();
-        stats[0] = stats[0] + workBuffer[GW_BEZIER_MONOTON_SUBDIVISIONS];
-        stats[1] = stats[1] + workBuffer[GW_BEZIER_HEIGHT_SUBDIVISIONS];
-        stats[2] = stats[2] + workBuffer[GW_BEZIER_OVERFLOW_SUBDIVISIONS];
-        stats[3] = stats[3] + workBuffer[GW_BEZIER_LINE_CONVERSIONS];
-        return receiver;
+        stats[0] += workBuffer[GW_BEZIER_MONOTON_SUBDIVISIONS];
+        stats[1] += workBuffer[GW_BEZIER_HEIGHT_SUBDIVISIONS];
+        stats[2] += workBuffer[GW_BEZIER_OVERFLOW_SUBDIVISIONS];
+        stats[3] += workBuffer[GW_BEZIER_LINE_CONVERSIONS];
     }
 
     /* BalloonEngineBase>>#primitiveGetClipRect */
-    public PointersObject primitiveGetClipRect(final AbstractPointersObjectWriteNode writeNode, final PointersObject receiver, final PointersObject rectOop) {
+    public void primitiveGetClipRect(final AbstractPointersObjectWriteNode writeNode, final PointersObject receiver, final PointersObject rectOop) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -5094,26 +5093,24 @@ public final class B2D {
         storeValue(0, rectOop, pointOop);
         pointOop = image.asPoint(writeNode, clipMaxXGet(), clipMaxYGet());
         storeValue(1, rectOop, pointOop);
-        return rectOop;
     }
 
     /* BalloonEngineBase>>#primitiveGetCounts */
-    public Object primitiveGetCounts(final PointersObject receiver, final NativeObject statOop) {
+    public void primitiveGetCounts(final PointersObject receiver, final NativeObject statOop) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         final int[] stats = statOop.getIntStorage();
-        stats[0] = stats[0] + workBuffer[GW_COUNT_INITIALIZING];
-        stats[1] = stats[1] + workBuffer[GW_COUNT_FINISH_TEST];
-        stats[2] = stats[2] + workBuffer[GW_COUNT_NEXT_GET_ENTRY];
-        stats[3] = stats[3] + workBuffer[GW_COUNT_ADD_AET_ENTRY];
-        stats[4] = stats[4] + workBuffer[GW_COUNT_NEXT_FILL_ENTRY];
-        stats[5] = stats[5] + workBuffer[GW_COUNT_MERGE_FILL];
-        stats[6] = stats[6] + workBuffer[GW_COUNT_DISPLAY_SPAN];
-        stats[7] = stats[7] + workBuffer[GW_COUNT_NEXT_AET_ENTRY];
-        stats[8] = stats[8] + workBuffer[GW_COUNT_CHANGE_AET_ENTRY];
-        return receiver;
+        stats[0] += workBuffer[GW_COUNT_INITIALIZING];
+        stats[1] += workBuffer[GW_COUNT_FINISH_TEST];
+        stats[2] += workBuffer[GW_COUNT_NEXT_GET_ENTRY];
+        stats[3] += workBuffer[GW_COUNT_ADD_AET_ENTRY];
+        stats[4] += workBuffer[GW_COUNT_NEXT_FILL_ENTRY];
+        stats[5] += workBuffer[GW_COUNT_MERGE_FILL];
+        stats[6] += workBuffer[GW_COUNT_DISPLAY_SPAN];
+        stats[7] += workBuffer[GW_COUNT_NEXT_AET_ENTRY];
+        stats[8] += workBuffer[GW_COUNT_CHANGE_AET_ENTRY];
     }
 
     /* BalloonEngineBase>>#primitiveGetDepth */
@@ -5128,6 +5125,7 @@ public final class B2D {
     /* Return the reason why the last operation failed. */
 
     /* BalloonEngineBase>>#primitiveGetFailureReason */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long primitiveGetFailureReason(final PointersObject receiver) {
         /*
          * Note -- don't call loadEngineFrom here because this will override the stopReason with
@@ -5154,7 +5152,7 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveGetTimes */
-    public Object primitiveGetTimes(final PointersObject receiver, final NativeObject statsArray) {
+    public void primitiveGetTimes(final PointersObject receiver, final NativeObject statsArray) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -5169,11 +5167,10 @@ public final class B2D {
         stats[6] += workBuffer[GW_TIME_DISPLAY_SPAN];
         stats[7] += workBuffer[GW_TIME_NEXT_AET_ENTRY];
         stats[8] += workBuffer[GW_TIME_CHANGE_AET_ENTRY];
-        return receiver;
     }
 
     /* BalloonEngineBase>>#primitiveInitializeBuffer */
-    public NativeObject primitiveInitializeBuffer(@SuppressWarnings("unused") final Object receiver, final NativeObject wbOop) {
+    public void primitiveInitializeBuffer(final NativeObject wbOop) {
         final int size = wbOop.getIntLength();
 
         workBufferPut(wbOop);
@@ -5201,13 +5198,13 @@ public final class B2D {
         resetGraphicsEngineStats();
         initEdgeTransform();
         initColorTransform();
-        return wbOop;
     }
 
     /* Note: No need to load bitBlt but must load spanBuffer */
 
     /* BalloonEngineBase>>#primitiveInitializeProcessing */
-    public PointersObject primitiveInitializeProcessing(final PointersObject receiver) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveInitializeProcessing(final PointersObject receiver) {
         if (doProfileStats) {
             geProfileTime = ioMicroMSecs();
         }
@@ -5231,13 +5228,13 @@ public final class B2D {
             incrementStatby(GW_COUNT_INITIALIZING, 1);
             incrementStatby(GW_TIME_INITIALIZING, ioMicroMSecs() - geProfileTime);
         }
-        return receiver;
     }
 
     /* Note: No need to load bitBlt but must load spanBuffer */
 
     /* BalloonEngineBase>>#primitiveMergeFillFrom */
-    public Object primitiveMergeFillFrom(final PointersObject receiver, final NativeObject bitsOop, final PointersObject fillOop) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveMergeFillFrom(final PointersObject receiver, final NativeObject bitsOop, final PointersObject fillOop) {
         long value;
 
         if (doProfileStats) {
@@ -5271,7 +5268,7 @@ public final class B2D {
             PrimitiveFailed.andTransferToInterpreter(ERROR_TABLE.BAD_ARGUMENT.ordinal());
         }
         if (failed()) {
-            return null;
+            return;
         }
         fillBitmapSpanfromto(bitsOop.getIntStorage(), lastExportedLeftXGet(), lastExportedRightXGet());
         statePut(GE_STATE_SCANNING_AET);
@@ -5280,7 +5277,6 @@ public final class B2D {
             incrementStatby(GW_COUNT_MERGE_FILL, 1);
             incrementStatby(GW_TIME_MERGE_FILL, ioMicroMSecs() - geProfileTime);
         }
-        return receiver;
     }
 
     /* BalloonEngineBase>>#primitiveNeedsFlush */
@@ -5297,7 +5293,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveNeedsFlushPut */
-    public Object primitiveNeedsFlushPut(final PointersObject receiver, final boolean needFlush) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveNeedsFlushPut(final PointersObject receiver, final boolean needFlush) {
         final int failureCode = quickLoadEngineFrom(receiver);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -5308,12 +5305,12 @@ public final class B2D {
             needsFlushPut(0);
         }
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* Note: No need to load either bitBlt or spanBuffer */
 
     /* BalloonEngineBase>>#primitiveNextActiveEdgeEntry */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean primitiveNextActiveEdgeEntry(final PointersObject receiver, final PointersObject edgeEntry) {
         final int edge;
         boolean hasEdge;
@@ -5348,6 +5345,7 @@ public final class B2D {
     /* Note: No need to load bitBlt but must load spanBuffer */
 
     /* BalloonEngineBase>>#primitiveNextFillEntry */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean primitiveNextFillEntry(final PointersObject receiver, final PointersObject fillOop) {
         final boolean hasFill;
 
@@ -5399,6 +5397,7 @@ public final class B2D {
     /* Note: No need to load either bitBlt or spanBuffer */
 
     /* BalloonEngineBase>>#primitiveNextGlobalEdgeEntry */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public boolean primitiveNextGlobalEdgeEntry(final PointersObject receiver, final PointersObject edgeEntry) {
         final int edge;
         final boolean hasEdge;
@@ -5437,7 +5436,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveRegisterExternalEdge */
-    public PointersObject primitiveRegisterExternalEdge(final PointersObject receiver, final long index, final long initialX, final long initialY, final long initialZ, final long leftFillIndex,
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveRegisterExternalEdge(final PointersObject receiver, final long index, final long initialX, final long initialY, final long initialZ, final long leftFillIndex,
                     final long rightFillIndex) {
         final int edge;
 
@@ -5468,10 +5468,10 @@ public final class B2D {
         if (!failed()) {
             storeEngineStateInto(engine);
         }
-        return receiver;
     }
 
     /* BalloonEngineBase>>#primitiveRegisterExternalFill */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long primitiveRegisterExternalFill(final PointersObject receiver, final long index) {
         int fill;
 
@@ -5498,6 +5498,7 @@ public final class B2D {
     /* Start/Proceed rendering the entire image */
 
     /* BalloonEngineBase>>#primitiveRenderImage */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long primitiveRenderImage(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
         final int failCode = loadRenderingState(receiver, edge, fill);
         if (failCode != 0) {
@@ -5514,6 +5515,7 @@ public final class B2D {
     /* Start rendering the entire image */
 
     /* BalloonEngineBase>>#primitiveRenderScanline */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     public long primitiveRenderScanline(final PointersObject receiver, final PointersObject edge, final PointersObject fill) {
         final int failCode = loadRenderingState(receiver, edge, fill);
         if (failCode != 0) {
@@ -5524,14 +5526,14 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveSetAALevel */
-    public PointersObject primitiveSetAALevel(final PointersObject receiver, final long level) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveSetAALevel(final PointersObject receiver, final long level) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         setAALevel(level);
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* Primitive. Set the BitBlt plugin to use. */
@@ -5549,7 +5551,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#primitiveSetClipRect */
-    public PointersObject primitiveSetClipRect(final PointersObject receiver, final PointersObject rectOop) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveSetClipRect(final PointersObject receiver, final PointersObject rectOop) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -5564,44 +5567,44 @@ public final class B2D {
         clipMaxXPut(point2GetX());
         clipMaxYPut(point2GetY());
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEngineBase>>#primitiveSetColorTransform */
-    public PointersObject primitiveSetColorTransform(final PointersObject receiver, final AbstractSqueakObject transformOop) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveSetColorTransform(final PointersObject receiver, final AbstractSqueakObject transformOop) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         loadColorTransformFrom(transformOop);
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEngineBase>>#primitiveSetDepth */
-    public PointersObject primitiveSetDepth(final PointersObject receiver, final long depth) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveSetDepth(final PointersObject receiver, final long depth) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         currentZPut(depth);
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEngineBase>>#primitiveSetEdgeTransform */
-    public PointersObject primitiveSetEdgeTransform(final PointersObject receiver, final AbstractSqueakObject transformOop) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveSetEdgeTransform(final PointersObject receiver, final AbstractSqueakObject transformOop) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         loadEdgeTransformFrom(transformOop);
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* BalloonEngineBase>>#primitiveSetOffset */
-    public PointersObject primitiveSetOffset(final PointersObject receiver, final PointersObject pointOop) {
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    public void primitiveSetOffset(final PointersObject receiver, final PointersObject pointOop) {
         final int failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED);
         if (failureCode != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
@@ -5610,7 +5613,6 @@ public final class B2D {
         destOffsetXPut(point1GetX());
         destOffsetYPut(point1GetY());
         storeEngineStateInto(engine);
-        return receiver;
     }
 
     /* This is the main rendering entry */
@@ -5821,6 +5823,7 @@ public final class B2D {
      */
 
     /* BalloonEngineBase>>#quickLoadEngineFrom: */
+    @TruffleBoundary(transferToInterpreterOnException = false)
     private int quickLoadEngineFrom(final PointersObject engineOop) {
         if (failed()) {
             return GEF_ALREADY_FAILED;
@@ -7408,7 +7411,9 @@ public final class B2D {
         return System.currentTimeMillis();
     }
 
+    @TruffleBoundary(transferToInterpreterOnException = false)
     private static void storeValue(final int i, final PointersObject object, final Object value) {
+        // TODO: avoid slow operation
         object.instVarAtPut0Slow(i, value);
     }
 
