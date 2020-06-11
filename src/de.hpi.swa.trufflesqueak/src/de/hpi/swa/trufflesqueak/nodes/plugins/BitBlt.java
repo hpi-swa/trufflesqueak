@@ -193,7 +193,8 @@ public final class BitBlt {
     private long skew;
     private long sourceAlpha;
     private Object sourceBits;
-    private boolean sourceBitsIsWords;
+    private int sourceBitsBaseOffset;
+    private int sourceBitsIndexScale;
     private long sourceDelta;
     private int sourceDepth;
     private PointersObject sourceForm;
@@ -1636,7 +1637,7 @@ public final class BitBlt {
             destBits = destBitsNative.getByteStorage();
             destBitsSize = destBitsNative.getByteLength();
             destBitsBaseOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET;
-            destBitsIndexScale = Unsafe.ARRAY_BYTE_INDEX_SCALE;
+            destBitsIndexScale = Unsafe.ARRAY_BYTE_INDEX_SCALE * Integer.BYTES;
         }
         return destBitsSize >= destPitch * destHeight;
     }
@@ -1760,15 +1761,17 @@ public final class BitBlt {
         sourcePitch = div(sourceWidth + sourcePPW - 1, sourcePPW) * 4;
         final NativeObject sourceBitsNative = (NativeObject) sourceBitsValue;
         if (isWords(sourceBitsNative)) {
-            sourceBitsIsWords = true;
             final int[] ints = sourceBitsNative.getIntStorage();
             sourceBits = ints;
+            sourceBitsBaseOffset = Unsafe.ARRAY_INT_BASE_OFFSET;
+            sourceBitsIndexScale = Unsafe.ARRAY_INT_INDEX_SCALE;
             return ints.length * Integer.BYTES >= sourcePitch * sourceHeight;
         } else {
-            sourceBitsIsWords = false;
             final byte[] bytes = sourceBitsNative.getByteStorage();
             if (bytes.length >= sourcePitch * sourceHeight) {
                 sourceBits = bytes;
+                sourceBitsBaseOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET;
+                sourceBitsIndexScale = Unsafe.ARRAY_BYTE_INDEX_SCALE * Integer.BYTES;
                 return true;
             } else {
                 return false;
@@ -3901,14 +3904,7 @@ public final class BitBlt {
          * arrowPrototype`.
          */
         if (0 <= index && index < endOfSource) {
-            final long adjustedIndex = index >>> 2;
-            final int rawValue;
-            if (sourceBitsIsWords) {
-                rawValue = UnsafeUtils.getInt((int[]) sourceBits, adjustedIndex);
-            } else {
-                rawValue = UnsafeUtils.getInt((byte[]) sourceBits, adjustedIndex);
-            }
-            return Integer.toUnsignedLong(rawValue);
+            return Integer.toUnsignedLong(UnsafeUtils.getIntAt(sourceBits, sourceBitsBaseOffset + (index >>> 2) * sourceBitsIndexScale));
         } else {
             return 0L;
         }
