@@ -30,14 +30,14 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageOptions;
 
 public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
-    private boolean headless = false;
-    private boolean printImagePath = false;
-    private boolean quiet = false;
+    private boolean headless;
+    private boolean printImagePath;
+    private boolean quiet;
     private String[] imageArguments = new String[0];
-    private String imagePath = null;
-    private String sourceCode = null;
-    private boolean enableTranscriptForwarding = false;
-    private String logHandlerMode = null;
+    private String imagePath;
+    private String sourceCode;
+    private boolean enableTranscriptForwarding;
+    private String logHandlerMode;
 
     public static void main(final String[] arguments) throws RuntimeException {
         new TruffleSqueakLauncher().launch(arguments);
@@ -51,7 +51,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
             if (isExistingImageFile(arg)) {
                 imagePath = Paths.get(arg).toAbsolutePath().toString();
                 final List<String> remainingArguments = arguments.subList(i + 1, arguments.size());
-                imageArguments = remainingArguments.toArray(new String[remainingArguments.size()]);
+                imageArguments = remainingArguments.toArray(new String[0]);
                 break;
             } else if (SqueakLanguageOptions.CODE_FLAG.equals(arg) || SqueakLanguageOptions.CODE_FLAG_SHORT.equals(arg)) {
                 sourceCode = arguments.get(++i);
@@ -128,7 +128,7 @@ public final class TruffleSqueakLauncher extends AbstractLanguageLauncher {
         } catch (final IllegalArgumentException e) {
             if (e.getMessage().contains("Could not find option with name " + SqueakLanguageConfig.ID)) {
                 final String thisPackageName = getClass().getPackage().getName();
-                final String parentPackageName = thisPackageName.substring(0, thisPackageName.lastIndexOf("."));
+                final String parentPackageName = thisPackageName.substring(0, thisPackageName.lastIndexOf('.'));
                 throw abort(String.format("Failed to load TruffleSqueak. Please ensure '%s' is on the Java class path.", parentPackageName));
             } else {
                 throw e;

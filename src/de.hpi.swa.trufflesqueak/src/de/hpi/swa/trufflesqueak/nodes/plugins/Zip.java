@@ -172,12 +172,12 @@ public final class Zip {
                     /* 236 */ 284, 284, 284, 284,
                     /* 240 */ 284, 284, 284, 284, 284, 284, 284, 284, 284, 284, 284, 284, 284, 284, 284, 284
     };
-    private int zipPosition = 0;
-    private int zipReadLimit = 0;
-    private byte[] zipSource = null;
-    private int zipSourceLimit = 0;
-    private int zipSourcePos = 0;
-    private int zipState = 0;
+    private int zipPosition;
+    private int zipReadLimit;
+    private byte[] zipSource;
+    private int zipSourceLimit;
+    private int zipSourcePos;
+    private int zipState;
 
     /*
      * Compare the two strings and return the length of matching characters. minLength is a lower

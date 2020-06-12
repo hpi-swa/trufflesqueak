@@ -44,8 +44,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private MaterializedFrame truffleFrame;
     @CompilationFinal private PointersObject process;
     @CompilationFinal private int size;
-    private boolean hasModifiedSender = false;
-    private boolean escaped = false;
+    private boolean hasModifiedSender;
+    private boolean escaped;
 
     private ContextObject(final SqueakImageContext image, final long hash) {
         super(image, hash);

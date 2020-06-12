@@ -218,20 +218,19 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         private static String generateNfiCodeParamsString(final List<String> argumentList) {
-            String nfiCodeParams = "";
+            final StringBuilder nfiCodeParams = new StringBuilder(32);
             if (!argumentList.isEmpty()) {
                 final String returnType = argumentList.get(0);
                 argumentList.remove(0);
                 if (!argumentList.isEmpty()) {
-                    nfiCodeParams = "(" + String.join(",", argumentList) + ")";
+                    nfiCodeParams.append('(').append(String.join(",", argumentList)).append(')');
                 } else {
-                    nfiCodeParams = "()";
+                    nfiCodeParams.append("()");
                 }
-                nfiCodeParams += ":" + returnType + ";";
+                nfiCodeParams.append(':').append(returnType).append(';');
             }
-            return nfiCodeParams;
+            return nfiCodeParams.toString();
         }
-
     }
 
     @GenerateNodeFactory

@@ -254,15 +254,15 @@ public final class SqueakBytecodeDecoder {
         final byte[] bytes = code.getBytes();
         while (bytecodeIndex < trailerPosition) {
             final int currentByte = Byte.toUnsignedInt(bytes[bytecodeIndex]);
-            sb.append(lineIndex + " ");
-            for (int j = 0; j < indent; j++) {
-                sb.append(" ");
+            sb.append(lineIndex);
+            for (int j = 0; j < 1 + indent; j++) {
+                sb.append(' ');
             }
             final int numBytecodes = decodeNumBytes(code, bytecodeIndex);
-            sb.append("<");
+            sb.append('<');
             for (int j = bytecodeIndex; j < bytecodeIndex + numBytecodes; j++) {
                 if (j > bytecodeIndex) {
-                    sb.append(" ");
+                    sb.append(' ');
                 }
                 if (j < bytes.length) {
                     sb.append(String.format("%02X", bytes[j]));
@@ -278,7 +278,7 @@ public final class SqueakBytecodeDecoder {
             lineIndex++;
             bytecodeIndex += numBytecodes;
             if (bytecodeIndex < trailerPosition) {
-                sb.append("\n");
+                sb.append('\n');
             }
         }
         return sb.toString();

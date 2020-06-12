@@ -79,9 +79,9 @@ public abstract class DispatchEagerlyFromStackNode extends AbstractNode {
      * send the primitive eagerly or not. This is useful to avoid rewriting primitives that set up
      * the image and then are retried in their fallback code (e.g. primitiveCopyBits).
      */
-    protected static final class PrimitiveFailedCounter {
+    public static final class PrimitiveFailedCounter {
         private static final int PRIMITIVE_FAILED_THRESHOLD = 3;
-        private int count = 0;
+        private int count;
 
         protected static PrimitiveFailedCounter create() {
             return new PrimitiveFailedCounter();

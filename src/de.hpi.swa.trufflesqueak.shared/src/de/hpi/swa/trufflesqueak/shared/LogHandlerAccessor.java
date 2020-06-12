@@ -40,7 +40,6 @@ public final class LogHandlerAccessor {
     private static boolean firstTime = true;
 
     public static Handler createLogHandler(final String mode) {
-        PrintStream output = null;
         switch (mode) {
             case "mapped":
                 if (firstTime) {
@@ -59,16 +58,14 @@ public final class LogHandlerAccessor {
                     firstTime = false;
                     println("TruffleSqueak log handler logging to standard err");
                 }
-                output = System.err;
-                break;
+                return new StandardPrintStreamHandler(System.err);
             default:
                 if (firstTime) {
                     firstTime = false;
                     println("TruffleSqueak log handler logging to standard out");
                 }
-                output = System.out;
+                return new StandardPrintStreamHandler(System.out);
         }
-        return new StandardPrintStreamHandler(output);
     }
 
     protected static Path getLogPath() {

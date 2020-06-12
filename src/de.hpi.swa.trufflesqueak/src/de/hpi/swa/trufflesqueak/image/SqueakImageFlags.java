@@ -12,7 +12,7 @@ import de.hpi.swa.trufflesqueak.io.DisplayPoint;
 
 public final class SqueakImageFlags {
     @CompilationFinal private long oldBaseAddress = -1;
-    @CompilationFinal private int fullScreenFlag = 0;
+    @CompilationFinal private int fullScreenFlag;
     @CompilationFinal private int imageFloatsBigEndian;
     @CompilationFinal private boolean flagInterpretedMethods;
     @CompilationFinal private boolean preemptionYields;

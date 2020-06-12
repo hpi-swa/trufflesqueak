@@ -27,9 +27,9 @@ public final class InterruptHandlerState {
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
     private boolean isActive = true;
-    protected long nextWakeupTick = 0;
-    protected boolean interruptPending = false;
-    private boolean pendingFinalizationSignals = false;
+    protected long nextWakeupTick;
+    protected boolean interruptPending;
+    private boolean pendingFinalizationSignals;
 
     /**
      * `shouldTrigger` is set to `true` by a dedicated thread. To guarantee atomicity, it would be
@@ -37,7 +37,7 @@ public final class InterruptHandlerState {
      * cannot be moved by the Graal compiler during compilation. Since atomicity is not needed for
      * the interrupt handler mechanism, we can use a standard boolean here for better compilation.
      */
-    private boolean shouldTrigger = false;
+    private boolean shouldTrigger;
 
     @CompilationFinal private PointersObject interruptSemaphore;
     private PointersObject timerSemaphore;

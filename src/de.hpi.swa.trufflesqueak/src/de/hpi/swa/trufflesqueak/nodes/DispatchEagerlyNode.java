@@ -18,6 +18,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.DispatchEagerlyFromStackNode.PrimitiveFailedCounter;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
@@ -54,24 +55,6 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
                 return IndirectCallNode.getUncached().call(cachedMethod.getCallTarget(),
                                 FrameAccess.newWith(cachedMethod, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
             }
-        }
-    }
-
-    /*
-     * Counts how often a primitive has failed and indicates whether this node should continue to
-     * send the primitive eagerly or not. This is useful to avoid rewriting primitives that set up
-     * the image and then are retried in their fallback code (e.g. primitiveCopyBits).
-     */
-    protected static final class PrimitiveFailedCounter {
-        private static final int PRIMITIVE_FAILED_THRESHOLD = 3;
-        private int count = 0;
-
-        protected static PrimitiveFailedCounter create() {
-            return new PrimitiveFailedCounter();
-        }
-
-        protected boolean shouldNoLongerSendEagerly() {
-            return ++count > PRIMITIVE_FAILED_THRESHOLD;
         }
     }
 

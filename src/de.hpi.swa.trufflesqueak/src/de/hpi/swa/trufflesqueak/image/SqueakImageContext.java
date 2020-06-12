@@ -95,9 +95,9 @@ public final class SqueakImageContext {
     public final NativeObject runWithInSelector = new NativeObject(this);
     public final ArrayObject primitiveErrorTable = new ArrayObject(this);
     public final ArrayObject specialSelectors = new ArrayObject(this);
-    @CompilationFinal private ClassObject smallFloatClass = null;
-    @CompilationFinal private ClassObject byteSymbolClass = null;
-    @CompilationFinal private ClassObject foreignObjectClass = null;
+    @CompilationFinal private ClassObject smallFloatClass;
+    @CompilationFinal private ClassObject byteSymbolClass;
+    @CompilationFinal private ClassObject foreignObjectClass;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
@@ -134,14 +134,14 @@ public final class SqueakImageContext {
     @CompilationFinal private SqueakImage squeakImage;
 
     /* Stack Management */
-    public int stackDepth = 0;
+    public int stackDepth;
     public ContextObject lastSeenContext;
 
-    @CompilationFinal private ClassObject compilerClass = null;
-    @CompilationFinal private ClassObject parserClass = null;
-    private PointersObject parserSharedInstance = null;
-    @CompilationFinal private PointersObject scheduler = null;
-    @CompilationFinal private ClassObject wideStringClass = null;
+    @CompilationFinal private ClassObject compilerClass;
+    @CompilationFinal private ClassObject parserClass;
+    private PointersObject parserSharedInstance;
+    @CompilationFinal private PointersObject scheduler;
+    @CompilationFinal private ClassObject wideStringClass;
 
     /* Plugins */
     public final B2D b2d = new B2D(this);
@@ -152,9 +152,9 @@ public final class SqueakImageContext {
 
     /* Error detection for headless execution */
     @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes();
-    @CompilationFinal private NativeObject debugErrorSelector = null;
+    @CompilationFinal private NativeObject debugErrorSelector;
     @CompilationFinal(dimensions = 1) public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes();
-    @CompilationFinal private NativeObject debugSyntaxErrorSelector = null;
+    @CompilationFinal private NativeObject debugSyntaxErrorSelector;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
@@ -517,9 +517,9 @@ public final class SqueakImageContext {
     public String getImageDirectory() {
         final Path parent = Paths.get(getImagePath()).getParent();
         if (parent != null) {
-            return "" + parent.getFileName(); // Avoids NullPointerExceptions.
+            return parent.toString();
         } else {
-            throw SqueakException.create("`parent` should not be `null`.");
+            throw SqueakException.create("Could not determine image directory.");
         }
     }
 

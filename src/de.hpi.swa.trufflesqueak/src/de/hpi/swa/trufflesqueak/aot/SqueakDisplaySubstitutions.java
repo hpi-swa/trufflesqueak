@@ -67,17 +67,17 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     private Cursor cursor = WordFactory.nullPointer();
     private NativeObject bitmap;
     @CompilationFinal private int inputSemaphoreIndex;
-    private boolean deferUpdates = false;
-    private boolean textureDirty = false;
+    private boolean deferUpdates;
+    private boolean textureDirty;
     private int width;
     private int height;
     private int bpp = 4; // TODO: for 32bit only!
 
     private int lastMouseXPos;
     private int lastMouseYPos;
-    private int button = 0;
-    private int key = 0;
-    private boolean isKeyDown = false;
+    private int button;
+    private int key;
+    private boolean isKeyDown;
 
     Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay(final SqueakImageContext image) {
         this.image = image;

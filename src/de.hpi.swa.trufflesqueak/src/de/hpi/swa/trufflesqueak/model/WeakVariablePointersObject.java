@@ -167,19 +167,19 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        String prefix = "";
+        final StringBuilder sb = new StringBuilder(64);
         if (variablePart.length > 0) {
             final Object referent = variablePart[0].get();
-            prefix = "[" + referent;
+            sb.append('[').append(referent);
             if (variablePart[0].isEnqueued()) {
-                prefix += " (marked as garbage)";
+                sb.append(" (marked as garbage)");
             }
             if (variablePart.length > 1) {
-                prefix += "...";
+                sb.append("...");
             }
-            prefix += "]";
+            sb.append(']');
         }
-        return prefix + " a " + getSqueakClassName() + " @" + Integer.toHexString(hashCode()) + " of size " + variablePart.length;
+        return sb.append(" a ").append(getSqueakClassName()).append(" @").append(Integer.toHexString(hashCode())).append(" of size ").append(variablePart.length).toString();
     }
 
     /*

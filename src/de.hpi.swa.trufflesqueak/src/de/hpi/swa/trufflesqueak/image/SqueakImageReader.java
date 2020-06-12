@@ -48,11 +48,11 @@ public final class SqueakImageReader {
     private int headerFlags;
     private short maxExternalSemaphoreTableSize;
     private long firstSegmentSize;
-    private int position = 0;
+    private int position;
     private long currentAddressSwizzle;
     private final byte[] emptyBytes = new byte[0];
 
-    private SqueakImageChunk freePageList = null;
+    private SqueakImageChunk freePageList;
 
     private SqueakImageReader(final SqueakImageContext image) {
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());

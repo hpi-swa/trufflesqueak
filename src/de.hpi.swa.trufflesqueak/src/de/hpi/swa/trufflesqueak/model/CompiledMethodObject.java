@@ -74,19 +74,10 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return className + ">>" + getNotNilSelector();
     }
 
-    public String getNotNilSelector() {
+    private String getNotNilSelector() {
         CompilerAsserts.neverPartOfCompilation();
-        String selector = "DoIt";
         final NativeObject selectorObj = getCompiledInSelector();
-        if (selectorObj != null) {
-            selector = selectorObj.asStringUnsafe();
-        } else if (getNumArgs() > 0) {
-            selector += ":";
-            for (int i = 1; i < getNumArgs(); i++) {
-                selector += "with:";
-            }
-        }
-        return selector;
+        return selectorObj == null ? "DoIt" : selectorObj.asStringUnsafe();
     }
 
     @Override

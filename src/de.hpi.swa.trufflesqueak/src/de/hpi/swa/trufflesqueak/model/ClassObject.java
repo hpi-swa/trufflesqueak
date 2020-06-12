@@ -53,7 +53,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private final CyclicAssumption methodDictStable = new CyclicAssumption("Method dictionary stability");
     private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
 
-    @CompilationFinal private boolean instancesAreClasses = false;
+    @CompilationFinal private boolean instancesAreClasses;
 
     private ClassObject superclass;
     @CompilationFinal private VariablePointersObject methodDict;
@@ -445,7 +445,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             }
             lookupClass = lookupClass.getSuperclassOrNull();
         }
-        return methodNames.toArray(new String[methodNames.size()]);
+        return methodNames.toArray(new String[0]);
     }
 
     public int getBasicInstanceSize() {

@@ -24,7 +24,7 @@ public final class SqueakMessageInterceptor extends TruffleInstrument {
     private static final String DEFAULTS = "TestCase>>runCase,TestCase>>logFailure:,TestCase>>signalFailure:,Object>>halt,Object>>inform:," + //
                     "SmalltalkImage>>logSqueakError:inContext:,UnhandledError>>defaultAction,SyntaxErrorNotification>>setClass:code:doitFlag:errorMessage:location:";
 
-    private static String[] breakpoints = null;
+    private static String[] breakpoints;
 
     public static void enableIfRequested(final SqueakLanguage.Env env) {
         if (env.getOptions().hasBeenSet(SqueakOptions.InterceptMessages)) {

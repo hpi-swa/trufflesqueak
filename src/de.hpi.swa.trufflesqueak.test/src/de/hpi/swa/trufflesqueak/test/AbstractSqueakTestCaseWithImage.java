@@ -9,6 +9,8 @@ import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -126,13 +128,13 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static String getPathToTestImage(final String imageName) {
-        File currentDirectory = new File(System.getProperty("user.dir"));
+        Path currentDirectory = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (currentDirectory != null) {
-            final String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "images" + File.separator + imageName;
-            if (new File(pathToImage).exists()) {
-                return pathToImage;
+            final File file = currentDirectory.resolve("images").resolve(imageName).toFile();
+            if (file.exists()) {
+                return file.getAbsolutePath();
             }
-            currentDirectory = currentDirectory.getParentFile();
+            currentDirectory = currentDirectory.getParent();
         }
         return null;
     }
@@ -274,17 +276,17 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
                 testCaseNames.add(classDirectories.getName().substring(0, classDirectories.getName().lastIndexOf(".class")));
             }
         }
-        return testCaseNames.toArray(new String[testCaseNames.size()]);
+        return testCaseNames.toArray(new String[0]);
     }
 
     protected static final String getPathToInImageCode() {
-        File currentDirectory = new File(System.getProperty("user.dir"));
+        Path currentDirectory = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (currentDirectory != null) {
-            final String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "src" + File.separator + "image" + File.separator + "src";
-            if (new File(pathToImage).isDirectory()) {
-                return pathToImage;
+            final File file = currentDirectory.resolve("src").resolve("image").resolve("src").toFile();
+            if (file.isDirectory()) {
+                return file.getAbsolutePath();
             }
-            currentDirectory = currentDirectory.getParentFile();
+            currentDirectory = currentDirectory.getParent();
         }
         return null;
     }

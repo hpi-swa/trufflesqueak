@@ -165,7 +165,7 @@ public final class JavaObjectWrapper implements TruffleObject {
             members.add(WRAPPED_MEMBER);
             members.addAll(getFields().keySet());
             members.addAll(getMethods().keySet());
-            cachedMembers = new InteropArray(members.toArray(new String[members.size()]));
+            cachedMembers = new InteropArray(members.toArray(new String[0]));
         }
         return cachedMembers;
     }

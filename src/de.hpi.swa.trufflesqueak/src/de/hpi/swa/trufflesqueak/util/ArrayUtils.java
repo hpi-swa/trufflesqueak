@@ -112,7 +112,7 @@ public final class ArrayUtils {
 
     @TruffleBoundary
     public static Object[] toArray(final AbstractCollection<AbstractSqueakObjectWithHash> list) {
-        return list.toArray(new Object[list.size()]);
+        return list.toArray(new Object[0]);
     }
 
     @TruffleBoundary

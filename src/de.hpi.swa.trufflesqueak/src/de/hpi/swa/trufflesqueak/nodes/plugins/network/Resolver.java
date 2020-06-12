@@ -30,8 +30,8 @@ final class Resolver {
         }
     }
 
-    private static InetAddress anyLocalAddress = null;
-    private static InetAddress loopbackAddress = null;
+    private static InetAddress anyLocalAddress;
+    private static InetAddress loopbackAddress;
 
     private static byte[] lastNameLookup;
     private static String lastAddressLookup;

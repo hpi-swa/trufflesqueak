@@ -95,7 +95,7 @@ public final class JPEGReader {
     private int[][] yBlocks = new int[128][];
     private int[] yComponent = new int[11];
 
-    private boolean failed = false;
+    private boolean failed;
 
     /* JPEGReaderPlugin>>#cbColorComponentFrom: */
     private boolean cbColorComponentFrom(final Object oop) {

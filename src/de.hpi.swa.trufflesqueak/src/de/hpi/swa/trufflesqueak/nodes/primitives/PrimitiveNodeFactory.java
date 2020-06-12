@@ -168,7 +168,7 @@ public final class PrimitiveNodeFactory {
         for (final String key : PLUGIN_MAP.getKeys()) {
             target.add(key);
         }
-        return target.toArray(new String[target.size()]);
+        return target.toArray(new String[0]);
     }
 
     private static AbstractPrimitiveNode createInstance(final CompiledMethodObject method, final boolean useStack, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {

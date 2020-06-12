@@ -27,6 +27,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import de.hpi.swa.trufflesqueak.test.SqueakTests.SqueakTest;
 import de.hpi.swa.trufflesqueak.test.SqueakTests.TestType;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 /**
  * Run tests from the Squeak image.
@@ -66,7 +67,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     @Parameter public SqueakTest test;
 
-    private static boolean truffleSqueakPackagesLoaded = false;
+    private static boolean truffleSqueakPackagesLoaded;
     private static boolean stopRunningSuite;
 
     @Parameters(name = "{0} (#{index})")
@@ -76,7 +77,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static Stream<SqueakTest> selectTestsToRun() {
         final String toRun = System.getProperty(TEST_CLASS_PROPERTY);
-        if (toRun != null && !toRun.trim().isEmpty()) {
+        if (toRun != null && !MiscUtils.isBlank(toRun)) {
             return SqueakTests.getTestsToRun(toRun);
         }
         return SqueakTests.allTests();

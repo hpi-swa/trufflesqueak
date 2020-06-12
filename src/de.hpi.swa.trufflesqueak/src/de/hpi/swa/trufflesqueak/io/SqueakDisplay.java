@@ -28,7 +28,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -74,11 +73,10 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     @CompilationFinal private int inputSemaphoreIndex = -1;
 
-    public int buttons = 0;
-    private Dimension rememberedWindowSize = null;
-    private Point rememberedWindowLocation = null;
-    private boolean deferUpdates = false;
-    private int[] cursorMergedWords = new int[SqueakIOConstants.CURSOR_HEIGHT];
+    public int buttons;
+    private Dimension rememberedWindowSize;
+    private Point rememberedWindowLocation;
+    private boolean deferUpdates;
 
     public SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
@@ -313,16 +311,13 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         canvas.setCursor(cursor);
     }
 
-    private int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
-        int cursorWord;
-        int maskWord;
-        int bit;
-        int merged;
+    private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
+        final int[] cursorMergedWords = new int[SqueakIOConstants.CURSOR_HEIGHT];
         for (int y = 0; y < SqueakIOConstants.CURSOR_HEIGHT; y++) {
-            cursorWord = cursorWords[y];
-            maskWord = maskWords[y];
-            bit = 0x80000000;
-            merged = 0;
+            final int cursorWord = cursorWords[y];
+            final int maskWord = maskWords[y];
+            int bit = 0x80000000;
+            int merged = 0;
             for (int x = 0; x < SqueakIOConstants.CURSOR_WIDTH; x++) {
                 merged = merged | (maskWord & bit) >> x | (cursorWord & bit) >> x + 1;
                 bit = bit >>> 1;
@@ -433,14 +428,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                     dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     try {
                         @SuppressWarnings("unchecked")
-                        final List<File> l = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                        final Iterator<File> iter = l.iterator();
-                        final String[] fileList = new String[l.size()];
-                        int i = 0;
-                        while (iter.hasNext()) {
-                            fileList[i++] = iter.next().getCanonicalPath();
-                        }
-                        image.dropPluginFileList = fileList;
+                        final List<File> fileList = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                        image.dropPluginFileList = fileList.toArray(new String[0]);
                         addDragEvent(DRAG.DROP, dtde.getLocation());
                         dtde.getDropTargetContext().dropComplete(true);
                         return;

@@ -46,6 +46,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SenaryPrimi
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 /**
  * Implement Squeak SSL primitives using {@link SSLEngine}.
@@ -599,7 +600,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
     @TruffleBoundary
     private static void setUp(final SqSSL ssl) {
-        if (certificateName != null && !certificateName.trim().isEmpty()) {
+        if (certificateName != null && !MiscUtils.isBlank(certificateName)) {
             initializeWithCertificate(ssl, certificateName);
         } else {
             initializeWithDefaultCertificates(ssl);
@@ -628,7 +629,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     }
 
     private static void ensureEngine(final SqSSL ssl) {
-        if (ssl.serverName != null && !ssl.serverName.trim().isEmpty()) {
+        if (ssl.serverName != null && !MiscUtils.isBlank(ssl.serverName)) {
             ssl.engine = ssl.context.createSSLEngine(ssl.serverName, -1);
         } else {
             ssl.engine = ssl.context.createSSLEngine();

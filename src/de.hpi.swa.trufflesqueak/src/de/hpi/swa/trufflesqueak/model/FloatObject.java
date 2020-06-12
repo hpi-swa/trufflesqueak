@@ -146,7 +146,7 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "" + doubleValue;
+        return Double.toString(doubleValue);
     }
 
     public FloatObject shallowCopy() {

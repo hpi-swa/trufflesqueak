@@ -155,7 +155,7 @@ public final class MiscUtils {
     @TruffleBoundary
     public static String getSystemProperties() {
         final Properties properties = System.getProperties();
-        final StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder(256);
         sb.append("\n\n== System Properties =================================>\n");
         final Object[] keys = properties.keySet().toArray();
         Arrays.sort(keys);
@@ -190,6 +190,15 @@ public final class MiscUtils {
     public static String getVMPath() {
         final String binaryName = OSDetector.SINGLETON.isWindows() ? "java.exe" : "java";
         return System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + binaryName;
+    }
+
+    public static boolean isBlank(final String str) {
+        for (int i = 0; i < str.length(); i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /* Wraps bitmap in a BufferedImage for efficient drawing. */

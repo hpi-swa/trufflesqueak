@@ -57,30 +57,20 @@ public final class DebugUtils {
 
     public static void dumpThreads(final StringBuilder sb) {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
-        sb.append("\r\n\r\n\r\n");
-        sb.append("Total number of threads started: ");
-        sb.append(ManagementFactory.getThreadMXBean().getTotalStartedThreadCount());
-        sb.append("\r\n\r\n");
+        sb.append("\r\n\r\n\r\n").append("Total number of threads started: ").append(ManagementFactory.getThreadMXBean().getTotalStartedThreadCount()).append("\r\n\r\n");
 
         final Runtime r = Runtime.getRuntime();
-        sb.append("Total Memory : ");
-        sb.append(r.totalMemory());
-        sb.append("\r\n");
-        sb.append("Max Memory   : ");
-        sb.append(r.maxMemory());
-        sb.append("\r\n");
-        sb.append("Free Memory  : ");
-        sb.append(r.freeMemory());
-        sb.append("\r\n\r\n");
+        sb.append("Total Memory : ").append(r.totalMemory()).append("\r\n").append("Max Memory   : ").append(r.maxMemory()).append("\r\n").append("Free Memory  : ").append(r.freeMemory()).append(
+                        "\r\n\r\n");
 
         final ThreadInfo[] threads = ManagementFactory.getThreadMXBean().dumpAllThreads(true, true);
         for (final ThreadInfo info : threads) {
-            sb.append("\"" + info.getThreadName() + "\" Id=" + info.getThreadId() + " " + info.getThreadState());
+            sb.append("\"").append(info.getThreadName()).append("\" Id=").append(info.getThreadId()).append(' ').append(info.getThreadState());
             if (info.getLockName() != null) {
-                sb.append(" on " + info.getLockName());
+                sb.append(" on ").append(info.getLockName());
             }
             if (info.getLockOwnerName() != null) {
-                sb.append(" owned by \"" + info.getLockOwnerName() + "\" Id=" + info.getLockOwnerId());
+                sb.append(" owned by \"").append(info.getLockOwnerName()).append("\" Id=").append(info.getLockOwnerId());
             }
             if (info.isSuspended()) {
                 sb.append(" (suspended)");
@@ -92,22 +82,19 @@ public final class DebugUtils {
             int i = 0;
             for (; i < info.getStackTrace().length; i++) {
                 final StackTraceElement ste = info.getStackTrace()[i];
-                sb.append("\tat " + ste.toString());
+                sb.append("\tat ").append(ste.toString());
                 sb.append("\r\n");
                 if (i == 0 && info.getLockInfo() != null) {
                     final Thread.State ts = info.getThreadState();
                     switch (ts) {
                         case BLOCKED:
-                            sb.append("\t-  blocked on " + info.getLockInfo());
-                            sb.append("\r\n");
+                            sb.append("\t-  blocked on ").append(info.getLockInfo()).append("\r\n");
                             break;
                         case WAITING:
-                            sb.append("\t-  waiting on " + info.getLockInfo());
-                            sb.append("\r\n");
+                            sb.append("\t-  waiting on ").append(info.getLockInfo()).append("\r\n");
                             break;
                         case TIMED_WAITING:
-                            sb.append("\t-  waiting on " + info.getLockInfo());
-                            sb.append("\r\n");
+                            sb.append("\t-  waiting on ").append(info.getLockInfo()).append("\r\n");
                             break;
                         default:
                     }
@@ -115,8 +102,7 @@ public final class DebugUtils {
 
                 for (final MonitorInfo mi : info.getLockedMonitors()) {
                     if (mi.getLockedStackDepth() == i) {
-                        sb.append("\t-  locked " + mi);
-                        sb.append("\r\n");
+                        sb.append("\t-  locked ").append(mi).append("\r\n");
                     }
                 }
             }
@@ -127,11 +113,9 @@ public final class DebugUtils {
 
             final LockInfo[] locks = info.getLockedSynchronizers();
             if (locks.length > 0) {
-                sb.append("\r\n\tNumber of locked synchronizers = " + locks.length);
-                sb.append("\r\n");
+                sb.append("\r\n\tNumber of locked synchronizers = ").append(locks.length).append("\r\n");
                 for (final LockInfo li : locks) {
-                    sb.append("\t- " + li);
-                    sb.append("\r\n");
+                    sb.append("\t- ").append(li).append("\r\n");
                 }
             }
 
@@ -142,15 +126,11 @@ public final class DebugUtils {
     public static String currentState() {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final SqueakImageContext image = SqueakLanguage.getContext();
-        final StringBuilder b = new StringBuilder();
+        final StringBuilder b = new StringBuilder(64);
         b.append("\nImage processes state\n");
         final PointersObject activeProcess = GetActiveProcessNode.getSlow(image);
         final long activePriority = (long) activeProcess.instVarAt0Slow(PROCESS.PRIORITY);
-        b.append("*Active process @");
-        b.append(Integer.toHexString(activeProcess.hashCode()));
-        b.append(" priority ");
-        b.append(activePriority);
-        b.append('\n');
+        b.append("*Active process @").append(Integer.toHexString(activeProcess.hashCode())).append(" priority ").append(activePriority).append('\n');
         final Object interruptSema = image.getSpecialObject(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
         printSemaphoreOrNil(b, "*Interrupt semaphore @", interruptSema, true);
         final Object timerSema = image.getSpecialObject(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE);
@@ -214,8 +194,8 @@ public final class DebugUtils {
         CompilerAsserts.neverPartOfCompilation("For debugging purposes only");
         final Object[] frameArguments = frame.getArguments();
         final Object receiver = frameArguments[3];
-        final StringBuilder b = new StringBuilder("\n\t\t- Receiver:                         ");
-        b.append(receiver);
+        final StringBuilder b = new StringBuilder(256);
+        b.append("\n\t\t- Receiver:                         ").append(receiver);
         if (receiver instanceof ContextObject) {
             final ContextObject context = (ContextObject) receiver;
             if (context.hasTruffleFrame()) {
@@ -231,11 +211,7 @@ public final class DebugUtils {
                     final int numArgs = receiverCode.getNumArgs();
                     for (int i = 0; i < numArgs; i++) {
                         final Object value = receiverFrameArguments[i + 4];
-                        b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t-> a" : "\t\t\t\t\t\t\ta");
-                        b.append(i);
-                        b.append("\t");
-                        b.append(value);
-                        b.append("\n");
+                        b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t-> a" : "\t\t\t\t\t\t\ta").append(i).append('\t').append(value).append('\n');
                     }
                     final FrameSlot[] stackSlots = receiverCode.getStackSlotsUnsafe();
                     boolean addedSeparator = false;
@@ -246,11 +222,7 @@ public final class DebugUtils {
                         initialStackp = receiverCode.getNumArgsAndCopied();
                         for (int i = numArgs; i < initialStackp; i++) {
                             final Object value = receiverFrameArguments[i + 4];
-                            b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t-> c" : "\t\t\t\t\t\t\tc");
-                            b.append(i);
-                            b.append("\t");
-                            b.append(value);
-                            b.append("\n");
+                            b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t-> c" : "\t\t\t\t\t\t\tc").append(i).append('\t').append(value).append('\n');
                         }
                     } else {
                         initialStackp = receiverCode.getNumTemps();
@@ -258,11 +230,7 @@ public final class DebugUtils {
                             final FrameSlot slot = stackSlots[i];
                             Object value = null;
                             if (slot != null && (value = receiverFrame.getValue(slot)) != null) {
-                                b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t-> t" : "\t\t\t\t\t\t\tt");
-                                b.append(i);
-                                b.append("\t");
-                                b.append(value);
-                                b.append("\n");
+                                b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t-> t" : "\t\t\t\t\t\t\tt").append(i).append('\t').append(value).append('\n');
                             }
                         }
                     }
@@ -275,9 +243,7 @@ public final class DebugUtils {
                                 addedSeparator = true;
                                 b.append("\t\t\t\t\t\t\t------------------------------------------------\n");
                             }
-                            b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t\t->\t" : "\t\t\t\t\t\t\t\t\t");
-                            b.append(value);
-                            b.append("\n");
+                            b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t\t->\t" : "\t\t\t\t\t\t\t\t\t").append(value).append('\n');
                         } else {
                             j = i;
                             if (zeroBasedStackp == i) {
@@ -304,11 +270,7 @@ public final class DebugUtils {
         final int numArgs = code.getNumArgs();
         for (int i = 0; i < numArgs; i++) {
             final Object value = frameArguments[i + 4];
-            b.append(zeroBasedStackp == i ? "\t\t\t\t-> a" : "\t\t\t\t\ta");
-            b.append(i);
-            b.append("\t");
-            b.append(value);
-            b.append("\n");
+            b.append(zeroBasedStackp == i ? "\t\t\t\t-> a" : "\t\t\t\t\ta").append(i).append('\t').append(value).append('\n');
         }
         final FrameSlot[] stackSlots = code.getStackSlotsUnsafe();
         boolean addedSeparator = false;
@@ -318,22 +280,14 @@ public final class DebugUtils {
             initialStackp = code.getNumArgsAndCopied();
             for (int i = numArgs; i < initialStackp; i++) {
                 final Object value = frameArguments[i + 4];
-                b.append(zeroBasedStackp == i ? "\t\t\t\t-> c" : "\t\t\t\t\tc");
-                b.append(i);
-                b.append("\t");
-                b.append(value);
-                b.append("\n");
+                b.append(zeroBasedStackp == i ? "\t\t\t\t-> c" : "\t\t\t\t\tc").append(i).append('\t').append(value).append('\n');
             }
         } else {
             initialStackp = code.getNumTemps();
             for (int i = numArgs; i < initialStackp; i++) {
                 final FrameSlot slot = stackSlots[i];
                 final Object value = frame.getValue(slot);
-                b.append(zeroBasedStackp == i ? "\t\t\t\t-> t" : "\t\t\t\t\tt");
-                b.append(i);
-                b.append("\t");
-                b.append(value);
-                b.append("\n");
+                b.append(zeroBasedStackp == i ? "\t\t\t\t-> t" : "\t\t\t\t\tt").append(i).append('\t').append(value).append('\n');
             }
         }
         int j = initialStackp;
@@ -345,9 +299,7 @@ public final class DebugUtils {
                     addedSeparator = true;
                     b.append("\t\t\t\t\t------------------------------------------------\n");
                 }
-                b.append(zeroBasedStackp == i ? "\t\t\t\t\t->\t" : "\t\t\t\t\t\t\t");
-                b.append(value);
-                b.append("\n");
+                b.append(zeroBasedStackp == i ? "\t\t\t\t\t->\t" : "\t\t\t\t\t\t\t").append(value).append('\n');
             } else {
                 j = i;
                 if (zeroBasedStackp == i) {
@@ -371,18 +323,14 @@ public final class DebugUtils {
 
     private static void printSemaphoreOrNil(final StringBuilder b, final String label, final Object semaphoreOrNil, final boolean printIfNil) {
         if (semaphoreOrNil instanceof PointersObject) {
-            b.append(label);
-            b.append(Integer.toHexString(semaphoreOrNil.hashCode()));
-            b.append(" with ");
-            b.append(((AbstractPointersObject) semaphoreOrNil).instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS));
-            b.append(" excess signals");
+            b.append(label).append(Integer.toHexString(semaphoreOrNil.hashCode())).append(" with ").append(((AbstractPointersObject) semaphoreOrNil).instVarAt0Slow(SEMAPHORE.EXCESS_SIGNALS)).append(
+                            " excess signals");
             if (!printLinkedList(b, "", (PointersObject) semaphoreOrNil)) {
                 b.append(" and no processes\n");
             }
         } else {
             if (printIfNil) {
-                b.append(label);
-                b.append(" is nil\n");
+                b.append(label).append(" is nil\n");
             }
         }
     }
@@ -390,8 +338,7 @@ public final class DebugUtils {
     private static boolean printLinkedList(final StringBuilder b, final String label, final PointersObject linkedList) {
         Object temp = linkedList.instVarAt0Slow(LINKED_LIST.FIRST_LINK);
         if (temp instanceof PointersObject) {
-            b.append(label);
-            b.append(" and process");
+            b.append(label).append(" and process");
             if (temp != linkedList.instVarAt0Slow(LINKED_LIST.LAST_LINK)) {
                 b.append("es:\n");
             } else {
@@ -402,16 +349,10 @@ public final class DebugUtils {
                 final Object aContext = aProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
                 if (aContext instanceof ContextObject) {
                     assert ((ContextObject) aContext).getProcess() == null || ((ContextObject) aContext).getProcess() == aProcess;
-                    b.append("\tprocess @");
-                    b.append(Integer.toHexString(aProcess.hashCode()));
-                    b.append(" with suspended context ");
-                    b.append(aContext);
-                    b.append(" and stack trace:\n");
+                    b.append("\tprocess @").append(Integer.toHexString(aProcess.hashCode())).append(" with suspended context ").append(aContext).append(" and stack trace:\n");
                     printSqMaterializedStackTraceOn(b, (ContextObject) aContext);
                 } else {
-                    b.append("\tprocess @");
-                    b.append(Integer.toHexString(aProcess.hashCode()));
-                    b.append(" with suspended context nil\n");
+                    b.append("\tprocess @").append(Integer.toHexString(aProcess.hashCode())).append(" with suspended context nil\n");
                 }
                 temp = aProcess.instVarAt0Slow(PROCESS.NEXT_LINK);
             }
@@ -425,14 +366,12 @@ public final class DebugUtils {
         ContextObject current = context;
         while (current != null && current.hasTruffleFrame()) {
             final Object[] rcvrAndArgs = current.getReceiverAndNArguments();
-            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker()));
-            b.append('\n');
+            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker())).append('\n');
             final Object sender = current.getFrameSender();
             if (sender == NilObject.SINGLETON) {
                 break;
             } else if (sender instanceof FrameMarker) {
-                b.append(sender);
-                b.append('\n');
+                b.append(sender).append('\n');
                 break;
             } else {
                 current = (ContextObject) sender;

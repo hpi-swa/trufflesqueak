@@ -63,7 +63,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal protected int numArgs;
     @CompilationFinal protected int numLiterals;
     @CompilationFinal protected boolean hasPrimitive;
-    @CompilationFinal protected boolean needsLargeFrame = false;
+    @CompilationFinal protected boolean needsLargeFrame;
     @CompilationFinal protected int numTemps;
 
     @CompilationFinal(dimensions = 1) private CompiledBlockObject[] innerBlocks;
