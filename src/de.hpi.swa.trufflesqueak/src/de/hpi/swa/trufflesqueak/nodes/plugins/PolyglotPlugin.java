@@ -6,13 +6,10 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
@@ -22,7 +19,6 @@ import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -48,8 +44,6 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
-import de.hpi.swa.trufflesqueak.nodes.plugins.PolyglotPluginFactory.PrimExecuteNodeFactory;
-import de.hpi.swa.trufflesqueak.nodes.plugins.PolyglotPluginFactory.PrimReadMemberNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -193,42 +187,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (IOException | RuntimeException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveEvalC")
-    protected abstract static class PrimEvalCNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        private static final String C_FILENAME = "temp.c";
-        private static final String LLVM_FILENAME = "temp.bc";
-        @Child private PrimReadMemberNode readNode = PrimReadMemberNodeFactory.create(null);
-        @Child private PrimExecuteNode executeNode = PrimExecuteNodeFactory.create(null);
-
-        @Specialization(guards = {"receiver.isByteType()", "memberToCall.isByteType()"})
-        protected final Object doEvaluate(final VirtualFrame frame, final NativeObject receiver, final NativeObject memberToCall,
-                        @Cached final WrapToSqueakNode wrapNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final String foreignCode = receiver.asStringUnsafe();
-            final String cFile = image.imageRelativeFilePathFor(C_FILENAME);
-            final String llvmFile = image.imageRelativeFilePathFor(LLVM_FILENAME);
-            try {
-                final Source source = generateSourcefromCCode(image, foreignCode, cFile, llvmFile);
-                final CallTarget foreignCallTarget = image.env.parsePublic(source);
-                final Object library = foreignCallTarget.call();
-                final Object cFunction = readNode.executeWithArguments(frame, library, memberToCall);
-                final Object result = executeNode.executeWithArguments(frame, cFunction);
-                return wrapNode.executeWrap(result);
-            } catch (final Exception e) {
-                throw primitiveFailedInInterpreterCapturing(e);
-            }
-        }
-
-        @TruffleBoundary
-        private static Source generateSourcefromCCode(final SqueakImageContext image, final String foreignCode, final String cFile, final String llvmFile) throws IOException, InterruptedException {
-            Files.write(Paths.get(cFile), foreignCode.getBytes());
-            final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
-            p.waitFor();
-            return Source.newBuilder("llvm", image.env.getPublicTruffleFile(llvmFile)).build();
         }
     }
 
