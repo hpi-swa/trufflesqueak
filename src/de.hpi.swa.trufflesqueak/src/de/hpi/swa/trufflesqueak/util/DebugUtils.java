@@ -65,7 +65,7 @@ public final class DebugUtils {
 
         final ThreadInfo[] threads = ManagementFactory.getThreadMXBean().dumpAllThreads(true, true);
         for (final ThreadInfo info : threads) {
-            sb.append("\"").append(info.getThreadName()).append("\" Id=").append(info.getThreadId()).append(' ').append(info.getThreadState());
+            sb.append('"').append(info.getThreadName()).append("\" Id=").append(info.getThreadId()).append(' ').append(info.getThreadState());
             if (info.getLockName() != null) {
                 sb.append(" on ").append(info.getLockName());
             }
