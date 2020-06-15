@@ -12,7 +12,7 @@ baseline: spec
 			optionalFileSystem := #('FileSystem').
 			spec baseline: 'FileSystem' with: [
 				spec
-					repository: 'github://j4yk/Squeak-FileSystem:master/src';
+					repository: 'github://squeak-smalltalk/squeak-filesystem:master/src';
 					loads: #('default')]].
 		Smalltalk at: #GitFilesystem ifAbsent: [
 			optionalSquot := #('Squot').
