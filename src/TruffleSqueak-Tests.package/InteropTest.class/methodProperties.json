@@ -2,5 +2,6 @@
 	"class" : {
 		 },
 	"instance" : {
+		"testExceptionHandling" : "fn 6/16/2020 17:08",
 		"testMetadataAPIs" : "fn 5/29/2020 16:06",
 		"testSmalltalkDNU" : "fn 2/13/2020 15:49" } }
