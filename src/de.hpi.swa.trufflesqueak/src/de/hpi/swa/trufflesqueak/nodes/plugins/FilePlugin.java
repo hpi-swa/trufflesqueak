@@ -75,11 +75,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class AbstractFilePluginPrimitiveNode extends AbstractPrimitiveNode {
 
         protected static final SeekableByteChannel getChannelOrPrimFail(final PointersObject handle) {
-            final Object channel = handle.getHiddenObject();
-            if (channel instanceof SeekableByteChannel) {
-                return (SeekableByteChannel) channel;
-            } else {
-                throw PrimitiveFailed.andTransferToInterpreter();
+            try {
+                return (SeekableByteChannel) handle.getHiddenObject();
+            } catch (final ClassCastException e) {
+                throw PrimitiveFailed.andTransferToInterpreterWithError(e);
             }
         }
 
