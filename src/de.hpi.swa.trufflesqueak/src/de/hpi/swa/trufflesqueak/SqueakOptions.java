@@ -27,7 +27,7 @@ public final class SqueakOptions {
     public static final OptionKey<String> ImageArguments = new OptionKey<>("");
 
     @Option(name = SqueakLanguageOptions.HEADLESS, category = OptionCategory.USER, stability = OptionStability.STABLE, help = SqueakLanguageOptions.HEADLESS_HELP)//
-    public static final OptionKey<Boolean> Headless = new OptionKey<>(false);
+    public static final OptionKey<Boolean> Headless = new OptionKey<>(true);
 
     @Option(name = SqueakLanguageOptions.INTERCEPT_MESSAGES, category = OptionCategory.INTERNAL, stability = OptionStability.EXPERIMENTAL, help = SqueakLanguageOptions.INTERCEPT_MESSAGES_HELP)//
     public static final OptionKey<String> InterceptMessages = new OptionKey<>("");

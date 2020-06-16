@@ -138,6 +138,7 @@ public final class SqueakImageContext {
     public ContextObject lastSeenContext;
 
     @CompilationFinal private ClassObject compilerClass;
+    @CompilationFinal private ClassObject exceptionClass;
     @CompilationFinal private ClassObject parserClass;
     private PointersObject parserSharedInstance;
     @CompilationFinal private PointersObject scheduler;
@@ -379,6 +380,14 @@ public final class SqueakImageContext {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert compilerClass == null;
         compilerClass = classObject;
+    }
+
+    public ClassObject getExceptionClass() {
+        if (exceptionClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            exceptionClass = (ClassObject) evaluate("Exception");
+        }
+        return exceptionClass;
     }
 
     public ClassObject getParserClass() {

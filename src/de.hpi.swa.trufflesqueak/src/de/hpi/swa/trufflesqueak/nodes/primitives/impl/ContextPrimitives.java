@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -19,21 +20,27 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.RootNode;
 
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -192,6 +199,9 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        private ContextObject cachedContext;
+
+        @TruffleBoundary
         @Specialization(guards = {"receiver.hasMaterializedSender()"})
         protected static final AbstractSqueakObject findNext(final ContextObject receiver) {
             ContextObject context = receiver;
@@ -210,14 +220,25 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @TruffleBoundary
         @Specialization(guards = {"!receiver.hasMaterializedSender()"})
-        protected static final AbstractSqueakObject findNextAvoidingMaterialization(final ContextObject receiver) {
+        protected final AbstractSqueakObject findNextAvoidingMaterialization(final ContextObject receiver) {
             final boolean[] foundMyself = new boolean[1];
             final Object[] lastSender = new Object[1];
             final ContextObject result = Truffle.getRuntime().iterateFrames(frameInstance -> {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
-                    return null; // Foreign frame cannot be handler.
+                    final RootNode rootNode = ((RootCallTarget) frameInstance.getCallTarget()).getRootNode();
+                    if (rootNode.isInternal() || rootNode.getLanguageInfo().getId().equals(SqueakLanguageConfig.ID)) {
+                        /* Skip internal and all other nodes that belong to TruffleSqueak. */
+                        return null;
+                    } else {
+                        /*
+                         * Found a frame of another language. Stop here by returning the receiver
+                         * context. This special case will be handled later on.
+                         */
+                        return receiver;
+                    }
                 }
                 final ContextObject context = FrameAccess.getContext(current);
                 if (!foundMyself[0]) {
@@ -237,7 +258,13 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 return null;
             });
-            if (result == null) {
+            if (result == receiver) {
+                /*
+                 * Foreign frame found during frame iteration. Inject a fake context which will
+                 * throw the Smalltalk exception as polyglot exception.
+                 */
+                return getInteropExceptionThrowingContext();
+            } else if (result == null) {
                 if (!foundMyself[0]) {
                     return findNext(receiver); // Fallback to other version.
                 }
@@ -249,6 +276,35 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 return result;
             }
+        }
+
+        /**
+         * Returns a fake context for BlockClosure>>#on:do: that handles any exception and rethrows
+         * it through Interop. This allows Smalltalk exceptions to be thrown to other languages, so
+         * that they can catch them. The mechanism works essentially like this:
+         *
+         * <pre>
+         * <code>[ ... ] on: Exception do: [ :e | Interop throwException: e exception ]</code>
+         * </pre>
+         *
+         * (see Context>>#handleSignal:)
+         */
+        private ContextObject getInteropExceptionThrowingContext() {
+            if (cachedContext == null) {
+                final SqueakImageContext image = lookupContext();
+                assert image.evaluate("Interop") != NilObject.SINGLETON : "Interop class must be present";
+                final CompiledMethodObject onDoMethod = (CompiledMethodObject) image.evaluate("BlockClosure>>#on:do:");
+                cachedContext = ContextObject.create(image, onDoMethod.getSqueakContextSize());
+                cachedContext.setMethod(onDoMethod);
+                cachedContext.setReceiver(NilObject.SINGLETON);
+                cachedContext.atTempPut(0, image.evaluate("Exception"));
+                cachedContext.atTempPut(1, image.evaluate("[ :e | Interop throwException: e exception ]"));
+                cachedContext.atTempPut(2, BooleanObject.TRUE);
+                cachedContext.setInstructionPointer(CallPrimitiveNode.NUM_BYTECODES);
+                cachedContext.setStackPointer(onDoMethod.getNumTemps());
+                cachedContext.removeSender();
+            }
+            return cachedContext.shallowCopy();
         }
     }
 

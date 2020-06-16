@@ -6,7 +6,16 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakInteropException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -19,11 +28,13 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.InheritsFromNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
+@ExportLibrary(InteropLibrary.class)
 public final class PointersObject extends AbstractPointersObject {
 
     public PointersObject(final SqueakImageContext image) {
@@ -186,5 +197,27 @@ public final class PointersObject extends AbstractPointersObject {
     @Override
     public void write(final SqueakImageWriter writer) {
         super.writeHeaderAndLayoutObjects(writer);
+    }
+
+    /*
+     * INTEROPERABILITY
+     */
+
+    @ExportMessage
+    protected static boolean isException(final PointersObject receiver,
+                    @Shared("inheritsFromNode") @Cached final InheritsFromNode inheritsFromNode,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return inheritsFromNode.execute(receiver, image.getExceptionClass());
+    }
+
+    @ExportMessage
+    protected static RuntimeException throwException(final PointersObject receiver,
+                    @Shared("inheritsFromNode") @Cached final InheritsFromNode inheritsFromNode,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) throws UnsupportedMessageException {
+        if (isException(receiver, inheritsFromNode, image)) {
+            throw new SqueakInteropException(receiver);
+        } else {
+            throw UnsupportedMessageException.create();
+        }
     }
 }

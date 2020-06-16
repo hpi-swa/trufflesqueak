@@ -5,6 +5,7 @@
  */
 package de.hpi.swa.trufflesqueak.exceptions;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.nodes.ControlFlowException;
@@ -14,6 +15,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.EXCEPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SYNTAX_ERROR_NOTIFICATION;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -156,6 +158,42 @@ public final class SqueakExceptions {
         @Override
         public boolean isExit() {
             return true;
+        }
+    }
+
+    public static final class SqueakInteropException extends RuntimeException implements TruffleException {
+        private static final long serialVersionUID = 1L;
+        private final PointersObject squeakException;
+
+        public SqueakInteropException(final PointersObject original) {
+            squeakException = original;
+        }
+
+        @Override
+        public String getMessage() {
+            CompilerAsserts.neverPartOfCompilation();
+            final Object messageText = squeakException.instVarAt0Slow(EXCEPTION.MESSAGE_TEXT);
+            if (messageText instanceof NativeObject && ((NativeObject) messageText).isString()) {
+                return ((NativeObject) messageText).asStringUnsafe();
+            } else {
+                return squeakException.toString();
+            }
+        }
+
+        @SuppressWarnings("sync-override")
+        @Override
+        public Throwable fillInStackTrace() {
+            return this;
+        }
+
+        @Override
+        public Object getExceptionObject() {
+            return squeakException;
+        }
+
+        @Override
+        public Node getLocation() {
+            return null;
         }
     }
 
