@@ -37,17 +37,18 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectBecomeNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectHashNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -313,11 +314,26 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 75)
-    protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        @Specialization
+        protected static final long doNil(@SuppressWarnings("unused") final NilObject object) {
+            return NilObject.getSqueakHash();
+        }
+
+        @Specialization(guards = "!object")
+        protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean object) {
+            return BooleanObject.getFalseSqueakHash();
+        }
+
+        @Specialization(guards = "object")
+        protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean object) {
+            return BooleanObject.getTrueSqueakHash();
+        }
 
         @Specialization
-        protected static final long doHash(final Object receiver, @Cached final SqueakObjectHashNode hashNode) {
-            return hashNode.execute(receiver);
+        protected static final long doAbstractSqueakObjectWithHash(final AbstractSqueakObjectWithHash object,
+                        @Cached final BranchProfile needsHashProfile) {
+            return object.getSqueakHash(needsHashProfile);
         }
     }
 
