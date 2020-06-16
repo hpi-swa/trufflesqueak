@@ -9,7 +9,6 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -109,8 +108,8 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
         return value.getSqueakClass();
     }
 
-    @Specialization(guards = {"!isAbstractSqueakObject(value)"})
-    protected static final ClassObject doForeignObject(@SuppressWarnings("unused") final TruffleObject value,
+    @Specialization(guards = {"!isAbstractSqueakObject(value)", "!isUsedJavaPrimitive(value)"})
+    protected static final ClassObject doForeignObject(@SuppressWarnings("unused") final Object value,
                     @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         return image.getForeignObjectClass();
     }
