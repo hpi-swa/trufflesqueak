@@ -103,12 +103,12 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         }
     }
 
-    private void ensureCachedContextCanRunAgain(final ContextObject activeContext) {
-        if (activeContext.isTerminated() && image.getLastParseRequestSource().isCached()) {
+    private static void ensureCachedContextCanRunAgain(final ContextObject activeContext) {
+        if (activeContext.getInstructionPointerForBytecodeLoop() != 0) {
             /**
              * Reset instruction pointer and stack pointer of the context (see
              * {@link EnterCodeNode#initializeSlots}) in case it has previously been executed and
-             * needs to run again, because the Source has been cached.
+             * needs to run again, for example because the Source has been cached.
              */
             assert !activeContext.hasClosure() : "activeContext is expected to have no closure";
             final CompiledMethodObject method = activeContext.getMethod();
