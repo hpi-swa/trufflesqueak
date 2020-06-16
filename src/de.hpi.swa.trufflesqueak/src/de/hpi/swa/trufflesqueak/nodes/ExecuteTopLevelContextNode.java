@@ -31,6 +31,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
+    private static final FrameDescriptor TOP_LEVEL_FRAME_DESCRIPTOR = new FrameDescriptor();
     private final SqueakImageContext image;
     private final boolean isImageResuming;
     private ContextObject initialContext;
@@ -39,7 +40,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
 
     private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean isImageResuming) {
-        super(language, new FrameDescriptor());
+        super(language, TOP_LEVEL_FRAME_DESCRIPTOR);
         image = code.image;
         initialContext = context;
         this.isImageResuming = isImageResuming;
