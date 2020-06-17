@@ -20,9 +20,23 @@ public class SDLCContext implements CContext.Directives {
 
     @Override
     public List<String> getLibraries() {
-        if (Platform.includedIn(Platform.LINUX.class) || Platform.includedIn(Platform.DARWIN.class)) {
-            // `sdl2-config --libs`
+        /* `sdl2-config --libs` */
+        if (Platform.includedIn(Platform.LINUX.class)) {
+            return Collections.singletonList("-L/usr/lib/x86_64-linux-gnu -lSDL2");
+        } else if (Platform.includedIn(Platform.DARWIN.class)) {
             return Collections.singletonList("-L/usr/local/lib -lSDL2");
+        } else {
+            throw new UnsupportedOperationException("Unsupported OS");
+        }
+    }
+
+    @Override
+    public List<String> getOptions() {
+        /* `sdl2-config --cflags` */
+        if (Platform.includedIn(Platform.LINUX.class)) {
+            return Collections.singletonList("-I/usr/include/SDL2 -D_REENTRANT");
+        } else if (Platform.includedIn(Platform.DARWIN.class)) {
+            return Collections.singletonList("-I/usr/local/include/SDL2 -D_THREAD_SAFE");
         } else {
             throw new UnsupportedOperationException("Unsupported OS");
         }
