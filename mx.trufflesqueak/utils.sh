@@ -36,6 +36,30 @@ add-path() {
   echo "::add-path::$(resolve-path "$1")"
 }
 
+build-component() {
+  local component_name=$1
+  local env_name=$2
+  local target=$3
+
+  mx --env "${env_name}" build --dependencies="${component_name}"
+  cp $(mx --env "${env_name}" paths "${component_name}") "${target}"
+}
+
+build-components() {
+  local java_version=$1
+
+  if [[ "${java_version}" == "java8" ]]; then
+    java_version="JAVA8"
+  else
+    java_version="JAVA11"
+  fi
+
+  mx build # Ensure all dependencies are built (e.g. GRAAL_SDK)
+
+  build-component "SMALLTALK_INSTALLABLE_${java_version}" trufflesqueak-jvm "${INSTALLABLE_JVM_TARGET}"
+  build-component "SMALLTALK_INSTALLABLE_SVM_${java_version}" trufflesqueak-svm "${INSTALLABLE_SVM_TARGET}"
+}
+
 deploy-asset() {
   local git_tag=$(git tag --points-at HEAD)
   if [[ -z "${git_tag}" ]]; then
@@ -137,10 +161,11 @@ ensure-test-image() {
 
 installable-filename() {
   local java_version=$1
+  local svm_prefix=$2
   local git_describe=$(git describe --tags --always)
   local git_short_commit=$(git log -1 --format="%h")
   local git_description="${git_describe:-${git_short_commit}}"
-  echo "trufflesqueak-installable-${java_version}-${OS_NAME}-amd64-${git_description}-for-GraalVM-${DEP_GRAALVM}.jar"
+  echo "trufflesqueak-installable${svm_prefix}-${java_version}-${OS_NAME}-amd64-${git_description}.jar"
 }
 
 resolve-path() {
@@ -178,7 +203,8 @@ set-up-dependencies() {
 
   set-up-graalvm-ce "${java_version}" "${HOME}"
 
-  set-env "INSTALLABLE_TARGET" "$(installable-filename "${java_version}")"
+  set-env "INSTALLABLE_JVM_TARGET" "$(installable-filename "${java_version}" "")"
+  set-env "INSTALLABLE_SVM_TARGET" "$(installable-filename "${java_version}" "-svm")"
 }
 
 set-up-graalvm-ce() {

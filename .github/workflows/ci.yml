@@ -54,21 +54,22 @@ jobs:
       run: |
         sudo apt update -qq && sudo apt install -qq libsdl2-dev
         mx.trufflesqueak/utils.sh set-up-dependencies java11
-    - name: Build and install TruffleSqueak component
-      run: |
-        mx --env trufflesqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA11
-        cp $(mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA11) "${INSTALLABLE_TARGET}"
-        gu install -L "${INSTALLABLE_TARGET}"
+    - name: Build TruffleSqueak components
+      run: mx.trufflesqueak/utils.sh build-components java11
+    - name: Install SVM-enabled TruffleSqueak component
+      run: gu install -L "${INSTALLABLE_SVM_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
-    - name: Run SystemReporter on Native Image
+    - name: Run SystemReporter on SubstrateVM
       run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Run tinyBenchmarks on Native Image
+    - name: Run tinyBenchmarks on SubstrateVM
       run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak component
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload TruffleSqueak components
+      run: |
+        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and code coverage
       run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
     - name: Report code coverage
@@ -94,21 +95,22 @@ jobs:
       run: |
         sudo apt update -qq && sudo apt install -qq libsdl2-dev
         mx.trufflesqueak/utils.sh set-up-dependencies java8
-    - name: Build and install TruffleSqueak component
-      run: |
-        mx --env trufflesqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
-        cp $(mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
-        gu install -L "${INSTALLABLE_TARGET}"
+    - name: Build TruffleSqueak components
+      run: mx.trufflesqueak/utils.sh build-components java8
+    - name: Install SVM-enabled TruffleSqueak component
+      run: gu install -L "${INSTALLABLE_SVM_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
-    - name: Run SystemReporter on Native Image
+    - name: Run SystemReporter on SubstrateVM
       run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Run tinyBenchmarks on Native Image
+    - name: Run tinyBenchmarks on SubstrateVM
       run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak component
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload TruffleSqueak components
+      run: |
+        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and code coverage
       run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
     - name: Report code coverage
@@ -134,21 +136,22 @@ jobs:
       run: |
         HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
         mx.trufflesqueak/utils.sh set-up-dependencies java11
-    - name: Build and install TruffleSqueak component
-      run: |
-        mx --env trufflesqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA11
-        cp $(mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA11) "${INSTALLABLE_TARGET}"
-        gu install -L "${INSTALLABLE_TARGET}"
+    - name: Build TruffleSqueak components
+      run: mx.trufflesqueak/utils.sh build-components java11
+    - name: Install SVM-enabled TruffleSqueak component
+      run: gu install -L "${INSTALLABLE_SVM_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
-    - name: Run SystemReporter on Native Image
+    - name: Run SystemReporter on SubstrateVM
       run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Run tinyBenchmarks on Native Image
+    - name: Run tinyBenchmarks on SubstrateVM
       run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak component
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload TruffleSqueak components
+      run: |
+        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
       run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
 
@@ -166,21 +169,22 @@ jobs:
       run: |
         HOMEBREW_NO_AUTO_UPDATE=1 brew install sdl2
         mx.trufflesqueak/utils.sh set-up-dependencies java8
-    - name: Build and install TruffleSqueak component
-      run: |
-        mx --env trufflesqueak-svm build --dependencies=SMALLTALK_INSTALLABLE_SVM_JAVA8
-        cp $(mx --env trufflesqueak-svm paths SMALLTALK_INSTALLABLE_SVM_JAVA8) "${INSTALLABLE_TARGET}"
-        gu install -L "${INSTALLABLE_TARGET}"
+    - name: Build TruffleSqueak components
+      run: mx.trufflesqueak/utils.sh build-components java8
+    - name: Install SVM-enabled TruffleSqueak component
+      run: gu install -L "${INSTALLABLE_SVM_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
-    - name: Run SystemReporter on Native Image
+    - name: Run SystemReporter on SubstrateVM
       run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Run tinyBenchmarks on Native Image
+    - name: Run tinyBenchmarks on SubstrateVM
       run: trufflesqueak --native --code "1 tinyBenchmarks" images/test-64bit.image
-    - name: Upload TruffleSqueak component
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload TruffleSqueak components
+      run: |
+        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+        mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
       run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
 
@@ -204,15 +208,15 @@ jobs:
     - name: Copy and install TruffleSqueak component
       shell: pwsh
       run: |
-        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
-        gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
+        gu.cmd install -L "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload TruffleSqueak component
       shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
       shell: cmd
       run: |
@@ -239,15 +243,15 @@ jobs:
     - name: Copy and install TruffleSqueak component
       shell: pwsh
       run: |
-        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_TARGET}"
-        gu.cmd install -L "${pwd}\${env:INSTALLABLE_TARGET}"
+        Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
+        gu.cmd install -L "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
     - name: Run SystemReporter on GraalVM
       run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload TruffleSqueak component
       shell: bash
-      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+      run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
       shell: cmd
       run: |
