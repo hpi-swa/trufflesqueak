@@ -18,8 +18,6 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 @ExportLibrary(InteropLibrary.class)
 public final class FloatObject extends AbstractSqueakObjectWithHash {
     public static final int PRECISION = 53;
-    public static final int EMIN = Double.MIN_EXPONENT;
-    public static final int EMAX = Double.MAX_EXPONENT;
     public static final int WORD_LENGTH = 2;
     private double doubleValue;
 

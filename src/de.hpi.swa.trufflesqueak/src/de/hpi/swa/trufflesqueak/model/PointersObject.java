@@ -57,14 +57,6 @@ public final class PointersObject extends AbstractPointersObject {
         super(original);
     }
 
-    public static PointersObject create(final AbstractPointersObjectWriteNode writeNode, final ClassObject squeakClass, final Object... pointers) {
-        final PointersObject object = new PointersObject(squeakClass.image, squeakClass);
-        for (int i = 0; i < pointers.length; i++) {
-            writeNode.execute(object, i, pointers[i]);
-        }
-        return object;
-    }
-
     public static PointersObject newHandleWithHiddenObject(final SqueakImageContext image, final Object hiddenObject) {
         final PointersObject handle = new PointersObject(image, image.pointClass);
         handle.object2 = hiddenObject;

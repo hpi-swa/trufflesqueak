@@ -295,10 +295,6 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return bitLength < Long.SIZE;
     }
 
-    public boolean fitsIntoInt() {
-        return bitLength < Integer.SIZE;
-    }
-
     public int bitLength() {
         return bitLength;
     }
@@ -306,11 +302,6 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     private static int bitLength(final BigInteger integer) {
         return integer.bitLength();
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static LargeIntegerObject valueOf(final SqueakImageContext image, final long a) {
-        return new LargeIntegerObject(image, BigInteger.valueOf(a));
     }
 
     public boolean isPositive() {
@@ -474,11 +465,6 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object remainder(final LargeIntegerObject b) {
         return reduceIfPossible(integer.remainder(b.integer));
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public Object negate() {
-        return reduceIfPossible(integer.negate());
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)

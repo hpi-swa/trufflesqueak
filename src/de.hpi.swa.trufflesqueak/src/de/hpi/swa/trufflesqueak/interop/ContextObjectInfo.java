@@ -48,10 +48,6 @@ public final class ContextObjectInfo implements TruffleObject {
         }
     }
 
-    public static boolean isInstance(final TruffleObject obj) {
-        return obj instanceof ContextObjectInfo;
-    }
-
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean hasMembers() {

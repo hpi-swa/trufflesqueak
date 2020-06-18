@@ -54,10 +54,6 @@ public abstract class DispatchSendFromStackNode extends AbstractNode {
             this.argumentCount = argumentCount;
         }
 
-        public static DispatchSendSelectorNode create(final CompiledCodeObject code, final int argumentCount) {
-            return DispatchSendSelectorNodeGen.create(code, argumentCount);
-        }
-
         @Specialization(guards = {"lookupResult != null"})
         protected static final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
                         @SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final ClassObject rcvrClass,

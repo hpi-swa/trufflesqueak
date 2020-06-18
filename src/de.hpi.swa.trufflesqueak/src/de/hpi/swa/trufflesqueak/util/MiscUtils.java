@@ -65,16 +65,6 @@ public final class MiscUtils {
         return (int) (value >> offset & size - 1);
     }
 
-    /** Ceil version of {@link Math#floorDiv(int, int)}. */
-    public static int ceilDiv(final int x, final int y) {
-        int r = x / y;
-        // if the signs are the same and modulo not zero, round up
-        if ((x ^ y) >= 0 && r * y != x) {
-            r++;
-        }
-        return r;
-    }
-
     @TruffleBoundary
     public static long currentTimeMillis() {
         return System.currentTimeMillis();

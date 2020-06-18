@@ -5,7 +5,6 @@
  */
 package de.hpi.swa.trufflesqueak.image;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.lang.ref.ReferenceQueue;
 import java.nio.file.Path;
@@ -504,10 +503,6 @@ public final class SqueakImageContext {
 
     public SqueakDisplayInterface getDisplay() {
         return display;
-    }
-
-    public String imageRelativeFilePathFor(final String fileName) {
-        return getImageDirectory() + File.separator + fileName;
     }
 
     public String getImagePath() {

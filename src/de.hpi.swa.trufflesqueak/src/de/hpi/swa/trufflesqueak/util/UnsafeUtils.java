@@ -120,10 +120,6 @@ public final class UnsafeUtils {
         return UNSAFE.getLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
-    public static long getLongReversed(final byte[] bytes, final long index) {
-        return Long.reverseBytes(getLong(bytes, index));
-    }
-
     public static Object getObject(final Object[] storage, final long index) {
         assert 0 <= index && index < storage.length;
         return UNSAFE.getObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE);
@@ -151,10 +147,6 @@ public final class UnsafeUtils {
     public static short getShortFromBytes(final byte[] bytes, final long index) {
         assert 0 <= index && index <= bytes.length;
         return UNSAFE.getShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
-    }
-
-    public static short getShortReversed(final byte[] bytes, final long index) {
-        return Short.reverseBytes(getShort(bytes, index));
     }
 
     public static WeakRef getWeakRef(final WeakRef[] storage, final long index) {
@@ -261,10 +253,6 @@ public final class UnsafeUtils {
         UNSAFE.putLong(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
-    public static void putLongReversed(final byte[] bytes, final long i, final long value) {
-        putLong(bytes, i, Long.reverseBytes(value));
-    }
-
     public static void putObject(final Object[] storage, final long index, final Object value) {
         assert 0 <= index && index < storage.length;
         UNSAFE.putObject(storage, Unsafe.ARRAY_OBJECT_BASE_OFFSET + index * Unsafe.ARRAY_OBJECT_INDEX_SCALE, value);
@@ -292,10 +280,6 @@ public final class UnsafeUtils {
     public static void putShortIntoBytes(final byte[] bytes, final long index, final short value) {
         assert 0 <= index && index <= bytes.length;
         UNSAFE.putShort(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
-    }
-
-    public static void putShortReversed(final byte[] bytes, final long index, final short value) {
-        putShort(bytes, index, Short.reverseBytes(value));
     }
 
     public static void putWeakRef(final WeakRef[] storage, final long index, final WeakRef value) {
