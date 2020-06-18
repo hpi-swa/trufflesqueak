@@ -284,7 +284,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
          * that they can catch them. The mechanism works essentially like this:
          *
          * <pre>
-         * <code>[ ... ] on: Exception do: [ :e | Interop throwException: e exception ]</code>
+         * <code>[ ... ] on: Exception do: [ :e | Interop throwException: ((e isKindOf: UnhandledError) ifTrue: [ e exception \"unpack exception\" ] ifFalse: [ e ]) ]</code>
          * </pre>
          *
          * (see Context>>#handleSignal:)
@@ -298,7 +298,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 cachedContext.setMethod(onDoMethod);
                 cachedContext.setReceiver(NilObject.SINGLETON);
                 cachedContext.atTempPut(0, image.evaluate("Exception"));
-                cachedContext.atTempPut(1, image.evaluate("[ :e | Interop throwException: e exception ]"));
+                cachedContext.atTempPut(1, image.evaluate("[ :e | Interop throwException: ((e isKindOf: UnhandledError) ifTrue: [ e exception \"unpack exception\" ] ifFalse: [ e ]) ]"));
                 cachedContext.atTempPut(2, BooleanObject.TRUE);
                 cachedContext.setInstructionPointer(CallPrimitiveNode.NUM_BYTECODES);
                 cachedContext.setStackPointer(onDoMethod.getNumTemps());
