@@ -97,6 +97,11 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return newHash;
     }
 
+    /* Used by TruffleSqueakTest. */
+    public boolean hasLayout() {
+        return layout != null;
+    }
+
     public ObjectLayout getLayout() {
         if (layout == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
