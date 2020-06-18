@@ -11,11 +11,12 @@ A [Squeak/Smalltalk][squeak] VM and Polyglot Programming Environment for the [Gr
    supported version of GraalVM.
 2. Download the corresponding [GraalVM][graalvm_download] for your platform.
 3. Use the [GraalVM Updater][graalvm_updater] to install the TruffleSqueak
-   component (JAR files are attached to the release) for your platform:
+   component for your platform:
 
 ```bash
-$GRAALVM_HOME/bin/gu install \
-  -u https://github.com/hpi-swa/trufflesqueak/releases/download/X.Y.Z/trufflesqueak-installable-….jar
+$GRAALVM_HOME/bin/gu \
+  -C https://raw.githubusercontent.com/hpi-swa/trufflesqueak/master/gu-catalog.properties \
+  install smalltalk
 ```
 
 4. You should now be able to run TruffleSqueak:
