@@ -49,6 +49,7 @@ else:
 
 _suite = mx.suite('trufflesqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
+_svm = mx.suite('substratevm', fatalIfMissing=False)
 
 
 def _graal_vm_args(args):
@@ -543,7 +544,12 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
             ],
         )
     ],
-    post_install_msg=None,
+    post_install_msg=(None if not _svm else "\nNOTES:\n---------------\n" +
+            "TruffleSqueak (SVM) requires SDL2 to be installed on your system:\n" +
+            "- On Debian/Ubuntu, you can install SDL2 via `sudo apt-get install libsdl2-2.0`.\n" +
+            "- On macOS, you can install SDL2 with Homebrew: `brew install sdl2`.\n\n" +
+            "The pre-compiled native image is used by default and does not include other languages. " +
+            "Run TruffleSqueak in JVM mode (via `trufflesqueak --jvm`) for polyglot access."),
 ))
 
 
