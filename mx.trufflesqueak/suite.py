@@ -13,11 +13,11 @@ suite = {
     "name": "trufflesqueak",
     "versionConflictResolution": "latest",
 
-    "version": "1.0.0-rc10-dev",
+    "version": "20.1.0",
     "trufflesqueak:dependencyMap": {
         "graalvm": "20.1.0",
-        "image": "TruffleSqueakImage-1.0.0-rc9.zip",
-        "image_tag": "1.0.0-rc9",
+        "image": "TruffleSqueakImage-20.1.0.zip",
+        "image_tag": "20.1.0",
         "jdk8": "252",
         "jdk8_update": "09",
         "jdk11": "11.0.7",
