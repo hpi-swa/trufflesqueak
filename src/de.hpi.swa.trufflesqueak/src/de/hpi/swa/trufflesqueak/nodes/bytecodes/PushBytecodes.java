@@ -29,6 +29,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.nodes.SqueakProfiles.SqueakProfile;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.ArrayFromStackNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.CreateNewArrayNodeGen;
@@ -207,16 +208,18 @@ public final class PushBytecodes {
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushLiteralVariableNode extends AbstractPushNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        private final SqueakProfile valueProfile;
         private final int literalIndex;
 
         public PushLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             super(code, index, numBytecodes);
             this.literalIndex = literalIndex;
+            valueProfile = SqueakProfile.createLiteralProfile(code.getLiteral(literalIndex));
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, at0Node.execute(code.getLiteral(literalIndex), ASSOCIATION.VALUE));
+            pushNode.execute(frame, valueProfile.profile(at0Node.execute(code.getLiteral(literalIndex), ASSOCIATION.VALUE)));
         }
 
         @Override
