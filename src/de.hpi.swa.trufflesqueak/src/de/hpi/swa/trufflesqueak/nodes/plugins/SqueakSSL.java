@@ -230,7 +230,8 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         private SSLContext context;
         private SSLEngine engine;
 
-        private String peerName;
+        /* Hack: Use "*" to avoid certificate validation errors and NPE. */
+        private String peerName = "*";
         private String serverName;
 
         private ByteBuffer buffer;
@@ -574,10 +575,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         private static void handshakeCompleted(final SqSSL ssl) {
             ssl.state = State.CONNECTED;
             final String peerHost = ssl.engine.getPeerHost();
-            /*
-             * Hack: if peer host is not available, use "*" to avoid certificate validation errors.
-             */
-            ssl.peerName = peerHost == null ? "*" : peerHost;
+            if (peerHost != null) {
+                ssl.peerName = peerHost;
+            }
         }
 
         private static void writeHandshakeResponse(final SqSSL ssl, final ByteBuffer target) throws SSLException {
@@ -715,7 +715,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         private static void connectionClosed(final SqSSL ssl) {
             ssl.buffer.clear();
             ssl.state = State.UNUSED;
-
         }
     }
 
