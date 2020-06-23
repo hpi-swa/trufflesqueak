@@ -14,6 +14,7 @@ printOnTitle
 	memberSize > 0 ifTrue: [ properties add: 'memberSize=', memberSize ].
 	(Interop isInstantiable: self) ifTrue: [ properties add: 'instantiable' ].
 	(Interop isExecutable: self) ifTrue: [ properties add: 'executable' ].
+	(Interop isMetaObject: self) ifTrue: [ properties add: 'meta' ].
 	^ properties
 		ifEmpty: [ 'ForeignObject' ]
 		ifNotEmpty: [ 'ForeignObject[', (properties joinSeparatedBy: ','), ']' ]
