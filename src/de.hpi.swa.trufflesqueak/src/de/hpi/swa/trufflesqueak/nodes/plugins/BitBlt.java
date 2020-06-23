@@ -2986,11 +2986,10 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#rgbMapPixel:flags: */
     private long rgbMapPixelflags(final long sourcePixel) {
-        long val;
-        val = shift(sourcePixel & cmMaskTable[0], cmShiftTable[0]);
-        val = val | shift(sourcePixel & cmMaskTable[1], cmShiftTable[1]);
-        val = val | shift(sourcePixel & cmMaskTable[2], cmShiftTable[2]);
-        return val | shift(sourcePixel & cmMaskTable[3], cmShiftTable[3]);
+        return shift(sourcePixel & cmMaskTable[0], cmShiftTable[0]) | //
+                        shift(sourcePixel & cmMaskTable[1], cmShiftTable[1]) | //
+                        shift(sourcePixel & cmMaskTable[2], cmShiftTable[2]) | //
+                        shift(sourcePixel & cmMaskTable[3], cmShiftTable[3]);
     }
 
     /*
@@ -3864,6 +3863,7 @@ public final class BitBlt {
         return a >>> b;
     }
 
+    /* SmallInteger>>bitShift: */
     private static long shift(final long a, final long b) {
         return b < 0 ? a >>> -b : a << b;
     }
