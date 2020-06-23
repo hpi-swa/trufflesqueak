@@ -11,6 +11,6 @@ testVMIntrospection
 	"Ensure that class has a layout"
 	self assert: testObject hasLayout wrappedJavaObject.
 	"Traverse class and unwrap object"
-	self assert: Object equals: testObject superclass wrappedJavaObject.
+	self assert: Object equals: testObject getSuperclass wrappedJavaObject.
 	"Allocate Object[]"
-	self assert: 10 equals: (testObject pointers getClass new: 10) size.
+	self assert: 10 equals: (testObject getOtherPointers getClass new: 10) size.
