@@ -181,19 +181,19 @@ public final class SqueakBytecodeDecoder {
             case 127:
                 return new UnknownBytecodeNode(code, index, 1, b);
             case 128:
-                return ExtendedBytecodes.createPush(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
+                return ExtendedBytecodes.createPush(code, index, 2, bytecode[index + 1]);
             case 129:
-                return ExtendedBytecodes.createStoreInto(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
+                return ExtendedBytecodes.createStoreInto(code, index, 2, bytecode[index + 1]);
             case 130:
-                return ExtendedBytecodes.createPopInto(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
+                return ExtendedBytecodes.createPopInto(code, index, 2, bytecode[index + 1]);
             case 131:
-                return new SingleExtendedSendNode(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
+                return new SingleExtendedSendNode(code, index, 2, bytecode[index + 1]);
             case 132:
-                return DoubleExtendedDoAnythingNode.create(code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
+                return DoubleExtendedDoAnythingNode.create(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 133:
-                return new SingleExtendedSuperNode(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
+                return new SingleExtendedSuperNode(code, index, 2, bytecode[index + 1]);
             case 134:
-                return new SecondExtendedSendNode(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
+                return new SecondExtendedSendNode(code, index, 2, bytecode[index + 1]);
             case 135:
                 return new PopNode(code, index, 1);
             case 136:
@@ -201,29 +201,28 @@ public final class SqueakBytecodeDecoder {
             case 137:
                 return new PushActiveContextNode(code, index);
             case 138:
-                return PushNewArrayNode.create(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
+                return PushNewArrayNode.create(code, index, 2, bytecode[index + 1]);
             case 139:
                 assert code instanceof CompiledMethodObject;
-                return CallPrimitiveNode.create((CompiledMethodObject) code, index, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
+                return CallPrimitiveNode.create((CompiledMethodObject) code, index, bytecode[index + 1], bytecode[index + 2]);
             case 140:
-                return new PushRemoteTempNode(code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
+                return new PushRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 141:
-                return new StoreIntoRemoteTempNode(code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
+                return new StoreIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 142:
-                return new PopIntoRemoteTempNode(code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
+                return new PopIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 143:
-                return PushClosureNode.create(code, index, 4,
-                                Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]), Byte.toUnsignedInt(bytecode[index + 3]));
+                return PushClosureNode.create(code, index, 4, bytecode[index + 1], bytecode[index + 2], bytecode[index + 3]);
             case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
                 return new UnconditionalJumpNode(code, index, 1, b);
             case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:
                 return new ConditionalJumpNode(code, index, 1, b);
             case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167:
-                return new UnconditionalJumpNode(code, index, 2, b, Byte.toUnsignedInt(bytecode[index + 1]));
+                return new UnconditionalJumpNode(code, index, 2, b, bytecode[index + 1]);
             case 168: case 169: case 170: case 171:
-                return new ConditionalJumpNode(code, index, 2, b, Byte.toUnsignedInt(bytecode[index + 1]), true);
+                return new ConditionalJumpNode(code, index, 2, b, bytecode[index + 1], true);
             case 172: case 173: case 174: case 175:
-                return new ConditionalJumpNode(code, index, 2, b, Byte.toUnsignedInt(bytecode[index + 1]), false);
+                return new ConditionalJumpNode(code, index, 2, b, bytecode[index + 1], false);
             case 176: case 177: case 178: case 179: case 180: case 181: case 182: case 183:
             case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191:
             case 192: case 193: case 194: case 195: case 196: case 197: case 198: case 199:
@@ -286,9 +285,6 @@ public final class SqueakBytecodeDecoder {
 
     private static String decodeBytecodeToString(final CompiledCodeObject code, final int b0, final int index) {
         final byte[] bytecode = code.getBytes();
-        final int b1;
-        final int b2;
-        final byte variableIndex;
         //@formatter:off
         switch (b0) {
             case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
@@ -343,9 +339,9 @@ public final class SqueakBytecodeDecoder {
                 return "unknown: " + b0;
             case 127:
                 return "unknown: " + b0;
-            case 128:
-                b1 = Byte.toUnsignedInt(bytecode[index + 1]);
-                variableIndex = ExtendedBytecodes.variableIndex(b1);
+            case 128: {
+                final byte b1 = bytecode[index + 1];
+                final int variableIndex = ExtendedBytecodes.variableIndex(b1);
                 switch (ExtendedBytecodes.variableType(b1)) {
                     case 0:
                         return "pushRcvr: " + variableIndex;
@@ -358,9 +354,10 @@ public final class SqueakBytecodeDecoder {
                     default:
                         throw SqueakException.create("unexpected type for ExtendedPush");
                 }
-            case 129:
-                b1 = Byte.toUnsignedInt(bytecode[index + 1]);
-                 variableIndex = ExtendedBytecodes.variableIndex(b1);
+            }
+            case 129: {
+                final byte b1 = bytecode[index + 1];
+                 final int variableIndex = ExtendedBytecodes.variableIndex(b1);
                 switch (ExtendedBytecodes.variableType(b1)) {
                     case 0:
                         return "storeIntoRcvr: " + variableIndex;
@@ -373,9 +370,10 @@ public final class SqueakBytecodeDecoder {
                     default:
                         throw SqueakException.create("illegal ExtendedStore bytecode");
                 }
-            case 130:
-                b1 = Byte.toUnsignedInt(bytecode[index + 1]);
-                variableIndex = ExtendedBytecodes.variableIndex(b1);
+            }
+            case 130: {
+                final byte b1 = bytecode[index + 1];
+                final int variableIndex = ExtendedBytecodes.variableIndex(b1);
                 switch (ExtendedBytecodes.variableType(b1)) {
                     case 0:
                         return "popIntoRcvr: " + variableIndex;
@@ -388,11 +386,12 @@ public final class SqueakBytecodeDecoder {
                     default:
                         throw SqueakException.create("illegal ExtendedStore bytecode");
                 }
+            }
             case 131:
                 return "send: " +  code.getLiteral(Byte.toUnsignedInt(bytecode[index + 1]) & 31);
-            case 132:
-                b1 = Byte.toUnsignedInt(bytecode[index + 1]);
-                b2 = Byte.toUnsignedInt(bytecode[index + 2]);
+            case 132: {
+                final int b1 = Byte.toUnsignedInt(bytecode[index + 1]);
+                final int b2 = Byte.toUnsignedInt(bytecode[index + 2]);
                 switch (b1 >> 5) {
                     case 0:
                         return "send: " + code.getLiteral(b2);
@@ -413,6 +412,7 @@ public final class SqueakBytecodeDecoder {
                     default:
                         return "unknown: " + b1;
                 }
+            }
             case 133:
                 return "sendSuper: " + code.getLiteral(Byte.toUnsignedInt(bytecode[index + 1]) & 31);
             case 134:
@@ -434,11 +434,12 @@ public final class SqueakBytecodeDecoder {
                 return "storeIntoTemp: " + Byte.toUnsignedInt(bytecode[index + 1]) + " inVectorAt: " + Byte.toUnsignedInt(bytecode[index + 2]);
             case 142:
                 return "popIntoTemp: " + Byte.toUnsignedInt(bytecode[index + 1]) + " inVectorAt: " + Byte.toUnsignedInt(bytecode[index + 2]);
-            case 143:
-                b1 = Byte.toUnsignedInt(bytecode[index + 1]);
+            case 143: {
+                final byte b1 = bytecode[index + 1];
                 final int start = index + PushClosureNode.NUM_BYTECODES;
                 final int end = start + (Byte.toUnsignedInt(bytecode[index + 2]) << 8 | Byte.toUnsignedInt(bytecode[index + 3]));
                 return "closureNumCopied: " + (b1 >> 4 & 0xF) + " numArgs: " + (b1 & 0xF) + " bytes " + start + " to " + end;
+            }
             case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
                 return "jumpTo: " + ((b0 & 7) + 1);
             case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:

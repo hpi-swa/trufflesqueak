@@ -50,9 +50,9 @@ public final class StoreBytecodes {
     }
 
     private abstract static class AbstractStoreIntoReceiverVariableNode extends AbstractStoreIntoNode {
-        protected final long receiverIndex;
+        protected final int receiverIndex;
 
-        private AbstractStoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
+        private AbstractStoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int receiverIndex) {
             super(code, index, numBytecodes);
             this.receiverIndex = receiverIndex;
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(receiverIndex);
@@ -71,12 +71,12 @@ public final class StoreBytecodes {
 
         @Child protected FrameSlotReadNode readNode;
 
-        private AbstractStoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int indexInArray, final int indexOfArray) {
+        private AbstractStoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte indexInArray, final byte indexOfArray) {
             super(code, index, numBytecodes);
-            this.indexInArray = indexInArray;
-            this.indexOfArray = indexOfArray;
+            this.indexInArray = Byte.toUnsignedInt(indexInArray);
+            this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(indexInArray);
-            readNode = FrameSlotReadNode.create(code.getStackSlot(indexOfArray));
+            readNode = FrameSlotReadNode.create(code.getStackSlot(this.indexOfArray));
         }
 
         @Override
@@ -127,7 +127,7 @@ public final class StoreBytecodes {
     public static final class PopIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        public PopIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
+        public PopIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int receiverIndex) {
             super(code, index, numBytecodes, receiverIndex);
         }
 
@@ -145,7 +145,7 @@ public final class StoreBytecodes {
     public static final class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        public PopIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int indexInArray, final int indexOfArray) {
+        public PopIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte indexInArray, final byte indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
         }
 
@@ -199,7 +199,7 @@ public final class StoreBytecodes {
     public static final class StoreIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public StoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
+        public StoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int receiverIndex) {
             super(code, index, numBytecodes, receiverIndex);
         }
 
@@ -217,7 +217,7 @@ public final class StoreBytecodes {
     public static final class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public StoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int indexInArray, final int indexOfArray) {
+        public StoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte indexInArray, final byte indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
         }
 

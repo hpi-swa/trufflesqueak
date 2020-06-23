@@ -37,9 +37,9 @@ public final class JumpBytecodes {
             handleConditionResultNode = HandleConditionResultNode.create(getSuccessorIndex());
         }
 
-        public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter, final boolean condition) {
+        public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final byte parameter, final boolean condition) {
             super(code, index, numBytecodes);
-            offset = ((bytecode & 3) << 8) + parameter;
+            offset = ((bytecode & 3) << 8) + Byte.toUnsignedInt(parameter);
             isIfTrue = condition;
             handleConditionResultNode = HandleConditionResultNode.create(getSuccessorIndex());
         }
@@ -105,9 +105,9 @@ public final class JumpBytecodes {
             offset = (bytecode & 7) + 1;
         }
 
-        public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter) {
+        public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final byte parameter) {
             super(code, index, numBytecodes);
-            offset = ((bytecode & 7) - 4 << 8) + parameter;
+            offset = ((bytecode & 7) - 4 << 8) + Byte.toUnsignedInt(parameter);
         }
 
         @Override

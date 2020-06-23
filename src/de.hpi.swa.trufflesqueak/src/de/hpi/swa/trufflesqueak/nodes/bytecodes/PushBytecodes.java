@@ -84,14 +84,14 @@ public final class PushBytecodes {
         @CompilationFinal private int cachedStartPC;
 
         @Child private FrameStackPopNNode popNNode;
-        @Child protected FrameStackPushNode pushNode = FrameStackPushNode.create();
+        @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
         @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
 
-        private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
+        private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte i, final byte j, final byte k) {
             super(code, index, numBytecodes);
             numArgs = i & 0xF;
-            numCopied = i >> 4 & 0xF;
-            blockSize = j << 8 | k;
+            numCopied = Byte.toUnsignedInt(i) >> 4 & 0xF;
+            blockSize = Byte.toUnsignedInt(j) << 8 | Byte.toUnsignedInt(k);
             popNNode = FrameStackPopNNode.create(numCopied);
         }
 
@@ -103,7 +103,7 @@ public final class PushBytecodes {
             popNNode = FrameStackPopNNode.create(numCopied);
         }
 
-        public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
+        public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final byte i, final byte j, final byte k) {
             return new PushClosureNode(code, index, numBytecodes, i, j, k);
         }
 
@@ -232,13 +232,13 @@ public final class PushBytecodes {
     public static final class PushNewArrayNode extends AbstractPushNode {
         @Child protected ArrayNode arrayNode;
 
-        protected PushNewArrayNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
+        protected PushNewArrayNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             super(code, index, numBytecodes);
             final int arraySize = param & 127;
-            arrayNode = param > 127 ? ArrayFromStackNodeGen.create(arraySize) : CreateNewArrayNodeGen.create(arraySize);
+            arrayNode = param < 0 ? ArrayFromStackNodeGen.create(arraySize) : CreateNewArrayNodeGen.create(arraySize);
         }
 
-        public static PushNewArrayNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
+        public static PushNewArrayNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             return new PushNewArrayNode(code, index, numBytecodes, param);
         }
 
@@ -353,11 +353,11 @@ public final class PushBytecodes {
         private final int indexInArray;
         private final int indexOfArray;
 
-        public PushRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int indexInArray, final int indexOfArray) {
+        public PushRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte indexInArray, final byte indexOfArray) {
             super(code, index, numBytecodes);
-            this.indexInArray = indexInArray;
-            this.indexOfArray = indexOfArray;
-            readTempNode = FrameSlotReadNode.create(code.getStackSlot(indexOfArray));
+            this.indexInArray = Byte.toUnsignedInt(indexInArray);
+            this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
+            readTempNode = FrameSlotReadNode.create(code.getStackSlot(this.indexOfArray));
         }
 
         @Override

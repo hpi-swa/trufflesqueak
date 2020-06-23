@@ -37,14 +37,14 @@ public final class MiscellaneousBytecodes {
         @Child public AbstractPrimitiveNode primitiveNode;
         private final int primitiveIndex;
 
-        public CallPrimitiveNode(final CompiledMethodObject method, final int index, final int byte1, final int byte2) {
+        public CallPrimitiveNode(final CompiledMethodObject method, final int index, final byte byte1, final byte byte2) {
             super(method, index, NUM_BYTECODES);
-            primitiveIndex = byte1 + (byte2 << 8);
+            primitiveIndex = Byte.toUnsignedInt(byte1) + (Byte.toUnsignedInt(byte2) << 8);
             primitiveNode = PrimitiveNodeFactory.forIndex(method, false, primitiveIndex);
             assert method.hasPrimitive();
         }
 
-        public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int byte1, final int byte2) {
+        public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final byte byte1, final byte byte2) {
             return new CallPrimitiveNode(code, index, byte1, byte2);
         }
 
@@ -62,9 +62,10 @@ public final class MiscellaneousBytecodes {
 
     public static final class DoubleExtendedDoAnythingNode {
 
-        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int second, final int third) {
-            final int opType = second >> 5;
-            switch (opType) {
+        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param1, final byte param2) {
+            final int second = Byte.toUnsignedInt(param1);
+            final int third = Byte.toUnsignedInt(param2);
+            switch (second >> 5) {
                 case 0:
                     return new SendSelfSelectorNode(code, index, numBytecodes, code.getLiteral(third), second & 31);
                 case 1:
@@ -109,7 +110,7 @@ public final class MiscellaneousBytecodes {
 
     public static final class ExtendedBytecodes {
 
-        public static AbstractInstrumentableBytecodeNode createPopInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
+        public static AbstractInstrumentableBytecodeNode createPopInto(final CompiledCodeObject code, final int index, final int numBytecodes, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
@@ -125,7 +126,7 @@ public final class MiscellaneousBytecodes {
             }
         }
 
-        public static AbstractInstrumentableBytecodeNode createPush(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
+        public static AbstractInstrumentableBytecodeNode createPush(final CompiledCodeObject code, final int index, final int numBytecodes, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
@@ -141,7 +142,7 @@ public final class MiscellaneousBytecodes {
             }
         }
 
-        public static AbstractInstrumentableBytecodeNode createStoreInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
+        public static AbstractInstrumentableBytecodeNode createStoreInto(final CompiledCodeObject code, final int index, final int numBytecodes, final byte nextByte) {
             final int variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
@@ -157,11 +158,11 @@ public final class MiscellaneousBytecodes {
             }
         }
 
-        public static byte variableIndex(final int i) {
-            return (byte) (i & 63);
+        public static int variableIndex(final byte i) {
+            return i & 63;
         }
 
-        public static byte variableType(final int i) {
+        public static byte variableType(final byte i) {
             return (byte) (i >> 6 & 3);
         }
     }

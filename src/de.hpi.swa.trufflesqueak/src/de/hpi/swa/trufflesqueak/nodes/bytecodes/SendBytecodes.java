@@ -163,8 +163,8 @@ public final class SendBytecodes {
     }
 
     public static final class SecondExtendedSendNode extends AbstractSendNode {
-        public SecondExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int i) {
-            super(code, index, numBytecodes, code.getLiteral(i & 63), i >> 6);
+        public SecondExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
+            super(code, index, numBytecodes, code.getLiteral(param & 63), Byte.toUnsignedInt(param) >> 6);
         }
     }
 
@@ -198,15 +198,15 @@ public final class SendBytecodes {
     }
 
     public static final class SingleExtendedSendNode extends AbstractSendNode {
-        public SingleExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
-            super(code, index, numBytecodes, code.getLiteral(param & 31), param >> 5);
+        public SingleExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
+            super(code, index, numBytecodes, code.getLiteral(param & 31), Byte.toUnsignedInt(param) >> 5);
         }
     }
 
     public static final class SingleExtendedSuperNode extends AbstractSendNode {
 
-        public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int rawByte) {
-            this(code, index, numBytecodes, rawByte & 31, rawByte >> 5);
+        public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
+            this(code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
         }
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
