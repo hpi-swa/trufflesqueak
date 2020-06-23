@@ -13,6 +13,8 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -39,7 +41,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     protected static final int LIMIT = 2;
 
     protected final Object wrappedObject;
-    private InteropArray cachedMembers;
+    @CompilationFinal private InteropArray cachedMembers;
     private HashMap<String, Field> fields;
     private HashMap<String, Method> methods;
 
@@ -60,13 +62,11 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     private HashMap<String, Field> getFields() {
         if (fields == null) {
-            fields = new HashMap<>();
-            Class<? extends Object> clazz = wrappedObject.getClass();
-            while (clazz != null) {
-                for (final Field field : clazz.getDeclaredFields()) {
-                    fields.put(field.getName(), field);
-                }
-                clazz = clazz.getSuperclass();
+            final Class<? extends Object> clazz = wrappedObject.getClass();
+            final Field[] fieldsArray = clazz.getFields();
+            fields = new HashMap<>(fieldsArray.length);
+            for (final Field field : fieldsArray) {
+                fields.put(field.getName(), field);
             }
         }
         return fields;
@@ -74,16 +74,11 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     private HashMap<String, Method> getMethods() {
         if (methods == null) {
-            methods = new HashMap<>();
-            Class<? extends Object> clazz = wrappedObject.getClass();
-            while (clazz != null) {
-                for (final Method method : clazz.getDeclaredMethods()) {
-                    if (method.getName().startsWith("access.")) {
-                        continue; // Ignore inner methods.
-                    }
-                    methods.put(method.getName(), method);
-                }
-                clazz = clazz.getSuperclass();
+            final Class<? extends Object> clazz = wrappedObject.getClass();
+            final Method[] methodsArray = clazz.getMethods();
+            methods = new HashMap<>(methodsArray.length);
+            for (final Method method : methodsArray) {
+                methods.put(method.getName(), method);
             }
         }
         return methods;
@@ -133,34 +128,30 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
-    public Object readMember(final String member) {
+    public Object readMember(final String member) throws UnknownIdentifierException {
         if (WRAPPED_MEMBER.equals(member)) {
             return WrapToSqueakNode.getUncached().executeWrap(wrappedObject);
         }
         final Field field = getFields().get(member);
         if (field != null) {
             try {
-                if (!field.isAccessible()) {
-                    field.setAccessible(true);
-                }
                 return wrap(field.get(wrappedObject));
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                throw new UnsupportedOperationException(e);
+                throw UnknownIdentifierException.create(member);
             }
         }
         final Method method = getMethods().get(member);
         if (method != null) {
             return new JavaMethodWrapper(wrappedObject, method);
         } else {
-            throw new UnsupportedOperationException(wrappedObject + " has not member " + member);
+            throw UnknownIdentifierException.create(member);
         }
     }
 
     @ExportMessage
-    @TruffleBoundary
     public Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
         if (cachedMembers == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             final HashSet<String> members = new HashSet<>();
             members.add(WRAPPED_MEMBER);
             members.addAll(getFields().keySet());

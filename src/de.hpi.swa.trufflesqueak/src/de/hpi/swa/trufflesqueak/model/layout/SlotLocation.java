@@ -122,27 +122,27 @@ public abstract class SlotLocation {
         return false;
     }
 
-    protected boolean isGeneric() {
+    public boolean isGeneric() {
         return false;
     }
 
-    protected boolean isBool() {
+    public boolean isBool() {
         return false;
     }
 
-    protected boolean isChar() {
+    public boolean isChar() {
         return false;
     }
 
-    protected boolean isLong() {
+    public boolean isLong() {
         return false;
     }
 
-    protected boolean isDouble() {
+    public boolean isDouble() {
         return false;
     }
 
-    protected boolean isExtension() {
+    public boolean isExtension() {
         return false;
     }
 
@@ -530,7 +530,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        protected boolean isExtension() {
+        public boolean isExtension() {
             return true;
         }
 
@@ -661,7 +661,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        protected boolean isExtension() {
+        public boolean isExtension() {
             return true;
         }
 
@@ -792,7 +792,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        protected boolean isExtension() {
+        public boolean isExtension() {
             return true;
         }
 
@@ -923,7 +923,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        protected boolean isExtension() {
+        public boolean isExtension() {
             return true;
         }
 
@@ -992,7 +992,7 @@ public abstract class SlotLocation {
         }
 
         @Override
-        protected boolean isExtension() {
+        public boolean isExtension() {
             return true;
         }
 
