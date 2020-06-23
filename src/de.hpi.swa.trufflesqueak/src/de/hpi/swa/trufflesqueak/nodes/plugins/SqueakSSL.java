@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 import static java.util.Arrays.asList;
 
 import java.io.IOException;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,8 +22,10 @@ import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -410,6 +413,8 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
             try {
                 return process(ssl, source, target);
+            } catch (final SSLHandshakeException e) {
+                return ReturnCode.GENERIC_ERROR.id();
             } catch (final SSLException e) {
                 e.printStackTrace(image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
@@ -687,11 +692,24 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             final ByteBuffer source = asReadBuffer(sourceBuffer, start, length);
             final ByteBuffer target = asWriteBuffer(targetBuffer);
 
+            /**
+             * Grow buffer if it is not large enough for the source to avoid
+             * {@link BufferOverflowException}s.
+             */
+            if (length > ssl.buffer.limit() - ssl.buffer.position()) {
+                assert ssl.buffer.position() > 0 : "Only observed this";
+                final ByteBuffer newBuffer = ByteBuffer.allocate(ssl.buffer.limit() + (int) length);
+                ssl.buffer.flip();
+                newBuffer.put(ssl.buffer);
+                ssl.buffer = newBuffer;
+            }
+
             try {
                 ssl.buffer.put(source);
                 decryptOne(ssl, target);
                 return target.position();
-            } catch (final SSLException e) {
+            } catch (final BufferOverflowException | SSLException e) {
+                CompilerDirectives.transferToInterpreter();
                 e.printStackTrace(image.getError());
                 return ReturnCode.GENERIC_ERROR.id();
             }
