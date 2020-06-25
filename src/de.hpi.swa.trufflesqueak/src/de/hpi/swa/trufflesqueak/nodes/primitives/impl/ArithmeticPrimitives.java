@@ -45,7 +45,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 1)
-    public abstract static class PrimAddNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimAddNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs) {
             return Math.addExact(lhs, rhs);
@@ -76,7 +76,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 2)
-    public abstract static class PrimSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs) {
             return Math.subtractExact(lhs, rhs);
@@ -271,7 +271,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 9)
-    public abstract static class PrimMultiplyNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimMultiplyNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs) {
             return Math.multiplyExact(lhs, rhs);
@@ -414,7 +414,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 14)
-    public abstract static class PrimBitAndNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimBitAndNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final long doLong(final long receiver, final long arg) {
             return receiver & arg;
@@ -434,7 +434,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 15)
-    public abstract static class PrimBitOrNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimBitOrNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final long doLong(final long receiver, final long arg) {
             return receiver | arg;
@@ -472,7 +472,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 17)
-    public abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doLong(final long receiver, final long arg,
                         @Cached("createBinaryProfile()") final ConditionProfile isPositiveProfile,
@@ -530,7 +530,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 21)
-    public abstract static class PrimAddLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimAddLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
             return lhs.add(rhs);
@@ -544,7 +544,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 22)
-    public abstract static class PrimSubtractLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSubtractLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
             return lhs.subtract(rhs);
@@ -658,7 +658,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 29)
-    public abstract static class PrimMultiplyLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimMultiplyLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doLargeIntegerLong(final LargeIntegerObject lhs, final long rhs) {
             return lhs.multiply(rhs);
@@ -783,7 +783,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 41)
-    public abstract static class PrimAddFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimAddFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doDouble(final FloatObject lhs, final double rhs,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
@@ -799,7 +799,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 42)
-    public abstract static class PrimSubtractFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSubtractFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doDouble(final FloatObject lhs, final double rhs,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
@@ -1180,7 +1180,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 541)
-    public abstract static class PrimSmallFloatAddFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSmallFloatAddFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doDouble(final double lhs, final double rhs) {
             return lhs + rhs;
@@ -1195,7 +1195,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 542)
-    public abstract static class PrimSmallFloatSubtractFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSmallFloatSubtractFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doDouble(final double lhs, final double rhs) {
             return lhs - rhs;
@@ -1586,7 +1586,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @TypeSystemReference(ArithmeticFloatTypeSystem.class)
-    public abstract static class AbstractArithmeticFloatPrimitiveNode extends AbstractArithmeticPrimitiveNode {
+    protected abstract static class AbstractArithmeticFloatPrimitiveNode extends AbstractArithmeticPrimitiveNode {
     }
 
     @Override
