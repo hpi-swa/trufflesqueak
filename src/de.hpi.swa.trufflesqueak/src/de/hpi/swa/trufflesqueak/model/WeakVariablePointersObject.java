@@ -10,7 +10,6 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -26,7 +25,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class WeakVariablePointersObject extends AbstractPointersObject {
     private static final WeakRef NIL_REF = new WeakRef(NilObject.SINGLETON);
-    @CompilationFinal(dimensions = 0) private WeakRef[] variablePart;
+    private WeakRef[] variablePart;
 
     public WeakVariablePointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
@@ -67,13 +66,9 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
 
     public void become(final WeakVariablePointersObject other) {
         becomeLayout(other);
-        final Object[] otherVariablePart = other.variablePart;
-        /*
-         * Keep outer arrays and only copy contents as variablePart is marked
-         * with @CompilationFinal(dimensions = 0).
-         */
-        System.arraycopy(variablePart, 0, other.variablePart, 0, variablePart.length);
-        System.arraycopy(otherVariablePart, 0, variablePart, 0, otherVariablePart.length);
+        final WeakRef[] otherVariablePart = other.variablePart;
+        other.variablePart = variablePart;
+        variablePart = otherVariablePart;
     }
 
     @Override

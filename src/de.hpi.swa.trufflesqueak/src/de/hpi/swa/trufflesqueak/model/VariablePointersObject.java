@@ -7,8 +7,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
@@ -20,7 +18,7 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class VariablePointersObject extends AbstractPointersObject {
-    @CompilationFinal(dimensions = 0) private Object[] variablePart;
+    private Object[] variablePart;
 
     public VariablePointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
@@ -57,12 +55,8 @@ public final class VariablePointersObject extends AbstractPointersObject {
     public void become(final VariablePointersObject other) {
         becomeLayout(other);
         final Object[] otherVariablePart = other.variablePart;
-        /*
-         * Keep outer arrays and only copy contents as variablePart is marked
-         * with @CompilationFinal(dimensions = 0).
-         */
-        System.arraycopy(variablePart, 0, other.variablePart, 0, variablePart.length);
-        System.arraycopy(otherVariablePart, 0, variablePart, 0, otherVariablePart.length);
+        other.variablePart = variablePart;
+        variablePart = otherVariablePart;
     }
 
     @Override
