@@ -622,7 +622,12 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         return System.getProperty("os.version", "unknown");
                     }
                 case 1003:  // this platform's processor type
-                    return "intel";
+                    final String osArch = System.getProperty("os.arch");
+                    if (osArch.equals("aarch64")) {
+                        return "armv8"; /* For `SmalltalkImage>>#isLowerPerformance`. */
+                    } else {
+                        return osArch;
+                    }
                 case 1004:  // vm version
                     /*
                      * Start with "Croquet" to let `LanguageEnvironment win32VMUsesUnicode` return
