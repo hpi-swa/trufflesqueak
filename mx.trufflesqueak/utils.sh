@@ -27,9 +27,11 @@ $(cd "${SCRIPT_DIRECTORY}" && python -c "${py_export}")
   echo "Failed to load values from dependencyMap and GitHub slug." 1>&2 && exit 1
 
 OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
-[[ "${OS_NAME}" == msys* || "${OS_NAME}" == cygwin* || "${OS_NAME}" == mingw* ]] && export OS_NAME="windows"
+[[ "${OS_NAME}" == msys* || "${OS_NAME}" == cygwin* || "${OS_NAME}" == mingw* ]] && OS_NAME="windows"
+OS_ARCH="amd64"
+[[ "${OS_NAME}" == "linux" ]] && [[ "$(dpkg --print-architecture)" == "arm64" ]] && OS_ARCH="aarch64"
 JAVA_HOME_SUFFIX="" && [[ "${OS_NAME}" == "darwin" ]] && JAVA_HOME_SUFFIX="/Contents/Home"
-readonly OS_NAME JAVA_HOME_SUFFIX
+readonly OS_NAME OS_ARCH JAVA_HOME_SUFFIX
 
 
 add-path() {
@@ -131,7 +133,7 @@ download-trufflesqueak-image() {
 
   popd > /dev/null
 
-  echo "[Test image downloaded successfully]"
+  echo "[TruffleSqueak image downloaded successfully]"
 }
 
 enable-jdk() {
@@ -156,7 +158,7 @@ ensure-test-image() {
 
   popd > /dev/null
 
-  echo "[Test image downloaded successfully]"
+  echo "[TruffleSqueak test image downloaded successfully]"
 }
 
 installable-filename() {
@@ -165,7 +167,7 @@ installable-filename() {
   local git_describe=$(git describe --tags --always)
   local git_short_commit=$(git log -1 --format="%h")
   local git_description="${git_describe:-${git_short_commit}}"
-  echo "trufflesqueak-installable${svm_prefix}-${java_version}-${OS_NAME}-amd64-${git_description}.jar"
+  echo "trufflesqueak-installable${svm_prefix}-${java_version}-${OS_NAME}-${OS_ARCH}-${git_description}.jar"
 }
 
 resolve-path() {
@@ -179,6 +181,7 @@ resolve-path() {
 
 set-env() {
   echo "::set-env name=$1::$2"
+  echo "export $1=\"$2\"" >> "${HOME}/all_env_vars"
 }
 
 set-up-dependencies() {
@@ -210,7 +213,7 @@ set-up-dependencies() {
 set-up-graalvm-ce() {
   local java_version=$1
   local target_dir=$2
-  local graalvm_name="graalvm-ce-${java_version}-${OS_NAME}-amd64-${DEP_GRAALVM}"
+  local graalvm_name="graalvm-ce-${java_version}-${OS_NAME}-${OS_ARCH}-${DEP_GRAALVM}"
   local file_suffix=".tar.gz" && [[ "${OS_NAME}" == "windows" ]]  && file_suffix=".zip"
   local file="${graalvm_name}${file_suffix}"
 
@@ -231,7 +234,7 @@ set-up-graalvm-ce() {
 set-up-labsjdk11() {
   local target_dir=$1
   local jdk_tar=${target_dir}/jdk.tar.gz
-  local jdk_name="labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64"
+  local jdk_name="labsjdk-ce-${DEP_JDK11}+${DEP_JDK11_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}"
 
   pushd "${target_dir}" > /dev/null
 
@@ -248,13 +251,14 @@ set-up-labsjdk11() {
 set-up-mx() {
   shallow-clone "https://github.com/graalvm/mx.git" "master" "${HOME}/mx"
   add-path "${HOME}/mx"
+  set-env "MX_HOME" "${HOME}/mx"
   echo "[mx set up successfully]"
 }
 
 set-up-openjdk8-jvmci() {
   local target_dir=$1
   local jdk_tar=${target_dir}/jdk.tar.gz
-  local jdk_name="openjdk-8u${DEP_JDK8}+${DEP_JDK8_UPDATE}-${DEP_JVMCI}-${OS_NAME}-amd64"
+  local jdk_name="openjdk-8u${DEP_JDK8}+${DEP_JDK8_UPDATE}-${DEP_JVMCI}-${OS_NAME}-${OS_ARCH}"
 
   pushd "${target_dir}" > /dev/null
 
@@ -284,7 +288,7 @@ shallow-clone() {
 
   git init > /dev/null
   git remote add origin "${git_url}"
-  git fetch origin --depth 1 "${git_commit_or_tag}"
+  git fetch --quiet --depth 1 origin "${git_commit_or_tag}"
   git reset --quiet --hard FETCH_HEAD
 
   popd > /dev/null

@@ -122,6 +122,33 @@ jobs:
         java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
       if: success()
 
+  linux-java11-aarch64:
+    name: Linux + JDK11 + aarch64
+    runs-on: ubuntu-18.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+      - name: Clone TruffleSqueak repository
+        uses: actions/checkout@v2
+      - name: Build, install, and test TruffleSqueak component
+        uses: uraimo/run-on-arch-action@v1.0.9
+        with:
+          architecture: aarch64
+          distribution: ubuntu20.04
+          run: |
+            apt update && apt install -y build-essential curl git python unzip
+            mx.trufflesqueak/utils.sh set-up-dependencies java11
+            source "${HOME}/all_env_vars"
+            export PATH="${PATH}:${MX_HOME}:${GRAALVM_HOME}/bin"
+            mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
+            cp "$(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11)" "${INSTALLABLE_JVM_TARGET}"
+            echo ::set-output name=installable::${INSTALLABLE_JVM_TARGET}
+            gu install -L "${INSTALLABLE_JVM_TARGET}"
+            trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"
+            trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+      - name: Upload TruffleSqueak component
+        shell: bash
+        run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+
   macos-java11:
     name: macOS + JDK11 + Graal
     runs-on: macos-latest
