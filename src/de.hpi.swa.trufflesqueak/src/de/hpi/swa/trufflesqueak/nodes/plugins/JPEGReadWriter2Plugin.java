@@ -133,7 +133,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
             final NativeObject bits = (NativeObject) readNode.execute(form, FORM.BITS);
             final int width = (int) (long) readNode.execute(form, FORM.WIDTH);
             final int height = (int) (long) readNode.execute(form, FORM.HEIGHT);
-            final long depth = (long) readNode.execute(form, FORM.DEPTH);
+            final long depth = Math.abs((long) readNode.execute(form, FORM.DEPTH));
             if (!bits.isIntType() || depth != 32) {
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
