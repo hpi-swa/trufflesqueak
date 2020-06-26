@@ -14,6 +14,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
@@ -71,7 +72,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doAt(final NativeObject receiver, final long index) {
-            return Float.intBitsToFloat(receiver.getIntStorage()[(int) index - 1]);
+            return Float.intBitsToFloat(receiver.getInt((int) index - 1));
         }
     }
 
@@ -106,7 +107,12 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doDiv(final NativeObject receiver, final NativeObject floatArray) {
             final int[] ints1 = receiver.getIntStorage();
             final int[] ints2 = floatArray.getIntStorage();
-
+            /* "Check if any of the argument's values is zero". */
+            for (final int value : ints2) {
+                if (Float.intBitsToFloat(value) == 0) {
+                    throw PrimitiveFailed.andTransferToInterpreter();
+                }
+            }
             for (int i = 0; i < ints1.length; i++) {
                 ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) / Float.intBitsToFloat(ints2[i]));
             }
@@ -123,7 +129,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
             for (int i = 0; i < ints.length; i++) {
-                ints[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints[i]) / (float) scalarValue);
+                ints[i] = Float.floatToRawIntBits((float) (Float.intBitsToFloat(ints[i]) / scalarValue));
             }
             return receiver;
         }
