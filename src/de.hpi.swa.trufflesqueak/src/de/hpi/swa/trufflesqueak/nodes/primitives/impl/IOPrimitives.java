@@ -383,17 +383,17 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        /* (Incomplete) FloatObject specialization used by Cuis 5.0. */
+        /* FloatObject specialization used by Cuis 5.0. */
         @SuppressWarnings("unused")
         @Specialization(guards = {"repl.isIntType()"})
         protected static final FloatObject doFloat(final FloatObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                         @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
-            if (!(start == 1 && stop == 2 && replStart == 1 && repl.getIntLength() == 2)) {
+            if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getIntLength(), replStart)) {
                 errorProfile.enter();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            rcvr.setHigh(repl.getInt(1));
-            rcvr.setLow(repl.getInt(0));
+            rcvr.setHigh(Integer.toUnsignedLong(repl.getInt(replStart)));
+            rcvr.setLow(Integer.toUnsignedLong(repl.getInt(replStart - 1)));
             return rcvr;
         }
 
