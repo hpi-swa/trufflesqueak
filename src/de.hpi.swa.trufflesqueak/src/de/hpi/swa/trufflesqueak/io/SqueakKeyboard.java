@@ -21,7 +21,7 @@ public final class SqueakKeyboard implements KeyListener {
 
     @Override
     public void keyTyped(final KeyEvent e) {
-        // Ignored.
+        /* Ignored. Called just after the user types a Unicode character. */
     }
 
     @Override
@@ -45,11 +45,14 @@ public final class SqueakKeyboard implements KeyListener {
 
     private void recordKeyboardEvent(final int key) {
         final int buttonsShifted = display.buttons >> 3;
-        final int code = buttonsShifted << 8 | key;
-        if (code == KEYBOARD.INTERRUPT_KEYCODE) {
+        if ((buttonsShifted << 8 | key) == KEYBOARD.INTERRUPT_KEYCODE) {
             display.image.interrupt.setInterruptPending();
         } else {
-            display.addEvent(EVENT_TYPE.KEYBOARD, code, KEYBOARD_EVENT.CHAR, buttonsShifted, key);
+            display.addEvent(EVENT_TYPE.KEYBOARD,
+                            key /* MacRoman */,
+                            KEYBOARD_EVENT.CHAR,
+                            buttonsShifted,
+                            key /* Unicode */);
         }
     }
 
