@@ -323,7 +323,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!rhs.isZero()")
         protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
-            return LargeIntegerObject.floorMod(lhs, rhs);
+            return rhs.floorModReverseOrder(lhs);
         }
     }
 

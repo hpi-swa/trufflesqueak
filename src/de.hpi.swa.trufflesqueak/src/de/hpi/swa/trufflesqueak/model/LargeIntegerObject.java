@@ -422,10 +422,11 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     public static long floorDivide(final long a, final LargeIntegerObject b) {
         assert !b.fitsIntoLong() : "non-reduced large integer!";
-        if ((a ^ b.integer.signum()) < 0) {
+        if (a != 0 && a < 0 ^ b.integer.signum() < 0) {
             return -1L;
+        } else {
+            return 0L;
         }
-        return 0L;
     }
 
     private static BigInteger floorDivide(final BigInteger x, final BigInteger y) {
@@ -433,28 +434,28 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         // if the signs are different and modulo not zero, round down
         if (x.signum() != y.signum() && r[1].signum() != 0) {
             return r[0].subtract(BigInteger.ONE);
+        } else {
+            return r[0];
         }
-        return r[0];
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object floorMod(final LargeIntegerObject b) {
-        return reduceIfPossible(integer.subtract(floorDivide(integer, b.integer).multiply(b.integer)));
+        return floorMod(integer, b.integer);
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object floorMod(final long b) {
-        final BigInteger bValue = BigInteger.valueOf(b);
-        return reduceIfPossible(integer.subtract(floorDivide(integer, bValue).multiply(bValue)));
+        return floorMod(integer, BigInteger.valueOf(b));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
-    public static Object floorMod(final long a, final LargeIntegerObject b) {
-        assert !b.fitsIntoLong() : "non-reduced large integer!";
-        if ((a ^ b.integer.signum()) < 0) {
-            return b.add(a);
-        }
-        return a;
+    public Object floorModReverseOrder(final long a) {
+        return floorMod(BigInteger.valueOf(a), integer);
+    }
+
+    private Object floorMod(final BigInteger a, final BigInteger b) {
+        return reduceIfPossible(a.subtract(floorDivide(a, b).multiply(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
