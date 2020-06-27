@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -42,7 +43,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primAnyBitFromTo")
     protected abstract static class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
         private final BranchProfile startLargerThanStopProfile = BranchProfile.create();
-        private final BranchProfile firstAndLastDigitIndexIdenticalProfile = BranchProfile.create();
+        private final ConditionProfile firstAndLastDigitIndexIdenticalProfile = ConditionProfile.createBinaryProfile();
+        private final BranchProfile firstDigitNonZeroProfile = BranchProfile.create();
+        private final BranchProfile middleDigitsNonZeroProfile = BranchProfile.create();
+        private final PrimitiveValueProfile lastDigitNonZeroProfile = PrimitiveValueProfile.createEqualityProfile();
 
         @Specialization(guards = {"start >= 1", "stopArg >= 1"})
         protected final boolean doLong(final long receiver, final long start, final long stopArg) {
@@ -51,31 +55,26 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 startLargerThanStopProfile.enter();
                 return BooleanObject.FALSE;
             }
-            final long firstDigitIndex = Math.floorDiv(start - 1, 32);
-            final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
-            final long firstMask = 0xFFFFFFFFL << (start - 1 & 31);
-            final long lastMask = 0xFFFFFFFFL >> 31 - (stop - 1 & 31);
-            if (firstDigitIndex == lastDigitIndex) {
-                firstAndLastDigitIndexIdenticalProfile.enter();
-                final byte digit = digitOf(receiver, firstDigitIndex);
-                if ((digit & firstMask & lastMask) != 0) {
-                    return BooleanObject.TRUE;
-                } else {
-                    return BooleanObject.FALSE;
-                }
-            }
-            if ((digitOf(receiver, firstDigitIndex) & firstMask) != 0) {
-                return BooleanObject.TRUE;
-            }
-            for (long i = firstDigitIndex + 1; i < lastDigitIndex - 1; i++) {
-                if (digitOf(receiver, i) != 0) {
-                    return BooleanObject.TRUE;
-                }
-            }
-            if ((digitOf(receiver, lastDigitIndex) & lastMask) != 0) {
-                return BooleanObject.TRUE;
+            final int firstDigitIndex = ((int) start - 1) / 8 + 1;
+            final int lastDigitIndex = ((int) stop - 1) / 8 + 1;
+            final int rightShift = -(((int) start - 1) % 8);
+            final int leftShift = 7 - ((int) stop - 1) % 8;
+            if (firstAndLastDigitIndexIdenticalProfile.profile(firstDigitIndex == lastDigitIndex)) {
+                final int mask = 0xFF >> rightShift & 0xFF >> leftShift;
+                final byte digit = digitOf(receiver, firstDigitIndex - 1);
+                return BooleanObject.wrap((digit & mask) != 0);
             } else {
-                return BooleanObject.FALSE;
+                if (digitOf(receiver, firstDigitIndex - 1) << rightShift != 0) {
+                    firstDigitNonZeroProfile.enter();
+                    return BooleanObject.TRUE;
+                }
+                for (long i = firstDigitIndex + 1; i < lastDigitIndex; i++) {
+                    if (digitOf(receiver, i - 1) != 0) {
+                        middleDigitsNonZeroProfile.enter();
+                        return BooleanObject.TRUE;
+                    }
+                }
+                return BooleanObject.wrap(lastDigitNonZeroProfile.profile((digitOf(receiver, lastDigitIndex - 1) << leftShift & 0xFF) != 0));
             }
         }
 
@@ -91,31 +90,27 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 startLargerThanStopProfile.enter();
                 return BooleanObject.FALSE;
             }
-            final long firstDigitIndex = Math.floorDiv(start - 1, 32);
-            final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
-            final long firstMask = 0xFFFFFFFFL << (start - 1 & 31);
-            final long lastMask = 0xFFFFFFFFL >> 31 - (stop - 1 & 31);
-            if (firstDigitIndex == lastDigitIndex) {
-                firstAndLastDigitIndexIdenticalProfile.enter();
-                final long digit = receiver.getNativeAt0(firstDigitIndex);
-                if ((digit & firstMask & lastMask) != 0) {
-                    return BooleanObject.TRUE;
-                } else {
-                    return BooleanObject.FALSE;
-                }
-            }
-            if ((receiver.getNativeAt0(firstDigitIndex) & firstMask) != 0) {
-                return BooleanObject.TRUE;
-            }
-            for (long i = firstDigitIndex + 1; i < lastDigitIndex - 1; i++) {
-                if (receiver.getNativeAt0(i) != 0) {
-                    return BooleanObject.TRUE;
-                }
-            }
-            if ((receiver.getNativeAt0(lastDigitIndex) & lastMask) != 0) {
-                return BooleanObject.TRUE;
+            final byte[] bytes = receiver.getBytes();
+            final int firstDigitIndex = ((int) start - 1) / 8 + 1;
+            final int lastDigitIndex = ((int) stop - 1) / 8 + 1;
+            final int rightShift = -(((int) start - 1) % 8);
+            final int leftShift = 7 - ((int) stop - 1) % 8;
+            if (firstAndLastDigitIndexIdenticalProfile.profile(firstDigitIndex == lastDigitIndex)) {
+                final int mask = 0xFF >> rightShift & 0xFF >> leftShift;
+                final byte digit = bytes[firstDigitIndex - 1];
+                return BooleanObject.wrap((digit & mask) != 0);
             } else {
-                return BooleanObject.FALSE;
+                if (bytes[firstDigitIndex - 1] << rightShift != 0) {
+                    firstDigitNonZeroProfile.enter();
+                    return BooleanObject.TRUE;
+                }
+                for (int i = firstDigitIndex + 1; i < lastDigitIndex; i++) {
+                    if (bytes[i - 1] != 0) {
+                        middleDigitsNonZeroProfile.enter();
+                        return BooleanObject.TRUE;
+                    }
+                }
+                return BooleanObject.wrap(lastDigitNonZeroProfile.profile((bytes[lastDigitIndex - 1] << leftShift & 0xFF) != 0));
             }
         }
 
