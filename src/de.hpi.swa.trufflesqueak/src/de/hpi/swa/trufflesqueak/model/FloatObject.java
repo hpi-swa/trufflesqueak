@@ -104,12 +104,24 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
         return Double.isFinite(doubleValue);
     }
 
+    public boolean isInfinite() {
+        return Double.isInfinite(doubleValue);
+    }
+
     public boolean isNaN() {
         return Double.isNaN(doubleValue);
     }
 
     public boolean isPositive() {
         return doubleValue >= 0;
+    }
+
+    public boolean isPositiveInfinity() {
+        return doubleValue == Double.POSITIVE_INFINITY;
+    }
+
+    public boolean isNegativeInfinity() {
+        return doubleValue == Double.NEGATIVE_INFINITY;
     }
 
     public boolean isZero() {

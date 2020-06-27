@@ -107,12 +107,20 @@ public final class SqueakGuards {
         return object instanceof EmptyObject;
     }
 
+    public static final boolean isExactDouble(final long value) {
+        return (long) (double) value == value;
+    }
+
     public static boolean isFloatObject(final Object object) {
         return object instanceof FloatObject;
     }
 
     public static boolean isFrameMarker(final Object object) {
         return object instanceof FrameMarker;
+    }
+
+    public static boolean isGreaterThanZero(final double value) {
+        return value > 0;
     }
 
     public static boolean isInfinite(final double value) {
@@ -125,6 +133,10 @@ public final class SqueakGuards {
 
     public static boolean isLargeIntegerObject(final Object object) {
         return object instanceof LargeIntegerObject;
+    }
+
+    public static boolean isLessThanZero(final double value) {
+        return value < 0;
     }
 
     public static boolean isLinux() {

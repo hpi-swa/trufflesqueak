@@ -14,12 +14,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
-import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystem;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -118,15 +115,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) >= 0);
         }
 
-        @Specialization
-        protected static final boolean doLongDouble(final long lhs, final double rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(lhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs < rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs, rhs) < 0);
-            }
+        @Specialization(guards = "isExactDouble(lhs)")
+        protected static final boolean doLongDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs < rhs);
+        }
+
+        @Specialization(guards = "!isExactDouble(lhs)")
+        protected static final boolean doLongDoubleNotExact(final long lhs, final double rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs, rhs) < 0);
         }
     }
 
@@ -143,15 +139,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) <= 0);
         }
 
-        @Specialization
-        protected static final boolean doLongDouble(final long lhs, final double rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(lhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs > rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs, rhs) > 0);
-            }
+        @Specialization(guards = "isExactDouble(lhs)")
+        protected static final boolean doLongDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs > rhs);
+        }
+
+        @Specialization(guards = "isExactDouble(lhs)")
+        protected static final boolean doLongDoubleNotExact(final long lhs, final double rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs, rhs) > 0);
         }
     }
 
@@ -168,15 +163,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) > 0);
         }
 
-        @Specialization
-        protected static final boolean doLongDouble(final long lhs, final double rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(lhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs <= rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs, rhs) <= 0);
-            }
+        @Specialization(guards = "isExactDouble(lhs)")
+        protected static final boolean doLongDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs <= rhs);
+        }
+
+        @Specialization(guards = "isExactDouble(lhs)")
+        protected static final boolean doLongDoubleNotExact(final long lhs, final double rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs, rhs) <= 0);
         }
     }
 
@@ -193,15 +187,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) < 0);
         }
 
-        @Specialization
-        protected static final boolean doLongDouble(final long lhs, final double rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(lhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs >= rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs, rhs) >= 0);
-            }
+        @Specialization(guards = "isExactDouble(lhs)")
+        protected static final boolean doLongDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs >= rhs);
+        }
+
+        @Specialization(guards = "isExactDouble(lhs)")
+        protected static final boolean doLongDoubleNotExact(final long lhs, final double rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs, rhs) >= 0);
         }
     }
 
@@ -218,15 +211,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) == 0);
         }
 
-        @Specialization
-        protected static final boolean doLongExactDouble(final long lhs, final double rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isAnExactFloatProfile) {
-            if (isAnExactFloatProfile.profile(isAnExactFloat(lhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs == rhs);
-            } else {
-                return BooleanObject.FALSE;
-            }
+        @Specialization(guards = "isExactDouble(lhs)")
+        protected static final boolean doLongExactDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs == rhs);
         }
 
         /** Quick return `false` if b is not a Number or Complex. */
@@ -250,15 +237,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(rhs.compareTo(lhs) != 0);
         }
 
-        @Specialization
-        protected static final boolean doLongDouble(final long lhs, final double rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isAnExactFloatProfile) {
-            if (isAnExactFloatProfile.profile(isAnExactFloat(lhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs != rhs);
-            } else {
-                return BooleanObject.TRUE;
-            }
+        @Specialization(guards = "isExactDouble(lhs)")
+        protected static final boolean doLongExactDouble(final long lhs, final double rhs) {
+            return BooleanObject.wrap(lhs != rhs);
         }
 
         /** Quick return `true` if b is not a Number or Complex. */
@@ -783,33 +764,45 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 41)
-    protected abstract static class PrimAddFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimAddFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doDouble(final FloatObject lhs, final double rhs,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs.getValue() + rhs);
         }
 
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final Object doLong(final FloatObject lhs, final long rhs,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return doDouble(lhs, rhs, boxNode);
+        }
+
         @Specialization
         protected static final Object doFloat(final FloatObject lhs, final FloatObject rhs,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(lhs.getValue() + rhs.getValue());
+            return doDouble(lhs, rhs.getValue(), boxNode);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 42)
-    protected abstract static class PrimSubtractFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSubtractFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doDouble(final FloatObject lhs, final double rhs,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs.getValue() - rhs);
         }
 
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final Object doLong(final FloatObject lhs, final long rhs,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return doDouble(lhs, rhs, boxNode);
+        }
+
         @Specialization
         protected static final Object doFloat(final FloatObject lhs, final FloatObject rhs,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(lhs.getValue() - rhs.getValue());
+            return doDouble(lhs, rhs.getValue(), boxNode);
         }
     }
 
@@ -826,15 +819,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() < rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(rhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs.getValue() < rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) < 0);
-            }
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.getValue() < rhs);
+        }
+
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLongNotExact(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) < 0);
         }
     }
 
@@ -851,15 +843,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() > rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(rhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs.getValue() > rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) > 0);
-            }
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.getValue() > rhs);
+        }
+
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLongNotExact(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) > 0);
         }
     }
 
@@ -876,15 +867,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() <= rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(rhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs.getValue() <= rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) <= 0);
-            }
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.getValue() <= rhs);
+        }
+
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLongNotExact(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) <= 0);
         }
     }
 
@@ -901,15 +891,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() >= rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(rhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs.getValue() >= rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) >= 0);
-            }
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.getValue() >= rhs);
+        }
+
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLongNotExact(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs.getValue(), rhs) >= 0);
         }
     }
 
@@ -926,10 +915,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() == rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile) {
-            return BooleanObject.wrap(isAnExactFloat(rhs, quickCheckProfile) && lhs.getValue() == rhs);
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.getValue() == rhs);
         }
     }
 
@@ -946,20 +934,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return BooleanObject.wrap(lhs.getValue() != rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile) {
-            return BooleanObject.wrap(!(isAnExactFloat(rhs, quickCheckProfile) && lhs.getValue() == rhs));
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final FloatObject lhs, final long rhs) {
+            return BooleanObject.wrap(lhs.getValue() != rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 49)
-    protected abstract static class PrimMultiplyFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimMultiplyFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doDouble(final FloatObject lhs, final double rhs,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs.getValue() * rhs);
+        }
+
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final Object doLong(final FloatObject lhs, final long rhs,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return doDouble(lhs, rhs, boxNode);
         }
 
         @Specialization
@@ -971,17 +964,23 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 50)
-    protected abstract static class PrimDivideFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDivideFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization(guards = {"!isZero(rhs)"})
         protected static final Object doDouble(final FloatObject lhs, final double rhs,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
             return boxNode.execute(lhs.getValue() / rhs);
         }
 
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final Object doLong(final FloatObject lhs, final long rhs,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return doDouble(lhs, rhs, boxNode);
+        }
+
         @Specialization(guards = {"!rhs.isZero()"})
         protected static final Object doFloat(final FloatObject lhs, final FloatObject rhs,
                         @Shared("boxNode") @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(lhs.getValue() / rhs.getValue());
+            return doDouble(lhs, rhs.getValue(), boxNode);
         }
     }
 
@@ -991,6 +990,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "inSafeIntegerRange(receiver.getValue())")
         protected static final long doFloat(final FloatObject receiver,
                         @Cached("createBinaryProfile()") final ConditionProfile positiveProfile) {
+            assert receiver.isFinite();
             final double value = receiver.getValue();
             return (long) (positiveProfile.profile(value >= 0) ? Math.floor(value) : Math.ceil(value));
         }
@@ -999,6 +999,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final Object doFloatExact(final FloatObject receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return LargeIntegerObject.truncateExact(image, receiver.getValue());
+        }
+
+        @Specialization(guards = {"!receiver.isFinite()"})
+        protected static final FloatObject doFloatNotFinite(final FloatObject receiver) {
+            return receiver.shallowCopy();
         }
     }
 
@@ -1011,9 +1016,20 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "!inSafeIntegerRange(receiver.getValue())")
+        @Specialization(guards = {"!inSafeIntegerRange(receiver.getValue())", "receiver.isFinite()"})
         protected static final double doFloatExact(final FloatObject receiver) {
             return receiver.getValue() - new BigDecimal(receiver.getValue()).toBigInteger().doubleValue();
+        }
+
+        @Specialization(guards = "receiver.isNaN()")
+        protected static final FloatObject doFloatNaN(final FloatObject receiver) {
+            return receiver.shallowCopy();
+        }
+
+        @Specialization(guards = "receiver.isInfinite()")
+        protected static final double doFloatInfinite(@SuppressWarnings("unused") final FloatObject receiver,
+                        @Cached("createBinaryProfile()") final ConditionProfile isNegativeInfinityProfile) {
+            return isNegativeInfinityProfile.profile(receiver.getValue() == Double.NEGATIVE_INFINITY) ? -0.0D : 0.0D;
         }
     }
 
@@ -1049,85 +1065,67 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 54)
-    protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
-        @Child private AsFloatObjectIfNessaryNode asFloatNode;
-
-        @Specialization
-        protected final Object doFloatDouble(final FloatObject matissa, final double exponent,
-                        @Cached("createBinaryProfile()") final ConditionProfile matissaZeroProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile exponentZeroProfile) {
-            if (matissaZeroProfile.profile(matissa.getValue() == 0)) {
-                return 0D;
-            } else {
-                if (isFiniteProfile.profile(matissa.isFinite())) {
-                    if (exponentZeroProfile.profile(exponent == 0)) {
-                        return matissa;
-                    } else {
-                        final double steps = Math.min(3, Math.ceil(Math.abs(exponent) / 1023));
-                        double result = matissa.getValue();
-                        for (int i = 0; i < steps; i++) {
-                            final double pow = Math.pow(2, Math.floor((exponent + i) / steps));
-                            assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
-                            result *= pow;
-                        }
-                        return getAsFloatObjectIfNessaryNode().execute(result);
-                    }
-                } else {
-                    return matissa;
-                }
-            }
+    protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        @Specialization(guards = "matissa.isZero() || isZero(exponent)")
+        protected static final FloatObject doDoubleZero(final FloatObject matissa, @SuppressWarnings("unused") final long exponent) {
+            return matissa; /* Can be either 0.0 or -0.0. */
         }
 
-        private AsFloatObjectIfNessaryNode getAsFloatObjectIfNessaryNode() {
-            if (asFloatNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                asFloatNode = insert(AsFloatObjectIfNessaryNode.create());
+        @Specialization(guards = {"!matissa.isZero()", "!isZero(exponent)"})
+        protected static final Object doDouble(final FloatObject matissa, final long exponent,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            final double exp = exponent;
+            final double steps = Math.min(3, Math.ceil(Math.abs(exp) / 1023));
+            double result = matissa.getValue();
+            for (int i = 0; i < steps; i++) {
+                final double pow = Math.pow(2, Math.floor((exp + i) / steps));
+                assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
+                result *= pow;
             }
-            return asFloatNode;
+            return boxNode.execute(result);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 55)
     protected abstract static class PrimSquareRootNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
-        @Specialization(guards = {"receiver.isPositive()"})
-        protected static final Object doFloat(final FloatObject receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
-            if (isFiniteProfile.profile(receiver.isFinite())) {
-                return Math.sqrt(receiver.getValue());
-            } else {
-                return receiver;
-            }
+        @Specialization(guards = {"receiver.isPositive()", "receiver.isFinite()"})
+        protected static final double doFloat(final FloatObject receiver) {
+            return Math.sqrt(receiver.getValue());
+        }
+
+        @Specialization(guards = {"receiver.isPositiveInfinity()"})
+        protected static final FloatObject doFloatPositiveInfinity(final FloatObject receiver) {
+            return receiver.shallowCopy();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 56)
     protected abstract static class PrimSinNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
-        @Specialization
-        protected static final Object doFloat(final FloatObject receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile,
+        @Specialization(guards = {"receiver.isFinite()"})
+        protected static final double doFloat(final FloatObject receiver) {
+            return Math.sin(receiver.getValue());
+        }
+
+        @Specialization(guards = {"!receiver.isFinite()"})
+        protected static final FloatObject doFloatNotFinite(@SuppressWarnings("unused") final FloatObject receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            if (isFiniteProfile.profile(receiver.isFinite())) {
-                return Math.sin(receiver.getValue());
-            } else {
-                return FloatObject.valueOf(image, Double.NaN);
-            }
+            return FloatObject.valueOf(image, Double.NaN);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 57)
     protected abstract static class PrimArcTanNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
-        @Specialization
-        protected static final Object doFloat(final FloatObject receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNanProfile) {
-            if (isNanProfile.profile(receiver.isNaN())) {
-                return receiver;
-            } else {
-                return Math.atan(receiver.getValue());
-            }
+        @Specialization(guards = {"!receiver.isNaN()"})
+        protected static final double doFloat(final FloatObject receiver) {
+            return Math.atan(receiver.getValue());
+        }
+
+        @Specialization(guards = {"receiver.isNaN()"})
+        protected static final FloatObject doFloatNaN(final FloatObject receiver) {
+            return receiver.shallowCopy();
         }
     }
 
@@ -1135,29 +1133,46 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 58)
     protected abstract static class PrimLogNNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Specialization
-        protected static final Object doFloat(final FloatObject receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile) {
-            if (isFiniteProfile.profile(receiver.isFinite())) {
-                return Math.log(receiver.getValue());
-            } else {
-                return receiver;
-            }
+        @Specialization(guards = {"receiver.isFinite()", "!receiver.isZero()"})
+        protected static final Object doFloat(final FloatObject receiver) {
+            return Math.log(receiver.getValue());
+        }
+
+        @Specialization(guards = "receiver.isZero()")
+        protected static final FloatObject doFloatZero(@SuppressWarnings("unused") final FloatObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return FloatObject.valueOf(image, Double.NEGATIVE_INFINITY);
+        }
+
+        @Specialization(guards = "receiver.isPositiveInfinity()")
+        protected static final FloatObject doFloatPositiveInfinity(final FloatObject receiver) {
+            return receiver.shallowCopy();
+        }
+
+        @Specialization(guards = "receiver.isNegativeInfinity() || receiver.isNaN()")
+        protected static final FloatObject doFloatOtherss(@SuppressWarnings("unused") final FloatObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return FloatObject.valueOf(image, Double.NaN);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 59)
     protected abstract static class PrimExpNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Specialization
+        @Specialization(guards = "receiver.isFinite()")
         protected static final Object doFloat(final FloatObject receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile isFiniteProfile,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            if (isFiniteProfile.profile(receiver.isFinite())) {
-                return boxNode.execute(Math.exp(receiver.getValue()));
-            } else {
-                return receiver.shallowCopy();
-            }
+            return boxNode.execute(Math.exp(receiver.getValue()));
+        }
+
+        @Specialization(guards = "receiver.isNegativeInfinity()")
+        protected static final double doFloatNegativeInfinity(@SuppressWarnings("unused") final FloatObject receiver) {
+            return 0.0;
+        }
+
+        @Specialization(guards = "receiver.isPositiveInfinity() || receiver.isNaN()")
+        protected static final FloatObject doFloatOthers(final FloatObject receiver) {
+            return receiver.shallowCopy();
         }
     }
 
@@ -1180,10 +1195,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 541)
-    protected abstract static class PrimSmallFloatAddFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSmallFloatAddFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doDouble(final double lhs, final double rhs) {
             return lhs + rhs;
+        }
+
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final Object doLong(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
         }
 
         @Specialization
@@ -1195,10 +1215,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 542)
-    protected abstract static class PrimSmallFloatSubtractFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSmallFloatSubtractFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doDouble(final double lhs, final double rhs) {
             return lhs - rhs;
+        }
+
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final Object doLong(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
         }
 
         @Specialization
@@ -1218,18 +1243,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
-            return BooleanObject.wrap(lhs < rhs.getValue());
+            return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final double lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(rhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs < rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs, rhs) < 0);
-            }
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
+        }
+
+        @Specialization(guards = "!isExactDouble(rhs)")
+        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs, rhs) < 0);
         }
     }
 
@@ -1243,18 +1267,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
-            return BooleanObject.wrap(lhs > rhs.getValue());
+            return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final double lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(rhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs > rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs, rhs) > 0);
-            }
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
+        }
+
+        @Specialization(guards = "!isExactDouble(rhs)")
+        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs, rhs) > 0);
         }
     }
 
@@ -1268,18 +1291,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
-            return BooleanObject.wrap(lhs <= rhs.getValue());
+            return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final double lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(rhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs <= rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs, rhs) <= 0);
-            }
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
+        }
+
+        @Specialization(guards = "!isExactDouble(rhs)")
+        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs, rhs) <= 0);
         }
     }
 
@@ -1293,18 +1315,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
-            return BooleanObject.wrap(lhs >= rhs.getValue());
+            return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final double lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isExactFloatProfile) {
-            if (isExactFloatProfile.profile(isAnExactFloat(rhs, quickCheckProfile))) {
-                return BooleanObject.wrap(lhs >= rhs);
-            } else {
-                return BooleanObject.wrap(compareNotExact(lhs, rhs) >= 0);
-            }
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
+        }
+
+        @Specialization(guards = "!isExactDouble(rhs)")
+        protected static final boolean doDoubleLongNotExact(final double lhs, final long rhs) {
+            return BooleanObject.wrap(compareNotExact(lhs, rhs) >= 0);
         }
     }
 
@@ -1318,13 +1339,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
-            return BooleanObject.wrap(lhs == rhs.getValue());
+            return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final double lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile) {
-            return BooleanObject.wrap(isAnExactFloat(rhs, quickCheckProfile) && lhs == rhs);
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
         }
     }
 
@@ -1338,43 +1358,56 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final boolean doFloat(final double lhs, final FloatObject rhs) {
-            return BooleanObject.wrap(lhs != rhs.getValue());
+            return doDouble(lhs, rhs.getValue());
         }
 
-        @Specialization
-        protected static final boolean doDoubleLong(final double lhs, final long rhs,
-                        @Cached final BranchProfile quickCheckProfile) {
-            return BooleanObject.wrap(!(isAnExactFloat(rhs, quickCheckProfile) && lhs == rhs));
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final boolean doDoubleLong(final double lhs, final long rhs) {
+            return doDouble(lhs, rhs);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 549)
-    protected abstract static class PrimSmallFloatMultiplyFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSmallFloatMultiplyFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        protected static final Object doDouble(final double lhs, final double rhs) {
-            return lhs * rhs;
+        protected static final Object doDouble(final double lhs, final double rhs,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return boxNode.execute(lhs * rhs);
+        }
+
+        @Specialization(guards = "isExactDouble(rhs)")
+        protected static final Object doLong(final double lhs, final long rhs,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return doDouble(lhs, rhs, boxNode);
         }
 
         @Specialization
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(lhs * rhs.getValue());
+            return doDouble(lhs, rhs.getValue(), boxNode);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 550)
-    protected abstract static class PrimSmallFloatDivideFloatNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSmallFloatDivideFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization(guards = {"!isZero(rhs)"})
-        protected static final Object doDouble(final double lhs, final double rhs) {
-            return lhs / rhs;
+        protected static final Object doDouble(final double lhs, final double rhs,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return boxNode.execute(lhs / rhs);
+        }
+
+        @Specialization(guards = {"!isZero(rhs)", "isExactDouble(rhs)"})
+        protected static final Object doLong(final double lhs, final long rhs,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return doDouble(lhs, rhs, boxNode);
         }
 
         @Specialization(guards = {"!rhs.isZero()"})
         protected static final Object doFloat(final double lhs, final FloatObject rhs,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            return boxNode.execute(lhs / rhs.getValue());
+            return doDouble(lhs, rhs.getValue(), boxNode);
         }
     }
 
@@ -1414,64 +1447,47 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSmallFloatExponentNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         private static final long BIAS = 1023;
 
-        @Specialization
+        @Specialization(guards = "isZero(receiver)")
+        protected static final long doDoubleZero(@SuppressWarnings("unused") final double receiver) {
+            return 0L;
+        }
+
+        @Specialization(guards = "!isZero(receiver)")
         protected static final long doDouble(final double receiver,
-                        @Cached final BranchProfile zeroProfile,
-                        @Cached final BranchProfile nonZeroProfile,
                         @Cached final BranchProfile subnormalFloatProfile) {
-            if (receiver == 0) {
-                zeroProfile.enter();
-                return 0L;
+            final long bits = Double.doubleToRawLongBits(receiver) >>> 52 & 0x7FF;
+            if (bits == 0) { // we have a subnormal float (actual zero was handled above)
+                subnormalFloatProfile.enter();
+                // make it normal by multiplying a large number
+                final double data = receiver * Math.pow(2, 64);
+                // access its exponent bits, and subtract the large number's exponent and bias
+                return (Double.doubleToRawLongBits(data) >>> 52 & 0x7FF) - 64 - BIAS;
             } else {
-                nonZeroProfile.enter();
-                final long bits = Double.doubleToRawLongBits(receiver) >>> 52 & 0x7FF;
-                if (bits == 0) { // we have a subnormal float (actual zero was handled above)
-                    subnormalFloatProfile.enter();
-                    // make it normal by multiplying a large number
-                    final double data = receiver * Math.pow(2, 64);
-                    // access its exponent bits, and subtract the large number's exponent and bias
-                    return (Double.doubleToRawLongBits(data) >>> 52 & 0x7FF) - 64 - BIAS;
-                } else {
-                    return bits - BIAS; // apply bias
-                }
+                return bits - BIAS; // apply bias
             }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 554)
-    protected abstract static class PrimSmallFloatTimesTwoPowerNode extends AbstractArithmeticFloatPrimitiveNode implements BinaryPrimitive {
-        @Child private AsFloatObjectIfNessaryNode asFloatNode;
-
-        @Specialization
-        protected final Object doDouble(final double matissa, final double exponent,
-                        @Cached("createBinaryProfile()") final ConditionProfile matissaZeroProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile exponentZeroProfile) {
-            if (matissaZeroProfile.profile(matissa == 0)) {
-                return 0D;
-            } else {
-                assert Double.isFinite(matissa);
-                if (exponentZeroProfile.profile(exponent == 0)) {
-                    return matissa;
-                } else {
-                    final double steps = Math.min(3, Math.ceil(Math.abs(exponent) / 1023));
-                    double result = matissa;
-                    for (int i = 0; i < steps; i++) {
-                        final double pow = Math.pow(2, Math.floor((exponent + i) / steps));
-                        assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
-                        result *= pow;
-                    }
-                    return getAsFloatObjectIfNessaryNode().execute(result);
-                }
-            }
+    protected abstract static class PrimSmallFloatTimesTwoPowerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+        @Specialization(guards = "isZero(matissa) || isZero(exponent)")
+        protected static final double doDoubleZero(final double matissa, @SuppressWarnings("unused") final long exponent) {
+            return matissa; /* Can be either 0.0 or -0.0. */
         }
 
-        private AsFloatObjectIfNessaryNode getAsFloatObjectIfNessaryNode() {
-            if (asFloatNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                asFloatNode = insert(AsFloatObjectIfNessaryNode.create());
+        @Specialization(guards = {"!isZero(matissa)", "!isZero(exponent)"})
+        protected static final Object doDouble(final double matissa, final long exponent,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            final double exp = exponent;
+            final double steps = Math.min(3, Math.ceil(Math.abs(exp) / 1023));
+            double result = matissa;
+            for (int i = 0; i < steps; i++) {
+                final double pow = Math.pow(2, Math.floor((exp + i) / steps));
+                assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
+                result *= pow;
             }
-            return asFloatNode;
+            return boxNode.execute(result);
         }
     }
 
@@ -1500,7 +1516,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArcTanSmallFloatNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
         @Specialization
         protected static final double doDouble(final double receiver) {
-            assert !Double.isNaN(receiver);
+            assert Double.isFinite(receiver);
             return Math.atan(receiver);
         }
     }
@@ -1509,10 +1525,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 558)
     protected abstract static class PrimLogNSmallFloatNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
-        @Specialization
+        @Specialization(guards = "isGreaterThanZero(receiver)")
         protected static final double doDouble(final double receiver) {
             assert Double.isFinite(receiver);
             return Math.log(receiver);
+        }
+
+        @Specialization(guards = "isZero(receiver)")
+        protected static final FloatObject doFloatZero(@SuppressWarnings("unused") final double receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return FloatObject.valueOf(image, Double.NEGATIVE_INFINITY);
+        }
+
+        @Specialization(guards = "isLessThanZero(receiver)")
+        protected static final FloatObject doDoubleNegative(@SuppressWarnings("unused") final double receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return FloatObject.valueOf(image, Double.NaN);
         }
     }
 
@@ -1541,22 +1569,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     public abstract static class AbstractArithmeticPrimitiveNode extends AbstractPrimitiveNode {
         private static final long ONE_SHIFTED_BY_53 = 1L << FloatObject.PRECISION;
 
-        public static final boolean isAnExactFloat(final long value, final BranchProfile quickCheckProfile) {
-            // We are being a little tricky here:
-            // if value is Long.MIN_VALUE, -value == value, so both tests will succeed
-            // despite the fact that the absolute value is outside the long range, but that is ok,
-            // since Long.MIN_VALUE is a power of two, therefore representable as a double anyway.
-            // Similarly, ONE_SHIFTED_BY_53 is representable, being a power of two, regardless if it
-            // fits in 53 bits or not, so we can use <= instead of <
-            if (-value <= ONE_SHIFTED_BY_53 && value <= ONE_SHIFTED_BY_53) {
-                return true;
-            }
-            quickCheckProfile.enter();
-            final long abs = Math.abs(value);
-            final long lowest = Long.lowestOneBit(abs);
-            return lowest > Double.MAX_EXPONENT || lowest > 1 && Long.highestOneBit(abs) <= lowest << FloatObject.PRECISION;
-        }
-
         @TruffleBoundary
         protected static final int compareNotExact(final double lhs, final long rhs) {
             return new BigDecimal(lhs).compareTo(new BigDecimal(rhs));
@@ -1575,18 +1587,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean differentSign(final long lhs, final long rhs) {
             return lhs < 0 ^ rhs < 0;
         }
-    }
-
-    @TypeSystem
-    public static class ArithmeticFloatTypeSystem {
-        @ImplicitCast
-        public static final double fromLong(final long object) {
-            return object;
-        }
-    }
-
-    @TypeSystemReference(ArithmeticFloatTypeSystem.class)
-    protected abstract static class AbstractArithmeticFloatPrimitiveNode extends AbstractArithmeticPrimitiveNode {
     }
 
     @Override
