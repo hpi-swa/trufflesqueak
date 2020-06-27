@@ -222,7 +222,9 @@ public final class SqueakImageChunk {
                 if (valueWithoutTag > 1) {
                     valueWithoutTag += SqueakImageConstants.SMALL_FLOAT_TAG_BITS_MASK;
                 }
-                return Double.longBitsToDouble(Long.rotateRight(valueWithoutTag, 1));
+                final double value = Double.longBitsToDouble(Long.rotateRight(valueWithoutTag, 1));
+                assert Double.isFinite(value) : "SmallFloats must be finite";
+                return value;
             default:
                 throw SqueakException.create("Unexpected pointer");
         }
