@@ -16,7 +16,6 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -46,7 +45,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         private final ConditionProfile firstAndLastDigitIndexIdenticalProfile = ConditionProfile.createBinaryProfile();
         private final BranchProfile firstDigitNonZeroProfile = BranchProfile.create();
         private final BranchProfile middleDigitsNonZeroProfile = BranchProfile.create();
-        private final PrimitiveValueProfile lastDigitNonZeroProfile = PrimitiveValueProfile.createEqualityProfile();
 
         @Specialization(guards = {"start >= 1", "stopArg >= 1"})
         protected final boolean doLong(final long receiver, final long start, final long stopArg) {
@@ -74,7 +72,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                         return BooleanObject.TRUE;
                     }
                 }
-                return BooleanObject.wrap(lastDigitNonZeroProfile.profile((digitOf(receiver, lastDigitIndex - 1) << leftShift & 0xFF) != 0));
+                return BooleanObject.wrap((digitOf(receiver, lastDigitIndex - 1) << leftShift & 0xFF) != 0);
             }
         }
 
@@ -110,7 +108,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                         return BooleanObject.TRUE;
                     }
                 }
-                return BooleanObject.wrap(lastDigitNonZeroProfile.profile((bytes[lastDigitIndex - 1] << leftShift & 0xFF) != 0));
+                return BooleanObject.wrap((bytes[lastDigitIndex - 1] << leftShift & 0xFF) != 0);
             }
         }
 
