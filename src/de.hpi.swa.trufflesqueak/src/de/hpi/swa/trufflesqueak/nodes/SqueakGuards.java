@@ -107,7 +107,7 @@ public final class SqueakGuards {
         return object instanceof EmptyObject;
     }
 
-    public static final boolean isExactDouble(final long value) {
+    public static boolean isExactDouble(final long value) {
         return (long) (double) value == value;
     }
 
