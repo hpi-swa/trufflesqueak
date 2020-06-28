@@ -104,27 +104,29 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGReadHeaderfromByteArrayerrorMgr")
     protected abstract static class PrimJPEGReadHeaderfromByteArrayerrorMgrNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        @TruffleBoundary
         @Specialization(guards = {"aJPEGDecompressStruct.isByteType()", "source.isByteType()"})
         protected static final Object doReadHeader(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source,
                         @SuppressWarnings("unused") final NativeObject aJPEGErrorMgr2Struct) {
-            final BufferedImage image;
+            final BufferedImage image = readImageOrPrimFail(source);
+            UnsafeUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 0, image.getHeight());
+            UnsafeUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 1, image.getWidth());
+            return receiver;
+        }
+
+        @TruffleBoundary
+        private static BufferedImage readImageOrPrimFail(final NativeObject source) {
             try {
-                image = ImageIO.read(new ByteArrayInputStream(source.getByteStorage()));
+                return ImageIO.read(new ByteArrayInputStream(source.getByteStorage()));
             } catch (final IOException e) {
                 e.printStackTrace();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            UnsafeUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 0, image.getHeight());
-            UnsafeUtils.putLong(aJPEGDecompressStruct.getByteStorage(), 1, image.getWidth());
-            return receiver;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGReadImagefromByteArrayonFormdoDitheringerrorMgr")
     protected abstract static class PrimJPEGReadImagefromByteArrayonFormdoDitheringerrorMgrNode extends AbstractPrimitiveNode implements SenaryPrimitive {
-        @TruffleBoundary
         @SuppressWarnings("unused")
         @Specialization(guards = {"aJPEGDecompressStruct.isByteType()", "source.isByteType()"})
         protected static final Object doRead(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source, final PointersObject form,
@@ -135,8 +137,14 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
             final int height = (int) (long) readNode.execute(form, FORM.HEIGHT);
             final long depth = Math.abs((long) readNode.execute(form, FORM.DEPTH));
             if (!bits.isIntType() || depth != 32) {
-                throw PrimitiveFailed.GENERIC_ERROR;
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
+            readImageOrPrimFail(source, bits, width, height);
+            return receiver;
+        }
+
+        @TruffleBoundary
+        private static void readImageOrPrimFail(final NativeObject source, final NativeObject bits, final int width, final int height) {
             try {
                 final BufferedImage image = ImageIO.read(new ByteArrayInputStream(source.getByteStorage()));
                 image.getRGB(0, 0, width, height, bits.getIntStorage(), 0, width);
@@ -144,14 +152,12 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
                 e.printStackTrace();
                 throw PrimitiveFailed.GENERIC_ERROR;
             }
-            return receiver;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgr")
     protected abstract static class PrimJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgrNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
-        @TruffleBoundary
         @SuppressWarnings("unused")
         @Specialization(guards = {"aJPEGCompressStruct.isByteType()", "destination.isByteType()"})
         protected static final long doWrite(final Object receiver, final NativeObject aJPEGCompressStruct, final NativeObject destination, final PointersObject form,
@@ -162,19 +168,24 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
             final int height = (int) (long) readNode.execute(form, FORM.HEIGHT);
             final long depth = (long) readNode.execute(form, FORM.DEPTH);
             if (!bits.isIntType() || depth != 32) {
-                throw PrimitiveFailed.GENERIC_ERROR;
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
-            final BufferedImage image = MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height);
             final WrappedByteArray output = new WrappedByteArray(destination.getByteStorage());
+            final BufferedImage image = MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height);
+            writeImage(output, image);
+            return output.count;
+        }
+
+        @TruffleBoundary
+        private static void writeImage(final WrappedByteArray output, final BufferedImage image) {
             try {
                 if (!ImageIO.write(image, "jpeg", output)) {
-                    return 0L;
+                    output.count = 0;
                 }
             } catch (final IOException e) {
                 e.printStackTrace();
-                return 0L;
+                output.count = 0;
             }
-            return output.count;
         }
 
         private static final class WrappedByteArray extends OutputStream {
