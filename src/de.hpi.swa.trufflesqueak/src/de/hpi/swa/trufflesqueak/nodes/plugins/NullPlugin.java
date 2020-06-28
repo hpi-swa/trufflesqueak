@@ -26,6 +26,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.NotProvided;
 
 public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
@@ -56,9 +57,8 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
             return arrayWithTwoSlots;
         }
 
-        @TruffleBoundary
         private static long getUTCMicroseconds() {
-            return System.currentTimeMillis() * 1000L;
+            return MiscUtils.currentTimeMillis() * 1000L;
         }
 
         @TruffleBoundary

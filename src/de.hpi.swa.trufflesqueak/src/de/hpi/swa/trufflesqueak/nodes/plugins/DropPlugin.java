@@ -15,6 +15,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -33,7 +35,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDropRequestFileHandleNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         @Specialization(guards = "dropIndex <= getFileList(image).length")
-        protected final Object doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex,
+        protected final PointersObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return FilePlugin.createFileHandleOrPrimFail(image,
                             image.env.getPublicTruffleFile(getFileList(image)[(int) dropIndex - 1]), false);
@@ -51,7 +53,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimDropRequestFileNameNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         @Specialization(guards = "dropIndex <= getFileList(image).length")
-        protected final Object doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex,
+        protected final NativeObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.asByteString(getFileList(image)[(int) dropIndex - 1]);
         }

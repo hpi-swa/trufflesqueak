@@ -27,7 +27,7 @@ public final class CroquetPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimGatherEntropyNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         @Specialization(guards = "byteArray.isByteType()")
-        protected static final Object doGather(@SuppressWarnings("unused") final Object receiver, final NativeObject byteArray) {
+        protected static final boolean doGather(@SuppressWarnings("unused") final Object receiver, final NativeObject byteArray) {
             ArrayUtils.fillRandomly(byteArray.getByteStorage());
             return BooleanObject.TRUE;
         }
@@ -38,7 +38,7 @@ public final class CroquetPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimMD5TransformNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @TruffleBoundary
         @Specialization(guards = {"buffer.isIntType()", "hash.isIntType()", "buffer.getIntLength() == 16", "hash.getIntLength() == 4"})
-        protected static final Object doMD5(@SuppressWarnings("unused") final Object receiver, final NativeObject buffer, final NativeObject hash) {
+        protected static final NativeObject doMD5(@SuppressWarnings("unused") final Object receiver, final NativeObject buffer, final NativeObject hash) {
             final int[] in = buffer.getIntStorage();
             final int[] hashInts = hash.getIntStorage();
             int a = hashInts[0];

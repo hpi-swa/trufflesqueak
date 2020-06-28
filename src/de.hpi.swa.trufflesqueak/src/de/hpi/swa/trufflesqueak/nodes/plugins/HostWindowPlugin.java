@@ -7,7 +7,6 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -76,7 +75,6 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimHostWindowTitleNode extends AbstractHostWindowPrimitiveNode implements TernaryPrimitive {
 
         @Specialization(guards = {"id == DEFAULT_HOST_WINDOW_ID", "title.isByteType()"})
-        @TruffleBoundary
         protected static final Object doTitle(final Object receiver, @SuppressWarnings("unused") final long id, final NativeObject title,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             if (image.hasDisplay()) {

@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
@@ -37,14 +38,19 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveCountry")
     protected abstract static class PrimCountryNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        @TruffleBoundary
-        protected static final Object doCountry(@SuppressWarnings("unused") final Object receiver,
+        protected static final NativeObject doCountry(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final String country = Locale.getDefault().getCountry();
+            final String country = getCountry();
             if (country.isEmpty()) {
-                throw PrimitiveFailed.GENERIC_ERROR;
+                throw PrimitiveFailed.andTransferToInterpreter();
+            } else {
+                return image.asByteString(country);
             }
-            return image.asByteString(country);
+        }
+
+        @TruffleBoundary
+        private static String getCountry() {
+            return Locale.getDefault().getCountry();
         }
     }
 
@@ -61,10 +67,14 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveCurrencySymbol")
     protected abstract static class PrimCurrencySymbolNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        @TruffleBoundary
-        protected static final Object doCurrencySymbol(@SuppressWarnings("unused") final Object receiver,
+        protected static final NativeObject doCurrencySymbol(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asByteString(NumberFormat.getCurrencyInstance().getCurrency().getCurrencyCode());
+            return image.asByteString(getCurrencyCode());
+        }
+
+        @TruffleBoundary
+        private static String getCurrencyCode() {
+            return NumberFormat.getCurrencyInstance().getCurrency().getCurrencyCode();
         }
     }
 
@@ -72,9 +82,13 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveDaylightSavings")
     protected abstract static class PrimDaylightSavingsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
+        protected static final boolean doDaylightSavings(@SuppressWarnings("unused") final Object receiver) {
+            return BooleanObject.wrap(inDaylightTime());
+        }
+
         @TruffleBoundary
-        protected static final Object doDaylightSavings(@SuppressWarnings("unused") final Object receiver) {
-            return BooleanObject.wrap(TimeZone.getDefault().inDaylightTime(new Date()));
+        private static boolean inDaylightTime() {
+            return TimeZone.getDefault().inDaylightTime(new Date());
         }
     }
 
@@ -100,14 +114,19 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveLanguage")
     protected abstract static class PrimLanguageNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        @TruffleBoundary
-        protected static final Object doLanguage(@SuppressWarnings("unused") final Object receiver,
+        protected static final NativeObject doLanguage(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final String language = Locale.getDefault().getLanguage();
+            final String language = getLanguage();
             if (language.isEmpty()) {
-                throw PrimitiveFailed.GENERIC_ERROR;
+                throw PrimitiveFailed.andTransferToInterpreter();
+            } else {
+                return image.asByteString(language);
             }
-            return image.asByteString(language);
+        }
+
+        @TruffleBoundary
+        private static String getLanguage() {
+            return Locale.getDefault().getLanguage();
         }
     }
 
@@ -151,9 +170,13 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveTimezoneOffset")
     protected abstract static class PrimTimezoneOffsetNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        @TruffleBoundary
         protected static final long doTimezoneOffset(@SuppressWarnings("unused") final Object receiver) {
-            return TimeZone.getDefault().getRawOffset() / 60 / 1000;
+            return getRawOffset() / 60 / 1000;
+        }
+
+        @TruffleBoundary
+        private static int getRawOffset() {
+            return TimeZone.getDefault().getRawOffset();
         }
     }
 

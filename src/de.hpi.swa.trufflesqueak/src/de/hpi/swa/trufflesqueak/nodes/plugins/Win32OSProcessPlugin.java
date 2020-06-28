@@ -19,6 +19,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
@@ -38,15 +39,19 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
     @SqueakPrimitive(names = "primitiveGetEnvironmentStrings")
     protected abstract static class PrimGetEnvironmentStringNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        @TruffleBoundary
-        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver,
+        protected static final NativeObject doGet(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.asByteString(getEnvironmentString(image));
+        }
+
+        @TruffleBoundary
+        private static String getEnvironmentString(final SqueakImageContext image) {
             final Map<String, String> envMap = image.env.getEnvironment();
             final List<String> strings = new ArrayList<>();
             for (final Map.Entry<String, String> entry : envMap.entrySet()) {
                 strings.add(entry.getKey() + "=" + entry.getValue());
             }
-            return image.asByteString(String.join("\n", strings));
+            return String.join("\n", strings);
         }
     }
 
