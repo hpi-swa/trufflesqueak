@@ -5,16 +5,21 @@
  */
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
 @GenerateUncached
 @ReportPolymorphism
@@ -37,33 +42,40 @@ public abstract class LookupMethodNode extends AbstractNode {
     protected static final Object doCached(final ClassObject classObject, final NativeObject selector,
                     @Cached("classObject") final ClassObject cachedClass,
                     @Cached("selector") final NativeObject cachedSelector,
-                    @Cached("doUncachedSlow(cachedClass, cachedSelector)") final Object cachedMethod) {
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+                    @Cached("doUncachedSlow(cachedClass, cachedSelector, image)") final Object cachedMethod) {
         return cachedMethod;
     }
 
-    protected static final Object doUncachedSlow(final ClassObject classObject, final NativeObject selector) {
-        return doUncached(classObject, selector, AbstractPointersObjectReadNode.getUncached());
+    protected static final Object doUncachedSlow(final ClassObject classObject, final NativeObject selector, final SqueakImageContext image) {
+        return doUncached(classObject, selector, image);
     }
 
     @Specialization(replaces = "doCached")
     protected static final Object doUncached(final ClassObject classObject, final NativeObject selector,
-                    /**
-                     * An AbstractPointersObjectReadNode is sufficient for accessing `values`
-                     * instance variable here.
-                     */
-                    @Cached final AbstractPointersObjectReadNode readValuesNode) {
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        final MethodCacheEntry cachedEntry = image.findMethodCacheEntry(classObject, selector);
+        if (cachedEntry.getResult() == null) {
+            lookupInMethodDictAndCache(classObject, selector, cachedEntry);
+        }
+        return cachedEntry.getResult(); /* `null` return signals a doesNotUnderstand. */
+    }
+
+    @TruffleBoundary
+    private static void lookupInMethodDictAndCache(final ClassObject classObject, final NativeObject selector, final MethodCacheEntry cachedEntry) {
+        final AbstractPointersObjectReadNode readValuesNode = AbstractPointersObjectReadNode.getUncached();
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
             final VariablePointersObject methodDict = lookupClass.getMethodDict();
             final Object[] methodDictVariablePart = methodDict.getVariablePart();
             for (int i = 0; i < methodDictVariablePart.length; i++) {
                 if (selector == methodDictVariablePart[i]) {
-                    return readValuesNode.executeArray(methodDict, METHOD_DICT.VALUES).getObjectStorage()[i];
+                    cachedEntry.setResult(readValuesNode.executeArray(methodDict, METHOD_DICT.VALUES).getObjectStorage()[i]);
+                    return;
                 }
             }
             lookupClass = lookupClass.getSuperclassOrNull();
         }
         assert !selector.isDoesNotUnderstand() : "Could not find does not understand method";
-        return null; // Signals a doesNotUnderstand.
     }
 }

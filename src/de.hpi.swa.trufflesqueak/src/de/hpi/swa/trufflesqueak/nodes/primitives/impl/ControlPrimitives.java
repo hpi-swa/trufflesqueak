@@ -429,8 +429,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         @Specialization
-        protected static final Object doFlush(final Object receiver) {
-            // TODO: actually flush caches once there are some
+        protected static final Object doFlush(final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            image.flushMethodCache();
             return receiver;
         }
     }
@@ -600,7 +601,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         @Specialization(guards = "receiver.hasMethodClass(readNode)")
-        protected final CompiledMethodObject doFlush(final CompiledMethodObject receiver) {
+        protected final CompiledMethodObject doFlush(final CompiledMethodObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            image.flushMethodCacheForMethod(receiver);
             receiver.getMethodClass(readNode).invalidateMethodDictStableAssumption();
             return receiver;
         }
@@ -669,8 +672,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         @Specialization
-        protected static final Object doFlush(final Object receiver) {
-            // TODO: actually flush caches once there are some
+        protected static final NativeObject doFlush(final NativeObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            image.flushMethodCacheForSelector(receiver);
             return receiver;
         }
     }

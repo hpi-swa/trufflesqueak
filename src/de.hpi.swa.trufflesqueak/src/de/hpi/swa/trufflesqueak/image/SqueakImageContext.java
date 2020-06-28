@@ -17,6 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
@@ -63,6 +64,7 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerState;
+import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakImageContext {
@@ -103,6 +105,13 @@ public final class SqueakImageContext {
     public final ClassObject nilClass = new ClassObject(this);
 
     public final CompiledMethodObject dummyMethod = new CompiledMethodObject(this, null, new Object[]{CompiledCodeObject.makeHeader(1, 0, 0, false, true)});
+
+    /* Method Cache */
+    private static final int METHOD_CACHE_SIZE = 1024;
+    private static final int METHOD_CACHE_MASK = METHOD_CACHE_SIZE - 1;
+    private static final int METHOD_CACHE_REPROBES = 4;
+    private int methodCacheRandomish = 0;
+    @CompilationFinal(dimensions = 1) private final MethodCacheEntry[] methodCache = new MethodCacheEntry[METHOD_CACHE_SIZE];
 
     /* System Information */
     public final SqueakImageFlags flags = new SqueakImageFlags();
@@ -171,6 +180,7 @@ public final class SqueakImageContext {
             homePath = env.getInternalTruffleFile(options.imagePath).getParent();
         }
         assert homePath.exists() : "Home directory does not exist: " + homePath;
+        initializeMethodCache();
     }
 
     public void ensureLoaded() {
@@ -570,6 +580,72 @@ public final class SqueakImageContext {
         final PointersObject environment = (PointersObject) smalltalk.instVarAt0Slow(SMALLTALK_IMAGE.GLOBALS);
         final PointersObject bindings = (PointersObject) environment.instVarAt0Slow(ENVIRONMENT.BINDINGS);
         return new InteropMap(bindings);
+    }
+
+    /*
+     * METHOD CACHE
+     */
+
+    private void initializeMethodCache() {
+        for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
+            methodCache[i] = new MethodCacheEntry();
+        }
+    }
+
+    /*
+     * Probe the cache, and return the matching entry if found. Otherwise return one that can be
+     * used (selector and class set) with method == null. Initial probe is class xor selector,
+     * reprobe delta is selector. We do not try to optimize probe time -- all are equally 'fast'
+     * compared to lookup. Instead we randomize the reprobe so two or three very active conflicting
+     * entries will not keep dislodging each other.
+     */
+    @ExplodeLoop
+    public MethodCacheEntry findMethodCacheEntry(final ClassObject classObject, final NativeObject selector) {
+        methodCacheRandomish = methodCacheRandomish + 1 & 3;
+        final int selectorHash = System.identityHashCode(selector);
+        int firstProbe = (System.identityHashCode(classObject) ^ selectorHash) & METHOD_CACHE_MASK;
+        int probe = firstProbe;
+        for (int i = 0; i < METHOD_CACHE_REPROBES; i++) {
+            final MethodCacheEntry entry = methodCache[probe];
+            if (entry.getClassObject() == classObject && entry.getSelector() == selector) {
+                return entry;
+            }
+            if (i == methodCacheRandomish) {
+                firstProbe = probe;
+            }
+            probe = probe + selectorHash & METHOD_CACHE_MASK;
+        }
+        return methodCache[firstProbe].reuseFor(classObject, selector);
+    }
+
+    /* Clear all cache entries (prim 89). */
+    public void flushMethodCache() {
+        for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
+            methodCache[i].freeAndRelease();
+        }
+    }
+
+    /* Clear cache entries for selector (prim 119). */
+    public void flushMethodCacheForSelector(final NativeObject selector) {
+        for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
+            if (methodCache[i].getSelector() == selector) {
+                methodCache[i].freeAndRelease();
+            }
+        }
+    }
+
+    /* Clear cache entries for method (prim 116). */
+    public void flushMethodCacheForMethod(final CompiledMethodObject method) {
+        for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
+            if (methodCache[i].getResult() == method) {
+                methodCache[i].freeAndRelease();
+            }
+        }
+    }
+
+    public void flushMethodCacheAfterBecome() {
+        /* TODO: Could be selective by checking class, selector, and method against mutations. */
+        flushMethodCache();
     }
 
     /*

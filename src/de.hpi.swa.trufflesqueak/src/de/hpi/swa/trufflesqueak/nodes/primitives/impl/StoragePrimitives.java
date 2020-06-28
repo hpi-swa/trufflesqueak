@@ -86,6 +86,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] fromPointersClone = fromPointers.clone();
             ObjectGraphUtils.pointersBecomeOneWay(image, fromPointersClone, toPointers, copyHash);
             patchTruffleFrames(fromPointersClone, toPointers, copyHash);
+            image.flushMethodCacheAfterBecome();
             return fromArray;
         }
 
@@ -367,7 +368,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         private final BranchProfile failProfile = BranchProfile.create();
 
         @Specialization(guards = {"sizeNode.execute(receiver) == sizeNode.execute(other)"})
-        protected final ArrayObject doBecome(final ArrayObject receiver, final ArrayObject other) {
+        protected final ArrayObject doBecome(final ArrayObject receiver, final ArrayObject other,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final int receiverSize = sizeNode.execute(receiver);
             int numBecomes = 0;
             final Object[] lefts = new Object[receiverSize];
@@ -387,6 +389,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.GENERIC_ERROR;
                 }
             }
+            image.flushMethodCacheAfterBecome();
             return receiver;
         }
 
