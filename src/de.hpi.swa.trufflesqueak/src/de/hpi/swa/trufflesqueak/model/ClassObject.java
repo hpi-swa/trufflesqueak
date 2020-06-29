@@ -38,7 +38,9 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_DESCRIPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_TRAIT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METACLASS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectNewNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -429,6 +431,24 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     public void setMethodDict(final VariablePointersObject methodDict) {
         methodDictStable.invalidate();
         this.methodDict = methodDict;
+    }
+
+    @TruffleBoundary
+    public Object lookupInMethodDictSlow(final NativeObject selector) {
+        final AbstractPointersObjectReadNode readValuesNode = AbstractPointersObjectReadNode.getUncached();
+        ClassObject lookupClass = this;
+        while (lookupClass != null) {
+            final VariablePointersObject methodDictionary = lookupClass.getMethodDict();
+            final Object[] methodDictVariablePart = methodDictionary.getVariablePart();
+            for (int i = 0; i < methodDictVariablePart.length; i++) {
+                if (selector == methodDictVariablePart[i]) {
+                    return readValuesNode.executeArray(methodDictionary, METHOD_DICT.VALUES).getObjectStorage()[i];
+                }
+            }
+            lookupClass = lookupClass.getSuperclassOrNull();
+        }
+        assert !selector.isDoesNotUnderstand() : "Could not find does not understand method";
+        return null; /* Signals a doesNotUnderstand. */
     }
 
     @TruffleBoundary
