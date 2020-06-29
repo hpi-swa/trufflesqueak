@@ -429,7 +429,12 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                     try {
                         @SuppressWarnings("unchecked")
                         final List<File> fileList = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                        image.dropPluginFileList = fileList.toArray(new String[0]);
+                        final String[] fileArray = new String[fileList.size()];
+                        int i = 0;
+                        for (final File file : fileList) {
+                            fileArray[i++] = file.getCanonicalPath();
+                        }
+                        image.dropPluginFileList = fileArray;
                         addDragEvent(DRAG.DROP, dtde.getLocation());
                         dtde.getDropTargetContext().dropComplete(true);
                         return;
