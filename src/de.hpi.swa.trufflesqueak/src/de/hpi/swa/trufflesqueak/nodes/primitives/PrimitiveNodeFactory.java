@@ -17,7 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode;
@@ -120,7 +120,7 @@ public final class PrimitiveNodeFactory {
     private PrimitiveNodeFactory() {
     }
 
-    public static AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final boolean useStack, final int primitiveIndex) {
+    public static AbstractPrimitiveNode forIndex(final CompiledCodeObject method, final boolean useStack, final int primitiveIndex) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         assert primitiveIndex >= 0 : "Unexpected negative primitiveIndex";
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
@@ -137,7 +137,7 @@ public final class PrimitiveNodeFactory {
         return null;
     }
 
-    public static AbstractPrimitiveNode namedFor(final CompiledMethodObject method, final boolean useStack) {
+    public static AbstractPrimitiveNode namedFor(final CompiledCodeObject method, final boolean useStack) {
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
         if (values[1] == NilObject.SINGLETON) {
             return null;
@@ -151,7 +151,7 @@ public final class PrimitiveNodeFactory {
         }
     }
 
-    private static AbstractPrimitiveNode forName(final CompiledMethodObject method, final boolean useStack, final byte[] moduleName, final byte[] functionName) {
+    private static AbstractPrimitiveNode forName(final CompiledCodeObject method, final boolean useStack, final byte[] moduleName, final byte[] functionName) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         final UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = PLUGIN_MAP.get(new String(moduleName));
         if (functionNameToNodeFactory != null) {
@@ -171,7 +171,7 @@ public final class PrimitiveNodeFactory {
         return target.toArray(new String[0]);
     }
 
-    private static AbstractPrimitiveNode createInstance(final CompiledMethodObject method, final boolean useStack, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
+    private static AbstractPrimitiveNode createInstance(final CompiledCodeObject method, final boolean useStack, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
         final int primitiveArity = nodeFactory.getExecutionSignature().size();
         final AbstractArgumentNode[] argumentNodes;
         argumentNodes = new AbstractArgumentNode[primitiveArity];

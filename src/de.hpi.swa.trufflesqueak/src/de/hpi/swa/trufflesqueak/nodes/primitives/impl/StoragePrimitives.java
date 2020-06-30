@@ -41,7 +41,6 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
@@ -345,15 +344,15 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimNewMethodNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         /**
-         * Instantiating a {@link CompiledMethodObject} allocates a {@link FrameDescriptor} which
+         * Instantiating a {@link CompiledCodeObject} allocates a {@link FrameDescriptor} which
          * should never be part of compilation, thus the <code>@TruffleBoundary</code>.
          */
         @TruffleBoundary
         @Specialization(guards = "receiver.isCompiledMethodClass()")
-        protected static final CompiledMethodObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header,
+        protected static final CompiledCodeObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             assert receiver.getBasicInstanceSize() == 0;
-            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(image, (int) bytecodeCount);
+            final CompiledCodeObject newMethod = CompiledCodeObject.newOfSize(image, (int) bytecodeCount, image.compiledMethodClass);
             newMethod.setHeader(header);
             return newMethod;
         }

@@ -13,8 +13,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
@@ -87,12 +86,7 @@ public abstract class SqueakObjectAt0Node extends AbstractNode {
     }
 
     @Specialization
-    protected static final Object doBlock(final CompiledBlockObject obj, final long index) {
-        return obj.at0(index);
-    }
-
-    @Specialization
-    protected static final Object doMethod(final CompiledMethodObject obj, final long index) {
+    protected static final Object doCode(final CompiledCodeObject obj, final long index) {
         return obj.at0(index);
     }
 

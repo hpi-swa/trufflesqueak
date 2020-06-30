@@ -13,8 +13,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
@@ -85,17 +84,12 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final CompiledMethodObject doMethod(final CompiledMethodObject receiver) {
+    protected static final CompiledCodeObject doCode(final CompiledCodeObject receiver) {
         return receiver.shallowCopy();
     }
 
     @Specialization
     protected static final ContextObject doContext(final ContextObject receiver) {
-        return receiver.shallowCopy();
-    }
-
-    @Specialization
-    protected static final CompiledBlockObject doBlock(final CompiledBlockObject receiver) {
         return receiver.shallowCopy();
     }
 

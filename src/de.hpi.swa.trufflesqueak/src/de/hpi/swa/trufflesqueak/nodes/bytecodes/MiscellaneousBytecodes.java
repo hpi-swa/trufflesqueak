@@ -10,7 +10,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
@@ -37,14 +36,15 @@ public final class MiscellaneousBytecodes {
         @Child public AbstractPrimitiveNode primitiveNode;
         private final int primitiveIndex;
 
-        public CallPrimitiveNode(final CompiledMethodObject method, final int index, final byte byte1, final byte byte2) {
+        public CallPrimitiveNode(final CompiledCodeObject method, final int index, final byte byte1, final byte byte2) {
             super(method, index, NUM_BYTECODES);
+            assert method.getSqueakClass() == method.image.compiledMethodClass;
             primitiveIndex = Byte.toUnsignedInt(byte1) + (Byte.toUnsignedInt(byte2) << 8);
             primitiveNode = PrimitiveNodeFactory.forIndex(method, false, primitiveIndex);
             assert method.hasPrimitive();
         }
 
-        public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final byte byte1, final byte byte2) {
+        public static CallPrimitiveNode create(final CompiledCodeObject code, final int index, final byte byte1, final byte byte2) {
             return new CallPrimitiveNode(code, index, byte1, byte2);
         }
 

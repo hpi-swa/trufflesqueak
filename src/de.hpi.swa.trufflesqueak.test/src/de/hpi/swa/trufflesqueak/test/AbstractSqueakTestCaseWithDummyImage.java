@@ -31,6 +31,8 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         image.specialObjectsArray.setStorage(dummySpecialObjects);
         image.specialObjectsArray.setSqueakClass(image.arrayClass);
         dummySpecialSelectors.setSqueakClass(image.arrayClass);
+        /* Ensure compiledBlock class is set to distinguish between methods and blocks. */
+        image.setCompiledBlockClass(new ClassObject(image));
 
         image.setByteSymbolClass(new ClassObject(image));
         setupMeta(image.metaClass, new Object[]{

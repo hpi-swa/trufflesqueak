@@ -39,7 +39,6 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -98,13 +97,14 @@ public final class SqueakImageContext {
     public final ArrayObject specialSelectors = new ArrayObject(this);
     @CompilationFinal private ClassObject smallFloatClass;
     @CompilationFinal private ClassObject byteSymbolClass;
+    @CompilationFinal private ClassObject compiledBlockClass;
     @CompilationFinal private ClassObject foreignObjectClass;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
 
-    public final CompiledMethodObject dummyMethod = new CompiledMethodObject(this, null, new Object[]{CompiledCodeObject.makeHeader(1, 0, 0, false, true)});
+    public final CompiledCodeObject dummyMethod = new CompiledCodeObject(this, null, new Object[]{CompiledCodeObject.makeHeader(1, 0, 0, false, true)}, compiledMethodClass);
 
     /* Method Cache */
     private static final int METHOD_CACHE_SIZE = 1024;
@@ -286,7 +286,7 @@ public final class SqueakImageContext {
             CompilerDirectives.transferToInterpreter();
             throw new SqueakSyntaxError("Syntax Error in \"" + source + "\"");
         }
-        final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
+        final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send("generate");
 
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
         doItContext.setReceiver(NilObject.SINGLETON);
@@ -429,11 +429,26 @@ public final class SqueakImageContext {
         byteSymbolClass = classObject;
     }
 
+    public boolean needsCompiledBlockClass() {
+        return compiledBlockClass == null;
+    }
+
+    public ClassObject getCompiledBlockClass() {
+        assert !needsCompiledBlockClass();
+        return compiledBlockClass;
+    }
+
+    public void setCompiledBlockClass(final ClassObject classObject) {
+        assert needsCompiledBlockClass();
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        compiledBlockClass = classObject;
+    }
+
     public ClassObject getWideStringClass() {
         if (wideStringClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // TODO: find a better way to find wideStringClass or do this on image side instead?
-            final CompiledMethodObject method = (CompiledMethodObject) LookupMethodByStringNode.getUncached().executeLookup(byteArrayClass, "asWideString");
+            final CompiledCodeObject method = (CompiledCodeObject) LookupMethodByStringNode.getUncached().executeLookup(byteArrayClass, "asWideString");
             if (method != null) {
                 final PointersObject assoc = (PointersObject) method.getLiteral(1);
                 wideStringClass = (ClassObject) assoc.instVarAt0Slow(ASSOCIATION.VALUE);
@@ -635,7 +650,7 @@ public final class SqueakImageContext {
     }
 
     /* Clear cache entries for method (prim 116). */
-    public void flushMethodCacheForMethod(final CompiledMethodObject method) {
+    public void flushMethodCacheForMethod(final CompiledCodeObject method) {
         for (int i = 0; i < METHOD_CACHE_SIZE; i++) {
             if (methodCache[i].getResult() == method) {
                 methodCache[i].freeAndRelease();

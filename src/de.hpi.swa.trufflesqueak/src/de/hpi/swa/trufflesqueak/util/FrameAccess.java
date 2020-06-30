@@ -24,10 +24,8 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject.SLOT_IDENTIFIER;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -89,11 +87,11 @@ public final class FrameAccess {
     private FrameAccess() {
     }
 
-    public static CompiledMethodObject getMethod(final Frame frame) {
-        return (CompiledMethodObject) frame.getArguments()[ArgumentIndicies.METHOD.ordinal()];
+    public static CompiledCodeObject getMethod(final Frame frame) {
+        return (CompiledCodeObject) frame.getArguments()[ArgumentIndicies.METHOD.ordinal()];
     }
 
-    public static void setMethod(final Frame frame, final CompiledMethodObject method) {
+    public static void setMethod(final Frame frame, final CompiledCodeObject method) {
         frame.getArguments()[ArgumentIndicies.METHOD.ordinal()] = method;
     }
 
@@ -288,10 +286,10 @@ public final class FrameAccess {
 
     public static boolean isTruffleSqueakFrame(final Frame frame) {
         final Object[] arguments = frame.getArguments();
-        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()] instanceof CompiledMethodObject;
+        return arguments.length >= ArgumentIndicies.RECEIVER.ordinal() && arguments[ArgumentIndicies.METHOD.ordinal()] instanceof CompiledCodeObject;
     }
 
-    public static Object[] newWith(final CompiledMethodObject method, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
+    public static Object[] newWith(final CompiledCodeObject method, final Object sender, final BlockClosureObject closure, final Object[] receiverAndArguments) {
         final int receiverAndArgumentsLength = receiverAndArguments.length;
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
         assert method != null : "Method should never be null";
@@ -306,7 +304,7 @@ public final class FrameAccess {
     }
 
     @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final CompiledMethodObject method, final Object sender, final BlockClosureObject closure,
+    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final BlockClosureObject closure,
                     final FrameSlotReadNode[] receiverAndArgumentsNodes) {
         final int receiverAndArgumentsLength = receiverAndArgumentsNodes.length;
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
@@ -340,13 +338,13 @@ public final class FrameAccess {
     }
 
     /* Template because closure arguments still need to be filled in. */
-    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final CompiledBlockObject block, final Object senderOrMarker, final int numArgs) {
+    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final CompiledCodeObject block, final Object senderOrMarker, final int numArgs) {
         assert closure.getCompiledBlock() == block;
         final Object[] copied = closure.getCopied();
         final int numCopied = copied.length;
         assert block.getNumArgs() == numArgs : "number of required and provided block arguments do not match";
         final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs + numCopied];
-        arguments[ArgumentIndicies.METHOD.ordinal()] = block.getMethod();
+        arguments[ArgumentIndicies.METHOD.ordinal()] = block.getMethodUnsafe();
         // Sender is thisContext (or marker)
         arguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = senderOrMarker;
         arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;

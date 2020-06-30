@@ -22,7 +22,6 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.context.UnwindContextChainNode;
@@ -112,7 +111,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
              * needs to run again, for example because the Source has been cached.
              */
             assert !activeContext.hasClosure() : "activeContext is expected to have no closure";
-            final CompiledMethodObject method = activeContext.getMethod();
+            final CompiledCodeObject method = activeContext.getMethod();
             final MaterializedFrame truffleFrame = activeContext.getTruffleFrame();
             FrameAccess.setInstructionPointer(truffleFrame, method, 0);
             FrameAccess.setStackPointer(truffleFrame, method, method.getNumTemps());

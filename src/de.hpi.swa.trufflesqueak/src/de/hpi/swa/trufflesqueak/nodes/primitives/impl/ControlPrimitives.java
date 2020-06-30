@@ -45,7 +45,7 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -601,7 +601,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         @Specialization(guards = "receiver.hasMethodClass(readNode)")
-        protected final CompiledMethodObject doFlush(final CompiledMethodObject receiver,
+        protected final CompiledCodeObject doFlush(final CompiledCodeObject receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             image.flushMethodCacheForMethod(receiver);
             receiver.getMethodClass(readNode).invalidateMethodDictStableAssumption();
@@ -980,7 +980,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         /** Deprecated since Kernel-eem.1204. Kept for backward compatibility. */
         @Specialization
-        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledMethodObject methodObject,
+        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject methodObject,
                         @SuppressWarnings("unused") final NotProvided notProvided,
                         @Cached("create()") final DispatchEagerlyNode dispatchNode) {
             return doExecute(frame, null, receiver, argArray, methodObject, dispatchNode);
@@ -989,7 +989,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @ExplodeLoop
         @Specialization(guards = "sizeNode.execute(argArray) == cachedNumArgs", limit = "3")
         protected final Object doExecuteCached(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
-                        final CompiledMethodObject methodObject,
+                        final CompiledCodeObject methodObject,
                         @Cached("sizeNode.execute(argArray)") final int cachedNumArgs,
                         @Cached("create()") final DispatchEagerlyNode dispatchNode) {
             final Object[] dispatchRcvrAndArgs = new Object[1 + cachedNumArgs];
@@ -1002,7 +1002,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(replaces = "doExecuteCached")
         protected final Object doExecute(final VirtualFrame frame, @SuppressWarnings("unused") final ClassObject compiledMethodClass, final Object receiver, final ArrayObject argArray,
-                        final CompiledMethodObject methodObject,
+                        final CompiledCodeObject methodObject,
                         @Cached("create()") final DispatchEagerlyNode dispatchNode) {
             final int numArgs = sizeNode.execute(argArray);
             final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
@@ -1020,8 +1020,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"methodObject == cachedMethodObject", "primitiveNode != null"}, limit = "2")
         protected static final Object doNamedPrimitiveWithArgsContextCached(final VirtualFrame frame, @SuppressWarnings("unused") final Object context,
-                        @SuppressWarnings("unused") final CompiledMethodObject methodObject, final Object target, final ArrayObject argumentArray,
-                        @SuppressWarnings("unused") @Cached("methodObject") final CompiledMethodObject cachedMethodObject,
+                        @SuppressWarnings("unused") final CompiledCodeObject methodObject, final Object target, final ArrayObject argumentArray,
+                        @SuppressWarnings("unused") @Cached("methodObject") final CompiledCodeObject cachedMethodObject,
                         @Cached("createPrimitiveNode(methodObject)") final AbstractPrimitiveNode primitiveNode,
                         @Cached final ArrayObjectSizeNode arraySizeNode,
                         @Cached("create(1)") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode) {
@@ -1033,7 +1033,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "doNamedPrimitiveWithArgsContextCached")
-        protected final Object doNamedPrimitiveWithArgsContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final CompiledMethodObject methodObject,
+        protected final Object doNamedPrimitiveWithArgsContext(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final CompiledCodeObject methodObject,
                         final Object target, final ArrayObject argumentArray) {
             /* Deopt might be acceptable because primitive is mostly used for debugging anyway. */
             CompilerDirectives.transferToInterpreter();
@@ -1049,7 +1049,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected static final AbstractPrimitiveNode createPrimitiveNode(final CompiledMethodObject methodObject) {
+        protected static final AbstractPrimitiveNode createPrimitiveNode(final CompiledCodeObject methodObject) {
             return PrimitiveNodeFactory.namedFor(methodObject, false);
         }
     }

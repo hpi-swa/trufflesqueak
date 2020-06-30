@@ -8,9 +8,7 @@ package de.hpi.swa.trufflesqueak.util;
 import com.oracle.truffle.api.CompilerAsserts;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
@@ -75,7 +73,7 @@ public final class SqueakBytecodeDecoder {
     }
 
     public static int trailerPosition(final CompiledCodeObject code) {
-        return code instanceof CompiledBlockObject ? code.getBytes().length : trailerPosition(code.getBytes());
+        return code.isCompiledBlock() ? code.getBytes().length : trailerPosition(code.getBytes());
     }
 
     private static int trailerPosition(final byte[] bytecode) {
@@ -203,8 +201,7 @@ public final class SqueakBytecodeDecoder {
             case 138:
                 return PushNewArrayNode.create(code, index, 2, bytecode[index + 1]);
             case 139:
-                assert code instanceof CompiledMethodObject;
-                return CallPrimitiveNode.create((CompiledMethodObject) code, index, bytecode[index + 1], bytecode[index + 2]);
+                return CallPrimitiveNode.create(code, index, bytecode[index + 1], bytecode[index + 2]);
             case 140:
                 return new PushRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 141:
@@ -426,7 +423,6 @@ public final class SqueakBytecodeDecoder {
             case 138:
                 return "push: (Array new: " + (Byte.toUnsignedInt(bytecode[index + 1]) & 127) + ")";
             case 139:
-                assert code instanceof CompiledMethodObject;
                 return "callPrimitive: " + (Byte.toUnsignedInt(bytecode[index + 1]) + (Byte.toUnsignedInt(bytecode[index + 2]) << 8));
             case 140:
                 return "pushTemp: " + Byte.toUnsignedInt(bytecode[index + 1]) + " inVectorAt: " + Byte.toUnsignedInt(bytecode[index + 2]);

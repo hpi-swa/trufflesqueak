@@ -130,7 +130,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final Object[] pointers = chunk.getPointers();
         size = pointers.length;
         assert size > CONTEXT.TEMP_FRAME_START;
-        final CompiledMethodObject method = (CompiledMethodObject) pointers[CONTEXT.METHOD];
+        final CompiledCodeObject method = (CompiledCodeObject) pointers[CONTEXT.METHOD];
         final AbstractSqueakObject sender = (AbstractSqueakObject) pointers[CONTEXT.SENDER_OR_NIL];
         assert sender != null : "sender should not be null";
         final Object closureOrNil = pointers[CONTEXT.CLOSURE_OR_NIL];
@@ -171,7 +171,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // Method is unknown, use dummy frame instead
             final Object[] dummyArguments = FrameAccess.newDummyWith(null, NilObject.SINGLETON, null, new Object[2]);
-            final CompiledMethodObject dummyMethod = SqueakLanguage.getContext().dummyMethod;
+            final CompiledCodeObject dummyMethod = SqueakLanguage.getContext().dummyMethod;
             truffleFrame = Truffle.getRuntime().createMaterializedFrame(dummyArguments, dummyMethod.getFrameDescriptor());
             FrameAccess.setInstructionPointer(truffleFrame, dummyMethod, 0);
             FrameAccess.setStackPointer(truffleFrame, dummyMethod, 1);
@@ -179,7 +179,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return truffleFrame;
     }
 
-    private MaterializedFrame getOrCreateTruffleFrame(final CompiledMethodObject method) {
+    private MaterializedFrame getOrCreateTruffleFrame(final CompiledCodeObject method) {
         if (truffleFrame == null || FrameAccess.getMethod(truffleFrame) == null) {
             final Object[] frameArguments;
             final int instructionPointer;
@@ -219,7 +219,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     private MaterializedFrame getOrCreateTruffleFrame(final BlockClosureObject closure) {
         if (truffleFrame == null || FrameAccess.getClosure(truffleFrame) != closure) {
             final Object[] frameArguments;
-            final CompiledBlockObject compiledBlock = closure.getCompiledBlock();
+            final CompiledCodeObject compiledBlock = closure.getCompiledBlock();
             final int instructionPointer;
             final int stackPointer;
             if (truffleFrame != null) {
@@ -307,7 +307,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public Object getInstructionPointer(final ConditionProfile nilProfile) {
         final BlockClosureObject closure = getClosure();
         if (closure != null) {
-            final CompiledBlockObject block = closure.getCompiledBlock();
+            final CompiledCodeObject block = closure.getCompiledBlock();
             final int pc = FrameAccess.getInstructionPointer(truffleFrame, block);
             if (nilProfile.profile(pc == NIL_PC_VALUE)) {
                 return NilObject.SINGLETON;
@@ -315,7 +315,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                 return (long) pc + block.getInitialPC(); // Must be a long.
             }
         } else {
-            final CompiledMethodObject method = getMethod();
+            final CompiledCodeObject method = getMethod();
             final int pc = FrameAccess.getInstructionPointer(truffleFrame, method);
             if (nilProfile.profile(pc == NIL_PC_VALUE)) {
                 return NilObject.SINGLETON;
@@ -332,10 +332,10 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     public void setInstructionPointer(final int value) {
         final BlockClosureObject closure = getClosure();
         if (closure != null) {
-            final CompiledBlockObject block = closure.getCompiledBlock();
+            final CompiledCodeObject block = closure.getCompiledBlock();
             FrameAccess.setInstructionPointer(truffleFrame, block, value - block.getInitialPC());
         } else {
-            final CompiledMethodObject method = getMethod();
+            final CompiledCodeObject method = getMethod();
             FrameAccess.setInstructionPointer(truffleFrame, method, value - method.getInitialPC());
         }
     }
@@ -357,11 +357,11 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return hasTruffleFrame() && getMethod() != null;
     }
 
-    public CompiledMethodObject getMethod() {
+    public CompiledCodeObject getMethod() {
         return FrameAccess.getMethod(truffleFrame);
     }
 
-    public void setMethod(final CompiledMethodObject value) {
+    public void setMethod(final CompiledCodeObject value) {
         FrameAccess.setMethod(getOrCreateTruffleFrame(value), value);
     }
 
@@ -581,8 +581,8 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                     setSender((ContextObject) to[i]);
                     copyHash(fromPointer, to[i], copyHash);
                 }
-                if (fromPointer == getMethod() && to[i] instanceof CompiledMethodObject) {
-                    setMethod((CompiledMethodObject) to[i]);
+                if (fromPointer == getMethod() && to[i] instanceof CompiledCodeObject) {
+                    setMethod((CompiledCodeObject) to[i]);
                     copyHash(fromPointer, to[i], copyHash);
                 }
                 if (fromPointer == getClosure() && to[i] instanceof BlockClosureObject) {

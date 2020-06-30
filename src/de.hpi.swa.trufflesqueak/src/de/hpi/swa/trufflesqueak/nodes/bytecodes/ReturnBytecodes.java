@@ -13,7 +13,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -61,18 +60,18 @@ public final class ReturnBytecodes {
             super(code, index);
         }
 
-        @Specialization(guards = {"isCompiledMethodObject(code)", "!hasModifiedSender(frame)"})
+        @Specialization(guards = {"code.isCompiledMethod()", "!hasModifiedSender(frame)"})
         protected final Object doLocalReturn(final VirtualFrame frame) {
             return getReturnValue(frame);
         }
 
-        @Specialization(guards = {"isCompiledMethodObject(code)", "hasModifiedSender(frame)"})
+        @Specialization(guards = {"code.isCompiledMethod()", "hasModifiedSender(frame)"})
         protected final Object doNonLocalReturn(final VirtualFrame frame) {
             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
             throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getSender(frame));
         }
 
-        @Specialization(guards = {"isCompiledBlockObject(code)"})
+        @Specialization(guards = {"code.isCompiledBlock()"})
         protected final Object doClosureReturnFromMaterialized(final VirtualFrame frame,
                         @Cached final GetActiveProcessNode getActiveProcessNode) {
             // Target is sender of closure's home context.
@@ -141,7 +140,7 @@ public final class ReturnBytecodes {
 
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            assert code instanceof CompiledBlockObject : "blockReturn can only occure in CompiledBlockObject";
+            assert code.isCompiledBlock() : "blockReturn can only occure in CompiledBlockObject";
         }
 
         public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {

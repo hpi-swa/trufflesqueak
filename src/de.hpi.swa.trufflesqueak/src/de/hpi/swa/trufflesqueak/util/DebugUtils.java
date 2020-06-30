@@ -26,9 +26,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -168,7 +166,7 @@ public final class DebugUtils {
             if (!FrameAccess.isTruffleSqueakFrame(current)) {
                 return null;
             }
-            final CompiledMethodObject method = FrameAccess.getMethod(current);
+            final CompiledCodeObject method = FrameAccess.getMethod(current);
             lastSender[0] = FrameAccess.getSender(current);
             final Object marker = FrameAccess.getMarker(current, method);
             final Object context = FrameAccess.getContext(current, method);
@@ -204,7 +202,7 @@ public final class DebugUtils {
                 b.append("\n\t\t\t\t- Receiver:                         ");
                 b.append(receiverFrameArguments[3]);
                 final CompiledCodeObject receiverCode = receiverFrameArguments[2] != null ? ((BlockClosureObject) receiverFrameArguments[2]).getCompiledBlock()
-                                : (CompiledMethodObject) receiverFrameArguments[0];
+                                : (CompiledCodeObject) receiverFrameArguments[0];
                 if (receiverCode != null) {
                     b.append("\n\t\t\t\t- Stack (including args and temps)\n");
                     final int zeroBasedStackp = FrameAccess.getStackPointer(receiverFrame, receiverCode) - 1;
@@ -217,7 +215,7 @@ public final class DebugUtils {
                     boolean addedSeparator = false;
                     final FrameDescriptor frameDescriptor = receiverCode.getFrameDescriptor();
                     final int initialStackp;
-                    if (receiverCode instanceof CompiledBlockObject) {
+                    if (receiverCode.isCompiledBlock()) {
                         assert ((BlockClosureObject) receiverFrameArguments[2]).getCopied().length == receiverCode.getNumArgsAndCopied() - receiverCode.getNumArgs();
                         initialStackp = receiverCode.getNumArgsAndCopied();
                         for (int i = numArgs; i < initialStackp; i++) {
@@ -276,7 +274,7 @@ public final class DebugUtils {
         boolean addedSeparator = false;
         final FrameDescriptor frameDescriptor = code.getFrameDescriptor();
         final int initialStackp;
-        if (code instanceof CompiledBlockObject) {
+        if (code.isCompiledBlock()) {
             initialStackp = code.getNumArgsAndCopied();
             for (int i = numArgs; i < initialStackp; i++) {
                 final Object value = frameArguments[i + 4];

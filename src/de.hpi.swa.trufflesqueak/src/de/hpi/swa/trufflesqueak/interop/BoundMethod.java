@@ -13,17 +13,17 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class BoundMethod implements TruffleObject {
-    private final CompiledMethodObject method;
+    private final CompiledCodeObject method;
     private final AbstractSqueakObject receiver;
 
-    public BoundMethod(final CompiledMethodObject method, final AbstractSqueakObject receiver) {
+    public BoundMethod(final CompiledCodeObject method, final AbstractSqueakObject receiver) {
         this.method = method;
         this.receiver = receiver;
     }

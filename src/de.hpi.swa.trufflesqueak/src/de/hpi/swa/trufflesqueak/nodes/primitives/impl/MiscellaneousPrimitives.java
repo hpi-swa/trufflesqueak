@@ -42,7 +42,6 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -123,7 +122,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @CompilationFinal private PointersObject externalFunction;
 
         @Override
-        public final boolean acceptsMethod(final CompiledMethodObject method) {
+        public final boolean acceptsMethod(final CompiledCodeObject method) {
             CompilerAsserts.neverPartOfCompilation();
             if (method.getNumLiterals() > 0) {
                 final Object literal1 = method.getLiterals()[1];
