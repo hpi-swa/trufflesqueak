@@ -11,7 +11,7 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class DispatchClosureNode extends AbstractNode {
     protected static final int INLINE_CACHE_SIZE = 3;
@@ -21,7 +21,7 @@ public abstract class DispatchClosureNode extends AbstractNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
     protected static final Object doDirect(final BlockClosureObject closure, final Object[] arguments,
-                    @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
+                    @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                     @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
         return directCallNode.call(arguments);
     }

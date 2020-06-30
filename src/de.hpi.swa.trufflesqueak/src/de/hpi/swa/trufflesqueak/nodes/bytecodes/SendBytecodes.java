@@ -20,7 +20,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.DispatchSendFromStackNode;
@@ -148,7 +147,7 @@ public final class SendBytecodes {
         @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
 
         private final ConditionProfile hasSuperclassProfile = ConditionProfile.createBinaryProfile();
-        private final CompiledMethodObject method;
+        private final CompiledCodeObject method;
 
         protected LookupSuperClassNode(final CompiledCodeObject code) {
             method = code.getMethod();

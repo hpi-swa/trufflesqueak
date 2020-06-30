@@ -25,7 +25,6 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
@@ -80,7 +79,7 @@ public final class PushBytecodes {
         private final int blockSize;
         private final int numArgs;
         private final int numCopied;
-        @CompilationFinal private CompiledBlockObject cachedBlock;
+        @CompilationFinal private CompiledCodeObject cachedBlock;
         @CompilationFinal private int cachedStartPC;
 
         @Child private FrameStackPopNNode popNNode;
@@ -107,7 +106,7 @@ public final class PushBytecodes {
             return new PushClosureNode(code, index, numBytecodes, i, j, k);
         }
 
-        private CompiledBlockObject getBlock(final VirtualFrame frame) {
+        private CompiledCodeObject getBlock(final VirtualFrame frame) {
             if (cachedBlock == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 cachedBlock = code.findBlock(FrameAccess.getMethod(frame), numArgs, numCopied, getSuccessorIndex(), blockSize);

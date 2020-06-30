@@ -31,7 +31,7 @@ import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 @ExportLibrary(InteropLibrary.class)
 public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private ContextObject outerContext;
-    @CompilationFinal private CompiledBlockObject block;
+    @CompilationFinal private CompiledCodeObject block;
     @CompilationFinal private long startPC = -1;
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal(dimensions = 0) private Object[] copied;
@@ -45,7 +45,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
-    public BlockClosureObject(final SqueakImageContext image, final CompiledBlockObject block, final int startPC, final int numArgs, final Object[] copied,
+    public BlockClosureObject(final SqueakImageContext image, final CompiledCodeObject block, final int startPC, final int numArgs, final Object[] copied,
                     final ContextObject outerContext) {
         super(image);
         assert block.getInitialPC() == startPC;
@@ -170,20 +170,20 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
                         " copied values in " + outerContext + ")";
     }
 
-    private void initializeCompiledBlock(final CompiledMethodObject method) {
+    private void initializeCompiledBlock(final CompiledCodeObject method) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert startPC >= 0;
         final int offset = (int) startPC - method.getInitialPC();
         final int j = method.getBytes()[offset - 2];
         final int k = method.getBytes()[offset - 1];
         final int blockSize = j << 8 | k & 0xff;
-        block = CompiledBlockObject.create(method, method, (int) numArgs, copied.length, offset, blockSize);
+        block = CompiledCodeObject.createBlock(method, method, (int) numArgs, copied.length, offset, blockSize);
         /* Ensure fields dependent on block are initialized. */
         getStartPC();
         getNumArgs();
     }
 
-    public CompiledBlockObject getCompiledBlock() {
+    public CompiledCodeObject getCompiledBlock() {
         if (block == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             /* `outerContext.getMethod()` should not be part of compilation. */
@@ -193,7 +193,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     }
 
     /** Special version of getCompiledBlock for image loader. */
-    public CompiledBlockObject getCompiledBlock(final CompiledMethodObject method) {
+    public CompiledCodeObject getCompiledBlock(final CompiledCodeObject method) {
         if (block == null) {
             initializeCompiledBlock(method);
         }

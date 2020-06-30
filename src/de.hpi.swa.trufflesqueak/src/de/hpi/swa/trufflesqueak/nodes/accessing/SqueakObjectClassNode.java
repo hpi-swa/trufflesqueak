@@ -18,7 +18,6 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -83,12 +82,6 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     protected static final ClassObject doCharacter(@SuppressWarnings("unused") final CharacterObject value,
                     @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         return image.characterClass;
-    }
-
-    @Specialization
-    protected static final ClassObject doMethod(@SuppressWarnings("unused") final CompiledMethodObject value,
-                    @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.compiledMethodClass;
     }
 
     @Specialization

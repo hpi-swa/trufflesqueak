@@ -18,7 +18,7 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectCopyIntoObjectArrayNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
@@ -43,7 +43,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 0"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure,
-                        @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
+                        @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
             return directCallNode.call(FrameAccess.newClosureArgumentsTemplate(closure, cachedBlock, getContextOrMarkerNode.execute(frame), 0));
@@ -64,7 +64,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 1"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg,
-                        @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
+                        @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, cachedBlock, getContextOrMarkerNode.execute(frame), 1);
@@ -89,7 +89,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 2"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2,
-                        @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
+                        @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, cachedBlock, getContextOrMarkerNode.execute(frame), 2);
@@ -116,7 +116,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 3"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3,
-                        @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
+                        @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, cachedBlock, getContextOrMarkerNode.execute(frame), 3);
@@ -146,7 +146,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 4"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValue4Direct(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         final NotProvided arg5,
-                        @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
+                        @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, cachedBlock, getContextOrMarkerNode.execute(frame), 4);
@@ -175,7 +175,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValue5Direct(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         final Object arg5,
-                        @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
+                        @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
             final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, cachedBlock, getContextOrMarkerNode.execute(frame), 5);
@@ -211,7 +211,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,
-                        @Cached("closure.getCompiledBlock()") final CompiledBlockObject cachedBlock,
+                        @Cached("closure.getCompiledBlock()") final CompiledCodeObject cachedBlock,
                         @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {

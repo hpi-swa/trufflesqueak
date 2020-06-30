@@ -9,13 +9,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 
 /**
  * Performs a send to receiver with arguments. For use in other node. Selector must resolve to a
- * {@link CompiledMethodObject}, object-as-method is not allowed.
+ * {@link CompiledCodeObject}, object-as-method is not allowed.
  */
 public final class SendSelectorNode extends Node {
     private final NativeObject selector;
@@ -34,7 +34,7 @@ public final class SendSelectorNode extends Node {
 
     public Object executeSend(final VirtualFrame frame, final Object... receiverAndArguments) {
         final ClassObject rcvrClass = lookupClassNode.executeLookup(receiverAndArguments[0]);
-        final CompiledMethodObject method = (CompiledMethodObject) lookupMethodNode.executeLookup(rcvrClass, selector);
+        final CompiledCodeObject method = (CompiledCodeObject) lookupMethodNode.executeLookup(rcvrClass, selector);
         final Object result = dispatchNode.executeDispatch(frame, method, receiverAndArguments);
         assert result != null : "Result of a message send should not be null";
         return result;

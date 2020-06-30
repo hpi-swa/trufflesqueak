@@ -24,7 +24,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -41,11 +40,11 @@ public abstract class AbstractSqueakTestCase {
     protected static SqueakImageContext image;
     protected static PointersObject nilClassBinding;
 
-    protected static CompiledMethodObject makeMethod(final byte[] bytes, final Object[] literals) {
-        return new CompiledMethodObject(image, bytes, literals);
+    protected static CompiledCodeObject makeMethod(final byte[] bytes, final Object[] literals) {
+        return new CompiledCodeObject(image, bytes, literals, image.compiledMethodClass);
     }
 
-    protected static CompiledMethodObject makeMethod(final Object[] literals, final int... intbytes) {
+    protected static CompiledCodeObject makeMethod(final Object[] literals, final int... intbytes) {
         final byte[] bytes = new byte[intbytes.length + 1];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
@@ -61,11 +60,11 @@ public abstract class AbstractSqueakTestCase {
         return CompiledCodeObject.makeHeader(numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
     }
 
-    protected CompiledMethodObject makeMethod(final int... intbytes) {
+    protected CompiledCodeObject makeMethod(final int... intbytes) {
         return makeMethod(new Object[]{makeHeader(0, 5, 14, false, true), nilClassBinding}, intbytes);
     }
 
-    protected static Object runMethod(final CompiledMethodObject code, final Object receiver, final Object... arguments) {
+    protected static Object runMethod(final CompiledCodeObject code, final Object receiver, final Object... arguments) {
         final VirtualFrame frame = createTestFrame(code);
         Object result = null;
         try {
@@ -76,11 +75,11 @@ public abstract class AbstractSqueakTestCase {
         return result;
     }
 
-    protected ExecuteTopLevelContextNode createContext(final CompiledMethodObject code, final Object receiver) {
+    protected ExecuteTopLevelContextNode createContext(final CompiledCodeObject code, final Object receiver) {
         return createContext(code, receiver, ArrayUtils.EMPTY_ARRAY);
     }
 
-    protected static ExecuteTopLevelContextNode createContext(final CompiledMethodObject code, final Object receiver, final Object[] arguments) {
+    protected static ExecuteTopLevelContextNode createContext(final CompiledCodeObject code, final Object receiver, final Object[] arguments) {
         final ContextObject testContext = ContextObject.create(image, code.getSqueakContextSize());
         testContext.setReceiver(receiver);
         testContext.setMethod(code);
@@ -103,7 +102,7 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected Object runMethod(final Object receiver, final Object[] arguments, final int... intbytes) {
-        final CompiledMethodObject method = makeMethod(intbytes);
+        final CompiledCodeObject method = makeMethod(intbytes);
         return runMethod(method, receiver, arguments);
     }
 
@@ -116,11 +115,11 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected Object runPrim(final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
-        final CompiledMethodObject method = makeMethod(literals, new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
+        final CompiledCodeObject method = makeMethod(literals, new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
         return runMethod(method, rcvr, arguments);
     }
 
-    protected static VirtualFrame createTestFrame(final CompiledMethodObject code) {
+    protected static VirtualFrame createTestFrame(final CompiledCodeObject code) {
         final Object[] arguments = FrameAccess.newWith(code, NilObject.SINGLETON, null, new Object[]{NilObject.SINGLETON});
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }

@@ -13,7 +13,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
@@ -46,7 +46,7 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = "index == METHOD")
-        protected static final CompiledMethodObject doMethod(final ContextObject context, @SuppressWarnings("unused") final long index) {
+        protected static final CompiledCodeObject doMethod(final ContextObject context, @SuppressWarnings("unused") final long index) {
             return context.getMethod();
         }
 
@@ -115,7 +115,7 @@ public final class ContextObjectNodes {
         }
 
         @Specialization(guards = "index == METHOD")
-        protected static final void doMethod(final ContextObject context, @SuppressWarnings("unused") final long index, final CompiledMethodObject value) {
+        protected static final void doMethod(final ContextObject context, @SuppressWarnings("unused") final long index, final CompiledCodeObject value) {
             context.setMethod(value);
         }
 

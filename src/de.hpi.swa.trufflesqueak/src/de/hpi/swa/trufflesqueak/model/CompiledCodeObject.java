@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -30,16 +31,23 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ADDITIONAL_METHOD_STATE;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.nodes.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextNode.ResumeContextRootNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 @ExportLibrary(InteropLibrary.class)
-public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
+public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
     private static final String SOURCE_UNAVAILABLE_NAME = "<unavailable>";
     public static final String SOURCE_UNAVAILABLE_CONTENTS = "Source unavailable";
 
@@ -66,9 +74,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal protected boolean needsLargeFrame;
     @CompilationFinal protected int numTemps;
 
-    @CompilationFinal(dimensions = 1) private CompiledBlockObject[] innerBlocks;
+    @CompilationFinal(dimensions = 1) private CompiledCodeObject[] innerBlocks;
 
-    private final int numCopiedValues; // for block closures
+    /* CompiledBlocks support. */
+    private final int numCopiedValues;
+    private final int offset;
 
     private Source source;
 
@@ -78,15 +88,47 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private RootCallTarget resumptionCallTarget;
 
     @TruffleBoundary
-    protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues) {
-        super(image, hash);
+    protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues, final int offset, final ClassObject classObject) {
+        super(image, hash, classObject);
         this.numCopiedValues = numCopiedValues;
+        assert classObject == image.compiledMethodClass || classObject == image.getCompiledBlockClass() && offset > 0 : "Only CompiledBlock objects should have an offset";
+        this.offset = offset;
 
         frameDescriptor = new FrameDescriptor();
         thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
         thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
+    }
+
+    public CompiledCodeObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
+        this(image, hash, 0, 0, classObject);
+    }
+
+    public CompiledCodeObject(final SqueakImageContext image, final byte[] bc, final Object[] lits, final ClassObject classObject) {
+        this(image, 0, 0, 0, classObject);
+        literals = lits;
+        decodeHeader();
+        bytes = bc;
+    }
+
+    private CompiledCodeObject(final CompiledCodeObject code, final CompiledCodeObject outerMethod, final int numArguments, final int numCopied, final int bytecodeOffset, final int blockSize) {
+        this(code.image, 0, numCopied, (code.isCompiledBlock() ? code.getOffset() : 0) + bytecodeOffset, code.image.getCompiledBlockClass());
+        final Object[] outerLiterals = outerMethod.getLiterals();
+        final int outerLiteralsLength = outerLiterals.length;
+        literals = new Object[outerLiteralsLength + 1];
+        literals[0] = makeHeader(numArguments, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
+        System.arraycopy(outerLiterals, 1, literals, 1, outerLiteralsLength - 1);
+        literals[outerLiteralsLength] = outerMethod; // Last literal is back pointer to method.
+        bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, bytecodeOffset + blockSize);
+        /* Instead of calling decodeHeader(), set fields directly. */
+        numLiterals = code.numLiterals;
+        hasPrimitive = false;
+        needsLargeFrame = outerMethod.needsLargeFrame;
+        numTemps = numArguments + numCopied;
+        numArgs = numArguments;
+        ensureCorrectNumberOfStackSlots();
+        initializeCallTargetUnsafe();
     }
 
     protected CompiledCodeObject(final CompiledCodeObject original) {
@@ -99,6 +141,21 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         stackPointerSlot = original.stackPointerSlot;
         stackSlots = original.stackSlots;
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
+        offset = original.offset;
+    }
+
+    private CompiledCodeObject(final int size, final SqueakImageContext image, final ClassObject classObject) {
+        this(image, 0, 0, 0, classObject);
+        bytes = new byte[size];
+    }
+
+    public static CompiledCodeObject newOfSize(final SqueakImageContext image, final int size, final ClassObject classObject) {
+        return new CompiledCodeObject(size, image, classObject);
+    }
+
+    public static CompiledCodeObject createBlock(final CompiledCodeObject code, final CompiledCodeObject outerMethod, final int numArguments, final int numCopied, final int bytecodeOffset,
+                    final int blockSize) {
+        return new CompiledCodeObject(code, outerMethod, numArguments, numCopied, bytecodeOffset, blockSize);
     }
 
     private void setLiteralsAndBytes(final Object[] literals, final byte[] bytes) {
@@ -110,7 +167,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         renewCallTarget();
     }
 
-    public final Source getSource() {
+    public Source getSource() {
         CompilerAsserts.neverPartOfCompilation();
         if (source == null) {
             String name = null;
@@ -129,11 +186,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         return source;
     }
 
-    public final int getSqueakContextSize() {
+    public int getSqueakContextSize() {
         return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
-    public final RootCallTarget getCallTarget() {
+    public RootCallTarget getCallTarget() {
         if (callTarget == null) {
             renewCallTarget();
         }
@@ -146,16 +203,16 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         initializeCallTargetUnsafe();
     }
 
-    protected final void initializeCallTargetUnsafe() {
+    protected void initializeCallTargetUnsafe() {
         callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(SqueakLanguage.getContext().getLanguage(), this));
     }
 
-    public final Assumption getCallTargetStable() {
+    public Assumption getCallTargetStable() {
         return callTargetStable.getAssumption();
     }
 
     @TruffleBoundary
-    public final RootCallTarget getResumptionCallTarget(final ContextObject context) {
+    public RootCallTarget getResumptionCallTarget(final ContextObject context) {
         if (resumptionCallTarget == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             resumptionCallTarget = Truffle.getRuntime().createCallTarget(ResumeContextRootNode.create(SqueakLanguage.getContext().getLanguage(), context));
@@ -172,47 +229,47 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         return resumptionCallTarget;
     }
 
-    public final Assumption getDoesNotNeedSenderAssumption() {
+    public Assumption getDoesNotNeedSenderAssumption() {
         return doesNotNeedSender;
     }
 
-    public final FrameDescriptor getFrameDescriptor() {
+    public FrameDescriptor getFrameDescriptor() {
         return frameDescriptor;
     }
 
-    public final FrameSlot getThisMarkerSlot() {
+    public FrameSlot getThisMarkerSlot() {
         return thisMarkerSlot;
     }
 
-    public final FrameSlot getThisContextSlot() {
+    public FrameSlot getThisContextSlot() {
         return thisContextSlot;
     }
 
-    public final FrameSlot getInstructionPointerSlot() {
+    public FrameSlot getInstructionPointerSlot() {
         return instructionPointerSlot;
     }
 
-    public final FrameSlot getStackPointerSlot() {
+    public FrameSlot getStackPointerSlot() {
         return stackPointerSlot;
     }
 
-    public final int getNumArgs() {
+    public int getNumArgs() {
         return numArgs;
     }
 
-    public final int getNumArgsAndCopied() {
+    public int getNumArgsAndCopied() {
         return numArgs + numCopiedValues;
     }
 
-    public final int getNumTemps() {
+    public int getNumTemps() {
         return numTemps;
     }
 
-    public final int getNumLiterals() {
+    public int getNumLiterals() {
         return numLiterals;
     }
 
-    public final FrameSlot getStackSlot(final int i) {
+    public FrameSlot getStackSlot(final int i) {
         assert 0 <= i && i < stackSlots.length : "Bad stack access";
         if (stackSlots[i] == null) {
             // Lazily add frame slots.
@@ -222,11 +279,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         return stackSlots[i];
     }
 
-    public final FrameSlot[] getStackSlotsUnsafe() {
+    public FrameSlot[] getStackSlotsUnsafe() {
         return stackSlots;
     }
 
-    public final int getNumStackSlots() {
+    public int getNumStackSlots() {
         /**
          * Arguments and copied values are also pushed onto the stack in {@link EnterCodeNode},
          * therefore there must be enough slots for all these values as well as the Squeak stack.
@@ -235,12 +292,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     }
 
     @Override
-    public ClassObject getSqueakClass() {
-        return image.compiledMethodClass;
-    }
-
-    @Override
-    public final void fillin(final SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // header is a tagged small integer
         final long header = chunk.getWord(0) >> 3;
@@ -258,7 +310,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         return MiscUtils.toIntExact((long) literals[0]);
     }
 
-    protected final void decodeHeader() {
+    protected void decodeHeader() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final int header = getHeader();
         numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
@@ -291,7 +343,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         }
     }
 
-    public final void become(final CompiledCodeObject other) {
+    public void become(final CompiledCodeObject other) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] literals2 = other.literals;
         final byte[] bytes2 = other.bytes;
@@ -301,11 +353,32 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         callTargetStable.invalidate();
     }
 
-    public final int getBytecodeOffset() {
+    public int getBytecodeOffset() {
         return (1 + numLiterals) * SqueakImageConstants.WORD_SIZE; // header plus numLiterals
     }
 
-    public final void atput0(final long longIndex, final Object obj) {
+    public Object at0(final long longIndex) {
+        final int index = (int) longIndex;
+        if (index < getBytecodeOffset() - getOffset()) {
+            assert index % SqueakImageConstants.WORD_SIZE == 0;
+            return literals[index / SqueakImageConstants.WORD_SIZE];
+        } else {
+            if (isCompiledBlock()) {
+                return getMethod().at0(longIndex);
+            } else {
+                assert isCompiledMethod();
+                final int realIndex = index - getBytecodeOffset();
+                assert realIndex >= 0;
+                return Byte.toUnsignedLong(bytes[realIndex]);
+            }
+        }
+    }
+
+    private int getOffset() {
+        return offset;
+    }
+
+    public void atput0(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         assert index >= 0;
         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -325,11 +398,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         }
     }
 
-    public final Object getLiteral(final long longIndex) {
+    public Object getLiteral(final long longIndex) {
         return literals[(int) (1 + longIndex)]; // +1 for skipping header.
     }
 
-    public final void setLiteral(final long longIndex, final Object obj) {
+    public void setLiteral(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (index == 0) {
@@ -343,61 +416,259 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
         }
     }
 
-    public final boolean hasPrimitive() {
+    public boolean hasPrimitive() {
         return hasPrimitive;
     }
 
-    public final int primitiveIndex() {
+    public int primitiveIndex() {
         assert hasPrimitive() && bytes.length >= 3;
         return (Byte.toUnsignedInt(bytes[2]) << 8) + Byte.toUnsignedInt(bytes[1]);
     }
 
-    public final boolean isUnwindMarked() {
+    public boolean isUnwindMarked() {
         return hasPrimitive() && primitiveIndex() == 198;
     }
 
+    public CompiledCodeObject shallowCopy() {
+        return new CompiledCodeObject(this);
+    }
+
     @Override
-    public final int instsize() {
+    public int getNumSlots() {
+        return 1 /* header */ + getNumLiterals() + (int) Math.ceil((double) bytes.length / 8);
+    }
+
+    @Override
+    public int instsize() {
         return 0;
     }
 
-    public final Object[] getLiterals() {
+    @Override
+    public int size() {
+        if (isCompiledBlock()) {
+            return getMethod().size();
+        } else {
+            return getBytecodeOffset() + bytes.length;
+        }
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        if (isCompiledBlock()) {
+            return "[] in " + getMethod().toString();
+        } else {
+            String className = "UnknownClass";
+            String selector = "unknownSelector";
+            final ClassObject methodClass = getMethodClassSlow();
+            if (methodClass != null) {
+                className = methodClass.getClassName();
+            }
+            final NativeObject selectorObj = getCompiledInSelector();
+            if (selectorObj != null) {
+                selector = selectorObj.asStringUnsafe();
+            }
+            return className + ">>" + selector;
+        }
+    }
+
+    public Object[] getLiterals() {
         return literals;
     }
 
-    public final byte[] getBytes() {
+    public byte[] getBytes() {
         return bytes;
     }
 
-    public abstract CompiledMethodObject getMethod();
-
-    public static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
+    public static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
         return (numArgs & 0x0F) << 24 | (numTemps & 0x3F) << 18 | numLiterals & 0x7FFF | (needsLargeFrame ? 0x20000 : 0) | (hasPrimitive ? 0x10000 : 0);
     }
 
-    public CompiledBlockObject findBlock(final CompiledMethodObject method, final int numClosureArgs, final int numCopied, final int successorIndex, final int blockSize) {
+    public CompiledCodeObject findBlock(final CompiledCodeObject method, final int numClosureArgs, final int numCopied, final int successorIndex, final int blockSize) {
         if (innerBlocks != null) {
             // TODO: Avoid instanceof checks (same code in CompiledBlockObject).
-            final int additionalOffset = this instanceof CompiledBlockObject ? ((CompiledBlockObject) this).getOffset() : 0;
-            final int offset = additionalOffset + successorIndex;
-            for (final CompiledBlockObject innerBlock : innerBlocks) {
-                if (innerBlock.getOffset() == offset) {
+            final int additionalOffset = isCompiledBlock() ? getOffset() : 0;
+            final int targetOffset = additionalOffset + successorIndex;
+            for (final CompiledCodeObject innerBlock : innerBlocks) {
+                if (innerBlock.getOffset() == targetOffset) {
                     return innerBlock;
                 }
             }
         }
-        return addInnerBlock(CompiledBlockObject.create(this, method, numClosureArgs, numCopied, successorIndex, blockSize));
+        return addInnerBlock(createBlock(this, method, numClosureArgs, numCopied, successorIndex, blockSize));
     }
 
-    private CompiledBlockObject addInnerBlock(final CompiledBlockObject innerBlock) {
+    private CompiledCodeObject addInnerBlock(final CompiledCodeObject innerBlock) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (innerBlocks == null) {
-            innerBlocks = new CompiledBlockObject[]{innerBlock};
+            innerBlocks = new CompiledCodeObject[]{innerBlock};
         } else {
             innerBlocks = Arrays.copyOf(innerBlocks, innerBlocks.length + 1);
             innerBlocks[innerBlocks.length - 1] = innerBlock;
         }
         return innerBlock;
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        for (int i = 0; i < from.length; i++) {
+            final Object fromPointer = from[i];
+            for (int j = 0; j < getLiterals().length; j++) {
+                if (fromPointer == getLiterals()[j]) {
+                    final Object toPointer = to[i];
+                    // FIXME: literals are @CompilationFinal, assumption needed (maybe
+                    // pointersBecome should not modify literals at all?).
+                    getLiterals()[j] = toPointer;
+                    copyHash(fromPointer, toPointer, copyHash);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void tracePointers(final ObjectTracer tracer) {
+        for (final Object literal : getLiterals()) {
+            tracer.addIfUnmarked(literal);
+        }
+    }
+
+    @Override
+    public void trace(final SqueakImageWriter writer) {
+        super.trace(writer);
+        writer.traceAllIfNecessary(getLiterals());
+    }
+
+    @Override
+    public void write(final SqueakImageWriter writer) {
+        assert isCompiledMethod() && offset == 0 : "Writing compiledBlocks has not been tested yet";
+        final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
+        assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
+        if (writeHeader(writer, formatOffset)) {
+            writer.writeObjects(getLiterals());
+            writer.writeBytes(getBytes());
+            final int byteOffset = getBytes().length % SqueakImageConstants.WORD_SIZE;
+            if (byteOffset > 0) {
+                writer.writePadding(SqueakImageConstants.WORD_SIZE - byteOffset);
+            }
+        }
+    }
+
+    /*
+     * CompiledMethod
+     */
+
+    public boolean isCompiledMethod() {
+        return getSqueakClass() == image.compiledMethodClass;
+    }
+
+    /* Answer the program counter for the receiver's first bytecode. */
+    public int getInitialPC() {
+        // pc is offset by header + numLiterals, +1 for one-based addressing
+        return getBytecodeOffset() + 1 + getOffset();
+    }
+
+    public NativeObject getCompiledInSelector() {
+        /**
+         *
+         * By convention the penultimate literal of a method is either its selector or an instance
+         * of AdditionalMethodState. AdditionalMethodState holds the method's selector and any
+         * pragmas and properties of the method. AdditionalMethodState may also be used to add
+         * instance variables to a method, albeit ones held in the method's AdditionalMethodState.
+         * Subclasses of CompiledMethod that want to add state should subclass AdditionalMethodState
+         * to add the state they want, and implement methodPropertiesClass on the class side of the
+         * CompiledMethod subclass to answer the specialized subclass of AdditionalMethodState.
+         * Enterprising programmers are encouraged to try and implement this support automatically
+         * through suitable modifications to the compiler and class builder.
+         */
+        CompilerAsserts.neverPartOfCompilation("Do not use getCompiledInSelector() in compiled code");
+        final Object penultimateLiteral = literals[literals.length - 2];
+        if (penultimateLiteral instanceof NativeObject) {
+            return (NativeObject) penultimateLiteral;
+        } else if (penultimateLiteral instanceof VariablePointersObject) {
+            final VariablePointersObject penultimateLiteralAsPointer = (VariablePointersObject) penultimateLiteral;
+            assert penultimateLiteralAsPointer.size() >= ADDITIONAL_METHOD_STATE.SELECTOR;
+            return (NativeObject) penultimateLiteralAsPointer.instVarAt0Slow(ADDITIONAL_METHOD_STATE.SELECTOR);
+        } else {
+            return null;
+        }
+    }
+
+    /** CompiledMethod>>#methodClassAssociation. */
+    private AbstractSqueakObject getMethodClassAssociation() {
+        /**
+         * From the CompiledMethod class description:
+         *
+         * The last literal in a CompiledMethod must be its methodClassAssociation, a binding whose
+         * value is the class the method is installed in. The methodClassAssociation is used to
+         * implement super sends. If a method contains no super send then its methodClassAssociation
+         * may be nil (as would be the case for example of methods providing a pool of inst var
+         * accessors).
+         */
+        return (AbstractSqueakObject) literals[literals.length - 1];
+    }
+
+    public boolean hasMethodClassSlow() {
+        CompilerAsserts.neverPartOfCompilation();
+        return hasMethodClass(AbstractPointersObjectReadNode.getUncached());
+    }
+
+    public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {
+        final AbstractSqueakObject mca = getMethodClassAssociation();
+        return mca != NilObject.SINGLETON && readNode.execute((AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
+    }
+
+    public ClassObject getMethodClassSlow() {
+        CompilerAsserts.neverPartOfCompilation();
+        final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
+        if (hasMethodClass(readNode)) {
+            return getMethodClass(readNode);
+        }
+        return null;
+    }
+
+    /** CompiledMethod>>#methodClass. */
+    public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
+        return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
+    }
+
+    /** CompiledMethod>>#methodClass:. */
+    public void setMethodClass(final AbstractPointersObjectWriteNode writeNode, final ClassObject newClass) {
+        writeNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE, newClass);
+    }
+
+    public void setHeader(final long header) {
+        literals = new Object[]{header};
+        decodeHeader();
+        literals = new Object[1 + numLiterals];
+        literals[0] = header;
+        for (int i = 1; i < literals.length; i++) {
+            literals[i] = NilObject.SINGLETON;
+        }
+    }
+
+    public boolean isExceptionHandlerMarked() {
+        return hasPrimitive() && primitiveIndex() == 199;
+    }
+
+    /*
+     * CompiledBlock
+     */
+
+    public boolean isCompiledBlock() {
+        return getSqueakClass() == image.getCompiledBlockClass();
+    }
+
+    public CompiledCodeObject getMethod() {
+        if (isCompiledBlock()) {
+            return getMethodUnsafe();
+        } else {
+            return this;
+        }
+    }
+
+    public CompiledCodeObject getMethodUnsafe() {
+        assert isCompiledBlock();
+        return (CompiledCodeObject) literals[literals.length - 1];
     }
 
     /*
@@ -406,12 +677,12 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    protected final boolean hasArrayElements() {
+    protected boolean hasArrayElements() {
         return true;
     }
 
     @ExportMessage
-    protected final long getArraySize() {
+    protected long getArraySize() {
         return literals.length;
     }
 
@@ -419,12 +690,12 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     @ExportMessage(name = "isArrayElementReadable")
     @ExportMessage(name = "isArrayElementModifiable")
     @ExportMessage(name = "isArrayElementInsertable")
-    protected final boolean isArrayElementReadable(final long index) {
+    protected boolean isArrayElementReadable(final long index) {
         return 0 <= index && index < literals.length;
     }
 
     @ExportMessage
-    protected final Object readArrayElement(final long index) throws InvalidArrayIndexException {
+    protected Object readArrayElement(final long index) throws InvalidArrayIndexException {
         if (isArrayElementReadable(index)) {
             return literals[(int) index];
         } else {
@@ -433,12 +704,31 @@ public abstract class CompiledCodeObject extends AbstractSqueakObjectWithHash {
     }
 
     @ExportMessage
-    protected final void writeArrayElement(final long index, final Object value,
+    protected void writeArrayElement(final long index, final Object value,
                     @Exclusive @Cached final WrapToSqueakNode wrapNode) throws InvalidArrayIndexException {
         if (isArrayElementReadable(index)) {
             literals[(int) index] = wrapNode.executeWrap(value);
         } else {
             throw InvalidArrayIndexException.create(index);
+        }
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isExecutable() {
+        return true;
+    }
+
+    @ExportMessage
+    public Object execute(final Object[] receiverAndArguments,
+                    @Exclusive @Cached final WrapToSqueakNode wrapNode,
+                    @Exclusive @Cached final DispatchUneagerlyNode dispatchNode) throws ArityException {
+        final int actualArity = receiverAndArguments.length;
+        final int expectedArity = 1 + getNumArgs(); // receiver + arguments
+        if (actualArity == expectedArity) {
+            return dispatchNode.executeDispatch(this, wrapNode.executeObjects(receiverAndArguments), NilObject.SINGLETON);
+        } else {
+            throw ArityException.create(expectedArity, actualArity);
         }
     }
 

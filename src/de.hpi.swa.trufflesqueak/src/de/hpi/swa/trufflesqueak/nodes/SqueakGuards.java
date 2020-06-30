@@ -13,8 +13,7 @@ import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
@@ -87,12 +86,8 @@ public final class SqueakGuards {
         return object instanceof ClassObject;
     }
 
-    public static boolean isCompiledBlockObject(final Object object) {
-        return object instanceof CompiledBlockObject;
-    }
-
-    public static boolean isCompiledMethodObject(final Object object) {
-        return object instanceof CompiledMethodObject;
+    public static boolean isCompiledCodeObject(final Object object) {
+        return object instanceof CompiledCodeObject;
     }
 
     public static boolean isContextObject(final Object object) {

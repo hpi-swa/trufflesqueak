@@ -17,7 +17,7 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
@@ -177,8 +177,8 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     }
 
     @Specialization(guards = {"classObject.isCompiledMethodClassType()"})
-    protected static final CompiledMethodObject doCompiledMethod(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+    protected static final CompiledCodeObject doCompiledMethod(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() == 0;
-        return CompiledMethodObject.newOfSize(image, extraSize);
+        return CompiledCodeObject.newOfSize(image, extraSize, classObject);
     }
 }

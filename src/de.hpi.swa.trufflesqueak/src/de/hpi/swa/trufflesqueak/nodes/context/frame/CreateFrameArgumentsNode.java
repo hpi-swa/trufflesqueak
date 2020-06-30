@@ -10,7 +10,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -27,7 +27,7 @@ public final class CreateFrameArgumentsNode extends AbstractNode {
         return new CreateFrameArgumentsNode(argumentCount);
     }
 
-    public Object[] execute(final VirtualFrame frame, final CompiledMethodObject method, final Object sender) {
+    public Object[] execute(final VirtualFrame frame, final CompiledCodeObject method, final Object sender) {
         if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stackPointerSlot = FrameAccess.getStackPointerSlot(frame);

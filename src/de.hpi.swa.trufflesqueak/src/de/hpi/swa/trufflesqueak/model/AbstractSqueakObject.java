@@ -75,10 +75,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                     @Exclusive @Cached("createBinaryProfile()") final ConditionProfile alternativeProfile) {
         final String selectorString = toSelector(member);
         final ClassObject classObject = classNode.executeLookup(this);
-        if (alternativeProfile.profile(lookupNode.executeLookup(classObject, selectorString) instanceof CompiledMethodObject)) {
+        if (alternativeProfile.profile(lookupNode.executeLookup(classObject, selectorString) instanceof CompiledCodeObject)) {
             return true;
         } else {
-            return lookupNode.executeLookup(classObject, toAlternativeSelector(selectorString)) instanceof CompiledMethodObject;
+            return lookupNode.executeLookup(classObject, toAlternativeSelector(selectorString)) instanceof CompiledCodeObject;
         }
     }
 
@@ -90,12 +90,12 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         final ClassObject classObject = classNode.executeLookup(this);
         final String selectorString = toSelector(member);
         final Object methodObject = lookupNode.executeLookup(classObject, selectorString);
-        if (alternativeProfile.profile(methodObject instanceof CompiledMethodObject)) {
-            return new BoundMethod((CompiledMethodObject) methodObject, this);
+        if (alternativeProfile.profile(methodObject instanceof CompiledCodeObject)) {
+            return new BoundMethod((CompiledCodeObject) methodObject, this);
         } else {
             final Object methodObjectAlternative = lookupNode.executeLookup(classObject, toAlternativeSelector(selectorString));
-            if (methodObjectAlternative instanceof CompiledMethodObject) {
-                return new BoundMethod((CompiledMethodObject) methodObjectAlternative, this);
+            if (methodObjectAlternative instanceof CompiledCodeObject) {
+                return new BoundMethod((CompiledCodeObject) methodObjectAlternative, this);
             } else {
                 throw UnknownIdentifierException.create(member);
             }
@@ -117,7 +117,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                 /* DoesNotUnderstand, rewrite this specialization. */
                 throw new RespecializeException();
             }
-            final CompiledMethodObject method = (CompiledMethodObject) methodObject;
+            final CompiledCodeObject method = (CompiledCodeObject) methodObject;
             final int expectedArity = method.getNumArgs();
             if (actualArity == expectedArity) {
                 return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), receiver), NilObject.SINGLETON);
@@ -143,8 +143,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             final String selector = toSelector(member, actualArity);
             final ClassObject classObject = classNode.executeLookup(receiver);
             final Object methodObject = lookupNode.executeLookup(classObject, selector);
-            if (hasMethodProfile.profile(methodObject instanceof CompiledMethodObject)) {
-                final CompiledMethodObject method = (CompiledMethodObject) methodObject;
+            if (hasMethodProfile.profile(methodObject instanceof CompiledCodeObject)) {
+                final CompiledCodeObject method = (CompiledCodeObject) methodObject;
                 final int expectedArity = method.getNumArgs();
                 if (actualArity == expectedArity) {
                     return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), receiver), NilObject.SINGLETON);
@@ -152,7 +152,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                     throw ArityException.create(1 + expectedArity, 1 + actualArity);
                 }
             } else {
-                final CompiledMethodObject doesNotUnderstandMethodObject = (CompiledMethodObject) lookupNode.executeLookup(classObject, "doesNotUnderstand:");
+                final CompiledCodeObject doesNotUnderstandMethodObject = (CompiledCodeObject) lookupNode.executeLookup(classObject, "doesNotUnderstand:");
                 final NativeObject symbol = (NativeObject) image.asByteString(selector).send("asSymbol");
                 final PointersObject message = image.newMessage(writeNode, symbol, classObject, arguments);
                 try {

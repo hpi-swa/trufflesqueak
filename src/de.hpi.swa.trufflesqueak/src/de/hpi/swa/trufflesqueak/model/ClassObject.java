@@ -313,7 +313,9 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
             if (size() > 7) {
                 final String className = getClassNameUnsafe();
-                if (image.getCompilerClass() == null && "Compiler".equals(className)) {
+                if (image.needsCompiledBlockClass() && "CompiledBlock".equals(className)) {
+                    image.setCompiledBlockClass(this);
+                } else if (image.getCompilerClass() == null && "Compiler".equals(className)) {
                     image.setCompilerClass(this);
                 } else if (image.getParserClass() == null && "Parser".equals(className)) {
                     image.setParserClass(this);

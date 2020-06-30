@@ -32,6 +32,7 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
 
     protected AbstractSqueakObjectWithHash(final SqueakImageContext image, final long hash) {
         this.image = image;
+        assert hash >= 0 : "Squeak hashes should not be negative (will mess up object headers)";
         squeakHash = hash;
         markingFlag = image.getCurrentMarkingFlag();
     }

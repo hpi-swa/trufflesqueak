@@ -26,7 +26,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -293,7 +292,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
             if (cachedContext == null) {
                 final SqueakImageContext image = lookupContext();
                 assert image.evaluate("Interop") != NilObject.SINGLETON : "Interop class must be present";
-                final CompiledMethodObject onDoMethod = (CompiledMethodObject) image.evaluate("BlockClosure>>#on:do:");
+                final CompiledCodeObject onDoMethod = (CompiledCodeObject) image.evaluate("BlockClosure>>#on:do:");
                 cachedContext = ContextObject.create(image, onDoMethod.getSqueakContextSize());
                 cachedContext.setMethod(onDoMethod);
                 cachedContext.setReceiver(NilObject.SINGLETON);

@@ -32,8 +32,7 @@ import de.hpi.swa.trufflesqueak.io.SqueakDisplayInterface;
 import de.hpi.swa.trufflesqueak.io.SqueakIOConstants;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
@@ -356,21 +355,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final CompiledMethodObject doMethod(final CompiledMethodObject rcvr, final long start, final long stop, final CompiledMethodObject repl, final long replStart,
-                        @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
-            if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
-                errorProfile.enter();
-                throw PrimitiveFailed.BAD_INDEX;
-            }
-            final long repOff = replStart - start;
-            for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.atput0(i, repl.at0(repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization
-        protected static final CompiledBlockObject doBlock(final CompiledBlockObject rcvr, final long start, final long stop, final CompiledBlockObject repl, final long replStart,
+        protected static final CompiledCodeObject doMethod(final CompiledCodeObject rcvr, final long start, final long stop, final CompiledCodeObject repl, final long replStart,
                         @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
             if (!inBounds(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart)) {
                 errorProfile.enter();
