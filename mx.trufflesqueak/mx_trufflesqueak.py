@@ -522,7 +522,7 @@ def _enable_local_compression():
         self._local_compress = kw_args.pop('localCompress', True) # Flip default to `True`
         self._remote_compress = kw_args.pop('remoteCompress', True)
         if self._local_compress and not self._remote_compress:
-            abort("Incompatible local/remote compression settings: local compression requires remote compression")
+            mx.abort("Incompatible local/remote compression settings: local compression requires remote compression")
         super(mx.LayoutZIPDistribution, self).__init__(*args, compress=self._local_compress, **kw_args)
 
     mx.LayoutZIPDistribution.__init__ = patched_init
