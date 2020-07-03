@@ -105,6 +105,13 @@ def _graal_vm_args(args):
             # Use `Truffle:2` for graphs between each compiler phase
             '-Dgraal.Dump=Truffle:1',
             '-Dgraal.DumpOnError=true',
+            '-Dgraal.PrintGraph=Network',
+            # Disable some optimizations
+            '-Dgraal.FullUnroll=false',
+            '-Dgraal.PartialUnroll=false',
+            '-Dgraal.LoopPeeling=false',
+            '-Dgraal.LoopUnswitch=false',
+            '-Dgraal.OptScheduleOutOfLoops=false',
         ]
 
     if args.low_level:
