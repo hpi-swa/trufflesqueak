@@ -76,7 +76,7 @@ public final class InterruptHandlerState {
         executor = new ScheduledThreadPoolExecutor(1);
         executor.setRemoveOnCancelPolicy(true);
         interruptChecks = executor.scheduleWithFixedDelay(() -> {
-            shouldTrigger = true;
+            shouldTrigger = interruptPending() || nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal();
         }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 
