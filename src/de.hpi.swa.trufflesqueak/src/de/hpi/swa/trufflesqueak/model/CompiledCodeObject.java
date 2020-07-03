@@ -28,6 +28,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -41,10 +42,12 @@ import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextNode.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.AbstractDecoder;
+import de.hpi.swa.trufflesqueak.util.DecoderForV3PlusClosures;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
-import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 @ExportLibrary(InteropLibrary.class)
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
@@ -73,6 +76,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal protected boolean hasPrimitive;
     @CompilationFinal protected boolean needsLargeFrame;
     @CompilationFinal protected int numTemps;
+    @CompilationFinal protected AbstractDecoder decoder;
 
     @CompilationFinal(dimensions = 1) private CompiledCodeObject[] innerBlocks;
 
@@ -117,7 +121,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final Object[] outerLiterals = outerMethod.getLiterals();
         final int outerLiteralsLength = outerLiterals.length;
         literals = new Object[outerLiteralsLength + 1];
-        literals[0] = makeHeader(numArguments, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
+        literals[0] = CompiledCodeHeader.makeHeader(numArguments, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
         System.arraycopy(outerLiterals, 1, literals, 1, outerLiteralsLength - 1);
         literals[outerLiteralsLength] = outerMethod; // Last literal is back pointer to method.
         bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, bytecodeOffset + blockSize);
@@ -127,6 +131,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         needsLargeFrame = outerMethod.needsLargeFrame;
         numTemps = numArguments + numCopied;
         numArgs = numArguments;
+        decoder = outerMethod.decoder;
         ensureCorrectNumberOfStackSlots();
         initializeCallTargetUnsafe();
     }
@@ -174,7 +179,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             String contents;
             try {
                 name = toString();
-                contents = SqueakBytecodeDecoder.decodeToString(this);
+                contents = decodeToString();
             } catch (final RuntimeException e) {
                 if (name == null) {
                     name = SOURCE_UNAVAILABLE_NAME;
@@ -313,11 +318,12 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     protected void decodeHeader() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final int header = getHeader();
-        numLiterals = CompiledCodeHeaderDecoder.getNumLiterals(header);
-        hasPrimitive = CompiledCodeHeaderDecoder.getHasPrimitive(header);
-        needsLargeFrame = CompiledCodeHeaderDecoder.getNeedsLargeFrame(header);
-        numTemps = CompiledCodeHeaderDecoder.getNumTemps(header);
-        numArgs = CompiledCodeHeaderDecoder.getNumArguments(header);
+        numLiterals = CompiledCodeHeader.getNumLiterals(header);
+        hasPrimitive = CompiledCodeHeader.getHasPrimitive(header);
+        needsLargeFrame = CompiledCodeHeader.getNeedsLargeFrame(header);
+        numTemps = CompiledCodeHeader.getNumTemps(header);
+        numArgs = CompiledCodeHeader.getNumArguments(header);
+        decoder = CompiledCodeHeader.getDecoder(header);
         ensureCorrectNumberOfStackSlots();
     }
 
@@ -480,10 +486,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return bytes;
     }
 
-    public static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
-        return (numArgs & 0x0F) << 24 | (numTemps & 0x3F) << 18 | numLiterals & 0x7FFF | (needsLargeFrame ? 0x20000 : 0) | (hasPrimitive ? 0x10000 : 0);
-    }
-
     public CompiledCodeObject findBlock(final CompiledCodeObject method, final int numClosureArgs, final int numCopied, final int successorIndex, final int blockSize) {
         if (innerBlocks != null) {
             // TODO: Avoid instanceof checks (same code in CompiledBlockObject).
@@ -551,6 +553,30 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                 writer.writePadding(SqueakImageConstants.WORD_SIZE - byteOffset);
             }
         }
+    }
+
+    /*
+     * Decoding
+     */
+
+    public AbstractBytecodeNode[] asBytecodeNodes() {
+        return decoder.decode(this);
+    }
+
+    public AbstractBytecodeNode[] asBytecodeNodesEmpty() {
+        return new AbstractBytecodeNode[decoder.trailerPosition(this)];
+    }
+
+    public AbstractBytecodeNode bytecodeNodeAt(final int pc) {
+        return decoder.decodeBytecode(this, pc);
+    }
+
+    public int findLineNumber(final int index) {
+        return decoder.findLineNumber(this, index);
+    }
+
+    private String decodeToString() {
+        return decoder.decodeToString(this);
     }
 
     /*
@@ -746,29 +772,45 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      *   sign bit:       1 bit:    selects the instruction set, >= 0 Primary, < 0 Secondary (#signFlag)
      * </pre>
      */
-    private static final class CompiledCodeHeaderDecoder {
+    public static final class CompiledCodeHeader {
         private static final int NUM_LITERALS_SIZE = 1 << 15;
         private static final int NUM_TEMPS_TEMPS_SIZE = 1 << 6;
         private static final int NUM_ARGUMENTS_SIZE = 1 << 4;
+
+        public static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
+            return (numArgs & 0x0F) << 24 | (numTemps & 0x3F) << 18 | numLiterals & 0x7FFF | (needsLargeFrame ? 0x20000 : 0) | (hasPrimitive ? 0x10000 : 0);
+        }
 
         private static int getNumLiterals(final long headerWord) {
             return MiscUtils.bitSplit(headerWord, 0, NUM_LITERALS_SIZE);
         }
 
-        private static boolean getHasPrimitive(final long headerWord) {
+        private static boolean getHasPrimitive(final int headerWord) {
             return (headerWord & 1 << 16) != 0;
         }
 
-        private static boolean getNeedsLargeFrame(final long headerWord) {
+        private static boolean getNeedsLargeFrame(final int headerWord) {
             return (headerWord & 1 << 17) != 0;
         }
 
-        private static int getNumTemps(final long headerWord) {
+        private static int getNumTemps(final int headerWord) {
             return MiscUtils.bitSplit(headerWord, 18, NUM_TEMPS_TEMPS_SIZE);
         }
 
-        private static int getNumArguments(final long headerWord) {
+        private static int getNumArguments(final int headerWord) {
             return MiscUtils.bitSplit(headerWord, 24, NUM_ARGUMENTS_SIZE);
+        }
+
+        private static AbstractDecoder getDecoder(final int headerWord) {
+            if (getSignBit(headerWord)) {
+                return DecoderForV3PlusClosures.SINGLETON;
+            } else {
+                throw SqueakException.create("Secondary bytecode set not support");
+            }
+        }
+
+        private static boolean getSignBit(final int headerWord) {
+            return (headerWord & 1 << 29) == 0;
         }
     }
 }

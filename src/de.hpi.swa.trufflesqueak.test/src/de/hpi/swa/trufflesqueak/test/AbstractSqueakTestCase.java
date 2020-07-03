@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject.CompiledCodeHeader;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -57,7 +58,7 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
-        return CompiledCodeObject.makeHeader(numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
+        return CompiledCodeHeader.makeHeader(numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
     }
 
     protected CompiledCodeObject makeMethod(final int... intbytes) {

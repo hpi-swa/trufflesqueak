@@ -35,7 +35,6 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public final class ExecuteContextNode extends AbstractExecuteContextNode {
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
@@ -59,9 +58,9 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     protected ExecuteContextNode(final CompiledCodeObject code, final boolean resume) {
         this.code = code;
         if (DECODE_BYTECODE_ON_DEMAND) {
-            bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
+            bytecodeNodes = code.asBytecodeNodesEmpty();
         } else {
-            bytecodeNodes = SqueakBytecodeDecoder.decode(code);
+            bytecodeNodes = code.asBytecodeNodes();
         }
         frameInitializationNode = resume ? null : FrameStackInitializationNode.create();
         /*
@@ -325,7 +324,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     private AbstractBytecodeNode fetchNextBytecodeNode(final int pc) {
         if (DECODE_BYTECODE_ON_DEMAND && bytecodeNodes[pc] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
+            bytecodeNodes[pc] = insert(code.bytecodeNodeAt(pc));
             notifyInserted(bytecodeNodes[pc]);
         }
         return bytecodeNodes[pc];

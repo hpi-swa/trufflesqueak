@@ -15,7 +15,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public abstract class AbstractBytecodeNode extends AbstractNode {
     protected final CompiledCodeObject code;
@@ -70,7 +69,7 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
             if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.equals(source.getCharacters())) {
                 sourceSection = source.createUnavailableSection();
             } else {
-                final int lineNumber = SqueakBytecodeDecoder.findLineNumber(code, index);
+                final int lineNumber = code.findLineNumber(index);
                 sourceSection = source.createSection(lineNumber);
             }
         }

@@ -39,6 +39,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject.CompiledCodeHeader;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -104,7 +105,7 @@ public final class SqueakImageContext {
     public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
 
-    public final CompiledCodeObject dummyMethod = new CompiledCodeObject(this, null, new Object[]{CompiledCodeObject.makeHeader(1, 0, 0, false, true)}, compiledMethodClass);
+    public final CompiledCodeObject dummyMethod = new CompiledCodeObject(this, null, new Object[]{CompiledCodeHeader.makeHeader(1, 0, 0, false, true)}, compiledMethodClass);
 
     /* Method Cache */
     private static final int METHOD_CACHE_SIZE = 1024;

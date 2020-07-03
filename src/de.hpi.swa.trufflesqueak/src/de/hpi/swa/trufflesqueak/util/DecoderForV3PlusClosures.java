@@ -43,11 +43,14 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoRemoteTemp
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLocationNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTempNode;
 
-public final class SqueakBytecodeDecoder {
-    private SqueakBytecodeDecoder() {
+public final class DecoderForV3PlusClosures extends AbstractDecoder {
+    public static final DecoderForV3PlusClosures SINGLETON = new DecoderForV3PlusClosures();
+
+    private DecoderForV3PlusClosures() {
     }
 
-    public static AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
+    @Override
+    public AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
         final int trailerPosition = trailerPosition(code);
         final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[trailerPosition];
         int index = 0;
@@ -59,7 +62,8 @@ public final class SqueakBytecodeDecoder {
         return nodes;
     }
 
-    public static int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
+    @Override
+    public int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
         final int trailerPosition = trailerPosition(code);
         assert 0 <= targetIndex && targetIndex <= trailerPosition;
         int index = 0;
@@ -72,7 +76,8 @@ public final class SqueakBytecodeDecoder {
         return lineNumber;
     }
 
-    public static int trailerPosition(final CompiledCodeObject code) {
+    @Override
+    public int trailerPosition(final CompiledCodeObject code) {
         return code.isCompiledBlock() ? code.getBytes().length : trailerPosition(code.getBytes());
     }
 
@@ -120,7 +125,8 @@ public final class SqueakBytecodeDecoder {
         return bytecodeLength - (1 + numBytes + length);
     }
 
-    public static AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
+    @Override
+    public AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();
         final int b = Byte.toUnsignedInt(bytecode[index]);
@@ -240,7 +246,8 @@ public final class SqueakBytecodeDecoder {
         //@formatter:on
     }
 
-    public static String decodeToString(final CompiledCodeObject code) {
+    @Override
+    public String decodeToString(final CompiledCodeObject code) {
         CompilerAsserts.neverPartOfCompilation();
         final StringBuilder sb = new StringBuilder();
         final int trailerPosition = trailerPosition(code);
