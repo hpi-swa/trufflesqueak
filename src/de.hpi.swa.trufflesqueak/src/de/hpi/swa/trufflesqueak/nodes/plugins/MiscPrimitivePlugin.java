@@ -30,6 +30,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrim
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimHashMultiplyNode;
 import de.hpi.swa.trufflesqueak.util.NotProvided;
+import de.hpi.swa.trufflesqueak.util.StringUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
@@ -51,17 +52,16 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()"}, rewriteOn = NotAsciiOrderException.class)
         protected final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
             ensureAsciiOrder(orderValue);
-            final int len1 = string1.getByteLength();
-            final int len2 = string2.getByteLength();
-            final int min = Math.min(len1, len2);
-            for (int i = 0; i < min; i++) {
-                final byte c1 = string1.getByte(i);
-                final byte c2 = string2.getByte(i);
-                if (c1 != c2) {
-                    return (c1 & 0xff) < (c2 & 0xff) ? 1L : 3L;
+            final int cmp = StringUtils.compareTo(string1.getByteStorage(), string2.getByteStorage());
+            if (cmp == 0) {
+                return 2L;
+            } else {
+                if (cmp < 0) {
+                    return 1L;
+                } else {
+                    return 3L;
                 }
             }
-            return len1 == len2 ? 2L : len1 < len2 ? 1L : 3L;
         }
 
         private void ensureAsciiOrder(final NativeObject orderValue) {
