@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.ArrayUtils;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
@@ -375,17 +376,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
-        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
-                        @Cached final BranchProfile foundProfile,
-                        @Cached final BranchProfile notFoundProfile) {
-            for (long i = start - 1; i < string.getByteLength(); i++) {
-                if (string.getByteUnsigned(i) == value) {
-                    foundProfile.enter();
-                    return i + 1;
-                }
-            }
-            notFoundProfile.enter();
-            return 0L;
+        protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start) {
+            return ArrayUtils.indexOf(string.getByteStorage(), (int) start - 1, string.getByteLength(), (byte) value) + 1;
         }
     }
 
