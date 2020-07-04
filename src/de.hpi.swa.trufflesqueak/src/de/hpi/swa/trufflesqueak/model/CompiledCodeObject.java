@@ -311,13 +311,13 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         assert innerBlocks == null : "Should not have any inner blocks yet";
     }
 
-    private int getHeader() {
-        return MiscUtils.toIntExact((long) literals[0]);
+    private long getHeader() {
+        return (long) literals[0];
     }
 
     protected void decodeHeader() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final int header = getHeader();
+        final long header = getHeader();
         numLiterals = CompiledCodeHeader.getNumLiterals(header);
         hasPrimitive = CompiledCodeHeader.getHasPrimitive(header);
         needsLargeFrame = CompiledCodeHeader.getNeedsLargeFrame(header);
@@ -785,32 +785,32 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             return MiscUtils.bitSplit(headerWord, 0, NUM_LITERALS_SIZE);
         }
 
-        private static boolean getHasPrimitive(final int headerWord) {
+        private static boolean getHasPrimitive(final long headerWord) {
             return (headerWord & 1 << 16) != 0;
         }
 
-        private static boolean getNeedsLargeFrame(final int headerWord) {
+        private static boolean getNeedsLargeFrame(final long headerWord) {
             return (headerWord & 1 << 17) != 0;
         }
 
-        private static int getNumTemps(final int headerWord) {
+        private static int getNumTemps(final long headerWord) {
             return MiscUtils.bitSplit(headerWord, 18, NUM_TEMPS_TEMPS_SIZE);
         }
 
-        private static int getNumArguments(final int headerWord) {
+        private static int getNumArguments(final long headerWord) {
             return MiscUtils.bitSplit(headerWord, 24, NUM_ARGUMENTS_SIZE);
         }
 
-        private static AbstractDecoder getDecoder(final int headerWord) {
-            if (getSignBit(headerWord)) {
+        private static AbstractDecoder getDecoder(final long headerWord) {
+            if (getSignFlag(headerWord)) {
                 return DecoderForV3PlusClosures.SINGLETON;
             } else {
                 throw SqueakException.create("Secondary bytecode set not support");
             }
         }
 
-        private static boolean getSignBit(final int headerWord) {
-            return (headerWord & 1 << 29) == 0;
+        private static boolean getSignFlag(final long headerWord) {
+            return headerWord >= 0;
         }
     }
 }
