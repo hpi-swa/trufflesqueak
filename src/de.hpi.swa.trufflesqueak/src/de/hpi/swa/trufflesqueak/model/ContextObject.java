@@ -46,6 +46,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal private int size;
     private boolean hasModifiedSender;
     private boolean escaped;
+    private ProcessSwitch processSwitch;
 
     private ContextObject(final SqueakImageContext image, final long hash) {
         super(image, hash);
@@ -525,12 +526,14 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
         newActiveContext.setProcess(newProcess);
         writeNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
-        if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
-            throw ProcessSwitch.create(newActiveContext);
-        } else {
-            // Avoid further PE if newActiveContext is not a PE constant.
-            throw ProcessSwitch.createWithBoundary(newActiveContext);
+        throw newActiveContext.getProcessSwitch();
+    }
+
+    private ProcessSwitch getProcessSwitch() {
+        if (processSwitch == null) {
+            processSwitch = ProcessSwitch.create(this);
         }
+        return processSwitch;
     }
 
     public MaterializedFrame getTruffleFrame() {

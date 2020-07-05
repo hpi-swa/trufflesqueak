@@ -93,7 +93,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
             if (enableStackDepthProtection && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
                 final ContextObject context = getGetOrCreateContextNode().executeGet(frame);
                 context.setProcess(GetActiveProcessNode.getUncached().execute());
-                throw ProcessSwitch.createWithBoundary(context);
+                throw ProcessSwitch.create(context);
             }
             frameInitializationNode.executeInitialize(frame);
             if (interruptHandlerNode != null) {

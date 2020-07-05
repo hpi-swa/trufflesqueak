@@ -6,7 +6,6 @@
 package de.hpi.swa.trufflesqueak.exceptions;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -20,11 +19,6 @@ public final class ProcessSwitch extends ControlFlowException {
     }
 
     public static ProcessSwitch create(final ContextObject newContext) {
-        return new ProcessSwitch(newContext);
-    }
-
-    @TruffleBoundary(transferToInterpreterOnException = false)
-    public static ProcessSwitch createWithBoundary(final ContextObject newContext) {
         return new ProcessSwitch(newContext);
     }
 
