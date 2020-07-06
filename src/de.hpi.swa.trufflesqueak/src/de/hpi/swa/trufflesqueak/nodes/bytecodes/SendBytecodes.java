@@ -13,7 +13,6 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
@@ -44,8 +43,8 @@ public final class SendBytecodes {
         @Child private FrameStackPopNNode popNNode;
         @Child private FrameStackPushNode pushNode;
 
-        private final BranchProfile nlrProfile = BranchProfile.create();
-        private final BranchProfile nvrProfile = BranchProfile.create();
+        private final ConditionProfile nlrProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile nvrProfile = ConditionProfile.createBinaryProfile();
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             this(code, index, numBytecodes, sel, argcount, new LookupClassNode());
@@ -74,15 +73,13 @@ public final class SendBytecodes {
                 assert result != null : "Result of a message send should not be null";
                 getPushNode().execute(frame, result);
             } catch (final NonLocalReturn nlr) {
-                nlrProfile.enter();
-                if (nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame)) {
+                if (nlrProfile.profile(nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame))) {
                     getPushNode().execute(frame, nlr.getReturnValue());
                 } else {
                     throw nlr;
                 }
             } catch (final NonVirtualReturn nvr) {
-                nvrProfile.enter();
-                if (nvr.getTargetContext() == getContext(frame)) {
+                if (nvrProfile.profile(nvr.getTargetContext() == getContext(frame))) {
                     getPushNode().execute(frame, nvr.getReturnValue());
                 } else {
                     throw nvr;
