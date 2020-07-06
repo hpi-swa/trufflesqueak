@@ -16,6 +16,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AboutToReturnNodeFactory.AboutToReturnImplNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
@@ -72,6 +73,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
         protected static final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
                         @Shared("getContextNode") @Cached final GetContextNode getContextNode,
                         @Cached("createAboutToReturnSend()") final SendSelectorNode sendAboutToReturnNode) {
+            assert nlr.getTargetContextOrMarker() instanceof ContextObject;
             sendAboutToReturnNode.executeSend(frame, getContextNode.execute(frame), nlr.getReturnValue(), nlr.getTargetContextOrMarker());
         }
     }
