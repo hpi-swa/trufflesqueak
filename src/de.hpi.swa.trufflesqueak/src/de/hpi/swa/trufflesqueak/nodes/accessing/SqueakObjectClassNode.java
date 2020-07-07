@@ -15,7 +15,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -23,7 +22,6 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
 @GenerateUncached
@@ -99,19 +97,13 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
         return image.floatClass;
     }
 
-    @Specialization(guards = "value.getLayout() == cachedLayout", limit = "1")
-    protected static final ClassObject doAbstractPointersObjectCached(@SuppressWarnings("unused") final AbstractPointersObject value,
-                    @Cached("value.getLayout()") final ObjectLayout cachedLayout) {
-        return cachedLayout.getSqueakClass();
-    }
-
     @Specialization(guards = "value.getSqueakClass() == cachedClass", limit = "1")
     protected static final ClassObject doAbstractSqueakObjectWithClassAndHashCached(@SuppressWarnings("unused") final AbstractSqueakObjectWithClassAndHash value,
                     @Cached("value.getSqueakClass()") final ClassObject cachedClass) {
         return cachedClass;
     }
 
-    @Specialization(replaces = {"doAbstractPointersObjectCached", "doAbstractSqueakObjectWithClassAndHashCached"})
+    @Specialization(replaces = {"doAbstractSqueakObjectWithClassAndHashCached"})
     protected static final ClassObject doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash value) {
         return value.getSqueakClass();
     }
