@@ -11,9 +11,9 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakError;
@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @NodeInfo(cost = NodeCost.NONE)
@@ -63,13 +64,13 @@ public abstract class DispatchSendFromStackNode extends AbstractNode {
         @Specialization(guards = {"lookupResult == null"})
         protected static final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final Object receiver,
                         final ClassObject rcvrClass,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final LookupMethodNode lookupNode,
+                        @Cached("create(image.doesNotUnderstand)") final LookupMethodForSelectorNode lookupNode,
                         @Cached("create(argumentCount)") final FrameStackPopNNode popArguments,
                         @Cached final FrameStackPopNode popReceiver,
-                        @Cached("create()") final DispatchEagerlyNode dispatchNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final CompiledCodeObject doesNotUnderstandMethod = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, image.doesNotUnderstand);
+                        @Cached("create()") final DispatchEagerlyNode dispatchNode) {
+            final CompiledCodeObject doesNotUnderstandMethod = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass);
             final PointersObject message = image.newMessage(writeNode, selector, rcvrClass, popArguments.execute(frame));
             final Object poppedReceiver = popReceiver.execute(frame);
             assert receiver == poppedReceiver;
@@ -79,25 +80,26 @@ public abstract class DispatchSendFromStackNode extends AbstractNode {
         @Specialization(guards = {"!isCompiledCodeObject(targetObject)"})
         protected static final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, final Object receiver,
                         @SuppressWarnings("unused") final ClassObject rcvrClass,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final SqueakObjectClassNode classNode,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Cached final LookupMethodNode lookupNode,
+                        @Cached("create(image.runWithInSelector)") final LookupMethodForSelectorNode lookupNode,
                         @Cached("create(argumentCount)") final FrameStackPopNNode popArguments,
                         @Cached final FrameStackPopNode popReceiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile,
-                        @Cached("create()") final DispatchEagerlyNode dispatchNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+                        @Cached("create()") final DispatchEagerlyNode dispatchNode) {
             final Object[] arguments = popArguments.execute(frame);
             final Object poppedReceiver = popReceiver.execute(frame);
             assert receiver == poppedReceiver;
             final ClassObject targetClass = classNode.executeLookup(targetObject);
-            final Object newLookupResult = lookupNode.executeLookup(targetClass, image.runWithInSelector);
-            if (isDoesNotUnderstandProfile.profile(newLookupResult == null)) {
-                final Object doesNotUnderstandMethod = lookupNode.executeLookup(targetClass, image.doesNotUnderstand);
-                return dispatchNode.executeDispatch(frame, (CompiledCodeObject) doesNotUnderstandMethod,
-                                new Object[]{targetObject, image.newMessage(writeNode, selector, targetClass, arguments)});
-            } else {
+            final Object newLookupResult = lookupNode.executeLookup(targetClass);
+            if (newLookupResult != null) {
                 return dispatchNode.executeDispatch(frame, (CompiledCodeObject) newLookupResult, new Object[]{targetObject, selector, image.asArrayOfObjects(arguments), receiver});
+            } else { /* Fall back to DNU on slow path. */
+                CompilerDirectives.transferToInterpreter();
+                final CompiledCodeObject dnuMethod = (CompiledCodeObject) LookupMethodNode.getUncached().executeLookup(targetClass, image.doesNotUnderstand);
+                return IndirectCallNode.getUncached().call(dnuMethod.getCallTarget(),
+                                FrameAccess.newWith(dnuMethod, FrameAccess.getContextOrMarkerSlow(frame), null,
+                                                new Object[]{targetObject, image.newMessage(writeNode, selector, targetClass, arguments)}));
             }
         }
     }

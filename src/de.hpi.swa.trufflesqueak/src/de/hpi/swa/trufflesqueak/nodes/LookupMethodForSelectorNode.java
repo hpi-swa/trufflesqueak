@@ -7,7 +7,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -17,33 +16,32 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
-@GenerateUncached
 @ReportPolymorphism
-public abstract class LookupMethodNode extends AbstractNode {
+public abstract class LookupMethodForSelectorNode extends AbstractNode {
     protected static final int LOOKUP_CACHE_SIZE = 6;
+    protected final NativeObject selector;
 
-    public static LookupMethodNode create() {
-        return LookupMethodNodeGen.create();
+    public LookupMethodForSelectorNode(final NativeObject selector) {
+        this.selector = selector;
     }
 
-    public static LookupMethodNode getUncached() {
-        return LookupMethodNodeGen.getUncached();
+    public static LookupMethodForSelectorNode create(final NativeObject selector) {
+        return LookupMethodForSelectorNodeGen.create(selector);
     }
 
-    public abstract Object executeLookup(ClassObject classObject, NativeObject selector);
+    public abstract Object executeLookup(ClassObject classObject);
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass", "selector == cachedSelector"}, //
+    @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass"}, //
                     assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()"})
-    protected static final Object doCached(final ClassObject classObject, final NativeObject selector,
+    protected static final Object doCached(final ClassObject classObject,
                     @Cached("classObject") final ClassObject cachedClass,
-                    @Cached("selector") final NativeObject cachedSelector,
                     @Cached("classObject.lookupInMethodDictSlow(selector)") final Object cachedMethod) {
         return cachedMethod;
     }
 
     @Specialization(replaces = "doCached")
-    protected static final Object doUncached(final ClassObject classObject, final NativeObject selector,
+    protected final Object doUncached(final ClassObject classObject,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         final MethodCacheEntry cachedEntry = image.findMethodCacheEntry(classObject, selector);
         if (cachedEntry.getResult() == null) {

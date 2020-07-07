@@ -8,6 +8,8 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.debug.DebuggerTags;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
@@ -22,11 +24,11 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.DispatchSendFromStackNode;
-import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.LookupMethodForSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.LookupSuperClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -37,10 +39,9 @@ public final class SendBytecodes {
         private final int argumentCount;
 
         @Child private AbstractLookupClassNode lookupClassNode;
-        @Child private LookupMethodNode lookupMethodNode = LookupMethodNode.create();
+        @Child private LookupMethodForSelectorNode lookupMethodNode;
         @Child private DispatchSendFromStackNode dispatchSendNode;
         @Child private FrameSlotReadNode peekReceiverNode;
-        @Child private FrameStackPopNNode popNNode;
         @Child private FrameStackPushNode pushNode;
 
         private final ConditionProfile nlrProfile = ConditionProfile.createBinaryProfile();
@@ -55,8 +56,8 @@ public final class SendBytecodes {
             selector = (NativeObject) sel;
             argumentCount = argcount;
             this.lookupClassNode = lookupClassNode;
+            lookupMethodNode = LookupMethodForSelectorNode.create(selector);
             dispatchSendNode = DispatchSendFromStackNode.create(selector, code, argumentCount);
-            popNNode = FrameStackPopNNode.create(1 + argumentCount); // receiver + arguments.
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
@@ -66,10 +67,10 @@ public final class SendBytecodes {
         @Override
         public final void executeVoid(final VirtualFrame frame) {
             final Object receiver = getReceiver(frame);
-            final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
-            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
+            final ClassObject receiverClass = lookupClassNode.executeLookup(receiver);
+            final Object lookupResult = lookupMethodNode.executeLookup(receiverClass);
             try {
-                final Object result = dispatchSendNode.executeSend(frame, selector, lookupResult, receiver, rcvrClass);
+                final Object result = dispatchSendNode.executeSend(frame, selector, lookupResult, receiver, receiverClass);
                 assert result != null : "Result of a message send should not be null";
                 getPushNode().execute(frame, result);
             } catch (final NonLocalReturn nlr) {
@@ -140,21 +141,19 @@ public final class SendBytecodes {
         }
     }
 
-    protected static final class LookupSuperClassNode extends AbstractLookupClassNode {
+    protected abstract static class LookupSuperClassNode extends AbstractLookupClassNode {
         @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
-
-        private final ConditionProfile hasSuperclassProfile = ConditionProfile.createBinaryProfile();
-        private final CompiledCodeObject method;
+        protected final ClassObject methodClass;
 
         protected LookupSuperClassNode(final CompiledCodeObject code) {
-            method = code.getMethod();
+            /* Literals are considered to be constant, so methodClass should be constant. */
+            methodClass = code.getMethod().getMethodClassSlow();
         }
 
-        @Override
-        protected ClassObject executeLookup(final Object receiver) {
-            final ClassObject methodClass = method.getMethodClass(readNode);
-            final ClassObject superclass = methodClass.getSuperclassOrNull();
-            return hasSuperclassProfile.profile(superclass == null) ? methodClass : superclass;
+        @Specialization(assumptions = "methodClass.getClassHierarchyStable()", limit = "1")
+        protected static final ClassObject doCached(@SuppressWarnings("unused") final Object receiver,
+                        @Cached("methodClass.getSuperclassOrNull()") final ClassObject superclass) {
+            return superclass;
         }
     }
 
@@ -206,7 +205,7 @@ public final class SendBytecodes {
         }
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
-            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs, new LookupSuperClassNode(code));
+            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs, LookupSuperClassNodeGen.create(code));
         }
 
         @Override
