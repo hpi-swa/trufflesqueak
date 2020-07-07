@@ -150,7 +150,7 @@ public final class SendBytecodes {
             methodClass = code.getMethod().getMethodClassSlow();
         }
 
-        @Specialization(assumptions = "methodClass.getClassHierarchyStable()", limit = "1")
+        @Specialization(assumptions = "methodClass.getClassHierarchyStable()")
         protected static final ClassObject doCached(@SuppressWarnings("unused") final Object receiver,
                         @Cached("methodClass.getSuperclassOrNull()") final ClassObject superclass) {
             return superclass;
