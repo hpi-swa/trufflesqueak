@@ -19,27 +19,30 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class ObjectLayout {
-    @CompilationFinal(dimensions = 1) private final SlotLocation[] locations;
+    private final ClassObject squeakClass;
     private final int numPrimitiveExtension;
     private final int numObjectExtension;
+    @CompilationFinal(dimensions = 1) private final SlotLocation[] locations;
 
     private final Assumption isValidAssumption = Truffle.getRuntime().createAssumption("Latest layout assumption");
 
     public ObjectLayout(final ClassObject classObject, final int instSize) {
         slowPathOperation();
+        squeakClass = classObject;
         classObject.updateLayout(this);
-        locations = new SlotLocation[instSize];
-        Arrays.fill(locations, SlotLocation.UNINITIALIZED_LOCATION);
         numPrimitiveExtension = 0;
         numObjectExtension = 0;
+        locations = new SlotLocation[instSize];
+        Arrays.fill(locations, SlotLocation.UNINITIALIZED_LOCATION);
     }
 
     public ObjectLayout(final ClassObject classObject, final SlotLocation[] locations) {
         slowPathOperation();
+        squeakClass = classObject;
         classObject.updateLayout(this);
-        this.locations = locations;
         numPrimitiveExtension = countPrimitiveExtension(locations);
         numObjectExtension = countObjectExtension(locations);
+        this.locations = locations;
     }
 
     public ObjectLayout evolveLocation(final ClassObject classObject, final int index, final Object value) {
@@ -193,6 +196,10 @@ public final class ObjectLayout {
             }
         }
         return false;
+    }
+
+    public ClassObject getSqueakClass() {
+        return squeakClass;
     }
 
     public Assumption getValidAssumption() {
