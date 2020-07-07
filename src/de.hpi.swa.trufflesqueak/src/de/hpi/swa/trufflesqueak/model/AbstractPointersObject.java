@@ -71,6 +71,10 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         objectExtension = layout.getFreshObjectExtension();
     }
 
+    /**
+     * Constructor for image reader. Object layout will be filled in later (see
+     * {@link #fillInLayoutAndExtensions()}).
+     */
     protected AbstractPointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
     }
@@ -120,10 +124,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     }
 
     public final ObjectLayout getLayout() {
-        if (layout == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            layout = getSqueakClass().getLayout();
-        }
+        assert layout != null;
         return layout;
     }
 
