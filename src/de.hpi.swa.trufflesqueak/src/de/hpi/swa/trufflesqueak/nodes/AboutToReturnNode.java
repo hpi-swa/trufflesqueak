@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchClosureNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class AboutToReturnNode extends AbstractNode {
