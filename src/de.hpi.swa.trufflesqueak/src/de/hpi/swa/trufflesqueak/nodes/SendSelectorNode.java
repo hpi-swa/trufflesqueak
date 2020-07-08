@@ -12,6 +12,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchEagerlyNode;
 
 /**
  * Performs a send to receiver with arguments. For use in other node. Selector must resolve to a
