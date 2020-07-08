@@ -31,8 +31,8 @@ import de.hpi.swa.trufflesqueak.interop.BoundMethod;
 import de.hpi.swa.trufflesqueak.interop.InteropArray;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 

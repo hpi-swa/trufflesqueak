@@ -54,9 +54,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SEMAPHORE;
-import de.hpi.swa.trufflesqueak.nodes.DispatchEagerlyNode;
-import de.hpi.swa.trufflesqueak.nodes.DispatchSendNode;
-import de.hpi.swa.trufflesqueak.nodes.DispatchSendNode.DispatchSendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.InheritsFromNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
@@ -71,6 +68,9 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPointerIncrementNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchEagerlyNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -605,6 +605,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final CompiledCodeObject doFlush(final CompiledCodeObject receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             image.flushMethodCacheForMethod(receiver);
+            /*
+             * TODO: maybe the method's callTarget could be invalidated to remove it from any PIC
+             * and to avoid invalidating the entire methodDict assumption.
+             */
             receiver.getMethodClass(readNode).invalidateMethodDictStableAssumption();
             return receiver;
         }

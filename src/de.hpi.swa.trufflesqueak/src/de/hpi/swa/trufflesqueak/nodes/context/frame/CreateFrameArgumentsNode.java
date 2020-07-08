@@ -38,6 +38,6 @@ public final class CreateFrameArgumentsNode extends AbstractNode {
             }
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
-        return FrameAccess.newWith(frame, method, sender, null, receiverAndArgumentsNodes);
+        return FrameAccess.newWith(frame, method, sender, receiverAndArgumentsNodes);
     }
 }

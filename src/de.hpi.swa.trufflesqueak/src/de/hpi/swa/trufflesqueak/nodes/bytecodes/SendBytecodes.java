@@ -7,12 +7,12 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.debug.DebuggerTags;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
@@ -20,56 +20,40 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.DispatchSendFromStackNode;
-import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchLookupResultNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
-        protected final NativeObject selector;
         private final int argumentCount;
+        @CompilationFinal private FrameSlot stackPointerSlot;
+        @CompilationFinal private int stackPointer;
 
-        @Child private AbstractLookupClassNode lookupClassNode;
-        @Child private LookupMethodNode lookupMethodNode = LookupMethodNode.create();
-        @Child private DispatchSendFromStackNode dispatchSendNode;
-        @Child private FrameSlotReadNode peekReceiverNode;
-        @Child private FrameStackPopNNode popNNode;
         @Child private FrameStackPushNode pushNode;
 
         private final ConditionProfile nlrProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile nvrProfile = ConditionProfile.createBinaryProfile();
 
-        private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
-            this(code, index, numBytecodes, sel, argcount, new LookupClassNode());
-        }
-
-        private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount, final AbstractLookupClassNode lookupClassNode) {
+        private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int numArgs) {
             super(code, index, numBytecodes);
-            selector = (NativeObject) sel;
-            argumentCount = argcount;
-            this.lookupClassNode = lookupClassNode;
-            dispatchSendNode = DispatchSendFromStackNode.create(selector, code, argumentCount);
-            popNNode = FrameStackPopNNode.create(1 + argumentCount); // receiver + arguments.
+            argumentCount = numArgs;
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
-            this(original.code, original.index, original.numBytecodes, original.selector, original.argumentCount);
+            this(original.code, original.index, original.numBytecodes, original.argumentCount);
         }
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
-            final Object receiver = getReceiver(frame);
-            final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
-            final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             try {
-                final Object result = dispatchSendNode.executeSend(frame, selector, lookupResult, receiver, rcvrClass);
+                decrementStackPointerByNumReceiverAndArguments(frame);
+                final Object result = dispatchSend(frame);
                 assert result != null : "Result of a message send should not be null";
                 getPushNode().execute(frame, result);
             } catch (final NonLocalReturn nlr) {
@@ -87,14 +71,17 @@ public final class SendBytecodes {
             }
         }
 
-        private Object getReceiver(final VirtualFrame frame) {
-            if (peekReceiverNode == null) {
+        private void decrementStackPointerByNumReceiverAndArguments(final VirtualFrame frame) {
+            if (stackPointerSlot == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int stackPointer = FrameAccess.getStackPointer(frame, code) - 1 - argumentCount;
-                peekReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer)));
+                stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - (1 + argumentCount);
+                assert stackPointer >= 0 : "Bad stack pointer";
             }
-            return peekReceiverNode.executeRead(frame);
+            FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
         }
+
+        protected abstract Object dispatchSend(VirtualFrame frame);
 
         private FrameStackPushNode getPushNode() {
             if (pushNode == null) {
@@ -104,9 +91,7 @@ public final class SendBytecodes {
             return pushNode;
         }
 
-        public final Object getSelector() {
-            return selector;
-        }
+        public abstract NativeObject getSelector();
 
         @Override
         public final boolean hasTag(final Class<? extends Tag> tag) {
@@ -114,7 +99,7 @@ public final class SendBytecodes {
                 return true;
             }
             if (tag == DebuggerTags.AlwaysHalt.class) {
-                return PrimExitToDebuggerNode.SELECTOR_NAME.equals(selector.asStringUnsafe());
+                return PrimExitToDebuggerNode.SELECTOR_NAME.equals(getSelector().asStringUnsafe());
             }
             return super.hasTag(tag);
         }
@@ -122,62 +107,68 @@ public final class SendBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "send: " + selector.asStringUnsafe();
+            return "send: " + getSelector().asStringUnsafe();
         }
     }
 
-    protected abstract static class AbstractLookupClassNode extends AbstractNode {
-        protected abstract ClassObject executeLookup(Object receiver);
-    }
+    public abstract static class AbstractSelfSendNode extends AbstractSendNode {
+        public static final int INLINE_CACHE_SIZE = 6;
 
-    @NodeInfo(cost = NodeCost.NONE)
-    protected static final class LookupClassNode extends AbstractLookupClassNode {
-        @Child private SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
+        @Child private FrameSlotReadNode peekAtReceiverNode;
+        @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
+        @Child private LookupSelectorNode lookupSelectorNode;
+        @Child private DispatchLookupResultNode dispatchNode;
 
-        @Override
-        protected ClassObject executeLookup(final Object receiver) {
-            return lookupClassNode.executeLookup(receiver);
-        }
-    }
-
-    protected static final class LookupSuperClassNode extends AbstractLookupClassNode {
-        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
-
-        private final ConditionProfile hasSuperclassProfile = ConditionProfile.createBinaryProfile();
-        private final CompiledCodeObject method;
-
-        protected LookupSuperClassNode(final CompiledCodeObject code) {
-            method = code.getMethod();
+        private AbstractSelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int numArgs) {
+            super(code, index, numBytecodes, numArgs);
+            final NativeObject selector = (NativeObject) sel;
+            lookupSelectorNode = LookupSelectorNode.create(selector);
+            dispatchNode = DispatchLookupResultNode.create(selector, numArgs);
         }
 
         @Override
-        protected ClassObject executeLookup(final Object receiver) {
-            final ClassObject methodClass = method.getMethodClass(readNode);
-            final ClassObject superclass = methodClass.getSuperclassOrNull();
-            return hasSuperclassProfile.profile(superclass == null) ? methodClass : superclass;
+        protected final Object dispatchSend(final VirtualFrame frame) {
+            final Object receiver = peekAtReceiver(frame);
+            final ClassObject receiverClass = lookupClassNode.execute(receiver);
+            final Object lookupResult = lookupSelectorNode.execute(receiverClass);
+            return dispatchNode.execute(frame, receiver, receiverClass, lookupResult);
+        }
+
+        @Override
+        public NativeObject getSelector() {
+            return dispatchNode.getSelector();
+        }
+
+        protected final Object peekAtReceiver(final VirtualFrame frame) {
+            if (peekAtReceiverNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final int stackPointer = FrameAccess.getStackPointer(frame, code);
+                peekAtReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer)));
+            }
+            return peekAtReceiverNode.executeRead(frame);
         }
     }
 
-    public static final class SecondExtendedSendNode extends AbstractSendNode {
+    public static final class SecondExtendedSendNode extends AbstractSelfSendNode {
         public SecondExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             super(code, index, numBytecodes, code.getLiteral(param & 63), Byte.toUnsignedInt(param) >> 6);
         }
     }
 
-    public static final class SendLiteralSelectorNode extends AbstractSendNode {
-        public SendLiteralSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argCount) {
-            super(code, index, numBytecodes, selector, argCount);
+    public static final class SendLiteralSelectorNode extends AbstractSelfSendNode {
+        public SendLiteralSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
+            super(code, index, numBytecodes, selector, numArgs);
         }
 
-        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int argCount) {
+        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
             final Object selector = code.getLiteral(literalIndex);
-            return new SendLiteralSelectorNode(code, index, numBytecodes, selector, argCount);
+            return new SendLiteralSelectorNode(code, index, numBytecodes, selector, numArgs);
         }
     }
 
-    public static final class SendSpecialSelectorNode extends AbstractSendNode {
-        private SendSpecialSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argcount) {
-            super(code, index, numBytecodes, selector, argcount);
+    public static final class SendSpecialSelectorNode extends AbstractSelfSendNode {
+        private SendSpecialSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
+            super(code, index, numBytecodes, selector, numArgs);
         }
 
         public static SendSpecialSelectorNode create(final CompiledCodeObject code, final int index, final int selectorIndex) {
@@ -187,32 +178,45 @@ public final class SendBytecodes {
         }
     }
 
-    public static final class SendSelfSelectorNode extends AbstractSendNode {
+    public static final class SendSelfSelectorNode extends AbstractSelfSendNode {
         public SendSelfSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
             super(code, index, numBytecodes, selector, numArgs);
         }
     }
 
-    public static final class SingleExtendedSendNode extends AbstractSendNode {
+    public static final class SingleExtendedSendNode extends AbstractSelfSendNode {
         public SingleExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             super(code, index, numBytecodes, code.getLiteral(param & 31), Byte.toUnsignedInt(param) >> 5);
         }
     }
 
     public static final class SingleExtendedSuperNode extends AbstractSendNode {
+        @Child private DispatchSuperSendNode dispatchNode;
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             this(code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
         }
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
-            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs, new LookupSuperClassNode(code));
+            super(code, index, numBytecodes, numArgs);
+            final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
+            dispatchNode = DispatchSuperSendNode.create(code, selector, numArgs);
+        }
+
+        @Override
+        protected Object dispatchSend(final VirtualFrame frame) {
+            return dispatchNode.execute(frame);
+        }
+
+        @Override
+        public NativeObject getSelector() {
+            return dispatchNode.getSelector();
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "sendSuper: " + selector.asStringUnsafe();
+            return "sendSuper: " + getSelector().asStringUnsafe();
         }
     }
 }

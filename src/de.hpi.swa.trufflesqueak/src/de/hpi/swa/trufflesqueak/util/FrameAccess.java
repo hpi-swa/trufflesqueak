@@ -23,12 +23,15 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject.SLOT_IDENTIFIER;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
@@ -304,19 +307,62 @@ public final class FrameAccess {
     }
 
     @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final BlockClosureObject closure,
-                    final FrameSlotReadNode[] receiverAndArgumentsNodes) {
-        final int receiverAndArgumentsLength = receiverAndArgumentsNodes.length;
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
+    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final FrameSlotReadNode[] receiverAndArgumentsNodes) {
+        final int numReceiverAndArguments = receiverAndArgumentsNodes.length;
+        CompilerAsserts.partialEvaluationConstant(numReceiverAndArguments);
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
         assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
-        assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
+        assert numReceiverAndArguments > 0 : "At least a receiver must be provided";
         frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
-        for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
+        for (int i = 0; i < numReceiverAndArguments; i++) {
             frameArguments[ArgumentIndicies.RECEIVER.ordinal() + i] = receiverAndArgumentsNodes[i].executeRead(frame);
         }
+        return frameArguments;
+    }
+
+    @ExplodeLoop
+    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final Object receiver, final FrameSlotReadNode[] argumentsNodes) {
+        final int argumentCount = argumentsNodes.length;
+        CompilerAsserts.partialEvaluationConstant(argumentCount);
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + argumentCount];
+        assert method != null : "Method should never be null";
+        assert sender != null : "Sender should never be null";
+        frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        for (int i = 0; i < argumentCount; i++) {
+            frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + i] = argumentsNodes[i].executeRead(frame);
+        }
+        return frameArguments;
+    }
+
+    public static Object[] newDNUWith(final CompiledCodeObject method, final Object sender, final Object receiver, final PointersObject message) {
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + 2];
+        assert method != null : "Method should never be null";
+        assert sender != null : "Sender should never be null";
+        frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal() + 1] = message;
+        return frameArguments;
+    }
+
+    public static Object[] newOAMWith(final CompiledCodeObject method, final Object sender, final Object object, final NativeObject selector, final ArrayObject arguments, final Object receiver) {
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + 4];
+        assert method != null : "Method should never be null";
+        assert sender != null : "Sender should never be null";
+        frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = object;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal() + 1] = selector;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal() + 2] = arguments;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal() + 3] = receiver;
         return frameArguments;
     }
 

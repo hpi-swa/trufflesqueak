@@ -44,7 +44,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         }
     }
 
-    public abstract ContextObject executeGet(Frame frame);
+    public abstract ContextObject executeGet(VirtualFrame frame);
 
     @ImportStatic(FrameAccess.class)
     protected abstract static class GetOrCreateContextFromActiveProcessNode extends GetOrCreateContextNode {

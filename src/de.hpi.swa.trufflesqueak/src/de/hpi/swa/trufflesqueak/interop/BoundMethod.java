@@ -15,7 +15,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.DispatchUneagerlyNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
