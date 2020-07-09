@@ -43,12 +43,12 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public abstract class DispatchSuperSendNode extends AbstractNode {
     protected static final int INLINE_CACHE_SIZE = 6;
 
-    protected final CompiledCodeObject code;
+    protected final CompiledCodeObject method;
     protected final NativeObject selector;
     protected final int argumentCount;
 
     public DispatchSuperSendNode(final CompiledCodeObject code, final NativeObject selector, final int argumentCount) {
-        this.code = code;
+        method = code.getMethod();
         this.selector = selector;
         this.argumentCount = argumentCount;
     }
@@ -59,10 +59,10 @@ public abstract class DispatchSuperSendNode extends AbstractNode {
 
     public abstract Object execute(VirtualFrame frame);
 
-    @Specialization(guards = {"code.getMethodClass(readNode) == cachedMethodClass"}, assumptions = {"cachedMethodClass.getClassHierarchyStable()"})
+    @Specialization(guards = {"method.getMethodClass(readNode) == cachedMethodClass"}, assumptions = {"cachedMethodClass.getClassHierarchyStable()"})
     protected final Object doCached(final VirtualFrame frame,
                     @Cached final AbstractPointersObjectReadNode readNode,
-                    @Cached("code.getMethodClassSlow()") final ClassObject cachedMethodClass,
+                    @Cached("method.getMethodClassSlow()") final ClassObject cachedMethodClass,
                     @Cached("createCachedDispatchNode(cachedMethodClass)") final CachedDispatchNode dispatchNode) {
         return dispatchNode.execute(frame, selector);
     }

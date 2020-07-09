@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.interop.TruffleObject;
+
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -40,8 +42,8 @@ public abstract class LookupGuard {
             return new AbstractPointersObjectGuard((AbstractPointersObject) receiver);
         } else if (receiver instanceof AbstractSqueakObjectWithClassAndHash) {
             return new AbstractSqueakObjectWithClassAndHashGuard((AbstractSqueakObjectWithClassAndHash) receiver);
-// } else if (receiver instanceof TruffleObject) {
-// return new ForeignObjectGuard();
+        } else if (receiver instanceof TruffleObject) {
+            return new ForeignObjectGuard();
         } else {
             throw SqueakException.create("Should not be reached");
         }
@@ -163,17 +165,10 @@ public abstract class LookupGuard {
         }
     }
 
-// protected final static class ForeignObjectGuard extends LookupGuard {
-// private final ClassObject expectedClass;
-//
-// public ForeignObjectGuard(final TruffleObject receiver) {
-// expectedClass = receiver.getSqueakClass();
-// }
-//
-// @Override
-// public boolean check(final Object receiver) {
-// return receiver instanceof AbstractSqueakObjectWithClassAndHash &&
-// ((AbstractSqueakObjectWithClassAndHash) receiver).getSqueakClass() == expectedClass;
-// }
-// }
+    protected final static class ForeignObjectGuard extends LookupGuard {
+        @Override
+        public boolean check(final Object receiver) {
+            return !SqueakGuards.isAbstractSqueakObject(receiver) && !SqueakGuards.isUsedJavaPrimitive(receiver);
+        }
+    }
 }

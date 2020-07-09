@@ -71,7 +71,6 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                     limit = "INLINE_CACHE_SIZE", assumptions = {"dispatchNode.getCallTargetStable()"})
     protected final Object doCached(final VirtualFrame frame,
                     @Cached("createCachedDispatchNode(getReceiver(frame))") final CachedDispatchNode dispatchNode) {
-        System.out.println("Direct send: " + dispatchNode.cachedMethod);
         return dispatchNode.execute(frame, selector);
     }
 
@@ -86,7 +85,6 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         final ClassObject receiverClass = classNode.executeLookup(receiver);
         final Object lookupResult = lookupMethod(image, receiverClass, selector);
         final CompiledCodeObject method = methodNode.execute(image, receiverClass, lookupResult);
-        System.out.println("Indirect send: " + method);
         return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, lookupResult, receiverClass, method, selector));
     }
 
@@ -425,7 +423,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         @Child private FrameStackPopNNode popArguments;
         @Child private FrameStackPopNode popReceiver = FrameStackPopNode.create();
         @Child private AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
-        @Child private SqueakObjectClassNode classNode;
+        @Child private SqueakObjectClassNode classNode = SqueakObjectClassNode.create();
 
         private CreateFrameArgumentsForDNUNode(final int argumentCount) {
             popArguments = FrameStackPopNNode.create(argumentCount);
