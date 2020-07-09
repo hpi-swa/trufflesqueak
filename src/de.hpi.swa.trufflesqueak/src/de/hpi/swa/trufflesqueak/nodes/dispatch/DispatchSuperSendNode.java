@@ -9,7 +9,6 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -40,10 +39,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.PrimitiveFailedCounter;
 
 @ReportPolymorphism
-@ImportStatic(PrimitiveNodeFactory.class)
 public abstract class DispatchSuperSendNode extends AbstractNode {
-    protected static final int INLINE_CACHE_SIZE = 6;
-
     protected final CompiledCodeObject method;
     protected final NativeObject selector;
     protected final int argumentCount;
@@ -64,39 +60,8 @@ public abstract class DispatchSuperSendNode extends AbstractNode {
     protected final Object doCached(final VirtualFrame frame,
                     @SuppressWarnings("unused") @Cached final AbstractPointersObjectReadNode readNode,
                     @SuppressWarnings("unused") @Cached("method.getMethodClassSlow()") final ClassObject cachedMethodClass,
-                    @Cached("createCachedDispatchNode(cachedMethodClass)") final CachedDispatchNode dispatchNode) {
+                    @Cached("create(selector, argumentCount, cachedMethodClass)") final CachedDispatchNode dispatchNode) {
         return dispatchNode.execute(frame, selector);
-    }
-
-    protected final CachedDispatchNode createCachedDispatchNode(final ClassObject methodClass) {
-        final ClassObject superclass = methodClass.getSuperclassOrNull();
-        assert superclass != null;
-        final Object lookupResult = LookupMethodNode.getUncached().executeLookup(superclass, selector);
-        if (lookupResult == null) {
-            final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(superclass, SqueakLanguage.getContext().doesNotUnderstand);
-            if (dnuMethod instanceof CompiledCodeObject) {
-                return AbstractCachedDispatchDoesNotUnderstandNode.create(argumentCount, (CompiledCodeObject) dnuMethod);
-            } else {
-                throw SqueakException.create("Unable to find DNU method in", superclass);
-            }
-        } else if (lookupResult instanceof CompiledCodeObject) {
-            final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
-            if (lookupMethod.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(lookupMethod, true, lookupMethod.primitiveIndex());
-                if (primitiveNode != null) {
-                    return new CachedDispatchPrimitiveNode(argumentCount, lookupMethod, primitiveNode);
-                }
-            }
-            return AbstractCachedDispatchMethodNode.create(argumentCount, lookupMethod);
-        } else {
-            final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
-            final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, selector.image.runWithInSelector);
-            if (runWithInMethod instanceof CompiledCodeObject) {
-                return AbstractCachedDispatchObjectAsMethodNode.create(argumentCount, lookupResult, (CompiledCodeObject) runWithInMethod);
-            } else {
-                throw SqueakException.create("Add support for DNU on runWithIn");
-            }
-        }
     }
 
     protected abstract static class CachedDispatchNode extends AbstractNode {
@@ -106,6 +71,37 @@ public abstract class DispatchSuperSendNode extends AbstractNode {
         public CachedDispatchNode(final int argumentCount, final CompiledCodeObject cachedMethod) {
             this.argumentCount = argumentCount;
             method = cachedMethod;
+        }
+
+        protected static final CachedDispatchNode create(final NativeObject selector, final int argumentCount, final ClassObject methodClass) {
+            final ClassObject superclass = methodClass.getSuperclassOrNull();
+            assert superclass != null;
+            final Object lookupResult = LookupMethodNode.getUncached().executeLookup(superclass, selector);
+            if (lookupResult == null) {
+                final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(superclass, SqueakLanguage.getContext().doesNotUnderstand);
+                if (dnuMethod instanceof CompiledCodeObject) {
+                    return AbstractCachedDispatchDoesNotUnderstandNode.create(argumentCount, (CompiledCodeObject) dnuMethod);
+                } else {
+                    throw SqueakException.create("Unable to find DNU method in", superclass);
+                }
+            } else if (lookupResult instanceof CompiledCodeObject) {
+                final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
+                if (lookupMethod.hasPrimitive()) {
+                    final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(lookupMethod, true, lookupMethod.primitiveIndex());
+                    if (primitiveNode != null) {
+                        return new CachedDispatchPrimitiveNode(argumentCount, lookupMethod, primitiveNode);
+                    }
+                }
+                return AbstractCachedDispatchMethodNode.create(argumentCount, lookupMethod);
+            } else {
+                final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
+                final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, selector.image.runWithInSelector);
+                if (runWithInMethod instanceof CompiledCodeObject) {
+                    return AbstractCachedDispatchObjectAsMethodNode.create(argumentCount, lookupResult, (CompiledCodeObject) runWithInMethod);
+                } else {
+                    throw SqueakException.create("Add support for DNU on runWithIn");
+                }
+            }
         }
 
         protected final Assumption getCallTargetStable() {

@@ -10,7 +10,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -45,7 +44,6 @@ import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.PrimitiveFailedCounter;
 
 @ReportPolymorphism
-@ImportStatic(PrimitiveNodeFactory.class)
 public abstract class DispatchSelfSendNode extends AbstractNode {
     protected static final int INLINE_CACHE_SIZE = 6;
 
@@ -70,7 +68,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     @Specialization(guards = {"dispatchNode.guard(getReceiver(frame))"}, //
                     limit = "INLINE_CACHE_SIZE", assumptions = {"dispatchNode.getCallTargetStable()"})
     protected final Object doCached(final VirtualFrame frame,
-                    @Cached("createCachedDispatchNode(getReceiver(frame))") final CachedSelfDispatchNode dispatchNode) {
+                    @Cached("create(selector, argumentCount, getReceiver(frame))") final CachedSelfDispatchNode dispatchNode) {
         return dispatchNode.execute(frame, selector);
     }
 
@@ -129,37 +127,6 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         }
     }
 
-    protected final CachedSelfDispatchNode createCachedDispatchNode(final Object receiver) {
-        final LookupGuard guard = LookupGuard.create(receiver);
-        final ClassObject receiverClass = SqueakObjectClassNode.getUncached().executeLookup(receiver);
-        final Object lookupResult = LookupMethodNode.getUncached().executeLookup(receiverClass, selector);
-        if (lookupResult == null) {
-            final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(receiverClass, SqueakLanguage.getContext().doesNotUnderstand);
-            if (dnuMethod instanceof CompiledCodeObject) {
-                return AbstractCachedDispatchDoesNotUnderstandNode.create(argumentCount, guard, (CompiledCodeObject) dnuMethod);
-            } else {
-                throw SqueakException.create("Unable to find DNU method in", receiverClass);
-            }
-        } else if (lookupResult instanceof CompiledCodeObject) {
-            final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
-            if (lookupMethod.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(lookupMethod, true, lookupMethod.primitiveIndex());
-                if (primitiveNode != null) {
-                    return new CachedDispatchPrimitiveNode(argumentCount, guard, lookupMethod, primitiveNode);
-                }
-            }
-            return AbstractCachedDispatchMethodNode.create(argumentCount, guard, lookupMethod);
-        } else {
-            final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
-            final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, selector.image.runWithInSelector);
-            if (runWithInMethod instanceof CompiledCodeObject) {
-                return AbstractCachedDispatchObjectAsMethodNode.create(argumentCount, guard, lookupResult, (CompiledCodeObject) runWithInMethod);
-            } else {
-                throw SqueakException.create("Add support for DNU on runWithIn");
-            }
-        }
-    }
-
     protected final Object getReceiver(final VirtualFrame frame) {
         if (peekReceiverNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -178,6 +145,37 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
             this.argumentCount = argumentCount;
             this.guard = guard;
             this.method = method;
+        }
+
+        protected static final CachedSelfDispatchNode create(final NativeObject selector, final int argumentCount, final Object receiver) {
+            final LookupGuard guard = LookupGuard.create(receiver);
+            final ClassObject receiverClass = SqueakObjectClassNode.getUncached().executeLookup(receiver);
+            final Object lookupResult = LookupMethodNode.getUncached().executeLookup(receiverClass, selector);
+            if (lookupResult == null) {
+                final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(receiverClass, SqueakLanguage.getContext().doesNotUnderstand);
+                if (dnuMethod instanceof CompiledCodeObject) {
+                    return AbstractCachedDispatchDoesNotUnderstandNode.create(argumentCount, guard, (CompiledCodeObject) dnuMethod);
+                } else {
+                    throw SqueakException.create("Unable to find DNU method in", receiverClass);
+                }
+            } else if (lookupResult instanceof CompiledCodeObject) {
+                final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
+                if (lookupMethod.hasPrimitive()) {
+                    final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(lookupMethod, true, lookupMethod.primitiveIndex());
+                    if (primitiveNode != null) {
+                        return new CachedDispatchPrimitiveNode(argumentCount, guard, lookupMethod, primitiveNode);
+                    }
+                }
+                return AbstractCachedDispatchMethodNode.create(argumentCount, guard, lookupMethod);
+            } else {
+                final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
+                final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, selector.image.runWithInSelector);
+                if (runWithInMethod instanceof CompiledCodeObject) {
+                    return AbstractCachedDispatchObjectAsMethodNode.create(argumentCount, guard, lookupResult, (CompiledCodeObject) runWithInMethod);
+                } else {
+                    throw SqueakException.create("Add support for DNU on runWithIn");
+                }
+            }
         }
 
         protected final boolean guard(final Object receiver) {
@@ -271,7 +269,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     }
 
     protected static final class CachedDispatchMethodWithoutSenderNode extends AbstractCachedDispatchMethodNode {
-        @Child private GetContextOrMarkerNode getOrCreateContextNode = GetContextOrMarkerNode.create();
+        @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
 
         private CachedDispatchMethodWithoutSenderNode(final int argumentCount, final LookupGuard guard, final CompiledCodeObject method) {
             super(argumentCount, guard, method);
@@ -285,7 +283,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new CachedDispatchMethodWithSenderNode(argumentCount, guard, method)).execute(frame, cachedSelector);
             }
-            return callNode.call(createFrameArgumentsNode.execute(frame, method, getOrCreateContextNode.execute(frame)));
+            return callNode.call(createFrameArgumentsNode.execute(frame, method, getContextOrMarkerNode.execute(frame)));
         }
     }
 
