@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelfSendNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
 
 public final class SendBytecodes {
@@ -188,7 +189,7 @@ public final class SendBytecodes {
     }
 
     public static final class SingleExtendedSuperNode extends AbstractSendNode {
-        @Child private DispatchSelfSendNode dispatchSendNode;
+        @Child private DispatchSuperSendNode dispatchSendNode;
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             this(code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
@@ -196,7 +197,7 @@ public final class SendBytecodes {
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
             super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs);
-            dispatchSendNode = DispatchSelfSendNode.create(code, selector, numArgs);
+            dispatchSendNode = DispatchSuperSendNode.create(code, selector, numArgs);
         }
 
         @Override
