@@ -187,6 +187,10 @@ public final class SqueakGuards {
         return value >= 0;
     }
 
+    public static int subtract(final int lhs, final int rhs) {
+        return lhs - rhs;
+    }
+
     public static long to0(final long value) {
         return value - 1;
     }
