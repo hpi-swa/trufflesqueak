@@ -204,14 +204,14 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                 throw SqueakException.create("Unable to find DNU method in", receiverClass);
             }
         } else if (lookupResult instanceof CompiledCodeObject) {
-            final CompiledCodeObject method = (CompiledCodeObject) lookupResult;
-            if (method.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(method, true, method.primitiveIndex());
+            final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
+            if (lookupMethod.hasPrimitive()) {
+                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(lookupMethod, true, lookupMethod.primitiveIndex());
                 if (primitiveNode != null) {
-                    return new CachedDispatchPrimitiveNode(argumentCount, guard, method, primitiveNode);
+                    return new CachedDispatchPrimitiveNode(argumentCount, guard, lookupMethod, primitiveNode);
                 }
             }
-            return AbstractCachedDispatchMethodNode.create(argumentCount, guard, method);
+            return AbstractCachedDispatchMethodNode.create(argumentCount, guard, lookupMethod);
         } else {
             final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
             final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, selector.image.runWithInSelector);
