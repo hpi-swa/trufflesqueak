@@ -153,7 +153,7 @@ public abstract class DispatchSuperSendNode extends AbstractNode {
         private FrameSlot getStackPointerSlot(final VirtualFrame frame) {
             if (stackPointerSlot == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = getStackPointerSlot(frame);
+                stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
             }
             return stackPointerSlot;
         }
@@ -161,7 +161,7 @@ public abstract class DispatchSuperSendNode extends AbstractNode {
         private int getStackPointer(final VirtualFrame frame) {
             if (stackPointer == -1) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointer = getStackPointer(frame);
+                stackPointer = FrameAccess.getStackPointerSlow(frame);
             }
             return stackPointer;
         }

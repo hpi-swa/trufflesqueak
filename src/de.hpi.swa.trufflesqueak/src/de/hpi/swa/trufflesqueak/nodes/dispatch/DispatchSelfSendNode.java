@@ -71,6 +71,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                     limit = "INLINE_CACHE_SIZE", assumptions = {"dispatchNode.getCallTargetStable()"})
     protected final Object doCached(final VirtualFrame frame,
                     @Cached("createCachedDispatchNode(getReceiver(frame))") final CachedDispatchNode dispatchNode) {
+        System.out.println("Direct send: " + dispatchNode.cachedMethod);
         return dispatchNode.execute(frame, selector);
     }
 
@@ -85,6 +86,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         final ClassObject receiverClass = classNode.executeLookup(receiver);
         final Object lookupResult = lookupMethod(image, receiverClass, selector);
         final CompiledCodeObject method = methodNode.execute(image, receiverClass, lookupResult);
+        System.out.println("Indirect send: " + method);
         return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, lookupResult, receiverClass, method, selector));
     }
 
@@ -99,7 +101,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected abstract static class CreateFrameArgumentsForIndirectCallNode extends AbstractNode {
         protected final int argumentCount;
 
-        public CreateFrameArgumentsForIndirectCallNode(final int argumentCount) {
+        protected CreateFrameArgumentsForIndirectCallNode(final int argumentCount) {
             this.argumentCount = argumentCount;
         }
 
@@ -111,25 +113,23 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
 
         @Specialization
         @SuppressWarnings("unused")
-        protected final Object[] doMethod(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject lookupResult,
+        protected static final Object[] doMethod(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject lookupResult,
                         final ClassObject receiverClass, final CompiledCodeObject method, final NativeObject cachedSelector,
                         @Cached("getStackPointerSlot(frame)") final FrameSlot stackPointerSlot,
-                        @Cached("subtract(getStackPointerSlow(frame), argumentCount)") final int stackPointer,
-                        @Cached("createReceiverAndArgumentsNodes(argumentCount)") final FrameSlotReadNode[] receiverAndArgumentsNodes,
+                        @Cached("subtract(getStackPointerSlow(frame), add(1, argumentCount))") final int newStackPointer,
+                        @Cached("createReceiverAndArgumentsNodes(frame, newStackPointer, argumentCount)") final FrameSlotReadNode[] receiverAndArgumentsNodes,
                         @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode) {
-            if (receiverAndArgumentsNodes[0] == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                assert stackPointer >= 0 : "Bad stack pointer";
-                for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                    receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
-                }
-            }
-            FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
+            FrameAccess.setStackPointer(frame, stackPointerSlot, newStackPointer);
             return FrameAccess.newWith(frame, method, getOrCreateContextNode.executeGet(frame), null, receiverAndArgumentsNodes);
         }
 
-        protected static final FrameSlotReadNode[] createReceiverAndArgumentsNodes(final int argumentCount) {
-            return new FrameSlotReadNode[1 + argumentCount];
+        protected static final FrameSlotReadNode[] createReceiverAndArgumentsNodes(final VirtualFrame frame, final int newStackPointer, final int argumentCount) {
+            final FrameSlotReadNode[] receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
+            assert newStackPointer >= 0 : "Bad stack pointer";
+            for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
+                receiverAndArgumentsNodes[i] = FrameSlotReadNode.create(frame, newStackPointer + i);
+            }
+            return receiverAndArgumentsNodes;
         }
 
         @Specialization(guards = "lookupResult == null")
@@ -292,7 +292,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         private FrameSlot getStackPointerSlot(final VirtualFrame frame) {
             if (stackPointerSlot == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = getStackPointerSlot(frame);
+                stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
             }
             return stackPointerSlot;
         }
@@ -300,7 +300,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         private int getStackPointer(final VirtualFrame frame) {
             if (stackPointer == -1) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointer = getStackPointer(frame);
+                stackPointer = FrameAccess.getStackPointerSlow(frame);
             }
             return stackPointer;
         }
