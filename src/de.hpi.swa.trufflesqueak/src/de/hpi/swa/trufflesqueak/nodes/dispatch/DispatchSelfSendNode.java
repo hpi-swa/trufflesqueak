@@ -6,11 +6,9 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
@@ -20,7 +18,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -29,23 +26,23 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupGuard;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchEagerlyFromStackNode.PrimitiveFailedCounter;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelfSendNodeGen.CreateFrameArgumentsForIndirectCallNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForDNUNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForIndirectCallNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForOAMNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
+import de.hpi.swa.trufflesqueak.util.PrimitiveFailedCounter;
 
 @ReportPolymorphism
 @ImportStatic(PrimitiveNodeFactory.class)
@@ -73,7 +70,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     @Specialization(guards = {"dispatchNode.guard(getReceiver(frame))"}, //
                     limit = "INLINE_CACHE_SIZE", assumptions = {"dispatchNode.getCallTargetStable()"})
     protected final Object doCached(final VirtualFrame frame,
-                    @Cached("createCachedDispatchNode(getReceiver(frame))") final CachedDispatchNode dispatchNode) {
+                    @Cached("createCachedDispatchNode(getReceiver(frame))") final CachedSelfDispatchNode dispatchNode) {
         return dispatchNode.execute(frame, selector);
     }
 
@@ -97,66 +94,6 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
             cachedEntry.setResult(classObject.lookupInMethodDictSlow(selector));
         }
         return cachedEntry.getResult(); /* `null` return signals a doesNotUnderstand. */
-    }
-
-    protected abstract static class CreateFrameArgumentsForIndirectCallNode extends AbstractNode {
-        protected final int argumentCount;
-
-        protected CreateFrameArgumentsForIndirectCallNode(final int argumentCount) {
-            this.argumentCount = argumentCount;
-        }
-
-        protected static CreateFrameArgumentsForIndirectCallNode create(final int argumentCount) {
-            return CreateFrameArgumentsForIndirectCallNodeGen.create(argumentCount);
-        }
-
-        protected abstract Object[] execute(VirtualFrame frame, Object lookupResult, ClassObject receiverClass, CompiledCodeObject method, NativeObject cachedSelector);
-
-        @Specialization
-        @SuppressWarnings("unused")
-        protected static final Object[] doMethod(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject lookupResult,
-                        final ClassObject receiverClass, final CompiledCodeObject method, final NativeObject cachedSelector,
-                        @Cached("getStackPointerSlot(frame)") final FrameSlot stackPointerSlot,
-                        @Cached("subtract(getStackPointerSlow(frame), add(1, argumentCount))") final int newStackPointer,
-                        @Cached("createReceiverAndArgumentsNodes(frame, newStackPointer, argumentCount)") final FrameSlotReadNode[] receiverAndArgumentsNodes,
-                        @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode) {
-            FrameAccess.setStackPointer(frame, stackPointerSlot, newStackPointer);
-            return FrameAccess.newWith(frame, method, getOrCreateContextNode.executeGet(frame), null, receiverAndArgumentsNodes);
-        }
-
-        protected static final FrameSlotReadNode[] createReceiverAndArgumentsNodes(final VirtualFrame frame, final int newStackPointer, final int argumentCount) {
-            final FrameSlotReadNode[] receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
-            assert newStackPointer >= 0 : "Bad stack pointer";
-            for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                receiverAndArgumentsNodes[i] = FrameSlotReadNode.create(frame, newStackPointer + i);
-            }
-            return receiverAndArgumentsNodes;
-        }
-
-        @Specialization(guards = "lookupResult == null")
-        protected static final Object[] doDoesNotUnderstand(final VirtualFrame frame, @SuppressWarnings("unused") final Object lookupResult,
-                        final ClassObject receiverClass, final CompiledCodeObject method, final NativeObject cachedSelector,
-                        @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Shared("popArgumentsNode") @Cached("create(argumentCount)") final FrameStackPopNNode popArgumentsNode,
-                        @Shared("popReceiverNode") @Cached final FrameStackPopNode popReceiverNode,
-                        @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final Object[] arguments = popArgumentsNode.execute(frame);
-            final Object receiver = popReceiverNode.execute(frame);
-            final PointersObject message = image.newMessage(writeNode, cachedSelector, receiverClass, arguments);
-            return FrameAccess.newDNUWith(method, getOrCreateContextNode.executeGet(frame), receiver, message);
-        }
-
-        @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
-        protected static final Object[] doObjectAsMethod(final VirtualFrame frame, final Object targetObject,
-                        @SuppressWarnings("unused") final ClassObject receiverClass, final CompiledCodeObject method, final NativeObject cachedSelector,
-                        @Shared("popArgumentsNode") @Cached("create(argumentCount)") final FrameStackPopNNode popArgumentsNode,
-                        @Shared("popReceiverNode") @Cached final FrameStackPopNode popReceiverNode,
-                        @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode) {
-            final Object[] arguments = popArgumentsNode.execute(frame);
-            final Object receiver = popReceiverNode.execute(frame);
-            return FrameAccess.newOAMWith(method, getOrCreateContextNode.executeGet(frame), targetObject, cachedSelector, method.image.asArrayOfObjects(arguments), receiver);
-        }
     }
 
     protected abstract static class ResolveMethodNode extends AbstractNode {
@@ -192,7 +129,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         }
     }
 
-    protected final CachedDispatchNode createCachedDispatchNode(final Object receiver) {
+    protected final CachedSelfDispatchNode createCachedDispatchNode(final Object receiver) {
         final LookupGuard guard = LookupGuard.create(receiver);
         final ClassObject receiverClass = SqueakObjectClassNode.getUncached().executeLookup(receiver);
         final Object lookupResult = LookupMethodNode.getUncached().executeLookup(receiverClass, selector);
@@ -232,15 +169,15 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         return peekReceiverNode.executeRead(frame);
     }
 
-    protected abstract static class CachedDispatchNode extends AbstractNode {
+    protected abstract static class CachedSelfDispatchNode extends AbstractNode {
         protected final int argumentCount;
         protected final LookupGuard guard;
-        protected final CompiledCodeObject cachedMethod;
+        protected final CompiledCodeObject method;
 
-        public CachedDispatchNode(final int argumentCount, final LookupGuard guard, final CompiledCodeObject cachedMethod) {
+        public CachedSelfDispatchNode(final int argumentCount, final LookupGuard guard, final CompiledCodeObject method) {
             this.argumentCount = argumentCount;
             this.guard = guard;
-            this.cachedMethod = cachedMethod;
+            this.method = method;
         }
 
         protected final boolean guard(final Object receiver) {
@@ -248,13 +185,22 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         }
 
         protected final Assumption getCallTargetStable() {
-            return cachedMethod.getCallTargetStable();
+            return method.getCallTargetStable();
         }
 
         protected abstract Object execute(VirtualFrame frame, NativeObject cachedSelector);
     }
 
-    protected static final class CachedDispatchPrimitiveNode extends CachedDispatchNode {
+    protected abstract static class CachedDispatchWithDirectCallNode extends CachedSelfDispatchNode {
+        @Child protected DirectCallNode callNode;
+
+        public CachedDispatchWithDirectCallNode(final int argumentCount, final LookupGuard guard, final CompiledCodeObject method) {
+            super(argumentCount, guard, method);
+            callNode = DirectCallNode.create(method.getCallTarget());
+        }
+    }
+
+    protected static final class CachedDispatchPrimitiveNode extends CachedSelfDispatchNode {
         private final PrimitiveFailedCounter failureCounter = new PrimitiveFailedCounter();
         @CompilationFinal FrameSlot stackPointerSlot;
         @CompilationFinal int stackPointer = -1;
@@ -280,12 +226,12 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                 // Restore stackPointer.
                 FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
                 if (failureCounter.shouldNoLongerSendEagerly()) {
-                    return replace(AbstractCachedDispatchMethodNode.create(argumentCount, guard, cachedMethod)).execute(frame, cachedSelector);
+                    return replace(AbstractCachedDispatchMethodNode.create(argumentCount, guard, method)).execute(frame, cachedSelector);
                 } else {
                     // Slow path send to fallback code.
                     final Object[] receiverAndArguments = FrameStackPopNNode.create(1 + argumentCount).execute(frame);
-                    return IndirectCallNode.getUncached().call(cachedMethod.getCallTarget(),
-                                    FrameAccess.newWith(cachedMethod, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
+                    return IndirectCallNode.getUncached().call(method.getCallTarget(),
+                                    FrameAccess.newWith(method, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
                 }
             }
         }
@@ -307,13 +253,11 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         }
     }
 
-    protected abstract static class AbstractCachedDispatchMethodNode extends CachedDispatchNode {
-        @Child protected DirectCallNode callNode;
+    protected abstract static class AbstractCachedDispatchMethodNode extends CachedDispatchWithDirectCallNode {
         @Child protected CreateFrameArgumentsNode createFrameArgumentsNode;
 
         private AbstractCachedDispatchMethodNode(final int argumentCount, final LookupGuard guard, final CompiledCodeObject method) {
             super(argumentCount, guard, method);
-            callNode = DirectCallNode.create(cachedMethod.getCallTarget());
             createFrameArgumentsNode = CreateFrameArgumentsNode.create(argumentCount);
         }
 
@@ -336,12 +280,12 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         @Override
         public Object execute(final VirtualFrame frame, final NativeObject cachedSelector) {
             try {
-                cachedMethod.getDoesNotNeedSenderAssumption().check();
+                method.getDoesNotNeedSenderAssumption().check();
             } catch (final InvalidAssumptionException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new CachedDispatchMethodWithSenderNode(argumentCount, guard, cachedMethod)).execute(frame, cachedSelector);
+                return replace(new CachedDispatchMethodWithSenderNode(argumentCount, guard, method)).execute(frame, cachedSelector);
             }
-            return callNode.call(createFrameArgumentsNode.execute(frame, cachedMethod, getOrCreateContextNode.execute(frame)));
+            return callNode.call(createFrameArgumentsNode.execute(frame, method, getOrCreateContextNode.execute(frame)));
         }
     }
 
@@ -354,17 +298,15 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame, final NativeObject cachedSelector) {
-            return callNode.call(createFrameArgumentsNode.execute(frame, cachedMethod, getOrCreateContextNode.executeGet(frame)));
+            return callNode.call(createFrameArgumentsNode.execute(frame, method, getOrCreateContextNode.executeGet(frame)));
         }
     }
 
-    protected abstract static class AbstractCachedDispatchDoesNotUnderstandNode extends CachedDispatchNode {
-        @Child protected DirectCallNode callNode;
+    protected abstract static class AbstractCachedDispatchDoesNotUnderstandNode extends CachedDispatchWithDirectCallNode {
         @Child protected CreateFrameArgumentsForDNUNode createFrameArgumentsForDNUNode;
 
         private AbstractCachedDispatchDoesNotUnderstandNode(final int argumentCount, final LookupGuard guard, final CompiledCodeObject method) {
             super(argumentCount, guard, method);
-            callNode = DirectCallNode.create(cachedMethod.getCallTarget());
             createFrameArgumentsForDNUNode = CreateFrameArgumentsForDNUNode.create(argumentCount);
         }
 
@@ -387,12 +329,12 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         @Override
         public Object execute(final VirtualFrame frame, final NativeObject cachedSelector) {
             try {
-                cachedMethod.getDoesNotNeedSenderAssumption().check();
+                method.getDoesNotNeedSenderAssumption().check();
             } catch (final InvalidAssumptionException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new CachedDispatchDoesNotUnderstandWithSenderNode(argumentCount, guard, cachedMethod)).execute(frame, cachedSelector);
+                return replace(new CachedDispatchDoesNotUnderstandWithSenderNode(argumentCount, guard, method)).execute(frame, cachedSelector);
             }
-            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, cachedSelector, cachedMethod, getContextOrMarkerNode.execute(frame)));
+            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, cachedSelector, method, getContextOrMarkerNode.execute(frame)));
         }
     }
 
@@ -405,23 +347,21 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame, final NativeObject cachedSelector) {
-            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, cachedSelector, cachedMethod, getOrCreateContextNode.executeGet(frame)));
+            return callNode.call(createFrameArgumentsForDNUNode.execute(frame, cachedSelector, method, getOrCreateContextNode.executeGet(frame)));
         }
     }
 
-    protected abstract static class AbstractCachedDispatchObjectAsMethodNode extends CachedDispatchNode {
-        protected final Object cachedObject;
-        @Child protected DirectCallNode callNode;
+    protected abstract static class AbstractCachedDispatchObjectAsMethodNode extends CachedDispatchWithDirectCallNode {
+        protected final Object object;
         @Child protected CreateFrameArgumentsForOAMNode createFrameArgumentsForOAMNode;
 
         private AbstractCachedDispatchObjectAsMethodNode(final int argumentCount, final LookupGuard guard, final Object object, final CompiledCodeObject method) {
             super(argumentCount, guard, method);
-            cachedObject = object;
-            callNode = DirectCallNode.create(cachedMethod.getCallTarget());
+            this.object = object;
             createFrameArgumentsForOAMNode = CreateFrameArgumentsForOAMNode.create(argumentCount);
         }
 
-        public static CachedDispatchNode create(final int argumentCount, final LookupGuard guard, final Object lookupResult, final CompiledCodeObject runWithInMethod) {
+        public static CachedSelfDispatchNode create(final int argumentCount, final LookupGuard guard, final Object lookupResult, final CompiledCodeObject runWithInMethod) {
             if (runWithInMethod.getDoesNotNeedSenderAssumption().isValid()) {
                 return new CachedDispatchObjectAsMethodWithoutSenderNode(argumentCount, guard, lookupResult, runWithInMethod);
             } else {
@@ -431,7 +371,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     }
 
     protected static final class CachedDispatchObjectAsMethodWithoutSenderNode extends AbstractCachedDispatchObjectAsMethodNode {
-        @Child GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
+        @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
 
         private CachedDispatchObjectAsMethodWithoutSenderNode(final int argumentCount, final LookupGuard guard, final Object object, final CompiledCodeObject method) {
             super(argumentCount, guard, object, method);
@@ -440,17 +380,17 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         @Override
         public Object execute(final VirtualFrame frame, final NativeObject cachedSelector) {
             try {
-                cachedMethod.getDoesNotNeedSenderAssumption().check();
+                method.getDoesNotNeedSenderAssumption().check();
             } catch (final InvalidAssumptionException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new CachedDispatchObjectAsMethodWithSenderNode(argumentCount, guard, cachedObject, cachedMethod)).execute(frame, cachedSelector);
+                return replace(new CachedDispatchObjectAsMethodWithSenderNode(argumentCount, guard, object, method)).execute(frame, cachedSelector);
             }
-            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, cachedSelector, cachedObject, cachedMethod, getContextOrMarkerNode.execute(frame)));
+            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, cachedSelector, object, method, getContextOrMarkerNode.execute(frame)));
         }
     }
 
     protected static final class CachedDispatchObjectAsMethodWithSenderNode extends AbstractCachedDispatchObjectAsMethodNode {
-        @Child GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
 
         private CachedDispatchObjectAsMethodWithSenderNode(final int argumentCount, final LookupGuard guard, final Object object, final CompiledCodeObject method) {
             super(argumentCount, guard, object, method);
@@ -458,116 +398,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
 
         @Override
         public Object execute(final VirtualFrame frame, final NativeObject cachedSelector) {
-            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, cachedSelector, cachedObject, cachedMethod, getOrCreateContextNode.executeGet(frame)));
-        }
-    }
-
-    protected static final DispatchIndirectNode createDispatchIndirectData(final Object receiver, final NativeObject selector, final int argumentCount) {
-        return DispatchIndirectNode.create(receiver, selector, argumentCount);
-    }
-
-    protected static final class DispatchIndirectNode extends Node {
-        public final LookupGuard guard;
-        public final CompiledCodeObject cachedMethod;
-        @Child public DirectCallNode callNode;
-        @Child protected CreateFrameArgumentsNode createFrameArgumentsNode;
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
-
-        private DispatchIndirectNode(final LookupGuard guard, final CompiledCodeObject primitiveMethod, final int argumentCount) {
-            this.guard = guard;
-            cachedMethod = primitiveMethod;
-            callNode = DirectCallNode.create(cachedMethod.getCallTarget());
-            createFrameArgumentsNode = CreateFrameArgumentsNode.create(argumentCount);
-        }
-
-        public Object execute(final VirtualFrame frame) {
-            return callNode.call(createFrameArgumentsNode.execute(frame, cachedMethod, getOrCreateContextNode.executeGet(frame)));
-        }
-
-        protected static DispatchIndirectNode create(final Object receiver, final NativeObject selector, final int argumentCount) {
-            final LookupGuard guard = LookupGuard.create(receiver);
-            final ClassObject receiverClass = SqueakObjectClassNode.getUncached().executeLookup(receiver);
-            final Object lookupResult = LookupMethodNode.getUncached().executeLookup(receiverClass, selector);
-            if (!(lookupResult instanceof CompiledCodeObject)) {
-                return null; /* Not a method. */
-            }
-            final CompiledCodeObject method = (CompiledCodeObject) lookupResult;
-            return new DispatchIndirectNode(guard, method, argumentCount);
-        }
-    }
-
-    public static final class CreateFrameArgumentsNode extends AbstractNode {
-        @CompilationFinal private FrameSlot stackPointerSlot;
-        @CompilationFinal private int stackPointer;
-        @Children private FrameSlotReadNode[] receiverAndArgumentsNodes;
-
-        private CreateFrameArgumentsNode(final int argumentCount) {
-            receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
-        }
-
-        public static CreateFrameArgumentsNode create(final int argumentCount) {
-            return new CreateFrameArgumentsNode(argumentCount);
-        }
-
-        public Object[] execute(final VirtualFrame frame, final CompiledCodeObject method, final Object sender) {
-            if (stackPointerSlot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
-                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - receiverAndArgumentsNodes.length;
-                assert stackPointer >= 0 : "Bad stack pointer";
-                for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                    receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
-                }
-            }
-            FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
-            return FrameAccess.newWith(frame, method, sender, null, receiverAndArgumentsNodes);
-        }
-
-        protected int getArgumentCount() {
-            CompilerAsserts.neverPartOfCompilation();
-            return receiverAndArgumentsNodes.length - 1;
-        }
-    }
-
-    public static final class CreateFrameArgumentsForDNUNode extends AbstractNode {
-        @Child private FrameStackPopNNode popArguments;
-        @Child private FrameStackPopNode popReceiver = FrameStackPopNode.create();
-        @Child private AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
-        @Child private SqueakObjectClassNode classNode = SqueakObjectClassNode.create();
-
-        private CreateFrameArgumentsForDNUNode(final int argumentCount) {
-            popArguments = FrameStackPopNNode.create(argumentCount);
-        }
-
-        public static CreateFrameArgumentsForDNUNode create(final int argumentCount) {
-            return new CreateFrameArgumentsForDNUNode(argumentCount);
-        }
-
-        public Object[] execute(final VirtualFrame frame, final NativeObject cachedSelector, final CompiledCodeObject method, final Object sender) {
-            final Object[] arguments = popArguments.execute(frame);
-            final Object receiver = popReceiver.execute(frame);
-            final ClassObject receiverClass = classNode.executeLookup(receiver);
-            final PointersObject message = method.image.newMessage(writeNode, cachedSelector, receiverClass, arguments);
-            return FrameAccess.newDNUWith(method, sender, receiver, message);
-        }
-    }
-
-    public static final class CreateFrameArgumentsForOAMNode extends AbstractNode {
-        @Child private FrameStackPopNNode popArguments;
-        @Child private FrameStackPopNode popReceiver = FrameStackPopNode.create();
-
-        private CreateFrameArgumentsForOAMNode(final int argumentCount) {
-            popArguments = FrameStackPopNNode.create(argumentCount);
-        }
-
-        public static CreateFrameArgumentsForOAMNode create(final int argumentCount) {
-            return new CreateFrameArgumentsForOAMNode(argumentCount);
-        }
-
-        public Object[] execute(final VirtualFrame frame, final NativeObject cachedSelector, final Object cachedObject, final CompiledCodeObject method, final Object sender) {
-            final Object[] arguments = popArguments.execute(frame);
-            final Object receiver = popReceiver.execute(frame);
-            return FrameAccess.newOAMWith(method, sender, cachedObject, cachedSelector, method.image.asArrayOfObjects(arguments), receiver);
+            return callNode.call(createFrameArgumentsForOAMNode.execute(frame, cachedSelector, object, method, getOrCreateContextNode.executeGet(frame)));
         }
     }
 }
