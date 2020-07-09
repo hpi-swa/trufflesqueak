@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -206,6 +207,10 @@ public final class ObjectLayout {
     @TruffleBoundary
     public boolean isValid() {
         return isValidAssumption.isValid();
+    }
+
+    public boolean isValid(final ValueProfile classProfile) {
+        return classProfile.profile(isValidAssumption).isValid();
     }
 
     public SlotLocation getLocation(final int index) {
