@@ -54,7 +54,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class NilGuard extends LookupGuard {
+    private static final class NilGuard extends LookupGuard {
         private static final LookupGuard.NilGuard SINGLETON = new NilGuard();
 
         @Override
@@ -63,7 +63,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class TrueGuard extends LookupGuard {
+    private static final class TrueGuard extends LookupGuard {
         private static final LookupGuard.TrueGuard SINGLETON = new TrueGuard();
 
         @Override
@@ -72,7 +72,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class FalseGuard extends LookupGuard {
+    private static final class FalseGuard extends LookupGuard {
         private static final LookupGuard.FalseGuard SINGLETON = new FalseGuard();
 
         @Override
@@ -81,7 +81,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class SmallIntegerGuard extends LookupGuard {
+    private static final class SmallIntegerGuard extends LookupGuard {
         private static final LookupGuard.SmallIntegerGuard SINGLETON = new SmallIntegerGuard();
 
         @Override
@@ -90,7 +90,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class CharacterGuard extends LookupGuard {
+    private static final class CharacterGuard extends LookupGuard {
         private static final LookupGuard.CharacterGuard SINGLETON = new CharacterGuard();
 
         @Override
@@ -99,7 +99,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class DoubleGuard extends LookupGuard {
+    private static final class DoubleGuard extends LookupGuard {
         private static final LookupGuard.DoubleGuard SINGLETON = new DoubleGuard();
 
         @Override
@@ -108,7 +108,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class BlockClosureObjectGuard extends LookupGuard {
+    private static final class BlockClosureObjectGuard extends LookupGuard {
         private static final LookupGuard.BlockClosureObjectGuard SINGLETON = new BlockClosureObjectGuard();
 
         @Override
@@ -117,7 +117,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class CharacterObjectGuard extends LookupGuard {
+    private static final class CharacterObjectGuard extends LookupGuard {
         private static final LookupGuard.CharacterObjectGuard SINGLETON = new CharacterObjectGuard();
 
         @Override
@@ -126,7 +126,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class ContextObjectGuard extends LookupGuard {
+    private static final class ContextObjectGuard extends LookupGuard {
         private static final LookupGuard.ContextObjectGuard SINGLETON = new ContextObjectGuard();
 
         @Override
@@ -135,7 +135,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class FloatObjectGuard extends LookupGuard {
+    private static final class FloatObjectGuard extends LookupGuard {
         private static final LookupGuard.FloatObjectGuard SINGLETON = new FloatObjectGuard();
 
         @Override
@@ -144,10 +144,10 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class AbstractPointersObjectGuard extends LookupGuard {
+    private static final class AbstractPointersObjectGuard extends LookupGuard {
         private final ObjectLayout expectedLayout;
 
-        public AbstractPointersObjectGuard(final AbstractPointersObject receiver) {
+        private AbstractPointersObjectGuard(final AbstractPointersObject receiver) {
             expectedLayout = receiver.getLayout();
         }
 
@@ -157,10 +157,10 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class AbstractSqueakObjectWithClassAndHashGuard extends LookupGuard {
+    private static final class AbstractSqueakObjectWithClassAndHashGuard extends LookupGuard {
         private final ClassObject expectedClass;
 
-        public AbstractSqueakObjectWithClassAndHashGuard(final AbstractSqueakObjectWithClassAndHash receiver) {
+        private AbstractSqueakObjectWithClassAndHashGuard(final AbstractSqueakObjectWithClassAndHash receiver) {
             expectedClass = receiver.getSqueakClass();
         }
 
@@ -170,7 +170,7 @@ public abstract class LookupGuard {
         }
     }
 
-    protected static final class ForeignObjectGuard extends LookupGuard {
+    private static final class ForeignObjectGuard extends LookupGuard {
         @Override
         public boolean check(final Object receiver) {
             return !SqueakGuards.isAbstractSqueakObject(receiver) && !SqueakGuards.isUsedJavaPrimitive(receiver);
