@@ -24,7 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelfSendNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
 
 public final class SendBytecodes {
@@ -32,7 +32,6 @@ public final class SendBytecodes {
         protected final NativeObject selector;
         private final int argumentCount;
 
-        @Child private DispatchNode dispatchSendNode;
         @Child private FrameStackPushNode pushNode;
 
         private final ConditionProfile nlrProfile = ConditionProfile.createBinaryProfile();
@@ -42,7 +41,6 @@ public final class SendBytecodes {
             super(code, index, numBytecodes);
             selector = (NativeObject) sel;
             argumentCount = argcount;
-            dispatchSendNode = DispatchNode.create(code, selector, argumentCount);
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
@@ -52,7 +50,7 @@ public final class SendBytecodes {
         @Override
         public final void executeVoid(final VirtualFrame frame) {
             try {
-                final Object result = dispatchSendNode.execute(frame);
+                final Object result = dispatch(frame);
                 assert result != null : "Result of a message send should not be null";
                 getPushNode().execute(frame, result);
             } catch (final NonLocalReturn nlr) {
@@ -69,6 +67,8 @@ public final class SendBytecodes {
                 }
             }
         }
+
+        protected abstract Object dispatch(VirtualFrame frame);
 
         private FrameStackPushNode getPushNode() {
             if (pushNode == null) {
@@ -132,13 +132,27 @@ public final class SendBytecodes {
         }
     }
 
-    public static final class SecondExtendedSendNode extends AbstractSendNode {
+    public abstract static class AbstractSelfSendNode extends AbstractSendNode {
+        @Child private DispatchSelfSendNode dispatchSendNode;
+
+        private AbstractSelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
+            super(code, index, numBytecodes, sel, argcount);
+            dispatchSendNode = DispatchSelfSendNode.create(code, selector, argcount);
+        }
+
+        @Override
+        protected final Object dispatch(final VirtualFrame frame) {
+            return dispatchSendNode.execute(frame);
+        }
+    }
+
+    public static final class SecondExtendedSendNode extends AbstractSelfSendNode {
         public SecondExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             super(code, index, numBytecodes, code.getLiteral(param & 63), Byte.toUnsignedInt(param) >> 6);
         }
     }
 
-    public static final class SendLiteralSelectorNode extends AbstractSendNode {
+    public static final class SendLiteralSelectorNode extends AbstractSelfSendNode {
         public SendLiteralSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argCount) {
             super(code, index, numBytecodes, selector, argCount);
         }
@@ -149,7 +163,7 @@ public final class SendBytecodes {
         }
     }
 
-    public static final class SendSpecialSelectorNode extends AbstractSendNode {
+    public static final class SendSpecialSelectorNode extends AbstractSelfSendNode {
         private SendSpecialSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argcount) {
             super(code, index, numBytecodes, selector, argcount);
         }
@@ -161,26 +175,33 @@ public final class SendBytecodes {
         }
     }
 
-    public static final class SendSelfSelectorNode extends AbstractSendNode {
+    public static final class SendSelfSelectorNode extends AbstractSelfSendNode {
         public SendSelfSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
             super(code, index, numBytecodes, selector, numArgs);
         }
     }
 
-    public static final class SingleExtendedSendNode extends AbstractSendNode {
+    public static final class SingleExtendedSendNode extends AbstractSelfSendNode {
         public SingleExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             super(code, index, numBytecodes, code.getLiteral(param & 31), Byte.toUnsignedInt(param) >> 5);
         }
     }
 
     public static final class SingleExtendedSuperNode extends AbstractSendNode {
+        @Child private DispatchSelfSendNode dispatchSendNode;
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             this(code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
         }
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
-            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs, new LookupSuperClassNode(code));
+            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs);
+            dispatchSendNode = DispatchSelfSendNode.create(code, selector, numArgs);
+        }
+
+        @Override
+        protected final Object dispatch(final VirtualFrame frame) {
+            return dispatchSendNode.execute(frame);
         }
 
         @Override
