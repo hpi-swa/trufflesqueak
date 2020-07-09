@@ -149,6 +149,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
 
         protected static final CachedSelfDispatchNode create(final NativeObject selector, final int argumentCount, final Object receiver) {
             final LookupGuard guard = LookupGuard.create(receiver);
+            assert guard.check(receiver) : "Guard check must succeed";
             final ClassObject receiverClass = SqueakObjectClassNode.getUncached().executeLookup(receiver);
             final Object lookupResult = LookupMethodNode.getUncached().executeLookup(receiverClass, selector);
             if (lookupResult == null) {

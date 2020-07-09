@@ -59,7 +59,7 @@ public abstract class LookupGuard {
 
         @Override
         public boolean check(final Object receiver) {
-            return receiver == Boolean.TRUE;
+            return receiver == NilObject.SINGLETON;
         }
     }
 
