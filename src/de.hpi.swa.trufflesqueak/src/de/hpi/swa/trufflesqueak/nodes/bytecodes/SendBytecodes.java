@@ -11,18 +11,12 @@ import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelfSendNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
@@ -101,49 +95,17 @@ public final class SendBytecodes {
         }
     }
 
-    protected abstract static class AbstractLookupClassNode extends AbstractNode {
-        protected abstract ClassObject executeLookup(Object receiver);
-    }
-
-    @NodeInfo(cost = NodeCost.NONE)
-    protected static final class LookupClassNode extends AbstractLookupClassNode {
-        @Child private SqueakObjectClassNode lookupClassNode = SqueakObjectClassNode.create();
-
-        @Override
-        protected ClassObject executeLookup(final Object receiver) {
-            return lookupClassNode.executeLookup(receiver);
-        }
-    }
-
-    protected static final class LookupSuperClassNode extends AbstractLookupClassNode {
-        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
-
-        private final ConditionProfile hasSuperclassProfile = ConditionProfile.createBinaryProfile();
-        private final CompiledCodeObject method;
-
-        protected LookupSuperClassNode(final CompiledCodeObject code) {
-            method = code.getMethod();
-        }
-
-        @Override
-        protected ClassObject executeLookup(final Object receiver) {
-            final ClassObject methodClass = method.getMethodClass(readNode);
-            final ClassObject superclass = methodClass.getSuperclassOrNull();
-            return hasSuperclassProfile.profile(superclass == null) ? methodClass : superclass;
-        }
-    }
-
     public abstract static class AbstractSelfSendNode extends AbstractSendNode {
-        @Child private DispatchSelfSendNode dispatchSendNode;
+        @Child private DispatchSelfSendNode dispatchSelfSendNode;
 
         private AbstractSelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes, sel, argcount);
-            dispatchSendNode = DispatchSelfSendNode.create(code, selector, argcount);
+            dispatchSelfSendNode = DispatchSelfSendNode.create(code, selector, argcount);
         }
 
         @Override
         protected final Object dispatch(final VirtualFrame frame) {
-            return dispatchSendNode.execute(frame);
+            return dispatchSelfSendNode.execute(frame);
         }
     }
 
@@ -189,7 +151,7 @@ public final class SendBytecodes {
     }
 
     public static final class SingleExtendedSuperNode extends AbstractSendNode {
-        @Child private DispatchSuperSendNode dispatchSendNode;
+        @Child private DispatchSuperSendNode dispatchSuperSendNode;
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             this(code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
@@ -197,12 +159,12 @@ public final class SendBytecodes {
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
             super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs);
-            dispatchSendNode = DispatchSuperSendNode.create(code, selector, numArgs);
+            dispatchSuperSendNode = DispatchSuperSendNode.create(code, selector, numArgs);
         }
 
         @Override
         protected final Object dispatch(final VirtualFrame frame) {
-            return dispatchSendNode.execute(frame);
+            return dispatchSuperSendNode.execute(frame);
         }
 
         @Override
