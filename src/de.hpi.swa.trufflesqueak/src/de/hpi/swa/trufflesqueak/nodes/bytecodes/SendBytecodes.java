@@ -163,7 +163,7 @@ public final class SendBytecodes {
         }
 
         @Override
-        protected final Object dispatch(final VirtualFrame frame) {
+        protected Object dispatch(final VirtualFrame frame) {
             return dispatchSuperSendNode.execute(frame);
         }
 
