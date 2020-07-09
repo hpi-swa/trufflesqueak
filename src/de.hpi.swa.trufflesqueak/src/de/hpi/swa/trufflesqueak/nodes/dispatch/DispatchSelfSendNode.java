@@ -38,7 +38,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchEagerlyFromStackNode.PrimitiveFailedCounter;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchNodeGen.CreateFrameArgumentsForIndirectCallNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelfSendNodeGen.CreateFrameArgumentsForIndirectCallNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -46,7 +46,7 @@ import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
 @ReportPolymorphism
 @ImportStatic(PrimitiveNodeFactory.class)
-public abstract class DispatchNode extends AbstractNode {
+public abstract class DispatchSelfSendNode extends AbstractNode {
     protected static final int INLINE_CACHE_SIZE = 6;
 
     protected final CompiledCodeObject code;
@@ -55,14 +55,14 @@ public abstract class DispatchNode extends AbstractNode {
 
     @Child protected FrameSlotReadNode peekReceiverNode;
 
-    public DispatchNode(final CompiledCodeObject code, final NativeObject selector, final int argumentCount) {
+    public DispatchSelfSendNode(final CompiledCodeObject code, final NativeObject selector, final int argumentCount) {
         this.code = code;
         this.selector = selector;
         this.argumentCount = argumentCount;
     }
 
-    public static DispatchNode create(final CompiledCodeObject code, final NativeObject selector, final int argumentCount) {
-        return DispatchNodeGen.create(code, selector, argumentCount);
+    public static DispatchSelfSendNode create(final CompiledCodeObject code, final NativeObject selector, final int argumentCount) {
+        return DispatchSelfSendNodeGen.create(code, selector, argumentCount);
     }
 
     public abstract Object execute(VirtualFrame frame);
