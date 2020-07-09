@@ -1,12 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
-import com.oracle.truffle.api.dsl.Specialization;
-
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -14,53 +8,10 @@ import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
-import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
-import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
 public abstract class LookupGuard {
-    public abstract static class LookupMethodForSelectorNode extends AbstractNode {
-        protected static final int LOOKUP_CACHE_SIZE = 6;
-        protected final NativeObject selector;
-
-        public LookupMethodForSelectorNode(final NativeObject selector) {
-            this.selector = selector;
-        }
-
-// public static LookupMethodForSelectorNode create(final NativeObject selector) {
-// return LookupMethodForSelectorNodeGen.create(selector);
-// }
-
-        public abstract Object executeLookup(Object receiver);
-
-        @SuppressWarnings("unused")
-        @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"guard.check(receiver)"}, //
-                        assumptions = {"cachedClass.getClassHierarchyStable()", "cachedClass.getMethodDictStable()"})
-        protected static final Object doCached(final Object receiver,
-                        @Cached("create(receiver)") final LookupGuard guard,
-                        @Cached("lookupClassSlow(receiver)") final ClassObject cachedClass,
-                        @Cached("cachedClass.lookupInMethodDictSlow(selector)") final Object cachedMethod) {
-            return cachedMethod;
-        }
-
-        @Specialization(replaces = "doCached")
-        protected final Object doUncached(final Object receiver,
-                        @Cached final SqueakObjectClassNode classNode,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final ClassObject classObject = classNode.executeLookup(receiver);
-            final MethodCacheEntry cachedEntry = image.findMethodCacheEntry(classObject, selector);
-            if (cachedEntry.getResult() == null) {
-                cachedEntry.setResult(classObject.lookupInMethodDictSlow(selector));
-            }
-            return cachedEntry.getResult(); /* `null` return signals a doesNotUnderstand. */
-        }
-
-        protected final static ClassObject lookupClassSlow(final Object receiver) {
-            return SqueakObjectClassNode.getUncached().executeLookup(receiver);
-        }
-    }
 
     public abstract boolean check(Object receiver);
 
