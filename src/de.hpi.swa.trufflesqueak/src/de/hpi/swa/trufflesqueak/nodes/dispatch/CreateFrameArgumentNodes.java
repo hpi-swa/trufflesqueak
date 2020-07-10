@@ -109,6 +109,10 @@ public final class CreateFrameArgumentNodes {
 
     protected abstract static class CreateFrameArgumentsForIndirectCallNode extends AbstractNode {
         protected final int argumentCount;
+        @Child private GetOrCreateContextOrMarkerNode senderNode = GetOrCreateContextOrMarkerNode.create();
+        @Children private FrameSlotReadNode[] receiverAndArgumentsNodes;
+        @CompilationFinal private FrameSlot stackPointerSlot;
+        @CompilationFinal private int newStackPointer = -1;
 
         protected CreateFrameArgumentsForIndirectCallNode(final int argumentCount) {
             this.argumentCount = argumentCount;
@@ -122,48 +126,76 @@ public final class CreateFrameArgumentNodes {
 
         @Specialization
         @SuppressWarnings("unused")
-        protected static final Object[] doMethod(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject lookupResult, final ClassObject receiverClass,
-                        final CompiledCodeObject method, final NativeObject cachedSelector,
-                        @Cached("getStackPointerSlot(frame)") final FrameSlot stackPointerSlot,
-                        @Cached("subtract(getStackPointerSlow(frame), add(1, argumentCount))") final int newStackPointer,
-                        @Cached("createReceiverAndArgumentsNodes(frame, newStackPointer, argumentCount)") final FrameSlotReadNode[] receiverAndArgumentsNodes,
-                        @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
-            FrameAccess.setStackPointer(frame, stackPointerSlot, newStackPointer);
-            return FrameAccess.newWith(frame, method, senderNode.execute(frame, method), null, receiverAndArgumentsNodes);
-        }
-
-        protected static final FrameSlotReadNode[] createReceiverAndArgumentsNodes(final VirtualFrame frame, final int newStackPointer, final int argumentCount) {
-            final FrameSlotReadNode[] receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
-            assert newStackPointer >= 0 : "Bad stack pointer";
-            for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                receiverAndArgumentsNodes[i] = FrameSlotReadNode.create(frame, newStackPointer + i);
-            }
-            return receiverAndArgumentsNodes;
+        protected final Object[] doMethod(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject lookupResult, final ClassObject receiverClass,
+                        final CompiledCodeObject method, final NativeObject cachedSelector) {
+            setNewStackPointer(frame);
+            return FrameAccess.newWith(frame, method, senderNode.execute(frame, method), null, getReceiverAndArgumentsNodes(frame));
         }
 
         @Specialization(guards = "lookupResult == null")
-        protected static final Object[] doDoesNotUnderstand(final VirtualFrame frame, @SuppressWarnings("unused") final Object lookupResult, final ClassObject receiverClass,
+        protected final Object[] doDoesNotUnderstand(final VirtualFrame frame, @SuppressWarnings("unused") final Object lookupResult, final ClassObject receiverClass,
                         final CompiledCodeObject method, final NativeObject cachedSelector,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Shared("popArgumentsNode") @Cached("create(argumentCount)") final FrameStackPopNNode popArgumentsNode,
-                        @Shared("popReceiverNode") @Cached final FrameStackPopNode popReceiverNode,
-                        @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final Object[] arguments = popArgumentsNode.execute(frame);
-            final Object receiver = popReceiverNode.execute(frame);
+            final Object[] arguments = getArguments(frame);
+            final Object receiver = getReceiver(frame);
+            setNewStackPointer(frame);
             final PointersObject message = image.newMessage(writeNode, cachedSelector, receiverClass, arguments);
             return FrameAccess.newDNUWith(method, senderNode.execute(frame, method), receiver, message);
         }
 
         @Specialization(guards = {"targetObject != null", "!isCompiledCodeObject(targetObject)"})
-        protected static final Object[] doObjectAsMethod(final VirtualFrame frame, final Object targetObject, @SuppressWarnings("unused") final ClassObject receiverClass,
-                        final CompiledCodeObject method, final NativeObject cachedSelector,
-                        @Shared("popArgumentsNode") @Cached("create(argumentCount)") final FrameStackPopNNode popArgumentsNode,
-                        @Shared("popReceiverNode") @Cached final FrameStackPopNode popReceiverNode,
-                        @Shared("senderNode") @Cached final GetOrCreateContextOrMarkerNode senderNode) {
-            final Object[] arguments = popArgumentsNode.execute(frame);
-            final Object receiver = popReceiverNode.execute(frame);
+        protected final Object[] doObjectAsMethod(final VirtualFrame frame, final Object targetObject, @SuppressWarnings("unused") final ClassObject receiverClass,
+                        final CompiledCodeObject method, final NativeObject cachedSelector) {
+            final Object[] arguments = getArguments(frame);
+            final Object receiver = getReceiver(frame);
+            setNewStackPointer(frame);
             return FrameAccess.newOAMWith(method, senderNode.execute(frame, method), targetObject, cachedSelector, method.image.asArrayOfObjects(arguments), receiver);
+        }
+
+        private Object[] getArguments(final VirtualFrame frame) {
+            final FrameSlotReadNode[] nodes = getReceiverAndArgumentsNodes(frame);
+            final Object[] arguments = new Object[argumentCount];
+            for (int i = 0; i < argumentCount; i++) {
+                arguments[i] = nodes[1 + i].executeRead(frame);
+            }
+            return arguments;
+        }
+
+        private void setNewStackPointer(final VirtualFrame frame) {
+            FrameAccess.setStackPointer(frame, getStackPointerSlot(frame), getNewStackPointer(frame));
+        }
+
+        private FrameSlot getStackPointerSlot(final VirtualFrame frame) {
+            if (stackPointerSlot == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+            }
+            return stackPointerSlot;
+        }
+
+        private int getNewStackPointer(final VirtualFrame frame) {
+            if (newStackPointer == -1) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                newStackPointer = FrameAccess.getStackPointerSlow(frame) - (1 + argumentCount);
+            }
+            return newStackPointer;
+        }
+
+        private FrameSlotReadNode[] getReceiverAndArgumentsNodes(final VirtualFrame frame) {
+            if (receiverAndArgumentsNodes == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
+                assert newStackPointer >= 0 : "Bad stack pointer";
+                for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
+                    receiverAndArgumentsNodes[i] = FrameSlotReadNode.create(frame, newStackPointer + i);
+                }
+            }
+            return receiverAndArgumentsNodes;
+        }
+
+        private Object getReceiver(final VirtualFrame frame) {
+            return receiverAndArgumentsNodes[0].executeRead(frame);
         }
     }
 
