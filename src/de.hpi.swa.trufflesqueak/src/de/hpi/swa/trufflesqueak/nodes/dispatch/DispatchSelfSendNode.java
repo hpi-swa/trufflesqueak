@@ -94,6 +94,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         return cachedEntry.getResult(); /* `null` return signals a doesNotUnderstand. */
     }
 
+    @ReportPolymorphism
     protected abstract static class ResolveMethodNode extends AbstractNode {
 
         protected abstract CompiledCodeObject execute(SqueakImageContext image, ClassObject receiverClass, Object lookupResult);
@@ -206,8 +207,8 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
 
         @Child private AbstractPrimitiveNode primitiveNode;
 
-        private CachedDispatchPrimitiveNode(final int argumentCount, final LookupGuard guard, final CompiledCodeObject primitiveMethod, final AbstractPrimitiveNode primitiveNode) {
-            super(argumentCount, guard, primitiveMethod);
+        private CachedDispatchPrimitiveNode(final int argumentCount, final LookupGuard guard, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
+            super(argumentCount, guard, method);
             this.primitiveNode = primitiveNode;
         }
 
