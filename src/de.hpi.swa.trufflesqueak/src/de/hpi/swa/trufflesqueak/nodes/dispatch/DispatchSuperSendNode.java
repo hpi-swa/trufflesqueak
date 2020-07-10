@@ -66,9 +66,9 @@ public abstract class DispatchSuperSendNode extends AbstractNode {
         protected final int argumentCount;
         protected final CompiledCodeObject method;
 
-        public CachedDispatchNode(final int argumentCount, final CompiledCodeObject cachedMethod) {
+        public CachedDispatchNode(final int argumentCount, final CompiledCodeObject method) {
             this.argumentCount = argumentCount;
-            method = cachedMethod;
+            this.method = method;
         }
 
         protected static final CachedDispatchNode create(final NativeObject selector, final int argumentCount, final ClassObject methodClass) {
@@ -119,16 +119,14 @@ public abstract class DispatchSuperSendNode extends AbstractNode {
     }
 
     protected static final class CachedDispatchPrimitiveNode extends CachedDispatchNode {
-        private final int argumentCount;
         private final PrimitiveFailedCounter failureCounter = new PrimitiveFailedCounter();
         @CompilationFinal FrameSlot stackPointerSlot;
         @CompilationFinal int stackPointer = -1;
 
         @Child private AbstractPrimitiveNode primitiveNode;
 
-        private CachedDispatchPrimitiveNode(final int argumentCount, final CompiledCodeObject primitiveMethod, final AbstractPrimitiveNode primitiveNode) {
-            super(argumentCount, primitiveMethod);
-            this.argumentCount = argumentCount;
+        private CachedDispatchPrimitiveNode(final int argumentCount, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
+            super(argumentCount, method);
             this.primitiveNode = primitiveNode;
         }
 
