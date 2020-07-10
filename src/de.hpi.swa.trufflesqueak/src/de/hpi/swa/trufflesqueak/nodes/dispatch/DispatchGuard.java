@@ -3,8 +3,9 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.trufflesqueak.nodes;
+package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -17,12 +18,13 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
+import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
-public abstract class LookupGuard {
+public abstract class DispatchGuard {
 
     public abstract boolean check(Object receiver);
 
-    public static LookupGuard create(final Object receiver) {
+    public static DispatchGuard create(final Object receiver) {
         if (receiver == NilObject.SINGLETON) {
             return NilGuard.SINGLETON;
         } else if (receiver == Boolean.TRUE) {
@@ -54,8 +56,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class NilGuard extends LookupGuard {
-        private static final LookupGuard.NilGuard SINGLETON = new NilGuard();
+    private static final class NilGuard extends DispatchGuard {
+        private static final DispatchGuard.NilGuard SINGLETON = new NilGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -63,8 +65,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class TrueGuard extends LookupGuard {
-        private static final LookupGuard.TrueGuard SINGLETON = new TrueGuard();
+    private static final class TrueGuard extends DispatchGuard {
+        private static final DispatchGuard.TrueGuard SINGLETON = new TrueGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -72,8 +74,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class FalseGuard extends LookupGuard {
-        private static final LookupGuard.FalseGuard SINGLETON = new FalseGuard();
+    private static final class FalseGuard extends DispatchGuard {
+        private static final DispatchGuard.FalseGuard SINGLETON = new FalseGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -81,8 +83,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class SmallIntegerGuard extends LookupGuard {
-        private static final LookupGuard.SmallIntegerGuard SINGLETON = new SmallIntegerGuard();
+    private static final class SmallIntegerGuard extends DispatchGuard {
+        private static final DispatchGuard.SmallIntegerGuard SINGLETON = new SmallIntegerGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -90,8 +92,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class CharacterGuard extends LookupGuard {
-        private static final LookupGuard.CharacterGuard SINGLETON = new CharacterGuard();
+    private static final class CharacterGuard extends DispatchGuard {
+        private static final DispatchGuard.CharacterGuard SINGLETON = new CharacterGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -99,8 +101,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class DoubleGuard extends LookupGuard {
-        private static final LookupGuard.DoubleGuard SINGLETON = new DoubleGuard();
+    private static final class DoubleGuard extends DispatchGuard {
+        private static final DispatchGuard.DoubleGuard SINGLETON = new DoubleGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -108,8 +110,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class BlockClosureObjectGuard extends LookupGuard {
-        private static final LookupGuard.BlockClosureObjectGuard SINGLETON = new BlockClosureObjectGuard();
+    private static final class BlockClosureObjectGuard extends DispatchGuard {
+        private static final DispatchGuard.BlockClosureObjectGuard SINGLETON = new BlockClosureObjectGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -117,8 +119,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class CharacterObjectGuard extends LookupGuard {
-        private static final LookupGuard.CharacterObjectGuard SINGLETON = new CharacterObjectGuard();
+    private static final class CharacterObjectGuard extends DispatchGuard {
+        private static final DispatchGuard.CharacterObjectGuard SINGLETON = new CharacterObjectGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -126,8 +128,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class ContextObjectGuard extends LookupGuard {
-        private static final LookupGuard.ContextObjectGuard SINGLETON = new ContextObjectGuard();
+    private static final class ContextObjectGuard extends DispatchGuard {
+        private static final DispatchGuard.ContextObjectGuard SINGLETON = new ContextObjectGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -135,8 +137,8 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class FloatObjectGuard extends LookupGuard {
-        private static final LookupGuard.FloatObjectGuard SINGLETON = new FloatObjectGuard();
+    private static final class FloatObjectGuard extends DispatchGuard {
+        private static final DispatchGuard.FloatObjectGuard SINGLETON = new FloatObjectGuard();
 
         @Override
         public boolean check(final Object receiver) {
@@ -144,20 +146,23 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class AbstractPointersObjectGuard extends LookupGuard {
+    private static final class AbstractPointersObjectGuard extends DispatchGuard {
         private final ObjectLayout expectedLayout;
+        private final Assumption methodDictStable;
 
         private AbstractPointersObjectGuard(final AbstractPointersObject receiver) {
             expectedLayout = receiver.getLayout();
+            methodDictStable = receiver.getSqueakClass().getMethodDictStable();
         }
 
         @Override
         public boolean check(final Object receiver) {
+// methodDictStable.check();
             return receiver instanceof AbstractPointersObject && ((AbstractPointersObject) receiver).getLayout() == expectedLayout;
         }
     }
 
-    private static final class AbstractSqueakObjectWithClassAndHashGuard extends LookupGuard {
+    private static final class AbstractSqueakObjectWithClassAndHashGuard extends DispatchGuard {
         private final ClassObject expectedClass;
 
         private AbstractSqueakObjectWithClassAndHashGuard(final AbstractSqueakObjectWithClassAndHash receiver) {
@@ -170,7 +175,7 @@ public abstract class LookupGuard {
         }
     }
 
-    private static final class ForeignObjectGuard extends LookupGuard {
+    private static final class ForeignObjectGuard extends DispatchGuard {
         @Override
         public boolean check(final Object receiver) {
             return !SqueakGuards.isAbstractSqueakObject(receiver) && !SqueakGuards.isUsedJavaPrimitive(receiver);
