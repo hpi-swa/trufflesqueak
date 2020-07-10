@@ -444,6 +444,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                     }
                 }
             }
+            image.dropPluginFileList = new String[0];
+            addDragEvent(DRAG.DROP, dtde.getLocation());
             dtde.rejectDrop();
         }
 
