@@ -145,6 +145,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
             this.argumentCount = argumentCount;
             this.guard = guard;
             this.method = method;
+            assert getCallTargetStable().isValid() : "callTargetStable must be valid";
         }
 
         protected static final CachedSelfDispatchNode create(final NativeObject selector, final int argumentCount, final Object receiver) {
