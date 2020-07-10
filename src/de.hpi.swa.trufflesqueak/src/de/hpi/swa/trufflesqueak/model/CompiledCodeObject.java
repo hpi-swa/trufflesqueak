@@ -83,7 +83,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private Source source;
 
     @CompilationFinal private RootCallTarget callTarget;
-    private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
+    private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject callTargetStable assumption");
     private final Assumption doesNotNeedSender = Truffle.getRuntime().createAssumption("CompiledCodeObject doesNotNeedSender assumption");
     @CompilationFinal private RootCallTarget resumptionCallTarget;
 
@@ -192,7 +192,8 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
-            renewCallTarget();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            initializeCallTargetUnsafe();
         }
         return callTarget;
     }
@@ -204,6 +205,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     protected void initializeCallTargetUnsafe() {
+        CompilerAsserts.neverPartOfCompilation();
         callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(SqueakLanguage.getContext().getLanguage(), this));
     }
 
