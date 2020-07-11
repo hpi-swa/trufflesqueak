@@ -91,17 +91,21 @@ public abstract class CachedDispatchGuard {
         }
     }
 
+    /*
+     * Returns all methodDict assumptions until the class defining the method. If any of these
+     * methodDicts change, the dispatch may no longer be valid.
+     */
     private static Assumption[] getMethodDictAssumptions(final Object receiver, final CompiledCodeObject method) {
         final ClassObject methodClass = method.getMethodClassSlow();
         final ClassObject receiverClass = SqueakObjectClassNode.getUncached().executeLookup(receiver);
         ASSUMPTION_SET.clear();
-        ASSUMPTION_SET.add(receiverClass.getMethodDictStable());
         ClassObject currentClass = receiverClass;
         while (currentClass != methodClass) {
             ASSUMPTION_SET.add(currentClass.getMethodDictStable());
             currentClass = currentClass.getSuperclassOrNull();
             assert currentClass != null;
         }
+        ASSUMPTION_SET.add(currentClass.getMethodDictStable());
         return ASSUMPTION_SET.toArray(new Assumption[0]);
     }
 
