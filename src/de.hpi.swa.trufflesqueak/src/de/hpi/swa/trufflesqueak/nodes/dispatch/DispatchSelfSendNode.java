@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
@@ -138,25 +139,23 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
 
     protected abstract static class CachedSelfDispatchNode extends AbstractNode {
         protected final int argumentCount;
-        protected final DispatchGuard guard;
+        protected final CachedDispatchGuard guard;
         protected final CompiledCodeObject method;
 
-        public CachedSelfDispatchNode(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
+        public CachedSelfDispatchNode(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
             this.argumentCount = argumentCount;
-            this.guard = guard;
             this.method = method;
+            guard = CachedDispatchGuard.create(receiver, method);
             assert getCallTargetStable().isValid() : "callTargetStable must be valid";
         }
 
         protected static final CachedSelfDispatchNode create(final NativeObject selector, final int argumentCount, final Object receiver) {
-            final DispatchGuard guard = DispatchGuard.create(receiver);
-            assert guard.check(receiver) : "Guard check must succeed";
             final ClassObject receiverClass = SqueakObjectClassNode.getUncached().executeLookup(receiver);
             final Object lookupResult = LookupMethodNode.getUncached().executeLookup(receiverClass, selector);
             if (lookupResult == null) {
                 final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(receiverClass, SqueakLanguage.getContext().doesNotUnderstand);
                 if (dnuMethod instanceof CompiledCodeObject) {
-                    return AbstractCachedDispatchDoesNotUnderstandNode.create(argumentCount, guard, (CompiledCodeObject) dnuMethod);
+                    return AbstractCachedDispatchDoesNotUnderstandNode.create(receiver, argumentCount, (CompiledCodeObject) dnuMethod);
                 } else {
                     throw SqueakException.create("Unable to find DNU method in", receiverClass);
                 }
@@ -165,15 +164,15 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                 if (lookupMethod.hasPrimitive()) {
                     final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(lookupMethod, true, lookupMethod.primitiveIndex());
                     if (primitiveNode != null) {
-                        return new CachedDispatchPrimitiveNode(argumentCount, guard, lookupMethod, primitiveNode);
+                        return new CachedDispatchPrimitiveNode(receiver, argumentCount, lookupMethod, primitiveNode);
                     }
                 }
-                return AbstractCachedDispatchMethodNode.create(argumentCount, guard, lookupMethod);
+                return AbstractCachedDispatchMethodNode.create(receiver, argumentCount, lookupMethod);
             } else {
                 final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
                 final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, selector.image.runWithInSelector);
                 if (runWithInMethod instanceof CompiledCodeObject) {
-                    return AbstractCachedDispatchObjectAsMethodNode.create(argumentCount, guard, lookupResult, (CompiledCodeObject) runWithInMethod);
+                    return AbstractCachedDispatchObjectAsMethodNode.create(receiver, argumentCount, lookupResult, (CompiledCodeObject) runWithInMethod);
                 } else {
                     throw SqueakException.create("Add support for DNU on runWithIn");
                 }
@@ -181,7 +180,20 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         }
 
         protected final boolean guard(final Object receiver) {
-            return guard.check(receiver);
+            try {
+                return guard.check(receiver);
+            } catch (final InvalidAssumptionException e) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                replace(CachedSelfDispatchNode.create(method.getCompiledInSelector(), argumentCount, receiver), "Invalid assumption");
+                return true;
+            }
+        }
+
+        protected final Object peekReceiverSlow(final VirtualFrame frame) {
+            CompilerAsserts.neverPartOfCompilation();
+            final CompiledCodeObject code = FrameAccess.getBlockOrMethod(frame);
+            final int stackPointer = FrameAccess.getStackPointer(frame, code) - 1 - argumentCount;
+            return frame.getValue(code.getStackSlot(stackPointer));
         }
 
         protected final Assumption getCallTargetStable() {
@@ -194,8 +206,8 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected abstract static class CachedDispatchWithDirectCallNode extends CachedSelfDispatchNode {
         @Child protected DirectCallNode callNode;
 
-        public CachedDispatchWithDirectCallNode(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
-            super(argumentCount, guard, method);
+        public CachedDispatchWithDirectCallNode(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
+            super(receiver, argumentCount, method);
             callNode = DirectCallNode.create(method.getCallTarget());
         }
     }
@@ -207,8 +219,8 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
 
         @Child private AbstractPrimitiveNode primitiveNode;
 
-        private CachedDispatchPrimitiveNode(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
-            super(argumentCount, guard, method);
+        private CachedDispatchPrimitiveNode(final Object receiver, final int argumentCount, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
+            super(receiver, argumentCount, method);
             this.primitiveNode = primitiveNode;
         }
 
@@ -226,7 +238,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                 // Restore stackPointer.
                 FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
                 if (failureCounter.shouldNoLongerSendEagerly()) {
-                    return replace(AbstractCachedDispatchMethodNode.create(argumentCount, guard, method)).execute(frame, cachedSelector);
+                    return replace(AbstractCachedDispatchMethodNode.create(peekReceiverSlow(frame), argumentCount, method)).execute(frame, cachedSelector);
                 } else {
                     // Slow path send to fallback code.
                     final Object[] receiverAndArguments = FrameStackPopNNode.create(1 + argumentCount).execute(frame);
@@ -256,16 +268,16 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected abstract static class AbstractCachedDispatchMethodNode extends CachedDispatchWithDirectCallNode {
         @Child protected CreateFrameArgumentsNode createFrameArgumentsNode;
 
-        private AbstractCachedDispatchMethodNode(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
-            super(argumentCount, guard, method);
+        private AbstractCachedDispatchMethodNode(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
+            super(receiver, argumentCount, method);
             createFrameArgumentsNode = CreateFrameArgumentsNode.create(argumentCount);
         }
 
-        protected static AbstractCachedDispatchMethodNode create(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
+        protected static AbstractCachedDispatchMethodNode create(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
             if (method.getDoesNotNeedSenderAssumption().isValid()) {
-                return new CachedDispatchMethodWithoutSenderNode(argumentCount, guard, method);
+                return new CachedDispatchMethodWithoutSenderNode(receiver, argumentCount, method);
             } else {
-                return new CachedDispatchMethodWithSenderNode(argumentCount, guard, method);
+                return new CachedDispatchMethodWithSenderNode(receiver, argumentCount, method);
             }
         }
     }
@@ -273,8 +285,8 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected static final class CachedDispatchMethodWithoutSenderNode extends AbstractCachedDispatchMethodNode {
         @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
 
-        private CachedDispatchMethodWithoutSenderNode(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
-            super(argumentCount, guard, method);
+        private CachedDispatchMethodWithoutSenderNode(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
+            super(receiver, argumentCount, method);
         }
 
         @Override
@@ -283,7 +295,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                 method.getDoesNotNeedSenderAssumption().check();
             } catch (final InvalidAssumptionException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new CachedDispatchMethodWithSenderNode(argumentCount, guard, method)).execute(frame, cachedSelector);
+                return replace(new CachedDispatchMethodWithSenderNode(peekReceiverSlow(frame), argumentCount, method)).execute(frame, cachedSelector);
             }
             return callNode.call(createFrameArgumentsNode.execute(frame, method, getContextOrMarkerNode.execute(frame)));
         }
@@ -292,8 +304,8 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected static final class CachedDispatchMethodWithSenderNode extends AbstractCachedDispatchMethodNode {
         @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
 
-        private CachedDispatchMethodWithSenderNode(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
-            super(argumentCount, guard, method);
+        private CachedDispatchMethodWithSenderNode(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
+            super(receiver, argumentCount, method);
         }
 
         @Override
@@ -305,16 +317,16 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected abstract static class AbstractCachedDispatchDoesNotUnderstandNode extends CachedDispatchWithDirectCallNode {
         @Child protected CreateFrameArgumentsForDNUNode createFrameArgumentsForDNUNode;
 
-        private AbstractCachedDispatchDoesNotUnderstandNode(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
-            super(argumentCount, guard, method);
+        private AbstractCachedDispatchDoesNotUnderstandNode(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
+            super(receiver, argumentCount, method);
             createFrameArgumentsForDNUNode = CreateFrameArgumentsForDNUNode.create(argumentCount);
         }
 
-        protected static AbstractCachedDispatchDoesNotUnderstandNode create(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
+        protected static AbstractCachedDispatchDoesNotUnderstandNode create(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
             if (method.getDoesNotNeedSenderAssumption().isValid()) {
-                return new CachedDispatchDoesNotUnderstandWithoutSenderNode(argumentCount, guard, method);
+                return new CachedDispatchDoesNotUnderstandWithoutSenderNode(receiver, argumentCount, method);
             } else {
-                return new CachedDispatchDoesNotUnderstandWithSenderNode(argumentCount, guard, method);
+                return new CachedDispatchDoesNotUnderstandWithSenderNode(receiver, argumentCount, method);
             }
         }
     }
@@ -322,8 +334,8 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected static final class CachedDispatchDoesNotUnderstandWithoutSenderNode extends AbstractCachedDispatchDoesNotUnderstandNode {
         @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
 
-        private CachedDispatchDoesNotUnderstandWithoutSenderNode(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
-            super(argumentCount, guard, method);
+        private CachedDispatchDoesNotUnderstandWithoutSenderNode(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
+            super(receiver, argumentCount, method);
         }
 
         @Override
@@ -332,7 +344,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                 method.getDoesNotNeedSenderAssumption().check();
             } catch (final InvalidAssumptionException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new CachedDispatchDoesNotUnderstandWithSenderNode(argumentCount, guard, method)).execute(frame, cachedSelector);
+                return replace(new CachedDispatchDoesNotUnderstandWithSenderNode(peekReceiverSlow(frame), argumentCount, method)).execute(frame, cachedSelector);
             }
             return callNode.call(createFrameArgumentsForDNUNode.execute(frame, cachedSelector, method, getContextOrMarkerNode.execute(frame)));
         }
@@ -341,8 +353,8 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected static final class CachedDispatchDoesNotUnderstandWithSenderNode extends AbstractCachedDispatchDoesNotUnderstandNode {
         @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
 
-        private CachedDispatchDoesNotUnderstandWithSenderNode(final int argumentCount, final DispatchGuard guard, final CompiledCodeObject method) {
-            super(argumentCount, guard, method);
+        private CachedDispatchDoesNotUnderstandWithSenderNode(final Object receiver, final int argumentCount, final CompiledCodeObject method) {
+            super(receiver, argumentCount, method);
         }
 
         @Override
@@ -355,17 +367,17 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
         protected final Object object;
         @Child protected CreateFrameArgumentsForOAMNode createFrameArgumentsForOAMNode;
 
-        private AbstractCachedDispatchObjectAsMethodNode(final int argumentCount, final DispatchGuard guard, final Object object, final CompiledCodeObject method) {
-            super(argumentCount, guard, method);
+        private AbstractCachedDispatchObjectAsMethodNode(final Object receiver, final int argumentCount, final Object object, final CompiledCodeObject method) {
+            super(receiver, argumentCount, method);
             this.object = object;
             createFrameArgumentsForOAMNode = CreateFrameArgumentsForOAMNode.create(argumentCount);
         }
 
-        public static CachedSelfDispatchNode create(final int argumentCount, final DispatchGuard guard, final Object lookupResult, final CompiledCodeObject runWithInMethod) {
+        public static CachedSelfDispatchNode create(final Object receiver, final int argumentCount, final Object lookupResult, final CompiledCodeObject runWithInMethod) {
             if (runWithInMethod.getDoesNotNeedSenderAssumption().isValid()) {
-                return new CachedDispatchObjectAsMethodWithoutSenderNode(argumentCount, guard, lookupResult, runWithInMethod);
+                return new CachedDispatchObjectAsMethodWithoutSenderNode(receiver, argumentCount, lookupResult, runWithInMethod);
             } else {
-                return new CachedDispatchObjectAsMethodWithSenderNode(argumentCount, guard, lookupResult, runWithInMethod);
+                return new CachedDispatchObjectAsMethodWithSenderNode(receiver, argumentCount, lookupResult, runWithInMethod);
             }
         }
     }
@@ -373,8 +385,8 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected static final class CachedDispatchObjectAsMethodWithoutSenderNode extends AbstractCachedDispatchObjectAsMethodNode {
         @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
 
-        private CachedDispatchObjectAsMethodWithoutSenderNode(final int argumentCount, final DispatchGuard guard, final Object object, final CompiledCodeObject method) {
-            super(argumentCount, guard, object, method);
+        private CachedDispatchObjectAsMethodWithoutSenderNode(final Object receiver, final int argumentCount, final Object object, final CompiledCodeObject method) {
+            super(receiver, argumentCount, object, method);
         }
 
         @Override
@@ -383,7 +395,7 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
                 method.getDoesNotNeedSenderAssumption().check();
             } catch (final InvalidAssumptionException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new CachedDispatchObjectAsMethodWithSenderNode(argumentCount, guard, object, method)).execute(frame, cachedSelector);
+                return replace(new CachedDispatchObjectAsMethodWithSenderNode(peekReceiverSlow(frame), argumentCount, object, method)).execute(frame, cachedSelector);
             }
             return callNode.call(createFrameArgumentsForOAMNode.execute(frame, cachedSelector, object, method, getContextOrMarkerNode.execute(frame)));
         }
@@ -392,8 +404,8 @@ public abstract class DispatchSelfSendNode extends AbstractNode {
     protected static final class CachedDispatchObjectAsMethodWithSenderNode extends AbstractCachedDispatchObjectAsMethodNode {
         @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
 
-        private CachedDispatchObjectAsMethodWithSenderNode(final int argumentCount, final DispatchGuard guard, final Object object, final CompiledCodeObject method) {
-            super(argumentCount, guard, object, method);
+        private CachedDispatchObjectAsMethodWithSenderNode(final Object receiver, final int argumentCount, final Object object, final CompiledCodeObject method) {
+            super(receiver, argumentCount, object, method);
         }
 
         @Override

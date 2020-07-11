@@ -605,6 +605,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final CompiledCodeObject doFlush(final CompiledCodeObject receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             image.flushMethodCacheForMethod(receiver);
+            /*
+             * TODO: maybe the method's callTarget could be invalidated to remove it from any PIC
+             * and to avoid invalidating the entire methodDict assumption.
+             */
             receiver.getMethodClass(readNode).invalidateMethodDictStableAssumption();
             return receiver;
         }
