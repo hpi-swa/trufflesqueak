@@ -11,6 +11,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
@@ -34,11 +35,16 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NotProvided;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
-    protected static final int INLINE_CACHE_SIZE = 3;
 
+    @ReportPolymorphism
+    public abstract static class AbstractClosurePrimitiveNode extends AbstractPrimitiveNode {
+        protected static final int INLINE_CACHE_SIZE = 3;
+    }
+
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {201, 221})
-    @ImportStatic(BlockClosurePrimitives.class)
+    @ImportStatic(AbstractClosurePrimitiveNode.class)
     public abstract static class PrimClosureValue0Node extends AbstractPrimitiveNode implements UnaryPrimitive {
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 0"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
@@ -59,8 +65,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 202)
-    @ImportStatic(BlockClosurePrimitives.class)
-    protected abstract static class PrimClosureValue1Node extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimClosureValue1Node extends AbstractClosurePrimitiveNode implements BinaryPrimitive {
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 1"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg,
@@ -84,8 +89,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 203)
-    @ImportStatic(BlockClosurePrimitives.class)
-    protected abstract static class PrimClosureValue2Node extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimClosureValue2Node extends AbstractClosurePrimitiveNode implements TernaryPrimitive {
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 2"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2,
@@ -111,8 +115,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 204)
-    @ImportStatic(BlockClosurePrimitives.class)
-    protected abstract static class PrimClosureValue3Node extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimClosureValue3Node extends AbstractClosurePrimitiveNode implements QuaternaryPrimitive {
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 3"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValueDirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3,
@@ -140,8 +143,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 205)
-    @ImportStatic(BlockClosurePrimitives.class)
-    protected abstract static class PrimClosureValueNode extends AbstractPrimitiveNode implements SenaryPrimitive {
+    protected abstract static class PrimClosureValueNode extends AbstractClosurePrimitiveNode implements SenaryPrimitive {
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == 4"}, assumptions = {"cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
         protected static final Object doValue4Direct(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
@@ -204,8 +206,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {206, 222})
-    @ImportStatic(BlockClosurePrimitives.class)
-    protected abstract static class PrimClosureValueAryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimClosureValueAryNode extends AbstractClosurePrimitiveNode implements BinaryPrimitive {
         @SuppressWarnings("unused")
         @Specialization(guards = {"closure.getCompiledBlock() == cachedBlock", "cachedBlock.getNumArgs() == sizeNode.execute(argArray)"}, assumptions = {
                         "cachedBlock.getCallTargetStable()"}, limit = "INLINE_CACHE_SIZE")
