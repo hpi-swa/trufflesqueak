@@ -63,6 +63,7 @@ public abstract class DispatchLookupResultNode extends AbstractNode {
 
     public abstract Object execute(VirtualFrame frame, ClassObject receiverClass, Object lookupResult);
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "lookupResult == cachedLookupResult", limit = "INLINE_CACHE_SIZE", assumptions = {"dispatchNode.getCallTargetStable()"})
     protected final Object doCached(final VirtualFrame frame, final ClassObject receiverClass, final Object lookupResult,
                     @Cached("lookupResult") final Object cachedLookupResult,
