@@ -47,18 +47,20 @@ import de.hpi.swa.trufflesqueak.util.PrimitiveFailedCounter;
 @ReportPolymorphism
 @ImportStatic(AbstractSelfSendNode.class)
 public abstract class DispatchLookupResultNode extends AbstractNode {
-    protected final CompiledCodeObject code;
     protected final NativeObject selector;
     protected final int argumentCount;
 
-    public DispatchLookupResultNode(final CompiledCodeObject code, final NativeObject selector, final int argumentCount) {
-        this.code = code;
+    public DispatchLookupResultNode(final NativeObject selector, final int argumentCount) {
         this.selector = selector;
         this.argumentCount = argumentCount;
     }
 
-    public static DispatchLookupResultNode create(final CompiledCodeObject code, final NativeObject selector, final int argumentCount) {
-        return DispatchLookupResultNodeGen.create(code, selector, argumentCount);
+    public static DispatchLookupResultNode create(final NativeObject selector, final int argumentCount) {
+        return DispatchLookupResultNodeGen.create(selector, argumentCount);
+    }
+
+    public final NativeObject getSelector() {
+        return selector;
     }
 
     public abstract Object execute(VirtualFrame frame, ClassObject receiverClass, Object lookupResult);

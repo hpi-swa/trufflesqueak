@@ -52,6 +52,10 @@ public abstract class DispatchSuperSendNode extends AbstractNode {
         return DispatchSuperSendNodeGen.create(code, selector, argumentCount);
     }
 
+    public NativeObject getSelector() {
+        return selector;
+    }
+
     public abstract Object execute(VirtualFrame frame);
 
     @Specialization(guards = {"method.getMethodClass(readNode) == cachedMethodClass"}, assumptions = {"cachedMethodClass.getClassHierarchyStable()", "dispatchNode.getCallTargetStable()"})
