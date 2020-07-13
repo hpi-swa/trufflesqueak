@@ -5,6 +5,11 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.utilities.AlwaysValidAssumption;
+
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -17,7 +22,18 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayout;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
 
 public abstract class LookupClassGuard {
-    public abstract boolean check(Object receiver);
+    protected abstract boolean check(Object receiver);
+
+    protected final ClassObject getSqueakClass(final SqueakImageContext image) {
+        CompilerAsserts.partialEvaluationConstant(image);
+        return getSqueakClassInternal(image);
+    }
+
+    protected abstract ClassObject getSqueakClassInternal(SqueakImageContext image);
+
+    protected Assumption getIsValidAssumption() {
+        return AlwaysValidAssumption.INSTANCE;
+    }
 
     public static LookupClassGuard create(final Object receiver) {
         if (receiver == NilObject.SINGLETON) {
@@ -28,14 +44,12 @@ public abstract class LookupClassGuard {
             return FalseGuard.SINGLETON;
         } else if (receiver instanceof Long) {
             return SmallIntegerGuard.SINGLETON;
-        } else if (receiver instanceof Character) {
+        } else if (receiver instanceof Character || receiver instanceof CharacterObject) {
             return CharacterGuard.SINGLETON;
         } else if (receiver instanceof Double) {
             return DoubleGuard.SINGLETON;
         } else if (receiver instanceof BlockClosureObject) {
             return BlockClosureObjectGuard.SINGLETON;
-        } else if (receiver instanceof CharacterObject) {
-            return CharacterObjectGuard.SINGLETON;
         } else if (receiver instanceof ContextObject) {
             return ContextObjectGuard.SINGLETON;
         } else if (receiver instanceof FloatObject) {
@@ -56,8 +70,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver == NilObject.SINGLETON;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.nilClass;
         }
     }
 
@@ -68,8 +87,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver == Boolean.TRUE;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.trueClass;
         }
     }
 
@@ -80,8 +104,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver == Boolean.FALSE;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.falseClass;
         }
     }
 
@@ -92,8 +121,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver instanceof Long;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.smallIntegerClass;
         }
     }
 
@@ -104,8 +138,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
-            return receiver instanceof Character;
+        protected boolean check(final Object receiver) {
+            return receiver instanceof Character || receiver instanceof CharacterObject;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.characterClass;
         }
     }
 
@@ -116,8 +155,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver instanceof Double;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.getSmallFloatClass();
         }
     }
 
@@ -128,20 +172,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver instanceof BlockClosureObject;
-        }
-    }
-
-    private static final class CharacterObjectGuard extends LookupClassGuard {
-        private static final CharacterObjectGuard SINGLETON = new CharacterObjectGuard();
-
-        private CharacterObjectGuard() {
         }
 
         @Override
-        public boolean check(final Object receiver) {
-            return receiver instanceof CharacterObject;
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.blockClosureClass;
         }
     }
 
@@ -152,8 +189,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver instanceof ContextObject;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.methodContextClass;
         }
     }
 
@@ -164,8 +206,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver instanceof FloatObject;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.floatClass;
         }
     }
 
@@ -173,12 +220,27 @@ public abstract class LookupClassGuard {
         private final ObjectLayout expectedLayout;
 
         private AbstractPointersObjectGuard(final AbstractPointersObject receiver) {
+            if (!receiver.getLayout().isValid()) {
+                /* Ensure only valid layouts are cached. */
+                receiver.updateLayout();
+            }
             expectedLayout = receiver.getLayout();
+            assert expectedLayout.isValid();
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver instanceof AbstractPointersObject && ((AbstractPointersObject) receiver).getLayout() == expectedLayout;
+        }
+
+        @Override
+        protected Assumption getIsValidAssumption() {
+            return expectedLayout.getValidAssumption();
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return expectedLayout.getSqueakClass();
         }
     }
 
@@ -190,8 +252,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return receiver instanceof AbstractSqueakObjectWithClassAndHash && ((AbstractSqueakObjectWithClassAndHash) receiver).getSqueakClass() == expectedClass;
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return expectedClass;
         }
     }
 
@@ -202,8 +269,13 @@ public abstract class LookupClassGuard {
         }
 
         @Override
-        public boolean check(final Object receiver) {
+        protected boolean check(final Object receiver) {
             return !SqueakGuards.isAbstractSqueakObject(receiver) && !SqueakGuards.isUsedJavaPrimitive(receiver);
+        }
+
+        @Override
+        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
+            return image.getForeignObjectClass();
         }
     }
 }

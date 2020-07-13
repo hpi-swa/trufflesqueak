@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class ObjectLayout {
+    private final ClassObject squeakClass;
     @CompilationFinal(dimensions = 1) private final SlotLocation[] locations;
     private final int numPrimitiveExtension;
     private final int numObjectExtension;
@@ -28,6 +29,7 @@ public final class ObjectLayout {
 
     public ObjectLayout(final ClassObject classObject, final int instSize) {
         slowPathOperation();
+        squeakClass = classObject;
         classObject.updateLayout(this);
         locations = new SlotLocation[instSize];
         Arrays.fill(locations, SlotLocation.UNINITIALIZED_LOCATION);
@@ -37,6 +39,7 @@ public final class ObjectLayout {
 
     public ObjectLayout(final ClassObject classObject, final SlotLocation[] locations) {
         slowPathOperation();
+        squeakClass = classObject;
         classObject.updateLayout(this);
         this.locations = locations;
         numPrimitiveExtension = countPrimitiveExtension(locations);
@@ -211,6 +214,10 @@ public final class ObjectLayout {
 
     public boolean isValid(final ValueProfile classProfile) {
         return classProfile.profile(isValidAssumption).isValid();
+    }
+
+    public ClassObject getSqueakClass() {
+        return squeakClass;
     }
 
     public SlotLocation getLocation(final int index) {
