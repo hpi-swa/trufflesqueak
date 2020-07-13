@@ -9,11 +9,9 @@ import java.util.HashSet;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -84,10 +82,8 @@ public abstract class CachedDispatchGuard {
             return new AbstractPointersObjectGuard(assumptions, (AbstractPointersObject) receiver);
         } else if (receiver instanceof AbstractSqueakObjectWithClassAndHash) {
             return new AbstractSqueakObjectWithClassAndHashGuard(assumptions, (AbstractSqueakObjectWithClassAndHash) receiver);
-        } else if (receiver instanceof TruffleObject) {
-            return new ForeignObjectGuard(assumptions);
         } else {
-            throw SqueakException.create("Should not be reached");
+            return new ForeignObjectGuard(assumptions);
         }
     }
 
