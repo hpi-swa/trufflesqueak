@@ -6,16 +6,17 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.ImportStatic;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSelfSendNode;
 
-@ReportPolymorphism
 @ImportStatic(AbstractSelfSendNode.class)
 public abstract class LookupClassNode extends AbstractNode {
 
@@ -25,15 +26,11 @@ public abstract class LookupClassNode extends AbstractNode {
 
     public abstract ClassObject execute(Object receiver);
 
-    @Specialization(guards = "guard.check(receiver)", limit = "INLINE_CACHE_SIZE")
+    @Specialization(guards = "guard.check(receiver)", assumptions = "guard.getIsValidAssumption()", limit = "INLINE_CACHE_SIZE")
     protected static final ClassObject doCached(@SuppressWarnings("unused") final Object receiver,
                     @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
-                    @Cached("lookupSlow(receiver)") final ClassObject cachedClass) {
-        return cachedClass;
-    }
-
-    protected static final ClassObject lookupSlow(final Object receiver) {
-        return SqueakObjectClassNode.getUncached().executeLookup(receiver);
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return guard.getSqueakClass(image);
     }
 
     @Specialization(replaces = "doCached")
