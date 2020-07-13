@@ -29,7 +29,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
-        protected final NativeObject selector;
         protected final int argumentCount;
 
         @Child private FrameStackPushNode pushNode;
@@ -37,14 +36,13 @@ public final class SendBytecodes {
         private final ConditionProfile nlrProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile nvrProfile = ConditionProfile.createBinaryProfile();
 
-        private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
+        private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int argcount) {
             super(code, index, numBytecodes);
-            selector = (NativeObject) sel;
             argumentCount = argcount;
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
-            this(original.code, original.index, original.numBytecodes, original.selector, original.argumentCount);
+            this(original.code, original.index, original.numBytecodes, original.argumentCount);
         }
 
         @Override
@@ -78,9 +76,7 @@ public final class SendBytecodes {
             return pushNode;
         }
 
-        public final Object getSelector() {
-            return selector;
-        }
+        public abstract NativeObject getSelector();
 
         @Override
         public final boolean hasTag(final Class<? extends Tag> tag) {
@@ -88,7 +84,7 @@ public final class SendBytecodes {
                 return true;
             }
             if (tag == DebuggerTags.AlwaysHalt.class) {
-                return PrimExitToDebuggerNode.SELECTOR_NAME.equals(selector.asStringUnsafe());
+                return PrimExitToDebuggerNode.SELECTOR_NAME.equals(getSelector().asStringUnsafe());
             }
             return super.hasTag(tag);
         }
@@ -96,7 +92,7 @@ public final class SendBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "send: " + selector.asStringUnsafe();
+            return "send: " + getSelector().asStringUnsafe();
         }
     }
 
@@ -109,9 +105,10 @@ public final class SendBytecodes {
         @Child private DispatchLookupResultNode dispatchNode;
 
         private AbstractSelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
-            super(code, index, numBytecodes, sel, argcount);
+            super(code, index, numBytecodes, argcount);
+            final NativeObject selector = (NativeObject) sel;
             lookupSelectorNode = LookupSelectorNode.create(selector);
-            dispatchNode = DispatchLookupResultNode.create(code, selector, argcount);
+            dispatchNode = DispatchLookupResultNode.create(selector, argcount);
         }
 
         @Override
@@ -120,6 +117,11 @@ public final class SendBytecodes {
             final ClassObject receiverClass = lookupClassNode.execute(receiver);
             final Object lookupResult = lookupSelectorNode.execute(receiverClass);
             return dispatchNode.execute(frame, receiverClass, lookupResult);
+        }
+
+        @Override
+        public NativeObject getSelector() {
+            return dispatchNode.getSelector();
         }
 
         protected final Object getReceiver(final VirtualFrame frame) {
@@ -174,26 +176,31 @@ public final class SendBytecodes {
     }
 
     public static final class SingleExtendedSuperNode extends AbstractSendNode {
-        @Child private DispatchSuperSendNode dispatchSuperSendNode;
+        @Child private DispatchSuperSendNode dispatchNode;
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             this(code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
         }
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
-            super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs);
-            dispatchSuperSendNode = DispatchSuperSendNode.create(code, selector, numArgs);
+            super(code, index, numBytecodes, numArgs);
+            dispatchNode = DispatchSuperSendNode.create(code, (NativeObject) code.getLiteral(literalIndex), numArgs);
         }
 
         @Override
         protected Object dispatch(final VirtualFrame frame) {
-            return dispatchSuperSendNode.execute(frame);
+            return dispatchNode.execute(frame);
+        }
+
+        @Override
+        public NativeObject getSelector() {
+            return dispatchNode.getSelector();
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "sendSuper: " + selector.asStringUnsafe();
+            return "sendSuper: " + getSelector().asStringUnsafe();
         }
     }
 }
