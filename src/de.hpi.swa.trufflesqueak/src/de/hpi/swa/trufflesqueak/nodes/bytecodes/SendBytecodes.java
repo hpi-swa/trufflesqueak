@@ -15,17 +15,22 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSelfSendNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchLookupResultNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
         protected final NativeObject selector;
-        private final int argumentCount;
+        protected final int argumentCount;
 
         @Child private FrameStackPushNode pushNode;
 
@@ -96,16 +101,32 @@ public final class SendBytecodes {
     }
 
     public abstract static class AbstractSelfSendNode extends AbstractSendNode {
-        @Child private DispatchSelfSendNode dispatchSelfSendNode;
+        @Child protected FrameSlotReadNode peekReceiverNode;
+        @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
+        @Child private LookupSelectorNode lookupSelectorNode;
+        @Child private DispatchLookupResultNode dispatchNode;
 
         private AbstractSelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes, sel, argcount);
-            dispatchSelfSendNode = DispatchSelfSendNode.create(code, selector, argcount);
+            lookupSelectorNode = LookupSelectorNode.create(selector);
+            dispatchNode = DispatchLookupResultNode.create(code, selector, argcount);
         }
 
         @Override
         protected final Object dispatch(final VirtualFrame frame) {
-            return dispatchSelfSendNode.execute(frame);
+            final Object receiver = getReceiver(frame);
+            final ClassObject receiverClass = lookupClassNode.execute(receiver);
+            final Object lookupResult = lookupSelectorNode.execute(receiverClass);
+            return dispatchNode.execute(frame, receiverClass, lookupResult);
+        }
+
+        protected final Object getReceiver(final VirtualFrame frame) {
+            if (peekReceiverNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final int stackPointer = FrameAccess.getStackPointer(frame, code) - 1 - argumentCount;
+                peekReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer)));
+            }
+            return peekReceiverNode.executeRead(frame);
         }
     }
 
