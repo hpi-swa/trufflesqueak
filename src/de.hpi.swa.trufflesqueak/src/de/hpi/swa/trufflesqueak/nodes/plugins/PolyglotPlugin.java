@@ -36,6 +36,7 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.ConvertToSqueakNode;
+import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -1105,6 +1106,30 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
                 return lib.getMetaSimpleName(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasSourceLocation")
+    protected abstract static class PrimHasSourceLocationNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean hasSourceLocation(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return lib.hasSourceLocation(object);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetSourceLocation")
+    protected abstract static class PrimGetSourceLocationNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization(guards = "lib.hasSourceLocation(object)")
+        protected static final Object getSourceLocation(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return JavaObjectWrapper.wrap(lib.getSourceLocation(object));
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
