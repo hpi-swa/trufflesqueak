@@ -11,6 +11,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -22,6 +23,7 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSelfSendNode;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
+@ReportPolymorphism
 @ImportStatic(AbstractSelfSendNode.class)
 public abstract class LookupSelectorNode extends AbstractNode {
     protected final NativeObject selector;
@@ -77,5 +79,4 @@ public abstract class LookupSelectorNode extends AbstractNode {
         }
         return cachedEntry.getResult(); /* `null` return signals a doesNotUnderstand. */
     }
-
 }
