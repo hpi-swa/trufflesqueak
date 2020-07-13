@@ -10,6 +10,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
@@ -29,6 +31,7 @@ public abstract class FrameStackPopNNode extends AbstractNode {
 
     public abstract Object[] execute(VirtualFrame frame);
 
+    @NodeInfo(cost = NodeCost.NONE)
     private static final class FrameStackPop0Node extends FrameStackPopNNode {
         @Override
         public Object[] execute(final VirtualFrame frame) {
@@ -36,6 +39,7 @@ public abstract class FrameStackPopNNode extends AbstractNode {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     private static final class FrameStackPop1Node extends FrameStackPopNNode {
         @CompilationFinal private FrameSlot stackPointerSlot;
         @CompilationFinal private int stackPointer;
