@@ -23,12 +23,15 @@ public abstract class LookupClassNode extends AbstractNode {
 
     public abstract ClassObject execute(Object receiver);
 
-    /* TODO: Use different guard for AbstractPointersObject. */
-    @Specialization(guards = "classNode.executeLookup(receiver) == cachedClass", limit = "INLINE_CACHE_SIZE")
-    protected static final ClassObject doCached(final Object receiver,
-                    @Cached final SqueakObjectClassNode classNode,
-                    @Cached("classNode.executeLookup(receiver)") final ClassObject cachedClass) {
+    @Specialization(guards = "guard.check(receiver)", limit = "INLINE_CACHE_SIZE")
+    protected static final ClassObject doCached(@SuppressWarnings("unused") final Object receiver,
+                    @SuppressWarnings("unused") @Cached("create(receiver)") final LookupClassGuard guard,
+                    @Cached("lookupSlow(receiver)") final ClassObject cachedClass) {
         return cachedClass;
+    }
+
+    protected static final ClassObject lookupSlow(final Object receiver) {
+        return SqueakObjectClassNode.getUncached().executeLookup(receiver);
     }
 
     @Specialization(replaces = "doCached")

@@ -101,6 +101,8 @@ public final class SendBytecodes {
     }
 
     public abstract static class AbstractSelfSendNode extends AbstractSendNode {
+        public static final int INLINE_CACHE_SIZE = 6;
+
         @Child protected FrameSlotReadNode peekReceiverNode;
         @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
         @Child private LookupSelectorNode lookupSelectorNode;
