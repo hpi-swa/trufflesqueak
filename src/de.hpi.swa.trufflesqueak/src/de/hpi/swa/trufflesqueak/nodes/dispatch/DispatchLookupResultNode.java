@@ -6,7 +6,6 @@
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
@@ -112,7 +111,8 @@ public abstract class DispatchLookupResultNode extends AbstractNode {
             if (runWithInMethod instanceof CompiledCodeObject) {
                 return (CompiledCodeObject) runWithInMethod;
             } else {
-                throw SqueakException.create("Add support for DNU on runWithIn");
+                assert runWithInMethod == null : "runWithInMethod should not be another Object";
+                return doDoesNotUnderstand(image, targetObjectClass, runWithInMethod);
             }
         }
 
@@ -136,13 +136,9 @@ public abstract class DispatchLookupResultNode extends AbstractNode {
         }
 
         protected static final CachedSelfDispatchNode create(final int argumentCount, final ClassObject receiverClass, final Object lookupResult) {
+            final SqueakImageContext image = SqueakLanguage.getContext();
             if (lookupResult == null) {
-                final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(receiverClass, SqueakLanguage.getContext().doesNotUnderstand);
-                if (dnuMethod instanceof CompiledCodeObject) {
-                    return AbstractCachedDispatchDoesNotUnderstandNode.create(argumentCount, (CompiledCodeObject) dnuMethod);
-                } else {
-                    throw SqueakException.create("Unable to find DNU method in", receiverClass);
-                }
+                return createDNUNode(image, argumentCount, receiverClass);
             } else if (lookupResult instanceof CompiledCodeObject) {
                 final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
                 if (lookupMethod.hasPrimitive()) {
@@ -154,20 +150,23 @@ public abstract class DispatchLookupResultNode extends AbstractNode {
                 return AbstractCachedDispatchMethodNode.create(argumentCount, lookupMethod);
             } else {
                 final ClassObject lookupResultClass = SqueakObjectClassNode.getUncached().executeLookup(lookupResult);
-                final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, receiverClass.image.runWithInSelector);
+                final Object runWithInMethod = LookupMethodNode.getUncached().executeLookup(lookupResultClass, image.runWithInSelector);
                 if (runWithInMethod instanceof CompiledCodeObject) {
                     return AbstractCachedDispatchObjectAsMethodNode.create(argumentCount, lookupResult, (CompiledCodeObject) runWithInMethod);
                 } else {
-                    throw SqueakException.create("Add support for DNU on runWithIn");
+                    assert runWithInMethod == null : "runWithInMethod should not be another Object";
+                    return createDNUNode(image, argumentCount, lookupResultClass);
                 }
             }
         }
 
-        protected final Object peekReceiverSlow(final VirtualFrame frame) {
-            CompilerAsserts.neverPartOfCompilation();
-            final CompiledCodeObject code = FrameAccess.getBlockOrMethod(frame);
-            final int stackPointer = FrameAccess.getStackPointer(frame, code) - 1 - argumentCount;
-            return frame.getValue(code.getStackSlot(stackPointer));
+        private static CachedSelfDispatchNode createDNUNode(final SqueakImageContext image, final int argumentCount, final ClassObject receiverClass) {
+            final Object dnuMethod = LookupMethodNode.getUncached().executeLookup(receiverClass, image.doesNotUnderstand);
+            if (dnuMethod instanceof CompiledCodeObject) {
+                return AbstractCachedDispatchDoesNotUnderstandNode.create(argumentCount, (CompiledCodeObject) dnuMethod);
+            } else {
+                throw SqueakException.create("Unable to find DNU method in", receiverClass);
+            }
         }
 
         protected final Assumption getCallTargetStable() {
