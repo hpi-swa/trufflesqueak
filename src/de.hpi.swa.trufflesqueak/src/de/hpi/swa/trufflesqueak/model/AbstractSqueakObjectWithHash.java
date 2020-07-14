@@ -59,6 +59,10 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
         // Do nothing by default.
     }
 
+    public final boolean hasFormatOf(final ClassObject other) {
+        return getSqueakClass().getFormat() == other.getFormat();
+    }
+
     public abstract void fillin(SqueakImageChunk chunk);
 
     public final long getSqueakHash() {

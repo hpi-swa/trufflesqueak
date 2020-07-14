@@ -127,6 +127,11 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return layout;
     }
 
+    public final void changeClassTo(final ClassObject newClass) {
+        migrateToLayout(newClass.getLayout());
+        setSqueakClass(newClass);
+    }
+
     @TruffleBoundary
     public final void updateLayout() {
         final ObjectLayout latestLayout = getSqueakClass().getLayout();
@@ -147,8 +152,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return getSqueakClass().getLayout(); /* Layout may have evolved again during migration. */
     }
 
+    @TruffleBoundary
     private void migrateToLayout(final ObjectLayout newLayout) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         assert newLayout.isValid() : "Should not migrate to outdated layout";
         ObjectLayout theLayout = newLayout;
         final ObjectLayout oldLayout = layout;

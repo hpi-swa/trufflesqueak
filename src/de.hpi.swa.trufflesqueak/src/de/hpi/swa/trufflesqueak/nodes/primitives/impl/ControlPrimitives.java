@@ -590,7 +590,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final AbstractSqueakObject doPrimChangeClass(final AbstractSqueakObjectWithClassAndHash receiver, final AbstractSqueakObjectWithClassAndHash argument,
                         @Cached final SqueakObjectChangeClassOfToNode changeClassOfToNode) {
-            return changeClassOfToNode.execute(receiver, argument.getSqueakClass());
+            changeClassOfToNode.execute(receiver, argument.getSqueakClass());
+            return receiver;
         }
 
     }

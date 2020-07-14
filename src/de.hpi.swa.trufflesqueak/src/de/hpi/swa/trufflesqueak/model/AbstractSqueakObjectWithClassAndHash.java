@@ -63,6 +63,8 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
 
     @Override
     public final void setSqueakClass(final ClassObject newClass) {
+        assert !(this instanceof AbstractPointersObject) || getSqueakClass() == null ||
+                        ((AbstractPointersObject) this).getLayout().getSqueakClass() == newClass : "Layout should be migrated before class change";
         squeakClass = newClass;
     }
 
