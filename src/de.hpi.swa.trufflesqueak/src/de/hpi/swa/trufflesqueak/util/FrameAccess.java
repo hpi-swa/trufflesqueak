@@ -310,6 +310,7 @@ public final class FrameAccess {
     public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final BlockClosureObject closure,
                     final FrameSlotReadNode[] receiverAndArgumentsNodes) {
         final int receiverAndArgumentsLength = receiverAndArgumentsNodes.length;
+        CompilerAsserts.partialEvaluationConstant(receiverAndArgumentsLength);
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
         assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
@@ -335,7 +336,6 @@ public final class FrameAccess {
         return frameArguments;
     }
 
-    @ExplodeLoop
     public static Object[] newOAMWith(final CompiledCodeObject method, final Object sender, final Object object, final NativeObject selector, final ArrayObject arguments, final Object receiver) {
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + 4];
         assert method != null : "Method should never be null";
