@@ -29,26 +29,23 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
-        protected final int argumentCount;
-
         @Child private FrameStackPushNode pushNode;
 
         private final ConditionProfile nlrProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile nvrProfile = ConditionProfile.createBinaryProfile();
 
-        private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int argcount) {
+        private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            argumentCount = argcount;
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
-            this(original.code, original.index, original.numBytecodes, original.argumentCount);
+            this(original.code, original.index, original.numBytecodes);
         }
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
             try {
-                final Object result = dispatch(frame);
+                final Object result = dispatchSend(frame);
                 assert result != null : "Result of a message send should not be null";
                 getPushNode().execute(frame, result);
             } catch (final NonLocalReturn nlr) {
@@ -66,7 +63,7 @@ public final class SendBytecodes {
             }
         }
 
-        protected abstract Object dispatch(VirtualFrame frame);
+        protected abstract Object dispatchSend(VirtualFrame frame);
 
         private FrameStackPushNode getPushNode() {
             if (pushNode == null) {
@@ -99,20 +96,20 @@ public final class SendBytecodes {
     public abstract static class AbstractSelfSendNode extends AbstractSendNode {
         public static final int INLINE_CACHE_SIZE = 6;
 
-        @Child protected FrameSlotReadNode peekReceiverNode;
+        @Child private FrameSlotReadNode peekReceiverNode;
         @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
         @Child private LookupSelectorNode lookupSelectorNode;
         @Child private DispatchLookupResultNode dispatchNode;
 
-        private AbstractSelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
-            super(code, index, numBytecodes, argcount);
+        private AbstractSelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int numArgs) {
+            super(code, index, numBytecodes);
             final NativeObject selector = (NativeObject) sel;
             lookupSelectorNode = LookupSelectorNode.create(selector);
-            dispatchNode = DispatchLookupResultNode.create(selector, argcount);
+            dispatchNode = DispatchLookupResultNode.create(selector, numArgs);
         }
 
         @Override
-        protected final Object dispatch(final VirtualFrame frame) {
+        protected final Object dispatchSend(final VirtualFrame frame) {
             final Object receiver = getReceiver(frame);
             final ClassObject receiverClass = lookupClassNode.execute(receiver);
             final Object lookupResult = lookupSelectorNode.execute(receiverClass);
@@ -127,7 +124,7 @@ public final class SendBytecodes {
         protected final Object getReceiver(final VirtualFrame frame) {
             if (peekReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int stackPointer = FrameAccess.getStackPointer(frame, code) - 1 - argumentCount;
+                final int stackPointer = FrameAccess.getStackPointer(frame, code) - 1 - dispatchNode.getArgumentCount();
                 peekReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer)));
             }
             return peekReceiverNode.executeRead(frame);
@@ -141,19 +138,19 @@ public final class SendBytecodes {
     }
 
     public static final class SendLiteralSelectorNode extends AbstractSelfSendNode {
-        public SendLiteralSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argCount) {
-            super(code, index, numBytecodes, selector, argCount);
+        public SendLiteralSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
+            super(code, index, numBytecodes, selector, numArgs);
         }
 
-        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int argCount) {
+        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
             final Object selector = code.getLiteral(literalIndex);
-            return new SendLiteralSelectorNode(code, index, numBytecodes, selector, argCount);
+            return new SendLiteralSelectorNode(code, index, numBytecodes, selector, numArgs);
         }
     }
 
     public static final class SendSpecialSelectorNode extends AbstractSelfSendNode {
-        private SendSpecialSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argcount) {
-            super(code, index, numBytecodes, selector, argcount);
+        private SendSpecialSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
+            super(code, index, numBytecodes, selector, numArgs);
         }
 
         public static SendSpecialSelectorNode create(final CompiledCodeObject code, final int index, final int selectorIndex) {
@@ -183,12 +180,13 @@ public final class SendBytecodes {
         }
 
         public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
-            super(code, index, numBytecodes, numArgs);
-            dispatchNode = DispatchSuperSendNode.create(code, (NativeObject) code.getLiteral(literalIndex), numArgs);
+            super(code, index, numBytecodes);
+            final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
+            dispatchNode = DispatchSuperSendNode.create(code, selector, numArgs);
         }
 
         @Override
-        protected Object dispatch(final VirtualFrame frame) {
+        protected Object dispatchSend(final VirtualFrame frame) {
             return dispatchNode.execute(frame);
         }
 

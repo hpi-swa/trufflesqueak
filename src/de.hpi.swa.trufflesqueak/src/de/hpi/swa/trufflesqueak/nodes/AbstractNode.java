@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
@@ -25,5 +26,10 @@ public abstract class AbstractNode extends Node {
     protected final SqueakImageContext lookupContext() {
         CompilerAsserts.neverPartOfCompilation();
         return lookupContextReference(SqueakLanguage.class).get();
+    }
+
+    protected final ContextReference<SqueakImageContext> lookupContextReference() {
+        CompilerAsserts.neverPartOfCompilation();
+        return lookupContextReference(SqueakLanguage.class);
     }
 }
