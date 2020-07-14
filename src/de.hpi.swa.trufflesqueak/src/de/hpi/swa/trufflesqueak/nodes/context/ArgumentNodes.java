@@ -7,6 +7,8 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -26,11 +28,12 @@ public final class ArgumentNodes {
                     return new ArgumentNode(argumentIndex);
                 }
             } else {
-                return new ArgumentNotProvidedNode();
+                return ArgumentNotProvidedNode.SINGLETON;
             }
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     public static final class ArgumentOnStackNode extends AbstractArgumentNode {
         private final int argumentIndex;
 
@@ -65,10 +68,18 @@ public final class ArgumentNodes {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     private static final class ArgumentNotProvidedNode extends AbstractArgumentNode {
+        private static final ArgumentNotProvidedNode SINGLETON = new ArgumentNotProvidedNode();
+
         @Override
         public NotProvided execute(final VirtualFrame frame) {
             return NotProvided.SINGLETON;
+        }
+
+        @Override
+        public boolean isAdoptable() {
+            return false; /* Allow sharing. */
         }
     }
 }
