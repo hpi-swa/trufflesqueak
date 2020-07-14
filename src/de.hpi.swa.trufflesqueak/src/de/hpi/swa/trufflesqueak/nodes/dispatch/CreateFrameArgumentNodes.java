@@ -67,6 +67,10 @@ public final class CreateFrameArgumentNodes {
         public void executeRestore(final VirtualFrame frame, final int argumentCount) {
             FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer + 1 + argumentCount);
         }
+
+        public int getStackPointer() {
+            return stackPointer;
+        }
     }
 
     private abstract static class AbstractCreateFrameArgumentsForExceptionalNode extends AbstractNode {
@@ -115,15 +119,10 @@ public final class CreateFrameArgumentNodes {
     }
 
     protected abstract static class CreateFrameArgumentsForIndirectCallNode extends AbstractNode {
-        protected final int argumentCount;
         @Child private GetOrCreateContextOrMarkerNode senderNode = GetOrCreateContextOrMarkerNode.create();
 
-        protected CreateFrameArgumentsForIndirectCallNode(final int argumentCount) {
-            this.argumentCount = argumentCount;
-        }
-
-        protected static CreateFrameArgumentsForIndirectCallNode create(final int argumentCount) {
-            return CreateFrameArgumentsForIndirectCallNodeGen.create(argumentCount);
+        protected static CreateFrameArgumentsForIndirectCallNode create() {
+            return CreateFrameArgumentsForIndirectCallNodeGen.create();
         }
 
         protected abstract Object[] execute(VirtualFrame frame, Object lookupResult, ClassObject receiverClass, CompiledCodeObject method, NativeObject cachedSelector,

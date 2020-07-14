@@ -55,7 +55,7 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
     @Specialization(replaces = "doCached")
     protected final Object doIndirect(final VirtualFrame frame, final ClassObject receiverClass, final Object lookupResult,
                     @Cached final ResolveMethodNode methodNode,
-                    @Cached("create(argumentCount)") final CreateFrameArgumentsForIndirectCallNode argumentsNode,
+                    @Cached final CreateFrameArgumentsForIndirectCallNode argumentsNode,
                     @Cached final IndirectCallNode callNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         final CompiledCodeObject method = methodNode.execute(image, receiverClass, lookupResult);

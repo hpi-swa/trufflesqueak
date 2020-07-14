@@ -43,11 +43,15 @@ public abstract class AbstractDispatchNode extends AbstractNode {
     }
 
     public static FrameSlotReadNode[] createReceiverAndArgumentsNodes(final VirtualFrame frame, final int argumentCount) {
-        final FrameSlotReadNode[] receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
         final int newStackPointer = FrameAccess.getStackPointerSlow(frame) - (1 + argumentCount);
         assert newStackPointer >= 0 : "Bad stack pointer";
+        return createReceiverAndArgumentsNodes(frame, argumentCount, newStackPointer);
+    }
+
+    public static FrameSlotReadNode[] createReceiverAndArgumentsNodes(final VirtualFrame frame, final int argumentCount, final int stackPointer) {
+        final FrameSlotReadNode[] receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
         for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-            receiverAndArgumentsNodes[i] = FrameSlotReadNode.create(frame, newStackPointer + i);
+            receiverAndArgumentsNodes[i] = FrameSlotReadNode.create(frame, stackPointer + i);
         }
         return receiverAndArgumentsNodes;
     }
