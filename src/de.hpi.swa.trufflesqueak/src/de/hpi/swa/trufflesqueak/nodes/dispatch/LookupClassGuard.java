@@ -11,6 +11,7 @@ import com.oracle.truffle.api.utilities.AlwaysValidAssumption;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -59,6 +60,7 @@ public abstract class LookupClassGuard {
         } else if (receiver instanceof AbstractSqueakObjectWithClassAndHash) {
             return new AbstractSqueakObjectWithClassAndHashGuard((AbstractSqueakObjectWithClassAndHash) receiver);
         } else {
+            assert !(receiver instanceof AbstractSqueakObject);
             return ForeignObjectGuard.SINGLETON;
         }
     }
