@@ -13,8 +13,9 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
-@NodeInfo(cost = NodeCost.NONE)
+@NodeInfo(language = SqueakLanguageConfig.ID, cost = NodeCost.NONE)
 public final class EnterCodeNode extends RootNode {
     private final CompiledCodeObject code;
 

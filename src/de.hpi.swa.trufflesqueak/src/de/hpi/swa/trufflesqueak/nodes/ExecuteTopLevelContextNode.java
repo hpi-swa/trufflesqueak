@@ -11,6 +11,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -29,6 +30,7 @@ import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
+@NodeInfo(language = SqueakLanguageConfig.ID)
 public final class ExecuteTopLevelContextNode extends RootNode {
     private static final FrameDescriptor TOP_LEVEL_FRAME_DESCRIPTOR = new FrameDescriptor();
     private final SqueakImageContext image;
