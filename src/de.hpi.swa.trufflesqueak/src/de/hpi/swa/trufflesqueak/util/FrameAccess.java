@@ -307,8 +307,7 @@ public final class FrameAccess {
     }
 
     @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final BlockClosureObject closure,
-                    final FrameSlotReadNode[] receiverAndArgumentsNodes) {
+    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final FrameSlotReadNode[] receiverAndArgumentsNodes) {
         final int receiverAndArgumentsLength = receiverAndArgumentsNodes.length;
         CompilerAsserts.partialEvaluationConstant(receiverAndArgumentsLength);
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
@@ -317,7 +316,7 @@ public final class FrameAccess {
         assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
         frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
-        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
         for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
             frameArguments[ArgumentIndicies.RECEIVER.ordinal() + i] = receiverAndArgumentsNodes[i].executeRead(frame);
         }

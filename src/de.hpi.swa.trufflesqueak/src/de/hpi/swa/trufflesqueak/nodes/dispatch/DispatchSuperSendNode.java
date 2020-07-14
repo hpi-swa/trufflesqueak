@@ -34,7 +34,7 @@ public abstract class DispatchSuperSendNode extends AbstractDispatchNode {
                     @SuppressWarnings("unused") @Cached final AbstractPointersObjectReadNode readNode,
                     @SuppressWarnings("unused") @Cached("method.getMethodClassSlow()") final ClassObject cachedMethodClass,
                     @Cached("create(argumentCount, cachedMethodClass, lookupSlow(cachedMethodClass.getSuperclassOrNull()))") final CachedDispatchNode dispatchNode) {
-        return dispatchNode.execute(frame, selector);
+        return dispatchNode.execute(frame, selector, getReceiverAndArgumentsNodes(frame), getUpdateStackPointerNode());
     }
 
     protected final Object lookupSlow(final ClassObject receiver) {
