@@ -3841,7 +3841,7 @@ public final class BitBlt {
 
     private long dstLongAt(final long index) {
         assert index >>> 2 < endOfDestination;
-        return Integer.toUnsignedLong(UnsafeUtils.getIntFromBytes(destBits, index >>> 2));
+        return Integer.toUnsignedLong(UnsafeUtils.getIntFromBytes(destBits, index));
     }
 
     /*
@@ -3856,7 +3856,7 @@ public final class BitBlt {
     }
 
     private void dstLongAtput(final long index, final long value) {
-        UnsafeUtils.putIntIntoBytes(destBits, index >>> 2, (int) value);
+        UnsafeUtils.putIntIntoBytes(destBits, index, (int) value);
     }
 
     private long halftoneLongAt(final long index) {
@@ -3871,7 +3871,7 @@ public final class BitBlt {
          * arrowPrototype`.
          */
         if (0 <= index && index < endOfSource) {
-            return Integer.toUnsignedLong(UnsafeUtils.getIntFromBytes(sourceBits, index >>> 2));
+            return Integer.toUnsignedLong(UnsafeUtils.getIntFromBytes(sourceBits, index));
         } else {
             return 0L;
         }

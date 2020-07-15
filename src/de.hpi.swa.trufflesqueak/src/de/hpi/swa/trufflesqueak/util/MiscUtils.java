@@ -5,13 +5,14 @@
  */
 package de.hpi.swa.trufflesqueak.util;
 
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
-import java.awt.image.DirectColorModel;
 import java.awt.image.Raster;
-import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.lang.management.CompilationMXBean;
@@ -44,12 +45,13 @@ public final class MiscUtils {
      * More importantly for the {@link JPEGReadWriter2Plugin}, {@link BufferedImage}s without alpha
      * channel can be exported as JPEG.
      */
-    private static final DirectColorModel COLOR_MODEL_32BIT = new DirectColorModel(
-                    32,
-                    0x00ff0000,  // Red
-                    0x0000ff00,  // Green
-                    0x000000ff   // Blue
-    );
+    private static final ComponentColorModel COLOR_MODEL = new ComponentColorModel(
+                    ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                    new int[]{8, 8, 8},
+                    false,
+                    true,
+                    Transparency.TRANSLUCENT,
+                    DataBuffer.TYPE_BYTE);
 
     // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
     public static final long EPOCH_DELTA_SECONDS = (69L * 365 + 17) * 24 * 3600;
@@ -195,18 +197,11 @@ public final class MiscUtils {
     /* Wraps bitmap in a BufferedImage for efficient drawing. */
     @TruffleBoundary
     public static BufferedImage new32BitBufferedImage(final byte[] bytes, final int width, final int height) {
-        final SampleModel sm = COLOR_MODEL_32BIT.createCompatibleSampleModel(width, height);
-        final DataBufferByte db = new DataBufferByte(bytes, bytes.length);
-        final WritableRaster raster = Raster.createWritableRaster(sm, db, null);
-        return new BufferedImage(COLOR_MODEL_32BIT, raster, true, null);
-    }
-
-    @TruffleBoundary
-    public static BufferedImage new32BitBufferedImage(final int[] words, final int width, final int height) {
-        final SampleModel sm = COLOR_MODEL_32BIT.createCompatibleSampleModel(width, height);
-        final DataBufferInt db = new DataBufferInt(words, words.length);
-        final WritableRaster raster = Raster.createWritableRaster(sm, db, null);
-        return new BufferedImage(COLOR_MODEL_32BIT, raster, true, null);
+        final WritableRaster raster = Raster.createInterleavedRaster(new DataBufferByte(bytes, bytes.length),
+                        width, height,
+                        width * 4, 4,
+                        new int[]{2, 1, 0}, null);
+        return new BufferedImage(COLOR_MODEL, raster, true, null);
     }
 
     @TruffleBoundary

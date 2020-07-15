@@ -211,7 +211,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getIntLength() {
-        return getByteLength() / Integer.BYTES;
+        return getByteSize() / Integer.BYTES;
     }
 
     public int[] getIntStorage() {
@@ -230,7 +230,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getLongLength() {
-        return getByteLength() / Long.BYTES;
+        return getByteSize() / Long.BYTES;
     }
 
     private long[] getLongStorage() {
@@ -249,7 +249,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public int getShortLength() {
-        return getByteLength() / Short.BYTES;
+        return getByteSize() / Short.BYTES;
     }
 
     private short[] getShortStorage() {

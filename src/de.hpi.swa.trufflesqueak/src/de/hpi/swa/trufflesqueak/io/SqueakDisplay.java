@@ -144,8 +144,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
         @Override
         public void paintComponent(final Graphics g) {
-            final int[] ints = bitmap.getIntStorage();
-            g.drawImage(MiscUtils.new32BitBufferedImage(ints, width, height), 0, 0, null);
+            g.drawImage(bufferedImage, 0, 0, null);
         }
 
         private void setSqDisplay(final PointersObject sqDisplay) {
