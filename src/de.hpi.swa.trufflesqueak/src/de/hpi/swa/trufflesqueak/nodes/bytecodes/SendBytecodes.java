@@ -131,7 +131,7 @@ public final class SendBytecodes {
             final Object receiver = peekAtReceiver(frame);
             final ClassObject receiverClass = lookupClassNode.execute(receiver);
             final Object lookupResult = lookupSelectorNode.execute(receiverClass);
-            return dispatchNode.execute(frame, receiverClass, lookupResult);
+            return dispatchNode.execute(frame, receiver, receiverClass, lookupResult);
         }
 
         @Override

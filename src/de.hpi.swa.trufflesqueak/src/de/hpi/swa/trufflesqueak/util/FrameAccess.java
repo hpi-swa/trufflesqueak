@@ -308,17 +308,35 @@ public final class FrameAccess {
 
     @ExplodeLoop
     public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final FrameSlotReadNode[] receiverAndArgumentsNodes) {
-        final int receiverAndArgumentsLength = receiverAndArgumentsNodes.length;
-        CompilerAsserts.partialEvaluationConstant(receiverAndArgumentsLength);
-        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + receiverAndArgumentsLength];
+        final int numReceiverAndArguments = receiverAndArgumentsNodes.length;
+        CompilerAsserts.partialEvaluationConstant(numReceiverAndArguments);
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
         assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
-        assert receiverAndArgumentsLength > 0 : "At least a receiver must be provided";
+        assert numReceiverAndArguments > 0 : "At least a receiver must be provided";
         frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
-        for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
+        for (int i = 0; i < numReceiverAndArguments; i++) {
             frameArguments[ArgumentIndicies.RECEIVER.ordinal() + i] = receiverAndArgumentsNodes[i].executeRead(frame);
+        }
+        return frameArguments;
+    }
+
+    @ExplodeLoop
+    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final Object receiver, final FrameSlotReadNode[] argumentsNodes) {
+        final int argumentCount = argumentsNodes.length;
+        CompilerAsserts.partialEvaluationConstant(argumentCount);
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + argumentCount];
+        assert method != null : "Method should never be null";
+        assert sender != null : "Sender should never be null";
+        assert argumentCount > 0 : "At least a receiver must be provided";
+        frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
+        frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
+        for (int i = 0; i < argumentCount; i++) {
+            frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + i] = argumentsNodes[i].executeRead(frame);
         }
         return frameArguments;
     }
