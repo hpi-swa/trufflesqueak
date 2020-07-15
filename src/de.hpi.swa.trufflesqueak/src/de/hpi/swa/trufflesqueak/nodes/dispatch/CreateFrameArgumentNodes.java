@@ -203,12 +203,12 @@ public final class CreateFrameArgumentNodes {
     }
 
     @ExplodeLoop
-    private static Object[] getArguments(final VirtualFrame frame, final FrameSlotReadNode[] argumentsNodes) {
-        final int argumentCount = argumentsNodes.length;
+    private static Object[] getArguments(final VirtualFrame frame, final FrameSlotReadNode[] receiverAndArgumentsNodes) {
+        final int argumentCount = receiverAndArgumentsNodes.length - 1;
         CompilerAsserts.partialEvaluationConstant(argumentCount);
         final Object[] arguments = new Object[argumentCount];
         for (int i = 0; i < argumentCount; i++) {
-            arguments[i] = argumentsNodes[1 + i].executeRead(frame);
+            arguments[i] = receiverAndArgumentsNodes[1 + i].executeRead(frame);
         }
         return arguments;
     }
