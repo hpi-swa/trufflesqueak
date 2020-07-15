@@ -330,7 +330,6 @@ public final class FrameAccess {
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + argumentCount];
         assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
-        assert argumentCount > 0 : "At least a receiver must be provided";
         frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
