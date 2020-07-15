@@ -171,7 +171,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
             final WrappedByteArray output = new WrappedByteArray(destination.getByteStorage());
-            final BufferedImage image = MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height);
+            final BufferedImage image = MiscUtils.new32BitBufferedImage(bits.getStorage(), width, height);
             writeImage(output, image);
             return output.count;
         }

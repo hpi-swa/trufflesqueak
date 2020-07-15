@@ -131,6 +131,9 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private final class Canvas extends JComponent {
         private static final long serialVersionUID = 1L;
         private BufferedImage bufferedImage;
+        private NativeObject bitmap;
+        private int width;
+        private int height;
 
         private Canvas(final SqueakImageContext image) {
             final Object display = image.getSpecialObject(SPECIAL_OBJECT.THE_DISPLAY);
@@ -141,21 +144,22 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
         @Override
         public void paintComponent(final Graphics g) {
-            g.drawImage(bufferedImage, 0, 0, null);
+            final int[] ints = bitmap.getIntStorage();
+            g.drawImage(MiscUtils.new32BitBufferedImage(ints, width, height), 0, 0, null);
         }
 
         private void setSqDisplay(final PointersObject sqDisplay) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-            final NativeObject bitmap = readNode.executeNative(sqDisplay, FORM.BITS);
+            bitmap = readNode.executeNative(sqDisplay, FORM.BITS);
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            final int width = readNode.executeInt(sqDisplay, FORM.WIDTH);
-            final int height = readNode.executeInt(sqDisplay, FORM.HEIGHT);
+            width = readNode.executeInt(sqDisplay, FORM.WIDTH);
+            height = readNode.executeInt(sqDisplay, FORM.HEIGHT);
             assert (long) sqDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
-                bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height);
+                bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getStorage(), width, height);
             }
         }
     }
@@ -295,7 +299,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             }
             final BufferedImage bufferedImage;
             if (depth == 32) {
-                bufferedImage = MiscUtils.new32BitBufferedImage(cursorWords, width, height);
+                final int x = 42;
+                bufferedImage = MiscUtils.new32BitBufferedImage(new byte[0], width, height);
             } else {
                 bufferedImage = new BufferedImage(bestCursorSize.width, bestCursorSize.height, BufferedImage.TYPE_INT_ARGB);
                 for (int y = 0; y < height; y++) {

@@ -101,7 +101,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
                     throw PrimitiveFailed.GENERIC_ERROR;
                 }
                 /* Use bitmap's storage as backend for BufferedImage. */
-                return image.env.asGuestValue(MiscUtils.new32BitBufferedImage(bits.getIntStorage(), width, height));
+                return image.env.asGuestValue(MiscUtils.new32BitBufferedImage(bits.getStorage(), width, height));
             } catch (final ClassCastException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.GENERIC_ERROR;

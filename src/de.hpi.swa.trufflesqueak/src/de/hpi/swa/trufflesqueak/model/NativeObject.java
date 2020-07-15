@@ -40,7 +40,6 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSi
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
@@ -52,28 +51,28 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     public static final int SHORT_TO_WORD = Long.SIZE / Short.SIZE;
     public static final int INTEGER_TO_WORD = Long.SIZE / Integer.SIZE;
 
-    @CompilationFinal private Object storage;
+    @CompilationFinal(dimensions = 1) private byte[] storage;
 
     public NativeObject(final SqueakImageContext image) { // constructor for special selectors
         super(image, AbstractSqueakObjectWithHash.HASH_UNINITIALIZED, null);
-        storage = ArrayUtils.EMPTY_ARRAY;
+        storage = null;
     }
 
-    private NativeObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
+    private NativeObject(final SqueakImageContext image, final ClassObject classObject, final byte[] storage) {
         super(image, classObject);
         assert storage != null : "Unexpected `null` value";
         this.storage = storage;
     }
 
-    private NativeObject(final SqueakImageContext image, final long hash, final ClassObject classObject, final Object storage) {
+    private NativeObject(final SqueakImageContext image, final long hash, final ClassObject classObject, final byte[] storage) {
         super(image, hash, classObject);
         assert storage != null : "Unexpected `null` value";
         this.storage = storage;
     }
 
-    private NativeObject(final NativeObject original, final Object storageCopy) {
+    private NativeObject(final NativeObject original) {
         super(original);
-        storage = storageCopy;
+        storage = original.storage.clone();
     }
 
     public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
@@ -89,44 +88,32 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     public static NativeObject newNativeInts(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), UnsafeUtils.toInts(chunk.getBytes()));
+        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), chunk.getBytes());
     }
 
     public static NativeObject newNativeInts(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeInts(img, klass, new int[size]);
-    }
-
-    public static NativeObject newNativeInts(final SqueakImageContext img, final ClassObject klass, final int[] words) {
-        return new NativeObject(img, klass, words);
+        return newNativeBytes(img, klass, size * Integer.BYTES);
     }
 
     public static NativeObject newNativeLongs(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), UnsafeUtils.toLongs(chunk.getBytes()));
+        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), chunk.getBytes());
     }
 
     public static NativeObject newNativeLongs(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeLongs(img, klass, new long[size]);
-    }
-
-    public static NativeObject newNativeLongs(final SqueakImageContext img, final ClassObject klass, final long[] longs) {
-        return new NativeObject(img, klass, longs);
+        return newNativeBytes(img, klass, size * Long.BYTES);
     }
 
     public static NativeObject newNativeShorts(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), UnsafeUtils.toShorts(chunk.getBytes()));
+        return new NativeObject(chunk.getImage(), chunk.getHash(), chunk.getSqClass(), chunk.getBytes());
     }
 
     public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeShorts(img, klass, new short[size]);
-    }
-
-    public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final short[] shorts) {
-        return new NativeObject(img, klass, shorts);
+        return newNativeBytes(img, klass, size * Short.BYTES);
     }
 
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        if (storage == ArrayUtils.EMPTY_ARRAY) { /* Fill in special selectors. */
+        if (storage == null) { /* Fill in special selectors. */
             setStorage(chunk.getBytes());
         } else if (chunk.getImage().isHeadless() && isByteType()) {
             final SqueakImageContext image = chunk.getImage();
@@ -167,13 +154,13 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void become(final NativeObject other) {
         super.becomeOtherClass(other);
-        final Object otherStorage = other.storage;
+        final byte[] otherStorage = other.storage;
         other.setStorage(storage);
         setStorage(otherStorage);
     }
 
-    public NativeObject shallowCopy(final Object storageCopy) {
-        return new NativeObject(this, storageCopy);
+    public NativeObject shallowCopy() {
+        return new NativeObject(this);
     }
 
     public void convertToBytesStorage(final byte[] bytes) {
@@ -181,24 +168,9 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         setStorage(bytes);
     }
 
-    public void convertToIntsStorage(final int[] ints) {
-        assert storage.getClass() != ints.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ints);
-    }
-
-    public void convertToLongsStorage(final long[] longs) {
-        assert storage.getClass() != longs.getClass() : "Converting storage of same type unnecessary";
-        setStorage(longs);
-    }
-
-    public void convertToShortsStorage(final short[] shorts) {
-        assert storage.getClass() != shorts.getClass() : "Converting storage of same type unnecessary";
-        setStorage(shorts);
-    }
-
     public byte getByte(final long index) {
         assert isByteType();
-        return UnsafeUtils.getByte((byte[]) storage, index);
+        return UnsafeUtils.getByte(storage, index);
     }
 
     public int getByteUnsigned(final long index) {
@@ -207,7 +179,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
 
     public void setByte(final long index, final byte value) {
         assert isByteType();
-        UnsafeUtils.putByte((byte[]) storage, index, value);
+        UnsafeUtils.putByte(storage, index, value);
     }
 
     public void setByte(final long index, final int value) {
@@ -219,92 +191,96 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return getByteStorage().length;
     }
 
+    public int getByteSize() {
+        return storage.length;
+    }
+
     public byte[] getByteStorage() {
         assert isByteType();
-        return (byte[]) storage;
+        return storage;
     }
 
     public int getInt(final long index) {
         assert isIntType();
-        return UnsafeUtils.getInt((int[]) storage, index);
+        return UnsafeUtils.getInt(storage, index);
     }
 
     public void setInt(final long index, final int value) {
         assert isIntType();
-        UnsafeUtils.putInt((int[]) storage, index, value);
+        UnsafeUtils.putInt(storage, index, value);
     }
 
     public int getIntLength() {
-        return getIntStorage().length;
+        return getByteLength() / Integer.BYTES;
     }
 
     public int[] getIntStorage() {
         assert isIntType();
-        return (int[]) storage;
+        return UnsafeUtils.toInts(storage);
     }
 
     public long getLong(final long index) {
         assert isLongType();
-        return UnsafeUtils.getLong((long[]) storage, index);
+        return UnsafeUtils.getLong(storage, index);
     }
 
     public void setLong(final long index, final long value) {
         assert isLongType();
-        UnsafeUtils.putLong((long[]) storage, index, value);
+        UnsafeUtils.putLong(storage, index, value);
     }
 
     public int getLongLength() {
-        return getLongStorage().length;
+        return getByteLength() / Long.BYTES;
     }
 
-    public long[] getLongStorage() {
+    private long[] getLongStorage() {
         assert isLongType();
-        return (long[]) storage;
+        return UnsafeUtils.toLongs(storage);
     }
 
     public short getShort(final long index) {
         assert isShortType();
-        return UnsafeUtils.getShort((short[]) storage, index);
+        return UnsafeUtils.getShort(storage, index);
     }
 
     public void setShort(final long index, final short value) {
         assert isShortType();
-        UnsafeUtils.putShort((short[]) storage, index, value);
+        UnsafeUtils.putShort(storage, index, value);
     }
 
     public int getShortLength() {
-        return getShortStorage().length;
+        return getByteLength() / Short.BYTES;
     }
 
-    public short[] getShortStorage() {
+    private short[] getShortStorage() {
         assert isShortType();
-        return (short[]) storage;
+        return UnsafeUtils.toShorts(storage);
     }
 
     public boolean isByteType() {
-        return storage instanceof byte[];
+        return getSqueakClass().isBytes();
     }
 
     public boolean isIntType() {
-        return storage instanceof int[];
+        return getSqueakClass().isWords();
     }
 
     public boolean isLongType() {
-        return storage instanceof long[];
+        return getSqueakClass().isLongs();
     }
 
     public boolean isShortType() {
-        return storage instanceof short[];
+        return getSqueakClass().isShorts();
     }
 
-    public void setStorage(final Object storage) {
+    public void setStorage(final byte[] storage) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.storage = storage;
     }
 
     @TruffleBoundary
     public String asStringUnsafe() {
-        return StandardCharsets.UTF_8.decode(ByteBuffer.wrap((byte[]) storage)).toString();
+        return StandardCharsets.UTF_8.decode(ByteBuffer.wrap(storage)).toString();
     }
 
     @TruffleBoundary
@@ -528,5 +504,16 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
             errorProfile.enter();
             throw UnsupportedMessageException.create();
         }
+    }
+
+    public byte[] getStorage() {
+        return storage;
+    }
+
+    private enum Format {
+        BYTES,
+        SHORTS,
+        INTS,
+        LONGS
     }
 }

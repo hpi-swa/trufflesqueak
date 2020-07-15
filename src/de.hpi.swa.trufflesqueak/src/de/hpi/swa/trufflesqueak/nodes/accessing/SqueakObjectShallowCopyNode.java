@@ -25,7 +25,6 @@ import de.hpi.swa.trufflesqueak.model.VariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectShallowCopyNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectShallowCopyNode;
 
 public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
 
@@ -94,9 +93,8 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final NativeObject doNative(final NativeObject receiver,
-                    @Cached final NativeObjectShallowCopyNode copyNode) {
-        return copyNode.execute(receiver);
+    protected static final NativeObject doNative(final NativeObject receiver) {
+        return receiver.shallowCopy();
     }
 
     @Specialization(guards = "!receiver.hasInstanceVariables()")

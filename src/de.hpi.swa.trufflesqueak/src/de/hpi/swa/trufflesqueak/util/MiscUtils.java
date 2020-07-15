@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.util;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DirectColorModel;
 import java.awt.image.Raster;
@@ -192,6 +193,14 @@ public final class MiscUtils {
     }
 
     /* Wraps bitmap in a BufferedImage for efficient drawing. */
+    @TruffleBoundary
+    public static BufferedImage new32BitBufferedImage(final byte[] bytes, final int width, final int height) {
+        final SampleModel sm = COLOR_MODEL_32BIT.createCompatibleSampleModel(width, height);
+        final DataBufferByte db = new DataBufferByte(bytes, bytes.length);
+        final WritableRaster raster = Raster.createWritableRaster(sm, db, null);
+        return new BufferedImage(COLOR_MODEL_32BIT, raster, true, null);
+    }
+
     @TruffleBoundary
     public static BufferedImage new32BitBufferedImage(final int[] words, final int width, final int height) {
         final SampleModel sm = COLOR_MODEL_32BIT.createCompatibleSampleModel(width, height);

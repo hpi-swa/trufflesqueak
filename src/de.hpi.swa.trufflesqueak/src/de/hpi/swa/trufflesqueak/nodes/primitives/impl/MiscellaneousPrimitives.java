@@ -522,44 +522,48 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "receiver.isShortType()")
         protected static final NativeObject doNativeShorts(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getShortStorage(), (short) value);
+            final short shortValue = (short) value;
+            for (int i = 0; i < receiver.getShortLength(); i++) {
+                receiver.setShort(i, shortValue);
+            }
             return receiver;
         }
 
         @Specialization(guards = "receiver.isIntType()")
         protected static final NativeObject doNativeInts(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getIntStorage(), (int) value);
+            final int intValue = (int) value;
+            for (int i = 0; i < receiver.getIntLength(); i++) {
+                receiver.setInt(i, intValue);
+            }
             return receiver;
         }
 
         @Specialization(guards = {"receiver.isIntType()"}, rewriteOn = ArithmeticException.class)
         protected static final NativeObject doNativeInts(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getIntStorage(), value.intValueExact());
-            return receiver;
+            return doNativeInts(receiver, value.intValueExact());
         }
 
         @Specialization(guards = {"receiver.isIntType()", "value.lessThanOrEqualTo(INTEGER_MAX)"}, replaces = "doNativeInts")
         protected static final NativeObject doNativeIntsFallback(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getIntStorage(), value.intValueExact());
-            return receiver;
+            return doNativeInts(receiver, value.intValueExact());
         }
 
         @Specialization(guards = "receiver.isLongType()")
         protected static final NativeObject doNativeLongs(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getLongStorage(), value);
+            for (int i = 0; i < receiver.getLongLength(); i++) {
+                receiver.setLong(i, value);
+            }
             return receiver;
         }
 
         @Specialization(guards = {"receiver.isLongType()"}, rewriteOn = ArithmeticException.class)
         protected static final NativeObject doNativeLongs(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getLongStorage(), value.longValueExact());
-            return receiver;
+            return doNativeLongs(receiver, value.longValueExact());
         }
 
         @Specialization(guards = {"receiver.isLongType()", "value.fitsIntoLong()"}, replaces = "doNativeLongs")
         protected static final NativeObject doNativeLongsFallback(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getLongStorage(), value.longValueExact());
-            return receiver;
+            return doNativeLongs(receiver, value.longValueExact());
         }
     }
 
@@ -724,24 +728,21 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "receiver.isShortType()", "anotherObject.isShortType()", "receiver.getShortLength() == anotherObject.getShortLength()"})
         protected static final NativeObject doCopyNativeShort(final NativeObject receiver, final NativeObject anotherObject) {
-            final short[] destStorage = receiver.getShortStorage();
-            System.arraycopy(anotherObject.getShortStorage(), 0, destStorage, 0, destStorage.length);
+            System.arraycopy(anotherObject.getStorage(), 0, receiver.getStorage(), 0, receiver.getShortLength() * Short.BYTES);
             return receiver;
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "receiver.isIntType()", "anotherObject.isIntType()", "receiver.getIntLength() == anotherObject.getIntLength()"})
         protected static final NativeObject doCopyNativeInt(final NativeObject receiver, final NativeObject anotherObject) {
-            final int[] destStorage = receiver.getIntStorage();
-            System.arraycopy(anotherObject.getIntStorage(), 0, destStorage, 0, destStorage.length);
+            System.arraycopy(anotherObject.getStorage(), 0, receiver.getStorage(), 0, receiver.getIntLength() * Integer.BYTES);
             return receiver;
         }
 
         @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
                         "receiver.isLongType()", "anotherObject.isLongType()", "receiver.getLongLength() == anotherObject.getLongLength()"})
         protected static final NativeObject doCopyNativeLong(final NativeObject receiver, final NativeObject anotherObject) {
-            final long[] destStorage = receiver.getLongStorage();
-            System.arraycopy(anotherObject.getLongStorage(), 0, destStorage, 0, destStorage.length);
+            System.arraycopy(anotherObject.getStorage(), 0, receiver.getStorage(), 0, receiver.getLongLength() * Long.BYTES);
             return receiver;
         }
 

@@ -602,7 +602,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected static final void doNativeShorts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 try {
-                    System.arraycopy(repl.getShortStorage(), (int) replStart - 1, rcvr.getShortStorage(), (int) start - 1, (int) (1 + stop - start));
+                    System.arraycopy(repl.getStorage(), (int) (replStart - 1) * Short.BYTES, rcvr.getStorage(), (int) (start - 1) * Short.BYTES, (int) (1 + stop - start) * Short.BYTES);
                 } catch (final IndexOutOfBoundsException e) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
@@ -613,7 +613,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected static final void doNativeInts(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 try {
-                    System.arraycopy(repl.getIntStorage(), (int) replStart - 1, rcvr.getIntStorage(), (int) start - 1, (int) (1 + stop - start));
+                    System.arraycopy(repl.getStorage(), (int) (replStart - 1) * Integer.BYTES, rcvr.getStorage(), (int) (start - 1) * Integer.BYTES, (int) (1 + stop - start) * Integer.BYTES);
                 } catch (final IndexOutOfBoundsException e) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;
@@ -624,7 +624,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             protected static final void doNativeLongs(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile) {
                 try {
-                    System.arraycopy(repl.getLongStorage(), (int) replStart - 1, rcvr.getLongStorage(), (int) start - 1, (int) (1 + stop - start));
+                    System.arraycopy(repl.getStorage(), (int) (replStart - 1) * Long.BYTES, rcvr.getStorage(), ((int) start - 1) * Long.BYTES, (int) (1 + stop - start) * Long.BYTES);
                 } catch (final IndexOutOfBoundsException e) {
                     errorProfile.enter();
                     throw PrimitiveFailed.BAD_INDEX;

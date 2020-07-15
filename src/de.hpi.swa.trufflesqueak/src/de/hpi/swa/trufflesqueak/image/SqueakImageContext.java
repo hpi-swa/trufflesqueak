@@ -65,6 +65,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerState;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakImageContext {
     /* Special objects */
@@ -684,7 +685,7 @@ public final class SqueakImageContext {
     }
 
     public NativeObject asWideString(final String value) {
-        return NativeObject.newNativeInts(this, getWideStringClass(), MiscUtils.stringToCodePointsArray(value));
+        return NativeObject.newNativeBytes(this, getWideStringClass(), UnsafeUtils.toBytes(MiscUtils.stringToCodePointsArray(value)));
     }
 
     public NativeObject asString(final String value, final ConditionProfile wideStringProfile) {
