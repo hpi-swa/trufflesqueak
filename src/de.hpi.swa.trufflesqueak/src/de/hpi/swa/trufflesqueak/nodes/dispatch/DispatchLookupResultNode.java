@@ -36,19 +36,19 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "lookupResult == cachedLookupResult", limit = "INLINE_CACHE_SIZE", assumptions = {"dispatchNode.getCallTargetStable()"})
-    protected final Object doCached(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
+    protected static final Object doCached(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
                     @Cached("lookupResult") final Object cachedLookupResult,
-                    @Cached("create(frame, argumentCount, receiverClass, lookupResult)") final CachedDispatchNode dispatchNode) {
-        return dispatchNode.execute(frame, selector);
+                    @Cached("create(frame, selector, argumentCount, receiverClass, lookupResult)") final CachedDispatchNode dispatchNode) {
+        return dispatchNode.execute(frame);
     }
 
     @Specialization(replaces = "doCached")
-    protected final Object doIndirect(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
+    protected static final Object doIndirect(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
                     @Cached final ResolveMethodNode methodNode,
-                    @Cached("create(frame, argumentCount)") final CreateFrameArgumentsForIndirectCallNode argumentsNode,
+                    @Cached("create(frame, selector, argumentCount)") final CreateFrameArgumentsForIndirectCallNode argumentsNode,
                     @Cached final IndirectCallNode callNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         final CompiledCodeObject method = methodNode.execute(image, receiverClass, lookupResult);
-        return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, receiver, receiverClass, lookupResult, method, selector));
+        return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, receiver, receiverClass, lookupResult, method));
     }
 }

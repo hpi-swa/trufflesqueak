@@ -30,11 +30,11 @@ public abstract class DispatchSuperSendNode extends AbstractDispatchNode {
     public abstract Object execute(VirtualFrame frame);
 
     @Specialization(guards = {"method.getMethodClass(readNode) == cachedMethodClass"}, assumptions = {"cachedMethodClass.getClassHierarchyStable()", "dispatchNode.getCallTargetStable()"})
-    protected final Object doCached(final VirtualFrame frame,
+    protected static final Object doCached(final VirtualFrame frame,
                     @SuppressWarnings("unused") @Cached final AbstractPointersObjectReadNode readNode,
                     @SuppressWarnings("unused") @Cached("method.getMethodClassSlow()") final ClassObject cachedMethodClass,
-                    @Cached("create(frame, argumentCount, cachedMethodClass, lookupSlow(cachedMethodClass.getSuperclassOrNull()))") final CachedDispatchNode dispatchNode) {
-        return dispatchNode.execute(frame, selector);
+                    @Cached("create(frame, selector, argumentCount, cachedMethodClass, lookupSlow(cachedMethodClass.getSuperclassOrNull()))") final CachedDispatchNode dispatchNode) {
+        return dispatchNode.execute(frame);
     }
 
     protected final Object lookupSlow(final ClassObject receiver) {
