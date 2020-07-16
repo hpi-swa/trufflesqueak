@@ -43,7 +43,7 @@ public final class CreateFrameArgumentNodes {
         @CompilationFinal private ContextReference<SqueakImageContext> context;
 
         @Child private FrameSlotReadNode receiverNode;
-        @Children private FrameSlotReadNode[] argumentNodes;
+        @Children protected FrameSlotReadNode[] argumentNodes;
 
         private AbstractCreateFrameArgumentsForExceptionalNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
             this.selector = selector;
@@ -78,17 +78,6 @@ public final class CreateFrameArgumentNodes {
             }
             return receiverNode.executeRead(frame);
         }
-
-        @ExplodeLoop
-        protected final Object[] getArguments(final VirtualFrame frame) {
-            final int argumentCount = argumentNodes.length;
-            CompilerAsserts.partialEvaluationConstant(argumentCount);
-            final Object[] arguments = new Object[argumentCount];
-            for (int i = 0; i < argumentCount; i++) {
-                arguments[i] = argumentNodes[i].executeRead(frame);
-            }
-            return arguments;
-        }
     }
 
     public static final class CreateFrameArgumentsForDNUNode extends AbstractCreateFrameArgumentsForExceptionalNode {
@@ -105,7 +94,7 @@ public final class CreateFrameArgumentNodes {
 
         public Object[] execute(final VirtualFrame frame, final CompiledCodeObject method, final Object sender) {
             final Object receiver = getReceiver(frame);
-            final Object[] arguments = getArguments(frame);
+            final Object[] arguments = getArguments(frame, argumentNodes);
             final ClassObject receiverClass = classNode.executeLookup(receiver);
             final PointersObject message = getImage().newMessage(writeNode, selector, receiverClass, arguments);
             return FrameAccess.newDNUWith(method, sender, receiver, message);
@@ -123,7 +112,7 @@ public final class CreateFrameArgumentNodes {
 
         public Object[] execute(final VirtualFrame frame, final Object cachedObject, final CompiledCodeObject method, final Object sender) {
             final Object receiver = getReceiver(frame);
-            final Object[] arguments = getArguments(frame);
+            final Object[] arguments = getArguments(frame, argumentNodes);
             return FrameAccess.newOAMWith(method, sender, cachedObject, selector, getImage().asArrayOfObjects(arguments), receiver);
         }
     }
@@ -163,7 +152,7 @@ public final class CreateFrameArgumentNodes {
                         final CompiledCodeObject method,
                         @Cached final AbstractPointersObjectWriteNode writeNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final Object[] arguments = getArguments(frame);
+            final Object[] arguments = getArguments(frame, argumentNodes);
             final PointersObject message = image.newMessage(writeNode, selector, receiverClass, arguments);
             return FrameAccess.newDNUWith(method, senderNode.execute(frame, method), receiver, message);
         }
@@ -172,20 +161,20 @@ public final class CreateFrameArgumentNodes {
         protected final Object[] doObjectAsMethod(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final ClassObject receiverClass, final Object targetObject,
                         final CompiledCodeObject method,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final Object[] arguments = getArguments(frame);
+            final Object[] arguments = getArguments(frame, argumentNodes);
             return FrameAccess.newOAMWith(method, senderNode.execute(frame, method), targetObject, selector, image.asArrayOfObjects(arguments), receiver);
         }
+    }
 
-        @ExplodeLoop
-        private Object[] getArguments(final VirtualFrame frame) {
-            final int argumentCount = argumentNodes.length;
-            CompilerAsserts.partialEvaluationConstant(argumentCount);
-            final Object[] arguments = new Object[argumentCount];
-            for (int i = 0; i < argumentCount; i++) {
-                arguments[i] = argumentNodes[1 + i].executeRead(frame);
-            }
-            return arguments;
+    @ExplodeLoop
+    private static Object[] getArguments(final VirtualFrame frame, final FrameSlotReadNode[] argumentNodes) {
+        final int argumentCount = argumentNodes.length;
+        CompilerAsserts.partialEvaluationConstant(argumentCount);
+        final Object[] arguments = new Object[argumentCount];
+        for (int i = 0; i < argumentCount; i++) {
+            arguments[i] = argumentNodes[i].executeRead(frame);
         }
+        return arguments;
     }
 
     @NodeInfo(cost = NodeCost.NONE)
