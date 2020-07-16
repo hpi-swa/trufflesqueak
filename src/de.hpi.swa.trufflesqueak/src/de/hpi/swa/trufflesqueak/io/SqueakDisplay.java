@@ -5,8 +5,10 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Toolkit;
@@ -29,12 +31,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import javax.swing.JComponent;
-import javax.swing.JFrame;
+import javax.swing.RepaintManager;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -49,7 +47,6 @@ import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.WINDOW;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
@@ -57,19 +54,16 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "TruffleSqueak";
-    private static final boolean REPAINT_AUTOMATICALLY = false; // For debugging purposes.
     private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
     @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = new int[]{0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
 
     public final SqueakImageContext image;
-    private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
-    private final Canvas canvas;
-    private boolean hasVisibleHardwareCursor;
+    private final Frame frame = new Frame(DEFAULT_WINDOW_TITLE);
+    private final Canvas canvas = new Canvas();
     private final SqueakMouse mouse;
     private final SqueakKeyboard keyboard;
     private final ArrayDeque<long[]> deferredEvents = new ArrayDeque<>();
-    private final ScheduledExecutorService repaintExecutor;
 
     @CompilationFinal private int inputSemaphoreIndex = -1;
 
@@ -80,22 +74,13 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
     public SqueakDisplay(final SqueakImageContext image) {
         this.image = image;
-        canvas = new Canvas(image);
+        frame.add(canvas);
         mouse = new SqueakMouse(this);
         keyboard = new SqueakKeyboard(this);
-        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setFocusTraversalKeysEnabled(false); // Ensure `Tab` key is captured.
         frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
-        frame.getContentPane().add(canvas);
         frame.setResizable(true);
-
         installEventListeners();
-        if (REPAINT_AUTOMATICALLY) {
-            repaintExecutor = Executors.newSingleThreadScheduledExecutor();
-            repaintExecutor.scheduleWithFixedDelay(() -> canvas.repaint(), 0, 20, TimeUnit.MILLISECONDS);
-        } else {
-            repaintExecutor = null;
-        }
     }
 
     @SuppressWarnings("unused")
@@ -128,32 +113,51 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         });
     }
 
-    private final class Canvas extends JComponent {
+    private static final class Canvas extends Component {
         private static final long serialVersionUID = 1L;
         private BufferedImage bufferedImage;
 
-        private Canvas(final SqueakImageContext image) {
-            final Object display = image.getSpecialObject(SPECIAL_OBJECT.THE_DISPLAY);
-            if (display instanceof PointersObject) {
-                setSqDisplay((PointersObject) display);
-            }
+        private Canvas() {
+            /* Drawing is very simple, so double buffering is not needed. */
+            RepaintManager.currentManager(this).setDoubleBufferingEnabled(false);
         }
 
         @Override
-        public void paintComponent(final Graphics g) {
+        public boolean isOpaque() {
+            return true;
+        }
+
+        /**
+         * Override paint in case a repaint event is triggered (e.g. when window is moved to another
+         * screen).
+         */
+        @Override
+        public void paint(final Graphics g) {
             g.drawImage(bufferedImage, 0, 0, null);
         }
 
-        private void setSqDisplay(final PointersObject sqDisplay) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+        /**
+         * Paint directly onto graphics. Smalltalk manages repaints and thus, Swing's repaint
+         * manager needs to be bypassed to avoid flickering (repaints otherwise have a slight
+         * delay).
+         */
+        public void paintImmediately(final int left, final int top, final int right, final int bottom) {
+            final Graphics g = getGraphics();
+            if (g != null) {
+                g.drawImage(bufferedImage, left, top, right, bottom, left, top, right, bottom, null);
+                g.dispose();
+            }
+        }
+
+        private void setSqueakDisplay(final PointersObject squeakDisplay) {
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
-            final NativeObject bitmap = readNode.executeNative(sqDisplay, FORM.BITS);
+            final NativeObject bitmap = readNode.executeNative(squeakDisplay, FORM.BITS);
             if (!bitmap.isIntType()) {
                 throw SqueakException.create("Display bitmap expected to be a words object");
             }
-            final int width = readNode.executeInt(sqDisplay, FORM.WIDTH);
-            final int height = readNode.executeInt(sqDisplay, FORM.HEIGHT);
-            assert (long) sqDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
+            final int width = readNode.executeInt(squeakDisplay, FORM.WIDTH);
+            final int height = readNode.executeInt(squeakDisplay, FORM.HEIGHT);
+            assert (long) squeakDisplay.instVarAt0Slow(FORM.DEPTH) == 32 : "Unsupported display depth";
             if (width > 0 && height > 0) {
                 bufferedImage = MiscUtils.new32BitBufferedImage(bitmap.getIntStorage(), width, height);
             }
@@ -164,7 +168,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @TruffleBoundary
     public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
         if (left < right && top < bottom && !deferUpdates && destForm.isDisplay()) {
-            canvas.paintImmediately(left, top, right - left, bottom - top);
+            canvas.paintImmediately(left, top, right, bottom);
         }
     }
 
@@ -172,17 +176,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @TruffleBoundary
     public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
         assert left < right && top < bottom;
-        /**
-         * {@link Canvas#repaint} informs the repaint manager that the canvas should soon be
-         * repainted which is sufficient in most cases. When the user drags content and the hardware
-         * cursor is invisible, however, it is necessary to {@link Canvas#paintImmediately} which is
-         * expensive but avoids strange visual artifacts.
-         */
-        if (hasVisibleHardwareCursor) {
-            canvas.repaint(0, left, top, right - left, bottom - top);
-        } else {
-            canvas.paintImmediately(left, top, right - left, bottom - top);
-        }
+        canvas.paintImmediately(left, top, right, bottom);
     }
 
     @Override
@@ -194,14 +188,14 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @Override
     @TruffleBoundary
     public void resizeTo(final int width, final int height) {
-        frame.getContentPane().setPreferredSize(new Dimension(width, height));
+        frame.setPreferredSize(new Dimension(width, height));
         frame.pack();
     }
 
     @Override
     @TruffleBoundary
     public DisplayPoint getWindowSize() {
-        return new DisplayPoint(frame.getContentPane().getWidth(), frame.getContentPane().getHeight());
+        return new DisplayPoint(canvas.getWidth(), canvas.getHeight());
     }
 
     @Override
@@ -209,16 +203,16 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     public void setFullscreen(final boolean enable) {
         if (enable) {
             rememberedWindowLocation = frame.getLocationOnScreen();
-            rememberedWindowSize = frame.getContentPane().getSize();
+            rememberedWindowSize = frame.getSize();
         }
         frame.dispose();
         frame.setUndecorated(enable);
         if (enable) {
-            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            frame.setExtendedState(Frame.MAXIMIZED_BOTH);
             frame.setResizable(false);
         } else {
-            frame.setExtendedState(JFrame.NORMAL);
-            frame.getContentPane().setPreferredSize(rememberedWindowSize);
+            frame.setExtendedState(Frame.NORMAL);
+            frame.setPreferredSize(rememberedWindowSize);
             frame.setResizable(true);
         }
         frame.pack();
@@ -235,7 +229,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @Override
     @TruffleBoundary
     public void open(final PointersObject sqDisplay) {
-        canvas.setSqDisplay(sqDisplay);
+        canvas.setSqueakDisplay(sqDisplay);
         // Set or update frame title.
         final String imageFileName = new File(image.getImagePath()).getName();
         // Avoid name duplication in frame title.
@@ -248,7 +242,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         frame.setTitle(title);
         if (!frame.isVisible()) {
             final DisplayPoint lastWindowSize = image.flags.getLastWindowSize();
-            frame.getContentPane().setPreferredSize(new Dimension(lastWindowSize.getWidth(), lastWindowSize.getHeight()));
+            frame.setPreferredSize(new Dimension(lastWindowSize.getWidth(), lastWindowSize.getHeight()));
             frame.pack();
             frame.setVisible(true);
             frame.requestFocus();
@@ -279,14 +273,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                   0        1     invert the underlying pixel
              * </pre>
              */
-            boolean allZero = true;
-            for (final int cursorWord : cursorWords) {
-                if (cursorWord != 0) {
-                    allZero = false;
-                    break;
-                }
-            }
-            hasVisibleHardwareCursor = !allZero;
             final int[] ints;
             if (mask != null) {
                 ints = mergeCursorWithMask(cursorWords, mask);
@@ -308,7 +294,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             }
             cursor = TOOLKIT.createCustomCursor(bufferedImage, new Point(offsetX, offsetY), "TruffleSqueak Cursor");
         }
-        canvas.setCursor(cursor);
+        frame.setCursor(cursor);
     }
 
     private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
