@@ -12,17 +12,20 @@ import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
-public class SqueakFileDetector implements TruffleFile.FileTypeDetector {
+public final class SqueakFileDetector implements TruffleFile.FileTypeDetector {
 
     @Override
     public String findMimeType(final TruffleFile file) throws IOException {
-        final String fileName = file.getName().toString();
-        if (fileName.endsWith(".image")) {
+        final String fileName = file.getName();
+        if (fileName == null) {
+            return null;
+        } else if (fileName.endsWith(".image")) {
             return SqueakLanguageConfig.MIME_TYPE;
         } else if (fileName.endsWith(".st")) {
             return SqueakLanguageConfig.ST_MIME_TYPE;
+        } else {
+            return null;
         }
-        return null;
     }
 
     @Override
