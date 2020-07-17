@@ -145,7 +145,6 @@ public final class SqueakImageContext {
     public int stackDepth;
     public ContextObject lastSeenContext;
 
-    @CompilationFinal private ClassObject compilerClass;
     @CompilationFinal private ClassObject exceptionClass;
     @CompilationFinal private ClassObject parserClass;
     private PointersObject parserSharedInstance;
@@ -234,7 +233,7 @@ public final class SqueakImageContext {
     }
 
     public Object lookup(final String member) {
-        final Object symbol = getCompilerClass().send("evaluate:", asByteString("'" + member + "' asSymbol"));
+        final Object symbol = asByteString(member).send("asSymbol");
         return smalltalk.send("at:ifAbsent:", symbol, NilObject.SINGLETON);
     }
 
@@ -268,7 +267,6 @@ public final class SqueakImageContext {
          * ifFail: [^nil]) generate
          */
         assert parserClass != null;
-        assert compilerClass != null;
 
         if (parserSharedInstance == null) {
             parserSharedInstance = (PointersObject) parserClass.send("new");
@@ -379,16 +377,6 @@ public final class SqueakImageContext {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert debugSyntaxErrorSelector == null;
         debugSyntaxErrorSelector = nativeObject;
-    }
-
-    public ClassObject getCompilerClass() {
-        return compilerClass;
-    }
-
-    public void setCompilerClass(final ClassObject classObject) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert compilerClass == null;
-        compilerClass = classObject;
     }
 
     public ClassObject getExceptionClass() {
