@@ -257,7 +257,19 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public ExecuteTopLevelContextNode getDoItContextNode(final Source source) {
         lastParseRequestSource = source;
-        return getDoItContextNode(source.getCharacters().toString());
+        final String sourceCode;
+        if (isFileInFormat(source)) {
+            sourceCode = String.format("[ (FileStream readOnlyFileNamed: '%s') fileIn. true ] on: Error do: [ :e | Interop throwException: e ]", source.getPath());
+        } else {
+            sourceCode = source.getCharacters().toString();
+        }
+        return getDoItContextNode(sourceCode);
+    }
+
+    private static boolean isFileInFormat(final Source source) {
+        final CharSequence firstLine = source.getCharacters(1);
+        /* First line must end with an `!`. */
+        return firstLine.charAt(firstLine.length() - 1) == '!';
     }
 
     @TruffleBoundary
