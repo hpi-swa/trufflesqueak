@@ -39,6 +39,8 @@ IS_JDK9_AND_LATER = mx.get_jdk(tag='default').javaCompliance > '1.8'
 
 if IS_JDK9_AND_LATER:
     ADD_OPENS = [
+        # Allow reflective access to BigInteger
+        '--add-opens=java.base/java.math=ALL-UNNAMED',
         # Enable access to Truffle's SourceSection (for retrieving sources through interop)
         '--add-opens=org.graalvm.truffle/com.oracle.truffle.api.source=ALL-UNNAMED',
         # Make Truffle.getRuntime() accessible for VM introspection

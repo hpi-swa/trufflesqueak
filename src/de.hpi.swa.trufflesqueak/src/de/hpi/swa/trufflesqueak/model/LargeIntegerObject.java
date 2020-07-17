@@ -5,6 +5,9 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -17,6 +20,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -28,6 +32,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     public static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
     @CompilationFinal(dimensions = 1) private static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = toBytes(LONG_MIN_OVERFLOW_RESULT);
+    private static final MethodHandle BIG_INTEGER_GET_INT_HANDLE = getBigIntegerMethodHandle("getInt", int.class);
 
     private BigInteger integer;
     private int bitLength;
@@ -100,9 +105,9 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     public long getNativeAt0(final long index) {
         assert index < size() : "Illegal index: " + index;
-        final byte[] bytes = toBigEndianBytes(integer);
-        final int length = bytes.length;
-        return index < length ? Byte.toUnsignedLong(bytes[length - 1 - (int) index]) : 0L;
+        final int intNum = (int) index / Integer.BYTES;
+        final long shift = Byte.SIZE * (index % Integer.BYTES);
+        return getInt(integer.abs(), intNum) >>> shift & 0xFF;
     }
 
     public void setNativeAt0(final long index, final long value) {
@@ -721,6 +726,30 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
             return doubleValue();
         } else {
             throw UnsupportedMessageException.create();
+        }
+    }
+
+    /*
+     * REFLECTIVE ACCESS
+     */
+
+    private static MethodHandle getBigIntegerMethodHandle(final String name, final Class<?>... parameterTypes) {
+        try {
+            final Method method = BigInteger.class.getDeclaredMethod(name, parameterTypes);
+            method.setAccessible(true);
+            final MethodHandle handle = MethodHandles.lookup().unreflect(method);
+            method.setAccessible(false);
+            return handle;
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException e) {
+            throw SqueakException.create("Cannot reflectively access BigInteger.class", e);
+        }
+    }
+
+    private static int getInt(final BigInteger integer, final int index) {
+        try {
+            return (int) BIG_INTEGER_GET_INT_HANDLE.invokeExact(integer, index);
+        } catch (final Throwable e) {
+            throw SqueakException.create("Cannot reflectively access BigInteger.class", e);
         }
     }
 }
