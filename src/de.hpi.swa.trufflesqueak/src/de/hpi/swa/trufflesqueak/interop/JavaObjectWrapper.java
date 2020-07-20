@@ -13,8 +13,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -41,7 +39,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     protected static final int LIMIT = 2;
 
     protected final Object wrappedObject;
-    @CompilationFinal private InteropArray cachedMembers;
+    private InteropArray cachedMembers;
     private HashMap<String, Field> fields;
     private HashMap<String, Method> methods;
 
@@ -151,14 +149,18 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     public Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
         if (cachedMembers == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            final HashSet<String> members = new HashSet<>();
-            members.add(WRAPPED_MEMBER);
-            members.addAll(getFields().keySet());
-            members.addAll(getMethods().keySet());
-            cachedMembers = new InteropArray(members.toArray(new String[0]));
+            cachedMembers = calculateMembers();
         }
         return cachedMembers;
+    }
+
+    @TruffleBoundary
+    private InteropArray calculateMembers() {
+        final HashSet<String> members = new HashSet<>();
+        members.add(WRAPPED_MEMBER);
+        members.addAll(getFields().keySet());
+        members.addAll(getMethods().keySet());
+        return new InteropArray(members.toArray(new String[0]));
     }
 
     @SuppressWarnings("static-method")
