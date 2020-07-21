@@ -1,4 +1,4 @@
-overrides
+toolbuilder
 exploreObject
 	"Switch to an explorer tool."
 	

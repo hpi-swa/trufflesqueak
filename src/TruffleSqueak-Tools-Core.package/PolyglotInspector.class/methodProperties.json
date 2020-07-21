@@ -3,9 +3,18 @@
 		 },
 	"instance" : {
 		"aboutToStyle:" : "fn 12/5/2018 19:14",
-		"baseFieldList" : "fn 2/9/2020 21:02",
+		"arrayFieldList" : "fn 7/17/2020 15:50",
+		"baseFieldList" : "fn 7/17/2020 15:46",
+		"calculateOptionalFields" : "fn 7/17/2020 16:16",
+		"contentsIsString" : "fn 7/17/2020 15:57",
 		"exploreObject" : "fn 3/3/2020 16:55",
-		"fieldList" : "fn 11/11/2019 22:12",
+		"fieldList" : "fn 7/17/2020 15:51",
+		"getMemberList:" : "fn 7/17/2020 16:12",
+		"getSource:" : "fn 7/17/2020 15:22",
+		"hasMembers:" : "fn 7/17/2020 16:16",
+		"initialize" : "fn 7/17/2020 15:52",
 		"inspect:" : "fn 11/21/2019 15:47",
-		"longPrintStringFor:" : "fn 2/10/2020 15:47",
-		"selection" : "fn 2/9/2020 21:05" } }
+		"longPrintStringFor:" : "fn 7/17/2020 16:16",
+		"mainFieldListMenu:" : "fn 7/17/2020 15:36",
+		"optionalFieldList" : "fn 7/17/2020 15:53",
+		"selection" : "fn 7/17/2020 16:04" } }
