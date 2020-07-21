@@ -1,0 +1,20 @@
+{
+	"class" : {
+		"default" : "fn 7/13/2020 16:37" },
+	"instance" : {
+		"bindingOf:" : "fn 7/13/2020 16:35",
+		"bindings" : "fn 7/13/2020 16:47",
+		"correctFrom:to:with:" : "fn 7/13/2020 16:55",
+		"currentSource" : "fn 7/13/2020 16:47",
+		"currentSource:" : "fn 7/13/2020 16:47",
+		"deselect" : "fn 7/13/2020 16:52",
+		"initialize" : "fn 7/13/2020 16:32",
+		"nextTokenFrom:direction:" : "fn 7/13/2020 16:54",
+		"notify:at:in:" : "fn 7/14/2020 09:12",
+		"primitiveThrowSyntaxError:at:in:" : "fn 7/14/2020 09:11",
+		"select" : "fn 7/13/2020 16:52",
+		"selectFrom:to:" : "fn 7/13/2020 16:52",
+		"selectInvisiblyFrom:to:" : "fn 7/13/2020 16:52",
+		"selectionInterval" : "fn 7/13/2020 16:47",
+		"text" : "fn 7/13/2020 16:54",
+		"wantsInteractiveErrorCorrection" : "fn 7/21/2020 10:56" } }
