@@ -17,6 +17,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @GenerateUncached
@@ -70,13 +71,15 @@ public abstract class WrapToSqueakNode extends AbstractNode {
     }
 
     @Specialization
-    protected static final double doFloat(final float value) {
-        return value;
+    protected static final Object doFloat(final float value,
+                    @Cached final AsFloatObjectIfNessaryNode boxNode) {
+        return boxNode.execute(value);
     }
 
     @Specialization
-    protected static final double doDouble(final double value) {
-        return value;
+    protected static final Object doDouble(final double value,
+                    @Cached final AsFloatObjectIfNessaryNode boxNode) {
+        return boxNode.execute(value);
     }
 
     @Specialization
