@@ -11,7 +11,7 @@ public final class SqueakLanguageConfig {
     public static final String MIME_TYPE = "application/x-smalltalk";
     public static final String NAME = "Squeak/Smalltalk";
     public static final String ST_MIME_TYPE = "text/x-smalltalk";
-    public static final String VERSION = "20.2.0-dev";
+    public static final String VERSION = "20.1.1";
 
     private SqueakLanguageConfig() {
     }
