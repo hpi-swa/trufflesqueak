@@ -18,13 +18,10 @@ import java.io.IOException;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.RuntimeMXBean;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Properties;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -37,11 +34,6 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReadWriter2Plugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 public final class MiscUtils {
-    private static final CompilationMXBean COMPILATION_BEAN = ManagementFactory.getCompilationMXBean();
-    private static final MemoryMXBean MEMORY_BEAN = ManagementFactory.getMemoryMXBean();
-    private static final RuntimeMXBean RUNTIME_BEAN = ManagementFactory.getRuntimeMXBean();
-    private static final List<GarbageCollectorMXBean> GC_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
-
     /**
      * {@link ColorModel#getRGBdefault()} with alpha = 1.0. Transparency not needed at this point.
      * More importantly for the {@link JPEGReadWriter2Plugin}, {@link BufferedImage}s without alpha
@@ -82,7 +74,7 @@ public final class MiscUtils {
     @TruffleBoundary
     public static long getCollectionCount() {
         long totalCollectionCount = 0;
-        for (final GarbageCollectorMXBean gcBean : GC_BEANS) {
+        for (final GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
             totalCollectionCount += Math.max(gcBean.getCollectionCount(), 0);
         }
         return totalCollectionCount;
@@ -91,7 +83,7 @@ public final class MiscUtils {
     @TruffleBoundary
     public static long getCollectionTime() {
         long totalCollectionTime = 0;
-        for (final GarbageCollectorMXBean gcBean : GC_BEANS) {
+        for (final GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
             totalCollectionTime += Math.max(gcBean.getCollectionTime(), 0);
         }
         return totalCollectionTime;
@@ -109,12 +101,12 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static long getHeapMemoryMax() {
-        return MEMORY_BEAN.getHeapMemoryUsage().getMax();
+        return ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getMax();
     }
 
     @TruffleBoundary
     public static long getHeapMemoryUsed() {
-        return MEMORY_BEAN.getHeapMemoryUsage().getUsed();
+        return ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed();
     }
 
     @TruffleBoundary
@@ -129,7 +121,7 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static long getObjectPendingFinalizationCount() {
-        return MEMORY_BEAN.getObjectPendingFinalizationCount();
+        return ManagementFactory.getMemoryMXBean().getObjectPendingFinalizationCount();
     }
 
     public static SecureRandom getSecureRandom() {
@@ -143,7 +135,7 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static long getStartTime() {
-        return RUNTIME_BEAN.getStartTime();
+        return ManagementFactory.getRuntimeMXBean().getStartTime();
     }
 
     @TruffleBoundary
@@ -163,8 +155,9 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static long getTotalCompilationTime() {
-        if (COMPILATION_BEAN.isCompilationTimeMonitoringSupported()) {
-            return COMPILATION_BEAN.getTotalCompilationTime();
+        final CompilationMXBean compilationBean = ManagementFactory.getCompilationMXBean();
+        if (compilationBean.isCompilationTimeMonitoringSupported()) {
+            return compilationBean.getTotalCompilationTime();
         } else {
             return -1L;
         }
@@ -172,7 +165,7 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static long getUptime() {
-        return RUNTIME_BEAN.getUptime();
+        return ManagementFactory.getRuntimeMXBean().getUptime();
     }
 
     @TruffleBoundary
