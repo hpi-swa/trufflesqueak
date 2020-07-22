@@ -278,12 +278,12 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         /**
-         * Returns a fake context for BlockClosure>>#on:do: that handles any exception and rethrows
-         * it through Interop. This allows Smalltalk exceptions to be thrown to other languages, so
-         * that they can catch them. The mechanism works essentially like this:
+         * Returns a fake context for BlockClosure>>#on:do: that handles any exception (and may
+         * rethrow it as Interop exception). This allows Smalltalk exceptions to be thrown to other
+         * languages, so that they can catch them. The mechanism works essentially like this:
          *
          * <pre>
-         * <code>[ ... ] on: Exception do: [ :e | Interop throwException: ((e isKindOf: UnhandledError) ifTrue: [ e exception \"unpack exception\" ] ifFalse: [ e ]) ]</code>
+         * <code>[ ... ] on: Exception do: [ :e | "handle e" ]</code>
          * </pre>
          *
          * (see Context>>#handleSignal:)
@@ -296,8 +296,17 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 cachedContext = ContextObject.create(image, onDoMethod.getSqueakContextSize());
                 cachedContext.setMethod(onDoMethod);
                 cachedContext.setReceiver(NilObject.SINGLETON);
+                /*
+                 * Need to catch all exceptions here. Otherwise, the contexts sender is used to find
+                 * the next handler context (see Context>>#nextHandlerContext).
+                 */
                 cachedContext.atTempPut(0, image.evaluate("Exception"));
-                cachedContext.atTempPut(1, image.evaluate("[ :e | Interop throwException: ((e isKindOf: UnhandledError) ifTrue: [ e exception \"unpack exception\" ] ifFalse: [ e ]) ]"));
+                /*
+                 * Throw Error and Halt as interop, ignore warnings, handle all other exceptions the
+                 * usual way via UndefinedObject>>#handleSignal:.
+                 */
+                cachedContext.atTempPut(1, image.evaluate(
+                                "[ :e | ((e isKindOf: Error) or: [ e isKindOf: Halt ]) ifTrue: [ Interop throwException: e \"rethrow as interop\" ] ifFalse: [(e isKindOf: Warning) ifTrue: [ e resume \"ignore\" ] ifFalse: [ nil handleSignal: e \"handle the usual way\" ] ] ]"));
                 cachedContext.atTempPut(2, BooleanObject.TRUE);
                 cachedContext.setInstructionPointer(CallPrimitiveNode.NUM_BYTECODES);
                 cachedContext.setStackPointer(onDoMethod.getNumTemps());
