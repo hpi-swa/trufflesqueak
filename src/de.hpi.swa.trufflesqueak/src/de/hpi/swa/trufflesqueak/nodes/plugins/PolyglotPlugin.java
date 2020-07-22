@@ -34,6 +34,7 @@ import com.oracle.truffle.api.source.Source.SourceBuilder;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.ConvertToSqueakNode;
 import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
@@ -1163,6 +1164,18 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveThrowSyntaxError")
+    protected abstract static class PrimThrowSyntaxErrorNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        @Specialization(guards = {"messageObject.isByteType()", "sourceObject.isByteType()"})
+        protected static final Object doThrowSyntaxError(@SuppressWarnings("unused") final Object receiver, final NativeObject messageObject, final long position, final NativeObject sourceObject) {
+            final String message = messageObject.asStringUnsafe();
+            final String source = sourceObject.asStringUnsafe();
+            throw new SqueakSyntaxError(message, (int) position, source);
         }
     }
 

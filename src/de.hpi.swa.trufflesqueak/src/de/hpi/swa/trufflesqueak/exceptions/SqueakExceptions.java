@@ -7,9 +7,11 @@ package de.hpi.swa.trufflesqueak.exceptions;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -18,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.EXCEPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SYNTAX_ERROR_NOTIFICATION;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
@@ -103,6 +106,12 @@ public final class SqueakExceptions {
             dummyCodeObjectNode = new FakeSourceCodeObjectNode(sourceOffset);
         }
 
+        @TruffleBoundary
+        public SqueakSyntaxError(final String message, final int position, final String source) {
+            super("Syntax Error: \"" + message + "\" at position " + position);
+            dummyCodeObjectNode = new FakeSourceCodeObjectNode(source, position);
+        }
+
         @Override
         public Node getLocation() {
             return dummyCodeObjectNode;
@@ -114,11 +123,15 @@ public final class SqueakExceptions {
         }
 
         protected static final class FakeSourceCodeObjectNode extends AbstractNode {
-            private final int sourceOffset;
+            private int sourceOffset;
             private SourceSection sourceSection;
 
             public FakeSourceCodeObjectNode(final int sourceOffset) {
                 this.sourceOffset = sourceOffset;
+            }
+
+            public FakeSourceCodeObjectNode(final String source, final int position) {
+                sourceSection = Source.newBuilder(SqueakLanguageConfig.ID, source, "<syntax error>").build().createSection(Math.max(position - 1, 0), 1);
             }
 
             @Override

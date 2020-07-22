@@ -146,8 +146,8 @@ public final class SqueakImageContext {
     public ContextObject lastSeenContext;
 
     @CompilationFinal private ClassObject exceptionClass;
-    @CompilationFinal private ClassObject parserClass;
     private PointersObject parserSharedInstance;
+    private AbstractSqueakObject requestorSharedInstanceOrNil;
     @CompilationFinal private PointersObject scheduler;
     @CompilationFinal private ClassObject wideStringClass;
 
@@ -237,6 +237,11 @@ public final class SqueakImageContext {
         return smalltalk.send("at:ifAbsent:", symbol, NilObject.SINGLETON);
     }
 
+    /* Returns ClassObject if present, nil otherwise. */
+    public Object classNamed(final String className) {
+        return smalltalk.send("classNamed:", asByteString(className));
+    }
+
     public boolean patch(final SqueakLanguage.Env newEnv) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         env = newEnv;
@@ -278,15 +283,25 @@ public final class SqueakImageContext {
          * (Parser new parse: '1 + 2 * 3' class: UndefinedObject noPattern: true notifying: nil
          * ifFail: [^nil]) generate
          */
-        assert parserClass != null;
 
         if (parserSharedInstance == null) {
-            parserSharedInstance = (PointersObject) parserClass.send("new");
+            parserSharedInstance = (PointersObject) ((ClassObject) classNamed("Parser")).send("new");
+            final Object polyglotRequestorClassOrNil = classNamed("PolyglotRequestor");
+            if (polyglotRequestorClassOrNil instanceof ClassObject) {
+                requestorSharedInstanceOrNil = (AbstractSqueakObject) ((ClassObject) polyglotRequestorClassOrNil).send("default");
+            } else {
+                requestorSharedInstanceOrNil = NilObject.SINGLETON;
+            }
+        }
+
+        final NativeObject smalltalkSource = asByteString(source);
+        if (requestorSharedInstanceOrNil != NilObject.SINGLETON) {
+            ((AbstractSqueakObjectWithClassAndHash) requestorSharedInstanceOrNil).send("currentSource:", smalltalkSource);
         }
         final PointersObject methodNode;
         try {
             methodNode = (PointersObject) parserSharedInstance.send("parse:class:noPattern:notifying:ifFail:",
-                            asByteString(source), nilClass, BooleanObject.TRUE, NilObject.SINGLETON, BlockClosureObject.create(this, 0));
+                            smalltalkSource, nilClass, BooleanObject.TRUE, requestorSharedInstanceOrNil, BlockClosureObject.create(this, 0));
         } catch (final ProcessSwitch e) {
             /*
              * A ProcessSwitch exception is thrown in case of a syntax error to open the
@@ -397,16 +412,6 @@ public final class SqueakImageContext {
             exceptionClass = (ClassObject) evaluate("Exception");
         }
         return exceptionClass;
-    }
-
-    public ClassObject getParserClass() {
-        return parserClass;
-    }
-
-    public void setParserClass(final ClassObject classObject) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert parserClass == null;
-        parserClass = classObject;
     }
 
     public ClassObject getSmallFloatClass() {

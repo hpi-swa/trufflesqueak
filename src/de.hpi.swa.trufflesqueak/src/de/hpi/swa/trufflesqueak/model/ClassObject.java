@@ -315,8 +315,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                 final String className = getClassNameUnsafe();
                 if (image.needsCompiledBlockClass() && "CompiledBlock".equals(className)) {
                     image.setCompiledBlockClass(this);
-                } else if (image.getParserClass() == null && "Parser".equals(className)) {
-                    image.setParserClass(this);
                 }
             }
         } else if (needsSqueakHash()) {
