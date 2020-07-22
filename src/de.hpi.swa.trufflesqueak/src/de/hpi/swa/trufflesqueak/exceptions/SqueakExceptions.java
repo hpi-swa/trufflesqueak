@@ -42,11 +42,6 @@ public final class SqueakExceptions {
             DebugUtils.printSqStackTrace();
         }
 
-        public static SqueakException create(final String message, final Throwable cause) {
-            CompilerDirectives.transferToInterpreter();
-            return new SqueakException(message, cause);
-        }
-
         public static SqueakException create(final Object... messageParts) {
             CompilerDirectives.transferToInterpreter();
             return new SqueakException(messageParts);

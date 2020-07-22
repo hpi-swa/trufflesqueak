@@ -306,8 +306,7 @@ public final class SqueakImageContext {
              * corresponding window. Fail with an appropriate exception here. This way, it is clear
              * why code execution failed (e.g. when requested through the Polyglot API).
              */
-            CompilerDirectives.transferToInterpreter();
-            throw SqueakException.create("Unexpected process switch detected during parse request:", e);
+            throw CompilerDirectives.shouldNotReachHere("Unexpected process switch detected during parse request", e);
         }
         final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send("generate");
 
