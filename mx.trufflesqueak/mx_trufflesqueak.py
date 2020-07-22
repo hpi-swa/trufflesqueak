@@ -58,55 +58,54 @@ _svm = mx.suite('substratevm', fatalIfMissing=False)
 
 
 def _graal_vm_args(args):
-    graal_args = []
+    graal_args = ['-Dpolyglot.engine.AllowExperimentalOptions=true']
 
     if args.trace_compilation:
-        graal_args += ['-Dgraal.TraceTruffleCompilation=true']
+        graal_args += ['-Dpolyglot.engine.TraceCompilation=true']
 
-    if args.truffle_compilation_details:
+    if args.compilation_details:
+        graal_args += ['-Dpolyglot.engine.TraceCompilationDetails=true']
+
+    if args.compilation_polymorphism:
+        graal_args += ['-Dpolyglot.engine.TraceCompilationPolymorphism=true']
+
+    if args.compilation_stats:
+        graal_args += ['-Dpolyglot.engine.CompilationStatistic=true']
+
+    if args.expansion_histogram:
+        graal_args += ['-Dpolyglot.engine.PrintExpansionHistogram=true']
+
+    if args.instrument_boundaries:
         graal_args += [
-            '-Dgraal.TraceTruffleCompilationDetails=true',
-            '-Dgraal.TraceTruffleExpansionSource=true']
-
-    if args.truffle_compilation_polymorphism:
-        graal_args += ['-Dgraal.TraceTruffleCompilationPolymorphism=true']
-
-    if args.truffle_compilation_stats:
-        graal_args += ['-Dgraal.TruffleCompilationStatistics=true']
-
-    if args.truffle_expansion_histogram:
-        graal_args += ['-Dgraal.PrintTruffleExpansionHistogram=true']
-
-    if args.truffle_instrument_boundaries:
-        graal_args += [
-            '-Dgraal.TruffleInstrumentBoundaries=true',
-            '-Dgraal.TruffleInstrumentBoundariesPerInlineSite=true',
+            '-Dpolyglot.engine.InstrumentBoundaries=true',
+            '-Dpolyglot.engine.InstrumentBoundariesPerInlineSite=true',
         ]
 
     if args.perf_warnings:
         graal_args += [
-            '-Dgraal.TruffleCompilationExceptionsAreFatal=true',
-            '-Dgraal.TraceTrufflePerformanceWarnings=true']
+            # '-Dpolyglot.engine.CompilationFailureAction=ExitVM',
+            '-Dpolyglot.engine.TreatPerformanceWarningsAsErrors=all',
+            '-Dpolyglot.engine.TracePerformanceWarnings=all']
 
     if args.trace_invalidation:
         graal_args += [
-            '-Dgraal.TraceTruffleTransferToInterpreter=true',
-            '-Dgraal.TraceTruffleAssumptions=true',
+            '-Dpolyglot.engine.TraceTransferToInterpreter=true',
+            '-Dpolyglot.engine.TraceAssumptions=true',
         ]
 
     if args.trace_inlining:
-        graal_args += ['-Dgraal.TraceTruffleInlining=true']
+        graal_args += ['-Dpolyglot.engine.TraceInlining=true']
 
     if args.trace_splitting:
         graal_args += [
-            # '-Dgraal.TraceTruffleSplitting=true',
-            '-Dgraal.TruffleTraceSplittingSummary=true',
+            # '-Dpolyglot.engine.TraceSplitting=true',
+            '-Dpolyglot.engine.TraceSplittingSummary=true',
         ]
 
     if args.igv:
         print('Sending Graal dumps to igv...')
         graal_args += [
-            '-Dgraal.TruffleBackgroundCompilation=false',
+            '-Dpolyglot.engine.BackgroundCompilation=false',
             # Use `Truffle:2` for graphs between each compiler phase
             '-Dgraal.Dump=Truffle:1',
             '-Dgraal.DumpOnError=true',
@@ -135,10 +134,10 @@ def _graal_vm_args(args):
         ]
 
     if not args.background_compilation:
-        graal_args += ['-Dgraal.TruffleBackgroundCompilation=false']
+        graal_args += ['-Dpolyglot.engine.BackgroundCompilation=false']
 
     if args.force_compilation:
-        graal_args += ['-Dgraal.TruffleCompileImmediately=true']
+        graal_args += ['-Dpolyglot.engine.CompileImmediately=true']
 
     if args.print_graal_options:
         graal_args += ['-XX:+JVMCIPrintProperties']
@@ -256,26 +255,26 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         help='print splitting summary on shutdown',
         dest='trace_splitting', action='store_true', default=False)
     parser.add_argument(
-        '-tcd', '--truffle-compilation-details',
+        '-cd', '--compilation-details',
         help='print Truffle compilation details',
-        dest='truffle_compilation_details', action='store_true', default=False)
+        dest='compilation_details', action='store_true', default=False)
     parser.add_argument(
-        '-tcp', '--truffle-compilation-polymorphism',
+        '-cp', '--compilation-polymorphism',
         help='print all polymorphic and generic nodes after each compilation',
-        dest='truffle_compilation_polymorphism', action='store_true',
+        dest='compilation_polymorphism', action='store_true',
         default=False)
     parser.add_argument(
-        '-tcs', '--truffle-compilation-statistics',
+        '-cs', '--compilation-statistics',
         help='print Truffle compilation statistics at the end of a run',
-        dest='truffle_compilation_stats', action='store_true', default=False)
+        dest='compilation_stats', action='store_true', default=False)
     parser.add_argument(
-        '-teh', '--truffle-expansion-histogram',
+        '-eh', '--expansion-histogram',
         help='print a histogram of all expanded Java methods',
-        dest='truffle_expansion_histogram', action='store_true', default=False)
+        dest='expansion_histogram', action='store_true', default=False)
     parser.add_argument(
-        '-tib', '--truffle-instrument-boundaries',
+        '-ib', '--instrument-boundaries',
         help='instrument Truffle boundaries and output profiling information',
-        dest='truffle_instrument_boundaries', action='store_true',
+        dest='instrument_boundaries', action='store_true',
         default=False)
     parser.add_argument('-v', '--verbose',
                         help='enable verbose output',
