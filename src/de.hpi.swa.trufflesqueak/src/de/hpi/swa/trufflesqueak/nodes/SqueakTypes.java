@@ -11,6 +11,7 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 
 import de.hpi.swa.trufflesqueak.model.InteropSenderMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.util.NotProvided;
 
 @TypeSystem
 public class SqueakTypes {
@@ -34,5 +35,16 @@ public class SqueakTypes {
     public static final NilObject asNilObject(final Object value) {
         assert isNilObject(value);
         return NilObject.SINGLETON;
+    }
+
+    @TypeCheck(NotProvided.class)
+    public static final boolean isNotProvided(final Object value) {
+        return value == NotProvided.SINGLETON;
+    }
+
+    @TypeCast(NotProvided.class)
+    public static final NotProvided asNotProvided(final Object value) {
+        assert isNotProvided(value);
+        return NotProvided.SINGLETON;
     }
 }
