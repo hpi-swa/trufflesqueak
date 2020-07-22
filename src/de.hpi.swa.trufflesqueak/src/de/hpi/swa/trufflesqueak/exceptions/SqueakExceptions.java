@@ -95,11 +95,6 @@ public final class SqueakExceptions {
         private static final long serialVersionUID = 1L;
         private final FakeSourceCodeObjectNode dummyCodeObjectNode;
 
-        public SqueakSyntaxError(final String reason) {
-            super(reason);
-            dummyCodeObjectNode = null;
-        }
-
         public SqueakSyntaxError(final PointersObject syntaxErrorNotification) {
             super(((NativeObject) syntaxErrorNotification.instVarAt0Slow(SYNTAX_ERROR_NOTIFICATION.ERROR_MESSAGE)).asStringUnsafe());
             final int sourceOffset = (int) ((long) syntaxErrorNotification.instVarAt0Slow(SYNTAX_ERROR_NOTIFICATION.LOCATION) - 1);

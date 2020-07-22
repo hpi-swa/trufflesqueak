@@ -26,7 +26,6 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.trufflesqueak.interop.InteropMap;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.io.DisplayPoint;
@@ -59,7 +58,6 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReader;
 import de.hpi.swa.trufflesqueak.nodes.plugins.Zip;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakImageLocator;
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.tools.SqueakMessageInterceptor;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerState;
@@ -228,8 +226,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public Object evaluate(final String sourceCode) {
-        final Source source = Source.newBuilder(SqueakLanguageConfig.NAME, sourceCode, "<image#evaluate>").build();
-        return Truffle.getRuntime().createCallTarget(getDoItContextNode(source)).call();
+        return Truffle.getRuntime().createCallTarget(getDoItContextNode(sourceCode)).call();
     }
 
     public Object lookup(final String member) {
@@ -278,7 +275,7 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
-    public ExecuteTopLevelContextNode getDoItContextNode(final String source) {
+    private ExecuteTopLevelContextNode getDoItContextNode(final String source) {
         /*
          * (Parser new parse: '1 + 2 * 3' class: UndefinedObject noPattern: true notifying: nil
          * ifFail: [^nil]) generate
@@ -309,7 +306,7 @@ public final class SqueakImageContext {
              * why code execution failed (e.g. when requested through the Polyglot API).
              */
             CompilerDirectives.transferToInterpreter();
-            throw new SqueakSyntaxError("Syntax Error in \"" + source + "\"");
+            throw SqueakException.create("Unexpected process switch detected during parse request:", e);
         }
         final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send("generate");
 
