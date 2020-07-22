@@ -32,8 +32,8 @@ import de.hpi.swa.trufflesqueak.interop.InteropArray;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
@@ -120,7 +120,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             final CompiledCodeObject method = (CompiledCodeObject) methodObject;
             final int expectedArity = method.getNumArgs();
             if (actualArity == expectedArity) {
-                return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), receiver), NilObject.SINGLETON);
+                return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), receiver), InteropSenderMarker.SINGLETON);
             } else {
                 throw ArityException.create(1 + expectedArity, 1 + actualArity);
             }
@@ -147,7 +147,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                 final CompiledCodeObject method = (CompiledCodeObject) methodObject;
                 final int expectedArity = method.getNumArgs();
                 if (actualArity == expectedArity) {
-                    return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), receiver), NilObject.SINGLETON);
+                    return dispatchNode.executeDispatch(method, ArrayUtils.copyWithFirst(wrapNode.executeObjects(arguments), receiver), InteropSenderMarker.SINGLETON);
                 } else {
                     throw ArityException.create(1 + expectedArity, 1 + actualArity);
                 }
@@ -156,7 +156,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                 final NativeObject symbol = (NativeObject) image.asByteString(selector).send("asSymbol");
                 final PointersObject message = image.newMessage(writeNode, symbol, classObject, arguments);
                 try {
-                    return dispatchNode.executeDispatch(doesNotUnderstandMethodObject, new Object[]{receiver, message}, NilObject.SINGLETON);
+                    return dispatchNode.executeDispatch(doesNotUnderstandMethodObject, new Object[]{receiver, message}, InteropSenderMarker.SINGLETON);
                 } catch (final ProcessSwitch ps) {
                     CompilerDirectives.transferToInterpreter();
                     /*

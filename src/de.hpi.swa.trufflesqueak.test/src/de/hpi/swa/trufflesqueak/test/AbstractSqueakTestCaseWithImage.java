@@ -9,7 +9,6 @@ import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -21,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import org.graalvm.polyglot.Source;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -35,7 +33,6 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
@@ -150,13 +147,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     protected static Object evaluate(final String expression) {
         context.enter();
         try {
-            final Source source;
-            try {
-                source = Source.newBuilder(SqueakLanguageConfig.NAME, expression, "<image#test-evaluate>").build();
-            } catch (final IOException e) {
-                throw new AssertionError("Failed to evaluate code: " + e);
-            }
-            return context.eval(source);
+            return image.evaluate(expression);
         } finally {
             context.leave();
         }

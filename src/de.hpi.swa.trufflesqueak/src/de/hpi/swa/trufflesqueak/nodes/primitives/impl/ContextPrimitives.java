@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.model.InteropSenderMarker;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
@@ -198,11 +199,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        private ContextObject cachedContext;
+        private ContextObject interopExceptionThrowingContextPrototype;
 
         @TruffleBoundary
         @Specialization(guards = {"receiver.hasMaterializedSender()"})
-        protected static final AbstractSqueakObject findNext(final ContextObject receiver) {
+        protected final AbstractSqueakObject findNext(final ContextObject receiver) {
             ContextObject context = receiver;
             while (true) {
                 if (context.getMethod().isExceptionHandlerMarked()) {
@@ -213,8 +214,12 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (sender instanceof ContextObject) {
                     context = (ContextObject) sender;
                 } else {
-                    assert sender == NilObject.SINGLETON;
-                    return NilObject.SINGLETON;
+                    if (sender == InteropSenderMarker.SINGLETON) {
+                        return getInteropExceptionThrowingContext();
+                    } else {
+                        assert sender == NilObject.SINGLETON;
+                        return NilObject.SINGLETON;
+                    }
                 }
             }
         }
@@ -289,30 +294,31 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
          * (see Context>>#handleSignal:)
          */
         private ContextObject getInteropExceptionThrowingContext() {
-            if (cachedContext == null) {
+            if (interopExceptionThrowingContextPrototype == null) {
                 final SqueakImageContext image = lookupContext();
                 assert image.evaluate("Interop") != NilObject.SINGLETON : "Interop class must be present";
                 final CompiledCodeObject onDoMethod = (CompiledCodeObject) image.evaluate("BlockClosure>>#on:do:");
-                cachedContext = ContextObject.create(image, onDoMethod.getSqueakContextSize());
-                cachedContext.setMethod(onDoMethod);
-                cachedContext.setReceiver(NilObject.SINGLETON);
+                interopExceptionThrowingContextPrototype = ContextObject.create(image, onDoMethod.getSqueakContextSize());
+                interopExceptionThrowingContextPrototype.setMethod(onDoMethod);
+                interopExceptionThrowingContextPrototype.setReceiver(NilObject.SINGLETON);
                 /*
                  * Need to catch all exceptions here. Otherwise, the contexts sender is used to find
                  * the next handler context (see Context>>#nextHandlerContext).
                  */
-                cachedContext.atTempPut(0, image.evaluate("Exception"));
+                interopExceptionThrowingContextPrototype.atTempPut(0, image.evaluate("Exception"));
                 /*
                  * Throw Error and Halt as interop, ignore warnings, handle all other exceptions the
                  * usual way via UndefinedObject>>#handleSignal:.
                  */
-                cachedContext.atTempPut(1, image.evaluate(
-                                "[ :e | ((e isKindOf: Error) or: [ e isKindOf: Halt ]) ifTrue: [ Interop throwException: e \"rethrow as interop\" ] ifFalse: [(e isKindOf: Warning) ifTrue: [ e resume \"ignore\" ] ifFalse: [ nil handleSignal: e \"handle the usual way\" ] ] ]"));
-                cachedContext.atTempPut(2, BooleanObject.TRUE);
-                cachedContext.setInstructionPointer(CallPrimitiveNode.NUM_BYTECODES);
-                cachedContext.setStackPointer(onDoMethod.getNumTemps());
-                cachedContext.removeSender();
+                interopExceptionThrowingContextPrototype.atTempPut(1, image.evaluate(
+                                "[ :e | ((e isKindOf: Error) or: [ e isKindOf: Halt ]) ifTrue: [ Interop throwException: e \"rethrow as interop\" ] ifFalse: [(e isKindOf: Warning) ifTrue: [ e resume \"ignore\" ] " +
+                                                "ifFalse: [ nil handleSignal: e \"handle the usual way\" ] ] ]"));
+                interopExceptionThrowingContextPrototype.atTempPut(2, BooleanObject.TRUE);
+                interopExceptionThrowingContextPrototype.setInstructionPointer(CallPrimitiveNode.NUM_BYTECODES);
+                interopExceptionThrowingContextPrototype.setStackPointer(onDoMethod.getNumTemps());
+                interopExceptionThrowingContextPrototype.removeSender();
             }
-            return cachedContext.shallowCopy();
+            return interopExceptionThrowingContextPrototype.shallowCopy();
         }
     }
 

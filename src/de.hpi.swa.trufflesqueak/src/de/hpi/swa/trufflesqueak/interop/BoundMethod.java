@@ -14,7 +14,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.InteropSenderMarker;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
@@ -45,7 +45,7 @@ public final class BoundMethod implements TruffleObject {
         final int actualArity = arguments.length;
         final int expectedArity = method.getNumArgs(); // receiver + arguments
         if (actualArity == expectedArity) {
-            return dispatchNode.executeDispatch(method, wrapNode.executeObjects(ArrayUtils.copyWithFirst(arguments, receiver)), NilObject.SINGLETON);
+            return dispatchNode.executeDispatch(method, wrapNode.executeObjects(ArrayUtils.copyWithFirst(arguments, receiver)), InteropSenderMarker.SINGLETON);
         } else {
             throw ArityException.create(expectedArity, actualArity);
         }

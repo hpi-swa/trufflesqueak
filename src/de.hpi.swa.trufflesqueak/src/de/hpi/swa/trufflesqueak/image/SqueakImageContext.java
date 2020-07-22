@@ -39,6 +39,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.InteropSenderMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -226,7 +227,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public Object evaluate(final String sourceCode) {
-        return Truffle.getRuntime().createCallTarget(getDoItContextNode(sourceCode)).call();
+        return Truffle.getRuntime().createCallTarget(getDoItContextNode(sourceCode, false)).call();
     }
 
     public Object lookup(final String member) {
@@ -265,7 +266,7 @@ public final class SqueakImageContext {
         } else {
             sourceCode = source.getCharacters().toString();
         }
-        return getDoItContextNode(sourceCode);
+        return getDoItContextNode(sourceCode, true);
     }
 
     private static boolean isFileInFormat(final Source source) {
@@ -275,7 +276,7 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
-    private ExecuteTopLevelContextNode getDoItContextNode(final String source) {
+    private ExecuteTopLevelContextNode getDoItContextNode(final String source, final boolean isExternalRequest) {
         /*
          * (Parser new parse: '1 + 2 * 3' class: UndefinedObject noPattern: true notifying: nil
          * ifFail: [^nil]) generate
@@ -315,7 +316,7 @@ public final class SqueakImageContext {
         doItContext.setMethod(doItMethod);
         doItContext.setInstructionPointer(doItMethod.getInitialPC());
         doItContext.setStackPointer(doItMethod.getNumTemps());
-        doItContext.removeSender();
+        doItContext.setSenderUnsafe(isExternalRequest ? InteropSenderMarker.SINGLETON : NilObject.SINGLETON);
         doItContext.setProcess(GetActiveProcessNode.getSlow(this));
         return ExecuteTopLevelContextNode.create(getLanguage(), doItContext, false);
     }

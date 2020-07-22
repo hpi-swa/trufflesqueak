@@ -728,7 +728,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final int actualArity = receiverAndArguments.length;
         final int expectedArity = 1 + getNumArgs(); // receiver + arguments
         if (actualArity == expectedArity) {
-            return dispatchNode.executeDispatch(this, wrapNode.executeObjects(receiverAndArguments), NilObject.SINGLETON);
+            return dispatchNode.executeDispatch(this, wrapNode.executeObjects(receiverAndArguments), InteropSenderMarker.SINGLETON);
         } else {
             throw ArityException.create(expectedArity, actualArity);
         }

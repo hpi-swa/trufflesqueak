@@ -294,6 +294,10 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
                 hasModifiedSender = true;
             }
         }
+        setSenderUnsafe(value);
+    }
+
+    public void setSenderUnsafe(final AbstractSqueakObject value) {
         FrameAccess.setSender(getOrCreateTruffleFrame(), value);
     }
 
