@@ -543,8 +543,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimBehaviorHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         @Specialization
-        protected static final long doClass(final ClassObject receiver) {
-            return receiver.getSqueakHash();
+        protected static final long doClass(final ClassObject receiver,
+                        @Cached final BranchProfile needsHashProfile) {
+            return receiver.getSqueakHash(needsHashProfile);
         }
     }
 
