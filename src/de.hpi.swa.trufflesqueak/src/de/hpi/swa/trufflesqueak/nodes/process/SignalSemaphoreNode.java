@@ -28,16 +28,16 @@ public abstract class SignalSemaphoreNode extends AbstractNode {
     @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "semaphore.isEmptyList(readNode)"}, limit = "1")
     public static final void doSignalEmpty(final PointersObject semaphore,
                     @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
-                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode) {
+                    @Cached final AbstractPointersObjectWriteNode writeNode) {
         writeNode.execute(semaphore, SEMAPHORE.EXCESS_SIGNALS, readNode.executeLong(semaphore, SEMAPHORE.EXCESS_SIGNALS) + 1);
     }
 
     @Specialization(guards = {"semaphore.getSqueakClass().isSemaphoreClass()", "!semaphore.isEmptyList(readNode)"}, limit = "1")
     public static final void doSignal(final VirtualFrame frame, final PointersObject semaphore,
-                    @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
-                    @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
+                    @SuppressWarnings("unused") @Shared("readNode") @Cached final AbstractPointersObjectReadNode readNode,
+                    @Cached final RemoveFirstLinkOfListNode removeFirstLinkOfListNode,
                     @Cached final ResumeProcessNode resumeProcessNode) {
-        resumeProcessNode.executeResume(frame, semaphore.removeFirstLinkOfList(readNode, writeNode));
+        resumeProcessNode.executeResume(frame, removeFirstLinkOfListNode.execute(semaphore));
     }
 
     @Specialization

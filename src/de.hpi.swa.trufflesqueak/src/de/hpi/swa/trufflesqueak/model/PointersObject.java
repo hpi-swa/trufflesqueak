@@ -137,20 +137,6 @@ public final class PointersObject extends AbstractPointersObject {
         return readNode.executeInt(this, FORM.WIDTH);
     }
 
-    public PointersObject removeFirstLinkOfList(final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode) {
-        // Remove the first process from the given linked list.
-        final PointersObject first = readNode.executePointers(this, LINKED_LIST.FIRST_LINK);
-        final Object last = readNode.execute(this, LINKED_LIST.LAST_LINK);
-        if (first == last) {
-            writeNode.executeNil(this, LINKED_LIST.FIRST_LINK);
-            writeNode.executeNil(this, LINKED_LIST.LAST_LINK);
-        } else {
-            writeNode.execute(this, LINKED_LIST.FIRST_LINK, readNode.execute(first, PROCESS.NEXT_LINK));
-        }
-        writeNode.executeNil(first, PROCESS.NEXT_LINK);
-        return first;
-    }
-
     public PointersObject shallowCopy() {
         return new PointersObject(this);
     }

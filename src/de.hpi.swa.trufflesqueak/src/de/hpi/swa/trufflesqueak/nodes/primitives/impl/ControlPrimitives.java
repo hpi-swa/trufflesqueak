@@ -86,6 +86,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.LinkProcessToListNode;
+import de.hpi.swa.trufflesqueak.nodes.process.RemoveFirstLinkOfListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
@@ -787,12 +788,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doYield(final VirtualFrame frame, final PointersObject scheduler,
                         @Cached final ArrayObjectReadNode arrayReadNode,
                         @Cached final GetActiveProcessNode getActiveProcessNode,
-                        @Cached final AbstractPointersObjectReadNode pointersReadNode) {
+                        @Cached final AbstractPointersObjectReadNode readPriorityNode,
+                        @Cached final AbstractPointersObjectReadNode readProcessListsNode,
+                        @Cached final AbstractPointersObjectReadNode readProcessListNode) {
             final PointersObject activeProcess = getActiveProcessNode.execute();
-            final long priority = pointersReadNode.executeLong(activeProcess, PROCESS.PRIORITY);
-            final ArrayObject processLists = pointersReadNode.executeArray(scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
+            final long priority = readPriorityNode.executeLong(activeProcess, PROCESS.PRIORITY);
+            final ArrayObject processLists = readProcessListsNode.executeArray(scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
             final PointersObject processList = (PointersObject) arrayReadNode.execute(processLists, priority - 1);
-            if (!processList.isEmptyList(pointersReadNode)) {
+            if (!processList.isEmptyList(readProcessListNode)) {
                 getLinkProcessToListNode().executeLink(activeProcess, processList);
                 try {
                     getWakeHighestPriorityNode().executeWake(frame);
@@ -839,20 +842,21 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 185)
     protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveStackIncrementNode implements UnaryPrimitive {
-        @Child protected AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
-        @Child private AbstractPointersObjectWriteNode writeNode = AbstractPointersObjectWriteNode.create();
+        @Child protected AbstractPointersObjectReadNode readFirstLinkNode = AbstractPointersObjectReadNode.create();
+        @Child private AbstractPointersObjectWriteNode writeMutexOwnerNode = AbstractPointersObjectWriteNode.create();
 
-        @Specialization(guards = "mutex.isEmptyList(readNode)")
+        @Specialization(guards = "mutex.isEmptyList(readFirstLinkNode)")
         protected final PointersObject doExitEmpty(final PointersObject mutex) {
-            writeNode.executeNil(mutex, MUTEX.OWNER);
+            writeMutexOwnerNode.executeNil(mutex, MUTEX.OWNER);
             return mutex;
         }
 
-        @Specialization(guards = "!mutex.isEmptyList(readNode)")
+        @Specialization(guards = "!mutex.isEmptyList(readFirstLinkNode)")
         protected final Object doExitNonEmpty(final VirtualFrame frame, final PointersObject mutex,
-                        @Cached("create()") final ResumeProcessNode resumeProcessNode) {
-            final PointersObject owningProcess = mutex.removeFirstLinkOfList(readNode, writeNode);
-            writeNode.execute(mutex, MUTEX.OWNER, owningProcess);
+                        @Cached final RemoveFirstLinkOfListNode removeFirstLinkOfListNode,
+                        @Cached final ResumeProcessNode resumeProcessNode) {
+            final PointersObject owningProcess = removeFirstLinkOfListNode.execute(mutex);
+            writeMutexOwnerNode.execute(mutex, MUTEX.OWNER, owningProcess);
             try {
                 resumeProcessNode.executeResume(frame, owningProcess);
             } catch (final ProcessSwitch ps) {
@@ -870,7 +874,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 186)
     protected abstract static class PrimEnterCriticalSectionNode extends AbstractPrimitiveStackPushNode implements BinaryPrimitive {
-        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
+        @Child private AbstractPointersObjectReadNode readOwnerNode = AbstractPointersObjectReadNode.create();
 
         @Specialization(guards = "ownerIsNil(mutex)")
         protected static final boolean doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided,
@@ -932,15 +936,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final boolean ownerIsNil(final PointersObject mutex) {
-            return readNode.execute(mutex, MUTEX.OWNER) == NilObject.SINGLETON;
+            return readOwnerNode.execute(mutex, MUTEX.OWNER) == NilObject.SINGLETON;
         }
 
         protected final boolean activeProcessMutexOwner(final PointersObject mutex, final GetActiveProcessNode getActiveProcessNode) {
-            return readNode.execute(mutex, MUTEX.OWNER) == getActiveProcessNode.execute();
+            return readOwnerNode.execute(mutex, MUTEX.OWNER) == getActiveProcessNode.execute();
         }
 
         protected final boolean isMutexOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
-            return readNode.execute(mutex, MUTEX.OWNER) == effectiveProcess;
+            return readOwnerNode.execute(mutex, MUTEX.OWNER) == effectiveProcess;
         }
     }
 
@@ -949,7 +953,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 187)
     protected abstract static class PrimTestAndSetOwnershipOfCriticalSectionNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private GetActiveProcessNode getActiveProcessNode = GetActiveProcessNode.create();
-        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
+        @Child private AbstractPointersObjectReadNode readOwnerNode = AbstractPointersObjectReadNode.create();
 
         @Specialization(guards = {"ownerIsNil(rcvrMutex)"})
         protected final boolean doNilOwner(final PointersObject rcvrMutex,
@@ -969,11 +973,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final boolean ownerIsNil(final PointersObject mutex) {
-            return readNode.execute(mutex, MUTEX.OWNER) == NilObject.SINGLETON;
+            return readOwnerNode.execute(mutex, MUTEX.OWNER) == NilObject.SINGLETON;
         }
 
         protected final boolean ownerIsActiveProcess(final PointersObject mutex) {
-            return readNode.execute(mutex, MUTEX.OWNER) == getActiveProcessNode.execute();
+            return readOwnerNode.execute(mutex, MUTEX.OWNER) == getActiveProcessNode.execute();
         }
     }
 

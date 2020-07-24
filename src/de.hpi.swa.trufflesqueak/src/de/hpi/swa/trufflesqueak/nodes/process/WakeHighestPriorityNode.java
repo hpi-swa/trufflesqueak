@@ -37,21 +37,25 @@ public abstract class WakeHighestPriorityNode extends AbstractNode {
     protected static final void doWake(final VirtualFrame frame,
                     @Cached final ArrayObjectReadNode arrayReadNode,
                     @Cached final ArrayObjectSizeNode arraySizeNode,
-                    @Cached final AbstractPointersObjectReadNode pointersReadNode,
-                    @Cached final AbstractPointersObjectWriteNode pointersWriteNode,
+                    @Cached final AbstractPointersObjectReadNode readSchedulerListNode,
+                    @Cached final AbstractPointersObjectReadNode readProcessListFirstLinkNode,
+                    @Cached final RemoveFirstLinkOfListNode removeFirstLinkOfListNode,
+                    @Cached final AbstractPointersObjectReadNode readNewContextNode,
+                    @Cached final AbstractPointersObjectReadNode readTransferNode,
+                    @Cached final AbstractPointersObjectWriteNode writeTransferNode,
                     @Cached("create(true)") final GetOrCreateContextNode contextNode,
                     @Cached final GetActiveProcessNode getActiveProcessNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
-        final ArrayObject schedLists = pointersReadNode.executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
+        final ArrayObject schedLists = readSchedulerListNode.executeArray(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
         for (long p = arraySizeNode.execute(schedLists) - 1; p >= 0; p--) {
             final PointersObject processList = (PointersObject) arrayReadNode.execute(schedLists, p);
-            while (!processList.isEmptyList(pointersReadNode)) {
-                final PointersObject newProcess = processList.removeFirstLinkOfList(pointersReadNode, pointersWriteNode);
-                final Object newContext = pointersReadNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+            while (!processList.isEmptyList(readProcessListFirstLinkNode)) {
+                final PointersObject newProcess = removeFirstLinkOfListNode.execute(processList);
+                final Object newContext = readNewContextNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
                 if (newContext instanceof ContextObject) {
-                    contextNode.executeGet(frame).transferTo(newProcess, pointersReadNode, pointersWriteNode, getActiveProcessNode);
+                    contextNode.executeGet(frame).transferTo(newProcess, readTransferNode, writeTransferNode, getActiveProcessNode);
                     throw SqueakException.create("Should not be reached");
                 }
             }
