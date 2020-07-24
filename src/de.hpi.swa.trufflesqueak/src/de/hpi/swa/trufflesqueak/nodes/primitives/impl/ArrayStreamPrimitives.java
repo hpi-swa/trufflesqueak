@@ -109,7 +109,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimSizeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final long doSqueakObject(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
+                        @Shared("sizeNode") @Cached("createReporting()") final SqueakObjectSizeNode sizeNode,
                         @Shared("instSizeNode") @Cached final SqueakObjectInstSizeNode instSizeNode) {
             return sizeNode.execute(receiver) - instSizeNode.execute(receiver);
         }
@@ -117,7 +117,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         /* Context>>#objectSize: */
         @Specialization
         protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target,
-                        @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
+                        @Shared("sizeNode") @Cached("createReporting()") final SqueakObjectSizeNode sizeNode,
                         @Shared("instSizeNode") @Cached final SqueakObjectInstSizeNode instSizeNode) {
             return sizeNode.execute(target) - instSizeNode.execute(target);
         }

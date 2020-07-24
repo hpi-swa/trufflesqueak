@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -27,12 +28,21 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectInstSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNodeGen.SqueakObjectSizeReportingNodeGen;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectSizeNode extends AbstractNode {
 
     public static SqueakObjectSizeNode create() {
         return SqueakObjectSizeNodeGen.create();
+    }
+
+    public static SqueakObjectSizeNode createReporting() {
+        return SqueakObjectSizeReportingNodeGen.create();
+    }
+
+    @ReportPolymorphism
+    protected abstract static class SqueakObjectSizeReportingNode extends SqueakObjectSizeNode {
     }
 
     public abstract int execute(Object obj);

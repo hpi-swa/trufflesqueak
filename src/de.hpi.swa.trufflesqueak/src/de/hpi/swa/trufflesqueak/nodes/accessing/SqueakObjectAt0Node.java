@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
@@ -32,6 +33,7 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObject
 import de.hpi.swa.trufflesqueak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
 
 @GenerateUncached
+@ReportPolymorphism
 public abstract class SqueakObjectAt0Node extends AbstractNode {
 
     public static SqueakObjectAt0Node create() {

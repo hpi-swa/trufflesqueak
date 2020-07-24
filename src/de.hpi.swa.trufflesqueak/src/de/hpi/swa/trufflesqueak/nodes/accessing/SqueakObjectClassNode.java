@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -22,12 +23,21 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNodeGen.SqueakObjectClassReportingNodeGen;
 
 @GenerateUncached
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class SqueakObjectClassNode extends AbstractNode {
     public static SqueakObjectClassNode create() {
         return SqueakObjectClassNodeGen.create();
+    }
+
+    public static SqueakObjectClassNode createReporting() {
+        return SqueakObjectClassReportingNodeGen.create();
+    }
+
+    @ReportPolymorphism
+    protected abstract static class SqueakObjectClassReportingNode extends SqueakObjectClassNode {
     }
 
     public static SqueakObjectClassNode getUncached() {

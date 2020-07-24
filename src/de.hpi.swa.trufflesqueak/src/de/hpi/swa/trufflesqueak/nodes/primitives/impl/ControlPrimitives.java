@@ -535,13 +535,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimClassNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final ClassObject doClass(final Object receiver, @SuppressWarnings("unused") final NotProvided object,
-                        @Shared("lookupNode") @Cached final SqueakObjectClassNode classNode) {
+                        @Shared("lookupNode") @Cached("createReporting()") final SqueakObjectClassNode classNode) {
             return classNode.executeLookup(receiver);
         }
 
         @Specialization(guards = "!isNotProvided(object)")
         protected static final ClassObject doClass(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @Shared("lookupNode") @Cached final SqueakObjectClassNode classNode) {
+                        @Shared("lookupNode") @Cached("createReporting()") final SqueakObjectClassNode classNode) {
             return classNode.executeLookup(object);
         }
     }

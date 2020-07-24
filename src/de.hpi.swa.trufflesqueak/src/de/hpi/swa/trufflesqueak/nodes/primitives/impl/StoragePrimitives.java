@@ -18,6 +18,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -177,6 +178,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 70)
     public abstract static class PrimNewNode extends AbstractPrimitiveNode implements UnaryPrimitive {
@@ -208,6 +210,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 71)
     protected abstract static class PrimNewWithArgNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
