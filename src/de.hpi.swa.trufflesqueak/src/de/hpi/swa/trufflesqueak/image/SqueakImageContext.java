@@ -17,7 +17,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 
@@ -622,7 +621,6 @@ public final class SqueakImageContext {
      * compared to lookup. Instead we randomize the reprobe so two or three very active conflicting
      * entries will not keep dislodging each other.
      */
-    @ExplodeLoop
     public MethodCacheEntry findMethodCacheEntry(final ClassObject classObject, final NativeObject selector) {
         methodCacheRandomish = methodCacheRandomish + 1 & 3;
         final int selectorHash = System.identityHashCode(selector);

@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -68,6 +69,7 @@ public abstract class LookupSelectorNode extends AbstractNode {
         return list.toArray(new Assumption[0]);
     }
 
+    @TruffleBoundary
     @Specialization(replaces = "doCached")
     protected final Object doUncached(final ClassObject receiverClass,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
