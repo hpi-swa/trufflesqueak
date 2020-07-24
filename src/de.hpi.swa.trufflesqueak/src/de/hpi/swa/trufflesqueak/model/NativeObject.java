@@ -176,6 +176,10 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         return new NativeObject(this, storageCopy);
     }
 
+    public NativeObject shallowCopyBytes() {
+        return new NativeObject(this, getByteStorage());
+    }
+
     public void convertToBytesStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
         setStorage(bytes);

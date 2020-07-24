@@ -5,15 +5,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.awt.DisplayMode;
-import java.awt.GraphicsEnvironment;
-import java.awt.HeadlessException;
-import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -25,6 +18,7 @@ import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -65,12 +59,10 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimit
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerState;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.NotProvided;
-import de.hpi.swa.trufflesqueak.util.OSDetector;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -576,116 +568,23 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
+    @ReportPolymorphism
     @GenerateNodeFactory
+    @ImportStatic(MiscUtils.class)
     @SqueakPrimitive(indices = 149)
     protected abstract static class PrimGetAttributeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        private static final String VM_BUILD_ID_DATE_FORMAT = "MMM dd yyyy HH:mm:ss zzz";
-
-        @Specialization
-        @TruffleBoundary
-        protected static final Object doGet(@SuppressWarnings("unused") final Object receiver, final long longIndex,
+        @Specialization(guards = "index == cachedIndex", limit = "1")
+        protected static final AbstractSqueakObject doGetCached(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long index,
+                        @Cached("toIntExact(index)") final int cachedIndex,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final int index = (int) longIndex;
-            if (index == 0) {
-                final String separator = File.separator;
-                return image.asByteString(System.getProperty("java.home") + separator + "bin" + separator + "java");
-            } else if (index == 1) {
-                return image.asByteString(image.getImagePath());
-            }
-            if (index >= 2 && index <= 1000) {
-                final String[] restArgs = image.getImageArguments();
-                if (restArgs.length > index - 2) {
-                    return image.asByteString(restArgs[index - 2]);
-                } else {
-                    return NilObject.SINGLETON;
-                }
-            } else {
-                final String attribute = getSystemAttribute(index);
-                if (attribute == null) {
-                    return NilObject.SINGLETON;
-                } else {
-                    return image.asByteString(attribute);
-                }
-            }
+            return image.getSystemAttribute(cachedIndex);
         }
 
-        private static String getSystemAttribute(final int index) {
-            switch (index) {
-                case 1001:  // this platform's operating system 'Mac OS', 'Win32', 'unix', ...
-                    return OSDetector.SINGLETON.getSqOSName();
-                case 1002:  // operating system version
-                    if (OSDetector.SINGLETON.isMacOS()) {
-                        /* The image expects things like 1095, so convert 10.10.5 into 1010.5 */
-                        return System.getProperty("os.version", "unknown").replaceFirst("\\.", "");
-                    } else {
-                        return System.getProperty("os.version", "unknown");
-                    }
-                case 1003:  // this platform's processor type
-                    final String osArch = System.getProperty("os.arch");
-                    if (osArch.equals("aarch64")) {
-                        return "armv8"; /* For `SmalltalkImage>>#isLowerPerformance`. */
-                    } else {
-                        return osArch;
-                    }
-                case 1004:  // vm version
-                    /*
-                     * Start with "Croquet" to let `LanguageEnvironment win32VMUsesUnicode` return
-                     * `true`. Add fake VMMaker info to make `Smalltalk vmVMMakerVersion` work.
-                     */
-                    return "Croquet " + SqueakLanguageConfig.IMPLEMENTATION_NAME + " " + SqueakLanguageConfig.VERSION + " VMMaker.fn.9999";
-                case 1005:  // window system name
-                    return "Aqua";
-                case 1006:  // vm build id
-                    final String date = new SimpleDateFormat(VM_BUILD_ID_DATE_FORMAT, Locale.US).format(new Date(MiscUtils.getStartTime()));
-                    return String.format("%s %s (%s) built on %s", getOSName(), getOSVersion(), getOSArch(), date);
-                case 1007: // Interpreter class (Cog VM only)
-                    return MiscUtils.getGraalVMInformation();
-                case 1008: // Cogit class (Cog VM only)
-                    return MiscUtils.getSystemProperties();
-                case 1009: // Platform source version
-                    return MiscUtils.getVMInformation();
-                case 1201: // max filename length (Mac OS only)
-                    if (OSDetector.SINGLETON.isMacOS()) {
-                        return "255";
-                    }
-                    break;
-                case 1202: // file last error (Mac OS only)
-                    if (OSDetector.SINGLETON.isMacOS()) {
-                        return "0";
-                    }
-                    break;
-                case 10001: // hardware details (Win32 only)
-                    return "Hardware information: not supported";
-                case 10002: // operating system details (Win32 only)
-                    return String.format("Operating System: %s (%s, %s)", getOSName(), getOSVersion(), getOSArch());
-                case 10003: // graphics hardware details (Win32 only)
-                    int width = 0;
-                    int height = 0;
-                    try {
-                        final DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-                        width = dm.getWidth();
-                        height = dm.getHeight();
-                    } catch (final HeadlessException e) {
-                        /* Report 0 x 0 in headless mode. */
-                    }
-                    return String.format("Display Information: \n" +
-                                    "\tPrimary monitor resolution: %d x %d\n", width, height);
-                default:
-                    return null;
-            }
-            return null;
-        }
-
-        private static String getOSName() {
-            return System.getProperty("os.name");
-        }
-
-        private static String getOSVersion() {
-            return System.getProperty("os.version");
-        }
-
-        private static String getOSArch() {
-            return System.getProperty("os.arch");
+        @TruffleBoundary
+        @Specialization(replaces = "doGetCached")
+        protected static final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final long index,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.getSystemAttribute((int) index);
         }
     }
 

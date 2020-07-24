@@ -119,6 +119,7 @@ public final class SqueakImageContext {
     @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;
     @CompilationFinal private boolean isHeadless;
     public final SqueakContextOptions options;
+    private final SqueakSystemAttributes systemAttributes = new SqueakSystemAttributes(this);
 
     /* System */
     public NativeObject clipboardTextHeadless = asByteString("");
@@ -561,6 +562,10 @@ public final class SqueakImageContext {
         } else {
             return env.getApplicationArguments();
         }
+    }
+
+    public AbstractSqueakObject getSystemAttribute(final int index) {
+        return systemAttributes.getSystemAttribute(index);
     }
 
     public Source getLastParseRequestSource() {
