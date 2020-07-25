@@ -5,7 +5,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.accessing;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -39,13 +38,25 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
         return BooleanObject.wrap(Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b));
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = "!isDouble(b)")
+    protected static final boolean doDoubleFalse(final double a, final Object b) {
+        return BooleanObject.FALSE;
+    }
+
     @Specialization
     protected static final boolean doCharacterObject(final CharacterObject a, final CharacterObject b) {
         return BooleanObject.wrap(a.getValue() == b.getValue());
     }
 
-    @Fallback
-    protected static final boolean doObject(final Object a, final Object b) {
+    @SuppressWarnings("unused")
+    @Specialization(guards = "!isCharacterObject(b)")
+    protected static final boolean doCharacterObjectFalse(final CharacterObject a, final Object b) {
+        return BooleanObject.FALSE;
+    }
+
+    @Specialization(guards = {"!isDouble(a)", "!isCharacterObject(a)"}, replaces = {"doBoolean", "doChar", "doLong"})
+    protected static final boolean doGeneric(final Object a, final Object b) {
         return BooleanObject.wrap(a == b);
     }
 }
