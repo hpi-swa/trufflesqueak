@@ -5,8 +5,10 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+@ValueType
 public final class CharacterObject extends AbstractSqueakObject {
     private final long value;
 
