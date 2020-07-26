@@ -28,9 +28,21 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
         return BooleanObject.wrap(a == b);
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = "!isCharacter(b)")
+    protected static final boolean doCharOther(final char a, final Object b) {
+        return BooleanObject.FALSE;
+    }
+
     @Specialization
     protected static final boolean doLong(final long a, final long b) {
         return BooleanObject.wrap(a == b);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "!isLong(b)")
+    protected static final boolean doLongOther(final long a, final Object b) {
+        return BooleanObject.FALSE;
     }
 
     @Specialization
@@ -40,7 +52,7 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isDouble(b)")
-    protected static final boolean doDoubleFalse(final double a, final Object b) {
+    protected static final boolean doDoubleOther(final double a, final Object b) {
         return BooleanObject.FALSE;
     }
 
@@ -51,11 +63,11 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isCharacterObject(b)")
-    protected static final boolean doCharacterObjectFalse(final CharacterObject a, final Object b) {
+    protected static final boolean doCharacterObjectOther(final CharacterObject a, final Object b) {
         return BooleanObject.FALSE;
     }
 
-    @Specialization(guards = {"!isDouble(a)", "!isCharacterObject(a)"}, replaces = {"doBoolean", "doChar", "doLong"})
+    @Specialization(guards = {"!isCharacter(a)", "!isLong(a)", "!isDouble(a)", "!isCharacterObject(a)"})
     protected static final boolean doGeneric(final Object a, final Object b) {
         return BooleanObject.wrap(a == b);
     }
