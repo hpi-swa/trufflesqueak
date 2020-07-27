@@ -540,12 +540,13 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         final PointersObject scheduler = newProcess.image.getScheduler();
         assert newProcess != getActiveProcessNode.execute() : "trying to switch to already active process";
         // overwritten in next line.
-        final PointersObject currentProcess = getActiveProcessNode.execute();
+        final PointersObject oldProcess = getActiveProcessNode.execute();
         writeNode.execute(scheduler, PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        writeNode.execute(currentProcess, PROCESS.SUSPENDED_CONTEXT, this);
+        writeNode.execute(oldProcess, PROCESS.SUSPENDED_CONTEXT, this);
+        writeNode.executeNil(newProcess, PROCESS.LIST);
         final ContextObject newActiveContext = (ContextObject) readNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
         newActiveContext.setProcess(newProcess);
-        writeNode.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
+        writeNode.executeNil(newProcess, PROCESS.SUSPENDED_CONTEXT);
         if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
             throw ProcessSwitch.create(newActiveContext);
         } else {
