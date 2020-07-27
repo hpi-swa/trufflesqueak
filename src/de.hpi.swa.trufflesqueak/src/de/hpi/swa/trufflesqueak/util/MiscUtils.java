@@ -13,6 +13,8 @@ import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -29,8 +31,10 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakInterrupt;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReadWriter2Plugin;
+import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
 public final class MiscUtils {
     private static final CompilationMXBean COMPILATION_BEAN = ManagementFactory.getCompilationMXBean();
@@ -173,7 +177,31 @@ public final class MiscUtils {
 
     @TruffleBoundary
     public static String getVMInformation() {
-        return String.format("\n%s (%s; %s)\n", System.getProperty("java.vm.name"), System.getProperty("java.vm.version"), System.getProperty("java.vm.info"));
+        final String jre;
+        if (System.getProperty("java.version").startsWith("1.8")) {
+            jre = "jre" + File.separator;
+        } else {
+            jre = "";
+        }
+        final File releaseFile = new File(System.getProperty("java.home") + jre + File.separator + "languages" + File.separator + SqueakLanguageConfig.ID + File.separator + "release");
+        if (releaseFile.canRead()) {
+            final Properties properties = new Properties();
+            try {
+                properties.load(new FileInputStream(releaseFile));
+            } catch (final IOException e) {
+                e.printStackTrace();
+                throw SqueakException.create("Could not read release file.", e);
+            }
+            final String source = properties.getProperty("SOURCE", "unknown source").replaceAll("\"", "");
+            final String graalVMVersion = properties.getProperty("GRAALVM_VERSION", "unknown GraalVM version").replaceAll("\"", "");
+            final String javaVersion = properties.getProperty("JAVA_VERSION", "unknown Java version").replaceAll("\"", "");
+            final String osName = properties.getProperty("OS_NAME", "unknown os name").replaceAll("\"", "");
+            final String osArch = properties.getProperty("OS_ARCH", "unknown os arch").replaceAll("\"", "");
+            final String commitInfo = properties.getProperty("COMMIT_INFO", "unknown commit").replaceAll("\"", "");
+            return String.format("%s\nbuilt for GraalVM %s (Java %s, %s, %s)\n%s", source, graalVMVersion, javaVersion, osName, osArch, commitInfo);
+        } else {
+            return String.format("\n%s (%s; %s)\n", System.getProperty("java.vm.name"), System.getProperty("java.vm.version"), System.getProperty("java.vm.info"));
+        }
     }
 
     @TruffleBoundary
