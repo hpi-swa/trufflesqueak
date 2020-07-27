@@ -402,12 +402,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doLargeInteger(final LargeIntegerObject largeInteger, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return calculateHash(initialHash, largeInteger.getBytes());
-        }
-
-        @Specialization(guards = {"isLongMinValue(value)"})
-        protected static final long doLongMinValue(@SuppressWarnings("unused") final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
+            return largeInteger.calculateHash(initialHash);
         }
 
         /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
@@ -419,12 +414,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject largeInteger, final long initialHash) {
-            return calculateHash(initialHash, largeInteger.getBytes());
-        }
-
-        @Specialization(guards = {"isLongMinValue(value)"})
-        protected static final long doLongMinValue(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long value, final long initialHash) {
-            return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
+            return largeInteger.calculateHash(initialHash);
         }
 
         private static long calculateHash(final long initialHash, final byte[] bytes) {

@@ -134,6 +134,24 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return toBytes(integer);
     }
 
+    @TruffleBoundary
+    public long calculateHash(final long initialHash) {
+        long hash = initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
+        final BigInteger abs = integer.abs();
+        final int byteLen = bitLength() / 8 + 1;
+        for (int i = byteLen - 1, bytesCopied = 4, nextInt = 0, intIndex = 0; i >= 0; i--) {
+            if (bytesCopied == 4) {
+                nextInt = getInt(abs, intIndex++);
+                bytesCopied = 1;
+            } else {
+                nextInt >>>= 8;
+                bytesCopied++;
+            }
+            hash = (hash + (nextInt & 0xFF)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
+        }
+        return hash;
+    }
+
     public void replaceInternalValue(final LargeIntegerObject other) {
         assert size() == other.size();
         integer = other.getSqueakClass() == getSqueakClass() ? other.integer : other.integer.negate();
