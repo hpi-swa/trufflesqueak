@@ -10,7 +10,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -19,20 +18,24 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageChunk;
 import de.hpi.swa.trufflesqueak.image.SqueakImageConstants;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimHashMultiplyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
+import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHash {
     private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
     public static final BigInteger LONG_MIN_OVERFLOW_RESULT = BigInteger.valueOf(Long.MIN_VALUE).abs();
-    @CompilationFinal(dimensions = 1) private static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = toBytes(LONG_MIN_OVERFLOW_RESULT);
     private static final MethodHandle BIG_INTEGER_GET_INT_HANDLE = getBigIntegerMethodHandle("getInt", int.class);
+    @CompilationFinal(dimensions = 1) private static final byte[] LONG_MIN_OVERFLOW_RESULT_BYTES = toBytes(LONG_MIN_OVERFLOW_RESULT);
 
     private BigInteger integer;
     private int bitLength;
@@ -92,10 +95,22 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return LONG_MIN_OVERFLOW_RESULT_BYTES;
     }
 
+    @TruffleBoundary
     private static byte[] toBytes(final BigInteger bigInteger) {
-        final byte[] bigEndianBytes = toBigEndianBytes(bigInteger);
-        final byte[] bytes = bigEndianBytes[0] != 0 ? bigEndianBytes : Arrays.copyOfRange(bigEndianBytes, 1, bigEndianBytes.length);
-        return ArrayUtils.swapOrderInPlace(bytes);
+        final BigInteger abs = bigInteger.abs();
+        final int byteLen = MiscUtils.ceilDiv(abs.bitLength(), Byte.SIZE);
+        final byte[] byteArray = new byte[byteLen];
+        for (int i = 0, bytesCopied = 4, nextInt = 0, intIndex = 0; i < byteLen; i++) {
+            if (bytesCopied == 4) {
+                nextInt = getInt(abs, intIndex++);
+                bytesCopied = 1;
+            } else {
+                nextInt >>>= 8;
+                bytesCopied++;
+            }
+            byteArray[i] = (byte) nextInt;
+        }
+        return byteArray;
     }
 
     @TruffleBoundary
@@ -134,6 +149,15 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         return toBytes(integer);
     }
 
+    public int[] toInts() {
+        final int[] ints = new int[(bitLength() >>> 5) + 1];
+        final BigInteger abs = integer.abs();
+        for (int i = 0; i < ints.length; i++) {
+            ints[ints.length - i - 1] = getInt(abs, i);
+        }
+        return ints;
+    }
+
     @TruffleBoundary
     public long calculateHash(final long initialHash) {
         long hash = initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
@@ -150,6 +174,34 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
             hash = (hash + (nextInt & 0xFF)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
         }
         return hash;
+    }
+
+    public boolean anyBitFromTo(final BranchProfile startLargerThanStopProfile, final ConditionProfile identicalDigitIndex, final int start, final int stopArg) {
+        final int stop = Math.min(stopArg, bitLength());
+        if (start > stop) {
+            startLargerThanStopProfile.enter();
+            return BooleanObject.FALSE;
+        }
+        final BigInteger abs = integer.abs();
+
+        final int firstDigitIndex = (start - 1) / 32;
+        final int lastDigitIndex = (stop - 1) / 32;
+        final long firstMask = 0xFFFFFFFFL << (start - 1 & 31);
+        final long lastMask = 0xFFFFFFFFL >> 31 - (stop - 1 & 31);
+
+        if (identicalDigitIndex.profile(firstDigitIndex == lastDigitIndex)) {
+            return BooleanObject.wrap((getInt(abs, firstDigitIndex) & firstMask & lastMask) != 0);
+        } else {
+            if ((getInt(abs, firstDigitIndex) & firstMask) != 0) {
+                return BooleanObject.TRUE;
+            }
+            for (int i = firstDigitIndex + 1; i < lastDigitIndex; i++) {
+                if (getInt(abs, i) != 0) {
+                    return BooleanObject.TRUE;
+                }
+            }
+            return BooleanObject.wrap((getInt(abs, lastDigitIndex) & lastMask) != 0);
+        }
     }
 
     public void replaceInternalValue(final LargeIntegerObject other) {

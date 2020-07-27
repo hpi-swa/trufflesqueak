@@ -65,6 +65,10 @@ public final class MiscUtils {
         return (int) (value >> offset & size - 1);
     }
 
+    public static int ceilDiv(final int lhs, final int rhs) {
+        return (lhs + rhs - 1) / rhs;
+    }
+
     @TruffleBoundary
     public static long currentTimeMillis() {
         return System.currentTimeMillis();

@@ -42,9 +42,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primAnyBitFromTo")
     protected abstract static class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
         private final BranchProfile startLargerThanStopProfile = BranchProfile.create();
-        private final ConditionProfile firstAndLastDigitIndexIdenticalProfile = ConditionProfile.createBinaryProfile();
-        private final BranchProfile firstDigitNonZeroProfile = BranchProfile.create();
-        private final BranchProfile middleDigitsNonZeroProfile = BranchProfile.create();
 
         @Specialization(guards = {"start >= 1", "stopArg >= 1"})
         protected final boolean doLong(final long receiver, final long start, final long stopArg) {
@@ -53,27 +50,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 startLargerThanStopProfile.enter();
                 return BooleanObject.FALSE;
             }
-            final int firstDigitIndex = ((int) start - 1) / 8 + 1;
-            final int lastDigitIndex = ((int) stop - 1) / 8 + 1;
-            final int rightShift = -(((int) start - 1) % 8);
-            final int leftShift = 7 - ((int) stop - 1) % 8;
-            if (firstAndLastDigitIndexIdenticalProfile.profile(firstDigitIndex == lastDigitIndex)) {
-                final int mask = 0xFF >> rightShift & 0xFF >> leftShift;
-                final byte digit = digitOf(receiver, firstDigitIndex - 1);
-                return BooleanObject.wrap((digit & mask) != 0);
-            } else {
-                if (digitOf(receiver, firstDigitIndex - 1) << rightShift != 0) {
-                    firstDigitNonZeroProfile.enter();
-                    return BooleanObject.TRUE;
-                }
-                for (long i = firstDigitIndex + 1; i < lastDigitIndex; i++) {
-                    if (digitOf(receiver, i - 1) != 0) {
-                        middleDigitsNonZeroProfile.enter();
-                        return BooleanObject.TRUE;
-                    }
-                }
-                return BooleanObject.wrap((digitOf(receiver, lastDigitIndex - 1) << leftShift & 0xFF) != 0);
-            }
+            final long firstMask = 0xFFFFFFFFL << (start - 1 & 31);
+            final long lastMask = 0xFFFFFFFFL >> 31 - (stop - 1 & 31);
+            return (receiver & firstMask & lastMask) != 0;
         }
 
         @Specialization(guards = {"start >= 1", "stopArg >= 1"}, rewriteOn = {ArithmeticException.class})
@@ -82,38 +61,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"start >= 1", "stopArg >= 1"})
-        protected final boolean doLargeInteger(final LargeIntegerObject receiver, final long start, final long stopArg) {
-            final long stop = Math.min(stopArg, receiver.bitLength());
-            if (start > stop) {
-                startLargerThanStopProfile.enter();
-                return BooleanObject.FALSE;
-            }
-            final byte[] bytes = receiver.getBytes();
-            final int firstDigitIndex = ((int) start - 1) / 8 + 1;
-            final int lastDigitIndex = ((int) stop - 1) / 8 + 1;
-            final int rightShift = -(((int) start - 1) % 8);
-            final int leftShift = 7 - ((int) stop - 1) % 8;
-            if (firstAndLastDigitIndexIdenticalProfile.profile(firstDigitIndex == lastDigitIndex)) {
-                final int mask = 0xFF >> rightShift & 0xFF >> leftShift;
-                final byte digit = bytes[firstDigitIndex - 1];
-                return BooleanObject.wrap((digit & mask) != 0);
-            } else {
-                if (bytes[firstDigitIndex - 1] << rightShift != 0) {
-                    firstDigitNonZeroProfile.enter();
-                    return BooleanObject.TRUE;
-                }
-                for (int i = firstDigitIndex + 1; i < lastDigitIndex; i++) {
-                    if (bytes[i - 1] != 0) {
-                        middleDigitsNonZeroProfile.enter();
-                        return BooleanObject.TRUE;
-                    }
-                }
-                return BooleanObject.wrap((bytes[lastDigitIndex - 1] << leftShift & 0xFF) != 0);
-            }
-        }
-
-        private static byte digitOf(final long value, final long index) {
-            return (byte) (value >> Byte.SIZE * index);
+        protected final boolean doLargeInteger(final LargeIntegerObject receiver, final long start, final long stopArg,
+                        @Cached("createBinaryProfile()") final ConditionProfile identicalDigitIndex) {
+            return receiver.anyBitFromTo(startLargerThanStopProfile, identicalDigitIndex, (int) start, (int) stopArg);
         }
     }
 
@@ -508,11 +458,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         /*
          * Optimized version of montgomeryTimesModulo for integer-sized arguments.
          */
-        @Specialization(rewriteOn = {ArithmeticException.class})
+        @Specialization(guards = {"fitsInOneWord(receiver)", "fitsInOneWord(a)", "fitsInOneWord(m)"})
         protected static final long doLongQuick(final long receiver, final long a, final long m, final long mInv) {
-            if (!(fitsInOneWord(receiver) && fitsInOneWord(a) && fitsInOneWord(m))) {
-                throw new ArithmeticException();
-            }
             final long accum3 = receiver * a;
             final long u = accum3 * mInv & 0xFFFFFFFFL;
             final long accum2 = u * m;
@@ -525,11 +472,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return result;
         }
 
-        private static boolean fitsInOneWord(final long value) {
+        protected static final boolean fitsInOneWord(final long value) {
             return value <= NativeObject.INTEGER_MAX;
         }
 
-        @Specialization(replaces = "doLongQuick")
+        @Specialization(guards = {"(!fitsInOneWord(receiver) || !fitsInOneWord(a)) || !fitsInOneWord(m)"})
         @TruffleBoundary
         protected static final Object doLong(final long receiver, final long a, final long m, final long mInv,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -540,53 +487,49 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected static final Object doLong(final long receiver, final LargeIntegerObject a, final long m, final long mInv,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
+            return doLargeInteger(image, toInts(receiver), a.toInts(), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
         protected static final Object doLong(final long receiver, final long a, final LargeIntegerObject m, final long mInv,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
+            return doLargeInteger(image, toInts(receiver), toInts(a), m.toInts(), mInv);
         }
 
         @Specialization
         @TruffleBoundary
         protected static final Object doLong(final long receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
+            return doLargeInteger(image, toInts(receiver), a.toInts(), m.toInts(), mInv);
         }
 
         @Specialization
         @TruffleBoundary
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final long m, final long mInv,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
+            return doLargeInteger(image, receiver.toInts(), toInts(a), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final long m, final long mInv,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
+            return doLargeInteger(image, receiver.toInts(), a.toInts(), toInts(m), mInv);
         }
 
         @Specialization
         @TruffleBoundary
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long a, final LargeIntegerObject m, final long mInv,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv);
+            return doLargeInteger(image, receiver.toInts(), toInts(a), m.toInts(), mInv);
         }
 
         @Specialization
         @TruffleBoundary
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final LargeIntegerObject mInv,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doLargeInteger(image, toInts(receiver), toInts(a), toInts(m), mInv.longValueExact());
-        }
-
-        private static int[] toInts(final LargeIntegerObject value) {
-            return UnsafeUtils.toIntsExact(value.getBytes());
+            return doLargeInteger(image, receiver.toInts(), a.toInts(), m.toInts(), mInv.longValueExact());
         }
 
         private static int[] toInts(final long value) {
