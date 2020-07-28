@@ -1,5 +1,6 @@
 # TruffleSqueak Documentation
 
+- [Development](development.md)
 - [Polyglot API Reference](polyglot-api.md)
 - [Image Creation](images.md)
 

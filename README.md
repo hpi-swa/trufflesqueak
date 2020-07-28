@@ -42,32 +42,9 @@ Documentation is available in [`docs/`][ts_docs].
 Active development is done in the [`master` branch][ts_master].
 Please feel free to open a [pull request][pull_request] if you'd like to
 contribute a bug-fix, documentation, or a new feature.
-
-
-### Building from Source
-
-The [mx] tool is required to build TruffleSqueak.
-Running `mx --dy /compiler build` in TruffleSqueak's root directory checks out all dependencies
-and builds all JAR files for running and testing TruffleSqueak with the Graal compiler.
-It can also be used to run TruffleSqueak via the `mx squeak` command.
-As an example, `mx --dy /compiler squeak path/to/a/squeaksmalltalk.image` opens
-the image and enables the Graal compiler.
-Run `mx squeak --help` and `mx --help` to list all command-line flags you can
-run TruffleSqueak with.
-
-
-### Setting Up A New Development Environment
-
-It is recommended to use [Eclipse][eclipse_downloads] with the
-[Eclipse Checkstyle Plugin][eclipse_cs] for development.
-
-1. Run `mx eclipseinit` in TruffleSqueak's root directory to create all project
-   files for Eclipse.
-2. Import all projects from the [graal] repository which `mx` should have
-   already cloned into the parent directory of your TruffleSqueak checkout during
-   the build process.
-3. Import all projects from TruffleSqueak's root directory.
-4. Run [`TruffleSqueakLauncher`][ts_launcher] to start TruffleSqueak.
+For more information, for example on how to build TruffleSqueak from source or
+set up a development environment, please refer to the
+[development.md][ts_dev_docs].
 
 
 ## Contributing
@@ -185,6 +162,7 @@ TruffleSqueak is released under the [MIT license][ts_license].
 [squeak]: https://squeak.org
 [squeak_downloads]: https://squeak.org/downloads/
 [ts_docs]: https://github.com/hpi-swa/trufflesqueak/tree/master/docs
+[ts_dev_docs]: https://github.com/hpi-swa/trufflesqueak/blob/master/docs/development.md
 [ts_gh_action]: https://github.com/hpi-swa/trufflesqueak/actions
 [ts_gh_action_badge]: https://img.shields.io/github/workflow/status/hpi-swa/trufflesqueak/CI
 [ts_issues]: https://github.com/hpi-swa/trufflesqueak/issues/new
