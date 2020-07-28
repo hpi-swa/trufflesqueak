@@ -125,6 +125,11 @@ download-asset() {
 download-trufflesqueak-image() {
   local target_dir="${BASE_DIRECTORY}/src/resources"
 
+  if ls -1 ${target_dir}/*.image 2>/dev/null; then
+    echo "[TruffleSqueak image already downloaded]"
+    return
+  fi
+
   pushd "${target_dir}" > /dev/null
 
   download-asset "${DEP_IMAGE}" "${DEP_IMAGE_TAG}"
@@ -141,10 +146,11 @@ enable-jdk() {
   set-env "JAVA_HOME" "$(resolve-path "$1")"
 }
 
-ensure-test-image() {
+download-trufflesqueak-test-image() {
   local target_dir="${BASE_DIRECTORY}/images"
 
   if [[ -f "${target_dir}/test-64bit.image" ]]; then
+    echo "[TruffleSqueak test image already downloaded]"
     return
   fi
 
@@ -196,7 +202,7 @@ set-up-dependencies() {
   shallow-clone-graalvm-project https://github.com/oracle/graal.git
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
   download-trufflesqueak-image
-  ensure-test-image
+  download-trufflesqueak-test-image
 
   if [[ "${java_version}" == "java8" ]]; then
     set-up-openjdk8-jvmci "${HOME}"
