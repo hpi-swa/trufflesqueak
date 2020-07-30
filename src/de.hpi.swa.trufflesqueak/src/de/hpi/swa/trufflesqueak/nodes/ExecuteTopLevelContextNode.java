@@ -102,7 +102,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                 LogUtils.SCHEDULING.log(Level.FINE, "Non Virtual Return on top-level: {0}", activeContext);
             }
-            assert image.stackDepth == 0 : "Stack depth should be zero before switching to another context";
         }
     }
 

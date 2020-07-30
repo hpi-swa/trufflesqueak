@@ -142,7 +142,6 @@ public final class SqueakImageContext {
     @CompilationFinal private SqueakImage squeakImage;
 
     /* Stack Management */
-    public int stackDepth;
     public ContextObject lastSeenContext;
 
     @CompilationFinal private ClassObject exceptionClass;

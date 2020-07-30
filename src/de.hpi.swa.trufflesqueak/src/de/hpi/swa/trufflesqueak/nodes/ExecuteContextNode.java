@@ -30,7 +30,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNo
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
-import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
@@ -39,7 +38,6 @@ import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public final class ExecuteContextNode extends AbstractExecuteContextNode {
     private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
-    private static final int STACK_DEPTH_LIMIT = 25000;
     private static final int LOCAL_RETURN_PC = -2;
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
@@ -88,13 +86,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     @Override
     public Object executeFresh(final VirtualFrame frame) {
         FrameAccess.setInstructionPointer(frame, code, 0);
-        final boolean enableStackDepthProtection = enableStackDepthProtection();
         try {
-            if (enableStackDepthProtection && code.image.stackDepth++ > STACK_DEPTH_LIMIT) {
-                final ContextObject context = getGetOrCreateContextNode().executeGet(frame);
-                context.setProcess(GetActiveProcessNode.getUncached().execute());
-                throw ProcessSwitch.createWithBoundary(context);
-            }
             frameInitializationNode.executeInitialize(frame);
             if (interruptHandlerNode != null) {
                 interruptHandlerNode.executeTrigger(frame);
@@ -112,9 +104,6 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw ps;
         } finally {
-            if (enableStackDepthProtection) {
-                code.image.stackDepth--;
-            }
             materializeContextOnMethodExitNode.execute(frame);
         }
     }
@@ -329,11 +318,6 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
             notifyInserted(bytecodeNodes[pc]);
         }
         return bytecodeNodes[pc];
-    }
-
-    /* Only use stackDepthProtection in interpreter or once per compilation unit (if at all). */
-    private boolean enableStackDepthProtection() {
-        return code.image.options.enableStackDepthProtection && (CompilerDirectives.inInterpreter() || CompilerDirectives.inCompilationRoot());
     }
 
     @Override
