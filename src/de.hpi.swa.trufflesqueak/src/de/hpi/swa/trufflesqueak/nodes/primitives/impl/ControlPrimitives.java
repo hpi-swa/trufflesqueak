@@ -1064,24 +1064,22 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveStackIncrementNode implements BinaryPrimitive {
         @Specialization
         protected final Object doRelinquish(final VirtualFrame frame, final Object receiver, final long timeMicroseconds,
-                        @Cached("createOrNull(true)") final InterruptHandlerNode interruptNode) {
+                        @Cached final InterruptHandlerNode interruptNode) {
             MiscUtils.sleep(timeMicroseconds / 1000);
             /*
              * Perform interrupt check (even if interrupt handler is not active), otherwise
              * idleProcess gets stuck. Checking whether the interrupt handler `shouldTrigger()`
              * decreases performance for some reason, forcing interrupt check instead.
              */
-            if (interruptNode != null) {
-                try {
-                    interruptNode.executeTrigger(frame);
-                } catch (final ProcessSwitch ps) {
-                    /*
-                     * Leave receiver on stack. It has not been removed from the stack yet, so it is
-                     * enough to increment the stack pointer.
-                     */
-                    getFrameStackPointerIncrementNode().execute(frame);
-                    throw ps;
-                }
+            try {
+                interruptNode.executeTrigger(frame);
+            } catch (final ProcessSwitch ps) {
+                /*
+                 * Leave receiver on stack. It has not been removed from the stack yet, so it is
+                 * enough to increment the stack pointer.
+                 */
+                getFrameStackPointerIncrementNode().execute(frame);
+                throw ps;
             }
             return receiver;
         }

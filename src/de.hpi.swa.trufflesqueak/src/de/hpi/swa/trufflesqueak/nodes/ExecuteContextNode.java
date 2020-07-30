@@ -69,7 +69,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
          * and therefore materialization and deopts. Timer inputs are currently handled in
          * primitiveRelinquishProcessor (#230) only.
          */
-        interruptHandlerNode = code.isCompiledBlock() || bytecodeNodes.length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? null : InterruptHandlerNode.createOrNull(false);
+        interruptHandlerNode = code.isCompiledBlock() || bytecodeNodes.length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? InterruptHandlerNode.DISABLED : InterruptHandlerNode.create();
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create();
     }
 
@@ -88,9 +88,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         FrameAccess.setInstructionPointer(frame, code, 0);
         try {
             frameInitializationNode.executeInitialize(frame);
-            if (interruptHandlerNode != null) {
-                interruptHandlerNode.executeTrigger(frame);
-            }
+            interruptHandlerNode.executeTrigger(frame);
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
