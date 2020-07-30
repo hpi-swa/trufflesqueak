@@ -175,12 +175,8 @@ public final class FrameAccess {
         frame.setObject(thisMarkerSlot, marker);
     }
 
-    public static void setMarker(final Frame frame, final CompiledCodeObject code, final FrameMarker marker) {
-        setMarker(frame, code.getThisMarkerSlot(), marker);
-    }
-
     public static void initializeMarker(final Frame frame, final CompiledCodeObject code) {
-        setMarker(frame, code, new FrameMarker());
+        setMarker(frame, code.getThisMarkerSlot(), new FrameMarker());
     }
 
     public static Object getContextOrMarkerSlow(final VirtualFrame frame) {
