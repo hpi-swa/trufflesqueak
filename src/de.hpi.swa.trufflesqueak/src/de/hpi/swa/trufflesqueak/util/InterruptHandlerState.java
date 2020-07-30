@@ -26,7 +26,6 @@ public final class InterruptHandlerState {
     private ScheduledThreadPoolExecutor executor;
     private final ArrayDeque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
-    private boolean isActive = true;
     protected long nextWakeupTick;
     protected boolean interruptPending;
     private boolean pendingFinalizationSignals;
@@ -76,7 +75,7 @@ public final class InterruptHandlerState {
         executor = new ScheduledThreadPoolExecutor(1);
         executor.setRemoveOnCancelPolicy(true);
         interruptChecks = executor.scheduleWithFixedDelay(() -> {
-            shouldTrigger = true;
+            shouldTrigger = interruptPending() || nextWakeUpTickTrigger() || pendingFinalizationSignals() || hasSemaphoresToSignal();
         }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 
@@ -109,18 +108,6 @@ public final class InterruptHandlerState {
 
     public boolean disabled() {
         return image.options.disableInterruptHandler;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void activate() {
-        isActive = true;
-    }
-
-    public void deactivate() {
-        isActive = false;
     }
 
     protected boolean interruptPending() {
@@ -164,10 +151,6 @@ public final class InterruptHandlerState {
         semaphoresToSignal.addLast(index);
     }
 
-    public boolean isActiveAndShouldTrigger() {
-        return isActive && shouldTrigger();
-    }
-
     public boolean shouldTrigger() {
         if (shouldTrigger) {
             shouldTrigger = false;
@@ -199,7 +182,6 @@ public final class InterruptHandlerState {
 
     public void reset() {
         CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
-        isActive = true;
         nextWakeupTick = 0;
         count = 0;
         if (interruptChecks != null) {
