@@ -448,7 +448,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public int size() {
         if (isCompiledBlock()) {
-            return getMethod().size();
+            return getMethodUnsafe().size();
         } else {
             return getBytecodeOffset() + bytes.length;
         }
