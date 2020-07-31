@@ -21,7 +21,13 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.UnknownBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushActiveContextNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushClosureNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantFalseNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantMinusOneNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantNilNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantOneNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantTrueNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantTwoNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantZeroNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushNewArrayNode;
@@ -149,19 +155,19 @@ public final class SqueakBytecodeDecoder {
             case 112:
                 return PushReceiverNode.create(code, index);
             case 113:
-                return new PushConstantNode(code, index, true);
+                return new PushConstantTrueNode(code, index);
             case 114:
-                return new PushConstantNode(code, index, false);
+                return new PushConstantFalseNode(code, index);
             case 115:
-                return new PushConstantNode(code, index, NilObject.SINGLETON);
+                return new PushConstantNilNode(code, index);
             case 116:
-                return new PushConstantNode(code, index, -1L);
+                return new PushConstantMinusOneNode(code, index);
             case 117:
-                return new PushConstantNode(code, index, 0L);
+                return new PushConstantZeroNode(code, index);
             case 118:
-                return new PushConstantNode(code, index, 1L);
+                return new PushConstantOneNode(code, index);
             case 119:
-                return new PushConstantNode(code, index, 2L);
+                return new PushConstantTwoNode(code, index);
             case 120:
                 return ReturnReceiverNode.create(code, index);
             case 121:

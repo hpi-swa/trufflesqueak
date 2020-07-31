@@ -25,8 +25,10 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.SqueakProfiles.SqueakProfile;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
@@ -163,23 +165,99 @@ public final class PushBytecodes {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public static final class PushConstantNode extends AbstractPushNode {
-        private final Object constant;
-
-        public PushConstantNode(final CompiledCodeObject code, final int index, final Object obj) {
+    public abstract static class PushConstantNode extends AbstractPushNode {
+        private PushConstantNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            constant = obj;
+        }
+
+        protected abstract Object getConstant();
+
+        @Override
+        public final void executeVoid(final VirtualFrame frame) {
+            pushNode.execute(frame, getConstant());
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, constant);
-        }
-
-        @Override
-        public String toString() {
+        public final String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushConstant: " + constant.toString();
+            return "pushConstant: " + getConstant().toString();
+        }
+
+        public static final class PushConstantTrueNode extends PushConstantNode {
+            public PushConstantTrueNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            @Override
+            protected Object getConstant() {
+                return BooleanObject.TRUE;
+            }
+        }
+
+        public static final class PushConstantFalseNode extends PushConstantNode {
+            public PushConstantFalseNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            @Override
+            protected Object getConstant() {
+                return BooleanObject.FALSE;
+            }
+        }
+
+        public static final class PushConstantNilNode extends PushConstantNode {
+            public PushConstantNilNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            @Override
+            protected Object getConstant() {
+                return NilObject.SINGLETON;
+            }
+        }
+
+        public static final class PushConstantMinusOneNode extends PushConstantNode {
+            public PushConstantMinusOneNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            @Override
+            protected Object getConstant() {
+                return -1L;
+            }
+        }
+
+        public static final class PushConstantZeroNode extends PushConstantNode {
+            public PushConstantZeroNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            @Override
+            protected Object getConstant() {
+                return 0L;
+            }
+        }
+
+        public static final class PushConstantOneNode extends PushConstantNode {
+            public PushConstantOneNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            @Override
+            protected Object getConstant() {
+                return 1L;
+            }
+        }
+
+        public static final class PushConstantTwoNode extends PushConstantNode {
+            public PushConstantTwoNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            @Override
+            protected Object getConstant() {
+                return 2L;
+            }
         }
     }
 
