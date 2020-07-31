@@ -9,10 +9,11 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
@@ -76,17 +77,27 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
         return "a " + getSqueakClassName() + " @" + Integer.toHexString(hashCode());
     }
 
+    /**
+     * Utility method to dispatch messages internally. The {@code selector} must resolve to a
+     * {@link CompiledCodeObject}. Note that the priority of the current process is temporarily
+     * raised to prevent the scheduler to switch control to another process.
+     */
     @TruffleBoundary
     public final Object send(final String selector, final Object... arguments) {
         final Object methodObject = LookupMethodByStringNode.getUncached().executeLookup(getSqueakClass(), selector);
+        final PointersObject activeProcess = (PointersObject) image.getScheduler().instVarAt0Slow(PROCESS_SCHEDULER.ACTIVE_PROCESS);
         if (methodObject instanceof CompiledCodeObject) {
+            final long currentPriority = (long) activeProcess.instVarAt0Slow(PROCESS.PRIORITY);
+            activeProcess.instVarAtPut0Slow(PROCESS.PRIORITY, PROCESS_SCHEDULER.HIGHEST_PRIORITY);
             try {
                 return DispatchUneagerlyNode.getUncached().executeDispatch((CompiledCodeObject) methodObject, ArrayUtils.copyWithFirst(arguments, this), NilObject.SINGLETON);
             } catch (final ProcessSwitch ps) {
                 throw SqueakException.create("Unexpected process switch detected during internal send");
+            } finally {
+                activeProcess.instVarAtPut0Slow(PROCESS.PRIORITY, currentPriority);
             }
         } else {
-            throw SqueakExceptions.SqueakException.create("CompiledMethodObject expected, got: " + methodObject);
+            throw SqueakException.create("CompiledMethodObject expected, got:", methodObject);
         }
     }
 }

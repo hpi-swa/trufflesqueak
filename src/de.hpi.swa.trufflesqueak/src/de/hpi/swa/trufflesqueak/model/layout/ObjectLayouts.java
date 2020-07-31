@@ -276,6 +276,7 @@ public final class ObjectLayouts {
     public static final class PROCESS_SCHEDULER {
         public static final int PROCESS_LISTS = 0;
         public static final int ACTIVE_PROCESS = 1;
+        public static final long HIGHEST_PRIORITY = 80L;
     }
 
     public static final class SEMAPHORE {
