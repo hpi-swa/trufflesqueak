@@ -10,12 +10,12 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -69,14 +69,15 @@ public final class StoreBytecodes {
         private final int indexInArray;
         private final int indexOfArray;
 
-        @Child protected FrameSlotReadNode readNode;
-
         private AbstractStoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte indexInArray, final byte indexOfArray) {
             super(code, index, numBytecodes);
             this.indexInArray = Byte.toUnsignedInt(indexInArray);
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(indexInArray);
-            readNode = FrameSlotReadNode.create(code.getStackSlot(this.indexOfArray));
+        }
+
+        protected final ArrayObject getRemoteTemp(final VirtualFrame frame) {
+            return (ArrayObject) FrameAccess.getStackAt(frame, code.getStackSlot(), indexOfArray);
         }
 
         @Override
@@ -151,7 +152,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(readNode.executeRead(frame), popNode.execute(frame));
+            storeNode.executeWrite(getRemoteTemp(frame), popNode.execute(frame));
         }
 
         @Override
@@ -223,7 +224,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(readNode.executeRead(frame), topNode.execute(frame));
+            storeNode.executeWrite(getRemoteTemp(frame), topNode.execute(frame));
         }
 
         @Override

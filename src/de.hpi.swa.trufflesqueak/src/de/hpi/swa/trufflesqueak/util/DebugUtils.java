@@ -14,10 +14,7 @@ import java.lang.management.ThreadInfo;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -211,9 +208,7 @@ public final class DebugUtils {
                         final Object value = receiverFrameArguments[i + 4];
                         b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t-> a" : "\t\t\t\t\t\t\ta").append(i).append('\t').append(value).append('\n');
                     }
-                    final FrameSlot[] stackSlots = receiverCode.getStackSlotsUnsafe();
                     boolean addedSeparator = false;
-                    final FrameDescriptor frameDescriptor = receiverCode.getFrameDescriptor();
                     final int initialStackp;
                     if (receiverCode.isCompiledBlock()) {
                         assert ((BlockClosureObject) receiverFrameArguments[2]).getCopied().length == receiverCode.getNumArgsAndCopied() - receiverCode.getNumArgs();
@@ -225,18 +220,16 @@ public final class DebugUtils {
                     } else {
                         initialStackp = receiverCode.getNumTemps();
                         for (int i = numArgs; i < initialStackp; i++) {
-                            final FrameSlot slot = stackSlots[i];
-                            Object value = null;
-                            if (slot != null && (value = receiverFrame.getValue(slot)) != null) {
+                            final Object value = FrameAccess.getStackAt(receiverFrame, receiverCode.getStackSlot(), i);
+                            if (value != null) {
                                 b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t-> t" : "\t\t\t\t\t\t\tt").append(i).append('\t').append(value).append('\n');
                             }
                         }
                     }
                     int j = initialStackp;
-                    for (int i = initialStackp; i < stackSlots.length; i++) {
-                        final FrameSlot slot = stackSlots[i];
-                        Object value = null;
-                        if (slot != null && frameDescriptor.getFrameSlotKind(slot) != FrameSlotKind.Illegal && (value = receiverFrame.getValue(slot)) != null) {
+                    for (int i = initialStackp; i < receiverCode.getNumStackSlots(); i++) {
+                        final Object value = FrameAccess.getStackAt(receiverFrame, receiverCode.getStackSlot(), i);
+                        if (value != null) {
                             if (!addedSeparator) {
                                 addedSeparator = true;
                                 b.append("\t\t\t\t\t\t\t------------------------------------------------\n");
@@ -270,9 +263,7 @@ public final class DebugUtils {
             final Object value = frameArguments[i + 4];
             b.append(zeroBasedStackp == i ? "\t\t\t\t-> a" : "\t\t\t\t\ta").append(i).append('\t').append(value).append('\n');
         }
-        final FrameSlot[] stackSlots = code.getStackSlotsUnsafe();
         boolean addedSeparator = false;
-        final FrameDescriptor frameDescriptor = code.getFrameDescriptor();
         final int initialStackp;
         if (code.isCompiledBlock()) {
             initialStackp = code.getNumArgsAndCopied();
@@ -283,16 +274,14 @@ public final class DebugUtils {
         } else {
             initialStackp = code.getNumTemps();
             for (int i = numArgs; i < initialStackp; i++) {
-                final FrameSlot slot = stackSlots[i];
-                final Object value = frame.getValue(slot);
+                final Object value = FrameAccess.getStackAt(frame, code.getStackSlot(), i);
                 b.append(zeroBasedStackp == i ? "\t\t\t\t-> t" : "\t\t\t\t\tt").append(i).append('\t').append(value).append('\n');
             }
         }
         int j = initialStackp;
-        for (int i = initialStackp; i < stackSlots.length; i++) {
-            final FrameSlot slot = stackSlots[i];
-            Object value = null;
-            if (slot != null && frameDescriptor.getFrameSlotKind(slot) != FrameSlotKind.Illegal && (value = frame.getValue(slot)) != null) {
+        for (int i = initialStackp; i < code.getNumStackSlots(); i++) {
+            final Object value = FrameAccess.getStackAt(frame, code.getStackSlot(), i);
+            if (value != null) {
                 if (!addedSeparator) {
                     addedSeparator = true;
                     b.append("\t\t\t\t\t------------------------------------------------\n");

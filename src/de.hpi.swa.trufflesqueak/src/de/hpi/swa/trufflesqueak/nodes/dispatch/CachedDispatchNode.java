@@ -5,6 +5,8 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -23,7 +25,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForDNUNode;
@@ -119,29 +120,23 @@ public abstract class CachedDispatchNode extends AbstractNode {
         private Object slowPathSendToFallbackCode(final VirtualFrame frame) {
             final CompiledCodeObject code = FrameAccess.getBlockOrMethod(frame);
             final int stackPointer = FrameAccess.getStackPointer(frame, code);
-            final Object[] receiverAndArguments = new Object[1 + argumentCount];
-            for (int i = 0; i < receiverAndArguments.length; i++) {
-                final FrameSlot stackSlot = code.getStackSlot(stackPointer + i);
-                receiverAndArguments[i] = frame.getValue(stackSlot);
-                if (frame.isObject(stackSlot)) {
-                    frame.setObject(stackSlot, null); /* Clear stack slot. */
-                }
-            }
+            final Object[] receiverAndArguments = Arrays.copyOfRange(FrameAccess.getStack(frame, code.getStackSlot()), stackPointer, stackPointer + 1 + argumentCount);
+            FrameAccess.clearStack(frame, code.getStackSlot(), stackPointer, stackPointer + 1 + argumentCount);
             return IndirectCallNode.getUncached().call(method.getCallTarget(),
                             FrameAccess.newWith(method, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
         }
     }
 
     protected abstract static class AbstractCachedDispatchMethodNode extends CachedDispatchWithDirectCallNode {
-        @Children protected FrameSlotReadNode[] receiverAndArgumentsNodes;
+        protected final int numReceiverAndArguments;
+        private final int stackPointer;
+        private final FrameSlot stackSlot;
 
         private AbstractCachedDispatchMethodNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             super(method);
-            receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
-            final int stackPointer = FrameAccess.getStackPointerSlow(frame);
-            for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
-            }
+            numReceiverAndArguments = 1 + argumentCount;
+            stackPointer = FrameAccess.getStackPointerSlow(frame);
+            stackSlot = FrameAccess.getStackSlot(frame);
         }
 
         protected static AbstractCachedDispatchMethodNode create(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
@@ -153,7 +148,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         }
 
         protected final Object[] createFrameArguments(final VirtualFrame frame, final Object sender) {
-            return FrameAccess.newWith(frame, method, sender, receiverAndArgumentsNodes);
+            return FrameAccess.newWith(frame, method, sender, stackSlot, stackPointer, numReceiverAndArguments);
         }
     }
 
@@ -170,7 +165,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
                 method.getDoesNotNeedSenderAssumption().check();
             } catch (final InvalidAssumptionException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new CachedDispatchMethodWithSenderNode(frame, receiverAndArgumentsNodes.length - 1, method)).execute(frame);
+                return replace(new CachedDispatchMethodWithSenderNode(frame, numReceiverAndArguments - 1, method)).execute(frame);
             }
             return callNode.call(createFrameArguments(frame, getContextOrMarkerNode.execute(frame)));
         }

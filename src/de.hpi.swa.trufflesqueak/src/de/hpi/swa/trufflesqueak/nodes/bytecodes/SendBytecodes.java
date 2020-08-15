@@ -20,7 +20,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchLookupResultNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
@@ -114,7 +113,7 @@ public final class SendBytecodes {
     public abstract static class AbstractSelfSendNode extends AbstractSendNode {
         public static final int INLINE_CACHE_SIZE = 6;
 
-        @Child private FrameSlotReadNode peekAtReceiverNode;
+        @CompilationFinal private int stackPointer = -1;
         @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
         @Child private LookupSelectorNode lookupSelectorNode;
         @Child private DispatchLookupResultNode dispatchNode;
@@ -140,12 +139,11 @@ public final class SendBytecodes {
         }
 
         protected final Object peekAtReceiver(final VirtualFrame frame) {
-            if (peekAtReceiverNode == null) {
+            if (stackPointer == -1) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int stackPointer = FrameAccess.getStackPointer(frame, code);
-                peekAtReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer)));
+                stackPointer = FrameAccess.getStackPointer(frame, code);
             }
-            return peekAtReceiverNode.executeRead(frame);
+            return FrameAccess.getStackAt(frame, code.getStackSlot(), stackPointer);
         }
     }
 

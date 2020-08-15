@@ -20,8 +20,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class FrameStackPushNode extends AbstractNode {
     @CompilationFinal private FrameSlot stackPointerSlot;
     @CompilationFinal private int stackPointer = -1;
-
-    @Child private FrameSlotWriteNode writeNode;
+    @CompilationFinal private FrameSlot stackSlot;
 
     public static FrameStackPushNode create() {
         return new FrameStackPushNode();
@@ -33,9 +32,9 @@ public final class FrameStackPushNode extends AbstractNode {
             stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) + 1;
             assert stackPointer <= CONTEXT.MAX_STACK_SIZE : "Bad stack pointer";
-            writeNode = insert(FrameSlotWriteNode.create(FrameAccess.getStackSlot(frame, stackPointer - 1)));
+            stackSlot = FrameAccess.getStackSlot(frame);
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
-        writeNode.executeWrite(frame, value);
+        FrameAccess.setStackAt(frame, stackSlot, stackPointer - 1, value);
     }
 }

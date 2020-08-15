@@ -61,7 +61,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         } else {
             bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         }
-        frameInitializationNode = resume ? null : FrameStackInitializationNode.create();
+        frameInitializationNode = resume ? null : FrameStackInitializationNode.create(code);
         /*
          * Only check for interrupts if method is relatively large. Avoid check if a closure is
          * activated (effectively what #primitiveClosureValueNoContextSwitch is for). Also, skip

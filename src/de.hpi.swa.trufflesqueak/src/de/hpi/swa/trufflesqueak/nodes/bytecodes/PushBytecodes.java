@@ -34,7 +34,6 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakProfiles.SqueakProfile;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.ArrayFromStackNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.CreateNewArrayNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
@@ -426,7 +425,6 @@ public final class PushBytecodes {
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushRemoteTempNode extends AbstractPushNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private FrameSlotReadNode readTempNode;
         private final int indexInArray;
         private final int indexOfArray;
 
@@ -434,12 +432,11 @@ public final class PushBytecodes {
             super(code, index, numBytecodes);
             this.indexInArray = Byte.toUnsignedInt(indexInArray);
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
-            readTempNode = FrameSlotReadNode.create(code.getStackSlot(this.indexOfArray));
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, at0Node.execute(readTempNode.executeRead(frame), indexInArray));
+            pushNode.execute(frame, at0Node.execute(FrameAccess.getStackAt(frame, code.getStackSlot(), indexOfArray), indexInArray));
         }
 
         @Override
@@ -452,18 +449,16 @@ public final class PushBytecodes {
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushTemporaryLocationNode extends AbstractInstrumentableBytecodeNode {
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
-        @Child private FrameSlotReadNode tempNode;
         private final int tempIndex;
 
         public PushTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            tempNode = FrameSlotReadNode.create(code.getStackSlot(tempIndex));
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, tempNode.executeRead(frame));
+            pushNode.execute(frame, FrameAccess.getStackAt(frame, code.getStackSlot(), tempIndex));
         }
 
         @Override

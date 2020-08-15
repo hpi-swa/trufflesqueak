@@ -56,6 +56,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         THIS_CONTEXT,
         INSTRUCTION_POINTER,
         STACK_POINTER,
+        STACK,
     }
 
     // frame info
@@ -64,7 +65,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     private final FrameSlot thisContextSlot;
     private final FrameSlot instructionPointerSlot;
     private final FrameSlot stackPointerSlot;
-    @CompilationFinal(dimensions = 1) protected FrameSlot[] stackSlots;
+    private final FrameSlot stackSlot;
+    // stack info
+    private int largestStackPointerObserved;
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
@@ -99,6 +102,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
+        stackSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK, FrameSlotKind.Object);
     }
 
     public CompiledCodeObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
@@ -127,7 +131,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         needsLargeFrame = outerMethod.needsLargeFrame;
         numTemps = numArguments + numCopied;
         numArgs = numArguments;
-        ensureCorrectNumberOfStackSlots();
         initializeCallTargetUnsafe();
     }
 
@@ -139,7 +142,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         thisContextSlot = original.thisContextSlot;
         instructionPointerSlot = original.instructionPointerSlot;
         stackPointerSlot = original.stackPointerSlot;
-        stackSlots = original.stackSlots;
+        stackSlot = original.stackSlot;
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
         offset = original.offset;
     }
@@ -255,6 +258,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return stackPointerSlot;
     }
 
+    public FrameSlot getStackSlot() {
+        return stackSlot;
+    }
+
     public int getNumArgs() {
         return numArgs;
     }
@@ -269,20 +276,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public int getNumLiterals() {
         return numLiterals;
-    }
-
-    public FrameSlot getStackSlot(final int i) {
-        assert 0 <= i && i < stackSlots.length : "Bad stack access";
-        if (stackSlots[i] == null) {
-            // Lazily add frame slots.
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackSlots[i] = frameDescriptor.addFrameSlot(i + 1, FrameSlotKind.Illegal);
-        }
-        return stackSlots[i];
-    }
-
-    public FrameSlot[] getStackSlotsUnsafe() {
-        return stackSlots;
     }
 
     public int getNumStackSlots() {
@@ -320,29 +313,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         needsLargeFrame = CompiledCodeHeaderDecoder.getNeedsLargeFrame(header);
         numTemps = CompiledCodeHeaderDecoder.getNumTemps(header);
         numArgs = CompiledCodeHeaderDecoder.getNumArguments(header);
-        ensureCorrectNumberOfStackSlots();
-    }
-
-    protected void ensureCorrectNumberOfStackSlots() {
-        final int requiredNumberOfStackSlots = getNumStackSlots();
-        if (stackSlots == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackSlots = new FrameSlot[requiredNumberOfStackSlots];
-            return;
-        }
-        final int currentNumberOfStackSlots = stackSlots.length;
-        if (currentNumberOfStackSlots < requiredNumberOfStackSlots) {
-            // Grow number of stack slots.
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackSlots = Arrays.copyOf(stackSlots, requiredNumberOfStackSlots);
-        } else if (currentNumberOfStackSlots > requiredNumberOfStackSlots) {
-            // Shrink number of stack slots.
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            for (int i = requiredNumberOfStackSlots; i < currentNumberOfStackSlots; i++) {
-                frameDescriptor.removeFrameSlot(i);
-            }
-            stackSlots = Arrays.copyOf(stackSlots, requiredNumberOfStackSlots);
-        }
     }
 
     public void become(final CompiledCodeObject other) {

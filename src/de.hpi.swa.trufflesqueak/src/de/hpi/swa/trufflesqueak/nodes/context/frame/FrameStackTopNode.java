@@ -6,7 +6,9 @@
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -15,18 +17,19 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class FrameStackTopNode extends AbstractNode {
-    @Child private FrameSlotReadNode readNode;
+    @CompilationFinal private int stackPointer;
+    @CompilationFinal private FrameSlot stackSlot;
 
     public static FrameStackTopNode create() {
         return new FrameStackTopNode();
     }
 
     public Object execute(final Frame frame) {
-        if (readNode == null) {
+        if (stackSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final int stackPointer = FrameAccess.getStackPointerSlow(frame) - 1;
-            readNode = FrameSlotReadNode.create(FrameAccess.getStackSlot(frame, stackPointer));
+            stackPointer = FrameAccess.getStackPointerSlow(frame) - 1;
+            stackSlot = FrameAccess.getStackSlot(frame);
         }
-        return readNode.executeRead(frame);
+        return FrameAccess.getStackAt(frame, stackSlot, stackPointer);
     }
 }

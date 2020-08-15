@@ -12,7 +12,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -32,8 +31,6 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 
 /**
@@ -251,30 +248,35 @@ public final class FrameAccess {
         setStackPointer(frame, code.getStackPointerSlot(), value);
     }
 
-    public static FrameSlot getStackSlot(final Frame frame, final int index) {
+    public static FrameSlot getStackSlot(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        // TODO: frame.getFrameDescriptor().findFrameSlot(index + 1);
-        return getBlockOrMethod(frame).getStackSlot(index);
+        return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.STACK);
     }
 
-    /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */
-    public static void setStackSlot(final Frame frame, final FrameSlot frameSlot, final Object value) {
-        final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        assert frame.getFrameDescriptor().getSlots().contains(frameSlot);
-        final FrameSlotKind frameSlotKind = frameDescriptor.getFrameSlotKind(frameSlot);
-        final boolean isIllegal = frameSlotKind == FrameSlotKind.Illegal;
-        if (value instanceof Boolean && (isIllegal || frameSlotKind == FrameSlotKind.Boolean)) {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Boolean);
-            frame.setBoolean(frameSlot, (boolean) value);
-        } else if (value instanceof Long && (isIllegal || frameSlotKind == FrameSlotKind.Long)) {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Long);
-            frame.setLong(frameSlot, (long) value);
-        } else if (value instanceof Double && (isIllegal || frameSlotKind == FrameSlotKind.Double)) {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Double);
-            frame.setDouble(frameSlot, (double) value);
-        } else {
-            frameDescriptor.setFrameSlotKind(frameSlot, FrameSlotKind.Object);
-            frame.setObject(frameSlot, value);
+    public static Object[] getStackSlow(final Frame frame) {
+        return (Object[]) FrameUtil.getObjectSafe(frame, getStackSlot(frame));
+    }
+
+    public static Object[] getStack(final Frame frame, final FrameSlot stackSlot) {
+        return (Object[]) FrameUtil.getObjectSafe(frame, stackSlot);
+    }
+
+    public static void setStack(final Frame frame, final FrameSlot stackSlot, final Object[] stack) {
+        frame.setObject(stackSlot, stack);
+    }
+
+    public static Object getStackAt(final Frame frame, final FrameSlot stackSlot, final int index) {
+        return getStack(frame, stackSlot)[index];
+    }
+
+    public static Object setStackAt(final Frame frame, final FrameSlot stackSlot, final int index, final Object value) {
+        return getStack(frame, stackSlot)[index] = value;
+    }
+
+    public static void clearStack(final Frame frame, final FrameSlot stackSlot, final int from, final int to) {
+        final Object[] stack = getStack(frame, stackSlot);
+        for (int i = from; i <= to; i++) {
+            stack[i] = NilObject.SINGLETON;
         }
     }
 
@@ -303,8 +305,8 @@ public final class FrameAccess {
     }
 
     @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final FrameSlotReadNode[] receiverAndArgumentsNodes) {
-        final int numReceiverAndArguments = receiverAndArgumentsNodes.length;
+    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final FrameSlot stackSlot, final int stackPointer,
+                    final int numReceiverAndArguments) {
         CompilerAsserts.partialEvaluationConstant(numReceiverAndArguments);
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
         assert method != null : "Method should never be null";
@@ -313,26 +315,21 @@ public final class FrameAccess {
         frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
-        for (int i = 0; i < numReceiverAndArguments; i++) {
-            frameArguments[ArgumentIndicies.RECEIVER.ordinal() + i] = receiverAndArgumentsNodes[i].executeRead(frame);
-        }
+        System.arraycopy(getStack(frame, stackSlot), stackPointer, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), numReceiverAndArguments);
         return frameArguments;
     }
 
-    @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final Object receiver, final FrameSlotReadNode[] argumentsNodes) {
-        final int argumentCount = argumentsNodes.length;
-        CompilerAsserts.partialEvaluationConstant(argumentCount);
-        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + argumentCount];
+    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final Object receiver, final FrameSlot stackSlot, final int stackPointer,
+                    final int numArguments) {
+        CompilerAsserts.partialEvaluationConstant(numArguments);
+        final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numArguments];
         assert method != null : "Method should never be null";
         assert sender != null : "Sender should never be null";
         frameArguments[ArgumentIndicies.METHOD.ordinal()] = method;
         frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
         frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
         frameArguments[ArgumentIndicies.RECEIVER.ordinal()] = receiver;
-        for (int i = 0; i < argumentCount; i++) {
-            frameArguments[ArgumentIndicies.ARGUMENTS_START.ordinal() + i] = argumentsNodes[i].executeRead(frame);
-        }
+        System.arraycopy(getStack(frame, stackSlot), stackPointer, frameArguments, ArgumentIndicies.ARGUMENTS_START.ordinal(), numArguments);
         return frameArguments;
     }
 

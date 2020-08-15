@@ -5,11 +5,12 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -39,53 +40,45 @@ public abstract class FrameStackPopNNode extends AbstractNode {
         }
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
-    private static final class FrameStackPop1Node extends FrameStackPopNNode {
-        @CompilationFinal private FrameSlot stackPointerSlot;
-        @CompilationFinal private int stackPointer;
-        @Child private FrameSlotReadNode readNode;
+    private abstract static class FrameStackPopNWithFieldsNode extends FrameStackPopNNode {
+        @CompilationFinal protected FrameSlot stackPointerSlot;
+        @CompilationFinal protected int stackPointer;
+        @CompilationFinal protected FrameSlot stackSlot;
 
-        @Override
-        public Object[] execute(final VirtualFrame frame) {
+        protected final void ensureInitialized(final VirtualFrame frame, final int numPop) {
             if (stackPointerSlot == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
-                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
+                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - numPop;
                 assert stackPointer >= 0 : "Bad stack pointer";
-                readNode = insert(FrameSlotReadNode.create(frame, stackPointer));
+                stackSlot = FrameAccess.getStackSlot(frame);
             }
+        }
+
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    private static final class FrameStackPop1Node extends FrameStackPopNWithFieldsNode {
+        @Override
+        public Object[] execute(final VirtualFrame frame) {
+            ensureInitialized(frame, 1);
             FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
-            return new Object[]{readNode.executeRead(frame)};
+            return new Object[]{FrameAccess.getStackAt(frame, stackSlot, stackPointer)};
         }
     }
 
-    private static final class FrameStackPopMultipleNode extends FrameStackPopNNode {
-        @CompilationFinal private FrameSlot stackPointerSlot;
-        @CompilationFinal private int stackPointer;
-        @Children private FrameSlotReadNode[] readNodes;
+    private static final class FrameStackPopMultipleNode extends FrameStackPopNWithFieldsNode {
+        private final int numPop;
 
         private FrameStackPopMultipleNode(final int numPop) {
-            readNodes = new FrameSlotReadNode[numPop];
+            this.numPop = numPop;
         }
 
         @Override
-        @ExplodeLoop
         public Object[] execute(final VirtualFrame frame) {
-            if (stackPointerSlot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
-                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - readNodes.length;
-                assert stackPointer >= 0 : "Bad stack pointer";
-                for (int i = 0; i < readNodes.length; i++) {
-                    readNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
-                }
-            }
+            ensureInitialized(frame, numPop);
             FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
-            final Object[] result = new Object[readNodes.length];
-            for (int i = 0; i < readNodes.length; i++) {
-                result[i] = readNodes[i].executeRead(frame);
-            }
-            return result;
+            return Arrays.copyOfRange(FrameAccess.getStack(frame, stackSlot), stackPointer, stackPointer + numPop);
         }
     }
 }

@@ -19,8 +19,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class FrameStackPopNode extends AbstractNode {
     @CompilationFinal private FrameSlot stackPointerSlot;
     @CompilationFinal private int stackPointer;
-
-    @Child private FrameSlotReadNode readNode;
+    @CompilationFinal private FrameSlot stackSlot;
 
     public static FrameStackPopNode create() {
         return new FrameStackPopNode();
@@ -31,9 +30,9 @@ public final class FrameStackPopNode extends AbstractNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
-            readNode = insert(FrameSlotReadNode.create(frame, stackPointer));
+            stackSlot = FrameAccess.getStackSlot(frame);
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
-        return readNode.executeRead(frame);
+        return FrameAccess.getStackAt(frame, stackSlot, stackPointer);
     }
 }

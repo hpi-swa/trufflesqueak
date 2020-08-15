@@ -6,13 +6,13 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.NotProvided;
 
@@ -36,8 +36,8 @@ public final class ArgumentNodes {
     @NodeInfo(cost = NodeCost.NONE)
     public static final class ArgumentOnStackNode extends AbstractArgumentNode {
         private final int argumentIndex;
-
-        @Child private FrameSlotReadNode readNode;
+        @CompilationFinal private int stackPointer;
+        @CompilationFinal private FrameSlot stackSlot;
 
         public ArgumentOnStackNode(final int argumentIndex) {
             this.argumentIndex = argumentIndex; // argumentIndex == 0 returns receiver
@@ -45,13 +45,12 @@ public final class ArgumentNodes {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            if (readNode == null) {
+            if (stackSlot == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(frame);
-                final int stackPointer = FrameAccess.getStackPointer(frame, blockOrMethod);
-                readNode = insert(FrameSlotReadNode.create(blockOrMethod.getStackSlot(stackPointer + argumentIndex)));
+                stackPointer = FrameAccess.getStackPointerSlow(frame);
+                stackSlot = FrameAccess.getStackSlot(frame);
             }
-            return readNode.executeRead(frame);
+            return FrameAccess.getStackAt(frame, stackSlot, stackPointer + argumentIndex);
         }
     }
 

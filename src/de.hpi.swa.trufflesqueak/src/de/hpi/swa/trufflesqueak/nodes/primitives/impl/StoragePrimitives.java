@@ -22,8 +22,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -132,22 +130,21 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                  * use blockOrMethod.getStackSlotsUnsafe() here instead of stackPointer because in
                  * rare cases, the stack is accessed behind the stackPointer.
                  */
-                for (final FrameSlot slot : blockOrMethod.getStackSlotsUnsafe()) {
-                    if (slot == null) {
+                final Object[] stack = FrameAccess.getStack(current, blockOrMethod.getStackSlot());
+                for (int i = 0; i < stack.length; i++) {
+                    final Object stackValue = stack[i];
+                    if (stackValue == null) {
                         return null; // Stop here, slot has not (yet) been created.
                     }
-                    if (current.isObject(slot)) {
-                        final Object stackObject = FrameUtil.getObjectSafe(current, slot);
-                        for (int j = 0; j < fromPointersLength; j++) {
-                            final Object fromPointer = fromPointers[j];
-                            if (stackObject == fromPointer) {
-                                final Object toPointer = toPointers[j];
-                                assert toPointer != null : "Unexpected `null` value";
-                                current.setObject(slot, toPointer);
-                                AbstractSqueakObjectWithHash.copyHash(fromPointer, toPointer, copyHash);
-                            } else if (stackObject instanceof AbstractSqueakObjectWithHash) {
-                                ((AbstractSqueakObjectWithHash) stackObject).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
-                            }
+                    for (int j = 0; j < fromPointersLength; j++) {
+                        final Object fromPointer = fromPointers[j];
+                        if (stackValue == fromPointer) {
+                            final Object toPointer = toPointers[j];
+                            assert toPointer != null : "Unexpected `null` value";
+                            stack[1] = toPointer;
+                            AbstractSqueakObjectWithHash.copyHash(fromPointer, toPointer, copyHash);
+                        } else if (stackValue instanceof AbstractSqueakObjectWithHash) {
+                            ((AbstractSqueakObjectWithHash) stackValue).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
                         }
                     }
                 }
