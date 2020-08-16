@@ -29,8 +29,8 @@ $GRAALVM_HOME/bin/trufflesqueak
 
 <table>
   <tr align="center">
-    <td width="50%"><a href="https://twitter.com/fniephaus/status/1264839969115340800" title="Live Plots with TruffleSqueak and ggplot2"><img src="https://user-images.githubusercontent.com/2368856/90331920-b319a400-dfb8-11ea-877d-e0505c8adf20.png" alt="Live Plots with TruffleSqueak and ggplot2" height="250" /><br>Live Plots with TruffleSqueak and ggplot2</a></td>
     <td width="50%"><a href="https://www.youtube.com/watch?v=rZiH9ub1aT4" title="TruffleSqueak: Polyglot Notebooks (Demo)"><img src="https://user-images.githubusercontent.com/2368856/90332594-6c2ead00-dfbe-11ea-8e92-f3136ad6ca05.png" alt="TruffleSqueak: Polyglot Notebooks (Demo)" height="250" /><br>TruffleSqueak: Polyglot Notebooks (Demo)</a></td>
+    <td width="50%"><a href="https://twitter.com/fniephaus/status/1264839969115340800" title="Live Plots with TruffleSqueak and ggplot2"><img src="https://user-images.githubusercontent.com/2368856/90331920-b319a400-dfb8-11ea-877d-e0505c8adf20.png" alt="Live Plots with TruffleSqueak and ggplot2" height="250" /><br>Live Plots with TruffleSqueak and ggplot2</a></td>
   </tr>
   <tr align="center">
     <td width="50%"><a href="https://www.youtube.com/watch?v=MxYoc6chBlg" title="TruffleSqueak: Polyglot Code Editor (Demo)"><img src="https://user-images.githubusercontent.com/2368856/90332428-10175900-dfbd-11ea-85b0-1b04d735827a.png" alt="TruffleSqueak: Polyglot Code Editor (Demo)" height="250" /><br>TruffleSqueak: Polyglot Code Editor (Demo)</a></td>
