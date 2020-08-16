@@ -25,6 +25,28 @@ $GRAALVM_HOME/bin/gu \
 $GRAALVM_HOME/bin/trufflesqueak
 ```
 
+## Demos
+
+<table>
+  <tr align="center">
+    <td width="50%"><a href="https://twitter.com/fniephaus/status/1264839969115340800" title="Live Plots with TruffleSqueak and ggplot2"><img src="https://user-images.githubusercontent.com/2368856/90331920-b319a400-dfb8-11ea-877d-e0505c8adf20.png" alt="Live Plots with TruffleSqueak and ggplot2" height="250" /><br>Live Plots with TruffleSqueak and ggplot2</a></td>
+    <td width="50%"><a href="https://www.youtube.com/watch?v=rZiH9ub1aT4" title="TruffleSqueak: Polyglot Notebooks (Demo)"><img src="https://user-images.githubusercontent.com/2368856/90332594-6c2ead00-dfbe-11ea-8e92-f3136ad6ca05.png" alt="TruffleSqueak: Polyglot Notebooks (Demo)" height="250" /><br>TruffleSqueak: Polyglot Notebooks (Demo)</a></td>
+  </tr>
+  <tr align="center">
+    <td width="50%"><a href="https://www.youtube.com/watch?v=MxYoc6chBlg" title="TruffleSqueak: Polyglot Code Editor (Demo)"><img src="https://user-images.githubusercontent.com/2368856/90332428-10175900-dfbd-11ea-85b0-1b04d735827a.png" alt="TruffleSqueak: Polyglot Code Editor (Demo)" height="250" /><br>TruffleSqueak: Polyglot Code Editor (Demo)</a></td>
+    <td width="50%"><a href="https://www.youtube.com/watch?v=W7p-W9VAbQU" title="TruffleSqueak: Polyglot Code Finder (Demo)"><img src="https://user-images.githubusercontent.com/2368856/90332430-10afef80-dfbd-11ea-8448-b04e7a222f78.png" alt="TruffleSqueak: Polyglot Code Finder (Demo)" height="250" /><br>TruffleSqueak: Polyglot Code Finder (Demo)</a></td>
+  </tr>
+  <tr align="center">
+    <td width="50%"><a href="https://www.youtube.com/watch?v=If7xNBYA0Bk" title="TruffleSqueak: Polyglot User Interfaces (Demo)"><img src="https://user-images.githubusercontent.com/2368856/90332427-0d1c6880-dfbd-11ea-9bfc-bc9927784437.png" alt="TruffleSqueak: Polyglot User Interfaces (Demo)" height="250" /><br>TruffleSqueak: Polyglot User Interfaces (Demo)</a></td>
+    <td width="50%"><a href="https://www.youtube.com/watch?v=1HjzDvNityU" title="TruffleSqueak Demo for ESUG19"><img src="https://user-images.githubusercontent.com/2368856/90332621-b4e66600-dfbe-11ea-8e19-48db2486f974.png" alt="TruffleSqueak Demo for ESUG19" height="250" /><br>TruffleSqueak Demo for ESUG19</a></td>
+  </tr>
+  <tr align="center">
+    <td width="50%"><a href="https://www.youtube.com/watch?v=wuGVyzUsEqE" title="TruffleSqueak vs. OpenSmalltalkVM: Bouncing Atoms"><img src="https://user-images.githubusercontent.com/2368856/90332179-350acc80-dfbb-11ea-803b-bdeb28577ef9.png" alt="TruffleSqueak vs. OpenSmalltalkVM: Bouncing Atoms" height="250" /><br>TruffleSqueak vs. OpenSmalltalkVM: Bouncing Atoms</a></td>
+    <td width="50%"><a href="https://twitter.com/fniephaus/status/1075807587491291137" title="TruffleSqueak: Polyglot Workspace (Demo)"><img src="https://user-images.githubusercontent.com/2368856/90332290-e4e03a00-dfbb-11ea-92e5-55bded783c8e.png" alt="TruffleSqueak: Polyglot Workspace (Demo)" height="250" /><br>TruffleSqueak: Polyglot Workspace (Demo)</a></td>
+  </tr>
+</table>
+
+
 ## Community Support
 
 If you have a question, need some help, or want to discuss a new feature, feel
