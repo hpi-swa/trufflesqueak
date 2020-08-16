@@ -20,7 +20,9 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantNilNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantOneNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantTrueNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -118,15 +120,15 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         final CompiledCodeObject code = makeMethod(bytes);
         final AbstractBytecodeNode[] bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         assertEquals(bytes.length, bytecodeNodes.length);
-        assertSame(PushConstantNode.class, bytecodeNodes[0].getClass());
+        assertSame(PushConstantOneNode.class, bytecodeNodes[0].getClass());
         assertSame(DupNode.class, bytecodeNodes[1].getClass());
-        assertSame(PushConstantNode.class, bytecodeNodes[2].getClass());
+        assertSame(PushConstantNilNode.class, bytecodeNodes[2].getClass());
 
         assertEquals("send: ==", bytecodeNodes[3].toString());
 
         assertSame(ConditionalJumpNode.class, bytecodeNodes[4].getClass());
         assertSame(PopNode.class, bytecodeNodes[5].getClass());
-        assertSame(PushConstantNode.class, bytecodeNodes[6].getClass());
+        assertSame(PushConstantTrueNode.class, bytecodeNodes[6].getClass());
 
         assertEquals("send: class", bytecodeNodes[7].toString());
 
