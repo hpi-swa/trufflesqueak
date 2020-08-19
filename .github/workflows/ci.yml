@@ -59,9 +59,9 @@ jobs:
     - name: Install SVM-enabled TruffleSqueak component
       run: gu install -L "${INSTALLABLE_SVM_TARGET}"
     - name: Run SystemReporter on GraalVM
-      run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+      run: trufflesqueak --jvm --code "SystemReporter new reportText asString"
     - name: Run SystemReporter on SubstrateVM
-      run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+      run: trufflesqueak --native --code "SystemReporter new reportText asString" images/test-64bit.image
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Run tinyBenchmarks on SubstrateVM
@@ -100,9 +100,9 @@ jobs:
     - name: Install SVM-enabled TruffleSqueak component
       run: gu install -L "${INSTALLABLE_SVM_TARGET}"
     - name: Run SystemReporter on GraalVM
-      run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+      run: trufflesqueak --jvm --code "SystemReporter new reportText asString"
     - name: Run SystemReporter on SubstrateVM
-      run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+      run: trufflesqueak --native --code "SystemReporter new reportText asString" images/test-64bit.image
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Run tinyBenchmarks on SubstrateVM
@@ -143,7 +143,7 @@ jobs:
             cp "$(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11)" "${INSTALLABLE_JVM_TARGET}"
             echo ::set-output name=installable::${INSTALLABLE_JVM_TARGET}
             gu install -L "${INSTALLABLE_JVM_TARGET}"
-            trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"
+            trufflesqueak --jvm --code "SystemReporter new reportText asString"
             trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
       - name: Upload TruffleSqueak component
         shell: bash
@@ -168,9 +168,9 @@ jobs:
     - name: Install SVM-enabled TruffleSqueak component
       run: gu install -L "${INSTALLABLE_SVM_TARGET}"
     - name: Run SystemReporter on GraalVM
-      run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+      run: trufflesqueak --jvm --code "SystemReporter new reportText asString"
     - name: Run SystemReporter on SubstrateVM
-      run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+      run: trufflesqueak --native --code "SystemReporter new reportText asString" images/test-64bit.image
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Run tinyBenchmarks on SubstrateVM
@@ -201,9 +201,9 @@ jobs:
     - name: Install SVM-enabled TruffleSqueak component
       run: gu install -L "${INSTALLABLE_SVM_TARGET}"
     - name: Run SystemReporter on GraalVM
-      run: 'trufflesqueak --jvm --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000"'
+      run: trufflesqueak --jvm --code "SystemReporter new reportText asString"
     - name: Run SystemReporter on SubstrateVM
-      run: 'trufflesqueak --native --code "String streamContents: [:s | SystemReporter new reportVM: s] limitedTo: 10000" images/test-64bit.image'
+      run: trufflesqueak --native --code "SystemReporter new reportText asString" images/test-64bit.image
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Run tinyBenchmarks on SubstrateVM
@@ -238,7 +238,7 @@ jobs:
         Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11) -Destination "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
         gu.cmd install -L "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
     - name: Run SystemReporter on GraalVM
-      run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
+      run: trufflesqueak.cmd --jvm --code "SystemReporter new reportText asString"
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload TruffleSqueak component
@@ -273,7 +273,7 @@ jobs:
         Copy-Item $(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA8) -Destination "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
         gu.cmd install -L "${pwd}\${env:INSTALLABLE_JVM_TARGET}"
     - name: Run SystemReporter on GraalVM
-      run: 'trufflesqueak.cmd --jvm --code "String streamContents: [:s ^| SystemReporter new reportVM: s] limitedTo: 10000"'
+      run: trufflesqueak.cmd --jvm --code "SystemReporter new reportText asString"
     - name: Run tinyBenchmarks on GraalVM
       run: trufflesqueak.cmd --jvm --code "1 tinyBenchmarks" images/test-64bit.image
     - name: Upload TruffleSqueak component
