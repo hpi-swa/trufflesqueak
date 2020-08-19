@@ -268,7 +268,7 @@ set-up-openjdk8-jvmci() {
 
   pushd "${target_dir}" > /dev/null
 
-  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${DEP_JVMCI}/${jdk_name}.tar.gz"
+  curl -sSL --retry 3 -o "${jdk_tar}" "https://github.com/graalvm/graal-jvmci-8/releases/download/${DEP_JVMCI}/${jdk_name}.tar.gz"
   tar xzf "${jdk_tar}"
 
   popd > /dev/null

@@ -9,20 +9,20 @@ suite = {
     # ==========================================================================
     #  METADATA
     # ==========================================================================
-    "mxversion": "5.263.8",
     "name": "trufflesqueak",
+    "mxversion": "5.270.4",
     "versionConflictResolution": "latest",
 
     "version": "20.2.0-dev",
     "trufflesqueak:dependencyMap": {
-        "graalvm": "20.1.0",
+        "graalvm": "20.2.0",
         "image": "TruffleSqueakImage-20.1.1.zip",
         "image_tag": "20.1.1",
-        "jdk8": "252",
-        "jdk8_update": "09",
-        "jdk11": "11.0.7",
+        "jdk8": "262",
+        "jdk8_update": "10",
+        "jdk11": "11.0.8",
         "jdk11_update": "10",
-        "jvmci": "jvmci-20.1-b02",
+        "jvmci": "jvmci-20.2-b03",
         "test_image": "TruffleSqueakTestImage-5.3-19438-64bit.zip",
         "test_image_tag": "1.0.0-rc9",
     },
@@ -51,7 +51,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "df628ae8688633d12dabc0a2a0e015d0ff65fcd5",
+            "version": "968c592cc6c1b3e6ee6b23b086adbc3c5007e6be",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
@@ -97,7 +97,6 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "TRUFFLESQUEAK_SHARED",
-                "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
@@ -230,7 +229,6 @@ suite = {
             ],
             "distDependencies": [
                 "TRUFFLESQUEAK_SHARED",
-                "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
             ],
         },
