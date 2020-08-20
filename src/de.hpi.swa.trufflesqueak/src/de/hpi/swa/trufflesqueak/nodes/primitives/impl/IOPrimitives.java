@@ -209,7 +209,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final PointersObject doCursor(final PointersObject receiver, final PointersObject maskObject,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
-                        @Cached("createBinaryProfile()") final ConditionProfile depthProfile) {
+                        @Cached final ConditionProfile depthProfile) {
             if (image.hasDisplay()) {
                 final int[] words = receiver.getFormBits(cursorReadNode);
                 final int depth = receiver.getFormDepth(cursorReadNode);
@@ -527,7 +527,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @Specialization
             protected static final void doLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile,
-                            @Cached("createBinaryProfile()") final ConditionProfile fitsEntirelyProfile) {
+                            @Cached final ConditionProfile fitsEntirelyProfile) {
                 if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
                     rcvr.replaceInternalValue(repl);
                 } else {
@@ -543,7 +543,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @Specialization
             protected static final void doLargeIntegerFloat(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile,
-                            @Cached("createBinaryProfile()") final ConditionProfile fitsEntirelyProfile) {
+                            @Cached final ConditionProfile fitsEntirelyProfile) {
                 if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.size(), replStart))) {
                     rcvr.setBytes(repl.getBytes());
                 } else {
@@ -559,7 +559,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @Specialization(guards = {"repl.isByteType()"})
             protected static final void doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart,
                             @Shared("errorProfile") @Cached final BranchProfile errorProfile,
-                            @Cached("createBinaryProfile()") final ConditionProfile fitsEntirelyProfile) {
+                            @Cached final ConditionProfile fitsEntirelyProfile) {
                 if (fitsEntirelyProfile.profile(inBoundsEntirely(rcvr.instsize(), rcvr.size(), start, stop, repl.instsize(), repl.getByteLength(), replStart))) {
                     rcvr.setBytes(repl.getByteStorage());
                 } else {

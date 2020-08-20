@@ -51,8 +51,8 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isBooleanType()")
         protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index,
-                        @Cached("createBinaryProfile()") final ConditionProfile falseProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile trueProfile) {
+                        @Cached final ConditionProfile falseProfile,
+                        @Cached final ConditionProfile trueProfile) {
             final byte value = obj.getByte(index);
             if (falseProfile.profile(value == ArrayObject.BOOLEAN_FALSE_TAG)) {
                 return BooleanObject.FALSE;
@@ -66,21 +66,21 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isCharType()")
         protected static final Object doArrayOfChars(final ArrayObject obj, final long index,
-                        @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+                        @Shared("nilProfile") @Cached final ConditionProfile nilProfile) {
             final char value = obj.getChar(index);
             return nilProfile.profile(value == ArrayObject.CHAR_NIL_TAG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final Object doArrayOfLongs(final ArrayObject obj, final long index,
-                        @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+                        @Shared("nilProfile") @Cached final ConditionProfile nilProfile) {
             final long value = obj.getLong(index);
             return nilProfile.profile(value == ArrayObject.LONG_NIL_TAG) ? NilObject.SINGLETON : value;
         }
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final Object doArrayOfDoubles(final ArrayObject obj, final long index,
-                        @Shared("nilProfile") @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+                        @Shared("nilProfile") @Cached final ConditionProfile nilProfile) {
             final double value = obj.getDouble(index);
             return nilProfile.profile(Double.doubleToRawLongBits(value) == ArrayObject.DOUBLE_NIL_TAG_LONG) ? NilObject.SINGLETON : value;
         }
@@ -208,7 +208,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isCharType()")
         protected static final Object[] doArrayOfChars(final ArrayObject obj,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             final char[] chars = obj.getCharStorage();
             final int length = chars.length;
             final Object[] objects = new Object[length];
@@ -221,7 +221,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isLongType()")
         protected static final Object[] doArrayOfLongs(final ArrayObject obj,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             final long[] longs = obj.getLongStorage();
             final int length = longs.length;
             final Object[] objects = new Object[length];
@@ -233,7 +233,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final Object[] doArrayOfDoubles(final ArrayObject obj,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             final double[] doubles = obj.getDoubleStorage();
             final int length = doubles.length;
             final Object[] objects = new Object[length];
@@ -283,7 +283,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isCharType()")
         protected static final Object[] doArrayOfChars(final Object first, final ArrayObject obj,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             final char[] chars = obj.getCharStorage();
             final int length = chars.length;
             final Object[] objects = new Object[1 + length];
@@ -297,7 +297,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isLongType()")
         protected static final Object[] doArrayOfLongs(final Object first, final ArrayObject obj,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             final long[] longs = obj.getLongStorage();
             final int length = longs.length;
             final Object[] objects = new Object[1 + length];
@@ -310,7 +310,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final Object[] doArrayOfDoubles(final Object first, final ArrayObject obj,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             final double[] doubles = obj.getDoubleStorage();
             final int length = doubles.length;
             final Object[] objects = new Object[1 + length];
@@ -366,7 +366,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isCharType()")
         protected final void doArrayOfChars(final Object[] target, final ArrayObject obj,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             final char[] chars = obj.getCharStorage();
             for (int i = 0; i < chars.length; i++) {
                 target[offset + i] = ArrayObject.toObjectFromChar(chars[i], isNilTagProfile);
@@ -375,7 +375,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isLongType()")
         protected final void doArrayOfLongs(final Object[] target, final ArrayObject obj,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             final long[] longs = obj.getLongStorage();
             for (int i = 0; i < longs.length; i++) {
                 target[offset + i] = ArrayObject.toObjectFromLong(longs[i], isNilTagProfile);
@@ -384,7 +384,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = "obj.isDoubleType()")
         protected final void doArrayOfDoubles(final Object[] target, final ArrayObject obj,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             final double[] doubles = obj.getDoubleStorage();
             for (int i = 0; i < doubles.length; i++) {
                 target[offset + i] = ArrayObject.toObjectFromDouble(doubles[i], isNilTagProfile);
@@ -490,7 +490,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isCharType()", "isCharNilTag(value)"})
         protected static final void doArrayOfCharsNilTagClash(final ArrayObject obj, final long index, final char value,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             /** `value` happens to be char nil tag, need to despecialize to be able store it. */
             obj.transitionFromCharsToObjects(isNilTagProfile);
             doArrayOfObjects(obj, index, value);
@@ -503,7 +503,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isCharType()", "!isCharacter(value)", "!isNil(value)"})
         protected static final void doArrayOfChars(final ArrayObject obj, final long index, final Object value,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             obj.transitionFromCharsToObjects(isNilTagProfile);
             doArrayOfObjects(obj, index, value);
         }
@@ -515,7 +515,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isLongType()", "isLongNilTag(value)"})
         protected static final void doArrayOfLongsNilTagClash(final ArrayObject obj, final long index, final long value,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             /** `value` happens to be long nil tag, need to despecialize to be able store it. */
             obj.transitionFromLongsToObjects(isNilTagProfile);
             doArrayOfObjects(obj, index, value);
@@ -528,7 +528,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isLongType()", "!isLong(value)", "!isNil(value)"})
         protected static final void doArrayOfLongs(final ArrayObject obj, final long index, final Object value,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             obj.transitionFromLongsToObjects(isNilTagProfile);
             doArrayOfObjects(obj, index, value);
         }
@@ -540,7 +540,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isDoubleType()", "isDoubleNilTag(value)"})
         protected static final void doArrayOfDoublesNilTagClash(final ArrayObject obj, final long index, final double value,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             // `value` happens to be double nil tag, need to despecialize to be able store it.
             obj.transitionFromDoublesToObjects(isNilTagProfile);
             doArrayOfObjects(obj, index, value);
@@ -553,7 +553,7 @@ public final class ArrayObjectNodes {
 
         @Specialization(guards = {"obj.isDoubleType()", "!isDouble(value)", "!isNil(value)"})
         protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, final Object value,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNilTagProfile) {
+                        @Cached final ConditionProfile isNilTagProfile) {
             obj.transitionFromDoublesToObjects(isNilTagProfile);
             doArrayOfObjects(obj, index, value);
         }

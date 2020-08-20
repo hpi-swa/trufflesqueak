@@ -36,7 +36,7 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == INSTRUCTION_POINTER"})
         protected static final Object doInstructionPointer(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+                        @Cached final ConditionProfile nilProfile) {
             return context.getInstructionPointer(nilProfile);
         }
 
@@ -52,7 +52,7 @@ public final class ContextObjectNodes {
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL"})
         protected static final Object doClosure(final ContextObject context, @SuppressWarnings("unused") final long index,
-                        @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+                        @Cached final ConditionProfile nilProfile) {
             return NilObject.nullToNil(context.getClosure(), nilProfile);
         }
 
@@ -67,7 +67,7 @@ public final class ContextObjectNodes {
                         @Cached("context") final ContextObject cachedContext,
                         @Cached("index") final long cachedIndex,
                         @Cached("createReadNode(cachedContext, cachedIndex)") final FrameSlotReadNode readNode,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNullProfile) {
+                        @Cached final ConditionProfile isNullProfile) {
             return NilObject.nullToNil(readNode.executeReadUnsafe(cachedContext.getTruffleFrame()), isNullProfile);
         }
 

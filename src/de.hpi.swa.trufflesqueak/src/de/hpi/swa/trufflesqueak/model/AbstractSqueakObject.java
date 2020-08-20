@@ -72,7 +72,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     public boolean isMemberInvocable(final String member,
                     @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
                     @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
-                    @Exclusive @Cached("createBinaryProfile()") final ConditionProfile alternativeProfile) {
+                    @Exclusive @Cached final ConditionProfile alternativeProfile) {
         final String selectorString = toSelector(member);
         final ClassObject classObject = classNode.executeLookup(this);
         if (alternativeProfile.profile(lookupNode.executeLookup(classObject, selectorString) instanceof CompiledCodeObject)) {
@@ -86,7 +86,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     public Object readMember(final String member,
                     @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
                     @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
-                    @Exclusive @Cached("createBinaryProfile()") final ConditionProfile alternativeProfile) throws UnknownIdentifierException {
+                    @Exclusive @Cached final ConditionProfile alternativeProfile) throws UnknownIdentifierException {
         final ClassObject classObject = classNode.executeLookup(this);
         final String selectorString = toSelector(member);
         final Object methodObject = lookupNode.executeLookup(classObject, selectorString);
@@ -137,7 +137,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Exclusive @Cached final WrapToSqueakNode wrapNode,
                         @Exclusive @Cached final DispatchUneagerlyNode dispatchNode,
                         @Exclusive @Cached final AbstractPointersObjectWriteNode writeNode,
-                        @Exclusive @Cached("createBinaryProfile()") final ConditionProfile hasMethodProfile,
+                        @Exclusive @Cached final ConditionProfile hasMethodProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) throws UnsupportedMessageException, ArityException {
             final int actualArity = arguments.length;
             final String selector = toSelector(member, actualArity);

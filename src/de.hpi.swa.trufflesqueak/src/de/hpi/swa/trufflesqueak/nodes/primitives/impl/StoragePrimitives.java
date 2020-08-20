@@ -466,14 +466,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"0 <= receiver", "receiver <= MAX_VALUE"})
         protected static final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target,
-                        @Shared("isImmediateProfile") @Cached("createBinaryProfile()") final ConditionProfile isImmediateProfile) {
+                        @Shared("isImmediateProfile") @Cached final ConditionProfile isImmediateProfile) {
             return CharacterObject.valueOf(receiver, isImmediateProfile);
         }
 
         /* Character class>>#value: */
         @Specialization(guards = {"0 <= target", "target <= MAX_VALUE"})
         protected static final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target,
-                        @Shared("isImmediateProfile") @Cached("createBinaryProfile()") final ConditionProfile isImmediateProfile) {
+                        @Shared("isImmediateProfile") @Cached final ConditionProfile isImmediateProfile) {
             return CharacterObject.valueOf(target, isImmediateProfile);
         }
     }

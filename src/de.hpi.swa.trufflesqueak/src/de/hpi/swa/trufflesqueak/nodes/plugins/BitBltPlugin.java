@@ -48,14 +48,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doCopy(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Cached("createBinaryProfile()") final ConditionProfile resultProfile,
+                        @Cached final ConditionProfile resultProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return doCopyTranslucent(receiver, -1L, resultProfile, image);
         }
 
         @Specialization
         protected static final Object doCopyTranslucent(final PointersObject receiver, final long factor,
-                        @Cached("createBinaryProfile()") final ConditionProfile resultProfile,
+                        @Cached final ConditionProfile resultProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             image.bitblt.resetSuccessFlag();
             final long result = image.bitblt.primitiveCopyBits(receiver, factor);

@@ -403,7 +403,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final Object doLongLargeQuick(final long receiver, final LargeIntegerObject arg,
-                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile) {
+                        @Cached final ConditionProfile positiveProfile) {
             return receiver & (positiveProfile.profile(receiver >= 0) ? arg.longValue() : arg.longValueExact());
         }
 
@@ -456,9 +456,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doLong(final long receiver, final long arg,
-                        @Cached("createBinaryProfile()") final ConditionProfile isPositiveProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isLShiftLongOverflowProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile isArgInLongSizeRangeProfile,
+                        @Cached final ConditionProfile isPositiveProfile,
+                        @Cached final ConditionProfile isLShiftLongOverflowProfile,
+                        @Cached final ConditionProfile isArgInLongSizeRangeProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             if (isPositiveProfile.profile(arg >= 0)) {
                 if (isLShiftLongOverflowProfile.profile(Long.numberOfLeadingZeros(receiver) - 1 < arg)) {
@@ -989,7 +989,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
         @Specialization(guards = "inSafeIntegerRange(receiver.getValue())")
         protected static final long doFloat(final FloatObject receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile) {
+                        @Cached final ConditionProfile positiveProfile) {
             assert receiver.isFinite();
             final double value = receiver.getValue();
             return (long) (positiveProfile.profile(value >= 0) ? Math.floor(value) : Math.ceil(value));
@@ -1028,7 +1028,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver.isInfinite()")
         protected static final double doFloatInfinite(@SuppressWarnings("unused") final FloatObject receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile isNegativeInfinityProfile) {
+                        @Cached final ConditionProfile isNegativeInfinityProfile) {
             return isNegativeInfinityProfile.profile(receiver.getValue() == Double.NEGATIVE_INFINITY) ? -0.0D : 0.0D;
         }
     }
@@ -1416,7 +1416,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimSmallFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
         @Specialization(guards = "inSafeIntegerRange(receiver)")
         protected static final long doDouble(final double receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile) {
+                        @Cached final ConditionProfile positiveProfile) {
             return (long) (positiveProfile.profile(receiver >= 0) ? Math.floor(receiver) : Math.ceil(receiver));
         }
 
@@ -1560,7 +1560,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimHighBitNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Specialization
         protected static final long doLong(final long receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile negativeProfile) {
+                        @Cached final ConditionProfile negativeProfile) {
             return Long.SIZE - Long.numberOfLeadingZeros(negativeProfile.profile(receiver < 0) ? -receiver : receiver);
         }
     }

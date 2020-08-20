@@ -84,7 +84,7 @@ public abstract class WrapToSqueakNode extends AbstractNode {
 
     @Specialization
     protected static final NativeObject doString(final String value,
-                    @Cached("createBinaryProfile()") final ConditionProfile wideStringProfile,
+                    @Cached final ConditionProfile wideStringProfile,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         return image.asString(value, wideStringProfile);
     }

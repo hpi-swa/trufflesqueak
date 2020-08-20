@@ -327,7 +327,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "!isSigned"})
         protected static final Object doAt8Unsigned(final NativeObject byteArray, final long byteOffsetLong, final long byteSize, final boolean isSigned,
-                        @Cached("createBinaryProfile()") final ConditionProfile positiveProfile,
+                        @Cached final ConditionProfile positiveProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final long signedLong = doAt8Signed(byteArray, byteOffsetLong, byteSize, isSigned);
             if (positiveProfile.profile(signedLong >= 0)) {

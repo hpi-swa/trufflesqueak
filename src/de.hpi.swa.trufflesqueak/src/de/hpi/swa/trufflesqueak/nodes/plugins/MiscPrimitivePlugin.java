@@ -317,7 +317,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
-                        @Cached("createBinaryProfile()") final ConditionProfile notFoundProfile) {
+                        @Cached final ConditionProfile notFoundProfile) {
             if (start < 1 || !string.isByteType() || !inclusionMap.isByteType()) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -341,7 +341,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable,
-                        @Cached("createBinaryProfile()") final ConditionProfile quickReturnProfile,
+                        @Cached final ConditionProfile quickReturnProfile,
                         @Cached final BranchProfile foundProfile,
                         @Cached final BranchProfile notFoundProfile) {
             if (!key.isByteType() || !body.isByteType() || !matchTable.isByteType() || matchTable.getByteLength() < 256) {

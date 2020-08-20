@@ -289,7 +289,7 @@ public class AbstractPointersObjectNodes {
         protected static final Object doReadFromVariablePartCachedIndex(final WeakVariablePointersObject object, @SuppressWarnings("unused") final int index,
                         @Cached("index") final int cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+                        @Cached final ConditionProfile nilProfile) {
             return object.getFromVariablePart(cachedIndex - cachedLayout.getInstSize(), nilProfile);
         }
 
@@ -297,13 +297,13 @@ public class AbstractPointersObjectNodes {
                         replaces = "doReadFromVariablePartCachedIndex", limit = "VARIABLE_PART_LAYOUT_CACHE_LIMIT")
         protected static final Object doReadFromVariablePartCachedLayout(final WeakVariablePointersObject object, final int index,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
-                        @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+                        @Cached final ConditionProfile nilProfile) {
             return object.getFromVariablePart(index - cachedLayout.getInstSize(), nilProfile);
         }
 
         @Specialization(guards = "index >= object.instsize()", replaces = {"doReadFromVariablePartCachedIndex", "doReadFromVariablePartCachedLayout"})
         protected static final Object doReadFromVariablePart(final WeakVariablePointersObject object, final int index,
-                        @Cached("createBinaryProfile()") final ConditionProfile nilProfile) {
+                        @Cached final ConditionProfile nilProfile) {
             return object.getFromVariablePart(index - object.instsize(), nilProfile);
         }
     }
@@ -334,7 +334,7 @@ public class AbstractPointersObjectNodes {
                         @Cached("index") final int cachedIndex,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached final BranchProfile nilProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile primitiveProfile) {
+                        @Cached final ConditionProfile primitiveProfile) {
             object.putIntoVariablePart(cachedIndex - cachedLayout.getInstSize(), value, nilProfile, primitiveProfile);
         }
 
@@ -343,14 +343,14 @@ public class AbstractPointersObjectNodes {
         protected static final void doWriteIntoVariablePartCachedLayout(final WeakVariablePointersObject object, final int index, final Object value,
                         @Cached("object.getLayout()") final ObjectLayout cachedLayout,
                         @Cached final BranchProfile nilProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile primitiveProfile) {
+                        @Cached final ConditionProfile primitiveProfile) {
             object.putIntoVariablePart(index - cachedLayout.getInstSize(), value, nilProfile, primitiveProfile);
         }
 
         @Specialization(guards = "index >= object.instsize()", replaces = {"doWriteIntoVariablePartCachedIndex", "doWriteIntoVariablePartCachedLayout"})
         protected static final void doWriteIntoVariablePart(final WeakVariablePointersObject object, final int index, final Object value,
                         @Cached final BranchProfile nilProfile,
-                        @Cached("createBinaryProfile()") final ConditionProfile primitiveProfile) {
+                        @Cached final ConditionProfile primitiveProfile) {
             object.putIntoVariablePart(index - object.instsize(), value, nilProfile, primitiveProfile);
         }
     }

@@ -34,8 +34,8 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
 
     @Specialization(guards = {"image.lastSeenContext != null"})
     protected static final void doMaterialize(final VirtualFrame frame,
-                    @Cached("createBinaryProfile()") final ConditionProfile isNotLastSeenContextProfile,
-                    @Cached("createBinaryProfile()") final ConditionProfile continueProfile,
+                    @Cached final ConditionProfile isNotLastSeenContextProfile,
+                    @Cached final ConditionProfile continueProfile,
                     @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         final ContextObject lastSeenContext = image.lastSeenContext;

@@ -305,7 +305,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = {"receiver.isEmptyType()"})
         protected static final boolean doEmptyArray(final ArrayObject receiver, final Object thang,
-                        @Cached("createBinaryProfile()") final ConditionProfile noElementsProfile) {
+                        @Cached final ConditionProfile noElementsProfile) {
             if (noElementsProfile.profile(receiver.getEmptyStorage() == 0)) {
                 return BooleanObject.FALSE;
             } else {

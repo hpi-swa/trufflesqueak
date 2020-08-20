@@ -47,7 +47,7 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = "obj.isLongType()")
         protected static final Object doNativeLongs(final NativeObject obj, final long index,
-                        @Cached("createBinaryProfile()") final ConditionProfile positiveValueProfile,
+                        @Cached final ConditionProfile positiveValueProfile,
                         @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> ref) {
             final long value = obj.getLong(index);
             if (positiveValueProfile.profile(value >= 0)) {

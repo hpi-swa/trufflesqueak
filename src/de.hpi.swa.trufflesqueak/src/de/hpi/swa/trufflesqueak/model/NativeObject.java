@@ -521,7 +521,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @ExportMessage
-    public String asString(@Cached("createBinaryProfile()") final ConditionProfile byteStringOrSymbolProfile,
+    public String asString(@Cached final ConditionProfile byteStringOrSymbolProfile,
                     @Cached final BranchProfile errorProfile) throws UnsupportedMessageException {
         final ClassObject squeakClass = getSqueakClass();
         if (byteStringOrSymbolProfile.profile(squeakClass.isStringClass() || squeakClass.isSymbolClass())) {

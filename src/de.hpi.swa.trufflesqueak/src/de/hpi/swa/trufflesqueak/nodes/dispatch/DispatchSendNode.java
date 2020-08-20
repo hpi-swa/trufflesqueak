@@ -77,7 +77,7 @@ public abstract class DispatchSendNode extends AbstractNode {
                         @Cached final SqueakObjectClassNode classNode,
                         @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
                         @Cached final LookupMethodNode lookupNode,
-                        @Cached("createBinaryProfile()") final ConditionProfile isDoesNotUnderstandProfile,
+                        @Cached final ConditionProfile isDoesNotUnderstandProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
             final ClassObject targetClass = classNode.executeLookup(targetObject);

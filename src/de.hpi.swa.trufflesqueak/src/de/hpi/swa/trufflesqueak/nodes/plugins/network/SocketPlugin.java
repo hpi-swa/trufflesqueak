@@ -135,7 +135,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         protected static final AbstractSqueakObject doWork(@SuppressWarnings("unused") final Object receiver,
-                        @Cached("createBinaryProfile()") final ConditionProfile hasResultProfile,
+                        @Cached final ConditionProfile hasResultProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
             LogUtils.SOCKET.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
@@ -535,7 +535,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long semaphoreIndex,
                         final long aReadSemaphore,
                         final long aWriteSemaphore,
-                        @Cached("createBinaryProfile()") final ConditionProfile socketTypeProfile,
+                        @Cached final ConditionProfile socketTypeProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
 
             final SqueakSocket socket;

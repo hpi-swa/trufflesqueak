@@ -35,7 +35,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
     protected final Object doHandle(final VirtualFrame frame, final NonLocalReturn nlr,
                     @Cached("getInstructionPointerSlot(frame)") final FrameSlot instructionPointerSlot,
                     @Cached final GetContextNode getContextNode,
-                    @Cached("createBinaryProfile()") final ConditionProfile hasModifiedSenderProfile) {
+                    @Cached final ConditionProfile hasModifiedSenderProfile) {
         if (hasModifiedSenderProfile.profile(getContextNode.hasModifiedSender(frame))) {
             aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
             // Sender has changed.
