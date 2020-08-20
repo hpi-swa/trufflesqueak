@@ -11,8 +11,7 @@ import java.util.List;
 import org.graalvm.nativeimage.Platform;
 import org.graalvm.nativeimage.c.CContext;
 
-public class SDLCContext implements CContext.Directives {
-
+public final class SDLCContext implements CContext.Directives {
     @Override
     public List<String> getHeaderFiles() {
         return Collections.singletonList("<SDL2/SDL.h>");
@@ -20,14 +19,7 @@ public class SDLCContext implements CContext.Directives {
 
     @Override
     public List<String> getLibraries() {
-        /* `sdl2-config --libs` */
-        if (Platform.includedIn(Platform.LINUX.class)) {
-            return Collections.singletonList("-L/usr/lib/x86_64-linux-gnu -lSDL2");
-        } else if (Platform.includedIn(Platform.DARWIN.class)) {
-            return Collections.singletonList("-L/usr/local/lib -lSDL2");
-        } else {
-            throw new UnsupportedOperationException("Unsupported OS");
-        }
+        return Collections.singletonList("SDL2");
     }
 
     @Override
