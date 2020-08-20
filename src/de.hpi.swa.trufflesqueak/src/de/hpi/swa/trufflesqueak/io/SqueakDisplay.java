@@ -180,6 +180,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     @Override
+    @TruffleBoundary
     public void close() {
         frame.setVisible(false);
         frame.dispose();
