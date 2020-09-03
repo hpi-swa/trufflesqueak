@@ -13,6 +13,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -23,6 +24,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.utilities.TriState;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
@@ -38,6 +40,8 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public abstract class AbstractSqueakObject implements TruffleObject {
+
+    public abstract long getSqueakHash();
 
     public abstract int getNumSlots();
 
@@ -69,7 +73,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     @ExportMessage(name = "isMemberInvocable")
     @ExportMessage(name = "isMemberReadable")
-    public boolean isMemberInvocable(final String member,
+    protected final boolean isMemberInvocable(final String member,
                     @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
                     @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                     @Exclusive @Cached final ConditionProfile alternativeProfile) {
@@ -83,7 +87,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     @ExportMessage
-    public Object readMember(final String member,
+    protected final Object readMember(final String member,
                     @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
                     @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                     @Exclusive @Cached final ConditionProfile alternativeProfile) throws UnknownIdentifierException {
@@ -103,7 +107,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     @ExportMessage
-    public static class InvokeMember {
+    protected static class InvokeMember {
         @Specialization(rewriteOn = RespecializeException.class)
         protected static final Object invokeMember(final AbstractSqueakObject receiver, final String member, final Object[] arguments,
                         @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
@@ -175,30 +179,49 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     @ExportMessage
     @SuppressWarnings("static-method")
-    public final boolean hasMetaObject() {
+    protected final boolean hasMetaObject() {
         return true;
     }
 
     @ExportMessage
-    public final Object getMetaObject(@Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
+    protected final Object getMetaObject(@Shared("classNode") @Cached final SqueakObjectClassNode classNode) {
         return classNode.executeLookup(this);
     }
 
     @ExportMessage
     @SuppressWarnings("static-method")
-    public final boolean hasLanguage() {
+    protected final boolean hasLanguage() {
         return true;
     }
 
     @ExportMessage
     @SuppressWarnings("static-method")
-    public final Class<? extends TruffleLanguage<?>> getLanguage() {
+    protected final Class<? extends TruffleLanguage<?>> getLanguage() {
         return SqueakLanguage.class;
     }
 
     @ExportMessage
+    protected static final class IsIdenticalOrUndefined {
+        @Specialization
+        protected static TriState doAbstractSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject other) {
+            return TriState.valueOf(receiver == other);
+        }
+
+        @Fallback
+        @SuppressWarnings("unused")
+        protected static TriState doOther(final AbstractSqueakObject receiver, final Object other) {
+            return TriState.UNDEFINED;
+        }
+    }
+
+    @ExportMessage
+    protected final int identityHashCode() {
+        return (int) getSqueakHash();
+    }
+
+    @ExportMessage
     @TruffleBoundary
-    public final Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
+    protected final Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
         return toString();
     }
 

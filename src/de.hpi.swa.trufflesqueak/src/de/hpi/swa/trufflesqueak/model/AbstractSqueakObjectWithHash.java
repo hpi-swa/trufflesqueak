@@ -65,6 +65,7 @@ public abstract class AbstractSqueakObjectWithHash extends AbstractSqueakObject 
 
     public abstract void fillin(SqueakImageChunk chunk);
 
+    @Override
     public final long getSqueakHash() {
         if (needsSqueakHash()) {
             /** Lazily initialize squeakHash and derive value from hashCode. */

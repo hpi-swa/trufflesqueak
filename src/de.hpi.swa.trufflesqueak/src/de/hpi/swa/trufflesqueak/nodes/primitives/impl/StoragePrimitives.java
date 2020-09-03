@@ -317,7 +317,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Specialization
         protected static final long doNil(@SuppressWarnings("unused") final NilObject object) {
-            return NilObject.getSqueakHash();
+            return object.getSqueakHash();
         }
 
         @Specialization(guards = "!object")

@@ -39,7 +39,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.ConvertToSqueakNode;
 import de.hpi.swa.trufflesqueak.interop.JavaObjectWrapper;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -1137,6 +1136,43 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    /* Identity APIs */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasIdentity")
+    protected abstract static class PrimHasIdentityNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean hasIdentity(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasIdentity(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsIdentical")
+    protected abstract static class PrimIsIdenticalNode extends AbstractPrimitiveNode implements TernaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean isIdentical(@SuppressWarnings("unused") final Object receiver, final Object object, final Object other,
+                        @CachedLibrary(limit = "2") final InteropLibrary leftLib,
+                        @CachedLibrary(limit = "2") final InteropLibrary rightLib) {
+            return BooleanObject.wrap(leftLib.isIdentical(object, other, rightLib));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIdentityHashCode")
+    protected abstract static class PrimIdentityHashCodeNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization(guards = "lib.hasIdentity(object)")
+        protected static final long identityHashCode(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.identityHashCode(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
     /*
      * Exception objects
      */
@@ -1256,16 +1292,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return BooleanObject.wrap(image.env.isHostSymbol(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveIdentityHash")
-    protected abstract static class PrimPolyglotIdentityHashNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        @Specialization
-        protected static final long doIdentityHash(@SuppressWarnings("unused") final Object receiver, final Object object) {
-            return object.hashCode() & AbstractSqueakObjectWithHash.IDENTITY_HASH_MASK;
         }
     }
 

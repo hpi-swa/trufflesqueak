@@ -12,6 +12,11 @@ public final class InteropSenderMarker extends AbstractSqueakObject {
     }
 
     @Override
+    public long getSqueakHash() {
+        return 0;
+    }
+
+    @Override
     public int getNumSlots() {
         return 0;
     }
