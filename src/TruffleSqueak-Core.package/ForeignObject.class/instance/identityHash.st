@@ -1,3 +1,3 @@
 overrides
 identityHash
-	^ Interop identityHash: self
+	^ Interop identityHashCode: self

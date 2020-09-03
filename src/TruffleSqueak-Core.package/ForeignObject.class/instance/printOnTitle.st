@@ -15,6 +15,7 @@ printOnTitle
 	(Interop isInstantiable: self) ifTrue: [ properties add: 'instantiable' ].
 	(Interop isExecutable: self) ifTrue: [ properties add: 'executable' ].
 	(Interop isMetaObject: self) ifTrue: [ properties add: 'meta' ].
+	(Interop hasIdentity: self) ifTrue: [ properties add: 'identity' ].
 	^ properties
 		ifEmpty: [ 'ForeignObject' ]
 		ifNotEmpty: [ 'ForeignObject[', (properties joinSeparatedBy: ','), ']' ]
