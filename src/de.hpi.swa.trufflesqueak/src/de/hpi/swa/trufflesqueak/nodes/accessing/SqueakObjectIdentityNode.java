@@ -13,6 +13,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -45,6 +46,16 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
     @Specialization
     protected static final boolean doCharacterObject(final CharacterObject left, final CharacterObject right) {
         return BooleanObject.wrap(left.getValue() == right.getValue());
+    }
+
+    @Specialization
+    protected static final boolean doSqueakObjectLeft(final AbstractSqueakObject left, final Object right) {
+        return BooleanObject.wrap(left == right);
+    }
+
+    @Specialization
+    protected static final boolean doSqueakObjectRight(final Object left, final AbstractSqueakObject right) {
+        return BooleanObject.wrap(left == right);
     }
 
     /** (inspired by SimpleLanguage's {@code SLEqualNode}). */
