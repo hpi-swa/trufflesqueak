@@ -35,7 +35,7 @@ readonly OS_NAME OS_ARCH JAVA_HOME_SUFFIX
 
 
 add-path() {
-  echo "::add-path::$(resolve-path "$1")"
+  echo "$(resolve-path "$1")" >> $GITHUB_PATH
 }
 
 build-component() {
@@ -186,7 +186,7 @@ resolve-path() {
 }
 
 set-env() {
-  echo "::set-env name=$1::$2"
+  echo "$1=$2" >> $GITHUB_ENV
   echo "export $1=\"$2\"" >> "${HOME}/all_env_vars"
 }
 
