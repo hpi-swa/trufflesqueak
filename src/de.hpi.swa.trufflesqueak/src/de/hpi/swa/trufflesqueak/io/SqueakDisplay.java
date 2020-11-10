@@ -390,6 +390,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     @SuppressWarnings("static-method")
+    @TruffleBoundary
     private Clipboard getClipboard() {
         return Toolkit.getDefaultToolkit().getSystemClipboard();
     }
