@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakInterrupt;
 import de.hpi.swa.trufflesqueak.nodes.plugins.JPEGReadWriter2Plugin;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 
@@ -242,7 +241,6 @@ public final class MiscUtils {
             Thread.sleep(millis);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new SqueakInterrupt();
         }
     }
 

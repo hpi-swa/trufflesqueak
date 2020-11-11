@@ -561,13 +561,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimQuitNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @SuppressWarnings("unused")
         @Specialization
-        protected static final Object doQuit(final Object receiver, final NotProvided exitStatus) {
-            throw new SqueakQuit(0);
+        protected final Object doQuit(final Object receiver, final NotProvided exitStatus) {
+            throw new SqueakQuit(this, 0);
         }
 
         @Specialization
-        protected static final Object doQuit(@SuppressWarnings("unused") final Object receiver, final long exitStatus) {
-            throw new SqueakQuit((int) exitStatus);
+        protected final Object doQuit(@SuppressWarnings("unused") final Object receiver, final long exitStatus) {
+            throw new SqueakQuit(this, (int) exitStatus);
         }
     }
 

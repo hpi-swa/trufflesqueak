@@ -14,7 +14,7 @@ import java.util.Map;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakAbortException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -57,14 +57,14 @@ public final class SqueakImageReader {
     private SqueakImageReader(final SqueakImageContext image) {
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
         if (!truffleFile.isRegularFile()) {
-            throw SqueakAbortException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
+            throw SqueakException.create(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
         }
         BufferedInputStream inputStream = null;
         try {
             inputStream = new BufferedInputStream(truffleFile.newInputStream());
         } catch (final IOException e) {
             if (!image.isTesting()) {
-                throw SqueakAbortException.create(e);
+                throw SqueakException.create(e);
             }
         }
         stream = inputStream;
@@ -109,7 +109,7 @@ public final class SqueakImageReader {
             assert readBytes == length : "Failed to read bytes";
             return readBytes;
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Failed to read next bytes:", e.getMessage());
+            throw SqueakException.create("Failed to read next bytes:", e.getMessage());
         }
     }
 
@@ -146,7 +146,7 @@ public final class SqueakImageReader {
             final long skipped = stream.skip(padding);
             assert skipped == padding : "Failed to skip padding bytes";
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Failed to skip next bytes:", e);
+            throw SqueakException.create("Failed to skip next bytes:", e);
         }
         position += paddedObjectSize;
         return bytes;
@@ -161,7 +161,7 @@ public final class SqueakImageReader {
                 pending -= skipped;
             }
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Failed to skip next bytes:", e);
+            throw SqueakException.create("Failed to skip next bytes:", e);
         }
         position += count;
     }
@@ -169,7 +169,7 @@ public final class SqueakImageReader {
     private void readVersion() {
         final long version = nextInt();
         if (version != SqueakImageConstants.IMAGE_FORMAT) {
-            throw SqueakAbortException.create(MiscUtils.format("Image format %s not supported. Please supply a 64bit Spur image (format %s).", version, SqueakImageConstants.IMAGE_FORMAT));
+            throw SqueakException.create(MiscUtils.format("Image format %s not supported. Please supply a 64bit Spur image (format %s).", version, SqueakImageConstants.IMAGE_FORMAT));
         }
         // nextWord(); // magic2
     }
@@ -242,7 +242,7 @@ public final class SqueakImageReader {
         try {
             stream.close();
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Failed to close stream:", e);
+            throw SqueakException.create("Failed to close stream:", e);
         }
     }
 

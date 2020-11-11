@@ -254,7 +254,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
                 fullDamage();
                 render(true);
             } else if (eventType == SDL.EventType.QUIT.getCValue()) {
-                throw new SqueakQuit(0);
+                throw new SqueakQuit(null, 0);
             }
         }
     }

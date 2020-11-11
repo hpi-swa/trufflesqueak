@@ -5,11 +5,13 @@
  */
 package de.hpi.swa.trufflesqueak.exceptions;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleException;
-import com.oracle.truffle.api.nodes.ControlFlowException;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
+import com.oracle.truffle.api.interop.ExceptionType;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -19,22 +21,17 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.EXCEPTION;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SYNTAX_ERROR_NOTIFICATION;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.DebugUtils;
 
 public final class SqueakExceptions {
 
-    /**
-     * Exception to signal an illegal state in TruffleSqueak.
-     */
-    public static final class SqueakException extends IllegalStateException {
+    public static final class SqueakException extends AbstractTruffleException {
         private static final long serialVersionUID = 1L;
 
-        private SqueakException(final String message, final Throwable cause) {
-            super(message, cause);
-            DebugUtils.printSqStackTrace();
+        public SqueakException(final String message, final Node location) {
+            super(message, location);
         }
 
         private SqueakException(final Object... messageParts) {
@@ -48,169 +45,85 @@ public final class SqueakExceptions {
         }
     }
 
-    public static final class SqueakError extends RuntimeException implements TruffleException {
+    @SuppressWarnings("static-method")
+    @ExportLibrary(InteropLibrary.class)
+    public static final class SqueakSyntaxError extends AbstractTruffleException {
         private static final long serialVersionUID = 1L;
-        private final Node location;
-
-        public SqueakError(final Node location, final String message) {
-            super(message);
-            this.location = location;
-        }
-
-        @Override
-        public Node getLocation() {
-            return location;
-        }
-    }
-
-    public static final class SqueakAbortException extends RuntimeException implements TruffleException {
-        private static final long serialVersionUID = 1L;
-
-        private SqueakAbortException(final Object... messageParts) {
-            super(ArrayUtils.toJoinedString(" ", messageParts));
-        }
-
-        public static SqueakAbortException create(final Object... messageParts) {
-            CompilerDirectives.transferToInterpreter();
-            return new SqueakAbortException(messageParts);
-        }
-
-        @Override
-        public Node getLocation() {
-            return null;
-        }
-
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-            return null;
-        }
-    }
-
-    public static final class SqueakSyntaxError extends RuntimeException implements TruffleException {
-        private static final long serialVersionUID = 1L;
-        private final FakeSourceCodeObjectNode dummyCodeObjectNode;
+        private final SourceSection sourceSection;
 
         public SqueakSyntaxError(final PointersObject syntaxErrorNotification) {
             super(((NativeObject) syntaxErrorNotification.instVarAt0Slow(SYNTAX_ERROR_NOTIFICATION.ERROR_MESSAGE)).asStringUnsafe());
             final int sourceOffset = (int) ((long) syntaxErrorNotification.instVarAt0Slow(SYNTAX_ERROR_NOTIFICATION.LOCATION) - 1);
-            dummyCodeObjectNode = new FakeSourceCodeObjectNode(sourceOffset);
+            sourceSection = SqueakLanguage.getContext().getLastParseRequestSource().createSection(Math.max(sourceOffset - 1, 0), 1);
         }
 
         @TruffleBoundary
         public SqueakSyntaxError(final String message, final int position, final String source) {
             super("Syntax Error: \"" + message + "\" at position " + position);
-            dummyCodeObjectNode = new FakeSourceCodeObjectNode(source, position);
+            sourceSection = Source.newBuilder(SqueakLanguageConfig.ID, source, "<syntax error>").build().createSection(Math.max(position - 1, 0), 1);
         }
 
-        @Override
-        public Node getLocation() {
-            return dummyCodeObjectNode;
+        @ExportMessage
+        protected ExceptionType getExceptionType() {
+            return ExceptionType.PARSE_ERROR;
         }
 
-        @Override
-        public boolean isSyntaxError() {
+        @ExportMessage
+        protected boolean isExceptionIncompleteSource() {
             return true;
         }
 
-        protected static final class FakeSourceCodeObjectNode extends AbstractNode {
-            private int sourceOffset;
-            private SourceSection sourceSection;
-
-            public FakeSourceCodeObjectNode(final int sourceOffset) {
-                this.sourceOffset = sourceOffset;
-            }
-
-            public FakeSourceCodeObjectNode(final String source, final int position) {
-                sourceSection = Source.newBuilder(SqueakLanguageConfig.ID, source, "<syntax error>").build().createSection(Math.max(position - 1, 0), 1);
-            }
-
-            @Override
-            public SourceSection getSourceSection() {
-                if (sourceSection == null) {
-                    // - 1 for previous character.
-                    sourceSection = SqueakLanguage.getContext().getLastParseRequestSource().createSection(Math.max(sourceOffset - 1, 0), 1);
-                }
-                return sourceSection;
-            }
+        @ExportMessage
+        protected boolean hasSourceLocation() {
+            return true;
         }
 
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-            return null;
+        @ExportMessage(name = "getSourceLocation")
+        protected SourceSection getSourceSection() {
+            return sourceSection;
         }
     }
 
-    public static final class SqueakQuit extends ControlFlowException implements TruffleException {
+    @ExportLibrary(InteropLibrary.class)
+    public static final class SqueakQuit extends AbstractTruffleException {
         private static final long serialVersionUID = 1L;
         private final int exitStatus;
 
-        public SqueakQuit(final int exitStatus) {
+        public SqueakQuit(final Node location, final int exitStatus) {
+            super(location);
             this.exitStatus = exitStatus;
         }
 
-        @Override
-        public int getExitStatus() {
+        @ExportMessage
+        @SuppressWarnings("static-method")
+        protected ExceptionType getExceptionType() {
+            return ExceptionType.EXIT;
+        }
+
+        @ExportMessage
+        protected int getExceptionExitStatus() {
             return exitStatus;
-        }
-
-        @Override
-        public Node getLocation() {
-            return null;
-        }
-
-        @Override
-        public boolean isExit() {
-            return true;
         }
     }
 
-    public static final class SqueakInteropException extends RuntimeException implements TruffleException {
+    @ExportLibrary(value = InteropLibrary.class, delegateTo = "squeakException")
+    public static final class SqueakExceptionWrapper extends AbstractTruffleException {
         private static final long serialVersionUID = 1L;
-        private final PointersObject squeakException;
+        protected final PointersObject squeakException;
 
-        public SqueakInteropException(final PointersObject original) {
-            squeakException = original;
+        public SqueakExceptionWrapper(final PointersObject exception) {
+            squeakException = exception;
         }
 
         @Override
+        @TruffleBoundary
         public String getMessage() {
-            CompilerAsserts.neverPartOfCompilation();
             final Object messageText = squeakException.instVarAt0Slow(EXCEPTION.MESSAGE_TEXT);
             if (messageText instanceof NativeObject && ((NativeObject) messageText).isString()) {
                 return ((NativeObject) messageText).asStringUnsafe();
             } else {
                 return squeakException.toString();
             }
-        }
-
-        @SuppressWarnings("sync-override")
-        @Override
-        public Throwable fillInStackTrace() {
-            return this;
-        }
-
-        @Override
-        public Object getExceptionObject() {
-            return squeakException;
-        }
-
-        @Override
-        public Node getLocation() {
-            return null;
-        }
-    }
-
-    public static final class SqueakInterrupt extends RuntimeException implements TruffleException {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Node getLocation() {
-            return null;
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return true;
         }
     }
 

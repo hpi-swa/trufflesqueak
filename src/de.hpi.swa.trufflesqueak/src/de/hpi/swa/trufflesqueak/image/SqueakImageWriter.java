@@ -20,7 +20,7 @@ import java.util.HashMap;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakAbortException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.io.DisplayPoint;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
@@ -352,7 +352,7 @@ public final class SqueakImageWriter {
         try {
             stream.write(bytes);
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Failed to write bytes:", e.getMessage());
+            throw SqueakException.create("Failed to write bytes:", e.getMessage());
         }
         position += bytes.length;
     }
@@ -376,7 +376,7 @@ public final class SqueakImageWriter {
         try {
             stream.write(byteArrayBuffer, 0, numberOfBytes);
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Failed to write bytes:", e.getMessage());
+            throw SqueakException.create("Failed to write bytes:", e.getMessage());
         }
         return numberOfBytes;
     }
@@ -387,7 +387,7 @@ public final class SqueakImageWriter {
                 stream.write(0);
             }
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Failed to write padding bytes:", e);
+            throw SqueakException.create("Failed to write padding bytes:", e);
         }
         position += byteLength;
     }
@@ -481,7 +481,7 @@ public final class SqueakImageWriter {
         try {
             stream.close();
         } catch (final IOException e) {
-            throw SqueakAbortException.create("Failed to close file:", e.getMessage());
+            throw SqueakException.create("Failed to close file:", e.getMessage());
         }
     }
 }
