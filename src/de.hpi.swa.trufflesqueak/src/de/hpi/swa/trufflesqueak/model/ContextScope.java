@@ -3,13 +3,15 @@
  *
  * Licensed under the MIT License.
  */
-package de.hpi.swa.trufflesqueak.interop;
+package de.hpi.swa.trufflesqueak.model;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -19,13 +21,15 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.interop.InteropArray;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ExportLibrary(InteropLibrary.class)
-public final class ContextObjectInfo implements TruffleObject {
+@SuppressWarnings("static-method")
+public final class ContextScope implements TruffleObject {
     private static final String SENDER = "sender";
     private static final String PC = "pc";
     private static final String STACKP = "stackp";
@@ -37,7 +41,7 @@ public final class ContextObjectInfo implements TruffleObject {
     private final Map<String, FrameSlot> slots = new HashMap<>();
     private final Frame frame;
 
-    public ContextObjectInfo(final Frame frame) {
+    public ContextScope(final Frame frame) {
         this.frame = frame;
         final CompiledCodeObject code = FrameAccess.getBlockOrMethod(frame);
         for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
@@ -48,15 +52,24 @@ public final class ContextObjectInfo implements TruffleObject {
         }
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
-    public boolean hasMembers() {
+    protected boolean hasLanguage() {
+        return true;
+    }
+
+    @ExportMessage
+    protected Class<? extends TruffleLanguage<?>> getLanguage() {
+        return SqueakLanguage.class;
+    }
+
+    @ExportMessage
+    protected boolean hasMembers() {
         return true;
     }
 
     @ExportMessage
     @TruffleBoundary
-    public Object readMember(final String member) throws UnknownIdentifierException {
+    protected Object readMember(final String member) throws UnknownIdentifierException {
         if (frame == null) {
             return NilObject.SINGLETON;
         }
@@ -88,7 +101,7 @@ public final class ContextObjectInfo implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    public Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
+    protected Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
         final String[] members = new String[ALL_FIELDS.length + slots.size()];
         System.arraycopy(ALL_FIELDS, 0, members, 0, ALL_FIELDS.length);
         int index = ALL_FIELDS.length;
@@ -100,7 +113,7 @@ public final class ContextObjectInfo implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    public boolean isMemberReadable(final String member) {
+    protected boolean isMemberReadable(final String member) {
         for (final String field : ALL_FIELDS) {
             if (field.equals(member)) {
                 return true;
@@ -123,13 +136,13 @@ public final class ContextObjectInfo implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    public boolean isMemberModifiable(final String member) {
+    protected boolean isMemberModifiable(final String member) {
         return slots.containsKey(member) && frame != null;
     }
 
     @ExportMessage
     @TruffleBoundary
-    public void writeMember(final String member, final Object value) throws UnknownIdentifierException, UnsupportedMessageException {
+    protected void writeMember(final String member, final Object value) throws UnknownIdentifierException, UnsupportedMessageException {
         if (frame == null) {
             throw UnsupportedMessageException.create();
         }
@@ -143,7 +156,34 @@ public final class ContextObjectInfo implements TruffleObject {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    public boolean isMemberInsertable(@SuppressWarnings("unused") final String member) {
+    protected boolean isMemberInsertable(@SuppressWarnings("unused") final String member) {
         return false;
+    }
+
+    @ExportMessage
+    protected boolean hasMetaObject() {
+        return true;
+    }
+
+    @ExportMessage
+    protected Object getMetaObject(@CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+        return image.methodContextClass;
+    }
+
+    @ExportMessage
+    protected boolean isScope() {
+        return true;
+    }
+
+    @ExportMessage
+    @TruffleBoundary
+    protected Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
+        final CompiledCodeObject method = FrameAccess.getMethod(frame);
+        final BlockClosureObject closure = FrameAccess.getClosure(frame);
+        if (closure != null) {
+            return "CTX [] in " + method;
+        } else {
+            return "CTX " + method;
+        }
     }
 }

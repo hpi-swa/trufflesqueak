@@ -5,30 +5,20 @@
  */
 package de.hpi.swa.trufflesqueak;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 import org.graalvm.options.OptionDescriptors;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.Scope;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.debug.DebuggerTags;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.interop.ContextObjectInfo;
-import de.hpi.swa.trufflesqueak.interop.InteropArray;
 import de.hpi.swa.trufflesqueak.interop.SqueakFileDetector;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 @TruffleLanguage.Registration(//
@@ -73,23 +63,8 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     @Override
-    protected Iterable<Scope> findTopScopes(final SqueakImageContext context) {
-        context.ensureLoaded();
-        return Arrays.asList(Scope.newBuilder("Smalltalk", context.getGlobals()).build());
-    }
-
-    @Override
-    protected Iterable<Scope> findLocalScopes(final SqueakImageContext context, final Node node, final Frame frame) {
-        // TODO: support access at parse time (frame == null).
-        if (!FrameAccess.isTruffleSqueakFrame(frame)) {
-            return super.findLocalScopes(context, node, frame);
-        }
-        final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(frame);
-        final String name = blockOrMethod.toString();
-        final Object receiver = FrameAccess.getReceiver(frame);
-        final ContextObjectInfo variables = new ContextObjectInfo(frame);
-        final InteropArray arguments = new InteropArray(frame.getArguments());
-        return Collections.singletonList(Scope.newBuilder(name, variables).node(node).receiver(receiver.toString(), receiver).arguments(arguments).build());
+    protected Object getScope(final SqueakImageContext context) {
+        return context.getScope();
     }
 
     public static SqueakImageContext getContext() {

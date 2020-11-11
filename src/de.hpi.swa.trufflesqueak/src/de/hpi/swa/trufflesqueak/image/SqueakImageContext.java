@@ -26,7 +26,6 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.interop.InteropMap;
 import de.hpi.swa.trufflesqueak.interop.LookupMethodByStringNode;
 import de.hpi.swa.trufflesqueak.io.DisplayPoint;
 import de.hpi.swa.trufflesqueak.io.SqueakDisplay;
@@ -43,12 +42,11 @@ import de.hpi.swa.trufflesqueak.model.InteropSenderMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.SmalltalkScope;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ENVIRONMENT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.MESSAGE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.PROCESS;
-import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SMALLTALK_IMAGE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.model.layout.SlotLocation;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
@@ -148,6 +146,7 @@ public final class SqueakImageContext {
     private PointersObject parserSharedInstance;
     private AbstractSqueakObject requestorSharedInstanceOrNil;
     @CompilationFinal private PointersObject scheduler;
+    @CompilationFinal private SmalltalkScope smalltalkScope;
     @CompilationFinal private ClassObject wideStringClass;
 
     /* Plugins */
@@ -597,10 +596,13 @@ public final class SqueakImageContext {
         return options.isTesting;
     }
 
-    public Object getGlobals() {
-        final PointersObject environment = (PointersObject) smalltalk.instVarAt0Slow(SMALLTALK_IMAGE.GLOBALS);
-        final PointersObject bindings = (PointersObject) environment.instVarAt0Slow(ENVIRONMENT.BINDINGS);
-        return new InteropMap(bindings);
+    public Object getScope() {
+        ensureLoaded();
+        if (smalltalkScope == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            smalltalkScope = new SmalltalkScope(smalltalk);
+        }
+        return smalltalkScope;
     }
 
     /*
