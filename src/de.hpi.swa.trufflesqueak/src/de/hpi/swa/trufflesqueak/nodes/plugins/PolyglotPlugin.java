@@ -118,11 +118,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final ConvertToSqueakNode convertNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final TruffleContext innerContext = image.env.newContextBuilder().build();
-            final Object p = innerContext.enter();
+            final Object p = innerContext.enter(null);
             try {
                 return convertNode.executeConvert(evalString(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, sourceObject));
             } finally {
-                innerContext.leave(p);
+                innerContext.leave(null, p);
                 innerContext.close();
             }
         }
@@ -165,11 +165,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @Cached final ConvertToSqueakNode convertNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final TruffleContext innerContext = image.env.newContextBuilder().build();
-            final Object p = innerContext.enter();
+            final Object p = innerContext.enter(null);
             try {
                 return convertNode.executeConvert(evalFile(SqueakLanguage.getContext(), languageIdOrMimeTypeObj, path));
             } finally {
-                innerContext.leave(p);
+                innerContext.leave(null, p);
                 innerContext.close();
             }
         }
