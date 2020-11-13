@@ -130,10 +130,10 @@ jobs:
       - name: Clone TruffleSqueak repository
         uses: actions/checkout@v2
       - name: Build, install, and test TruffleSqueak component
-        uses: uraimo/run-on-arch-action@v1.0.9
+        uses: uraimo/run-on-arch-action@v2.0.7
         with:
-          architecture: aarch64
-          distribution: ubuntu20.04
+          arch: aarch64
+          distro: ubuntu20.04
           run: |
             apt update && apt install -y build-essential curl git python unzip
             mx.trufflesqueak/utils.sh set-up-dependencies java11
@@ -145,6 +145,9 @@ jobs:
             gu install -L "${INSTALLABLE_JVM_TARGET}"
             trufflesqueak --jvm --code "SystemReporter new reportText asString"
             trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
+          env: |
+            GITHUB_PATH: $GITHUB_PATH
+            GITHUB_ENV: $GITHUB_ENV
       - name: Upload TruffleSqueak component
         shell: bash
         run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
