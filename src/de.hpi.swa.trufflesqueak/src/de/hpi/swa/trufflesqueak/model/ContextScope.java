@@ -176,6 +176,20 @@ public final class ContextScope implements TruffleObject {
     }
 
     @ExportMessage
+    protected boolean hasScopeParent() {
+        return FrameAccess.getSender(frame) instanceof ContextObject;
+    }
+
+    @ExportMessage
+    protected Object getScopeParent() throws UnsupportedMessageException {
+        if (hasScopeParent()) {
+            return new ContextScope(FrameAccess.getSenderContext(frame).getTruffleFrame());
+        } else {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportMessage
     @TruffleBoundary
     protected Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
         final CompiledCodeObject method = FrameAccess.getMethod(frame);
