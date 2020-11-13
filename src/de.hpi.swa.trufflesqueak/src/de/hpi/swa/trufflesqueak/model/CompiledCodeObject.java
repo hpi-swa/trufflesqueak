@@ -721,6 +721,19 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return true;
     }
 
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasExecutableName() {
+        return true;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    @TruffleBoundary
+    public Object getExecutableName() {
+        return toString();
+    }
+
     @ExportMessage
     public Object execute(final Object[] receiverAndArguments,
                     @Exclusive @Cached final WrapToSqueakNode wrapNode,
