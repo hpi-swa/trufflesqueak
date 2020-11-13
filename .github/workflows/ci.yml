@@ -27,10 +27,10 @@ jobs:
         eclipse_tar_path="${HOME}/${eclipse_tar}"
         mx.trufflesqueak/utils.sh download-asset "${eclipse_tar}" 0.8.0 "${eclipse_tar_path}"
         tar -xzf ${eclipse_tar_path} -C ${HOME}
-        echo "::set-env name=ECLIPSE_EXE::${HOME}/eclipse/eclipse" # required by mx
+        echo "ECLIPSE_EXE=${HOME}/eclipse/eclipse" >> "${GITHUB_ENV}" # required by mx
         # Download ECJ
         mx.trufflesqueak/utils.sh download-asset "ci-dep-ecj-4.5.2.jar" 0.8.0 "${HOME}/ecj.jar"
-        echo "::set-env name=JDT::${HOME}/ecj.jar" # required by mx
+        echo "JDT=${HOME}/ecj.jar" >> "${GITHUB_ENV}" # required by mx
         # Set up mx, oracle/graal, and LabsJDK11
         mx.trufflesqueak/utils.sh set-up-mx
         mx.trufflesqueak/utils.sh shallow-clone-graalvm-project https://github.com/oracle/graal.git
