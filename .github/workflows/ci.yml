@@ -131,6 +131,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Build, install, and test TruffleSqueak component
         uses: uraimo/run-on-arch-action@v2.0.7
+        id: build_aarch64
         with:
           arch: aarch64
           distro: ubuntu20.04
@@ -141,7 +142,7 @@ jobs:
             export PATH="${PATH}:${MX_HOME}:${GRAALVM_HOME}/bin"
             mx --disable-installables=false build --dependencies=SMALLTALK_INSTALLABLE_JAVA11
             cp "$(mx --disable-installables=false paths SMALLTALK_INSTALLABLE_JAVA11)" "${INSTALLABLE_JVM_TARGET}"
-            echo ::set-output name=installable::${INSTALLABLE_JVM_TARGET}
+            echo ::set-output name=installable_jvm::${INSTALLABLE_JVM_TARGET}
             gu install -L "${INSTALLABLE_JVM_TARGET}"
             trufflesqueak --jvm --code "SystemReporter new reportText asString"
             trufflesqueak --jvm --code "1 tinyBenchmarks" images/test-64bit.image
@@ -149,8 +150,7 @@ jobs:
             GITHUB_PATH: $GITHUB_PATH
             GITHUB_ENV: $GITHUB_ENV
       - name: Upload TruffleSqueak component
-        shell: bash
-        run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
+        run: mx.trufflesqueak/utils.sh deploy-asset ${{ steps.build_aarch64.outputs.installable_jvm }} ${{ secrets.GITHUB_TOKEN }}
 
   macos-java11:
     name: macOS + JDK11 + Graal
