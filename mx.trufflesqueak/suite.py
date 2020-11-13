@@ -13,11 +13,11 @@ suite = {
     "mxversion": "5.270.4",
     "versionConflictResolution": "latest",
 
-    "version": "20.2.0-dev",
+    "version": "20.2.0",
     "trufflesqueak:dependencyMap": {
         "graalvm": "20.2.0",
-        "image": "TruffleSqueakImage-20.1.1.zip",
-        "image_tag": "20.1.1",
+        "image": "TruffleSqueakImage-20.2.0.zip",
+        "image_tag": "20.2.0",
         "jdk8": "262",
         "jdk8_update": "10",
         "jdk11": "11.0.8",
@@ -27,7 +27,7 @@ suite = {
         "test_image_tag": "1.0.0-rc9",
     },
 
-    "release": False,
+    "release": True,
     "groupId": "de.hpi.swa.trufflesqueak",
     "url": "https://github.com/hpi-swa/trufflesqueak",
 
