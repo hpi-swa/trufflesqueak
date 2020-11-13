@@ -17,8 +17,10 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ExceptionType;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -42,6 +44,8 @@ import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextScope;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
@@ -449,11 +453,34 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsExecutable")
     protected abstract static class PrimIsExecutableNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
         @Specialization
         protected static final boolean doIsExecutable(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             return BooleanObject.wrap(lib.isExecutable(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasExecutableName")
+    protected abstract static class PrimHasExecutableNameNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean doHasExecutableName(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasExecutableName(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetExecutableName")
+    protected abstract static class PrimGetExecutableNameNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        @Specialization(guards = "lib.hasExecutableName(object)")
+        protected static final Object doGetExecutableName(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getExecutableName(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
         }
     }
 
@@ -1042,7 +1069,17 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final boolean hasMetaObject(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
-            return lib.hasMetaObject(object);
+            return BooleanObject.wrap(lib.hasMetaObject(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasDeclaringMetaObject")
+    protected abstract static class PrimHasDeclaringMetaObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean hasMetaObject(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasDeclaringMetaObject(object));
         }
     }
 
@@ -1078,6 +1115,20 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             try {
                 return lib.getMetaObject(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetDeclaringMetaObject")
+    protected abstract static class PrimGetDeclaringMetaObjectNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization(guards = "lib.hasDeclaringMetaObject(object)")
+        protected static final Object getDeclaringMetaObject(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getDeclaringMetaObject(object);
             } catch (final UnsupportedMessageException e) {
                 throw primitiveFailedInInterpreterCapturing(e);
             }
@@ -1174,6 +1225,68 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     /*
+     * Scope objects
+     */
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsScope")
+    protected abstract static class PrimIsScopeNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean isScope(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.isScope(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasScopeParent")
+    protected abstract static class PrimHasScopeParentNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean hasScopeParent(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasScopeParent(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetScopeParent")
+    protected abstract static class PrimGetScopeParentNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        @Specialization(guards = "lib.hasScopeParent(object)")
+        protected static final Object getScopeParent(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getScopeParent(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetSmalltalkScope")
+    protected abstract static class PrimGetSmalltalkScopeNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final Object getSmalltalkScope(@SuppressWarnings("unused") final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.getScope();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveContextAsScope")
+    protected abstract static class PrimContextAsScopeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        @Specialization
+        @TruffleBoundary
+        protected static final Object doContextAsScope(@SuppressWarnings("unused") final Object receiver, final ContextObject object) {
+            if (object.hasTruffleFrame()) {
+                return new ContextScope(object.getTruffleFrame());
+            } else {
+                return NilObject.SINGLETON;
+            }
+        }
+    }
+
+    /*
      * Exception objects
      */
 
@@ -1182,9 +1295,150 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimIsExceptionNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
 
         @Specialization
-        protected static final boolean doIsException(@SuppressWarnings("unused") final Object receiver, final Object object,
+        protected static final boolean isException(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedLibrary(limit = "2") final InteropLibrary lib) {
             return BooleanObject.wrap(lib.isException(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveIsExceptionIncompleteSource")
+    protected abstract static class PrimIsExceptionIncompleteSourceNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        @Specialization(guards = "isParseErrorException(lib, object)")
+        protected static final boolean isExceptionIncompleteSource(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return BooleanObject.wrap(lib.isExceptionIncompleteSource(object));
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+
+        protected static final boolean isParseErrorException(final InteropLibrary lib, final Object object) {
+            try {
+                return lib.getExceptionType(object) == ExceptionType.PARSE_ERROR;
+            } catch (final UnsupportedMessageException e) {
+                return false;
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasExceptionCause")
+    protected abstract static class PrimHasExceptionCauseNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        @Specialization
+        protected static final boolean hasExceptionCause(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasExceptionCause(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetExceptionCause")
+    protected abstract static class PrimGetExceptionCauseNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        @Specialization(guards = "lib.hasExceptionCause(object)")
+        protected static final Object getExceptionCause(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getExceptionCause(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasExceptionMessage")
+    protected abstract static class PrimHasExceptionMessageNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        @Specialization
+        protected static final boolean hasExceptionMessage(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasExceptionMessage(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetExceptionMessage")
+    protected abstract static class PrimGetExceptionMessageNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        @Specialization(guards = "lib.hasExceptionMessage(object)")
+        protected static final Object getExceptionMessage(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getExceptionMessage(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveHasExceptionStackTrace")
+    protected abstract static class PrimHasExceptionStackTraceNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+
+        @Specialization
+        protected static final boolean hasExceptionStackTrace(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            return BooleanObject.wrap(lib.hasExceptionStackTrace(object));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetExceptionStackTrace")
+    protected abstract static class PrimGetExceptionStackTraceNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        @Specialization(guards = "lib.hasExceptionStackTrace(object)")
+        protected static final Object getExceptionStackTrace(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getExceptionStackTrace(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @ImportStatic(ExceptionType.class)
+    @SqueakPrimitive(names = "primitiveGetExceptionExitStatus")
+    protected abstract static class PrimGetExceptionExitStatusNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        @Specialization(guards = "isExitException(lib, object)")
+        protected static final long getExceptionExitStatus(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return lib.getExceptionExitStatus(object);
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
+        }
+
+        protected static final boolean isExitException(final InteropLibrary lib, final Object object) {
+            try {
+                return lib.getExceptionType(object) == ExceptionType.EXIT;
+            } catch (final UnsupportedMessageException e) {
+                return false;
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveGetExceptionType")
+    protected abstract static class PrimGetExceptionTypeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        @Specialization(guards = "lib.isException(object)")
+        protected static final NativeObject getExceptionType(@SuppressWarnings("unused") final Object receiver, final Object object,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
+                        @CachedLibrary(limit = "2") final InteropLibrary lib) {
+            try {
+                return image.asByteString(lib.getExceptionType(object).name());
+            } catch (final UnsupportedMessageException e) {
+                throw primitiveFailedInInterpreterCapturing(e);
+            }
         }
     }
 
@@ -1292,17 +1546,6 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final boolean doIsHostSymbol(@SuppressWarnings("unused") final Object receiver, final Object object,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return BooleanObject.wrap(image.env.isHostSymbol(object));
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(names = "primitiveStringRepresentation")
-    protected abstract static class PrimStringRepresentationNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
-
-        @Specialization
-        protected static final NativeObject doString(@SuppressWarnings("unused") final Object receiver, final Object object,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asByteString(MiscUtils.toString(object));
         }
     }
 
