@@ -1,4 +1,4 @@
-primitives
+primitives instantiables
 instantiate: anObject with: anArray
 	<primitive: 'primitiveInstantiate' module: 'PolyglotPlugin'>
 	(self isInstantiable: anObject)

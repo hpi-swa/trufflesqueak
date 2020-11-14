@@ -8,6 +8,6 @@ testJavaBasic
 	self deny: (Interop isHostSymbol: ((Java type: 'int[]') new: 0)).
 
 	self assert:  (Interop identityHashCode: (Java type: 'int[]')) > 0.
-	self assert:  'JavaClass[int]' equals: (Interop stringRepresentation: (Java type: 'int')).
+	self assert:  'int' equals: (Interop toDisplayString: (Java type: 'int')) asString.
 
 	self assert: ((Java type: 'java.lang.System') getProperty: 'java.version') notEmpty.

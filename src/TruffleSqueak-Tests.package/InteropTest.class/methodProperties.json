@@ -2,7 +2,9 @@
 	"class" : {
 		 },
 	"instance" : {
-		"testExceptionHandling" : "fn 6/16/2020 17:08",
+		"testExceptionAPIs" : "fn 11/12/2020 11:48",
+		"testExceptionHandling" : "fn 11/12/2020 11:52",
 		"testIdentityAPIs" : "fn 9/3/2020 11:27",
 		"testMetadataAPIs" : "fn 5/29/2020 16:06",
+		"testScopeAPIs" : "fn 11/12/2020 11:27",
 		"testSmalltalkDNU" : "fn 2/13/2020 15:49" } }

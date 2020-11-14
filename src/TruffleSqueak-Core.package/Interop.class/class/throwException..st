@@ -1,4 +1,4 @@
-primitives miscellaneous
+primitives exceptions
 throwException: anObject
 	<primitive: 'primitiveThrowException' module: 'PolyglotPlugin'>
 	(self isException: anObject)
