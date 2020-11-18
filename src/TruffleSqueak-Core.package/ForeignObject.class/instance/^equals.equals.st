@@ -1,3 +1,3 @@
 comparing
 == anObject
-	^ Interop isIdentical: self to: anObject
+	^ super == anObject or: [ Interop isIdentical: self to: anObject ]
