@@ -2,7 +2,7 @@
 	"class" : {
 		 },
 	"instance" : {
-		"expectedFailures" : "fn 11/11/2019 22:19",
+		"expectedFailures" : "fn 11/18/2020 14:56",
 		"testJavaAddToHostClassPath" : "fn 11/11/2019 22:16",
 		"testJavaArray" : "fn 12/13/2019 11:43",
 		"testJavaBasic" : "fn 11/12/2020 11:56",

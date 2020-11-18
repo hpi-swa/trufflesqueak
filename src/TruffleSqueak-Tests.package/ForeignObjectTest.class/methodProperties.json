@@ -2,11 +2,12 @@
 	"class" : {
 		 },
 	"instance" : {
+		"expectedFailures" : "fn 11/18/2020 16:02",
 		"jsEval:" : "fn 5/29/2020 10:45",
 		"testJSArray" : "fn 5/29/2020 10:45",
 		"testJSBasic" : "fn 5/29/2020 10:46",
 		"testJSDate" : "fn 5/29/2020 10:46",
 		"testJSExecutable" : "fn 5/29/2020 10:46",
 		"testJSMetadataAPIs" : "fn 5/29/2020 16:06",
-		"testJSObject" : "fn 9/3/2020 10:40",
+		"testJSObject" : "fn 11/18/2020 15:55",
 		"testSmalltalkFromJS" : "fn 5/29/2020 16:36" } }
