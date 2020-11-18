@@ -200,8 +200,6 @@ set-up-dependencies() {
 
   set-up-mx
   shallow-clone-graalvm-project https://github.com/oracle/graal.git
-  # Apply hotfix for 20.2 (see https://github.com/oracle/graal/issues/2879)
-  (cd "${BASE_DIRECTORY}/../graal"; curl -sSL https://github.com/oracle/graal/commit/489daee58b8b0c2281b6f1c3329ff93630317258.patch | git apply)
   shallow-clone-graalvm-project https://github.com/graalvm/graaljs.git
   download-trufflesqueak-image
   download-trufflesqueak-test-image
