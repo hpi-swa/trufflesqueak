@@ -58,8 +58,14 @@ public abstract class SqueakObjectIdentityNode extends AbstractNode {
         return BooleanObject.wrap(left == right);
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = "left == right")
+    protected static final boolean doJavaIdenticalObject(final Object left, final Object right) {
+        return BooleanObject.TRUE;
+    }
+
     /** (inspired by SimpleLanguage's {@code SLEqualNode}). */
-    @Specialization(limit = "4")
+    @Specialization(guards = "left != right", limit = "4")
     protected static final boolean doObject(final Object left, final Object right,
                     @CachedLibrary("left") final InteropLibrary leftInterop,
                     @CachedLibrary("right") final InteropLibrary rightInterop) {
