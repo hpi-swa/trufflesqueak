@@ -198,7 +198,7 @@ public final class SqueakImageContext {
                 evaluate("[Smalltalk clearExternalObjects. Smalltalk processStartUpList: true. Smalltalk setPlatformPreferences] value");
             } catch (final Exception e) {
                 printToStdErr("startUpList failed:");
-                e.printStackTrace();
+                printToStdErr(e);
             }
             // Set author information.
             evaluate("Utilities authorName: 'TruffleSqueak'");
@@ -596,6 +596,7 @@ public final class SqueakImageContext {
         return options.isTesting;
     }
 
+    @TruffleBoundary
     public Object getScope() {
         ensureLoaded();
         if (smalltalkScope == null) {
@@ -742,6 +743,11 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public void printToStdErr(final String string) {
         getError().println("[trufflesqueak] " + string);
+    }
+
+    @TruffleBoundary
+    public void printToStdErr(final Exception e) {
+        e.printStackTrace(getError());
     }
 
     @TruffleBoundary
