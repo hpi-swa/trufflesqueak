@@ -549,6 +549,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     dir_name=LANGUAGE_ID,
     license_files=[],  # already included in `TRUFFLESQUEAK_HOME`.
     third_party_license_files=[],
+    dependencies=['Truffle'],
     truffle_jars=[
         'trufflesqueak:TRUFFLESQUEAK',
         'trufflesqueak:TRUFFLESQUEAK_SHARED',
