@@ -79,6 +79,32 @@ Please [report any issues here on GitHub][ts_issues] and open
 
 *To cite this work, please use [the GraalSqueak paper presented at MPLR'19][mplr19_paper].*
 
+### 2020
+- Fabio Niephaus, Patrick Rein, Jakob Edding, Jonas Hering, Bastian König, Kolya
+Opahle, Nico Scordialo, and Robert Hirschfeld. *Example-based Live Programming
+for Everyone: Building Language-agnostic Tools for Live Programming With LSP and
+GraalVM*. In Proceedings of [the ACM Symposium for New Ideas, New Paradigms, and
+Reflections on Everything to do with Programming and Software (Onward!)
+2020][onward20], co-located with the Conference on Object-oriented Programming,
+Systems, Languages, and Applications (OOPSLA), pages 108-124, Chicago, United
+States, November 17-18, 2020, ACM DL.  
+[![doi][onward20_doi]][onward20_paper] [![Preprint][preprint]][onward20_pdf]
+- Jan Ehmueller, Alexander Riese, Hendrik Tjabben, Fabio Niephaus, and Robert
+Hirschfeld. *Polyglot Code Finder*. In Proceedings of [the Programming
+Experience 2020 (PX/20) Workshop][px20], companion volume to International
+Conference on the Art, Science, and Engineering of Programming (‹Programming›),
+co-located with the International Conference on the Art, Science, and Engineering
+of Programming (‹Programming›), 6 pages, Genova, Italy, April 1, 2019, ACM DL.  
+[![doi][px20_doi]][px20_paper] [![Preprint][preprint]][px20_pdf]
+- Alexander Riese, Fabio Niephaus, Tim Felgentreff, and Robert Hirschfeld.
+*User-defined Interface Mappings for the GraalVM*. In Proceedings of [the
+Interconnecting Code Workshop (ICW) 2020][icw20], companion volume to the
+International Conference on the Art, Science, and Engineering of Programming
+(‹Programming›), co-located with the International Conference on the Art,
+Science, and Engineering of Programming (‹Programming›), pages 19-22, Porto,
+Portugal, March 23, 2020, ACM DL.  
+[![doi][icw20_doi]][icw20_paper] [![Preprint][preprint]][icw20_pdf]
+
 ### 2019
 - Fabio Niephaus. [*Smalltalk with the GraalVM*][javaadvent19]. In the
   JVM Programming Advent Calendar, December 7, 2019.
@@ -160,6 +186,10 @@ TruffleSqueak is released under the [MIT license][ts_license].
 [icooolps18_doi]: https://img.shields.io/badge/doi-10.1145/3242947.3242948-blue.svg
 [icooolps18_paper]: https://doi.org/10.1145/3242947.3242948
 [icooolps18_pdf]: https://fniephaus.com/2018/icooolps18-graalsqueak.pdf
+[icw20]: https://2020.programming-conference.org/home/icw-2020
+[icw20_doi]: https://img.shields.io/badge/doi-10.1145/3397537.3399577-blue.svg
+[icw20_paper]: https://dl.acm.org/doi/10.1145/3397537.3399577
+[icw20_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/RieseNiephausFelgentreffHirschfeld_2020_UserDefinedInterfaceMappingsForTheGraalVM_AcmDL.pdf
 [javaadvent19]: https://www.javaadvent.com/2019/12/smalltalk-with-the-graalvm.html
 [morevms19]: https://2019.programming-conference.org/track/MoreVMs-2019
 [morevms19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3328440-blue.svg
@@ -170,6 +200,10 @@ TruffleSqueak is released under the [MIT license][ts_license].
 [mplr19_paper]: https://doi.org/10.1145/3357390.3361024
 [mplr19_pdf]: https://fniephaus.com/2019/mplr19-graalsqueak.pdf
 [mx]: https://github.com/graalvm/mx
+[onward20]: https://2020.splashcon.org/track/splash-2020-Onward-papers
+[onward20_doi]: https://img.shields.io/badge/doi-10.1145/3426428.3426919-blue.svg
+[onward20_paper]: https://doi.org/10.1145/3426428.3426919
+[onward20_pdf]: https://fniephaus.com/2020/onward20-live-programming.pdf
 [pp19_post]: https://medium.com/p/3fd06ffa59d2/
 [preprint]: https://img.shields.io/badge/preprint-download-blue.svg
 [pull_request]: https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request
@@ -177,6 +211,10 @@ TruffleSqueak is released under the [MIT license][ts_license].
 [px19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3328434-blue.svg
 [px19_paper]: https://doi.org/10.1145/3328433.3328434
 [px19_pdf]: https://fniephaus.com/2019/px19-polyglot-notebooks.pdf
+[px20]: https://2020.programming-conference.org/track/px-2020-papers
+[px20_doi]: https://img.shields.io/badge/doi-10.1145/3397537.3397559-blue.svg
+[px20_paper]: https://doi.org/10.1145/3397537.3397559
+[px20_pdf]: https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/EhmuellerRieseTjabbenNiephausHirschfeld_2020_PolyglotCodeFinder_AcmDL.pdf
 [sdr19]: https://2019.programming-conference.org/track/sdr-2019-papers
 [sdr19_doi]: https://img.shields.io/badge/doi-10.1145/3328433.3338056-blue.svg
 [sdr19_paper]: https://doi.org/10.1145/3328433.3338056
