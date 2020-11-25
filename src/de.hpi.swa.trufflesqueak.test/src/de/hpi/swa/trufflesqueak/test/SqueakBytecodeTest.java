@@ -72,7 +72,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testPushLiteralConstants() {
         final int bytecodeStart = 32;
         final Object[] expectedResults = getTestObjects(32);
-        final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
+        final List<Object> literalsList = new ArrayList<>(Arrays.asList(68419598L));
         literalsList.addAll(Arrays.asList(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
@@ -91,7 +91,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testPushLiteralVariables() {
         final int bytecodeStart = 64;
         final Object[] expectedResults = getTestObjects(32);
-        final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
+        final List<Object> literalsList = new ArrayList<>(Arrays.asList(68419598L));
         literalsList.addAll(Arrays.asList(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 32; i++) {
@@ -198,7 +198,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testExtendedPushLiteralConstants() {
         final Object[] expectedResults = getTestObjects(64);
-        final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
+        final List<Object> literalsList = new ArrayList<>(Arrays.asList(68419598L));
         literalsList.addAll(Arrays.asList(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
@@ -216,7 +216,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testExtendedPushLiteralVariables() {
         final Object[] expectedResults = getTestObjects(64);
-        final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
+        final List<Object> literalsList = new ArrayList<>(Arrays.asList(68419598L));
         literalsList.addAll(Arrays.asList(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
@@ -265,7 +265,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testExtendedStoreIntoAssociation() {
         final ArrayObject testObject = image.asArrayOfObjects(createDummyLiterals(64));
 
-        final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{64L})); // header
+        final List<Object> literalsList = new ArrayList<>(Arrays.asList(64L)); // header
         // with
         // numLiterals=64
         for (int i = 0; i < 64; i++) {
@@ -321,7 +321,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testExtendedPopIntoLiteralVariables() {
         final int maxNumLiterals = 64; // number of accepted bytecodes
         final ArrayObject testObject = image.asArrayOfObjects(createDummyLiterals(maxNumLiterals));
-        final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{makeHeader(0, 0, maxNumLiterals, false, true)}));
+        final List<Object> literalsList = new ArrayList<>(Arrays.asList(makeHeader(0, 0, maxNumLiterals, false, true)));
         for (int i = 0; i < maxNumLiterals; i++) {
             literalsList.add(testObject);
         }
@@ -357,7 +357,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testDoubleExtendedPushLiteralConstants() {
         final Object[] expectedResults = getTestObjects(255);
-        final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
+        final List<Object> literalsList = new ArrayList<>(Arrays.asList(68419598L));
         literalsList.addAll(Arrays.asList(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
@@ -375,7 +375,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testDoubleExtendedPushLiteralVariables() {
         final Object[] expectedResults = getTestObjects(255);
-        final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
+        final List<Object> literalsList = new ArrayList<>(Arrays.asList(68419598L));
         literalsList.addAll(Arrays.asList(expectedResults));
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
@@ -421,7 +421,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final int numberOfAssociations = 255;
         final ArrayObject testObject = image.asArrayOfObjects(createDummyLiterals(numberOfAssociations));
 
-        final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{(long) numberOfAssociations})); // set
+        final List<Object> literalsList = new ArrayList<>(Arrays.asList((long) numberOfAssociations)); // set
         // numLiterals
         for (int i = 0; i < numberOfAssociations; i++) {
             literalsList.add(testObject);

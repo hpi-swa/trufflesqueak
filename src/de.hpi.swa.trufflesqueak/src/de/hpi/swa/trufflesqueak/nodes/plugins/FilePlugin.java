@@ -594,10 +594,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object getHandles(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return image.asArrayOfObjects(new Object[]{
-                            createStdioFileHandle(image, STDIO_HANDLES.IN),
+            return image.asArrayOfObjects(createStdioFileHandle(image, STDIO_HANDLES.IN),
                             createStdioFileHandle(image, STDIO_HANDLES.OUT),
-                            createStdioFileHandle(image, STDIO_HANDLES.ERROR)});
+                            createStdioFileHandle(image, STDIO_HANDLES.ERROR));
         }
     }
 

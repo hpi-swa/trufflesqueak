@@ -115,7 +115,7 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected Object runPrim(final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
-        final CompiledCodeObject method = makeMethod(literals, new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
+        final CompiledCodeObject method = makeMethod(literals, 139, primCode & 0xFF, (primCode & 0xFF00) >> 8);
         return runMethod(method, rcvr, arguments);
     }
 
