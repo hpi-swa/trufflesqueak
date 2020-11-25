@@ -16,8 +16,8 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodesFactory.AsFloatObjectIfNessaryNodeGen;
 
-@GenerateUncached
 public final class FloatObjectNodes {
+    @GenerateUncached
     @ImportStatic(Double.class)
     public abstract static class AsFloatObjectIfNessaryNode extends Node {
 
