@@ -780,6 +780,7 @@ public final class Zip {
                 } else {
                     final int dstPos = zipReadLimit;
                     final int srcPos = zipReadLimit - distance;
+                    // Cannot use System#arraycopy here
                     for (int i = 1; i <= length; i += 1) {
                         zipCollection[dstPos + i] = zipCollection[srcPos + i];
                     }
