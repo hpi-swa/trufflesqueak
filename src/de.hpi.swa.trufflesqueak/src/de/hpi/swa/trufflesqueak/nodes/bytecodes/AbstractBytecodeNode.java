@@ -68,7 +68,7 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
         CompilerAsserts.neverPartOfCompilation();
         if (sourceSection == null) {
             final Source source = code.getSource();
-            if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.equals(source.getCharacters())) {
+            if (CompiledCodeObject.SOURCE_UNAVAILABLE_CONTENTS.contentEquals(source.getCharacters())) {
                 sourceSection = source.createUnavailableSection();
             } else {
                 final int lineNumber = SqueakBytecodeDecoder.findLineNumber(code, index);
