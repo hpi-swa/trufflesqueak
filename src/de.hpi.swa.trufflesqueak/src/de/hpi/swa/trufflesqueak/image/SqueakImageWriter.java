@@ -214,16 +214,13 @@ public final class SqueakImageWriter {
         final TruffleFile truffleFile = image.env.getPublicTruffleFile(image.getImagePath());
         assert truffleFile.exists();
         try {
-            final EnumSet<StandardOpenOption> options = EnumSet.<StandardOpenOption> of(StandardOpenOption.WRITE, StandardOpenOption.READ);
-            final SeekableByteChannel channel = truffleFile.newByteChannel(options);
-            try {
+            final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ);
+            try (SeekableByteChannel channel = truffleFile.newByteChannel(options)) {
                 UnsafeUtils.putLong(byteArrayBuffer, 0, position - SqueakImageConstants.IMAGE_HEADER_SIZE);
                 channel.position(SqueakImageConstants.IMAGE_HEADER_MEMORY_SIZE_POSITION);
                 channel.write(ByteBuffer.wrap(byteArrayBuffer));
                 channel.position(SqueakImageConstants.IMAGE_HEADER_FIRST_FRAGMENT_SIZE_POSITION);
                 channel.write(ByteBuffer.wrap(byteArrayBuffer));
-            } finally {
-                channel.close();
             }
         } catch (final IOException e) {
             e.printStackTrace();
