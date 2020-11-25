@@ -60,7 +60,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     private HashMap<String, Field> getFields() {
         if (fields == null) {
-            final Class<? extends Object> clazz = wrappedObject.getClass();
+            final Class<?> clazz = wrappedObject.getClass();
             final Field[] fieldsArray = clazz.getFields();
             fields = new HashMap<>(fieldsArray.length);
             for (final Field field : fieldsArray) {
@@ -72,7 +72,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     private HashMap<String, Method> getMethods() {
         if (methods == null) {
-            final Class<? extends Object> clazz = wrappedObject.getClass();
+            final Class<?> clazz = wrappedObject.getClass();
             final Method[] methodsArray = clazz.getMethods();
             methods = new HashMap<>(methodsArray.length);
             for (final Method method : methodsArray) {
