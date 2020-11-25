@@ -126,7 +126,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    public Object readMember(final String member) throws UnknownIdentifierException {
+    protected Object readMember(final String member) throws UnknownIdentifierException {
         if (WRAPPED_MEMBER.equals(member)) {
             return WrapToSqueakNode.getUncached().executeWrap(wrappedObject);
         }
@@ -147,7 +147,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    public Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
+    protected Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
         if (cachedMembers == null) {
             cachedMembers = calculateMembers();
         }
@@ -165,33 +165,33 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    public boolean hasMembers() {
+    protected boolean hasMembers() {
         return true;
     }
 
     @ExportMessage
     @TruffleBoundary
-    public boolean isMemberReadable(final String member) {
+    protected boolean isMemberReadable(final String member) {
         return WRAPPED_MEMBER.equals(member) || getFields().containsKey(member) || getMethods().containsKey(member);
     }
 
     @SuppressWarnings("static-method")
     @ExportMessage
     @ExportMessage(name = "isMemberInsertable")
-    public boolean isMemberModifiable(@SuppressWarnings("unused") final String member) {
+    protected boolean isMemberModifiable(@SuppressWarnings("unused") final String member) {
         return false;
     }
 
     @ExportMessage
     @TruffleBoundary
-    public boolean isMemberInvocable(final String member) {
+    protected boolean isMemberInvocable(final String member) {
         return getMethods().containsKey(member);
     }
 
     @ExportMessage
     @TruffleBoundary
     @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
-    public Object invokeMember(final String member, final Object... arguments) throws UnknownIdentifierException, UnsupportedTypeException {
+    protected Object invokeMember(final String member, final Object... arguments) throws UnknownIdentifierException, UnsupportedTypeException {
         final Method method = getMethods().get(member);
         if (method != null) {
             try {
@@ -210,7 +210,7 @@ public final class JavaObjectWrapper implements TruffleObject {
     @ExportMessage
     @TruffleBoundary
     @SuppressWarnings("deprecation") // isAccessible deprecated in Java 11
-    public void writeMember(final String key, final Object value) {
+    protected void writeMember(final String key, final Object value) {
         final Field field = getFields().get(key);
         if (field != null) {
             try {
@@ -438,7 +438,7 @@ public final class JavaObjectWrapper implements TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    public long getArraySize(@Shared("sizeNode") @Cached final ArraySizeNode sizeNode) throws UnsupportedMessageException {
+    protected long getArraySize(@Shared("sizeNode") @Cached final ArraySizeNode sizeNode) throws UnsupportedMessageException {
         try {
             return sizeNode.execute(wrappedObject);
         } catch (final UnsupportedSpecializationException e) {
