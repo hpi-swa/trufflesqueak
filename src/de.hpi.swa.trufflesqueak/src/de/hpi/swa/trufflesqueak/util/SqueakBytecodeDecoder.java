@@ -88,19 +88,13 @@ public final class SqueakBytecodeDecoder {
         final int index = (flagByte >> 2) + 1;
         switch (index) {
             case 1: // #decodeNoTrailer
-                return bytecodeLength - 1;
-            case 2: // #decodeClearedTrailer
-                return decodeLengthField(bytecode, bytecodeLength, flagByte);
-            case 3: // #decodeTempsNamesQCompress
-                return decodeLengthField(bytecode, bytecodeLength, flagByte);
-            case 4: // #decodeTempsNamesZip
-                return decodeLengthField(bytecode, bytecodeLength, flagByte);
             case 5: // #decodeSourceBySelector
                 return bytecodeLength - 1;
+            case 2: // #decodeClearedTrailer
+            case 3: // #decodeTempsNamesQCompress
+            case 4: // #decodeTempsNamesZip
             case 6: // #decodeSourceByStringIdentifier
-                return decodeLengthField(bytecode, bytecodeLength, flagByte);
             case 7: // #decodeEmbeddedSourceQCompress
-                return decodeLengthField(bytecode, bytecodeLength, flagByte);
             case 8: // #decodeEmbeddedSourceZip
                 return decodeLengthField(bytecode, bytecodeLength, flagByte);
             case 9: // decodeVarLengthSourcePointer
@@ -181,7 +175,6 @@ public final class SqueakBytecodeDecoder {
             case 125:
                 return ReturnTopFromBlockNode.create(code, index);
             case 126:
-                return new UnknownBytecodeNode(code, index, 1, b);
             case 127:
                 return new UnknownBytecodeNode(code, index, 1, b);
             case 128:
@@ -339,7 +332,6 @@ public final class SqueakBytecodeDecoder {
             case 125:
                 return "blockReturn";
             case 126:
-                return "unknown: " + b0;
             case 127:
                 return "unknown: " + b0;
             case 128: {
