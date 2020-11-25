@@ -322,12 +322,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!object")
         protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean object) {
-            return BooleanObject.getFalseSqueakHash();
+            return BooleanObject.FALSE_SQUEAK_HASH;
         }
 
         @Specialization(guards = "object")
         protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean object) {
-            return BooleanObject.getTrueSqueakHash();
+            return BooleanObject.TRUE_SQUEAK_HASH;
         }
 
         @Specialization
