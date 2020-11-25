@@ -71,7 +71,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     private boolean textureDirty;
     private int width;
     private int height;
-    private int bpp = 4; // TODO: for 32bit only!
+    private final int bpp = 4; // TODO: for 32bit only!
 
     private int lastMouseXPos;
     private int lastMouseYPos;

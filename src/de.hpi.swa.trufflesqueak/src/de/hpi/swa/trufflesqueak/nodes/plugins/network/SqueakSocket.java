@@ -31,7 +31,7 @@ public abstract class SqueakSocket {
         OtherEndClosed(3),
         ThisEndClosed(4);
 
-        private long id;
+        private final long id;
 
         Status(final long id) {
             this.id = id;

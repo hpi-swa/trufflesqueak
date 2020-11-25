@@ -75,8 +75,8 @@ public final class LogHandlerAccessor {
     private static final class MappedHandler extends Handler {
         private MappedByteBuffer buffer;
         private Path path;
-        private PrintStream originalOut = System.out;
-        private PrintStream originalErr = System.err;
+        private final PrintStream originalOut = System.out;
+        private final PrintStream originalErr = System.err;
 
         private MappedHandler() {
             initializeMappedBuffer();
@@ -386,7 +386,7 @@ public final class LogHandlerAccessor {
 
     private static final class StandardPrintStreamHandler extends Handler {
 
-        private PrintStream stream;
+        private final PrintStream stream;
 
         private StandardPrintStreamHandler(final PrintStream stream) {
             this.stream = stream;
