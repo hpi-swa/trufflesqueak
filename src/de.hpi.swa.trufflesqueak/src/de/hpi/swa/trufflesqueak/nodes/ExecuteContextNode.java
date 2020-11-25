@@ -95,14 +95,10 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
-        } catch (final NonVirtualReturn nvr) {
+        } catch (final NonVirtualReturn | ProcessSwitch nvr) {
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw nvr;
-        } catch (final ProcessSwitch ps) {
-            /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame).markEscaped();
-            throw ps;
         } finally {
             materializeContextOnMethodExitNode.execute(frame);
         }
