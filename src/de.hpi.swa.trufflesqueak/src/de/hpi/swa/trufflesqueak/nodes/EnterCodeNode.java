@@ -14,6 +14,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
+import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 @NodeInfo(language = SqueakLanguageConfig.ID, cost = NodeCost.NONE)
 public final class EnterCodeNode extends RootNode {
@@ -54,5 +55,10 @@ public final class EnterCodeNode extends RootNode {
     @Override
     public boolean isCloningAllowed() {
         return true;
+    }
+
+    @Override
+    protected boolean isTrivial() {
+        return SqueakBytecodeDecoder.isTrivial(code);
     }
 }
