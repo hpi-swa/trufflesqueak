@@ -114,28 +114,28 @@ public final class CroquetPlugin extends AbstractPrimitiveFactoryHolder {
             c = step4(c, d, a, b, in[2], 0x2AD7D2BB, 15);
             b = step4(b, c, d, a, in[9], 0xEB86D391, 21);
 
-            hashInts[0] = a + hashInts[0] & 0xFFFFFFFF;
-            hashInts[1] = b + hashInts[1] & 0xFFFFFFFF;
-            hashInts[2] = c + hashInts[2] & 0xFFFFFFFF;
-            hashInts[3] = d + hashInts[3] & 0xFFFFFFFF;
+            hashInts[0] = a + hashInts[0];
+            hashInts[1] = b + hashInts[1];
+            hashInts[2] = c + hashInts[2];
+            hashInts[3] = d + hashInts[3];
 
             return hash;
         }
 
         private static int step1(final int w, final int x, final int y, final int z, final int data, final int add, final int s) {
-            return Integer.rotateLeft(w + (z ^ x & (y ^ z)) + data + add, s) + x & 0xFFFFFFFF;
+            return Integer.rotateLeft(w + (z ^ x & (y ^ z)) + data + add, s) + x;
         }
 
         private static int step2(final int w, final int x, final int y, final int z, final int data, final int add, final int s) {
-            return Integer.rotateLeft(w + (y ^ z & (x ^ y)) + data + add, s) + x & 0xFFFFFFFF;
+            return Integer.rotateLeft(w + (y ^ z & (x ^ y)) + data + add, s) + x;
         }
 
         private static int step3(final int w, final int x, final int y, final int z, final int data, final int add, final int s) {
-            return Integer.rotateLeft(w + (x ^ y ^ z) + data + add, s) + x & 0xFFFFFFFF;
+            return Integer.rotateLeft(w + (x ^ y ^ z) + data + add, s) + x;
         }
 
         private static int step4(final int w, final int x, final int y, final int z, final int data, final int add, final int s) {
-            return Integer.rotateLeft(w + (y ^ (x | ~z)) + data + add, s) + x & 0xFFFFFFFF;
+            return Integer.rotateLeft(w + (y ^ (x | ~z)) + data + add, s) + x;
         }
     }
 
