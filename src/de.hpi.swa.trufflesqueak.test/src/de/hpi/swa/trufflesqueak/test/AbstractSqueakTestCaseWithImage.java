@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.test;
 import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -268,7 +267,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         final File[] srcDirectories = new File(getPathToInImageCode()).listFiles(File::isDirectory);
         final ArrayList<String> testCaseNames = new ArrayList<>();
         for (final File subDirectory : srcDirectories) {
-            for (final File classDirectories : subDirectory.listFiles((FileFilter) pathname -> pathname.isDirectory() && pathname.getName().endsWith("Test.class"))) {
+            for (final File classDirectories : subDirectory.listFiles(pathname -> pathname.isDirectory() && pathname.getName().endsWith("Test.class"))) {
                 testCaseNames.add(classDirectories.getName().substring(0, classDirectories.getName().lastIndexOf(".class")));
             }
         }

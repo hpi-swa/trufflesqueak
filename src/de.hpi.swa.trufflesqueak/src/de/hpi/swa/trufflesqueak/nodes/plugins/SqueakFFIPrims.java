@@ -443,7 +443,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean inSignedBounds(final long value, final long max) {
-            return value >= 0 - max && value < max;
+            return value >= -max && value < max;
         }
 
         protected static final boolean inUnsignedBounds(final long value, final long max) {

@@ -58,8 +58,8 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final List<AttributeDescriptor<? extends Comparable<?>>> ENTRY_ATTRIBUTES = Arrays.asList(
                     TruffleFile.LAST_MODIFIED_TIME, TruffleFile.CREATION_TIME, TruffleFile.IS_DIRECTORY, TruffleFile.SIZE);
-    private static final EnumSet<StandardOpenOption> OPTIONS_DEFAULT = EnumSet.<StandardOpenOption> of(StandardOpenOption.READ);
-    private static final EnumSet<StandardOpenOption> OPTIONS_WRITEABLE = EnumSet.<StandardOpenOption> of(StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
+    private static final EnumSet<StandardOpenOption> OPTIONS_DEFAULT = EnumSet.of(StandardOpenOption.READ);
+    private static final EnumSet<StandardOpenOption> OPTIONS_WRITEABLE = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
 
     public static final class STDIO_HANDLES {
         public static final byte IN = 0;

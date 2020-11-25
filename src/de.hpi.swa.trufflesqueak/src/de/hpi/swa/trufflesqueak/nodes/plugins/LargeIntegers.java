@@ -609,12 +609,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             final int limit3 = thirdLen - 1;
             final int[] result = new int[thirdLen];
 
-            long accum = 0;
-            long accum2 = 0;
-            long accum3 = 0;
+            long accum;
+            long accum2;
             int lastDigit = 0;
             for (int i = 0; i <= limit1; i++) {
-                accum3 = firstInts[i] & 0xFFFFFFFFL;
+                long accum3 = firstInts[i] & 0xFFFFFFFFL;
                 accum3 = accum3 * (secondInts[0] & 0xFFFFFFFFL) + (result[0] & 0xFFFFFFFFL);
                 final long u = accum3 * mInv & 0xFFFFFFFFL;
                 accum2 = u * (thirdInts[0] & 0xFFFFFFFFL);
@@ -658,7 +657,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 for (int i = 0; i <= limit3; i++) {
                     accum = accum + result[i] - (thirdInts[i] & 0xFFFFFFFFL);
                     result[i] = (int) (accum & 0xFFFFFFFFL);
-                    accum = 0 - (accum >> 63);
+                    accum = -(accum >> 63);
                 }
             }
             final byte[] resultBytes = UnsafeUtils.toBytes(result);

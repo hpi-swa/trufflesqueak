@@ -581,12 +581,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "between(receiver.getInstanceSpecification(), 12, 15)")
         protected static final long doSize16bit(final ClassObject receiver, final long numElements) {
-            return postProcessSize(receiver.getBasicInstanceSize() + ((numElements + 1) / 2 | 0));
+            return postProcessSize(receiver.getBasicInstanceSize() + ((numElements + 1) / 2));
         }
 
         @Specialization(guards = "receiver.getInstanceSpecification() >= 16")
         protected static final long doSize8bit(final ClassObject receiver, final long numElements) {
-            return postProcessSize(receiver.getBasicInstanceSize() + ((numElements + 3) / 4 | 0));
+            return postProcessSize(receiver.getBasicInstanceSize() + ((numElements + 3) / 4));
         }
 
         private static long postProcessSize(final long originalSize) {
