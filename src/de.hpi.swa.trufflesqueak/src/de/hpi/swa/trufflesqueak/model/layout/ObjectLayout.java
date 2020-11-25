@@ -132,8 +132,7 @@ public final class ObjectLayout {
 
     private static int getHighestPrimitiveField(final SlotLocation[] locations) {
         int maxPrimitiveField = -1;
-        for (int i = 0; i < locations.length; i++) {
-            final SlotLocation location = locations[i];
+        for (final SlotLocation location : locations) {
             if (location.isPrimitive()) {
                 maxPrimitiveField = Math.max(location.getFieldIndex(), maxPrimitiveField);
             }
@@ -143,8 +142,7 @@ public final class ObjectLayout {
 
     private static int getHighestObjectField(final SlotLocation[] locations) {
         int maxPrimitiveField = -1;
-        for (int i = 0; i < locations.length; i++) {
-            final SlotLocation location = locations[i];
+        for (final SlotLocation location : locations) {
             if (location.isGeneric()) {
                 maxPrimitiveField = Math.max(location.getFieldIndex(), maxPrimitiveField);
             }
@@ -190,8 +188,7 @@ public final class ObjectLayout {
     }
 
     private static boolean inUse(final SlotLocation[] locations, final SlotLocation targetlocation) {
-        for (int i = 0; i < locations.length; i++) {
-            final SlotLocation location = locations[i];
+        for (final SlotLocation location : locations) {
             if (location.isGeneric() == targetlocation.isGeneric() && location.getFieldIndex() == targetlocation.getFieldIndex()) {
                 return true;
             }

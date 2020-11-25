@@ -687,8 +687,7 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         writer.writeObject(getReceiver());
         assert getBlockOrMethod().getStackSlotsUnsafe().length == getBlockOrMethod().getNumStackSlots();
         final FrameSlot[] stackSlots = getBlockOrMethod().getStackSlotsUnsafe();
-        for (int i = 0; i < stackSlots.length; i++) {
-            final FrameSlot slot = stackSlots[i];
+        for (final FrameSlot slot : stackSlots) {
             if (slot == null) {
                 writer.writeNil();
             } else {
