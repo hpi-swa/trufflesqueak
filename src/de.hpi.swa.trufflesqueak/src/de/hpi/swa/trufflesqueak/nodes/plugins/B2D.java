@@ -604,9 +604,7 @@ public final class B2D {
                 workBuffer[rampPtr + i] = transformColor(ramp[i]);
             }
         } else {
-            for (int i = 0; i < rampWidth; i++) {
-                workBuffer[rampPtr + i] = ramp[i];
-            }
+            System.arraycopy(ramp, 0, workBuffer, rampPtr, (int) rampWidth);
         }
         gradientRampLengthOfput(fill, rampWidth);
         return fill;
