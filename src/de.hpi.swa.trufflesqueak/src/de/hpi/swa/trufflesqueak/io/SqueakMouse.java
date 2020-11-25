@@ -5,7 +5,6 @@
  */
 package de.hpi.swa.trufflesqueak.io;
 
-import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
@@ -18,14 +17,9 @@ import de.hpi.swa.trufflesqueak.io.SqueakIOConstants.MOUSE_EVENT;
 
 public final class SqueakMouse extends MouseInputAdapter {
     private final SqueakDisplay display;
-    private Point position = new Point(0, 0);
 
     public SqueakMouse(final SqueakDisplay display) {
         this.display = display;
-    }
-
-    public Point getPosition() {
-        return position;
     }
 
     @Override
