@@ -83,7 +83,7 @@ public final class FFIConstants {
 
         private String squeakType;
         private String truffleType;
-        private int integerValue;
+        private final int integerValue;
 
         FFI_TYPES(final int integerValue) {
             this.integerValue = integerValue;

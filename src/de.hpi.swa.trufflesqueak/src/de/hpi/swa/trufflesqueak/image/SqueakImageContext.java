@@ -115,7 +115,7 @@ public final class SqueakImageContext {
     private String imagePath;
     private final TruffleFile homePath;
     @CompilationFinal(dimensions = 1) private byte[] resourcesPathBytes;
-    @CompilationFinal private boolean isHeadless;
+    private final boolean isHeadless;
     public final SqueakContextOptions options;
     private final SqueakSystemAttributes systemAttributes = new SqueakSystemAttributes(this);
 
