@@ -421,7 +421,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
     private void handleWindowEvent() {
         final WindowEvent windowEvent = (WindowEvent) event;
         final byte eventID = windowEvent.event();
-        if (eventID == SDL.WindowEventID.RESIZED.ordinal() || eventID == SDL.WindowEventID.RESIZED.ordinal() || eventID == SDL.WindowEventID.EXPOSED.ordinal()) {
+        if (eventID == SDL.WindowEventID.RESIZED.ordinal() || eventID == SDL.WindowEventID.SIZE_CHANGED.ordinal() || eventID == SDL.WindowEventID.EXPOSED.ordinal()) {
             final int newWidth = windowEvent.data1();
             final int newHeight = windowEvent.data2();
             if (newWidth != width || newHeight != height) {
