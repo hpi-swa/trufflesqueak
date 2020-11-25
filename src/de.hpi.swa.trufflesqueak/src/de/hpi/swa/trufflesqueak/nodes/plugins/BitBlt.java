@@ -213,9 +213,8 @@ public final class BitBlt {
     private long vDir;
     private long warpAlignMask;
     private long warpAlignShift;
-    private int[] warpBitShiftTable = new int[32];
+    private final int[] warpBitShiftTable = new int[32];
     private long warpSrcMask;
-    private long warpSrcShift;
     private int width;
 
     private boolean successFlag = false;
@@ -492,7 +491,7 @@ public final class BitBlt {
                         srcIndex += 4;
                         /* Now skip as many words as possible, */
                         dstIndex += 4;
-                        while (--deltaX != 0 && (sourceWord = srcLongAt(srcIndex)) >>> 24 == 0) {
+                        while (--deltaX != 0 && srcLongAt(srcIndex) >>> 24 == 0) {
                             srcIndex += 4;
                             dstIndex += 4;
                         }
@@ -519,7 +518,6 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#alphaSourceBlendBits8 */
     private void alphaSourceBlendBits8() {
-        final long[] mappingTable = DEFAULT_8_TO_32_TABLE;
         final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
 
         /* So we can pre-decrement */
@@ -559,7 +557,7 @@ public final class BitBlt {
                         long destWord = dstLongAt(dstIndex);
                         destWord = destWord & ~dstMask;
                         destWord = shr(destWord, srcShift);
-                        destWord = mappingTable[(int) destWord];
+                        destWord = DEFAULT_8_TO_32_TABLE[(int) destWord];
                         sourceWord = alphaBlendScaledwith(sourceWord, destWord);
                     }
                     sourceWord = mapPixelflags(sourceWord, mapperFlags);
@@ -666,7 +664,7 @@ public final class BitBlt {
                 sy = sy + bbH - 1;
                 dy = dy + bbH - 1;
             } else {
-                if (dy == sy && dx > sx) {
+                if (dx > sx) {
                     /* y's are equal, but x's are backward */
                     hDir = -1;
                     /* start at right */
@@ -887,7 +885,7 @@ public final class BitBlt {
         final long skewMask;
         if (skew < 0) {
             unskew = skew + 32;
-            skewMask = shl(ALL_ONES, 0 - skew);
+            skewMask = shl(ALL_ONES, -skew);
         } else {
             if (skew == 0) {
                 unskew = 0;
@@ -1168,11 +1166,11 @@ public final class BitBlt {
         long dstShiftLeft = 0;
         if (sourceMSB) {
             srcShift = 32 - sourceDepth - srcShift;
-            srcShiftInc = 0 - srcShiftInc;
+            srcShiftInc = -srcShiftInc;
         }
         if (destMSB) {
             dstShift = 32 - destDepth - dstShift;
-            dstShiftInc = 0 - dstShiftInc;
+            dstShiftInc = -dstShiftInc;
             dstShiftLeft = 32 - destDepth;
         }
         if (noHalftone) {
@@ -1231,7 +1229,7 @@ public final class BitBlt {
             if (x2 == x1) {
                 return 0;
             }
-            return 0 - (div(x1 - x2 + FIXED_PT1, n + 1) + 1);
+            return -(div(x1 - x2 + FIXED_PT1, n + 1) + 1);
         }
     }
 
@@ -1335,10 +1333,10 @@ public final class BitBlt {
                     }
                     if (affectedL < affectedR && affectedT < affectedB) {
                         /* Affected rectangle grows along the line */
-                        affL = affL < affectedL ? affL : affectedL;
-                        affR = affR < affectedR ? affectedR : affR;
-                        affT = affT < affectedT ? affT : affectedT;
-                        affB = affB < affectedB ? affectedB : affB;
+                        affL = Math.min(affL, affectedL);
+                        affR = Math.max(affR, affectedR);
+                        affT = Math.min(affT, affectedT);
+                        affB = Math.max(affB, affectedB);
                         if ((affR - affL) * (affB - affT) > 4000) {
                             /* If affected rectangle gets large, update it in chunks */
                             affectedL = affL;
@@ -1369,10 +1367,10 @@ public final class BitBlt {
                     }
                     if (affectedL < affectedR && affectedT < affectedB) {
                         /* Affected rectangle grows along the line */
-                        affL = affL < affectedL ? affL : affectedL;
-                        affR = affR < affectedR ? affectedR : affR;
-                        affT = affT < affectedT ? affT : affectedT;
-                        affB = affB < affectedB ? affectedB : affB;
+                        affL = Math.min(affL, affectedL);
+                        affR = Math.max(affR, affectedR);
+                        affT = Math.min(affT, affectedT);
+                        affB = Math.max(affB, affectedB);
                         if ((affR - affL) * (affB - affT) > 4000) {
                             /* If affected rectangle gets large, update it in chunks */
                             affectedL = affL;
@@ -1615,7 +1613,7 @@ public final class BitBlt {
         }
         destDepth = fetchIntegerofObject(FORM.DEPTH, destForm);
         if (!(destMSB = destDepth > 0)) {
-            destDepth = 0 - destDepth;
+            destDepth = -destDepth;
         }
         if (!isWordsOrBytes(destBitsValue)) {
             if (destBitsValue instanceof Long) {
@@ -1748,7 +1746,7 @@ public final class BitBlt {
         }
         sourceDepth = fetchIntegerofObject(FORM.DEPTH, sourceForm);
         if (!(sourceMSB = sourceDepth > 0)) {
-            sourceDepth = 0 - sourceDepth;
+            sourceDepth = -sourceDepth;
         }
         if (!isWordsOrBytes(sourceBitsValue)) {
             if (sourceBitsValue instanceof Long) {
@@ -2699,13 +2697,13 @@ public final class BitBlt {
             /* This is the inner loop */
             long deltaX = bbW + 1;
             while (--deltaX != 0) {
-                long sourceWord = srcLongAt(srcIndex);
+                final long sourceWord = srcLongAt(srcIndex);
                 final long srcAlpha = sourceWord & 0xFFFFFF;
                 if (srcAlpha == 0) {
                     srcIndex += 4;
                     /* Now skip as many words as possible, */
                     dstIndex += 4;
-                    while (--deltaX != 0 && ((sourceWord = srcLongAt(srcIndex)) & 0xFFFFFF) == 0) {
+                    while (--deltaX != 0 && (srcLongAt(srcIndex) & 0xFFFFFF) == 0) {
                         srcIndex += 4;
                         dstIndex += 4;
                     }
@@ -2819,7 +2817,6 @@ public final class BitBlt {
     /* BitBltSimulation>>#rgbComponentAlpha8 */
     private void rgbComponentAlpha8() {
         /* This particular method should be optimized in itself */
-        final long[] mappingTable = DEFAULT_8_TO_32_TABLE;
         final long mapperFlags = cmFlags & ~COLOR_MAP_NEW_STYLE;
         /* So we can pre-decrement */
         int deltaY = bbH + 1;
@@ -2863,7 +2860,7 @@ public final class BitBlt {
                     long destWord = dstLongAt(dstIndex);
                     destWord = destWord & ~dstMask;
                     destWord = shr(destWord, srcShift);
-                    destWord = mappingTable[(int) destWord];
+                    destWord = DEFAULT_8_TO_32_TABLE[(int) destWord];
                     sourceWord = rgbComponentAlpha32with(sourceWord, destWord);
                     sourceWord = mapPixelflags(sourceWord, mapperFlags);
                     /* Store back */
@@ -2910,8 +2907,7 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#rgbComponentAlpha:with: */
     private long rgbComponentAlphawith(final long sourceWord, final long destinationWord) {
-        final long alpha = sourceWord;
-        if (alpha == 0) {
+        if (sourceWord == 0) {
             return destinationWord;
         }
         return partitionedRgbComponentAlphadestnBitsnPartitions(sourceWord, destinationWord, destDepth, destPPW);
@@ -3178,7 +3174,7 @@ public final class BitBlt {
             final long mask = shl(1, targetBits) - 1;
             masks[RED_INDEX] = (int) shl(mask, srcBits * 2 - deltaBits);
             masks[GREEN_INDEX] = (int) shl(mask, srcBits - deltaBits);
-            masks[BLUE_INDEX] = (int) shl(mask, 0 - deltaBits);
+            masks[BLUE_INDEX] = (int) shl(mask, -deltaBits);
             // masks[ALPHA_INDEX] = 0; // Always zero anyway.
         } else {
             /* Mask for extracting a color part of the source */
@@ -3503,7 +3499,7 @@ public final class BitBlt {
         final int dstShiftInc;
         final int dstShiftLeft;
         if (destMSB) {
-            dstShiftInc = 0 - destDepth;
+            dstShiftInc = -destDepth;
             dstShiftLeft = 32 - destDepth;
         } else {
             dstShiftInc = destDepth;
@@ -3595,7 +3591,7 @@ public final class BitBlt {
     /* BitBltSimulation>>#warpLoopSetup */
     private void warpLoopSetup() {
         /* warpSrcShift = log2(sourceDepth) */
-        warpSrcShift = 0;
+        long warpSrcShift = 0;
         /* recycle temp */
         long words = sourceDepth;
         while (words != 1) {
@@ -3836,7 +3832,7 @@ public final class BitBlt {
     }
 
     private static boolean isPointers(final Object object) {
-        return object != null && object instanceof PointersObject;
+        return object instanceof PointersObject;
     }
 
     private boolean failed() {
