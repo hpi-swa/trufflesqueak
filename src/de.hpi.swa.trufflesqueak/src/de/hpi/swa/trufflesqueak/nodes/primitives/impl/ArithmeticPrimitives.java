@@ -1035,37 +1035,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 53)
-    protected abstract static class PrimFloatExponentNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
-        private static final long BIAS = 1023;
+    protected abstract static class PrimFloatExponentNode extends AbstractFloatArithmeticPrimitiveNode implements UnaryPrimitive {
+        @Specialization(guards = "receiver.isZero()")
+        protected static final long doFloatZero(@SuppressWarnings("unused") final FloatObject receiver) {
+            return 0L;
+        }
 
-        @Specialization
+        @Specialization(guards = "!receiver.isZero()")
         protected static final long doFloat(final FloatObject receiver,
-                        @Cached final BranchProfile zeroProfile,
-                        @Cached final BranchProfile nonZeroProfile,
                         @Cached final BranchProfile subnormalFloatProfile) {
-            final double value = receiver.getValue();
-            if (value == 0) {
-                zeroProfile.enter();
-                return 0L;
-            } else {
-                nonZeroProfile.enter();
-                final long bits = Double.doubleToRawLongBits(value) >>> 52 & 0x7FF;
-                if (bits == 0) { // we have a subnormal float (actual zero was handled above)
-                    subnormalFloatProfile.enter();
-                    // make it normal by multiplying a large number
-                    final double data = value * Math.pow(2, 64);
-                    // access its exponent bits, and subtract the large number's exponent and bias
-                    return (Double.doubleToRawLongBits(data) >>> 52 & 0x7FF) - 64 - BIAS;
-                } else {
-                    return bits - BIAS; // apply bias
-                }
-            }
+            return exponentNonZero(receiver.getValue(), subnormalFloatProfile);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 54)
-    protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractFloatArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization(guards = "matissa.isZero() || isZero(exponent)")
         protected static final FloatObject doDoubleZero(final FloatObject matissa, @SuppressWarnings("unused") final long exponent) {
             return matissa; /* Can be either 0.0 or -0.0. */
@@ -1074,15 +1059,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"!matissa.isZero()", "!isZero(exponent)"})
         protected static final Object doDouble(final FloatObject matissa, final long exponent,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            final double exp = exponent;
-            final double steps = Math.min(3, Math.ceil(Math.abs(exp) / 1023));
-            double result = matissa.getValue();
-            for (int i = 0; i < steps; i++) {
-                final double pow = Math.pow(2, Math.floor((exp + i) / steps));
-                assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
-                result *= pow;
-            }
-            return boxNode.execute(result);
+            return timesToPower(matissa.getValue(), exponent, boxNode);
         }
     }
 
@@ -1444,9 +1421,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 553)
-    protected abstract static class PrimSmallFloatExponentNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        private static final long BIAS = 1023;
-
+    protected abstract static class PrimSmallFloatExponentNode extends AbstractFloatArithmeticPrimitiveNode implements UnaryPrimitive {
         @Specialization(guards = "isZero(receiver)")
         protected static final long doDoubleZero(@SuppressWarnings("unused") final double receiver) {
             return 0L;
@@ -1455,22 +1430,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "!isZero(receiver)")
         protected static final long doDouble(final double receiver,
                         @Cached final BranchProfile subnormalFloatProfile) {
-            final long bits = Double.doubleToRawLongBits(receiver) >>> 52 & 0x7FF;
-            if (bits == 0) { // we have a subnormal float (actual zero was handled above)
-                subnormalFloatProfile.enter();
-                // make it normal by multiplying a large number
-                final double data = receiver * Math.pow(2, 64);
-                // access its exponent bits, and subtract the large number's exponent and bias
-                return (Double.doubleToRawLongBits(data) >>> 52 & 0x7FF) - 64 - BIAS;
-            } else {
-                return bits - BIAS; // apply bias
-            }
+            return exponentNonZero(receiver, subnormalFloatProfile);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 554)
-    protected abstract static class PrimSmallFloatTimesTwoPowerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSmallFloatTimesTwoPowerNode extends AbstractFloatArithmeticPrimitiveNode implements BinaryPrimitive {
         @Specialization(guards = "isZero(matissa) || isZero(exponent)")
         protected static final double doDoubleZero(final double matissa, @SuppressWarnings("unused") final long exponent) {
             return matissa; /* Can be either 0.0 or -0.0. */
@@ -1479,15 +1445,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"!isZero(matissa)", "!isZero(exponent)"})
         protected static final Object doDouble(final double matissa, final long exponent,
                         @Cached final AsFloatObjectIfNessaryNode boxNode) {
-            final double exp = exponent;
-            final double steps = Math.min(3, Math.ceil(Math.abs(exp) / 1023));
-            double result = matissa;
-            for (int i = 0; i < steps; i++) {
-                final double pow = Math.pow(2, Math.floor((exp + i) / steps));
-                assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
-                result *= pow;
-            }
-            return boxNode.execute(result);
+            return timesToPower(matissa, exponent, boxNode);
         }
     }
 
@@ -1586,6 +1544,34 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected static final boolean differentSign(final long lhs, final long rhs) {
             return lhs < 0 ^ rhs < 0;
+        }
+    }
+
+    protected abstract static class AbstractFloatArithmeticPrimitiveNode extends AbstractArithmeticPrimitiveNode {
+        private static final long BIAS = 1023;
+
+        protected static final Object timesToPower(final double matissa, final long exponent, final AsFloatObjectIfNessaryNode boxNode) {
+            final double steps = Math.min(3, Math.ceil(Math.abs((double) exponent) / 1023));
+            double result = matissa;
+            for (int i = 0; i < steps; i++) {
+                final double pow = Math.pow(2, Math.floor(((double) exponent + i) / steps));
+                assert pow != Double.POSITIVE_INFINITY && pow != Double.NEGATIVE_INFINITY;
+                result *= pow;
+            }
+            return boxNode.execute(result);
+        }
+
+        protected static final long exponentNonZero(final double receiver, final BranchProfile subnormalFloatProfile) {
+            final long bits = Double.doubleToRawLongBits(receiver) >>> 52 & 0x7FF;
+            if (bits == 0) { // we have a subnormal float (actual zero was handled above)
+                subnormalFloatProfile.enter();
+                // make it normal by multiplying a large number
+                final double data = receiver * Math.pow(2, 64);
+                // access its exponent bits, and subtract the large number's exponent and bias
+                return (Double.doubleToRawLongBits(data) >>> 52 & 0x7FF) - 64 - BIAS;
+            } else {
+                return bits - BIAS; // apply bias
+            }
         }
     }
 
