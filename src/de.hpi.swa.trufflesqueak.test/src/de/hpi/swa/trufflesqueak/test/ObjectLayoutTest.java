@@ -7,7 +7,9 @@ package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -41,7 +43,7 @@ public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
         }
 
         for (int i = 0; i < obj1.getNumSlots(); i++) {
-            assertTrue("All reads should return nil", readNode.execute(obj1, i) == NilObject.SINGLETON);
+            assertSame("All reads should return nil", readNode.execute(obj1, i), NilObject.SINGLETON);
         }
 
         /* Ensure nil writes do not change uninitialized locations. */
@@ -53,31 +55,31 @@ public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
         }
 
         writeAndValidate(obj1, 0, 0L);
-        assertTrue(obj1.primitive0 == 0L);
+        assertEquals(0L, obj1.primitive0);
 
         final PointersObject obj2 = instantiate(dummyClass);
-        assertTrue(obj1.getLayout() == obj2.getLayout());
+        assertSame(obj1.getLayout(), obj2.getLayout());
 
         writeAndValidate(obj2, 0, 42L);
-        assertTrue(obj2.primitive0 == 42L);
-        assertTrue("Long write should not change layout", obj1.getLayout() == obj2.getLayout());
+        assertEquals(42L, obj2.primitive0);
+        assertSame("Long write should not change layout", obj1.getLayout(), obj2.getLayout());
 
         writeAndValidate(obj1, 1, dummyClass);
         assertTrue("Write produces valid layout", obj1.getLayout().isValid());
         assertFalse("Write invalidates older layouts", obj2.getLayout().isValid());
-        assertTrue("Layouts should be out of sync", obj1.getLayout() != obj2.getLayout());
-        assertTrue(obj1.object0 == dummyClass);
+        assertNotSame("Layouts should be out of sync", obj1.getLayout(), obj2.getLayout());
+        assertSame(obj1.object0, dummyClass);
 
-        assertTrue(readNode.execute(obj2, 1) == NilObject.SINGLETON);
-        assertTrue("Layouts should be in sync after read", obj1.getLayout() == obj2.getLayout());
+        assertSame(readNode.execute(obj2, 1), NilObject.SINGLETON);
+        assertSame("Layouts should be in sync after read", obj1.getLayout(), obj2.getLayout());
 
         writeAndValidate(obj2, 12, 1234L);
-        assertTrue(obj2.primitive1 == 1234L);
+        assertEquals(1234L, obj2.primitive1);
 
         writeAndValidate(obj1, 12, image.bitmapClass);
-        assertTrue((long) readNode.execute(obj2, 12) == 1234L);
-        assertTrue("Primitive slot should be unset", obj2.primitive1 == 0L);
-        assertTrue("Object slot should be used for primitive value", (long) obj2.object1 == 1234L);
+        assertEquals(1234L, (long) readNode.execute(obj2, 12));
+        assertEquals("Primitive slot should be unset", 0L, obj2.primitive1);
+        assertEquals("Object slot should be used for primitive value", 1234L, (long) obj2.object1);
     }
 
     @Test
@@ -102,9 +104,9 @@ public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
 
         final int expectedGenericLocations = 3;
         assertEquals(obj.getNumSlots() - SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS - expectedGenericLocations, obj.primitiveExtension.length);
-        assertTrue(obj.object0 != NilObject.SINGLETON);
-        assertTrue(obj.object1 != NilObject.SINGLETON);
-        assertTrue(obj.object2 != NilObject.SINGLETON);
+        assertNotSame(obj.object0, NilObject.SINGLETON);
+        assertNotSame(obj.object1, NilObject.SINGLETON);
+        assertNotSame(obj.object2, NilObject.SINGLETON);
         assertNull(obj.objectExtension);
 
         writeAndValidate(obj, 26, '#');
@@ -130,12 +132,12 @@ public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
             assertTrue("All locations should be primitive", location.isPrimitive());
             assertTrue("All locations should be set", location.isSet(obj));
         }
-        assertTrue(obj.primitive0 == 42L);
-        assertTrue(obj.primitive1 == 43L);
-        assertTrue(obj.primitive2 == 44L);
+        assertEquals(42L, obj.primitive0);
+        assertEquals(43L, obj.primitive1);
+        assertEquals(44L, obj.primitive2);
         assertEquals(obj.getNumSlots() - SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS, obj.primitiveExtension.length);
         for (int i = 0; i < obj.primitiveExtension.length; i++) {
-            assertTrue(obj.primitiveExtension[i] == SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + i + 42L);
+            assertEquals(obj.primitiveExtension[i], SlotLocation.NUM_PRIMITIVE_INLINE_LOCATIONS + i + 42L);
         }
 
         /* Fill entirely with specialObjectsArray. */
@@ -147,27 +149,27 @@ public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
             assertTrue("All locations should be generic", !location.isPrimitive() && !location.isUninitialized());
             assertTrue("All locations should be set", location.isSet(obj));
         }
-        assertTrue(obj.object0 == image.specialObjectsArray);
-        assertTrue(obj.object1 == image.specialObjectsArray);
-        assertTrue(obj.object2 == image.specialObjectsArray);
+        assertSame(obj.object0, image.specialObjectsArray);
+        assertSame(obj.object1, image.specialObjectsArray);
+        assertSame(obj.object2, image.specialObjectsArray);
         assertEquals(obj.getNumSlots() - SlotLocation.NUM_OBJECT_INLINE_LOCATIONS, obj.objectExtension.length);
         for (final Object object : obj.objectExtension) {
-            assertTrue(object == image.specialObjectsArray);
+            assertSame(object, image.specialObjectsArray);
         }
         assertUnsetPrimitiveFields(obj);
     }
 
     private static void assertUnsetPrimitiveFields(final AbstractPointersObject obj) {
-        assertTrue(obj.primitive0 == 0L);
-        assertTrue(obj.primitive1 == 0L);
-        assertTrue(obj.primitive2 == 0L);
+        assertEquals(0L, obj.primitive0);
+        assertEquals(0L, obj.primitive1);
+        assertEquals(0L, obj.primitive2);
         assertNull(obj.primitiveExtension);
     }
 
     private static void assertUnsetObjectFields(final AbstractPointersObject obj) {
-        assertTrue(obj.object0 == NilObject.SINGLETON);
-        assertTrue(obj.object1 == NilObject.SINGLETON);
-        assertTrue(obj.object2 == NilObject.SINGLETON);
+        assertSame(obj.object0, NilObject.SINGLETON);
+        assertSame(obj.object1, NilObject.SINGLETON);
+        assertSame(obj.object2, NilObject.SINGLETON);
         assertNull(obj.objectExtension);
     }
 
@@ -189,6 +191,6 @@ public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
 
     private static void writeAndValidate(final AbstractPointersObject obj, final int index, final Object value) {
         AbstractPointersObjectWriteNode.getUncached().execute(obj, index, value);
-        assertTrue("Write failed", AbstractPointersObjectReadNode.getUncached().execute(obj, index).equals(value));
+        assertEquals("Write failed", AbstractPointersObjectReadNode.getUncached().execute(obj, index), value);
     }
 }
