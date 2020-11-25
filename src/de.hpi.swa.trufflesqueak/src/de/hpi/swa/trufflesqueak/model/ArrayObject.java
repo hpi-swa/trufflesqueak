@@ -215,7 +215,7 @@ public final class ArrayObject extends AbstractSqueakObjectWithClassAndHash {
         return (Object[]) storage;
     }
 
-    public Class<? extends Object> getStorageType() {
+    public Class<?> getStorageType() {
         return storage.getClass();
     }
 

@@ -175,7 +175,7 @@ public final class SqueakGuards {
     }
 
     public static boolean isUsedJavaPrimitive(final Object value) {
-        final Class<? extends Object> clazz = value.getClass();
+        final Class<?> clazz = value.getClass();
         return clazz == Boolean.class || clazz == Long.class || clazz == Double.class || clazz == Character.class;
     }
 
