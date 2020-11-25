@@ -275,8 +275,6 @@ public final class B2D {
 
     /* Variables */
     private int aetBufferIndex;
-    private long dispatchedValue;
-    private long dispatchReturnValue;
     private boolean doProfileStats = false;
     private PointersObject engine;
     private boolean engineStopped;
@@ -318,12 +316,8 @@ public final class B2D {
 
     /* BalloonEngineBase>>#aaFirstPixelFrom:to: */
     private long aaFirstPixelFromto(final long leftX, final long rightX) {
-        final long firstPixel = leftX + aaLevelGet() - 1 & ~(aaLevelGet() - 1);
-        if (firstPixel > rightX) {
-            return rightX;
-        } else {
-            return firstPixel;
-        }
+        final long firstPixel = leftX + aaLevelGet() - 1 & -aaLevelGet();
+        return Math.min(firstPixel, rightX);
     }
 
     /* BalloonEngineBase>>#aaHalfPixelGet */
@@ -341,7 +335,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#aaLastPixelFrom:to: */
     private long aaLastPixelFromto(@SuppressWarnings("unused") final long leftX, final long rightX) {
-        return rightX - 1 & ~(aaLevelGet() - 1);
+        return rightX - 1 & -aaLevelGet();
     }
 
     /* BalloonEngineBase>>#aaLevelGet */
@@ -391,18 +385,10 @@ public final class B2D {
     /* BalloonEngineBase>>#accurateLengthOf:with: */
     private static long accurateLengthOfwith(final long deltaX, final long deltaY) {
         if (deltaX == 0) {
-            if (deltaY < 0) {
-                return 0 - deltaY;
-            } else {
-                return deltaY;
-            }
+            return Math.abs(deltaY);
         }
         if (deltaY == 0) {
-            if (deltaX < 0) {
-                return 0 - deltaX;
-            } else {
-                return deltaX;
-            }
+            return Math.abs(deltaX);
         }
         final int length = (int) (deltaX * deltaX + deltaY * deltaY);
         return computeSqrt(length);
@@ -980,9 +966,9 @@ public final class B2D {
     private boolean checkCompressedFills(final NativeObject indexList) {
         final int[] fillPtr = indexList.getIntStorage();
         final long length = fillPtr.length;
-        for (int i = 0; i < length; i++) {
+        for (final int j : fillPtr) {
             /* Make sure the fill is okay */
-            if (!isFillOkay(fillPtr[i])) {
+            if (!isFillOkay(j)) {
                 return false;
             }
         }
@@ -1445,33 +1431,36 @@ public final class B2D {
     private long drawWideEdgefrom(final long edge, final long leftX) {
         /* Not for the moment */
         final int type = edgeTypeOf(edge);
-        dispatchedValue = edge;
+        final long lineWidth;
         switch (type) {
             case 0:
             case 1:
-                errorWrongIndex();
+                lineWidth = errorWrongIndex();
                 break;
             case 2:
-                returnWideLineWidth();
+                lineWidth = returnWideLineWidth(edge);
                 break;
             case 3:
-                returnWideBezierWidth();
+                lineWidth = returnWideBezierWidth(edge);
                 break;
+            default:
+                throw SqueakException.create("Unexpected type:", type);
         }
-        final long lineWidth = dispatchReturnValue;
+        final long fill;
         switch (type) {
             case 0:
             case 1:
-                errorWrongIndex();
+                fill = errorWrongIndex();
                 break;
             case 2:
-                returnWideLineFill();
+                fill = makeUnsignedFrom(returnWideLineFill(edge));
                 break;
             case 3:
-                returnWideBezierFill();
+                fill = makeUnsignedFrom(returnWideBezierFill(edge));
                 break;
+            default:
+                throw SqueakException.create("Unexpected type:", type);
         }
-        final long fill = makeUnsignedFrom(dispatchReturnValue);
         if (fill == 0) {
             return leftX;
         }
@@ -1591,12 +1580,12 @@ public final class B2D {
         if (deltaX >= 0) {
             absDx = deltaX;
         } else {
-            absDx = 0 - deltaX;
+            absDx = -deltaX;
         }
         if (deltaY >= 0) {
             absDy = deltaY;
         } else {
-            absDy = 0 - deltaY;
+            absDy = -deltaY;
         }
         if (absDx > absDy) {
             return absDx + absDy / 2;
@@ -1608,18 +1597,15 @@ public final class B2D {
     /* Fill the span buffer from leftX to rightX with the given fill. */
 
     /* BalloonEngineBase>>#fillAllFrom:to: */
-    private boolean fillAllFromto(final long leftX, final long rightX) {
+    private void fillAllFromto(final long leftX, final long rightX) {
         long fill;
-        long startX;
-        long stopX;
+        long startX = leftX;
+        long stopX = topRightX();
 
-        fill = topFill();
-        startX = leftX;
-        stopX = topRightX();
         while (stopX < rightX) {
             fill = makeUnsignedFrom(topFill());
             if (fill != 0 && fillSpanfromto(fill, startX, stopX)) {
-                return true;
+                return;
             }
             quickRemoveInvalidFillsAt(stopX);
             startX = stopX;
@@ -1627,9 +1613,8 @@ public final class B2D {
         }
         fill = makeUnsignedFrom(topFill());
         if (fill != 0) {
-            return fillSpanfromto(fill, startX, rightX);
+            fillSpanfromto(fill, startX, rightX);
         }
-        return false;
     }
 
     /* BalloonEnginePlugin>>#fillBitmapSpan */
@@ -2100,8 +2085,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#fillMaxXPut: */
-    private long fillMaxXPut(final long value) {
-        return workBuffer[GW_FILL_MAX_X] = (int) value;
+    private void fillMaxXPut(final long value) {
+        workBuffer[GW_FILL_MAX_X] = (int) value;
     }
 
     /* BalloonEngineBase>>#fillMaxYGet */
@@ -2110,8 +2095,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#fillMaxYPut: */
-    private long fillMaxYPut(final long value) {
-        return workBuffer[GW_FILL_MAX_Y] = (int) value;
+    private void fillMaxYPut(final long value) {
+        workBuffer[GW_FILL_MAX_Y] = (int) value;
     }
 
     /* BalloonEngineBase>>#fillMinXGet */
@@ -2120,8 +2105,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#fillMinXPut: */
-    private long fillMinXPut(final int value) {
-        return workBuffer[GW_FILL_MIN_X] = value;
+    private void fillMinXPut(final int value) {
+        workBuffer[GW_FILL_MIN_X] = value;
     }
 
     /* BalloonEngineBase>>#fillMinYGet */
@@ -2130,8 +2115,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#fillMinYPut: */
-    private long fillMinYPut(final long value) {
-        return workBuffer[GW_FILL_MIN_Y] = (int) value;
+    private void fillMinYPut(final long value) {
+        workBuffer[GW_FILL_MIN_Y] = (int) value;
     }
 
     /* BalloonEnginePlugin>>#fillNormalXOf: */
@@ -2729,15 +2714,14 @@ public final class B2D {
         int leftEdge;
         long leftX;
         int rightEdge;
-        long rightX;
+        long rightX = fillMaxXGet();
 
-        leftX = rightX = fillMaxXGet();
         while (aetStartGet() < aetUsedGet()) {
             /*
              * TODO: We should check if leftX from last operation is greater than leftX from next
              * edge. Currently, we rely here on spanEndAA from the span buffer fill.
              */
-            leftEdge = rightEdge = aetBuffer(aetStartGet());
+            leftEdge = aetBuffer(aetStartGet());
             leftX = rightX = edgeXValueOf(leftEdge);
             if (leftX >= fillMaxXGet()) {
                 return false;
@@ -2892,8 +2876,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#getStartPut: */
-    private long getStartPut(final long value) {
-        return workBuffer[GW_GET_START] = (int) value;
+    private void getStartPut(final long value) {
+        workBuffer[GW_GET_START] = (int) value;
     }
 
     /* BalloonEngineBase>>#getUsedGet */
@@ -2902,8 +2886,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#getUsedPut: */
-    private long getUsedPut(final long value) {
-        return workBuffer[GW_GET_USED] = (int) value;
+    private void getUsedPut(final long value) {
+        workBuffer[GW_GET_USED] = (int) value;
     }
 
     /* BalloonEnginePlugin>>#gradientRampLengthOf: */
@@ -2932,8 +2916,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#hasColorTransformPut: */
-    private long hasColorTransformPut(final long value) {
-        return workBuffer[GW_HAS_COLOR_TRANSFORM] = (int) value;
+    private void hasColorTransformPut(final long value) {
+        workBuffer[GW_HAS_COLOR_TRANSFORM] = (int) value;
     }
 
     /* BalloonEngineBase>>#hasEdgeTransform */
@@ -2947,8 +2931,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#hasEdgeTransformPut: */
-    private long hasEdgeTransformPut(final long value) {
-        return workBuffer[GW_HAS_EDGE_TRANSFORM] = (int) value;
+    private void hasEdgeTransformPut(final long value) {
+        workBuffer[GW_HAS_EDGE_TRANSFORM] = (int) value;
     }
 
     /* Make the fill style with the given index invisible */
@@ -3007,8 +2991,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#incrementStat:by: */
-    private long incrementStatby(final long statIndex, final long value) {
-        return workBuffer[(int) statIndex] = workBuffer[(int) statIndex] + (int) value;
+    private void incrementStatby(final long statIndex, final long value) {
+        workBuffer[(int) statIndex] = workBuffer[(int) statIndex] + (int) value;
     }
 
     /* Find insertion point for the given edge in the AET */
@@ -3587,20 +3571,16 @@ public final class B2D {
      */
 
     /* BalloonEngineBase>>#loadColorTransformFrom: */
-    private boolean loadColorTransformFrom(final AbstractSqueakObject transformOop) {
-        final boolean okay;
-
+    private void loadColorTransformFrom(final AbstractSqueakObject transformOop) {
         hasColorTransformPut(0);
-        okay = loadTransformFromintolength(transformOop, GW_COLOR_TRANSFORM, 8);
-        if (!okay) {
-            return false;
+        if (!loadTransformFromintolength(transformOop, GW_COLOR_TRANSFORM, 8)) {
+            return;
         }
         hasColorTransformPut(1);
         colorTransformSet(1, colorTransformGet(1) * 256.0f);
         colorTransformSet(3, colorTransformGet(3) * 256.0f);
         colorTransformSet(5, colorTransformGet(5) * 256.0f);
         colorTransformSet(7, colorTransformGet(7) * 256.0f);
-        return okay;
     }
 
     /* Load the compressed segment identified by segment index */
@@ -3765,19 +3745,16 @@ public final class B2D {
      */
 
     /* BalloonEngineBase>>#loadEdgeTransformFrom: */
-    private boolean loadEdgeTransformFrom(final AbstractSqueakObject transformOop) {
-        final boolean okay;
-
+    private void loadEdgeTransformFrom(final AbstractSqueakObject transformOop) {
         hasEdgeTransformPut(0);
-        okay = loadTransformFromintolength(transformOop, GW_EDGE_TRANSFORM, 6);
+        final boolean okay = loadTransformFromintolength(transformOop, GW_EDGE_TRANSFORM, 6);
         assert !failed();
         if (!okay) {
-            return false;
+            return;
         }
         hasEdgeTransformPut(1);
         edgeTransformSet(2, (float) (edgeTransformGet(2) + (double) destOffsetXGet()));
         edgeTransformSet(5, (float) (edgeTransformGet(5) + (double) destOffsetYGet()));
-        return true;
     }
 
     /* Transform the points */
@@ -4271,8 +4248,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#magicNumberPut: */
-    private long magicNumberPut(final int value) {
-        return workBuffer[GW_MAGIC_INDEX] = value;
+    private void magicNumberPut(final int value) {
+        workBuffer[GW_MAGIC_INDEX] = value;
     }
 
     /* BalloonEnginePlugin>>#makeRectFromPoints */
@@ -6049,27 +6026,27 @@ public final class B2D {
     }
 
     /* BalloonEnginePlugin>>#returnWideBezierFill */
-    private long returnWideBezierFill() {
-        return dispatchReturnValue = wideBezierFillOf(dispatchedValue);
+    private long returnWideBezierFill(final long edge) {
+        return wideBezierFillOf(edge);
     }
 
     /* BalloonEnginePlugin>>#returnWideBezierWidth */
-    private long returnWideBezierWidth() {
-        return dispatchReturnValue = wideBezierWidthOf(dispatchedValue);
+    private long returnWideBezierWidth(final long edge) {
+        return wideBezierWidthOf(edge);
     }
 
     /* Return the fill of the (wide) line - this method is called from a case. */
 
     /* BalloonEnginePlugin>>#returnWideLineFill */
-    private long returnWideLineFill() {
-        return dispatchReturnValue = wideLineFillOf(dispatchedValue);
+    private long returnWideLineFill(final long edge) {
+        return wideLineFillOf(edge);
     }
 
     /* Return the width of the (wide) line - this method is called from a case. */
 
     /* BalloonEnginePlugin>>#returnWideLineWidth */
-    private long returnWideLineWidth() {
-        return dispatchReturnValue = wideLineWidthOf(dispatchedValue);
+    private long returnWideLineWidth(final long edge) {
+        return wideLineWidthOf(edge);
     }
 
     /*
@@ -6171,8 +6148,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#spanEndPut: */
-    private int spanEndPut(final long value) {
-        return workBuffer[GW_SPAN_END] = (int) value;
+    private void spanEndPut(final long value) {
+        workBuffer[GW_SPAN_END] = (int) value;
     }
 
     /* BalloonEngineBase>>#spanSizeGet */
@@ -6362,7 +6339,7 @@ public final class B2D {
             error = 0;
         } else {
             xDir = -1;
-            widthX = 0 - deltaX;
+            widthX = -deltaX;
             error = 1 - deltaY;
         }
         final int xInc;
@@ -6454,7 +6431,7 @@ public final class B2D {
         /* turned on at lineOffset */
         yEntry = 0;
         /* turned off at zero */
-        yExit = 0 - nLines - lineOffset;
+        yExit = -nLines - lineOffset;
         wideBezierEntryOfput(bezier, yEntry);
         wideBezierExitOfput(bezier, yExit);
         if (yEntry >= lineOffset && yExit < 0) {
@@ -6506,7 +6483,7 @@ public final class B2D {
         /* turned on at lineOffset */
         final int yEntry = 0;
         /* turned off at zero */
-        final long yExit = 0 - nLines - lineOffset;
+        final long yExit = -nLines - lineOffset;
         wideLineEntryOfput(line, yEntry);
         wideLineExitOfput(line, yExit);
         if (yEntry >= lineOffset && yExit < 0) {
@@ -6569,23 +6546,17 @@ public final class B2D {
 
     /* Copy of BalloonEnginePlugin>>#stepToNextBezierForward:at: for wide beziers */
     private long stepToNextBezierForwardatWide(final long bzesierUpdateDataIndex, final long yValue) {
-        int fwDx;
-        int fwDy;
-        int lastX;
-        int lastY;
-        final long minY;
-
-        lastX = wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_X);
-        lastY = wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_Y);
-        fwDx = wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DX);
-        fwDy = wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DY);
+        int lastX = wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_X);
+        int lastY = wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_Y);
+        int fwDx = wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DX);
+        int fwDy = wideBezierUpdateDataOf(bzesierUpdateDataIndex, GB_UPDATE_DY);
 
         /*
          * Step as long as we haven't yet reached minY and also as long as fwDy is greater than zero
          * thus stepping down. Note: The test for fwDy should not be necessary in theory but is a
          * good insurance in practice.
          */
-        minY = yValue * 256;
+        final long minY = yValue * 256;
         while (minY > lastY && fwDy >= 0) {
             lastX += fwDx + 32768 >> 16;
             lastY += fwDy + 32768 >> 16;
@@ -6714,8 +6685,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#stopReasonPut: */
-    private long stopReasonPut(final long value) {
-        return workBuffer[GW_STOP_REASON] = (int) value;
+    private void stopReasonPut(final long value) {
+        workBuffer[GW_STOP_REASON] = (int) value;
     }
 
     /* BalloonEngineBase>>#storeEdgeStateFrom:into: */
@@ -6796,11 +6767,7 @@ public final class B2D {
             if (engineStopped) {
                 return 0;
             }
-            if (index1 >= index2) {
-                return index1;
-            } else {
-                return index2;
-            }
+            return Math.max(index1, index2);
         }
         return index;
     }
@@ -6817,7 +6784,7 @@ public final class B2D {
         }
         int deltaY = endY - startY;
         if (deltaY < 0) {
-            deltaY = 0 - deltaY;
+            deltaY = -deltaY;
         }
         if (deltaY > 0xFF) {
             incrementStatby(GW_BEZIER_HEIGHT_SUBDIVISIONS, 1);
@@ -6827,7 +6794,7 @@ public final class B2D {
         final int endX = bzEndX(index);
         int deltaX = endX - startX;
         if (deltaX < 0) {
-            deltaX = 0 - deltaX;
+            deltaX = -deltaX;
         }
         if (deltaY * 32 < deltaX) {
             incrementStatby(GW_BEZIER_OVERFLOW_SUBDIVISIONS, 1);
@@ -6852,10 +6819,10 @@ public final class B2D {
         int denom = dx2 - dx1;
         int num = dx1;
         if (num < 0) {
-            num = 0 - num;
+            num = -num;
         }
         if (denom < 0) {
-            denom = 0 - denom;
+            denom = -denom;
         }
         return computeBeziersplitAt(index, (double) num / (double) denom);
     }
@@ -6876,10 +6843,10 @@ public final class B2D {
         int denom = dy2 - dy1;
         int num = dy1;
         if (num < 0) {
-            num = 0 - num;
+            num = -num;
         }
         if (denom < 0) {
-            denom = 0 - denom;
+            denom = -denom;
         }
         return computeBeziersplitAt(index, (float) num / (float) denom);
     }
@@ -6946,37 +6913,36 @@ public final class B2D {
     /* BalloonEngineBase>>#toggleWideFillOf: */
     private void toggleWideFillOf(final long edge) {
         final int type = edgeTypeOf(edge);
-        dispatchedValue = edge;
+        final long lineWidth;
         switch (type) {
             case 0:
             case 1:
-                errorWrongIndex();
+                lineWidth = errorWrongIndex();
                 break;
             case 2:
-                returnWideLineWidth();
+                lineWidth = returnWideLineWidth(edge);
                 break;
             case 3:
-                returnWideBezierWidth();
+                lineWidth = returnWideBezierWidth(edge);
                 break;
             default:
                 throw SqueakException.create("Unexpected type:", type);
         }
-        final long lineWidth = dispatchReturnValue;
+        final long fill;
         switch (type) {
             case 0:
             case 1:
-                errorWrongIndex();
+                fill = errorWrongIndex();
                 break;
             case 2:
-                returnWideLineFill();
+                fill = returnWideLineFill(edge);
                 break;
             case 3:
-                returnWideBezierFill();
+                fill = returnWideBezierFill(edge);
                 break;
             default:
                 throw SqueakException.create("Unexpected type:", type);
         }
-        final long fill = dispatchReturnValue;
         if (fill == 0) {
             return;
         }
@@ -7076,14 +7042,14 @@ public final class B2D {
             g = (int) ((g * colorTransformGet(2) + colorTransformGet(3)) * alphaScale);
             b = (int) ((b * colorTransformGet(4) + colorTransformGet(5)) * alphaScale);
             a = (int) (a * alphaScale); // TODO: check this cast is ok
-            r = r < 0 ? 0 : r;
-            r = r < 0xFF ? r : 0xFF;
-            g = g < 0 ? 0 : g;
-            g = g < 0xFF ? g : 0xFF;
-            b = b < 0 ? 0 : b;
-            b = b < 0xFF ? b : 0xFF;
-            a = a < 0 ? 0 : a;
-            a = a < 0xFF ? a : 0xFF;
+            r = Math.max(r, 0);
+            r = Math.min(r, 0xFF);
+            g = Math.max(g, 0);
+            g = Math.min(g, 0xFF);
+            b = Math.max(b, 0);
+            b = Math.min(b, 0xFF);
+            a = Math.max(a, 0);
+            a = Math.min(a, 0xFF);
         }
         if (a < 1) {
             return 0;
@@ -7207,14 +7173,14 @@ public final class B2D {
         g = g * colorTransformGet(2) + colorTransformGet(3);
         b = b * colorTransformGet(4) + colorTransformGet(5);
         a = a * colorTransformGet(6) + colorTransformGet(7);
-        r = r < 0 ? 0 : r;
-        r = r < 0xFF ? r : 0xFF;
-        g = g < 0 ? 0 : g;
-        g = g < 0xFF ? g : 0xFF;
-        b = b < 0 ? 0 : b;
-        b = b < 0xFF ? b : 0xFF;
-        a = a < 0 ? 0 : a;
-        a = a < 0xFF ? a : 0xFF;
+        r = Math.max(r, 0);
+        r = Math.min(r, 0xFF);
+        g = Math.max(g, 0);
+        g = Math.min(g, 0xFF);
+        b = Math.max(b, 0);
+        b = Math.min(b, 0xFF);
+        a = Math.max(a, 0);
+        a = Math.min(a, 0xFF);
         if (a < 16) {
             return 0;
         }
@@ -7227,8 +7193,8 @@ public final class B2D {
     }
 
     /* BalloonEngineBase>>#wbSizePut: */
-    private long wbSizePut(final long value) {
-        return workBuffer[GW_SIZE] = (int) value;
+    private void wbSizePut(final long value) {
+        workBuffer[GW_SIZE] = (int) value;
     }
 
     /* BalloonEngineBase>>#wbStackClear */
@@ -7320,8 +7286,8 @@ public final class B2D {
         return workBuffer[wideBezierUpdateDataIndexOf(bezier) + index];
     }
 
-    private int wideBezierUpdateDataOf(final long bezier, final int index, final long value) {
-        return workBuffer[wideBezierUpdateDataIndexOf(bezier) + index] = (int) value;
+    private void wideBezierUpdateDataOf(final long bezier, final int index, final long value) {
+        workBuffer[wideBezierUpdateDataIndexOf(bezier) + index] = (int) value;
     }
 
     private int wideBezierUpdateDataIndexOf(final long bezier) {
