@@ -77,6 +77,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
         return callDirect(callNode, cachedMethod, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
     protected static final Object doIndirect(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
@@ -85,6 +86,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
         return callIndirect(callNode, method, getContextOrMarkerNode.execute(frame), receiverAndArguments);
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
     protected static final Object doIndirectWithSender(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode,

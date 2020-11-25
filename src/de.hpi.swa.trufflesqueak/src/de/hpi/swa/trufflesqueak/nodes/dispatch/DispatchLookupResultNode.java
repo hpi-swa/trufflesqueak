@@ -42,6 +42,7 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
         return dispatchNode.execute(frame);
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected static final Object doIndirect(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
                     @Cached final ResolveMethodNode methodNode,

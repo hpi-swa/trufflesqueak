@@ -55,6 +55,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             return directCallNode.call(FrameAccess.newClosureArgumentsTemplate(closure, cachedBlock, getContextOrMarkerNode.execute(frame), 0));
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"closure.getNumArgs() == 0"}, replaces = "doValueDirect")
         protected static final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
@@ -77,6 +78,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             return directCallNode.call(frameArguments);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"closure.getNumArgs() == 1"}, replaces = "doValueDirect")
         protected static final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
@@ -102,6 +104,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             return directCallNode.call(frameArguments);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"closure.getNumArgs() == 2"}, replaces = "doValueDirect")
         protected static final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
@@ -129,6 +132,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             return directCallNode.call(frameArguments);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"closure.getNumArgs() == 3"}, replaces = "doValueDirect")
         protected static final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
@@ -159,6 +163,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             return directCallNode.call(frameArguments);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"closure.getNumArgs() == 4"}, replaces = "doValue4Direct")
         protected static final Object doValue4Indirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         @SuppressWarnings("unused") final NotProvided arg5,
@@ -189,6 +194,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             return directCallNode.call(frameArguments);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"!isNotProvided(arg5)", "closure.getNumArgs() == 5"}, replaces = "doValue5Direct")
         protected static final Object doValue5Indirect(final VirtualFrame frame, final BlockClosureObject closure, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         final Object arg5,
@@ -221,6 +227,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             return directCallNode.call(frameArguments);
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(guards = {"closure.getNumArgs() == sizeNode.execute(argArray)"}, replaces = "doValueDirect", limit = "1")
         protected static final Object doValueIndirect(final VirtualFrame frame, final BlockClosureObject closure, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached final SqueakObjectSizeNode sizeNode,

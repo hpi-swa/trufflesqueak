@@ -42,6 +42,7 @@ public abstract class LookupMethodNode extends AbstractNode {
         return cachedMethod;
     }
 
+    @ReportPolymorphism.Megamorphic
     @Specialization(replaces = "doCached")
     protected static final Object doUncached(final ClassObject classObject, final NativeObject selector,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
