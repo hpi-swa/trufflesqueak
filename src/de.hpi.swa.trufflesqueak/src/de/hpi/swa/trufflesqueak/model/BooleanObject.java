@@ -11,6 +11,8 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 public final class BooleanObject {
     public static final boolean FALSE = false;
     public static final boolean TRUE = true;
+    public static final long FALSE_SQUEAK_HASH = 2L;
+    public static final long TRUE_SQUEAK_HASH = 3L;
 
     private BooleanObject() {
     }
@@ -19,19 +21,11 @@ public final class BooleanObject {
         return object; /** avoid check since true->true and false->false. */
     }
 
-    public static long getFalseSqueakHash() {
-        return 2L;
-    }
-
-    public static long getTrueSqueakHash() {
-        return 3L;
-    }
-
     public static void write(final SqueakImageWriter writer, final boolean value) {
         if (value) {
-            writer.writeObjectHeader(0, getTrueSqueakHash(), writer.getImage().trueClass, 0);
+            writer.writeObjectHeader(0, TRUE_SQUEAK_HASH, writer.getImage().trueClass, 0);
         } else {
-            writer.writeObjectHeader(0, getFalseSqueakHash(), writer.getImage().falseClass, 0);
+            writer.writeObjectHeader(0, FALSE_SQUEAK_HASH, writer.getImage().falseClass, 0);
         }
         writer.writePadding(SqueakImageConstants.WORD_SIZE); /* Write alignment word. */
     }
