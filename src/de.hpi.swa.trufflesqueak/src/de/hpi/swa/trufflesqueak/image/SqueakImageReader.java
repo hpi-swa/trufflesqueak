@@ -216,9 +216,7 @@ public final class SqueakImageReader {
         while (position < segmentEnd) {
             while (position < segmentEnd - SqueakImageConstants.IMAGE_BRIDGE_SIZE) {
                 final SqueakImageChunk chunk = readObject();
-                if (chunk != null) {
-                    putChunk(chunk);
-                }
+                putChunk(chunk);
             }
             assert hiddenRootsChunk != null : "hiddenRootsChunk must be known from now on.";
             final long bridge = nextLong();
@@ -282,7 +280,7 @@ public final class SqueakImageReader {
             if (freePageList == null) {
                 assert classIndex == SqueakImageConstants.WORD_SIZE_CLASS_INDEX_PUN && size == SqueakImageConstants.NUM_FREE_LISTS;
                 freePageList = chunk; /* First hidden object. */
-            } else if (hiddenRootsChunk == null) {
+            } else {
                 assert classIndex == SqueakImageConstants.ARRAY_CLASS_INDEX_PUN &&
                                 size == SqueakImageConstants.CLASS_TABLE_ROOT_SLOTS + SqueakImageConstants.HIDDEN_ROOT_SLOTS : "hiddenRootsObj has unexpected size";
                 hiddenRootsChunk = chunk; /* Seconds hidden object. */
