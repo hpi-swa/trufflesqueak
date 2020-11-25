@@ -28,6 +28,7 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
         code = original.code;
         index = original.index;
         numBytecodes = original.numBytecodes;
+        sourceSection = original.sourceSection;
     }
 
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index) {
