@@ -65,10 +65,10 @@ public final class JPEGReader {
     /* Variables */
     private int[] acTable;
     private int acTableSize;
-    private int[][] cbBlocks = new int[128][];
-    private int[] cbComponent = new int[11];
-    private int[][] crBlocks = new int[128][];
-    private int[] crComponent = new int[11];
+    private final int[][] cbBlocks = new int[128][];
+    private final int[] cbComponent = new int[11];
+    private final int[][] crBlocks = new int[128][];
+    private final int[] crComponent = new int[11];
     private int[] dcTable;
     private int dcTableSize;
     private int ditherMask;
@@ -92,8 +92,8 @@ public final class JPEGReader {
     private int jsReadLimit;
     public static final String moduleName = "JPEGReaderPlugin * VMMaker.oscog-eem.2480 (TruffleSqueak)";
     private int[] residuals;
-    private int[][] yBlocks = new int[128][];
-    private int[] yComponent = new int[11];
+    private final int[][] yBlocks = new int[128][];
+    private final int[] yComponent = new int[11];
 
     private boolean failed;
 
@@ -216,12 +216,12 @@ public final class JPEGReader {
     }
 
     /* JPEGReaderPlugin>>#fillBuffer */
-    private int fillBuffer() {
+    private void fillBuffer() {
         byte byteValue;
 
         while (jsBitCount <= 16) {
             if (jsPosition >= jsReadLimit) {
-                return jsBitCount;
+                return;
             }
             byteValue = jsCollection[jsPosition];
             jsPosition += 1;
@@ -229,14 +229,13 @@ public final class JPEGReader {
                 /* peek for 00 */
                 if (!(jsPosition < jsReadLimit && jsCollection[jsPosition] == 0)) {
                     jsPosition -= 1;
-                    return jsBitCount;
+                    return;
                 }
                 jsPosition += 1;
             }
             jsBitBuffer = (int) (Integer.toUnsignedLong(jsBitBuffer) << 8) | Byte.toUnsignedInt(byteValue);
             jsBitCount += 8;
         }
-        return jsBitCount;
     }
 
     /* JPEGReaderPlugin>>#getBits: */
@@ -417,10 +416,10 @@ public final class JPEGReader {
         for (int i = 0; i < jpegBitsSize; i += 1) {
             y = nextSampleY();
             y += residuals[GreenIndex];
-            y = y < MaxSample ? y : MaxSample;
+            y = Math.min(y, MaxSample);
             residuals[GreenIndex] = y & ditherMask;
             y = y & MaxSample - ditherMask;
-            y = y < 1 ? 1 : y;
+            y = Math.max(y, 1);
             jpegBits[i] = 0xFF000000 + (int) ((long) y << 16) + (int) ((long) y << 8) + y;
         }
     }
@@ -494,23 +493,23 @@ public final class JPEGReader {
             cr = sample;
             cr -= SampleOffset;
             red = y + FIXn1n40200 * cr / 65536 + residuals[RedIndex];
-            red = red < MaxSample ? red : MaxSample;
-            red = red < 0 ? 0 : red;
+            red = Math.min(red, MaxSample);
+            red = Math.max(red, 0);
             residuals[RedIndex] = red & ditherMask;
             red = red & MaxSample - ditherMask;
-            red = red < 1 ? 1 : red;
+            red = Math.max(red, 1);
             green = y - FIXn0n34414 * cb / 65536 - FIXn0n71414 * cr / 65536 + residuals[GreenIndex];
-            green = green < MaxSample ? green : MaxSample;
-            green = green < 0 ? 0 : green;
+            green = Math.min(green, MaxSample);
+            green = Math.max(green, 0);
             residuals[GreenIndex] = green & ditherMask;
             green = green & MaxSample - ditherMask;
-            green = green < 1 ? 1 : green;
+            green = Math.max(green, 1);
             blue = y + FIXn1n77200 * cb / 65536 + residuals[BlueIndex];
-            blue = blue < MaxSample ? blue : MaxSample;
-            blue = blue < 0 ? 0 : blue;
+            blue = Math.min(blue, MaxSample);
+            blue = Math.max(blue, 0);
             residuals[BlueIndex] = blue & ditherMask;
             blue = blue & MaxSample - ditherMask;
-            blue = blue < 1 ? 1 : blue;
+            blue = Math.max(blue, 1);
             jpegBits[i] = (int) (0xFF000000 + (Integer.toUnsignedLong(red) << 16) + (Integer.toUnsignedLong(green) << 8) + blue);
         }
     }
@@ -590,7 +589,7 @@ public final class JPEGReader {
                 z2 = anArray[DCTSize * 2 + i] * qt[DCTSize * 2 + i];
                 z3 = anArray[DCTSize * 6 + i] * qt[DCTSize * 6 + i];
                 z1 = (z2 + z3) * FIXn0n541196100;
-                t2 = z1 + z3 * (0 - FIXn1n847759065);
+                t2 = z1 + z3 * -FIXn1n847759065;
                 t3 = z1 + z2 * FIXn0n765366865;
                 z2 = anArray[i] * qt[i];
                 z3 = anArray[DCTSize * 4 + i] * qt[DCTSize * 4 + i];
@@ -613,10 +612,10 @@ public final class JPEGReader {
                 t1 = t1 * FIXn2n053119869;
                 t2 = t2 * FIXn3n072711026;
                 t3 = t3 * FIXn1n501321110;
-                z1 = z1 * (0 - FIXn0n899976223);
-                z2 = z2 * (0 - FIXn2n562915447);
-                z3 = z3 * (0 - FIXn1n961570560);
-                z4 = z4 * (0 - FIXn0n390180644);
+                z1 = z1 * -FIXn0n899976223;
+                z2 = z2 * -FIXn2n562915447;
+                z3 = z3 * -FIXn1n961570560;
+                z4 = z4 * -FIXn0n390180644;
                 z3 += z5;
                 z4 += z5;
                 t0 = t0 + z1 + z3;
@@ -637,7 +636,7 @@ public final class JPEGReader {
             z2 = ws[i + 2];
             z3 = ws[i + 6];
             z1 = (z2 + z3) * FIXn0n541196100;
-            t2 = z1 + z3 * (0 - FIXn1n847759065);
+            t2 = z1 + z3 * -FIXn1n847759065;
             t3 = z1 + z2 * FIXn0n765366865;
             t0 = (int) (Integer.toUnsignedLong(ws[i] + ws[i + 4]) << ConstBits);
             t1 = (int) (Integer.toUnsignedLong(ws[i] - ws[i + 4]) << ConstBits);
@@ -658,10 +657,10 @@ public final class JPEGReader {
             t1 = t1 * FIXn2n053119869;
             t2 = t2 * FIXn3n072711026;
             t3 = t3 * FIXn1n501321110;
-            z1 = z1 * (0 - FIXn0n899976223);
-            z2 = z2 * (0 - FIXn2n562915447);
-            z3 = z3 * (0 - FIXn1n961570560);
-            z4 = z4 * (0 - FIXn0n390180644);
+            z1 = z1 * -FIXn0n899976223;
+            z2 = z2 * -FIXn2n562915447;
+            z3 = z3 * -FIXn1n961570560;
+            z4 = z4 * -FIXn0n390180644;
             z3 += z5;
             z4 += z5;
             t0 = t0 + z1 + z3;
@@ -669,36 +668,36 @@ public final class JPEGReader {
             t2 = t2 + z2 + z3;
             t3 = t3 + z1 + z4;
             v = (t10 + t3) / Pass2Div + SampleOffset;
-            v = v < MaxSample ? v : MaxSample;
-            v = v < 0 ? 0 : v;
+            v = Math.min(v, MaxSample);
+            v = Math.max(v, 0);
             anArray[i] = v;
             v = (t10 - t3) / Pass2Div + SampleOffset;
-            v = v < MaxSample ? v : MaxSample;
-            v = v < 0 ? 0 : v;
+            v = Math.min(v, MaxSample);
+            v = Math.max(v, 0);
             anArray[i + 7] = v;
             v = (t11 + t2) / Pass2Div + SampleOffset;
-            v = v < MaxSample ? v : MaxSample;
-            v = v < 0 ? 0 : v;
+            v = Math.min(v, MaxSample);
+            v = Math.max(v, 0);
             anArray[i + 1] = v;
             v = (t11 - t2) / Pass2Div + SampleOffset;
-            v = v < MaxSample ? v : MaxSample;
-            v = v < 0 ? 0 : v;
+            v = Math.min(v, MaxSample);
+            v = Math.max(v, 0);
             anArray[i + 6] = v;
             v = (t12 + t1) / Pass2Div + SampleOffset;
-            v = v < MaxSample ? v : MaxSample;
-            v = v < 0 ? 0 : v;
+            v = Math.min(v, MaxSample);
+            v = Math.max(v, 0);
             anArray[i + 2] = v;
             v = (t12 - t1) / Pass2Div + SampleOffset;
-            v = v < MaxSample ? v : MaxSample;
-            v = v < 0 ? 0 : v;
+            v = Math.min(v, MaxSample);
+            v = Math.max(v, 0);
             anArray[i + 5] = v;
             v = (t13 + t0) / Pass2Div + SampleOffset;
-            v = v < MaxSample ? v : MaxSample;
-            v = v < 0 ? 0 : v;
+            v = Math.min(v, MaxSample);
+            v = Math.max(v, 0);
             anArray[i + 3] = v;
             v = (t13 - t0) / Pass2Div + SampleOffset;
-            v = v < MaxSample ? v : MaxSample;
-            v = v < 0 ? 0 : v;
+            v = Math.min(v, MaxSample);
+            v = Math.max(v, 0);
             anArray[i + 4] = v;
         }
     }
