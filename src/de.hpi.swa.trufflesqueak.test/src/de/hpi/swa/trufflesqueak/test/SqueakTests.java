@@ -114,7 +114,7 @@ public final class SqueakTests {
      */
     public static String[] rawTestNames() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(SqueakTests.class.getResourceAsStream(FILENAME)))) {
-            return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).collect(toList()).toArray(new String[0]);
+            return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).toArray(String[]::new);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
