@@ -21,11 +21,11 @@ public final class OSDetector {
 
     private OSDetector() {
         final String os = System.getProperty("os.name", "generic").toLowerCase();
-        if (os.indexOf("mac") >= 0 || os.indexOf("darwin") >= 0) {
+        if (os.contains("mac") || os.contains("darwin")) {
             currentOS = OSType.MacOS;
-        } else if (os.indexOf("win") >= 0) {
+        } else if (os.contains("win")) {
             currentOS = OSType.Windows;
-        } else if (os.indexOf("nux") >= 0) {
+        } else if (os.contains("nux")) {
             currentOS = OSType.Linux;
         } else {
             currentOS = OSType.Other;
