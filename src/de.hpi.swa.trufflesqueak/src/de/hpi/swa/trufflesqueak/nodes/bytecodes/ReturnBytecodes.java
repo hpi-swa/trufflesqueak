@@ -13,10 +13,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen.ReturnConstantFalseNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen.ReturnConstantNilNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen.ReturnConstantTrueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
@@ -90,26 +93,59 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnConstantNode extends AbstractReturnWithSpecializationsNode {
-        public final Object constant;
-
-        protected ReturnConstantNode(final CompiledCodeObject code, final int index, final Object obj) {
+        protected ReturnConstantNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            constant = obj;
-        }
-
-        public static ReturnConstantNode create(final CompiledCodeObject code, final int index, final Object value) {
-            return ReturnConstantNodeGen.create(code, index, value);
-        }
-
-        @Override
-        protected final Object getReturnValue(final VirtualFrame frame) {
-            return constant;
         }
 
         @Override
         public final String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "return: " + constant.toString();
+            return "return: " + getReturnValue(null).toString();
+        }
+
+        public abstract static class ReturnConstantTrueNode extends ReturnConstantNode {
+            protected ReturnConstantTrueNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            public static ReturnConstantTrueNode create(final CompiledCodeObject code, final int index) {
+                return ReturnConstantTrueNodeGen.create(code, index);
+            }
+
+            @Override
+            protected final Object getReturnValue(final VirtualFrame frame) {
+                return BooleanObject.TRUE;
+            }
+        }
+
+        public abstract static class ReturnConstantFalseNode extends ReturnConstantNode {
+            protected ReturnConstantFalseNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            public static ReturnConstantFalseNode create(final CompiledCodeObject code, final int index) {
+                return ReturnConstantFalseNodeGen.create(code, index);
+            }
+
+            @Override
+            protected final Object getReturnValue(final VirtualFrame frame) {
+                return BooleanObject.FALSE;
+            }
+        }
+
+        public abstract static class ReturnConstantNilNode extends ReturnConstantNode {
+            protected ReturnConstantNilNode(final CompiledCodeObject code, final int index) {
+                super(code, index);
+            }
+
+            public static ReturnConstantNilNode create(final CompiledCodeObject code, final int index) {
+                return ReturnConstantNilNodeGen.create(code, index);
+            }
+
+            @Override
+            protected final Object getReturnValue(final VirtualFrame frame) {
+                return NilObject.SINGLETON;
+            }
         }
     }
 
