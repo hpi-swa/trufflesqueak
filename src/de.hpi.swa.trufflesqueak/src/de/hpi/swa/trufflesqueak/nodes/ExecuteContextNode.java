@@ -37,7 +37,6 @@ import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public final class ExecuteContextNode extends AbstractExecuteContextNode {
-    private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
     private static final int LOCAL_RETURN_PC = -2;
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
@@ -56,11 +55,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
 
     protected ExecuteContextNode(final CompiledCodeObject code, final boolean resume) {
         this.code = code;
-        if (DECODE_BYTECODE_ON_DEMAND) {
-            bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
-        } else {
-            bytecodeNodes = SqueakBytecodeDecoder.decode(code);
-        }
+        bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
         frameInitializationNode = resume ? null : FrameStackInitializationNode.create();
         /*
          * Only check for interrupts if method is relatively large. Avoid check if a closure is
@@ -308,7 +303,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
      */
     @SuppressWarnings("unused")
     private AbstractBytecodeNode fetchNextBytecodeNode(final int pc) {
-        if (DECODE_BYTECODE_ON_DEMAND && bytecodeNodes[pc] == null) {
+        if (bytecodeNodes[pc] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
             notifyInserted(bytecodeNodes[pc]);
