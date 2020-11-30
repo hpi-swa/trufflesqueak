@@ -168,9 +168,16 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert startPC >= 0;
         final int offset = (int) startPC - method.getInitialPC();
-        final int j = method.getBytes()[offset - 2];
-        final int k = method.getBytes()[offset - 1];
-        final int blockSize = j << 8 | k & 0xff;
+        final int blockSize;
+        if (method.getSignFlag()) {
+            final int j = method.getBytes()[offset - 2];
+            final int k = method.getBytes()[offset - 1];
+            blockSize = j << 8 | k & 0xff;
+        } else {
+            final int possibleExtBIndex = offset - 5;
+            assert possibleExtBIndex < 0 || method.getBytes()[possibleExtBIndex] != 225 : "FIXME: should calculate extB from bytecode";
+            blockSize = Byte.toUnsignedInt(method.getBytes()[offset - 1]);
+        }
         block = CompiledCodeObject.createBlock(method, method, (int) numArgs, copied.length, offset, blockSize);
         /* Ensure fields dependent on block are initialized. */
         getStartPC();

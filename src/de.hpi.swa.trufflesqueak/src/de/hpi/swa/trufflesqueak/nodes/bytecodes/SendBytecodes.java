@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchLookupResultNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendStackedNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
@@ -203,6 +204,32 @@ public final class SendBytecodes {
             super(code, index, numBytecodes, numArgs);
             final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
             dispatchNode = DispatchSuperSendNode.create(code, selector, numArgs);
+        }
+
+        @Override
+        protected Object dispatchSend(final VirtualFrame frame) {
+            return dispatchNode.execute(frame);
+        }
+
+        @Override
+        public NativeObject getSelector() {
+            return dispatchNode.getSelector();
+        }
+
+        @Override
+        public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return "sendSuper: " + getSelector().asStringUnsafe();
+        }
+    }
+
+    public static final class SendToSuperclassStackedNode extends AbstractSendNode {
+        @Child private DispatchSuperSendStackedNode dispatchNode;
+
+        public SendToSuperclassStackedNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
+            super(code, index, numBytecodes, numArgs);
+            final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
+            dispatchNode = DispatchSuperSendStackedNode.create(selector, numArgs);
         }
 
         @Override

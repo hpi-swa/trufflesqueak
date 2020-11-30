@@ -57,7 +57,7 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) { // shortcut
-        return CompiledCodeObject.makeHeader(numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
+        return CompiledCodeObject.makeHeader(true, numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
     }
 
     protected CompiledCodeObject makeMethod(final int... intbytes) {

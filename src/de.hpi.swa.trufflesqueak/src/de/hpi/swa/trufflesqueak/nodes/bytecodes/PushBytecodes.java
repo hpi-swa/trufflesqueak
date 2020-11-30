@@ -27,6 +27,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
+import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -90,11 +91,11 @@ public final class PushBytecodes {
         @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
         @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
 
-        private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte i, final byte j, final byte k) {
+        private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int numArgs, final int numCopied, final int blockSize) {
             super(code, index, numBytecodes);
-            numArgs = i & 0xF;
-            numCopied = Byte.toUnsignedInt(i) >> 4 & 0xF;
-            blockSize = Byte.toUnsignedInt(j) << 8 | Byte.toUnsignedInt(k);
+            this.numArgs = numArgs;
+            this.numCopied = numCopied;
+            this.blockSize = blockSize;
             popNNode = FrameStackPopNNode.create(numCopied);
         }
 
@@ -107,7 +108,14 @@ public final class PushBytecodes {
         }
 
         public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final byte i, final byte j, final byte k) {
-            return new PushClosureNode(code, index, numBytecodes, i, j, k);
+            return new PushClosureNode(code, index, numBytecodes, i & 0xF, Byte.toUnsignedInt(i) >> 4 & 0xF, Byte.toUnsignedInt(j) << 8 | Byte.toUnsignedInt(k));
+        }
+
+        public static PushClosureNode createExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final int extA, final int extB, final byte byteA, final byte byteB) {
+            final int numArgs = (byteA & 7) + Math.floorMod(extA, 16) * 8;
+            final int numCopied = (Byte.toUnsignedInt(byteA) >> 3 & 0x7) + Math.floorDiv(extA, 16) * 8;
+            final int blockSize = Byte.toUnsignedInt(byteB) + (extB << 8);
+            return new PushClosureNode(code, index, numBytecodes, numArgs, numCopied, blockSize);
         }
 
         private CompiledCodeObject getBlock(final VirtualFrame frame) {
@@ -175,7 +183,7 @@ public final class PushBytecodes {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public abstract static class PushConstantNode extends AbstractPushNode {
+    private abstract static class PushConstantNode extends AbstractPushNode {
         private PushConstantNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
@@ -192,82 +200,82 @@ public final class PushBytecodes {
             CompilerAsserts.neverPartOfCompilation();
             return "pushConstant: " + getConstant().toString();
         }
+    }
 
-        public static final class PushConstantTrueNode extends PushConstantNode {
-            public PushConstantTrueNode(final CompiledCodeObject code, final int index) {
-                super(code, index);
-            }
-
-            @Override
-            protected Object getConstant() {
-                return BooleanObject.TRUE;
-            }
+    public static final class PushConstantTrueNode extends PushConstantNode {
+        public PushConstantTrueNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
         }
 
-        public static final class PushConstantFalseNode extends PushConstantNode {
-            public PushConstantFalseNode(final CompiledCodeObject code, final int index) {
-                super(code, index);
-            }
+        @Override
+        protected Object getConstant() {
+            return BooleanObject.TRUE;
+        }
+    }
 
-            @Override
-            protected Object getConstant() {
-                return BooleanObject.FALSE;
-            }
+    public static final class PushConstantFalseNode extends PushConstantNode {
+        public PushConstantFalseNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
         }
 
-        public static final class PushConstantNilNode extends PushConstantNode {
-            public PushConstantNilNode(final CompiledCodeObject code, final int index) {
-                super(code, index);
-            }
+        @Override
+        protected Object getConstant() {
+            return BooleanObject.FALSE;
+        }
+    }
 
-            @Override
-            protected Object getConstant() {
-                return NilObject.SINGLETON;
-            }
+    public static final class PushConstantNilNode extends PushConstantNode {
+        public PushConstantNilNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
         }
 
-        public static final class PushConstantMinusOneNode extends PushConstantNode {
-            public PushConstantMinusOneNode(final CompiledCodeObject code, final int index) {
-                super(code, index);
-            }
+        @Override
+        protected Object getConstant() {
+            return NilObject.SINGLETON;
+        }
+    }
 
-            @Override
-            protected Object getConstant() {
-                return -1L;
-            }
+    public static final class PushConstantMinusOneNode extends PushConstantNode {
+        public PushConstantMinusOneNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
         }
 
-        public static final class PushConstantZeroNode extends PushConstantNode {
-            public PushConstantZeroNode(final CompiledCodeObject code, final int index) {
-                super(code, index);
-            }
+        @Override
+        protected Object getConstant() {
+            return -1L;
+        }
+    }
 
-            @Override
-            protected Object getConstant() {
-                return 0L;
-            }
+    public static final class PushConstantZeroNode extends PushConstantNode {
+        public PushConstantZeroNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
         }
 
-        public static final class PushConstantOneNode extends PushConstantNode {
-            public PushConstantOneNode(final CompiledCodeObject code, final int index) {
-                super(code, index);
-            }
+        @Override
+        protected Object getConstant() {
+            return 0L;
+        }
+    }
 
-            @Override
-            protected Object getConstant() {
-                return 1L;
-            }
+    public static final class PushConstantOneNode extends PushConstantNode {
+        public PushConstantOneNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
         }
 
-        public static final class PushConstantTwoNode extends PushConstantNode {
-            public PushConstantTwoNode(final CompiledCodeObject code, final int index) {
-                super(code, index);
-            }
+        @Override
+        protected Object getConstant() {
+            return 1L;
+        }
+    }
 
-            @Override
-            protected Object getConstant() {
-                return 2L;
-            }
+    public static final class PushConstantTwoNode extends PushConstantNode {
+        public PushConstantTwoNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
+        }
+
+        @Override
+        protected Object getConstant() {
+            return 2L;
         }
     }
 
@@ -288,7 +296,7 @@ public final class PushBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushConstant: " + code.getLiteral(literalIndex).toString();
+            return "pushConstant: " + code.getLiteral(literalIndex);
         }
     }
 
@@ -480,6 +488,48 @@ public final class PushBytecodes {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "pushTemp: " + tempIndex;
+        }
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    public static final class PushSmallIntegerNode extends AbstractPushNode {
+        private final long value;
+
+        public PushSmallIntegerNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int value) {
+            super(code, index, numBytecodes);
+            this.value = value;
+        }
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            pushNode.execute(frame, value);
+        }
+
+        @Override
+        public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return "pushConstant: " + value;
+        }
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    public static final class PushCharacterNode extends AbstractPushNode {
+        private final Object value;
+
+        public PushCharacterNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long value) {
+            super(code, index, numBytecodes);
+            this.value = CharacterObject.valueOf(value);
+        }
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            pushNode.execute(frame, value);
+        }
+
+        @Override
+        public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return "pushConstant: $" + value;
         }
     }
 }

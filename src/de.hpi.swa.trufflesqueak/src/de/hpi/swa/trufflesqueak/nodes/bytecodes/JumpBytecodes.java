@@ -23,14 +23,9 @@ public final class JumpBytecodes {
 
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        protected ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
+        protected ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes);
-            offset = (bytecode & 7) + 1;
-        }
-
-        protected ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final byte parameter) {
-            super(code, index, numBytecodes);
-            offset = ((bytecode & 3) << 8) + Byte.toUnsignedInt(parameter);
+            this.offset = offset;
         }
 
         @Override
@@ -57,19 +52,27 @@ public final class JumpBytecodes {
         }
     }
 
-    public static final class ConditionalFalseJumpNode extends ConditionalJumpNode {
-        public ConditionalFalseJumpNode(final CompiledCodeObject code, final int index, final int bytecode) {
-            super(code, index, 1, bytecode);
+    public static final class ConditionalJumpOnFalseNode extends ConditionalJumpNode {
+        private ConditionalJumpOnFalseNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+            super(code, index, numBytecodes, offset);
         }
 
-        public ConditionalFalseJumpNode(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
-            super(code, index, 2, bytecode, parameter);
+        public static ConditionalJumpOnFalseNode createShort(final CompiledCodeObject code, final int index, final int bytecode) {
+            return new ConditionalJumpOnFalseNode(code, index, 1, calculateShortOffset(bytecode));
+        }
+
+        public static ConditionalJumpOnFalseNode createLong(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
+            return new ConditionalJumpOnFalseNode(code, index, 2, ((bytecode & 3) << 8) + Byte.toUnsignedInt(parameter));
+        }
+
+        public static ConditionalJumpOnFalseNode createLongExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final byte bytecode, final int extB) {
+            return new ConditionalJumpOnFalseNode(code, index, numBytecodes, Byte.toUnsignedInt(bytecode) + (extB << 8));
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "jumpTrue: " + offset;
+            return "jumpFalse: " + offset;
         }
 
         @Override
@@ -78,9 +81,21 @@ public final class JumpBytecodes {
         }
     }
 
-    public static final class ConditionalTrueJumpNode extends ConditionalJumpNode {
-        public ConditionalTrueJumpNode(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
-            super(code, index, 2, bytecode, parameter);
+    public static final class ConditionalJumpOnTrueNode extends ConditionalJumpNode {
+        private ConditionalJumpOnTrueNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
+            super(code, index, numBytecodes, offset);
+        }
+
+        public static ConditionalJumpOnTrueNode createShort(final CompiledCodeObject code, final int index, final int bytecode) {
+            return new ConditionalJumpOnTrueNode(code, index, 1, calculateShortOffset(bytecode));
+        }
+
+        public static ConditionalJumpOnTrueNode createLong(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
+            return new ConditionalJumpOnTrueNode(code, index, 2, ((bytecode & 3) << 8) + Byte.toUnsignedInt(parameter));
+        }
+
+        public static ConditionalJumpOnTrueNode createLongExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final byte bytecode, final int extB) {
+            return new ConditionalJumpOnTrueNode(code, index, numBytecodes, Byte.toUnsignedInt(bytecode) + (extB << 8));
         }
 
         @Override
@@ -98,14 +113,21 @@ public final class JumpBytecodes {
     public static final class UnconditionalJumpNode extends AbstractBytecodeNode {
         private final int offset;
 
-        public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
+        private UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes);
-            offset = (bytecode & 7) + 1;
+            this.offset = offset;
         }
 
-        public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final byte parameter) {
-            super(code, index, numBytecodes);
-            offset = ((bytecode & 7) - 4 << 8) + Byte.toUnsignedInt(parameter);
+        public static UnconditionalJumpNode createShort(final CompiledCodeObject code, final int index, final int bytecode) {
+            return new UnconditionalJumpNode(code, index, 1, calculateShortOffset(bytecode));
+        }
+
+        public static UnconditionalJumpNode createLong(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
+            return new UnconditionalJumpNode(code, index, 2, ((bytecode & 7) - 4 << 8) + Byte.toUnsignedInt(parameter));
+        }
+
+        public static UnconditionalJumpNode createLongExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final byte bytecode, final int extB) {
+            return new UnconditionalJumpNode(code, index, numBytecodes, Byte.toUnsignedInt(bytecode) + (extB << 8));
         }
 
         @Override
@@ -122,5 +144,9 @@ public final class JumpBytecodes {
             CompilerAsserts.neverPartOfCompilation();
             return "jumpTo: " + offset;
         }
+    }
+
+    private static int calculateShortOffset(final int bytecode) {
+        return (bytecode & 7) + 1;
     }
 }

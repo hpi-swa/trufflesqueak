@@ -342,6 +342,12 @@ public final class ObjectLayouts {
         public static final int INVOKE_CALLBACK_SELECTOR = 53;
         public static final int CLASS_UNSAFE_ALIEN = 54;
         public static final int CLASS_WEAK_FINALIZER = 55;
+        public static final int FOREIGN_CALLBACK_PROCESS = 56;
+        public static final int SELECTOR_UNKNOWN_BYTECODE = 57;
+        public static final int SELECTOR_COUNTER_TRIPPED = 58;
+        public static final int SELECTOR_SISTA_TRAP = 59;
+        public static final int LOWCODE_CONTEXT_MARK = 60;
+        public static final int LOWCODE_NATIVE_CONTEXT_CLASS = 61;
     }
 
     public static final class SPECIAL_OBJECT_TAG {

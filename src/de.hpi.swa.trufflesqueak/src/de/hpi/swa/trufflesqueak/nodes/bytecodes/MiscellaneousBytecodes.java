@@ -16,12 +16,12 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushReceiverVariab
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushTemporaryLocationNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelfSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SingleExtendedSuperNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoAssociationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLocationNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoAssociationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoReceiverVariableNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoTemporaryLocationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
@@ -36,16 +36,16 @@ public final class MiscellaneousBytecodes {
         @Child public AbstractPrimitiveNode primitiveNode;
         private final int primitiveIndex;
 
-        public CallPrimitiveNode(final CompiledCodeObject method, final int index, final byte byte1, final byte byte2) {
+        public CallPrimitiveNode(final CompiledCodeObject method, final int index, final int primitiveIndex) {
             super(method, index, NUM_BYTECODES);
             assert method.hasPrimitive();
-            primitiveIndex = Byte.toUnsignedInt(byte1) + (Byte.toUnsignedInt(byte2) << 8);
+            this.primitiveIndex = primitiveIndex;
             primitiveNode = PrimitiveNodeFactory.forIndex(method, false, primitiveIndex);
             assert method.hasPrimitive();
         }
 
         public static CallPrimitiveNode create(final CompiledCodeObject code, final int index, final byte byte1, final byte byte2) {
-            return new CallPrimitiveNode(code, index, byte1, byte2);
+            return new CallPrimitiveNode(code, index, Byte.toUnsignedInt(byte1) + (Byte.toUnsignedInt(byte2) << 8));
         }
 
         @Override
@@ -81,7 +81,7 @@ public final class MiscellaneousBytecodes {
                 case 6:
                     return new PopIntoReceiverVariableNode(code, index, numBytecodes, third);
                 case 7:
-                    return new StoreIntoAssociationNode(code, index, numBytecodes, third);
+                    return new StoreIntoLiteralVariableNode(code, index, numBytecodes, third);
                 default:
                     return new UnknownBytecodeNode(code, index, numBytecodes, second);
             }
@@ -92,8 +92,8 @@ public final class MiscellaneousBytecodes {
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-            super(code, index, numBytecodes);
+        public DupNode(final CompiledCodeObject code, final int index) {
+            super(code, index, 1);
         }
 
         @Override
@@ -120,7 +120,7 @@ public final class MiscellaneousBytecodes {
                 case 2:
                     return new UnknownBytecodeNode(code, index, numBytecodes, nextByte);
                 case 3:
-                    return new PopIntoAssociationNode(code, index, numBytecodes, variableIndex);
+                    return new PopIntoLiteralVariableNode(code, index, numBytecodes, variableIndex);
                 default:
                     throw SqueakException.create("illegal ExtendedStore bytecode");
             }
@@ -148,11 +148,11 @@ public final class MiscellaneousBytecodes {
                 case 0:
                     return new StoreIntoReceiverVariableNode(code, index, numBytecodes, variableIndex);
                 case 1:
-                    return new StoreIntoTempNode(code, index, numBytecodes, variableIndex);
+                    return new StoreIntoTemporaryLocationNode(code, index, numBytecodes, variableIndex);
                 case 2:
                     return new UnknownBytecodeNode(code, index, numBytecodes, nextByte);
                 case 3:
-                    return new StoreIntoAssociationNode(code, index, numBytecodes, variableIndex);
+                    return new StoreIntoLiteralVariableNode(code, index, numBytecodes, variableIndex);
                 default:
                     throw SqueakException.create("illegal ExtendedStore bytecode");
             }
@@ -170,8 +170,8 @@ public final class MiscellaneousBytecodes {
     public static final class PopNode extends AbstractInstrumentableBytecodeNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-            super(code, index, numBytecodes);
+        public PopNode(final CompiledCodeObject code, final int index) {
+            super(code, index, 1);
         }
 
         @Override
@@ -183,6 +183,22 @@ public final class MiscellaneousBytecodes {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "pop";
+        }
+    }
+
+    public static final class NopBytecodeNode extends AbstractInstrumentableBytecodeNode {
+        public NopBytecodeNode(final CompiledCodeObject code, final int index) {
+            super(code, index, 1);
+        }
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+        }
+
+        @Override
+        public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return "nop";
         }
     }
 

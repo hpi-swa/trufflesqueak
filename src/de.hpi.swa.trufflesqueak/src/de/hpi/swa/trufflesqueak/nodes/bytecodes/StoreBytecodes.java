@@ -106,10 +106,10 @@ public final class StoreBytecodes {
         }
     }
 
-    public static final class PopIntoAssociationNode extends AbstractStoreIntoAssociationNode {
+    public static final class PopIntoLiteralVariableNode extends AbstractStoreIntoAssociationNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        public PopIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
+        public PopIntoLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes, variableIndex);
         }
 
@@ -178,10 +178,10 @@ public final class StoreBytecodes {
         }
     }
 
-    public static final class StoreIntoAssociationNode extends AbstractStoreIntoAssociationNode {
+    public static final class StoreIntoLiteralVariableNode extends AbstractStoreIntoAssociationNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public StoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
+        public StoreIntoLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes, variableIndex);
         }
 
@@ -232,10 +232,10 @@ public final class StoreBytecodes {
         }
     }
 
-    public static final class StoreIntoTempNode extends AbstractStoreIntoTempNode {
+    public static final class StoreIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
         @Child private FrameStackTopNode topNode = FrameStackTopNode.create();
 
-        public StoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
+        public StoreIntoTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes, tempIndex);
         }
 
