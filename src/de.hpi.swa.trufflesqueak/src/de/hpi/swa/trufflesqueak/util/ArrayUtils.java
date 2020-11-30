@@ -24,7 +24,7 @@ public final class ArrayUtils {
     }
 
     public static boolean contains(final byte[] objects, final byte element) {
-        for (byte object : objects) {
+        for (final byte object : objects) {
             if (object == element) {
                 return true;
             }
@@ -33,7 +33,7 @@ public final class ArrayUtils {
     }
 
     public static boolean contains(final char[] objects, final char element) {
-        for (char object : objects) {
+        for (final char object : objects) {
             if (object == element) {
                 return true;
             }
@@ -42,7 +42,7 @@ public final class ArrayUtils {
     }
 
     public static boolean contains(final long[] objects, final long element) {
-        for (long object : objects) {
+        for (final long object : objects) {
             if (object == element) {
                 return true;
             }
@@ -51,7 +51,7 @@ public final class ArrayUtils {
     }
 
     public static boolean contains(final double[] objects, final double element) {
-        for (double object : objects) {
+        for (final double object : objects) {
             if (object == element) {
                 return true;
             }
@@ -60,7 +60,7 @@ public final class ArrayUtils {
     }
 
     public static boolean contains(final Object[] objects, final Object element) {
-        for (Object object : objects) {
+        for (final Object object : objects) {
             if (object == element) {
                 return true;
             }

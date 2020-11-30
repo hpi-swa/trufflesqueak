@@ -86,7 +86,7 @@ public abstract class AbstractSqueakTestCase {
         testContext.setInstructionPointer(code.getInitialPC());
         testContext.setStackPointer(0);
         testContext.removeSender();
-        for (Object argument : arguments) {
+        for (final Object argument : arguments) {
             testContext.push(argument);
         }
         // Initialize temporary variables with nil in newContext.
