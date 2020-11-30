@@ -157,7 +157,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                 }
             } else {
                 final CompiledCodeObject doesNotUnderstandMethodObject = (CompiledCodeObject) lookupNode.executeLookup(classObject, "doesNotUnderstand:");
-                final NativeObject symbol = (NativeObject) image.asByteString(selector).send("asSymbol");
+                final NativeObject symbol = (NativeObject) image.asByteString(selector).send(image, "asSymbol");
                 final PointersObject message = image.newMessage(writeNode, symbol, classObject, arguments);
                 try {
                     return dispatchNode.executeDispatch(doesNotUnderstandMethodObject, new Object[]{receiver, message}, InteropSenderMarker.SINGLETON);

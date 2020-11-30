@@ -167,7 +167,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @Override
     @TruffleBoundary
     public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
-        if (left < right && top < bottom && !deferUpdates && destForm.isDisplay()) {
+        if (left < right && top < bottom && !deferUpdates && destForm.isDisplay(image)) {
             canvas.paintImmediately(left, top, right, bottom);
         }
     }

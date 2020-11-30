@@ -3976,7 +3976,7 @@ public final class B2D {
 
     /* BalloonEngineBase>>#loadPoint:from: */
     private void loadPointfrom(final int pointIndex, final PointersObject pointOop) {
-        if (!pointOop.isPoint()) {
+        if (!pointOop.getSqueakClass().isPoint()) {
             PrimitiveFailed.andTransferToInterpreter();
         }
         final Object value0 = fetchObjectofObject(0, pointOop);

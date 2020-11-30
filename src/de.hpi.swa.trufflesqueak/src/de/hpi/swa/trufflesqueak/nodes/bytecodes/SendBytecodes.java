@@ -17,6 +17,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -172,8 +173,9 @@ public final class SendBytecodes {
         }
 
         public static SendSpecialSelectorNode create(final CompiledCodeObject code, final int index, final int selectorIndex) {
-            final NativeObject specialSelector = code.image.getSpecialSelector(selectorIndex);
-            final int numArguments = code.image.getSpecialSelectorNumArgs(selectorIndex);
+            final SqueakImageContext image = code.getSqueakClass().getImage(); // TODO: Refactor
+            final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
+            final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
             return new SendSpecialSelectorNode(code, index, 1, specialSelector, numArguments);
         }
     }

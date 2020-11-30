@@ -16,7 +16,7 @@ import com.oracle.truffle.api.TruffleFile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -447,8 +447,8 @@ public final class SqueakImageReader {
     private void fillInObjects() {
         for (final SqueakImageChunk chunk : chunktable.values()) {
             final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof AbstractSqueakObjectWithHash) {
-                final AbstractSqueakObjectWithHash obj = (AbstractSqueakObjectWithHash) chunkObject;
+            if (chunkObject instanceof AbstractSqueakObjectWithClassAndHash) {
+                final AbstractSqueakObjectWithClassAndHash obj = (AbstractSqueakObjectWithClassAndHash) chunkObject;
                 if (obj.needsSqueakClass()) {
                     obj.setSqueakClass(chunk.getSqClass());
                 }

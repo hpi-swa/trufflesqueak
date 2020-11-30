@@ -16,13 +16,13 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
-public final class FloatObject extends AbstractSqueakObjectWithHash {
+public final class FloatObject extends AbstractSqueakObjectWithClassAndHash {
     public static final int PRECISION = 53;
     public static final int WORD_LENGTH = 2;
     private double doubleValue;
 
     public FloatObject(final SqueakImageContext image) {
-        super(image);
+        super(image, image.floatClass);
     }
 
     private FloatObject(final FloatObject original) {
@@ -31,13 +31,8 @@ public final class FloatObject extends AbstractSqueakObjectWithHash {
     }
 
     public FloatObject(final SqueakImageContext image, final double doubleValue) {
-        super(image);
+        super(image, image.floatClass);
         this.doubleValue = doubleValue;
-    }
-
-    @Override
-    public ClassObject getSqueakClass() {
-        return image.floatClass;
     }
 
     @Override

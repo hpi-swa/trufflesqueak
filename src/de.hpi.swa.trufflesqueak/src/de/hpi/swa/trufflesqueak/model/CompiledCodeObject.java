@@ -112,8 +112,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         bytes = bc;
     }
 
-    private CompiledCodeObject(final CompiledCodeObject code, final CompiledCodeObject outerMethod, final int numArguments, final int numCopied, final int bytecodeOffset, final int blockSize) {
-        this(code.image, 0, numCopied, (code.isCompiledBlock() ? code.getOffset() : 0) + bytecodeOffset, code.image.getCompiledBlockClass());
+    private CompiledCodeObject(final SqueakImageContext image, final CompiledCodeObject code, final CompiledCodeObject outerMethod, final int numArguments, final int numCopied,
+                    final int bytecodeOffset, final int blockSize) {
+        this(image, 0, numCopied, (code.isCompiledBlock() ? code.getOffset() : 0) + bytecodeOffset, image.getCompiledBlockClass());
         final Object[] outerLiterals = outerMethod.getLiterals();
         final int outerLiteralsLength = outerLiterals.length;
         literals = new Object[outerLiteralsLength + 1];
@@ -155,7 +156,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public static CompiledCodeObject createBlock(final CompiledCodeObject code, final CompiledCodeObject outerMethod, final int numArguments, final int numCopied, final int bytecodeOffset,
                     final int blockSize) {
-        return new CompiledCodeObject(code, outerMethod, numArguments, numCopied, bytecodeOffset, blockSize);
+        return new CompiledCodeObject(code.getSqueakClass().getImage(), code, outerMethod, numArguments, numCopied, bytecodeOffset, blockSize);
     }
 
     private void setLiteralsAndBytes(final Object[] literals, final byte[] bytes) {
@@ -560,7 +561,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      */
 
     public boolean isCompiledMethod() {
-        return getSqueakClass() == image.compiledMethodClass;
+        return getSqueakClass().isCompiledMethodClass();
     }
 
     /* Answer the program counter for the receiver's first bytecode. */
@@ -657,7 +658,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      */
 
     public boolean isCompiledBlock() {
-        return getSqueakClass() == image.getCompiledBlockClass();
+        return getSqueakClass().isCompiledBlock();
     }
 
     public CompiledCodeObject getMethod() {

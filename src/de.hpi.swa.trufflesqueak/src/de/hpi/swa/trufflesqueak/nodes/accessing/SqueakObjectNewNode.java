@@ -13,7 +13,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
+import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -43,17 +43,17 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return SqueakObjectNewNodeGen.getUncached();
     }
 
-    public final AbstractSqueakObjectWithHash execute(final SqueakImageContext image, final ClassObject classObject) {
+    public final AbstractSqueakObjectWithClassAndHash execute(final SqueakImageContext image, final ClassObject classObject) {
         return execute(image, classObject, 0);
     }
 
-    public final AbstractSqueakObjectWithHash execute(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
+    public final AbstractSqueakObjectWithClassAndHash execute(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
         CompilerAsserts.partialEvaluationConstant(image);
         image.reportNewAllocationRequest();
         return image.reportNewAllocationResult(executeAllocation(image, classObject, extraSize));
     }
 
-    protected abstract AbstractSqueakObjectWithHash executeAllocation(SqueakImageContext image, ClassObject classObject, int extraSize);
+    protected abstract AbstractSqueakObjectWithClassAndHash executeAllocation(SqueakImageContext image, ClassObject classObject, int extraSize);
 
     @Specialization(guards = "classObject.isZeroSized()")
     protected static final EmptyObject doEmpty(final SqueakImageContext image, final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {

@@ -31,7 +31,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -118,7 +117,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             CompilerAsserts.neverPartOfCompilation();
             if (method.getNumLiterals() > 0) {
                 final Object literal1 = method.getLiterals()[1];
-                if (literal1 instanceof PointersObject && ((PointersObject) literal1).getSqueakClass().includesExternalFunctionBehavior(SqueakLanguage.getContext())) {
+                if (literal1 instanceof PointersObject && ((PointersObject) literal1).getSqueakClass().includesExternalFunctionBehavior()) {
                     externalFunction = (PointersObject) literal1;
                     return true;
                 }
@@ -665,7 +664,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected static final long doMaxHash(@SuppressWarnings("unused") final Object receiver) {
-            return AbstractSqueakObjectWithHash.IDENTITY_HASH_MASK;
+            return AbstractSqueakObjectWithClassAndHash.IDENTITY_HASH_MASK;
         }
     }
 

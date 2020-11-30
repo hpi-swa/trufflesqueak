@@ -55,7 +55,7 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private Object storage;
 
     public NativeObject(final SqueakImageContext image) { // constructor for special selectors
-        super(image, AbstractSqueakObjectWithHash.HASH_UNINITIALIZED, null);
+        super(image, AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED, null);
         storage = ArrayUtils.EMPTY_ARRAY;
     }
 
@@ -352,19 +352,19 @@ public final class NativeObject extends AbstractSqueakObjectWithClassAndHash {
         }
     }
 
-    public boolean isAllowedInHeadlessMode() {
-        return !isDebugErrorSelector() && !isDebugSyntaxErrorSelector();
+    public boolean isAllowedInHeadlessMode(final SqueakImageContext image) {
+        return !isDebugErrorSelector(image) && !isDebugSyntaxErrorSelector(image);
     }
 
-    public boolean isDebugErrorSelector() {
+    public boolean isDebugErrorSelector(final SqueakImageContext image) {
         return this == image.getDebugErrorSelector();
     }
 
-    public boolean isDebugSyntaxErrorSelector() {
+    public boolean isDebugSyntaxErrorSelector(final SqueakImageContext image) {
         return this == image.getDebugSyntaxErrorSelector();
     }
 
-    public boolean isDoesNotUnderstand() {
+    public boolean isDoesNotUnderstand(final SqueakImageContext image) {
         return this == image.doesNotUnderstand;
     }
 

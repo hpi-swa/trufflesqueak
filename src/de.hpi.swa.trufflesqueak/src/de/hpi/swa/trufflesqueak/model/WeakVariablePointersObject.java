@@ -26,26 +26,31 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public final class WeakVariablePointersObject extends AbstractPointersObject {
     private static final WeakRef NIL_REF = new WeakRef(NilObject.SINGLETON);
     private WeakRef[] variablePart;
+    private final ReferenceQueue<Object> weakPointersQueue;
 
     public WeakVariablePointersObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
+        weakPointersQueue = image.weakPointersQueue;
     }
 
     public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final ObjectLayout layout, final int variableSize) {
         super(image, classObject, layout);
         variablePart = new WeakRef[variableSize];
         Arrays.fill(variablePart, NIL_REF);
+        weakPointersQueue = image.weakPointersQueue;
     }
 
     public WeakVariablePointersObject(final SqueakImageContext image, final ClassObject classObject, final int variableSize) {
         super(image, classObject);
         variablePart = new WeakRef[variableSize];
         Arrays.fill(variablePart, NIL_REF);
+        weakPointersQueue = image.weakPointersQueue;
     }
 
     private WeakVariablePointersObject(final WeakVariablePointersObject original) {
         super(original);
         variablePart = original.variablePart.clone();
+        weakPointersQueue = original.weakPointersQueue;
     }
 
     @Override
@@ -101,7 +106,7 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
             nilProfile.enter();
             UnsafeUtils.putWeakRef(variablePart, index, NIL_REF);
         } else {
-            UnsafeUtils.putWeakRef(variablePart, index, new WeakRef(value, primitiveProfile.profile(SqueakGuards.isUsedJavaPrimitive(value)) ? null : image.weakPointersQueue));
+            UnsafeUtils.putWeakRef(variablePart, index, new WeakRef(value, primitiveProfile.profile(SqueakGuards.isUsedJavaPrimitive(value)) ? null : weakPointersQueue));
         }
     }
 

@@ -67,7 +67,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public Object getHiddenObject() {
-        assert getSqueakClass() == image.pointClass && object2 != NilObject.SINGLETON : "Object not a handle with hidden object";
+        assert getSqueakClass().isPoint() && object2 != NilObject.SINGLETON : "Object not a handle with hidden object";
         return object2;
     }
 
@@ -84,7 +84,7 @@ public final class PointersObject extends AbstractPointersObject {
             writeNode.execute(this, i, pointersObject[i]);
         }
         assert size() == pointersObject.length;
-        if (isProcess()) { /* Collect suspended contexts */
+        if (getSqueakClass().isProcess()) { /* Collect suspended contexts */
             final AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.getUncached();
             final ContextObject suspendedContext = (ContextObject) readNode.execute(this, PROCESS.SUSPENDED_CONTEXT);
             chunk.getReader().getSuspendedContexts().put(this, suspendedContext);
@@ -108,16 +108,12 @@ public final class PointersObject extends AbstractPointersObject {
         return readNode.execute(this, LINKED_LIST.FIRST_LINK) == NilObject.SINGLETON;
     }
 
-    public boolean isDisplay() {
+    public boolean isDisplay(final SqueakImageContext image) {
         return this == image.getSpecialObject(SPECIAL_OBJECT.THE_DISPLAY);
     }
 
     public boolean isPoint() {
-        return getSqueakClass() == image.pointClass;
-    }
-
-    public boolean isProcess() {
-        return getSqueakClass() == image.processClass;
+        return getSqueakClass().isPoint();
     }
 
     public int[] getFormBits(final AbstractPointersObjectReadNode readNode) {

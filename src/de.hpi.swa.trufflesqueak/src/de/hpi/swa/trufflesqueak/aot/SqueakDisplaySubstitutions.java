@@ -106,7 +106,7 @@ final class Target_de_hpi_swa_trufflesqueak_io_SqueakDisplay implements SqueakDi
 
     @Override
     public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
-        if (left < right && top < bottom && !deferUpdates && destForm.isDisplay()) {
+        if (left < right && top < bottom && !deferUpdates && destForm.isDisplay(image)) {
             paintImmediately(left, right, top, bottom);
         }
     }

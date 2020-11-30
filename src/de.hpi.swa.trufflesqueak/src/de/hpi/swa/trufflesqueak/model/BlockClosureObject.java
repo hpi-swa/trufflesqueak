@@ -29,7 +29,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
 @ExportLibrary(InteropLibrary.class)
-public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
+public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHash {
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledCodeObject block;
     @CompilationFinal private long startPC = -1;
@@ -37,17 +37,16 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
     @CompilationFinal(dimensions = 0) private Object[] copied;
 
     private BlockClosureObject(final SqueakImageContext image) {
-        super(image);
+        super(image, image.blockClosureClass);
     }
 
     private BlockClosureObject(final SqueakImageContext image, final long hash) {
-        super(image, hash);
+        super(image, hash, image.blockClosureClass);
         copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
-    public BlockClosureObject(final SqueakImageContext image, final CompiledCodeObject block, final int startPC, final int numArgs, final Object[] copied,
-                    final ContextObject outerContext) {
-        super(image);
+    public BlockClosureObject(final SqueakImageContext image, final CompiledCodeObject block, final int startPC, final int numArgs, final Object[] copied, final ContextObject outerContext) {
+        super(image, image.blockClosureClass);
         assert block.getInitialPC() == startPC;
         this.block = block;
         this.outerContext = outerContext;
@@ -73,11 +72,6 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithHash {
         final BlockClosureObject result = new BlockClosureObject(image);
         result.copied = new Object[extraSize];
         return result;
-    }
-
-    @Override
-    public ClassObject getSqueakClass() {
-        return image.blockClosureClass;
     }
 
     @Override

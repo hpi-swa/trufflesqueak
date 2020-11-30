@@ -132,10 +132,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
         protected final DispatchSendNode createDispatchSendNode(final NativeObject selector) {
-            if (lookupContext().isHeadless()) {
-                if (selector.isDebugErrorSelector()) {
+            final SqueakImageContext image = lookupContext();
+            if (image.isHeadless()) {
+                if (selector.isDebugErrorSelector(image)) {
                     return new DispatchSendHeadlessErrorNode();
-                } else if (selector.isDebugSyntaxErrorSelector()) {
+                } else if (selector.isDebugSyntaxErrorSelector(image)) {
                     return new DispatchSendSyntaxErrorNode();
                 }
             }

@@ -55,6 +55,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     private final CyclicAssumption methodDictStable = new CyclicAssumption("Method dictionary stability");
     private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
 
+    private final SqueakImageContext image;
     @CompilationFinal private boolean instancesAreClasses;
 
     private ClassObject superclass;
@@ -68,14 +69,17 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public ClassObject(final SqueakImageContext image) {
         super(image);
+        this.image = image;
     }
 
     public ClassObject(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
         super(image, hash, squeakClass);
+        this.image = image;
     }
 
     private ClassObject(final ClassObject original, final ArrayObject copiedInstanceVariablesOrNull) {
         super(original);
+        image = original.image;
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
         methodDict = original.methodDict.shallowCopy();
@@ -87,9 +91,14 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
         super(image, image.getNextClassHash(), classObject);
+        this.image = image;
         pointers = ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), NilObject.SINGLETON);
         instancesAreClasses = classObject.isMetaClass();
         // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
+    }
+
+    public SqueakImageContext getImage() {
+        return image;
     }
 
     public long rehashForClassTable() {
@@ -252,6 +261,18 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.messageClass;
     }
 
+    public boolean isMetaClass() {
+        return this == image.metaClass;
+    }
+
+    public boolean isPoint() {
+        return this == image.pointClass;
+    }
+
+    public boolean isProcess() {
+        return this == image.processClass;
+    }
+
     public boolean isSemaphoreClass() {
         return this == image.semaphoreClass;
     }
@@ -282,10 +303,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return false;
     }
 
-    public boolean includesExternalFunctionBehavior(final SqueakImageContext theImage) {
-        final Object externalFunctionClass = theImage.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
+    public boolean includesExternalFunctionBehavior() {
+        final Object externalFunctionClass = image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION);
         if (externalFunctionClass instanceof ClassObject) {
-            return includesBehavior((ClassObject) theImage.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
+            return includesBehavior((ClassObject) image.getSpecialObject(SPECIAL_OBJECT.CLASS_EXTERNAL_FUNCTION));
         } else {
             return false;
         }
@@ -297,7 +318,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
      */
     @Override
     public void fillin(final SqueakImageChunk chunk) {
-        final SqueakImageContext image = chunk.getImage();
         if (methodDict == null) {
             if (needsSqueakHash()) {
                 final int hash = chunk.getHash();
@@ -445,7 +465,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             }
             lookupClass = lookupClass.getSuperclassOrNull();
         }
-        assert !selector.isDoesNotUnderstand() : "Could not find does not understand method";
+        assert !selector.isDoesNotUnderstand(image) : "Could not find does not understand method";
         return null; /* Signals a doesNotUnderstand. */
     }
 
@@ -549,6 +569,10 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
 
     public boolean isCompiledMethodClass() {
         return this == image.compiledMethodClass;
+    }
+
+    public boolean isCompiledBlock() {
+        return this == image.getCompiledBlockClass();
     }
 
     public boolean isMethodContextClass() {
@@ -655,7 +679,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                         @Shared("newObjectNode") @Cached final SqueakObjectNewNode newObjectNode,
                         @CachedLibrary(limit = "2") final InteropLibrary initializer,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext theImage) throws UnsupportedTypeException {
-            final AbstractSqueakObjectWithHash newObject = newObjectNode.execute(theImage, receiver);
+            final AbstractSqueakObjectWithClassAndHash newObject = newObjectNode.execute(theImage, receiver);
             initializeObject(arguments, initializer, newObject);
             return newObject;
         }
@@ -667,7 +691,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
                         @CachedLibrary(limit = "2") final InteropLibrary initializer,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext theImage) throws UnsupportedTypeException {
             if (functions.fitsInInt(arguments[0])) {
-                final AbstractSqueakObjectWithHash newObject;
+                final AbstractSqueakObjectWithClassAndHash newObject;
                 try {
                     newObject = newObjectNode.execute(theImage, receiver, functions.asInt(arguments[0]));
                 } catch (final UnsupportedMessageException e) {
@@ -685,7 +709,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             throw ArityException.create(1, arguments.length);
         }
 
-        private static void initializeObject(final Object[] arguments, final InteropLibrary initializer, final AbstractSqueakObjectWithHash newObject) throws UnsupportedTypeException {
+        private static void initializeObject(final Object[] arguments, final InteropLibrary initializer, final AbstractSqueakObjectWithClassAndHash newObject) throws UnsupportedTypeException {
             try {
                 initializer.invokeMember(newObject, "initialize");
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {

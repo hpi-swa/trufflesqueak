@@ -10,7 +10,9 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -22,6 +24,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -81,7 +84,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!receiver.hasMaterializedSender()")
-        protected static final AbstractSqueakObject doFindNextAvoidingMaterialization(final ContextObject receiver, final ContextObject previousContext) {
+        protected static final AbstractSqueakObject doFindNextAvoidingMaterialization(final ContextObject receiver, final ContextObject previousContext,
+                        @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> ref) {
             // Sender is not materialized, so avoid materialization by walking Truffle frames.
             final boolean[] foundMyself = {false};
             final AbstractSqueakObject result = Truffle.getRuntime().iterateFrames((frameInstance) -> {
@@ -102,7 +106,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         if (context != null) {
                             return context;
                         } else {
-                            return ContextObject.create(frameInstance);
+                            return ContextObject.create(ref.get(), frameInstance);
                         }
                     }
                 }
@@ -226,7 +230,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         @Specialization(guards = {"!receiver.hasMaterializedSender()"})
-        protected final AbstractSqueakObject findNextAvoidingMaterialization(final ContextObject receiver) {
+        protected final AbstractSqueakObject findNextAvoidingMaterialization(final ContextObject receiver,
+                        @CachedContext(SqueakLanguage.class) final ContextReference<SqueakImageContext> ref) {
             final boolean[] foundMyself = new boolean[1];
             final Object[] lastSender = new Object[1];
             final ContextObject result = Truffle.getRuntime().iterateFrames(frameInstance -> {
@@ -254,7 +259,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         if (context != null) {
                             return context;
                         } else {
-                            return ContextObject.create(frameInstance);
+                            return ContextObject.create(ref.get(), frameInstance);
                         }
                     } else {
                         lastSender[0] = FrameAccess.getSender(current);

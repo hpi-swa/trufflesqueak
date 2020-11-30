@@ -35,7 +35,6 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithHash;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
@@ -106,9 +105,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         if (argument == fromPointer) {
                             final Object toPointer = toPointers[j];
                             arguments[i] = toPointer;
-                            AbstractSqueakObjectWithHash.copyHash(fromPointer, toPointer, copyHash);
-                        } else if (argument instanceof AbstractSqueakObjectWithHash) {
-                            ((AbstractSqueakObjectWithHash) argument).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
+                            AbstractSqueakObjectWithClassAndHash.copyHash(fromPointer, toPointer, copyHash);
+                        } else if (argument instanceof AbstractSqueakObjectWithClassAndHash) {
+                            ((AbstractSqueakObjectWithClassAndHash) argument).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
                         }
                     }
                 }
@@ -121,7 +120,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         if (context == fromPointer) {
                             final Object toPointer = toPointers[j];
                             FrameAccess.setContext(current, blockOrMethod, (ContextObject) toPointer);
-                            AbstractSqueakObjectWithHash.copyHash(fromPointer, toPointer, copyHash);
+                            AbstractSqueakObjectWithClassAndHash.copyHash(fromPointer, toPointer, copyHash);
                         } else {
                             context.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
                         }
@@ -144,9 +143,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                                 final Object toPointer = toPointers[j];
                                 assert toPointer != null : "Unexpected `null` value";
                                 current.setObject(slot, toPointer);
-                                AbstractSqueakObjectWithHash.copyHash(fromPointer, toPointer, copyHash);
-                            } else if (stackObject instanceof AbstractSqueakObjectWithHash) {
-                                ((AbstractSqueakObjectWithHash) stackObject).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
+                                AbstractSqueakObjectWithClassAndHash.copyHash(fromPointer, toPointer, copyHash);
+                            } else if (stackObject instanceof AbstractSqueakObjectWithClassAndHash) {
+                                ((AbstractSqueakObjectWithClassAndHash) stackObject).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
                             }
                         }
                     }
@@ -183,7 +182,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         public static final int NEW_CACHE_SIZE = 6;
 
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
-        protected static final AbstractSqueakObjectWithHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
+        protected static final AbstractSqueakObjectWithClassAndHash newDirect(@SuppressWarnings("unused") final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached final SqueakObjectNewNode newNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -196,7 +195,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newDirect")
-        protected static final AbstractSqueakObjectWithHash newIndirect(final ClassObject receiver,
+        protected static final AbstractSqueakObjectWithClassAndHash newIndirect(final ClassObject receiver,
                         @Cached final SqueakObjectNewNode newNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
@@ -214,7 +213,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         public static final int NEW_CACHE_SIZE = 6;
 
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(cachedReceiver, size)"}, assumptions = {"cachedReceiver.getClassFormatStable()"})
-        protected static final AbstractSqueakObjectWithHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
+        protected static final AbstractSqueakObjectWithClassAndHash newWithArgDirect(@SuppressWarnings("unused") final ClassObject receiver, final long size,
                         @Cached("createIdentityProfile()") final IntValueProfile sizeProfile,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached final SqueakObjectNewNode newNode,
@@ -228,7 +227,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
-        protected static final AbstractSqueakObjectWithHash newWithArg(final ClassObject receiver, final long size,
+        protected static final AbstractSqueakObjectWithClassAndHash newWithArg(final ClassObject receiver, final long size,
                         @Cached final SqueakObjectNewNode newNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
@@ -331,7 +330,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doAbstractSqueakObjectWithHash(final AbstractSqueakObjectWithHash object,
+        protected static final long doAbstractSqueakObjectWithClassAndHash(final AbstractSqueakObjectWithClassAndHash object,
                         @Cached final BranchProfile needsHashProfile) {
             return object.getSqueakHash(needsHashProfile);
         }
@@ -446,9 +445,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final Collection<AbstractSqueakObjectWithHash> allInstances) {
+        private static AbstractSqueakObject getNext(final AbstractSqueakObjectWithClassAndHash receiver, final Collection<AbstractSqueakObjectWithClassAndHash> allInstances) {
             boolean foundMyself = false;
-            for (final AbstractSqueakObjectWithHash instance : allInstances) {
+            for (final AbstractSqueakObjectWithClassAndHash instance : allInstances) {
                 if (instance == receiver) {
                     foundMyself = true;
                 } else if (foundMyself) {

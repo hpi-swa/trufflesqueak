@@ -41,15 +41,15 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Child private UnwindContextChainNode unwindContextChainNode = UnwindContextChainNode.create();
     @Child private IndirectCallNode callNode = IndirectCallNode.create();
 
-    private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean isImageResuming) {
+    private ExecuteTopLevelContextNode(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
         super(language, TOP_LEVEL_FRAME_DESCRIPTOR);
-        image = code.image;
+        this.image = image;
         initialContext = context;
         this.isImageResuming = isImageResuming;
     }
 
-    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
-        return new ExecuteTopLevelContextNode(language, context, context.getBlockOrMethod(), isImageResuming);
+    public static ExecuteTopLevelContextNode create(final SqueakImageContext image, final SqueakLanguage language, final ContextObject context, final boolean isImageResuming) {
+        return new ExecuteTopLevelContextNode(image, language, context, isImageResuming);
     }
 
     @Override

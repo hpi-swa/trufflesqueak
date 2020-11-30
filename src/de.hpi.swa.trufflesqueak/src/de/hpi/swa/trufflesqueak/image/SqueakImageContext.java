@@ -230,13 +230,13 @@ public final class SqueakImageContext {
     }
 
     public Object lookup(final String member) {
-        final Object symbol = asByteString(member).send("asSymbol");
-        return smalltalk.send("at:ifAbsent:", symbol, NilObject.SINGLETON);
+        final Object symbol = asByteString(member).send(this, "asSymbol");
+        return smalltalk.send(this, "at:ifAbsent:", symbol, NilObject.SINGLETON);
     }
 
     /* Returns ClassObject if present, nil otherwise. */
     public Object classNamed(final String className) {
-        return smalltalk.send("classNamed:", asByteString(className));
+        return smalltalk.send(this, "classNamed:", asByteString(className));
     }
 
     public boolean patch(final SqueakLanguage.Env newEnv) {
@@ -253,7 +253,7 @@ public final class SqueakImageContext {
         final ContextObject activeContext = (ContextObject) activeProcess.instVarAt0Slow(PROCESS.SUSPENDED_CONTEXT);
         activeContext.setProcess(activeProcess);
         activeProcess.instVarAtPut0Slow(PROCESS.SUSPENDED_CONTEXT, NilObject.SINGLETON);
-        return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
+        return ExecuteTopLevelContextNode.create(this, getLanguage(), activeContext, true);
     }
 
     @TruffleBoundary
@@ -282,10 +282,10 @@ public final class SqueakImageContext {
          */
 
         if (parserSharedInstance == null) {
-            parserSharedInstance = (PointersObject) ((ClassObject) classNamed("Parser")).send("new");
+            parserSharedInstance = (PointersObject) ((ClassObject) classNamed("Parser")).send(this, "new");
             final Object polyglotRequestorClassOrNil = classNamed("PolyglotRequestor");
             if (polyglotRequestorClassOrNil instanceof ClassObject) {
-                requestorSharedInstanceOrNil = (AbstractSqueakObject) ((ClassObject) polyglotRequestorClassOrNil).send("default");
+                requestorSharedInstanceOrNil = (AbstractSqueakObject) ((ClassObject) polyglotRequestorClassOrNil).send(this, "default");
             } else {
                 requestorSharedInstanceOrNil = NilObject.SINGLETON;
             }
@@ -293,11 +293,11 @@ public final class SqueakImageContext {
 
         final NativeObject smalltalkSource = asByteString(source);
         if (requestorSharedInstanceOrNil != NilObject.SINGLETON) {
-            ((AbstractSqueakObjectWithClassAndHash) requestorSharedInstanceOrNil).send("currentSource:", smalltalkSource);
+            ((AbstractSqueakObjectWithClassAndHash) requestorSharedInstanceOrNil).send(this, "currentSource:", smalltalkSource);
         }
         final PointersObject methodNode;
         try {
-            methodNode = (PointersObject) parserSharedInstance.send("parse:class:noPattern:notifying:ifFail:",
+            methodNode = (PointersObject) parserSharedInstance.send(this, "parse:class:noPattern:notifying:ifFail:",
                             smalltalkSource, nilClass, BooleanObject.TRUE, requestorSharedInstanceOrNil, BlockClosureObject.create(this, 0));
         } catch (final ProcessSwitch e) {
             /*
@@ -307,7 +307,7 @@ public final class SqueakImageContext {
              */
             throw CompilerDirectives.shouldNotReachHere("Unexpected process switch detected during parse request", e);
         }
-        final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send("generate");
+        final CompiledCodeObject doItMethod = (CompiledCodeObject) methodNode.send(this, "generate");
 
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
         doItContext.setReceiver(NilObject.SINGLETON);
@@ -316,7 +316,7 @@ public final class SqueakImageContext {
         doItContext.setStackPointer(doItMethod.getNumTemps());
         doItContext.setSenderUnsafe(isExternalRequest ? InteropSenderMarker.SINGLETON : NilObject.SINGLETON);
         doItContext.setProcess(GetActiveProcessNode.getSlow(this));
-        return ExecuteTopLevelContextNode.create(getLanguage(), doItContext, false);
+        return ExecuteTopLevelContextNode.create(this, getLanguage(), doItContext, false);
     }
 
     /*

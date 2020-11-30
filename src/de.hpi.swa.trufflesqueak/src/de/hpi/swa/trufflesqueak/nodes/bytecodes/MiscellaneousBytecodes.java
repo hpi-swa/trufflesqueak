@@ -38,7 +38,7 @@ public final class MiscellaneousBytecodes {
 
         public CallPrimitiveNode(final CompiledCodeObject method, final int index, final byte byte1, final byte byte2) {
             super(method, index, NUM_BYTECODES);
-            assert method.getSqueakClass() == method.image.compiledMethodClass;
+            assert method.hasPrimitive();
             primitiveIndex = Byte.toUnsignedInt(byte1) + (Byte.toUnsignedInt(byte2) << 8);
             primitiveNode = PrimitiveNodeFactory.forIndex(method, false, primitiveIndex);
             assert method.hasPrimitive();

@@ -245,7 +245,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     private Object reduceIfPossible(final BigInteger value) {
-        return reduceIfPossible(image, value);
+        return reduceIfPossible(getSqueakClass().getImage(), value);
     }
 
     private static Object reduceIfPossible(final SqueakImageContext image, final BigInteger value) {
@@ -362,12 +362,12 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public static Object subtract(final long a, final LargeIntegerObject b) {
-        return reduceIfPossible(b.image, BigInteger.valueOf(a).subtract(b.integer));
+        return b.reduceIfPossible(BigInteger.valueOf(a).subtract(b.integer));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
     public Object multiply(final LargeIntegerObject b) {
-        return reduceIfPossible(image, integer.multiply(b.integer));
+        return reduceIfPossible(integer.multiply(b.integer));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)
@@ -375,7 +375,7 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
         if (b == 0) {
             return 0L;
         }
-        return reduceIfPossible(image, integer.multiply(BigInteger.valueOf(b)));
+        return reduceIfPossible(integer.multiply(BigInteger.valueOf(b)));
     }
 
     @TruffleBoundary(transferToInterpreterOnException = false)

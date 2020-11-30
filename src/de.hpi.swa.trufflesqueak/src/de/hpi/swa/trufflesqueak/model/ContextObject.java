@@ -38,7 +38,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
 
-public final class ContextObject extends AbstractSqueakObjectWithHash {
+public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private static final int NIL_PC_VALUE = -1;
     @CompilationFinal private static Class<?> concreteMaterializedFrameClass;
 
@@ -49,18 +49,18 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
     private boolean escaped;
 
     private ContextObject(final SqueakImageContext image, final long hash) {
-        super(image, hash);
+        super(image, hash, image.methodContextClass);
         truffleFrame = null;
     }
 
     private ContextObject(final SqueakImageContext image, final int size) {
-        super(image);
+        super(image, image.methodContextClass);
         truffleFrame = null;
         this.size = size;
     }
 
     private ContextObject(final SqueakImageContext image, final MaterializedFrame truffleFrame, final int size) {
-        super(image);
+        super(image, image.methodContextClass);
         assert FrameAccess.getSender(truffleFrame) != null;
         assert FrameAccess.getContext(truffleFrame) == null;
         assert FrameAccess.getBlockOrMethod(truffleFrame).getSqueakContextSize() == size;
@@ -102,20 +102,15 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return new ContextObject(image, hash);
     }
 
-    public static ContextObject create(final FrameInstance frameInstance) {
+    public static ContextObject create(final SqueakImageContext image, final FrameInstance frameInstance) {
         final Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-        return create(frame.materialize(), FrameAccess.getBlockOrMethod(frame));
+        return create(image, frame.materialize(), FrameAccess.getBlockOrMethod(frame));
     }
 
-    public static ContextObject create(final MaterializedFrame frame, final CompiledCodeObject blockOrMethod) {
-        final ContextObject context = new ContextObject(blockOrMethod.image, frame, blockOrMethod.getSqueakContextSize());
+    public static ContextObject create(final SqueakImageContext image, final MaterializedFrame frame, final CompiledCodeObject blockOrMethod) {
+        final ContextObject context = new ContextObject(image, frame, blockOrMethod.getSqueakContextSize());
         FrameAccess.setContext(frame, blockOrMethod, context);
         return context;
-    }
-
-    @Override
-    public ClassObject getSqueakClass() {
-        return image.methodContextClass;
     }
 
     /**
@@ -534,10 +529,10 @@ public final class ContextObject extends AbstractSqueakObjectWithHash {
         return arguments;
     }
 
-    public void transferTo(final PointersObject newProcess, final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode,
+    public void transferTo(final SqueakImageContext image, final PointersObject newProcess, final AbstractPointersObjectReadNode readNode, final AbstractPointersObjectWriteNode writeNode,
                     final GetActiveProcessNode getActiveProcessNode) {
         // Record a process to be awakened on the next interpreter cycle.
-        final PointersObject scheduler = newProcess.image.getScheduler();
+        final PointersObject scheduler = image.getScheduler();
         assert newProcess != getActiveProcessNode.execute() : "trying to switch to already active process";
         // overwritten in next line.
         final PointersObject oldProcess = getActiveProcessNode.execute();

@@ -27,10 +27,6 @@ public final class EnterCodeNode extends RootNode {
         executeContextNode = ExecuteContextNode.create(code, false);
     }
 
-    protected EnterCodeNode(final EnterCodeNode codeNode) {
-        this(codeNode.code.image.getLanguage(), codeNode.code);
-    }
-
     public static EnterCodeNode create(final SqueakLanguage language, final CompiledCodeObject code) {
         return new EnterCodeNode(language, code);
     }

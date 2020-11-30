@@ -94,7 +94,7 @@ public abstract class AbstractSqueakTestCase {
         for (int i = 0; i < numTemps - arguments.length; i++) {
             testContext.push(NilObject.SINGLETON);
         }
-        return ExecuteTopLevelContextNode.create(null, testContext, false);
+        return ExecuteTopLevelContextNode.create(image, null, testContext, false);
     }
 
     protected Object runMethod(final Object receiver, final int... intbytes) {

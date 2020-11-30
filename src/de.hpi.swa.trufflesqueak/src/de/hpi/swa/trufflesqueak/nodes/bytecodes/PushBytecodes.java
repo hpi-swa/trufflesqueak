@@ -8,6 +8,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -87,6 +88,7 @@ public final class PushBytecodes {
         @Child private FrameStackPopNNode popNNode;
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
         @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+        @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
 
         private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte i, final byte j, final byte k) {
             super(code, index, numBytecodes);
@@ -137,7 +139,15 @@ public final class PushBytecodes {
         private BlockClosureObject createClosure(final VirtualFrame frame) {
             final Object[] copiedValues = popNNode.execute(frame);
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
-            return new BlockClosureObject(code.image, getBlock(frame), cachedStartPC, numArgs, copiedValues, outerContext);
+            return new BlockClosureObject(getSqueakImageContext(), getBlock(frame), cachedStartPC, numArgs, copiedValues, outerContext);
+        }
+
+        private SqueakImageContext getSqueakImageContext() {
+            if (contextReference == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                contextReference = lookupContextReference(SqueakLanguage.class);
+            }
+            return contextReference.get();
         }
 
         @Override

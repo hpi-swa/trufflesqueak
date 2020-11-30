@@ -122,8 +122,8 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Child private AbstractPointersObjectReadNode readExternalLibNode = AbstractPointersObjectReadNode.create();
         @Child private AbstractPointersObjectReadNode readArgumentTypeNode = AbstractPointersObjectReadNode.create();
 
-        protected static final PointersObject asExternalFunctionOrFail(final SqueakImageContext image, final Object object) {
-            if (!(object instanceof PointersObject && ((PointersObject) object).getSqueakClass().includesExternalFunctionBehavior(image))) {
+        protected static final PointersObject asExternalFunctionOrFail(final Object object) {
+            if (!(object instanceof PointersObject && ((PointersObject) object).getSqueakClass().includesExternalFunctionBehavior())) {
                 throw PrimitiveFailed.andTransferToInterpreter(FFI_ERROR.NOT_FUNCTION);
             }
             return (PointersObject) object;
@@ -242,7 +242,7 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doCalloutWithArgs(final PointersObject receiver, final ArrayObject argArray,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, asExternalFunctionOrFail(image, receiver), receiver, getObjectArrayNode.execute(argArray));
+            return doCallout(image, asExternalFunctionOrFail(receiver), receiver, getObjectArrayNode.execute(argArray));
         }
     }
 
