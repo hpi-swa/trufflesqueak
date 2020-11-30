@@ -97,7 +97,7 @@ public final class PushBytecodes {
         }
 
         public PushClosureNode(final PushClosureNode node) {
-            super(node.code, node.index, node.numBytecodes);
+            super(node.code, node.index, node.getNumBytecodes());
             numArgs = node.numArgs;
             numCopied = node.numCopied;
             blockSize = node.blockSize;
@@ -158,7 +158,7 @@ public final class PushBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            final int start = index + numBytecodes;
+            final int start = getSuccessorIndex();
             final int end = start + blockSize;
             return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;
         }

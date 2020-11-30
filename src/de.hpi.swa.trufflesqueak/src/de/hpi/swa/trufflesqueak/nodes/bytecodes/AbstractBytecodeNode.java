@@ -19,15 +19,15 @@ import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public abstract class AbstractBytecodeNode extends AbstractNode {
     protected final CompiledCodeObject code;
-    protected final int numBytecodes;
     protected final int index;
+    private final int successorIndex;
 
     private SourceSection sourceSection;
 
     protected AbstractBytecodeNode(final AbstractBytecodeNode original) {
         code = original.code;
         index = original.index;
-        numBytecodes = original.numBytecodes;
+        successorIndex = original.successorIndex;
         sourceSection = original.sourceSection;
     }
 
@@ -38,13 +38,13 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
         this.code = code;
         this.index = index;
-        this.numBytecodes = numBytecodes;
+        successorIndex = index + numBytecodes;
     }
 
     public abstract void executeVoid(VirtualFrame frame);
 
     public final int getSuccessorIndex() {
-        return index + numBytecodes;
+        return successorIndex;
     }
 
     public final int getIndex() {
@@ -52,7 +52,7 @@ public abstract class AbstractBytecodeNode extends AbstractNode {
     }
 
     public final int getNumBytecodes() {
-        return numBytecodes;
+        return successorIndex - index;
     }
 
     protected final ContextObject getContext(final VirtualFrame frame) {

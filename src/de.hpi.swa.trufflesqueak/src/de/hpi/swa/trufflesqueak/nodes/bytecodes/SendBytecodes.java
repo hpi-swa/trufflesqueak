@@ -46,7 +46,7 @@ public final class SendBytecodes {
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
-            this(original.code, original.index, original.numBytecodes, original.argumentCount);
+            this(original.code, original.index, original.getNumBytecodes(), original.argumentCount);
         }
 
         @Override
