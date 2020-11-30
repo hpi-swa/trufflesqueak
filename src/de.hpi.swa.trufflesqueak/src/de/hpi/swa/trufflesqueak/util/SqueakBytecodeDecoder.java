@@ -10,7 +10,8 @@ import com.oracle.truffle.api.CompilerAsserts;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalFalseJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalTrueJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DoubleExtendedDoAnythingNode;
@@ -213,13 +214,13 @@ public final class SqueakBytecodeDecoder {
             case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
                 return new UnconditionalJumpNode(code, index, 1, b);
             case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:
-                return new ConditionalJumpNode(code, index, 1, b);
+                return new ConditionalFalseJumpNode(code, index, b);
             case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167:
                 return new UnconditionalJumpNode(code, index, 2, b, bytecode[index + 1]);
             case 168: case 169: case 170: case 171:
-                return new ConditionalJumpNode(code, index, 2, b, bytecode[index + 1], true);
+                return new ConditionalTrueJumpNode(code, index, b, bytecode[index + 1]);
             case 172: case 173: case 174: case 175:
-                return new ConditionalJumpNode(code, index, 2, b, bytecode[index + 1], false);
+                return new ConditionalFalseJumpNode(code, index, b, bytecode[index + 1]);
             case 176: case 177: case 178: case 179: case 180: case 181: case 182: case 183:
             case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191:
             case 192: case 193: case 194: case 195: case 196: case 197: case 198: case 199:

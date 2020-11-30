@@ -7,93 +7,91 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class JumpBytecodes {
 
-    public static final class ConditionalJumpNode extends AbstractBytecodeNode {
-        private final int offset;
-        private final boolean isIfTrue;
+    public abstract static class ConditionalJumpNode extends AbstractBytecodeNode {
+        protected final int offset;
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
-        @Child private HandleConditionResultNode handleConditionResultNode;
 
-        public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
+        protected ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);
             offset = (bytecode & 7) + 1;
-            isIfTrue = false;
-            handleConditionResultNode = HandleConditionResultNode.create(getSuccessorIndex());
         }
 
-        public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final byte parameter, final boolean condition) {
+        protected ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final byte parameter) {
             super(code, index, numBytecodes);
             offset = ((bytecode & 3) << 8) + Byte.toUnsignedInt(parameter);
-            isIfTrue = condition;
-            handleConditionResultNode = HandleConditionResultNode.create(getSuccessorIndex());
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        public final void executeVoid(final VirtualFrame frame) {
             // nothing to do
         }
 
-        public boolean executeCondition(final VirtualFrame frame) {
+        public final boolean executeCondition(final VirtualFrame frame) {
             final Object result = popNode.execute(frame);
-            return conditionProfile.profile(handleConditionResultNode.execute(frame, isIfTrue, result));
+            if (result instanceof Boolean) {
+                return conditionProfile.profile(check((boolean) result));
+            } else {
+                CompilerDirectives.transferToInterpreter();
+                FrameAccess.setInstructionPointer(frame, FrameAccess.getInstructionPointerSlot(frame), getSuccessorIndex());
+                lookupContext().mustBeBooleanSelector.executeAsSymbolSlow(frame, result);
+                throw SqueakException.create("Should not be reached");
+            }
         }
 
-        public int getJumpSuccessorIndex() {
+        protected abstract boolean check(boolean value);
+
+        public final int getJumpSuccessorIndex() {
             return getSuccessorIndex() + offset;
+        }
+    }
+
+    public static final class ConditionalFalseJumpNode extends ConditionalJumpNode {
+        public ConditionalFalseJumpNode(final CompiledCodeObject code, final int index, final int bytecode) {
+            super(code, index, 1, bytecode);
+        }
+
+        public ConditionalFalseJumpNode(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
+            super(code, index, 2, bytecode, parameter);
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            if (isIfTrue) {
-                return "jumpTrue: " + offset;
-            } else {
-                return "jumpFalse: " + offset;
-            }
+            return "jumpTrue: " + offset;
         }
 
-        protected abstract static class HandleConditionResultNode extends AbstractNode {
-            private final int successorIndex;
+        @Override
+        protected boolean check(final boolean value) {
+            return !value;
+        }
+    }
 
-            protected HandleConditionResultNode(final int successorIndex) {
-                this.successorIndex = successorIndex;
-            }
+    public static final class ConditionalTrueJumpNode extends ConditionalJumpNode {
+        public ConditionalTrueJumpNode(final CompiledCodeObject code, final int index, final int bytecode, final byte parameter) {
+            super(code, index, 2, bytecode, parameter);
+        }
 
-            protected static HandleConditionResultNode create(final int successorIndex) {
-                return HandleConditionResultNodeGen.create(successorIndex);
-            }
+        @Override
+        public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return "jumpTrue: " + offset;
+        }
 
-            protected abstract boolean execute(VirtualFrame frame, boolean expected, Object result);
-
-            @Specialization
-            protected static final boolean doBoolean(final boolean expected, final boolean result) {
-                return expected == result;
-            }
-
-            @Specialization(guards = "!isBoolean(result)")
-            protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result,
-                            @Cached("getInstructionPointerSlot(frame)") final FrameSlot instructionPointerSlot) {
-                CompilerDirectives.transferToInterpreter();
-                FrameAccess.setInstructionPointer(frame, instructionPointerSlot, successorIndex);
-                lookupContext().mustBeBooleanSelector.executeAsSymbolSlow(frame, result);
-                throw SqueakException.create("Should not be reached");
-            }
+        @Override
+        protected boolean check(final boolean value) {
+            return value;
         }
     }
 

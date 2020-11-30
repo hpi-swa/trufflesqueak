@@ -17,7 +17,7 @@ import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalFalseJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode.PushConstantNilNode;
@@ -126,7 +126,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
         assertEquals("send: ==", bytecodeNodes[3].toString());
 
-        assertSame(ConditionalJumpNode.class, bytecodeNodes[4].getClass());
+        assertSame(ConditionalFalseJumpNode.class, bytecodeNodes[4].getClass());
         assertSame(PopNode.class, bytecodeNodes[5].getClass());
         assertSame(PushConstantTrueNode.class, bytecodeNodes[6].getClass());
 
