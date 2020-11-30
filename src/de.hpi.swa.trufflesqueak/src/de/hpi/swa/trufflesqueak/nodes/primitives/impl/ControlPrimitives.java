@@ -70,7 +70,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPointerIncrementNo
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchEagerlyNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendHeadlessErrorNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNode.DispatchSendSyntaxErrorNode;
+import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSendNodeFactory.DispatchSendSelectorNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -127,13 +130,26 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    protected abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
+        protected final DispatchSendNode createDispatchSendNode(final NativeObject selector) {
+            if (lookupContext().isHeadless()) {
+                if (selector.isDebugErrorSelector()) {
+                    return new DispatchSendHeadlessErrorNode();
+                } else if (selector.isDebugSyntaxErrorSelector()) {
+                    return new DispatchSendSyntaxErrorNode();
+                }
+            }
+            return DispatchSendSelectorNodeGen.create();
+        }
+    }
+
     /* primitiveFail (#19) handled specially. */
 
     // primitiveBlockCopy / primitiveBlockValue: (#80, #81, #82) no longer needed.
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 83)
-    protected abstract static class PrimPerformNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
+    protected abstract static class PrimPerformNode extends AbstractPerformPrimitiveNode implements SeptenaryPrimitive {
         protected static final int CACHE_LIMIT = 2;
 
         @SuppressWarnings("unused")
@@ -143,7 +159,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached final SqueakObjectClassNode lookupClassNode,
                         @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("create(cachedSelector, getBlockOrMethod(frame))") final DispatchSendNode dispatchNode) {
+                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
@@ -164,7 +180,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached final SqueakObjectClassNode lookupClassNode,
                         @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("create(cachedSelector, getBlockOrMethod(frame))") final DispatchSendNode dispatchNode) {
+                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
@@ -185,7 +201,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached final SqueakObjectClassNode lookupClassNode,
                         @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("create(cachedSelector, getBlockOrMethod(frame))") final DispatchSendNode dispatchNode) {
+                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
@@ -206,7 +222,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached final SqueakObjectClassNode lookupClassNode,
                         @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("create(cachedSelector, getBlockOrMethod(frame))") final DispatchSendNode dispatchNode) {
+                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
@@ -227,7 +243,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached final SqueakObjectClassNode lookupClassNode,
                         @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("create(cachedSelector, getBlockOrMethod(frame))") final DispatchSendNode dispatchNode) {
+                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3, object4}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
@@ -249,7 +265,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached final SqueakObjectClassNode lookupClassNode,
                         @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("create(cachedSelector, getBlockOrMethod(frame))") final DispatchSendNode dispatchNode) {
+                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             return dispatchCached(frame, cachedSelector, new Object[]{receiver, object1, object2, object3, object4, object5}, lookupClassNode, lookupMethodNode, dispatchNode);
         }
 
@@ -280,7 +296,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 84)
-    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode implements TernaryPrimitive {
         @Child private ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode = ArrayObjectToObjectArrayWithFirstNode.create();
 
         @Specialization(guards = "selector == cachedSelector", limit = "2")
@@ -288,7 +304,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached final SqueakObjectClassNode lookupClassNode,
                         @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("create(cachedSelector, getBlockOrMethod(frame))") final DispatchSendNode dispatchNode) {
+                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, cachedSelector);
             return dispatchNode.executeSend(frame, cachedSelector, lookupResult, rcvrClass, getObjectArrayNode.execute(receiver, arguments));
@@ -438,7 +454,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 100)
-    protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode implements QuinaryPrimitive {
         @Child private ArrayObjectToObjectArrayWithFirstNode getObjectArrayNode = ArrayObjectToObjectArrayWithFirstNode.create();
         @Child protected InheritsFromNode inheritsFromNode = InheritsFromNode.create();
 
@@ -451,7 +467,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         final ClassObject superClass, @SuppressWarnings("unused") final NotProvided np,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("create(cachedSelector, getBlockOrMethod(frame))") final DispatchSendNode dispatchNode) {
+                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             if (inheritsFromNode.execute(receiver, superClass)) {
                 final Object lookupResult = lookupMethodNode.executeLookup(superClass, cachedSelector);
                 return dispatchNode.executeSend(frame, cachedSelector, lookupResult, superClass, getObjectArrayNode.execute(receiver, arguments));
@@ -484,7 +500,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                         @SuppressWarnings("unused") final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
                         @Cached("selector") final NativeObject cachedSelector,
                         @Cached final LookupMethodNode lookupMethodNode,
-                        @Cached("create(cachedSelector, getBlockOrMethod(frame))") final DispatchSendNode dispatchNode) {
+                        @Cached("createDispatchSendNode(cachedSelector)") final DispatchSendNode dispatchNode) {
             if (inheritsFromNode.execute(target, superClass)) {
                 final Object lookupResult = lookupMethodNode.executeLookup(superClass, cachedSelector);
                 return dispatchNode.executeSend(frame, cachedSelector, lookupResult, superClass, getObjectArrayNode.execute(target, arguments));

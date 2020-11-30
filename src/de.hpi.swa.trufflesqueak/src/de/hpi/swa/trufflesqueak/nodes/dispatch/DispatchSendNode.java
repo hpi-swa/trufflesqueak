@@ -34,17 +34,6 @@ import de.hpi.swa.trufflesqueak.util.MiscUtils;
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchSendNode extends AbstractNode {
 
-    public static DispatchSendNode create(final NativeObject selector, final CompiledCodeObject code) {
-        if (code.image.isHeadless()) {
-            if (selector.isDebugErrorSelector()) {
-                return new DispatchSendHeadlessErrorNode();
-            } else if (selector.isDebugSyntaxErrorSelector()) {
-                return new DispatchSendSyntaxErrorNode();
-            }
-        }
-        return DispatchSendSelectorNodeGen.create();
-    }
-
     public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments);
 
     public abstract static class DispatchSendSelectorNode extends DispatchSendNode {
@@ -92,7 +81,7 @@ public abstract class DispatchSendNode extends AbstractNode {
         }
     }
 
-    private static final class DispatchSendHeadlessErrorNode extends DispatchSendNode {
+    public static final class DispatchSendHeadlessErrorNode extends DispatchSendNode {
         @Override
         public Object executeSend(final VirtualFrame frame, final NativeObject selector, final Object lookupResult, final ClassObject rcvrClass, final Object[] receiverAndArguments) {
             CompilerDirectives.transferToInterpreter();
@@ -100,7 +89,7 @@ public abstract class DispatchSendNode extends AbstractNode {
         }
     }
 
-    private static final class DispatchSendSyntaxErrorNode extends DispatchSendNode {
+    public static final class DispatchSendSyntaxErrorNode extends DispatchSendNode {
         @Override
         public Object executeSend(final VirtualFrame frame, final NativeObject selector, final Object lookupResult, final ClassObject rcvrClass, final Object[] receiverAndArguments) {
             CompilerDirectives.transferToInterpreter();
