@@ -132,10 +132,10 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         protected static final Object doRead(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source, final PointersObject form,
                         final boolean ditherFlag, final NativeObject aJPEGErrorMgr2Struct,
                         @Cached final AbstractPointersObjectReadNode readNode) {
-            final NativeObject bits = (NativeObject) readNode.execute(form, FORM.BITS);
-            final int width = (int) (long) readNode.execute(form, FORM.WIDTH);
-            final int height = (int) (long) readNode.execute(form, FORM.HEIGHT);
-            final long depth = Math.abs((long) readNode.execute(form, FORM.DEPTH));
+            final NativeObject bits = readNode.executeNative(form, FORM.BITS);
+            final int width = readNode.executeInt(form, FORM.WIDTH);
+            final int height = readNode.executeInt(form, FORM.HEIGHT);
+            final long depth = Math.abs(readNode.executeLong(form, FORM.DEPTH));
             if (!bits.isIntType() || depth != 32) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }
@@ -163,10 +163,10 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
         protected static final long doWrite(final Object receiver, final NativeObject aJPEGCompressStruct, final NativeObject destination, final PointersObject form,
                         final long quality, final boolean progressiveFlag, final NativeObject aJPEGErrorMgr2Struct,
                         @Cached final AbstractPointersObjectReadNode readNode) {
-            final NativeObject bits = (NativeObject) readNode.execute(form, FORM.BITS);
-            final int width = (int) (long) readNode.execute(form, FORM.WIDTH);
-            final int height = (int) (long) readNode.execute(form, FORM.HEIGHT);
-            final long depth = (long) readNode.execute(form, FORM.DEPTH);
+            final NativeObject bits = readNode.executeNative(form, FORM.BITS);
+            final int width = readNode.executeInt(form, FORM.WIDTH);
+            final int height = readNode.executeInt(form, FORM.HEIGHT);
+            final long depth = readNode.executeLong(form, FORM.DEPTH);
             if (!bits.isIntType() || depth != 32) {
                 throw PrimitiveFailed.andTransferToInterpreter();
             }

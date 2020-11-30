@@ -92,10 +92,10 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             try {
                 /* Extract information from form. */
-                final NativeObject bits = (NativeObject) readNode.execute(form, FORM.BITS);
+                final NativeObject bits = readNode.executeNative(form, FORM.BITS);
                 final int width = readNode.executeInt(form, FORM.WIDTH);
                 final int height = readNode.executeInt(form, FORM.HEIGHT);
-                final long depth = (long) readNode.execute(form, FORM.DEPTH);
+                final long depth = readNode.executeLong(form, FORM.DEPTH);
                 if (!bits.isIntType() || depth != 32) {
                     CompilerDirectives.transferToInterpreter();
                     throw PrimitiveFailed.GENERIC_ERROR;
