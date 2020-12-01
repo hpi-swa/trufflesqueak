@@ -118,9 +118,9 @@ public final class ObjectGraphUtils {
                 for (final Object argument : current.getArguments()) {
                     addIfUnmarked(argument);
                 }
-                final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
-                addIfUnmarked(FrameAccess.getContext(current, blockOrMethod));
-                for (final FrameSlot slot : blockOrMethod.getStackSlotsUnsafe()) {
+                final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
+                addIfUnmarked(FrameAccess.getContext(current, code));
+                for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
                     if (slot == null) {
                         return null; // Stop here, slot has not (yet) been created.
                     }

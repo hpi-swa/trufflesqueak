@@ -354,6 +354,10 @@ public final class SqueakImageReader {
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_BYTE_ARRAY, image.byteArrayClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_PROCESS, image.processClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_BLOCK_CLOSURE, image.blockClosureClass);
+        if (!specialObjectChunk(specialChunk, SPECIAL_OBJECT.CLASS_FULL_BLOCK_CLOSURE).isNil()) {
+            image.fullBlockClosureClass = new ClassObject(image);
+            setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_FULL_BLOCK_CLOSURE, image.fullBlockClosureClass);
+        }
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.CLASS_LARGE_NEGATIVE_INTEGER, image.largeNegativeIntegerClass);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_ABOUT_TO_RETURN, image.aboutToReturnSelector);
         setPrebuiltObject(specialChunk, SPECIAL_OBJECT.SELECTOR_RUN_WITHIN, image.runWithInSelector);
@@ -366,7 +370,7 @@ public final class SqueakImageReader {
         fillInClassObjects();
         fillInObjects();
         fillInContextObjects();
-        fillInSmallFloatClass();
+        fillInClassesFromCompactClassList();
     }
 
     /**
@@ -471,13 +475,18 @@ public final class SqueakImageReader {
         }
     }
 
-    private void fillInSmallFloatClass() {
-        final ArrayObject classTableFirstPage = (ArrayObject) getChunk(hiddenRootsChunk.getWord(0)).asObject();
-        final ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.getUncached();
-        assert arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_INTEGER) == image.smallIntegerClass;
-        assert arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.CHARACTER) == image.characterClass;
-        final Object smallFloatClassOrNil = arrayReadNode.execute(classTableFirstPage, SPECIAL_OBJECT_TAG.SMALL_FLOAT);
-        image.setSmallFloatClass((ClassObject) smallFloatClassOrNil);
+    private void fillInClassesFromCompactClassList() {
+        image.smallFloatClass = lookupClassInCompactClassList(SPECIAL_OBJECT_TAG.SMALL_FLOAT);
+        if (image.fullBlockClosureClass == null) {
+            image.fullBlockClosureClass = lookupClassInCompactClassList(SqueakImageConstants.CLASS_FULL_BLOCK_CLOSURE_COMPACT_INDEX);
+        }
+    }
+
+    private ClassObject lookupClassInCompactClassList(final int compactIndex) {
+        final int majorIndex = SqueakImageConstants.majorClassIndexOf(compactIndex);
+        final int minorIndex = SqueakImageConstants.minorClassIndexOf(compactIndex);
+        final ArrayObject classTablePage = (ArrayObject) getChunk(hiddenRootsChunk.getWord(majorIndex)).asObject();
+        return (ClassObject) ArrayObjectReadNode.getUncached().execute(classTablePage, minorIndex);
     }
 
     protected SqueakImageChunk getChunk(final long ptr) {

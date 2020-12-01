@@ -75,7 +75,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     break;
                 } else {
                     current = (ContextObject) sender;
-                    if (current.getClosure() == null && current.getMethod().isUnwindMarked()) {
+                    if (current.getClosure() == null && current.getCodeObject().isUnwindMarked()) {
                         return current;
                     }
                 }
@@ -93,7 +93,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
                     return null; // Foreign frame cannot be unwind marked.
                 }
-                final ContextObject context = FrameAccess.getContext(current);
+                final ContextObject context = FrameAccess.getContextSlow(current);
                 if (!foundMyself[0]) {
                     if (receiver == context) {
                         foundMyself[0] = true;
@@ -102,7 +102,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     if (previousContext == context) {
                         return NilObject.SINGLETON;
                     }
-                    if (FrameAccess.getClosure(current) == null && FrameAccess.getMethod(current).isUnwindMarked()) {
+                    if (FrameAccess.getClosure(current) == null && FrameAccess.getCodeObject(current).isUnwindMarked()) {
                         if (context != null) {
                             return context;
                         } else {
@@ -170,20 +170,19 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                     if (!FrameAccess.isTruffleSqueakFrame(current)) {
                         return null;
                     }
-                    final CompiledCodeObject currentCode = FrameAccess.getMethod(current);
                     if (!foundMyself) {
-                        if (start == FrameAccess.getMarker(current)) {
+                        if (start == FrameAccess.getMarkerSlow(current)) {
                             foundMyself = true;
                         }
                     } else {
-                        final ContextObject context = FrameAccess.getContext(current);
+                        final ContextObject context = FrameAccess.getContextSlow(current);
                         if (context == end) {
                             return end;
                         }
                         bottomContextOnTruffleStack[0] = context;
                         final Frame currentWritable = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
                         // Terminate frame
-                        FrameAccess.setInstructionPointer(currentWritable, currentCode, -1);
+                        FrameAccess.setInstructionPointer(currentWritable, FrameAccess.getMethodOrBlock(current), -1);
                         FrameAccess.setSender(currentWritable, NilObject.SINGLETON);
                     }
                     return null;
@@ -210,7 +209,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final AbstractSqueakObject findNext(final ContextObject receiver) {
             ContextObject context = receiver;
             while (true) {
-                if (context.getMethod().isExceptionHandlerMarked()) {
+                if (context.getCodeObject().isExceptionHandlerMarked()) {
                     assert context.getClosure() == null;
                     return context;
                 }
@@ -249,13 +248,13 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         return receiver;
                     }
                 }
-                final ContextObject context = FrameAccess.getContext(current);
+                final ContextObject context = FrameAccess.getContextSlow(current);
                 if (!foundMyself[0]) {
                     if (context == receiver) {
                         foundMyself[0] = true;
                     }
                 } else {
-                    if (FrameAccess.getMethod(current).isExceptionHandlerMarked()) {
+                    if (FrameAccess.getCodeObject(current).isExceptionHandlerMarked()) {
                         if (context != null) {
                             return context;
                         } else {
@@ -304,7 +303,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 assert image.evaluate("Interop") != NilObject.SINGLETON : "Interop class must be present";
                 final CompiledCodeObject onDoMethod = (CompiledCodeObject) image.evaluate("BlockClosure>>#on:do:");
                 interopExceptionThrowingContextPrototype = ContextObject.create(image, onDoMethod.getSqueakContextSize());
-                interopExceptionThrowingContextPrototype.setMethod(onDoMethod);
+                interopExceptionThrowingContextPrototype.setCodeObject(onDoMethod);
                 interopExceptionThrowingContextPrototype.setReceiver(NilObject.SINGLETON);
                 /*
                  * Need to catch all exceptions here. Otherwise, the contexts sender is used to find
@@ -319,7 +318,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                                 "[ :e | ((e isKindOf: Error) or: [ e isKindOf: Halt ]) ifTrue: [ Interop throwException: e \"rethrow as interop\" ] ifFalse: [(e isKindOf: Warning) ifTrue: [ e resume \"ignore\" ] " +
                                                 "ifFalse: [ nil handleSignal: e \"handle the usual way\" ] ] ]"));
                 interopExceptionThrowingContextPrototype.atTempPut(2, BooleanObject.TRUE);
-                interopExceptionThrowingContextPrototype.setInstructionPointer(CallPrimitiveNode.NUM_BYTECODES);
+                interopExceptionThrowingContextPrototype.setInstructionPointer(onDoMethod.getInitialPC() + CallPrimitiveNode.NUM_BYTECODES);
                 interopExceptionThrowingContextPrototype.setStackPointer(onDoMethod.getNumTemps());
                 interopExceptionThrowingContextPrototype.removeSender();
             }

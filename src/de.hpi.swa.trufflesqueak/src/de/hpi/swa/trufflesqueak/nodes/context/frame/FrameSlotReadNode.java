@@ -32,11 +32,11 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         final int initialSP;
         final BlockClosureObject closure = FrameAccess.getClosure(frame);
         if (closure == null) {
-            code = FrameAccess.getMethod(frame);
+            code = FrameAccess.getCodeObject(frame);
             initialSP = code.getNumTemps();
         } else {
             code = closure.getCompiledBlock();
-            initialSP = code.getNumArgsAndCopied();
+            initialSP = closure.getNumTemps();
         }
         if (index >= initialSP) {
             return FrameSlotReadClearNodeGen.create(code.getStackSlot(index));

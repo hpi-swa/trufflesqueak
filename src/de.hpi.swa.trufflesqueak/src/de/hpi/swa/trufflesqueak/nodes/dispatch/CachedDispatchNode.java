@@ -117,7 +117,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         }
 
         private Object slowPathSendToFallbackCode(final VirtualFrame frame) {
-            final CompiledCodeObject code = FrameAccess.getBlockOrMethod(frame);
+            final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
             final int stackPointer = FrameAccess.getStackPointer(frame, code);
             final Object[] receiverAndArguments = new Object[1 + argumentCount];
             for (int i = 0; i < receiverAndArguments.length; i++) {

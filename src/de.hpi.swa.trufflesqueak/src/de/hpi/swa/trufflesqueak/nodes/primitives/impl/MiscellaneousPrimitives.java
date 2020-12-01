@@ -45,6 +45,7 @@ import de.hpi.swa.trufflesqueak.model.WeakVariablePointersObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectIdentityNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectShallowCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
@@ -584,6 +585,27 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         protected static final AbstractSqueakObject doGet(@SuppressWarnings("unused") final Object receiver, final long index,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.getSystemAttribute((int) index);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 163)
+    protected abstract static class PrimGetImmutabilityNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final boolean doGet(final Object receiver,
+                        @Cached final SqueakObjectClassNode classNode) {
+            return BooleanObject.wrap(classNode.executeLookup(receiver).isImmediateClassType());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 164)
+    protected abstract static class PrimSetImmutabilityNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        @Specialization
+        protected static final boolean doGet(final Object receiver, @SuppressWarnings("unused") final boolean value,
+                        @Cached final SqueakObjectClassNode classNode) {
+            // FIXME: implement immutability
+            return BooleanObject.wrap(classNode.executeLookup(receiver).isImmediateClassType());
         }
     }
 

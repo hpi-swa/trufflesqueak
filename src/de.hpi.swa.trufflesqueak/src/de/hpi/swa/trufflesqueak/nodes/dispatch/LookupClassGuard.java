@@ -13,7 +13,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -49,8 +48,6 @@ public abstract class LookupClassGuard {
             return CharacterGuard.SINGLETON;
         } else if (receiver instanceof Double) {
             return DoubleGuard.SINGLETON;
-        } else if (receiver instanceof BlockClosureObject) {
-            return BlockClosureObjectGuard.SINGLETON;
         } else if (receiver instanceof ContextObject) {
             return ContextObjectGuard.SINGLETON;
         } else if (receiver instanceof FloatObject) {
@@ -163,24 +160,7 @@ public abstract class LookupClassGuard {
 
         @Override
         protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.getSmallFloatClass();
-        }
-    }
-
-    private static final class BlockClosureObjectGuard extends LookupClassGuard {
-        private static final BlockClosureObjectGuard SINGLETON = new BlockClosureObjectGuard();
-
-        private BlockClosureObjectGuard() {
-        }
-
-        @Override
-        protected boolean check(final Object receiver) {
-            return receiver instanceof BlockClosureObject;
-        }
-
-        @Override
-        protected ClassObject getSqueakClassInternal(final SqueakImageContext image) {
-            return image.blockClosureClass;
+            return image.smallFloatClass;
         }
     }
 

@@ -965,7 +965,6 @@ public final class B2D {
     /* BalloonEnginePlugin>>#checkCompressedFills: */
     private boolean checkCompressedFills(final NativeObject indexList) {
         final int[] fillPtr = indexList.getIntStorage();
-        final long length = fillPtr.length;
         for (final int j : fillPtr) {
             /* Make sure the fill is okay */
             if (!isFillOkay(j)) {

@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantFalseNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNilNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantTrueNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnNilFromBlockNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
@@ -63,18 +64,18 @@ public final class ReturnBytecodes {
             super(code, index);
         }
 
-        @Specialization(guards = {"code.isCompiledMethod()", "!hasModifiedSender(frame)"})
+        @Specialization(guards = {"getClosure(frame) == null", "!hasModifiedSender(frame)"})
         protected final Object doLocalReturn(final VirtualFrame frame) {
             return getReturnValue(frame);
         }
 
-        @Specialization(guards = {"code.isCompiledMethod()", "hasModifiedSender(frame)"})
+        @Specialization(guards = {"getClosure(frame) == null", "hasModifiedSender(frame)"})
         protected final Object doNonLocalReturn(final VirtualFrame frame) {
             assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
             throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getSender(frame));
         }
 
-        @Specialization(guards = {"code.isCompiledBlock()"})
+        @Specialization(guards = {"getClosure(frame) != null"})
         protected final Object doClosureReturnFromMaterialized(final VirtualFrame frame,
                         @Cached final GetActiveProcessNode getActiveProcessNode) {
             // Target is sender of closure's home context.
@@ -171,16 +172,9 @@ public final class ReturnBytecodes {
         }
     }
 
-    public abstract static class ReturnTopFromBlockNode extends AbstractReturnNode {
-        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
-
-        protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
+    public abstract static class AbstractReturnFromBlockNode extends AbstractReturnNode {
+        protected AbstractReturnFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            assert code.isCompiledBlock() : "blockReturn can only occure in CompiledBlockObject";
-        }
-
-        public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
-            return ReturnTopFromBlockNodeGen.create(code, index);
         }
 
         @Specialization(guards = {"!hasModifiedSender(frame)"})
@@ -204,6 +198,18 @@ public final class ReturnBytecodes {
             }
             throw new NonLocalReturn(getReturnValue(frame), caller);
         }
+    }
+
+    public abstract static class ReturnTopFromBlockNode extends AbstractReturnFromBlockNode {
+        @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
+
+        protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
+        }
+
+        public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
+            return ReturnTopFromBlockNodeGen.create(code, index);
+        }
 
         @Override
         protected final Object getReturnValue(final VirtualFrame frame) {
@@ -214,6 +220,27 @@ public final class ReturnBytecodes {
         public final String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "blockReturn";
+        }
+    }
+
+    public abstract static class ReturnNilFromBlockNode extends AbstractReturnFromBlockNode {
+        protected ReturnNilFromBlockNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
+        }
+
+        public static ReturnNilFromBlockNode create(final CompiledCodeObject code, final int index) {
+            return ReturnNilFromBlockNodeGen.create(code, index);
+        }
+
+        @Override
+        protected final Object getReturnValue(final VirtualFrame frame) {
+            return NilObject.SINGLETON;
+        }
+
+        @Override
+        public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return "blockReturn: nil";
         }
     }
 

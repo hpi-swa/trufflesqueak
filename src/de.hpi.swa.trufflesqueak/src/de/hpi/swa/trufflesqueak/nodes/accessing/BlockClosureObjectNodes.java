@@ -11,6 +11,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
@@ -27,9 +28,14 @@ public final class BlockClosureObjectNodes {
             return closure.getOuterContext();
         }
 
-        @Specialization(guards = "index == START_PC")
+        @Specialization(guards = {"index == START_PC_OR_METHOD", "closure.isABlockClosure()"})
         protected static final long doClosureStartPC(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
             return closure.getStartPC();
+        }
+
+        @Specialization(guards = {"index == START_PC_OR_METHOD", "closure.isAFullBlockClosure()"})
+        protected static final CompiledCodeObject doFullClosureMethod(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
+            return closure.getCompiledBlock();
         }
 
         @Specialization(guards = "index == ARGUMENT_COUNT")
@@ -37,9 +43,19 @@ public final class BlockClosureObjectNodes {
             return closure.getNumArgs();
         }
 
-        @Specialization(guards = "index > ARGUMENT_COUNT")
+        @Specialization(guards = {"index >= FIRST_COPIED_VALUE", "closure.isABlockClosure()"})
         protected static final Object doClosureCopiedValues(final BlockClosureObject closure, final long index) {
-            return closure.getCopiedAt0((int) index);
+            return closure.getCopiedValue((int) index - BLOCK_CLOSURE.FIRST_COPIED_VALUE);
+        }
+
+        @Specialization(guards = {"index == FULL_RECEIVER", "closure.isAFullBlockClosure()"})
+        protected static final Object doFullClosureReceiver(final BlockClosureObject closure, @SuppressWarnings("unused") final long index) {
+            return closure.getReceiver();
+        }
+
+        @Specialization(guards = {"index >= FULL_FIRST_COPIED_VALUE", "closure.isAFullBlockClosure()"})
+        protected static final Object doFullClosureCopiedValues(final BlockClosureObject closure, final long index) {
+            return closure.getCopiedValue((int) index - BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE);
         }
     }
 
@@ -54,9 +70,14 @@ public final class BlockClosureObjectNodes {
             closure.setOuterContext(value);
         }
 
-        @Specialization(guards = "index == START_PC")
+        @Specialization(guards = {"index == START_PC_OR_METHOD", "closure.isABlockClosure()"})
         protected static final void doClosureStartPC(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final long value) {
             closure.setStartPC((int) value);
+        }
+
+        @Specialization(guards = {"index == START_PC_OR_METHOD", "closure.isAFullBlockClosure()"})
+        protected static final void doClosureStartPC(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final CompiledCodeObject value) {
+            closure.setBlock(value);
         }
 
         @Specialization(guards = "index == ARGUMENT_COUNT")
@@ -64,9 +85,19 @@ public final class BlockClosureObjectNodes {
             closure.setNumArgs((int) value);
         }
 
-        @Specialization(guards = "index > ARGUMENT_COUNT")
+        @Specialization(guards = {"index >= FIRST_COPIED_VALUE", "closure.isABlockClosure()"})
         protected static final void doClosureCopiedValues(final BlockClosureObject closure, final long index, final Object value) {
-            closure.setCopiedAt0((int) index, value);
+            closure.setCopiedValue((int) index - BLOCK_CLOSURE.FIRST_COPIED_VALUE, value);
+        }
+
+        @Specialization(guards = {"index == FULL_RECEIVER", "closure.isAFullBlockClosure()"})
+        protected static final void doFullClosureReceiver(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final Object value) {
+            closure.setReceiver(value);
+        }
+
+        @Specialization(guards = {"index >= FULL_FIRST_COPIED_VALUE", "closure.isAFullBlockClosure()"})
+        protected static final void doFullClosureCopiedValues(final BlockClosureObject closure, final long index, final Object value) {
+            closure.setCopiedValue((int) index - BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE, value);
         }
     }
 }

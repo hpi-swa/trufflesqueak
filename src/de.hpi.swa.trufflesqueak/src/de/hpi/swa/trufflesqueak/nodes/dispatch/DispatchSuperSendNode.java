@@ -12,7 +12,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 
 public abstract class DispatchSuperSendNode extends AbstractDispatchNode {
@@ -33,12 +32,7 @@ public abstract class DispatchSuperSendNode extends AbstractDispatchNode {
     protected static final Object doCached(final VirtualFrame frame,
                     @SuppressWarnings("unused") @Cached final AbstractPointersObjectReadNode readNode,
                     @SuppressWarnings("unused") @Cached("method.getMethodClassSlow()") final ClassObject cachedMethodClass,
-                    @Cached("create(frame, selector, argumentCount, cachedMethodClass, lookupSlow(cachedMethodClass.getSuperclassOrNull()))") final CachedDispatchNode dispatchNode) {
+                    @Cached("create(frame, selector, argumentCount, cachedMethodClass, lookupInSuperClassSlow(cachedMethodClass))") final CachedDispatchNode dispatchNode) {
         return dispatchNode.execute(frame);
-    }
-
-    protected final Object lookupSlow(final ClassObject receiver) {
-        assert receiver != null;
-        return LookupMethodNode.getUncached().executeLookup(receiver, selector);
     }
 }

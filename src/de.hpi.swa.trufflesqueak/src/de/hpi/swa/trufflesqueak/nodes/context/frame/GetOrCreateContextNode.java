@@ -36,7 +36,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
 
     public static final ContextObject getOrCreateFromActiveProcessUncached(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        final CompiledCodeObject code = FrameAccess.getBlockOrMethod(frame);
+        final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
         final ContextObject context = FrameAccess.getContext(frame, code);
         if (context != null) {
             return context;
@@ -53,13 +53,13 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
     protected abstract static class GetOrCreateContextFromActiveProcessNode extends GetOrCreateContextNode {
         @Specialization(guards = "getContext(frame, code) != null", limit = "1")
         protected static final ContextObject doGet(final VirtualFrame frame,
-                        @Cached("getBlockOrMethod(frame)") final CompiledCodeObject code) {
+                        @Cached("getMethodOrBlock(frame)") final CompiledCodeObject code) {
             return FrameAccess.getContext(frame, code);
         }
 
         @Specialization(guards = "getContext(frame, code) == null", limit = "1")
         protected static final ContextObject doCreate(final VirtualFrame frame,
-                        @Cached("getBlockOrMethod(frame)") final CompiledCodeObject code,
+                        @Cached("getMethodOrBlock(frame)") final CompiledCodeObject code,
                         @Cached final GetActiveProcessNode getActiveProcessNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final ContextObject result = ContextObject.create(image, frame.materialize(), code);
@@ -71,7 +71,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
     protected abstract static class GetOrCreateContextNotFromActiveProcessNode extends GetOrCreateContextNode {
         @Specialization
         protected static final ContextObject doCreate(final VirtualFrame frame,
-                        @Cached("getBlockOrMethod(frame)") final CompiledCodeObject code,
+                        @Cached("getMethodOrBlock(frame)") final CompiledCodeObject code,
                         @Cached("createCountingProfile()") final ConditionProfile hasContextProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             final ContextObject context = FrameAccess.getContext(frame, code);

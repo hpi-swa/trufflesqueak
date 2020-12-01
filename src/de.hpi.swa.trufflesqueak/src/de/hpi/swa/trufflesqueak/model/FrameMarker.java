@@ -19,14 +19,14 @@ public final class FrameMarker {
 
     public ContextObject getMaterializedContext() {
         final MaterializedFrame targetFrame = FrameAccess.findFrameForMarker(this);
-        final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(targetFrame);
-        final ContextObject context = FrameAccess.getContext(targetFrame, blockOrMethod);
+        final CompiledCodeObject code = FrameAccess.getMethodOrBlock(targetFrame);
+        final ContextObject context = FrameAccess.getContext(targetFrame, code);
         if (context != null) {
             assert context.getFrameMarker() == this;
             return context;
         } else {
-            assert this == FrameAccess.getMarker(targetFrame, blockOrMethod) : "Frame does not match";
-            return ContextObject.create(blockOrMethod.getSqueakClass().getImage(), targetFrame, blockOrMethod);
+            assert this == FrameAccess.getMarker(targetFrame, code) : "Frame does not match";
+            return ContextObject.create(code.getSqueakClass().getImage(), targetFrame, code);
         }
     }
 }

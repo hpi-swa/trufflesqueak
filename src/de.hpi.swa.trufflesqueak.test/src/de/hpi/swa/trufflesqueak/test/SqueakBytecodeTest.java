@@ -5,7 +5,6 @@
  */
 package de.hpi.swa.trufflesqueak.test;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -583,12 +582,11 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final VirtualFrame frame = createTestFrame(method);
         final Object result = createContext(method, rcvr).execute(frame);
         assertTrue(result instanceof BlockClosureObject);
-        final CompiledCodeObject block = ((BlockClosureObject) result).getCompiledBlock();
-        assertTrue(block.isCompiledBlock());
-        assertEquals(2, block.getNumArgs());
-        assertEquals(0, block.getNumArgsAndCopied() - block.getNumArgs());
-        assertEquals(2, block.getNumTemps());
-        assertArrayEquals(new byte[]{0x10, 0x11, (byte) 0xB0, 0x7D}, block.getBytes());
+        final BlockClosureObject closure = (BlockClosureObject) result;
+        assertEquals(2, closure.getNumArgs());
+        assertEquals(0, closure.getNumCopied());
+        assertEquals(2, closure.getNumTemps());
+        assertTrue(closure.getCompiledBlock().getSqueakClass().isCompiledMethodClassType());
     }
 
     @Test

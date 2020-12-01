@@ -12,17 +12,11 @@ import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.GenerateWrapper;
-import com.oracle.truffle.api.instrumentation.InstrumentableNode;
-import com.oracle.truffle.api.instrumentation.ProbeNode;
-import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -38,6 +32,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArra
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.CreateNewArrayNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -53,6 +48,210 @@ public final class PushBytecodes {
 
         protected AbstractPushNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
+        }
+    }
+
+    private abstract static class AbstractPushClosureNode extends AbstractInstrumentableBytecodeNode {
+        protected final int numCopied;
+
+        @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
+
+        @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
+        @Child private FrameStackPopNNode popCopiedValuesNode;
+
+        private AbstractPushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int numCopied) {
+            super(code, index, numBytecodes);
+            this.numCopied = numCopied;
+            popCopiedValuesNode = FrameStackPopNNode.create(numCopied);
+        }
+
+        private AbstractPushClosureNode(final AbstractPushClosureNode original) {
+            super(original.code, original.index, original.getNumBytecodes());
+            numCopied = original.numCopied;
+            popCopiedValuesNode = FrameStackPopNNode.create(original.numCopied);
+        }
+
+        @Override
+        public final void executeVoid(final VirtualFrame frame) {
+            pushNode.execute(frame, createClosure(frame, popCopiedValuesNode.execute(frame)));
+        }
+
+        protected abstract BlockClosureObject createClosure(VirtualFrame frame, Object[] copiedValues);
+
+        public final int getNumCopied() {
+            return numCopied;
+        }
+
+        protected final SqueakImageContext getSqueakImageContext() {
+            if (contextReference == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                contextReference = lookupContextReference(SqueakLanguage.class);
+            }
+            return contextReference.get();
+        }
+    }
+
+    public static final class PushClosureNode extends AbstractPushClosureNode {
+        public static final int NUM_BYTECODES = 4;
+
+        private final CompiledCodeObject shadowBlock;
+        private final int numArgs;
+
+        private final int blockSize;
+
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+
+        private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int numArgs, final int numCopied, final int blockSize) {
+            super(code, index, numBytecodes + blockSize, numCopied);
+            this.numArgs = numArgs;
+            this.blockSize = blockSize;
+            shadowBlock = code.getOrCreateShadowBlock(getSuccessorIndex() - blockSize);
+        }
+
+        public PushClosureNode(final PushClosureNode node) {
+            super(node);
+            shadowBlock = node.shadowBlock;
+            numArgs = node.numArgs;
+            blockSize = node.blockSize;
+        }
+
+        public static PushClosureNode create(final CompiledCodeObject code, final int index, final byte i, final byte j, final byte k) {
+            final int numArgs = i & 0xF;
+            final int numCopied = Byte.toUnsignedInt(i) >> 4 & 0xF;
+            final int blockSize = Byte.toUnsignedInt(j) << 8 | Byte.toUnsignedInt(k);
+            return new PushClosureNode(code, index, NUM_BYTECODES, numArgs, numCopied, blockSize);
+        }
+
+        public static PushClosureNode createExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final int extA, final int extB, final byte byteA, final byte byteB) {
+            final int numArgs = (byteA & 7) + Math.floorMod(extA, 16) * 8;
+            final int numCopied = (Byte.toUnsignedInt(byteA) >> 3 & 0x7) + Math.floorDiv(extA, 16) * 8;
+            final int blockSize = Byte.toUnsignedInt(byteB) + (extB << 8);
+            return new PushClosureNode(code, index, numBytecodes, numArgs, numCopied, blockSize);
+        }
+
+        @Override
+        protected BlockClosureObject createClosure(final VirtualFrame frame, final Object[] copiedValues) {
+            final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
+            final int startPC = getSuccessorIndex() - blockSize;
+            final SqueakImageContext image = getSqueakImageContext();
+            return new BlockClosureObject(getSqueakImageContext(), image.blockClosureClass, shadowBlock, startPC, numArgs, copiedValues, FrameAccess.getReceiver(frame), outerContext);
+        }
+
+        public int getBlockSize() {
+            return blockSize;
+        }
+
+        @Override
+        public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            final int start = getSuccessorIndex();
+            final int end = start + blockSize;
+            return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;
+        }
+    }
+
+    public abstract static class AbstractPushFullClosureNode extends AbstractPushClosureNode {
+        private final int literalIndex;
+        private final CompiledCodeObject block;
+
+        protected AbstractPushFullClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
+            super(code, index, numBytecodes, numCopied);
+            this.literalIndex = literalIndex;
+            block = (CompiledCodeObject) code.getLiteral(literalIndex);
+        }
+
+        public AbstractPushFullClosureNode(final AbstractPushFullClosureNode node) {
+            super(node);
+            literalIndex = node.literalIndex;
+            block = node.block;
+        }
+
+        public static AbstractPushFullClosureNode createExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final int extA, final byte byteA, final byte byteB) {
+            final int literalIndex = Byte.toUnsignedInt(byteA) + (extA << 8);
+            final int numCopied = Byte.toUnsignedInt(byteB) & 63;
+            final boolean ignoreOuterContext = (byteB >> 6 & 1) == 1;
+            final boolean receiverOnStack = (byteB >> 7 & 1) == 1;
+            if (receiverOnStack) {
+                if (ignoreOuterContext) {
+                    return new PushFullClosureOnStackReceiverIgnoreOuterContextNode(code, index, numBytecodes, literalIndex, numCopied);
+                } else {
+                    return new PushFullClosureOnStackReceiverWithOuterContextNode(code, index, numBytecodes, literalIndex, numCopied);
+                }
+            } else {
+                if (ignoreOuterContext) {
+                    return new PushFullClosureFrameReceiverIgnoreOuterContextNode(code, index, numBytecodes, literalIndex, numCopied);
+                } else {
+                    return new PushFullClosureFrameReceiverWithOuterContextNode(code, index, numBytecodes, literalIndex, numCopied);
+                }
+            }
+        }
+
+        protected final BlockClosureObject createClosure(final Object[] copiedValues, final Object receiver, final ContextObject context) {
+            final SqueakImageContext image = getSqueakImageContext();
+            return new BlockClosureObject(image, image.fullBlockClosureClass, block, block.getInitialPC(), block.getNumArgs(), copiedValues, receiver, context);
+        }
+
+        @Override
+        public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return "pushFullClosure: (self literalAt: " + literalIndex + ") numCopied: " + numCopied + " numArgs: " + block.getNumArgs();
+        }
+
+        private static final class PushFullClosureOnStackReceiverWithOuterContextNode extends AbstractPushFullClosureNode {
+            @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+            @Child private FrameStackPopNode popReceiverNode = FrameStackPopNode.create();
+
+            private PushFullClosureOnStackReceiverWithOuterContextNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
+                super(code, index, numBytecodes, literalIndex, numCopied);
+            }
+
+            @Override
+            protected BlockClosureObject createClosure(final VirtualFrame frame, final Object[] copiedValues) {
+                final Object receiver = popReceiverNode.execute(frame);
+                final ContextObject context = getOrCreateContextNode.executeGet(frame);
+                return createClosure(copiedValues, receiver, context);
+            }
+        }
+
+        private static final class PushFullClosureFrameReceiverWithOuterContextNode extends AbstractPushFullClosureNode {
+            @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+
+            private PushFullClosureFrameReceiverWithOuterContextNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
+                super(code, index, numBytecodes, literalIndex, numCopied);
+            }
+
+            @Override
+            protected BlockClosureObject createClosure(final VirtualFrame frame, final Object[] copiedValues) {
+                final Object receiver = FrameAccess.getReceiver(frame);
+                final ContextObject context = getOrCreateContextNode.executeGet(frame);
+                return createClosure(copiedValues, receiver, context);
+            }
+        }
+
+        private static final class PushFullClosureOnStackReceiverIgnoreOuterContextNode extends AbstractPushFullClosureNode {
+            @Child private FrameStackPopNode popReceiverNode = FrameStackPopNode.create();
+
+            private PushFullClosureOnStackReceiverIgnoreOuterContextNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
+                super(code, index, numBytecodes, literalIndex, numCopied);
+            }
+
+            @Override
+            protected BlockClosureObject createClosure(final VirtualFrame frame, final Object[] copiedValues) {
+                final Object receiver = popReceiverNode.execute(frame);
+                return createClosure(copiedValues, receiver, null);
+            }
+        }
+
+        private static final class PushFullClosureFrameReceiverIgnoreOuterContextNode extends AbstractPushFullClosureNode {
+            private PushFullClosureFrameReceiverIgnoreOuterContextNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numCopied) {
+                super(code, index, numBytecodes, literalIndex, numCopied);
+            }
+
+            @Override
+            protected BlockClosureObject createClosure(final VirtualFrame frame, final Object[] copiedValues) {
+                final Object receiver = FrameAccess.getReceiver(frame);
+                return createClosure(copiedValues, receiver, null);
+            }
         }
     }
 
@@ -73,112 +272,6 @@ public final class PushBytecodes {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "pushThisContext:";
-        }
-    }
-
-    @GenerateWrapper
-    public static class PushClosureNode extends AbstractBytecodeNode implements InstrumentableNode {
-        public static final int NUM_BYTECODES = 4;
-
-        private final int blockSize;
-        private final int numArgs;
-        private final int numCopied;
-        @CompilationFinal private CompiledCodeObject cachedBlock;
-        @CompilationFinal private int cachedStartPC;
-
-        @Child private FrameStackPopNNode popNNode;
-        @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
-        @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
-
-        private PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int numArgs, final int numCopied, final int blockSize) {
-            super(code, index, numBytecodes);
-            this.numArgs = numArgs;
-            this.numCopied = numCopied;
-            this.blockSize = blockSize;
-            popNNode = FrameStackPopNNode.create(numCopied);
-        }
-
-        public PushClosureNode(final PushClosureNode node) {
-            super(node.code, node.index, node.getNumBytecodes());
-            numArgs = node.numArgs;
-            numCopied = node.numCopied;
-            blockSize = node.blockSize;
-            popNNode = FrameStackPopNNode.create(numCopied);
-        }
-
-        public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final byte i, final byte j, final byte k) {
-            return new PushClosureNode(code, index, numBytecodes, i & 0xF, Byte.toUnsignedInt(i) >> 4 & 0xF, Byte.toUnsignedInt(j) << 8 | Byte.toUnsignedInt(k));
-        }
-
-        public static PushClosureNode createExtended(final CompiledCodeObject code, final int index, final int numBytecodes, final int extA, final int extB, final byte byteA, final byte byteB) {
-            final int numArgs = (byteA & 7) + Math.floorMod(extA, 16) * 8;
-            final int numCopied = (Byte.toUnsignedInt(byteA) >> 3 & 0x7) + Math.floorDiv(extA, 16) * 8;
-            final int blockSize = Byte.toUnsignedInt(byteB) + (extB << 8);
-            return new PushClosureNode(code, index, numBytecodes, numArgs, numCopied, blockSize);
-        }
-
-        private CompiledCodeObject getBlock(final VirtualFrame frame) {
-            if (cachedBlock == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cachedBlock = code.findBlock(FrameAccess.getMethod(frame), numArgs, numCopied, getSuccessorIndex(), blockSize);
-                cachedStartPC = cachedBlock.getInitialPC();
-            }
-            return cachedBlock;
-        }
-
-        public int getBockSize() {
-            return blockSize;
-        }
-
-        public int getClosureSuccessorIndex() {
-            return getSuccessorIndex() + getBockSize();
-        }
-
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            throw SqueakException.create("Should never be called directly.");
-        }
-
-        public void executePush(final VirtualFrame frame) {
-            pushNode.execute(frame, createClosure(frame));
-        }
-
-        private BlockClosureObject createClosure(final VirtualFrame frame) {
-            final Object[] copiedValues = popNNode.execute(frame);
-            final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
-            return new BlockClosureObject(getSqueakImageContext(), getBlock(frame), cachedStartPC, numArgs, copiedValues, outerContext);
-        }
-
-        private SqueakImageContext getSqueakImageContext() {
-            if (contextReference == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                contextReference = lookupContextReference(SqueakLanguage.class);
-            }
-            return contextReference.get();
-        }
-
-        @Override
-        public final boolean isInstrumentable() {
-            return true;
-        }
-
-        @Override
-        public WrapperNode createWrapper(final ProbeNode probe) {
-            return new PushClosureNodeWrapper(this, this, probe);
-        }
-
-        @Override
-        public boolean hasTag(final Class<? extends Tag> tag) {
-            return tag == StandardTags.StatementTag.class;
-        }
-
-        @Override
-        public String toString() {
-            CompilerAsserts.neverPartOfCompilation();
-            final int start = getSuccessorIndex();
-            final int end = start + blockSize;
-            return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;
         }
     }
 

@@ -11,23 +11,27 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 
-public final class SqueakBytecodeSistaV1Decoder {
+public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDecoder {
+    public static final SqueakBytecodeSistaV1Decoder SINGLETON = new SqueakBytecodeSistaV1Decoder();
+
     private SqueakBytecodeSistaV1Decoder() {
     }
 
-    public static AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
+    @Override
+    public AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
         final int trailerPosition = trailerPosition(code);
         final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[trailerPosition];
         int index = 0;
         while (index < trailerPosition) {
             final AbstractBytecodeNode bytecodeNode = decodeBytecode(code, index);
             nodes[index] = bytecodeNode;
-            index = bytecodeNode.getSuccessorIndex();
+            index += decodeNumBytes(code, index);
         }
         return nodes;
     }
 
-    public static int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
+    @Override
+    public int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
         final int trailerPosition = trailerPosition(code);
         assert 0 <= targetIndex && targetIndex <= trailerPosition;
         int index = 0;
@@ -40,7 +44,8 @@ public final class SqueakBytecodeSistaV1Decoder {
         return lineNumber;
     }
 
-    public static int trailerPosition(final CompiledCodeObject code) {
+    @Override
+    public int trailerPosition(final CompiledCodeObject code) {
         return code.isCompiledBlock() ? code.getBytes().length : trailerPosition(code.getBytes());
     }
 
@@ -82,7 +87,8 @@ public final class SqueakBytecodeSistaV1Decoder {
         return bytecodeLength - (1 + numBytes + length);
     }
 
-    public static AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
+    @Override
+    public AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
         return decodeBytecode(code, index, 0, 0, 0);
     }
 
@@ -121,7 +127,12 @@ public final class SqueakBytecodeSistaV1Decoder {
             case 81:
                 return new PushBytecodes.PushConstantOneNode(code, index);
             case 82:
-                return new PushBytecodes.PushActiveContextNode(code, index); // FIXME: Push thisContext, (then Extend B = 1 => push thisProcess)
+                // Push thisContext, (then Extend B = 1 => push thisProcess)
+                if (extB == 0) {
+                    return new PushBytecodes.PushActiveContextNode(code, index);
+                } else {
+                    return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
+                }
             case 83:
                 return new MiscellaneousBytecodes.DupNode(code, index);
             case 84: case 85: case 86: case 87:
@@ -137,9 +148,13 @@ public final class SqueakBytecodeSistaV1Decoder {
             case 92:
                 return ReturnBytecodes.ReturnTopFromMethodNode.create(code, index);
             case 93:
-                return ReturnBytecodes.ReturnTopFromBlockNode.create(code, index); // FIXME: BlockReturn nil
+                return ReturnBytecodes.ReturnNilFromBlockNode.create(code, index);
             case 94:
-                return ReturnBytecodes.ReturnTopFromBlockNode.create(code, index); // FIXME: BlockReturn Top [* return from enclosing block N, N = Extend A, then jump by Ext B ]
+                if (extA == 0) {
+                    return ReturnBytecodes.ReturnTopFromBlockNode.create(code, index);
+                } else { // shouldBeImplemented, see #genExtReturnTopFromBlock
+                    return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
+                }
             case 95:
                 return new MiscellaneousBytecodes.NopBytecodeNode(code, index);
             case 96: case 97: case 98: case 99: case 100: case 101: case 102: case 103:
@@ -193,17 +208,25 @@ public final class SqueakBytecodeSistaV1Decoder {
             case 233:
                 return new PushBytecodes.PushCharacterNode(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extB << 8));
             case 234: {
-                final int nextByte = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
-                return SendBytecodes.SendLiteralSelectorNode.create(code, index, 2 + extBytes, (nextByte >> 3) + (extA << 5), (nextByte & 7) + (extB << 3));
+                final int byte1 = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
+                final int literalIndex = (byte1 >> 3) + (extA << 5);
+                final int numArgs = (byte1 & 7) + (extB << 3);
+                return SendBytecodes.SendLiteralSelectorNode.create(code, index, 2 + extBytes, literalIndex, numArgs);
             }
             case 235: {
-                final int intValue = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
-                final int i = intValue >> 3;
-                final int j = intValue & 7;
-                if (extB < 64) {
-                    return new SendBytecodes.SingleExtendedSuperNode(code, index, 2 + extBytes, i + (extA << 8), j + (extB << 3));
+                boolean isDirected = false;
+                int extBValue = extB;
+                if (extBValue >= 64) {
+                    isDirected = true;
+                    extBValue = extBValue & 63;
+                }
+                final int byte1 = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
+                final int literalIndex = (byte1 >> 3) + (extA << 5);
+                final int numArgs = (byte1 & 7) + (extBValue << 3);
+                if (isDirected) {
+                    return new SendBytecodes.DirectedSuperSendNode(code, index, 2 + extBytes, literalIndex, numArgs);
                 } else {
-                    return new SendBytecodes.SendToSuperclassStackedNode(code, index, 2 + extBytes, i + (extA << 8), j + ((extB & 63) << 3));
+                    return new SendBytecodes.SingleExtendedSuperNode(code, index, 2 + extBytes, literalIndex, numArgs);
                 }
             }
             case 236:
@@ -234,6 +257,7 @@ public final class SqueakBytecodeSistaV1Decoder {
                 // TODO: use `final int s = bytecode[indexWithExt + 2] >> 5 & 3;`
                 final int j = bytecode[indexWithExt + 2] & 31;
                 final int primitiveIndex = Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + j;
+                assert 1 <= primitiveIndex && primitiveIndex < 32767 : "primitiveIndex out of range";
                 if (primitiveIndex < 1000) {
                     return new MiscellaneousBytecodes.CallPrimitiveNode(code, index, primitiveIndex);
                 }
@@ -329,7 +353,7 @@ public final class SqueakBytecodeSistaV1Decoder {
                 }
             }
             case 249:
-                return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 3, b); // FIXME: PushBytecodes.PushClosureNode.createExtended(code, index, 3, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
+                return PushBytecodes.AbstractPushFullClosureNode.createExtended(code, index, 3, extA, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
             case 250:
                 return PushBytecodes.PushClosureNode.createExtended(code, index, 3 + extBytes, extA, extB, bytecode[indexWithExt + 1], bytecode[indexWithExt + 2]);
             case 251:
@@ -347,7 +371,8 @@ public final class SqueakBytecodeSistaV1Decoder {
         //@formatter:on
     }
 
-    public static String decodeToString(final CompiledCodeObject code) {
+    @Override
+    public String decodeToString(final CompiledCodeObject code) {
         CompilerAsserts.neverPartOfCompilation();
         final StringBuilder sb = new StringBuilder();
         final int trailerPosition = trailerPosition(code);
@@ -520,8 +545,9 @@ public final class SqueakBytecodeSistaV1Decoder {
                 return "callPrimitive: " + primitiveIndex;
             }
             case 249:
+                return "pushFullClosure: (self literalAt: ?) numCopied: ? numArgs: ?";
             case 250:
-                return "closureNumCopied: numArgs: bytes  to ";
+                return "closureNumCopied: ? numArgs: ? bytes ? to ?";
             case 251:
                 return "pushTemp: inVectorAt: ";
             case 252:

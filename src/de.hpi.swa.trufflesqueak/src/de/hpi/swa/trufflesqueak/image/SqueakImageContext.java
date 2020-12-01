@@ -92,9 +92,9 @@ public final class SqueakImageContext {
     public final NativeObject runWithInSelector = new NativeObject(this);
     public final ArrayObject primitiveErrorTable = new ArrayObject(this);
     public final ArrayObject specialSelectors = new ArrayObject(this);
-    @CompilationFinal private ClassObject smallFloatClass;
+    @CompilationFinal public ClassObject fullBlockClosureClass;
+    @CompilationFinal public ClassObject smallFloatClass;
     @CompilationFinal private ClassObject byteSymbolClass;
-    @CompilationFinal private ClassObject compiledBlockClass;
     @CompilationFinal private ClassObject foreignObjectClass;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
@@ -298,7 +298,7 @@ public final class SqueakImageContext {
         final PointersObject methodNode;
         try {
             methodNode = (PointersObject) parserSharedInstance.send(this, "parse:class:noPattern:notifying:ifFail:",
-                            smalltalkSource, nilClass, BooleanObject.TRUE, requestorSharedInstanceOrNil, BlockClosureObject.create(this, 0));
+                            smalltalkSource, nilClass, BooleanObject.TRUE, requestorSharedInstanceOrNil, BlockClosureObject.create(this, blockClosureClass, 0));
         } catch (final ProcessSwitch e) {
             /*
              * A ProcessSwitch exception is thrown in case of a syntax error to open the
@@ -311,7 +311,7 @@ public final class SqueakImageContext {
 
         final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
         doItContext.setReceiver(NilObject.SINGLETON);
-        doItContext.setMethod(doItMethod);
+        doItContext.setCodeObject(doItMethod);
         doItContext.setInstructionPointer(doItMethod.getInitialPC());
         doItContext.setStackPointer(doItMethod.getNumTemps());
         doItContext.setSenderUnsafe(isExternalRequest ? InteropSenderMarker.SINGLETON : NilObject.SINGLETON);
@@ -410,16 +410,6 @@ public final class SqueakImageContext {
         return exceptionClass;
     }
 
-    public ClassObject getSmallFloatClass() {
-        return smallFloatClass;
-    }
-
-    public void setSmallFloatClass(final ClassObject classObject) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert smallFloatClass == null;
-        smallFloatClass = classObject;
-    }
-
     public ClassObject getByteSymbolClass() {
         return byteSymbolClass;
     }
@@ -428,21 +418,6 @@ public final class SqueakImageContext {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         assert byteSymbolClass == null;
         byteSymbolClass = classObject;
-    }
-
-    public boolean needsCompiledBlockClass() {
-        return compiledBlockClass == null;
-    }
-
-    public ClassObject getCompiledBlockClass() {
-        assert !needsCompiledBlockClass();
-        return compiledBlockClass;
-    }
-
-    public void setCompiledBlockClass(final ClassObject classObject) {
-        assert needsCompiledBlockClass();
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        compiledBlockClass = classObject;
     }
 
     public ClassObject getWideStringClass() {

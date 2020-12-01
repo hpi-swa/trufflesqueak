@@ -36,13 +36,14 @@ public final class FrameStackInitializationNode extends AbstractNode {
             final int initialSP;
             final BlockClosureObject closure = FrameAccess.getClosure(frame);
             if (closure == null) {
-                code = FrameAccess.getMethod(frame);
+                code = FrameAccess.getCodeObject(frame);
                 initialSP = code.getNumTemps();
+                numArgs = code.getNumArgs();
             } else {
                 code = closure.getCompiledBlock();
-                initialSP = code.getNumArgsAndCopied();
+                initialSP = closure.getNumTemps();
+                numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
             }
-            numArgs = code.getNumArgsAndCopied();
             writeNodes = new FrameSlotWriteNode[initialSP];
             for (int i = 0; i < writeNodes.length; i++) {
                 writeNodes[i] = insert(FrameSlotWriteNode.create(code.getStackSlot(i)));

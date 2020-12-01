@@ -113,9 +113,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
              * needs to run again, for example because the Source has been cached.
              */
             assert !activeContext.hasClosure() : "activeContext is expected to have no closure";
-            final CompiledCodeObject method = activeContext.getMethod();
+            final CompiledCodeObject method = activeContext.getCodeObject();
             final MaterializedFrame truffleFrame = activeContext.getTruffleFrame();
-            FrameAccess.setInstructionPointer(truffleFrame, method, 0);
+            FrameAccess.setInstructionPointer(truffleFrame, method, method.getInitialPC());
             FrameAccess.setStackPointer(truffleFrame, method, method.getNumTemps());
         }
     }

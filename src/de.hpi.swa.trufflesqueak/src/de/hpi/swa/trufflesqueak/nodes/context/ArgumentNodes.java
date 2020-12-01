@@ -47,9 +47,9 @@ public final class ArgumentNodes {
         public Object execute(final VirtualFrame frame) {
             if (readNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(frame);
-                final int stackPointer = FrameAccess.getStackPointer(frame, blockOrMethod);
-                readNode = insert(FrameSlotReadNode.create(blockOrMethod.getStackSlot(stackPointer + argumentIndex)));
+                final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
+                final int stackPointer = FrameAccess.getStackPointer(frame, code);
+                readNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer + argumentIndex)));
             }
             return readNode.executeRead(frame);
         }

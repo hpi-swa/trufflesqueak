@@ -166,13 +166,13 @@ public final class DebugUtils {
             if (!FrameAccess.isTruffleSqueakFrame(current)) {
                 return null;
             }
-            final CompiledCodeObject method = FrameAccess.getMethod(current);
+            final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
             lastSender[0] = FrameAccess.getSender(current);
-            final Object marker = FrameAccess.getMarker(current, method);
-            final Object context = FrameAccess.getContext(current, method);
+            final Object marker = FrameAccess.getMarker(current, code);
+            final Object context = FrameAccess.getContext(current, code);
             final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
             final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
-            err.println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, method, argumentsString, marker, context, lastSender[0]));
+            err.println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, code, argumentsString, marker, context, lastSender[0]));
             return null;
         });
         if (lastSender[0] instanceof ContextObject) {
@@ -216,8 +216,7 @@ public final class DebugUtils {
                     final FrameDescriptor frameDescriptor = receiverCode.getFrameDescriptor();
                     final int initialStackp;
                     if (receiverCode.isCompiledBlock()) {
-                        assert ((BlockClosureObject) receiverFrameArguments[2]).getCopied().length == receiverCode.getNumArgsAndCopied() - receiverCode.getNumArgs();
-                        initialStackp = receiverCode.getNumArgsAndCopied();
+                        initialStackp = receiverCode.getNumArgs() + ((BlockClosureObject) receiverFrameArguments[2]).getNumCopied();
                         for (int i = numArgs; i < initialStackp; i++) {
                             final Object value = receiverFrameArguments[i + 4];
                             b.append(zeroBasedStackp == i ? "\t\t\t\t\t\t-> c" : "\t\t\t\t\t\t\tc").append(i).append('\t').append(value).append('\n');
@@ -275,7 +274,7 @@ public final class DebugUtils {
         final FrameDescriptor frameDescriptor = code.getFrameDescriptor();
         final int initialStackp;
         if (code.isCompiledBlock()) {
-            initialStackp = code.getNumArgsAndCopied();
+            initialStackp = code.getNumArgs() + ((BlockClosureObject) frame.getArguments()[2]).getCopiedValues().length;
             for (int i = numArgs; i < initialStackp; i++) {
                 final Object value = frameArguments[i + 4];
                 b.append(zeroBasedStackp == i ? "\t\t\t\t-> c" : "\t\t\t\t\tc").append(i).append('\t').append(value).append('\n');

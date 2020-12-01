@@ -25,7 +25,6 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchLookupResultNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
-import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendStackedNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
@@ -33,7 +32,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractInstrumentableBytecodeNode {
-        private final int argumentCount;
+        protected final int argumentCount;
         @CompilationFinal private FrameSlot stackPointerSlot;
         @CompilationFinal private int stackPointer;
 
@@ -223,18 +222,32 @@ public final class SendBytecodes {
         }
     }
 
-    public static final class SendToSuperclassStackedNode extends AbstractSendNode {
-        @Child private DispatchSuperSendStackedNode dispatchNode;
+    public static final class DirectedSuperSendNode extends AbstractSendNode {
 
-        public SendToSuperclassStackedNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
+        @CompilationFinal private FrameSlot stackPointerSlot;
+        @CompilationFinal private int stackPointer;
+
+        @Child private FrameSlotReadNode peekAtReceiverNode;
+        @Child private FrameSlotReadNode readDirectedClassNode;
+        @Child private LookupSelectorNode lookupSelectorNode;
+        @Child private DispatchLookupResultNode dispatchNode;
+
+        public DirectedSuperSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int selectorLiteralIndex, final int numArgs) {
             super(code, index, numBytecodes, numArgs);
-            final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
-            dispatchNode = DispatchSuperSendStackedNode.create(selector, numArgs);
+            assert 0 <= selectorLiteralIndex && selectorLiteralIndex < 65535 : "selectorLiteralIndex out of range";
+            assert 0 <= numArgs && numArgs <= 31 : "numArgs out of range";
+            final NativeObject selector = (NativeObject) code.getLiteral(selectorLiteralIndex);
+            lookupSelectorNode = LookupSelectorNode.create(selector);
+            dispatchNode = DispatchLookupResultNode.create(selector, numArgs);
         }
 
         @Override
         protected Object dispatchSend(final VirtualFrame frame) {
-            return dispatchNode.execute(frame);
+            final ClassObject superclass = popDirectedClass(frame).getSuperclassOrNull();
+            assert superclass != null;
+            final Object lookupResult = lookupSelectorNode.execute(superclass);
+            final Object receiver = peekAtReceiver(frame);
+            return dispatchNode.execute(frame, receiver, superclass, lookupResult);
         }
 
         @Override
@@ -242,10 +255,35 @@ public final class SendBytecodes {
             return dispatchNode.getSelector();
         }
 
+        protected Object peekAtReceiver(final VirtualFrame frame) {
+            if (peekAtReceiverNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final int sp = FrameAccess.getStackPointer(frame, code);
+                peekAtReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(sp)));
+            }
+            return peekAtReceiverNode.executeRead(frame);
+        }
+
+        protected ClassObject popDirectedClass(final VirtualFrame frame) {
+            if (readDirectedClassNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+                /* Decrement sp to pop directed class. */
+                stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
+                /*
+                 * Read and clear directed class. Add receiver and argumentCount (sp already
+                 * decremented in AbstractSendNode).
+                 */
+                readDirectedClassNode = insert(FrameSlotReadNode.create(frame, stackPointer + 1 + argumentCount));
+            }
+            FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
+            return (ClassObject) readDirectedClassNode.executeRead(frame);
+        }
+
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "sendSuper: " + getSelector().asStringUnsafe();
+            return "directedSuperSend: " + getSelector().asStringUnsafe();
         }
     }
 }

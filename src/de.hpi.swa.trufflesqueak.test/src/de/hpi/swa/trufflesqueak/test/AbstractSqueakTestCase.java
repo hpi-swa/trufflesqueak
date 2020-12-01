@@ -82,7 +82,7 @@ public abstract class AbstractSqueakTestCase {
     protected static ExecuteTopLevelContextNode createContext(final CompiledCodeObject code, final Object receiver, final Object[] arguments) {
         final ContextObject testContext = ContextObject.create(image, code.getSqueakContextSize());
         testContext.setReceiver(receiver);
-        testContext.setMethod(code);
+        testContext.setCodeObject(code);
         testContext.setInstructionPointer(code.getInitialPC());
         testContext.setStackPointer(0);
         testContext.removeSender();

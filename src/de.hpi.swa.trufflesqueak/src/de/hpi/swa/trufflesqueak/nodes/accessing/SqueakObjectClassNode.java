@@ -15,7 +15,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
-import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -69,13 +68,7 @@ public abstract class SqueakObjectClassNode extends AbstractNode {
     @Specialization
     protected static final ClassObject doDouble(@SuppressWarnings("unused") final double value,
                     @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.getSmallFloatClass();
-    }
-
-    @Specialization
-    protected static final ClassObject doClosure(@SuppressWarnings("unused") final BlockClosureObject value,
-                    @Shared("image") @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-        return image.blockClosureClass;
+        return image.smallFloatClass;
     }
 
     @Specialization

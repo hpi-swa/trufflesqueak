@@ -27,7 +27,7 @@ public final class TemporaryWriteMarkContextsNode extends AbstractNode {
     }
 
     public static TemporaryWriteMarkContextsNode create(final VirtualFrame frame, final int tempIndex) {
-        return new TemporaryWriteMarkContextsNode(FrameAccess.getStackSlot(frame, tempIndex));
+        return new TemporaryWriteMarkContextsNode(FrameAccess.getStackSlotSlow(frame, tempIndex));
     }
 
     public static TemporaryWriteMarkContextsNode create(final CompiledCodeObject code, final int tempIndex) {

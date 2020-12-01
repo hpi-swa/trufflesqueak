@@ -15,12 +15,13 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class ResumeContextNode extends Node {
-    @Child private AbstractExecuteContextNode executeContextNode;
+    @Child private ExecuteContextNode executeContextNode;
 
     protected ResumeContextNode(final CompiledCodeObject code) {
         executeContextNode = ExecuteContextNode.create(code, true);
@@ -28,17 +29,26 @@ public abstract class ResumeContextNode extends Node {
 
     protected abstract Object executeResume(ContextObject context);
 
-    @Specialization(guards = "context.getInstructionPointerForBytecodeLoop() == 0")
+    @Specialization(guards = "context.getInstructionPointerForBytecodeLoop() == getInitalPC(context)")
     protected final Object doResumeAtStart(final ContextObject context) {
         return executeContextNode.executeResumeAtStart(context.getTruffleFrame());
     }
 
     /* Avoid compilation of contexts that are not resumed from the start. */
     @TruffleBoundary
-    @Specialization(guards = "context.getInstructionPointerForBytecodeLoop() > 0")
+    @Specialization(guards = "context.getInstructionPointerForBytecodeLoop() > getInitalPC(context)")
     protected final Object doResumeInMiddle(final ContextObject context) {
         final long initialPC = context.getInstructionPointerForBytecodeLoop();
         return executeContextNode.executeResumeInMiddle(context.getTruffleFrame(), initialPC);
+    }
+
+    protected static final int getInitalPC(final ContextObject context) {
+        final BlockClosureObject closure = context.getClosure();
+        if (closure == null) {
+            return context.getCodeObject().getInitialPC();
+        } else {
+            return (int) closure.getStartPC();
+        }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
@@ -50,7 +60,9 @@ public abstract class ResumeContextNode extends Node {
         protected ResumeContextRootNode(final SqueakLanguage language, final ContextObject context) {
             super(language, context.getTruffleFrame().getFrameDescriptor());
             activeContext = context;
-            executeContextNode = ResumeContextNodeGen.create(context.getBlockOrMethod());
+            final BlockClosureObject closure = context.getClosure();
+            final CompiledCodeObject code = closure == null ? context.getCodeObject() : closure.getCompiledBlock();
+            executeContextNode = ResumeContextNodeGen.create(code);
         }
 
         public static ResumeContextRootNode create(final SqueakLanguage language, final ContextObject activeContext) {

@@ -104,12 +104,12 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isBlockClosureClass()"})
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject.isBlockClosureClass() || classObject.isFullBlockClosureClass()"})
     protected static final BlockClosureObject doBlockClosure(final SqueakImageContext image, final ClassObject classObject, final int extraSize) {
-        return BlockClosureObject.create(image, extraSize);
+        return BlockClosureObject.create(image, classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!classObject.isMethodContextClass()", "!classObject.isBlockClosureClass()",
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!classObject.isMethodContextClass()", "!classObject.isBlockClosureClass()", "!classObject.isFullBlockClosureClass()",
                     "classObject.getLayout() == cachedLayout"}, limit = "NEW_CACHE_SIZE")
     protected static final VariablePointersObject doVariablePointers(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
                     @Cached(value = "classObject.getLayout()", allowUncached = true) final ObjectLayout cachedLayout) {

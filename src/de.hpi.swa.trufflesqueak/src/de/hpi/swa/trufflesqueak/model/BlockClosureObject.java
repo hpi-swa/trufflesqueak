@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -34,43 +35,47 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal private CompiledCodeObject block;
     @CompilationFinal private long startPC = -1;
     @CompilationFinal private long numArgs = -1;
-    @CompilationFinal(dimensions = 0) private Object[] copied;
+    @CompilationFinal private Object receiver = null;
+    @CompilationFinal(dimensions = 0) private Object[] copiedValues;
 
-    private BlockClosureObject(final SqueakImageContext image) {
-        super(image, image.blockClosureClass);
+    private BlockClosureObject(final SqueakImageContext image, final ClassObject squeakClass) {
+        super(image, squeakClass);
     }
 
-    private BlockClosureObject(final SqueakImageContext image, final long hash) {
-        super(image, hash, image.blockClosureClass);
-        copied = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
+    private BlockClosureObject(final SqueakImageContext image, final long hash, final ClassObject squeakClass) {
+        super(image, hash, squeakClass);
+        copiedValues = ArrayUtils.EMPTY_ARRAY; // Ensure copied is set.
     }
 
-    public BlockClosureObject(final SqueakImageContext image, final CompiledCodeObject block, final int startPC, final int numArgs, final Object[] copied, final ContextObject outerContext) {
-        super(image, image.blockClosureClass);
-        assert block.getInitialPC() == startPC;
+    public BlockClosureObject(final SqueakImageContext image, final ClassObject squeakClass, final CompiledCodeObject block, final int startPC, final int numArgs, final Object[] copied,
+                    final Object receiver, final ContextObject outerContext) {
+        super(image, squeakClass);
+        assert startPC > 0;
         this.block = block;
         this.outerContext = outerContext;
-        this.copied = copied;
+        copiedValues = copied;
         this.startPC = startPC;
         this.numArgs = numArgs;
+        this.receiver = receiver;
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
         super(original);
         block = original.block;
         outerContext = original.outerContext;
-        copied = original.copied;
+        copiedValues = original.copiedValues;
         startPC = original.startPC;
         numArgs = original.numArgs;
+        receiver = original.receiver;
     }
 
-    public static BlockClosureObject createWithHash(final SqueakImageContext image, final int hash) {
-        return new BlockClosureObject(image, hash);
+    public static BlockClosureObject createWithHash(final SqueakImageContext image, final int hash, final ClassObject squeakClass) {
+        return new BlockClosureObject(image, hash, squeakClass);
     }
 
-    public static BlockClosureObject create(final SqueakImageContext image, final int extraSize) {
-        final BlockClosureObject result = new BlockClosureObject(image);
-        result.copied = new Object[extraSize];
+    public static BlockClosureObject create(final SqueakImageContext image, final ClassObject squeakClass, final int extraSize) {
+        final BlockClosureObject result = new BlockClosureObject(image, squeakClass);
+        result.copiedValues = new Object[extraSize];
         return result;
     }
 
@@ -80,9 +85,15 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         final Object[] pointers = chunk.getPointers();
         assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
         outerContext = (ContextObject) pointers[BLOCK_CLOSURE.OUTER_CONTEXT];
-        startPC = (long) pointers[BLOCK_CLOSURE.START_PC];
+        if (pointers[BLOCK_CLOSURE.START_PC_OR_METHOD] instanceof CompiledCodeObject) {
+            block = (CompiledCodeObject) pointers[BLOCK_CLOSURE.START_PC_OR_METHOD];
+            receiver = pointers[BLOCK_CLOSURE.FULL_RECEIVER];
+            copiedValues = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE, pointers.length);
+        } else {
+            startPC = (long) pointers[BLOCK_CLOSURE.START_PC_OR_METHOD];
+            copiedValues = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FIRST_COPIED_VALUE, pointers.length);
+        }
         numArgs = (long) pointers[BLOCK_CLOSURE.ARGUMENT_COUNT];
-        copied = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FIRST_COPIED_VALUE, pointers.length);
     }
 
     public AbstractSqueakObject getOuterContext() {
@@ -109,12 +120,29 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         return numArgs;
     }
 
-    public Object getCopiedAt0(final int index) {
-        return copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
+    public Object getCopiedValue(final int index) {
+        return copiedValues[index];
     }
 
-    public Object[] getCopied() {
-        return copied;
+    public Object[] getCopiedValues() {
+        return copiedValues;
+    }
+
+    public int getNumCopied() {
+        return copiedValues.length;
+    }
+
+    public Object getReceiver() {
+        if (receiver == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            receiver = getOuterContextOrNull().getReceiver();
+        }
+        return receiver;
+    }
+
+    public void setReceiver(final Object value) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        receiver = value;
     }
 
     public void setOuterContext(final ContextObject outerContext) {
@@ -127,68 +155,61 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         startPC = pc;
     }
 
+    public void setBlock(final CompiledCodeObject value) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        block = value;
+    }
+
     public void setNumArgs(final int numArgs) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.numArgs = numArgs;
     }
 
-    public void setCopiedAt0(final int index, final Object value) {
-        copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = value;
+    public void setCopiedValue(final int index, final Object value) {
+        copiedValues[index] = value;
     }
 
-    public void setCopied(final Object[] copied) {
+    public void setCopiedValues(final Object[] copied) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.copied = copied;
+        copiedValues = copied;
     }
 
     public void become(final BlockClosureObject other) {
-        final Object[] otherCopied = other.copied;
-        other.setCopied(copied);
-        setCopied(otherCopied);
+        final Object[] otherCopied = other.copiedValues;
+        other.setCopiedValues(copiedValues);
+        setCopiedValues(otherCopied);
     }
 
     @Override
     public int instsize() {
-        return BLOCK_CLOSURE.FIRST_COPIED_VALUE;
+        return isABlockClosure() ? BLOCK_CLOSURE.FIRST_COPIED_VALUE : BLOCK_CLOSURE.FULL_FIRST_COPIED_VALUE;
     }
 
     @Override
     public int size() {
-        return instsize() + copied.length;
+        return instsize() + copiedValues.length;
+    }
+
+    public boolean isABlockClosure() {
+        return getSqueakClass().isBlockClosureClass();
+    }
+
+    public boolean isAFullBlockClosure() {
+        return getSqueakClass().isFullBlockClosureClass();
     }
 
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "a BlockClosureObject @" + Integer.toHexString(hashCode()) + " (with " + (numArgs == -1 && block == null ? "no block" : getNumArgs() + " args") + " and " + copied.length +
-                        " copied values in " + outerContext + ")";
-    }
-
-    private void initializeCompiledBlock(final CompiledCodeObject method) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        assert startPC >= 0;
-        final int offset = (int) startPC - method.getInitialPC();
-        final int blockSize;
-        if (method.getSignFlag()) {
-            final int j = method.getBytes()[offset - 2];
-            final int k = method.getBytes()[offset - 1];
-            blockSize = j << 8 | k & 0xff;
-        } else {
-            final int possibleExtBIndex = offset - 5;
-            assert possibleExtBIndex < 0 || method.getBytes()[possibleExtBIndex] != 225 : "FIXME: should calculate extB from bytecode";
-            blockSize = Byte.toUnsignedInt(method.getBytes()[offset - 1]);
-        }
-        block = CompiledCodeObject.createBlock(method, method, (int) numArgs, copied.length, offset, blockSize);
-        /* Ensure fields dependent on block are initialized. */
-        getStartPC();
-        getNumArgs();
+        return "a " + getSqueakClassName() + " @" + Integer.toHexString(hashCode()) + " (with " + (numArgs == -1 && block == null ? "no block" : getNumArgs() + " args") + " and " +
+                        copiedValues.length + " copied values in " + outerContext + ")";
     }
 
     public CompiledCodeObject getCompiledBlock() {
         if (block == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             /* `outerContext.getMethod()` should not be part of compilation. */
-            initializeCompiledBlock(outerContext.getMethod());
+            block = outerContext.getCodeObject().getOrCreateShadowBlock((int) getStartPC());
         }
         return block;
     }
@@ -196,7 +217,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     /** Special version of getCompiledBlock for image loader. */
     public CompiledCodeObject getCompiledBlock(final CompiledCodeObject method) {
         if (block == null) {
-            initializeCompiledBlock(method);
+            block = method.getOrCreateShadowBlock((int) getStartPC());
         }
         return block;
     }
@@ -221,6 +242,47 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
+    public int getNumTemps() {
+        if (block.isCompiledMethod()) { // See BlockClosure>>#numTemps
+            return (int) (getNumCopied() + getNumArgs() + tempCountForBlock());
+        } else { // FullBlockClosure>>#numTemps
+            return block.getNumTemps();
+        }
+    }
+
+    private int tempCountForBlock() {
+        assert block.isCompiledMethod();
+        CompilerAsserts.neverPartOfCompilation();
+        final byte[] bytecode = block.getBytes();
+        int pc;
+        final int pushNilCode;
+        final int blockSize;
+        if (block.getSignFlag()) {
+            pc = (int) getStartPC() - 4 - block.getInitialPC();
+            pushNilCode = 115;
+            blockSize = Byte.toUnsignedInt(bytecode[pc + 2]) << 8 | Byte.toUnsignedInt(bytecode[pc + 3]);
+        } else {
+            pc = (int) getStartPC() - 3 - block.getInitialPC();
+            pushNilCode = 79;
+            final PushClosureNode pushNode = (PushClosureNode) block.bytecodeNodeAt(pc);
+            blockSize = pushNode.getBlockSize();
+        }
+        final int blockEnd = pc + blockSize;
+
+        int stackpointer = 0;
+        if (Byte.toUnsignedInt(bytecode[pc]) == pushNilCode) {
+            while (pc < blockEnd) {
+                final int b = Byte.toUnsignedInt(bytecode[pc++]);
+                if (b == pushNilCode) {
+                    stackpointer++;
+                } else {
+                    break;
+                }
+            }
+        }
+        return stackpointer;
+    }
+
     public BlockClosureObject shallowCopy() {
         return new BlockClosureObject(this);
     }
@@ -229,14 +291,21 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
-            if (getOuterContextOrNull() == fromPointer && fromPointer != to[i] && to[i] instanceof ContextObject) {
+            if (receiver == fromPointer) {
+                receiver = to[i];
+                copyHash(fromPointer, to[i], copyHash); // FIXME????
+            }
+            if (block == fromPointer && to[i] instanceof CompiledCodeObject) {
+                block = (CompiledCodeObject) to[i];
+            }
+            if (outerContext == fromPointer && fromPointer != to[i] && to[i] instanceof ContextObject) {
                 setOuterContext((ContextObject) to[i]);
                 copyHash(fromPointer, to[i], copyHash);
             }
-            for (int j = 0; j < getCopied().length; j++) {
-                final Object copiedValue = getCopied()[j];
+            for (int j = 0; j < copiedValues.length; j++) {
+                final Object copiedValue = copiedValues[j];
                 if (copiedValue == fromPointer) {
-                    getCopied()[j] = to[i];
+                    copiedValues[j] = to[i];
                     copyHash(fromPointer, to[i], copyHash);
                 }
             }
@@ -246,7 +315,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     @Override
     public void tracePointers(final ObjectTracer tracer) {
         tracer.addIfUnmarked(getOuterContext());
-        for (final Object value : getCopied()) {
+        for (final Object value : getCopiedValues()) {
             tracer.addIfUnmarked(value);
         }
     }
@@ -255,7 +324,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
     public void trace(final SqueakImageWriter writer) {
         super.trace(writer);
         writer.traceIfNecessary(outerContext);
-        writer.traceAllIfNecessary(getCopied());
+        writer.traceAllIfNecessary(getCopiedValues());
     }
 
     @Override
@@ -266,7 +335,7 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         writer.writeObject(getOuterContext());
         writer.writeSmallInteger(getStartPC());
         writer.writeSmallInteger(getNumArgs());
-        for (final Object value : getCopied()) {
+        for (final Object value : getCopiedValues()) {
             writer.writeObject(value);
         }
     }

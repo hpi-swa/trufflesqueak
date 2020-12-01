@@ -10,23 +10,27 @@ import com.oracle.truffle.api.CompilerAsserts;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
-public final class SqueakBytecodeV3PlusClosuresDecoder {
+public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakBytecodeDecoder {
+    public static final SqueakBytecodeV3PlusClosuresDecoder SINGLETON = new SqueakBytecodeV3PlusClosuresDecoder();
+
     private SqueakBytecodeV3PlusClosuresDecoder() {
     }
 
-    public static AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
+    @Override
+    public AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
         final int trailerPosition = trailerPosition(code);
         final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[trailerPosition];
         int index = 0;
         while (index < trailerPosition) {
             final AbstractBytecodeNode bytecodeNode = decodeBytecode(code, index);
             nodes[index] = bytecodeNode;
-            index = bytecodeNode.getSuccessorIndex();
+            index += decodeNumBytes(code, index);
         }
         return nodes;
     }
 
-    public static int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
+    @Override
+    public int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
         final int trailerPosition = trailerPosition(code);
         assert 0 <= targetIndex && targetIndex <= trailerPosition;
         int index = 0;
@@ -39,7 +43,8 @@ public final class SqueakBytecodeV3PlusClosuresDecoder {
         return lineNumber;
     }
 
-    public static int trailerPosition(final CompiledCodeObject code) {
+    @Override
+    public int trailerPosition(final CompiledCodeObject code) {
         return code.isCompiledBlock() ? code.getBytes().length : trailerPosition(code.getBytes());
     }
 
@@ -81,7 +86,8 @@ public final class SqueakBytecodeV3PlusClosuresDecoder {
         return bytecodeLength - (1 + numBytes + length);
     }
 
-    public static AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
+    @Override
+    public AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();
         final int b = Byte.toUnsignedInt(bytecode[index]);
@@ -169,7 +175,7 @@ public final class SqueakBytecodeV3PlusClosuresDecoder {
             case 142:
                 return new StoreBytecodes.PopIntoRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 143:
-                return PushBytecodes.PushClosureNode.create(code, index, 4, bytecode[index + 1], bytecode[index + 2], bytecode[index + 3]);
+                return PushBytecodes.PushClosureNode.create(code, index, bytecode[index + 1], bytecode[index + 2], bytecode[index + 3]);
             case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
                 return JumpBytecodes.UnconditionalJumpNode.createShort(code, index, b);
             case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:
@@ -200,7 +206,8 @@ public final class SqueakBytecodeV3PlusClosuresDecoder {
         //@formatter:on
     }
 
-    public static String decodeToString(final CompiledCodeObject code) {
+    @Override
+    public String decodeToString(final CompiledCodeObject code) {
         CompilerAsserts.neverPartOfCompilation();
         final StringBuilder sb = new StringBuilder();
         final int trailerPosition = trailerPosition(code);

@@ -685,7 +685,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final AbstractPrimitiveNode createPrimitiveNode(final VirtualFrame frame, final long primitiveIndex) {
-            return PrimitiveNodeFactory.forIndex(FrameAccess.getMethod(frame), false, (int) primitiveIndex);
+            return PrimitiveNodeFactory.forIndex(FrameAccess.getCodeObject(frame), false, (int) primitiveIndex);
         }
     }
 

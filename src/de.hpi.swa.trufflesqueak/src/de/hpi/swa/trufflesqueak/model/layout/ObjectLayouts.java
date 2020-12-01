@@ -56,9 +56,13 @@ public final class ObjectLayouts {
 
     public static final class BLOCK_CLOSURE {
         public static final int OUTER_CONTEXT = 0;
-        public static final int START_PC = 1;
+        public static final int START_PC_OR_METHOD = 1;
         public static final int ARGUMENT_COUNT = 2;
         public static final int FIRST_COPIED_VALUE = 3;
+
+        /* FullBlockClosure specifics */
+        public static final int FULL_RECEIVER = 3;
+        public static final int FULL_FIRST_COPIED_VALUE = 4;
     }
 
     public static final class BLOCK_CONTEXT { // only used by blockCopy primitive
@@ -323,7 +327,7 @@ public final class ObjectLayouts {
         public static final int SELECTOR_CANNOT_INTERPRET = 34;
         public static final int METHOD_CONTEXT_PROTO = 35;
         public static final int CLASS_BLOCK_CLOSURE = 36;
-        public static final int BLOCK_CONTEXT_PROTO = 37;
+        public static final int CLASS_FULL_BLOCK_CLOSURE = 37;
         public static final int EXTERNAL_OBJECTS_ARRAY = 38;
         public static final int CLASS_PSEUDO_CONTEXT = 39;
         public static final int CLASS_TRANSLATED_METHOD = 40;

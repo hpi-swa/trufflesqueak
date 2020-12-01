@@ -51,7 +51,7 @@ public final class GetContextOrMarkerNode extends AbstractNode {
 
     public static Object getNotProfiled(final VirtualFrame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        final ContextObject context = FrameAccess.getContext(frame);
+        final ContextObject context = FrameAccess.getContextSlow(frame);
         if (context != null) {
             return context;
         } else {

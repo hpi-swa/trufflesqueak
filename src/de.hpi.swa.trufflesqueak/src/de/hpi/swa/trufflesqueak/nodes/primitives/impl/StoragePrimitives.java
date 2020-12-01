@@ -112,14 +112,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     }
                 }
 
-                final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
-                final ContextObject context = FrameAccess.getContext(current, blockOrMethod);
+                final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
+                final ContextObject context = FrameAccess.getContext(current, code);
                 if (context != null) {
                     for (int j = 0; j < fromPointersLength; j++) {
                         final Object fromPointer = fromPointers[j];
                         if (context == fromPointer) {
                             final Object toPointer = toPointers[j];
-                            FrameAccess.setContext(current, blockOrMethod, (ContextObject) toPointer);
+                            FrameAccess.setContext(current, code, (ContextObject) toPointer);
                             AbstractSqueakObjectWithClassAndHash.copyHash(fromPointer, toPointer, copyHash);
                         } else {
                             context.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
@@ -131,7 +131,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                  * use blockOrMethod.getStackSlotsUnsafe() here instead of stackPointer because in
                  * rare cases, the stack is accessed behind the stackPointer.
                  */
-                for (final FrameSlot slot : blockOrMethod.getStackSlotsUnsafe()) {
+                for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
                     if (slot == null) {
                         return null; // Stop here, slot has not (yet) been created.
                     }

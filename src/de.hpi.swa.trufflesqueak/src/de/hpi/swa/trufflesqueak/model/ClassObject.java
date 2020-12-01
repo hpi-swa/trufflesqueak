@@ -292,7 +292,7 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.getWideStringClass();
     }
 
-    private boolean includesBehavior(final ClassObject squeakClass) {
+    public boolean includesBehavior(final ClassObject squeakClass) {
         ClassObject current = this;
         while (current != null) {
             if (current == squeakClass) {
@@ -331,12 +331,6 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
             instanceVariables = chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES] == NilObject.SINGLETON ? null : (ArrayObject) chunkPointers[CLASS_DESCRIPTION.INSTANCE_VARIABLES];
             organization = chunkPointers[CLASS_DESCRIPTION.ORGANIZATION] == NilObject.SINGLETON ? null : (PointersObject) chunkPointers[CLASS_DESCRIPTION.ORGANIZATION];
             pointers = Arrays.copyOfRange(chunkPointers, CLASS_DESCRIPTION.SIZE, chunkPointers.length);
-            if (size() > 7) {
-                final String className = getClassNameUnsafe();
-                if (image.needsCompiledBlockClass() && "CompiledBlock".equals(className)) {
-                    image.setCompiledBlockClass(this);
-                }
-            }
         } else if (needsSqueakHash()) {
             setSqueakHash(image.getNextClassHash());
         }
@@ -571,16 +565,16 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
         return this == image.compiledMethodClass;
     }
 
-    public boolean isCompiledBlock() {
-        return this == image.getCompiledBlockClass();
-    }
-
     public boolean isMethodContextClass() {
         return this == image.methodContextClass;
     }
 
     public boolean isBlockClosureClass() {
         return this == image.blockClosureClass;
+    }
+
+    public boolean isFullBlockClosureClass() {
+        return this == image.fullBlockClosureClass;
     }
 
     public boolean isFloatClass() {

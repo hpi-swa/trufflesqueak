@@ -87,7 +87,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
     }
 
     protected static final FrameSlotReadNode createTemporaryReadNode(final VirtualFrame frame, final int tempIndex) {
-        return FrameSlotReadNode.create(FrameAccess.getStackSlot(frame, tempIndex));
+        return FrameSlotReadNode.create(FrameAccess.getStackSlotSlow(frame, tempIndex));
     }
 
     protected static final SendSelectorNode createAboutToReturnSend() {

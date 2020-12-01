@@ -7,6 +7,8 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import org.graalvm.collections.EconomicMap;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -39,8 +41,8 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextNode.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
-import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeSistaV1Decoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
@@ -76,11 +78,17 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal protected boolean needsLargeFrame;
     @CompilationFinal protected int numTemps;
 
-    @CompilationFinal(dimensions = 1) private CompiledCodeObject[] innerBlocks;
+    private AbstractSqueakBytecodeDecoder decoder;
 
-    /* CompiledBlocks support. */
-    private final int numCopiedValues;
-    private final int offset;
+    /*
+     * With FullBlockClosure support, CompiledMethods store CompiledBlocks in their literals and
+     * CompiledBlocks their outer method in their last literal. For traditional BlockClosures, we
+     * need to do something similar, but with CompiledMethods only (CompiledBlocks are not used
+     * then). The next two fields are used to store "shadowBlocks", which are light copies of the
+     * outer method with a new call target, and the code object to be used for closure activations.
+     */
+    private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
+    @CompilationFinal private CompiledCodeObject closureCodeObject;
 
     private Source source;
 
@@ -90,53 +98,28 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @CompilationFinal private RootCallTarget resumptionCallTarget;
 
     @TruffleBoundary
-    protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues, final int offset, final ClassObject classObject) {
+    public CompiledCodeObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
-        this.numCopiedValues = numCopiedValues;
-        assert classObject == image.compiledMethodClass || classObject == image.getCompiledBlockClass() && offset > 0 : "Only CompiledBlock objects should have an offset";
-        this.offset = offset;
-
         frameDescriptor = new FrameDescriptor();
         thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
         thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
-    }
-
-    public CompiledCodeObject(final SqueakImageContext image, final int hash, final ClassObject classObject) {
-        this(image, hash, 0, 0, classObject);
+        if (!classObject.isCompiledMethodClass()) {
+            // CompiledBlocks are used as code object for closure activations.
+            closureCodeObject = this;
+        }
     }
 
     public CompiledCodeObject(final SqueakImageContext image, final byte[] bc, final Object[] lits, final ClassObject classObject) {
-        this(image, 0, 0, 0, classObject);
+        this(image, AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED, classObject);
         literals = lits;
         decodeHeader();
         bytes = bc;
     }
 
-    private CompiledCodeObject(final SqueakImageContext image, final CompiledCodeObject code, final CompiledCodeObject outerMethod, final int numArguments, final int numCopied,
-                    final int bytecodeOffset, final int blockSize) {
-        this(image, 0, numCopied, (code.isCompiledBlock() ? code.getOffset() : 0) + bytecodeOffset, image.getCompiledBlockClass());
-        final Object[] outerLiterals = outerMethod.getLiterals();
-        final int outerLiteralsLength = outerLiterals.length;
-        literals = new Object[outerLiteralsLength + 1];
-        literals[0] = makeHeader(outerMethod.getSignFlag(), numArguments, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
-        System.arraycopy(outerLiterals, 1, literals, 1, outerLiteralsLength - 1);
-        literals[outerLiteralsLength] = outerMethod; // Last literal is back pointer to method.
-        bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, bytecodeOffset + blockSize);
-        /* Instead of calling decodeHeader(), set fields directly. */
-        numLiterals = code.numLiterals;
-        hasPrimitive = false;
-        needsLargeFrame = outerMethod.needsLargeFrame;
-        numTemps = numArguments + numCopied;
-        numArgs = numArguments;
-        ensureCorrectNumberOfStackSlots();
-        initializeCallTargetUnsafe();
-    }
-
     protected CompiledCodeObject(final CompiledCodeObject original) {
         super(original);
-        numCopiedValues = original.numCopiedValues;
         frameDescriptor = original.frameDescriptor;
         thisMarkerSlot = original.thisMarkerSlot;
         thisContextSlot = original.thisContextSlot;
@@ -144,11 +127,42 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         stackPointerSlot = original.stackPointerSlot;
         stackSlots = original.stackSlots;
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
-        offset = original.offset;
+        decoder = original.decoder;
+    }
+
+    protected CompiledCodeObject(final CompiledCodeObject outerCode, final int startPC) {
+        super(outerCode);
+        outerCode.shadowBlocks.put(startPC, this);
+
+        // Find outer method
+        CompiledCodeObject currentOuterCode = outerCode;
+        while (currentOuterCode.closureCodeObject != null) {
+            currentOuterCode = currentOuterCode.closureCodeObject;
+        }
+        closureCodeObject = currentOuterCode;
+
+        frameDescriptor = new FrameDescriptor();
+        thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
+        thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
+        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
+        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
+
+        // header info and data
+        literals = outerCode.literals;
+        bytes = outerCode.bytes;
+        numArgs = outerCode.numArgs;
+        numLiterals = outerCode.numLiterals;
+        hasPrimitive = outerCode.hasPrimitive;
+        needsLargeFrame = outerCode.needsLargeFrame;
+        numTemps = outerCode.numTemps;
+
+        decoder = outerCode.decoder;
+
+        ensureCorrectNumberOfStackSlots();
     }
 
     private CompiledCodeObject(final int size, final SqueakImageContext image, final ClassObject classObject) {
-        this(image, 0, 0, 0, classObject);
+        this(image, AbstractSqueakObjectWithClassAndHash.HASH_UNINITIALIZED, classObject);
         bytes = new byte[size];
     }
 
@@ -156,9 +170,22 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return new CompiledCodeObject(size, image, classObject);
     }
 
-    public static CompiledCodeObject createBlock(final CompiledCodeObject code, final CompiledCodeObject outerMethod, final int numArguments, final int numCopied, final int bytecodeOffset,
-                    final int blockSize) {
-        return new CompiledCodeObject(code.getSqueakClass().getImage(), code, outerMethod, numArguments, numCopied, bytecodeOffset, blockSize);
+    public CompiledCodeObject getOrCreateShadowBlock(final int startPC) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (shadowBlocks == null) {
+            shadowBlocks = EconomicMap.create();
+        }
+        final CompiledCodeObject copy = shadowBlocks.get(startPC);
+        if (copy == null) {
+            return new CompiledCodeObject(this, startPC);
+        } else {
+            return copy;
+        }
+    }
+
+    public CompiledCodeObject getClosureCodeObject() {
+        assert closureCodeObject != null;
+        return closureCodeObject;
     }
 
     private void setLiteralsAndBytes(final Object[] literals, final byte[] bytes) {
@@ -166,7 +193,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         this.literals = literals;
         decodeHeader();
         this.bytes = bytes;
-        innerBlocks = null; // Remove any inner blocks.
         renewCallTarget();
     }
 
@@ -177,7 +203,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             String contents;
             try {
                 name = toString();
-                contents = SqueakBytecodeV3PlusClosuresDecoder.decodeToString(this);
+                contents = decoder.decodeToString(this);
             } catch (final RuntimeException e) {
                 if (name == null) {
                     name = SOURCE_UNAVAILABLE_NAME;
@@ -262,10 +288,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return numArgs;
     }
 
-    public int getNumArgsAndCopied() {
-        return numArgs + numCopiedValues;
-    }
-
     public int getNumTemps() {
         return numTemps;
     }
@@ -312,39 +334,22 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         decodeHeader();
         assert bytes == null;
         bytes = Arrays.copyOfRange(chunk.getBytes(), ptrs.length * SqueakImageConstants.WORD_SIZE, chunk.getBytes().length);
-        assert innerBlocks == null : "Should not have any inner blocks yet";
     }
 
     public AbstractBytecodeNode[] asBytecodeNodes() {
-        if (getSignFlag()) {
-            return SqueakBytecodeV3PlusClosuresDecoder.decode(this);
-        } else {
-            return SqueakBytecodeSistaV1Decoder.decode(this);
-        }
+        return decoder.decode(this);
     }
 
     public AbstractBytecodeNode[] asBytecodeNodesEmpty() {
-        if (getSignFlag()) {
-            return new AbstractBytecodeNode[SqueakBytecodeV3PlusClosuresDecoder.trailerPosition(this)];
-        } else {
-            return new AbstractBytecodeNode[SqueakBytecodeSistaV1Decoder.trailerPosition(this)];
-        }
+        return new AbstractBytecodeNode[decoder.trailerPosition(this)];
     }
 
     public AbstractBytecodeNode bytecodeNodeAt(final int pc) {
-        if (getSignFlag()) {
-            return SqueakBytecodeV3PlusClosuresDecoder.decodeBytecode(this, pc);
-        } else {
-            return SqueakBytecodeSistaV1Decoder.decodeBytecode(this, pc);
-        }
+        return decoder.decodeBytecode(this, pc);
     }
 
     public int findLineNumber(final int index) {
-        if (getSignFlag()) {
-            return SqueakBytecodeV3PlusClosuresDecoder.findLineNumber(this, index);
-        } else {
-            return SqueakBytecodeSistaV1Decoder.findLineNumber(this, index);
-        }
+        return decoder.findLineNumber(this, index);
     }
 
     protected void decodeHeader() {
@@ -355,6 +360,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         needsLargeFrame = CompiledCodeHeaderDecoder.getNeedsLargeFrame(header);
         numTemps = CompiledCodeHeaderDecoder.getNumTemps(header);
         numArgs = CompiledCodeHeaderDecoder.getNumArguments(header);
+        decoder = getSignFlag() ? SqueakBytecodeV3PlusClosuresDecoder.SINGLETON : SqueakBytecodeSistaV1Decoder.SINGLETON;
         ensureCorrectNumberOfStackSlots();
     }
 
@@ -396,23 +402,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
-        if (index < getBytecodeOffset() - getOffset()) {
+        if (index < getBytecodeOffset()) {
             assert index % SqueakImageConstants.WORD_SIZE == 0;
             return literals[index / SqueakImageConstants.WORD_SIZE];
         } else {
-            if (isCompiledBlock()) {
-                return getMethod().at0(longIndex);
-            } else {
-                assert isCompiledMethod();
-                final int realIndex = index - getBytecodeOffset();
-                assert realIndex >= 0;
-                return Byte.toUnsignedLong(bytes[realIndex]);
-            }
+            final int realIndex = index - getBytecodeOffset();
+            assert realIndex >= 0;
+            return Byte.toUnsignedLong(bytes[realIndex]);
         }
-    }
-
-    private int getOffset() {
-        return offset;
     }
 
     public void atput0(final long longIndex, final Object obj) {
@@ -482,11 +479,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public int size() {
-        if (isCompiledBlock()) {
-            return getMethodUnsafe().size();
-        } else {
-            return getBytecodeOffset() + bytes.length;
-        }
+        return getBytecodeOffset() + bytes.length;
     }
 
     @Override
@@ -521,31 +514,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return (signFlag ? 0 : 1) << 31 | (numArgs & 0x0F) << 24 | (numTemps & 0x3F) << 18 | numLiterals & 0x7FFF | (needsLargeFrame ? 0x20000 : 0) | (hasPrimitive ? 0x10000 : 0);
     }
 
-    public CompiledCodeObject findBlock(final CompiledCodeObject method, final int numClosureArgs, final int numCopied, final int successorIndex, final int blockSize) {
-        if (innerBlocks != null) {
-            // TODO: Avoid instanceof checks (same code in CompiledBlockObject).
-            final int additionalOffset = isCompiledBlock() ? getOffset() : 0;
-            final int targetOffset = additionalOffset + successorIndex;
-            for (final CompiledCodeObject innerBlock : innerBlocks) {
-                if (innerBlock.getOffset() == targetOffset) {
-                    return innerBlock;
-                }
-            }
-        }
-        return addInnerBlock(createBlock(this, method, numClosureArgs, numCopied, successorIndex, blockSize));
-    }
-
-    private CompiledCodeObject addInnerBlock(final CompiledCodeObject innerBlock) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        if (innerBlocks == null) {
-            innerBlocks = new CompiledCodeObject[]{innerBlock};
-        } else {
-            innerBlocks = Arrays.copyOf(innerBlocks, innerBlocks.length + 1);
-            innerBlocks[innerBlocks.length - 1] = innerBlock;
-        }
-        return innerBlock;
-    }
-
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
         for (int i = 0; i < from.length; i++) {
@@ -577,7 +545,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void write(final SqueakImageWriter writer) {
-        assert isCompiledMethod() && offset == 0 : "Writing compiledBlocks has not been tested yet";
+        assert isCompiledMethod() : "Writing compiledBlocks has not been tested yet";
         final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
         assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
         if (writeHeader(writer, formatOffset)) {
@@ -601,7 +569,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     /* Answer the program counter for the receiver's first bytecode. */
     public int getInitialPC() {
         // pc is offset by header + numLiterals, +1 for one-based addressing
-        return getBytecodeOffset() + 1 + getOffset();
+        return getBytecodeOffset() + 1;
     }
 
     public NativeObject getCompiledInSelector() {
@@ -644,11 +612,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return (AbstractSqueakObject) literals[literals.length - 1];
     }
 
-    public boolean hasMethodClassSlow() {
-        CompilerAsserts.neverPartOfCompilation();
-        return hasMethodClass(AbstractPointersObjectReadNode.getUncached());
-    }
-
     public boolean hasMethodClass(final AbstractPointersObjectReadNode readNode) {
         final AbstractSqueakObject mca = getMethodClassAssociation();
         return mca != NilObject.SINGLETON && readNode.execute((AbstractPointersObject) mca, CLASS_BINDING.VALUE) != NilObject.SINGLETON;
@@ -666,11 +629,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     /** CompiledMethod>>#methodClass. */
     public ClassObject getMethodClass(final AbstractPointersObjectReadNode readNode) {
         return (ClassObject) readNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE);
-    }
-
-    /** CompiledMethod>>#methodClass:. */
-    public void setMethodClass(final AbstractPointersObjectWriteNode writeNode, final ClassObject newClass) {
-        writeNode.execute((AbstractPointersObject) getMethodClassAssociation(), CLASS_BINDING.VALUE, newClass);
     }
 
     public void setHeader(final long header) {
@@ -692,19 +650,19 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      */
 
     public boolean isCompiledBlock() {
-        return getSqueakClass().isCompiledBlock();
+        return !getSqueakClass().isCompiledMethodClass();
     }
 
     public CompiledCodeObject getMethod() {
-        if (isCompiledBlock()) {
-            return getMethodUnsafe();
-        } else {
+        if (isCompiledMethod()) {
             return this;
+        } else {
+            return getMethodUnsafe();
         }
     }
 
     public CompiledCodeObject getMethodUnsafe() {
-        assert isCompiledBlock();
+        assert !isCompiledMethod();
         return (CompiledCodeObject) literals[literals.length - 1];
     }
 

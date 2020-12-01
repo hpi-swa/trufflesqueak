@@ -118,7 +118,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         // pushConstant: true, send: class, pop, returnSelf
         final int[] bytes = {0x76, 0x88, 0x73, 0xc6, 0x99, 0x87, 0x71, 0xc7, 0x87, 0x78};
         final CompiledCodeObject code = makeMethod(bytes);
-        final AbstractBytecodeNode[] bytecodeNodes = SqueakBytecodeV3PlusClosuresDecoder.decode(code);
+        final AbstractBytecodeNode[] bytecodeNodes = SqueakBytecodeV3PlusClosuresDecoder.SINGLETON.decode(code);
         assertEquals(bytes.length, bytecodeNodes.length);
         assertSame(PushConstantOneNode.class, bytecodeNodes[0].getClass());
         assertSame(DupNode.class, bytecodeNodes[1].getClass());
@@ -142,7 +142,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                                                                                                      // with
         // numTemp=55
         final CompiledCodeObject code = makeMethod(literals, 0x70, 0x68, 0x10, 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, 0xC9, 0x7C);
-        final CharSequence source = SqueakBytecodeV3PlusClosuresDecoder.decodeToString(code);
+        final CharSequence source = SqueakBytecodeV3PlusClosuresDecoder.SINGLETON.decodeToString(code);
         assertEquals(String.join("\n",
                         "1 <70> self",
                         "2 <68> popIntoTemp: 0",
@@ -186,7 +186,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                         176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
                         189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201,
                         202, 203, 204, 205, 206, 207, 208, 225, 240);
-        final CharSequence source = SqueakBytecodeV3PlusClosuresDecoder.decodeToString(code);
+        final CharSequence source = SqueakBytecodeV3PlusClosuresDecoder.SINGLETON.decodeToString(code);
         assertEquals(ALL_BYTECODES_EXPECTED_RESULT, source);
     }
 

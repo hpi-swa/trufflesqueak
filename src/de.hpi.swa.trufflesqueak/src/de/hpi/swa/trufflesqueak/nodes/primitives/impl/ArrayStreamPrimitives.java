@@ -46,8 +46,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Child protected SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
 
-        protected final boolean inBoundsOfSqueakObject(final Object target, final long index) {
-            return SqueakGuards.inBounds1(index + instSizeNode.execute(target), sizeNode.execute(target));
+        protected final boolean inBoundsOfSqueakObject(final Object target, final int instSize, final long index) {
+            return SqueakGuards.inBounds1(index + instSize, sizeNode.execute(target));
         }
     }
 
@@ -59,8 +59,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected final Object doSqueakObject(final Object receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("at0Node") @Cached final SqueakObjectAt0Node at0Node,
                         @Cached final BranchProfile outOfBounceProfile) {
-            if (inBoundsOfSqueakObject(receiver, index)) {
-                return at0Node.execute(receiver, index - 1 + instSizeNode.execute(receiver));
+            final int instSize = instSizeNode.execute(receiver);
+            if (inBoundsOfSqueakObject(receiver, instSize, index)) {
+                return at0Node.execute(receiver, index - 1 + instSize);
             } else {
                 outOfBounceProfile.enter();
                 throw PrimitiveFailed.BAD_INDEX;
@@ -85,8 +86,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                         @SuppressWarnings("unused") final NotProvided notProvided,
                         @Shared("atput0Node") @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final BranchProfile outOfBounceProfile) {
-            if (inBoundsOfSqueakObject(receiver, index)) {
-                atput0Node.execute(receiver, index - 1 + instSizeNode.execute(receiver), value);
+            final int instSize = instSizeNode.execute(receiver);
+            if (inBoundsOfSqueakObject(receiver, instSize, index)) {
+                atput0Node.execute(receiver, index - 1 + instSize, value);
                 return value;
             } else {
                 outOfBounceProfile.enter();

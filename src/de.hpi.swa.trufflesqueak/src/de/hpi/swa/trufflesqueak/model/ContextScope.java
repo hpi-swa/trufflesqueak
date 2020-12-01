@@ -43,7 +43,7 @@ public final class ContextScope implements TruffleObject {
 
     public ContextScope(final Frame frame) {
         this.frame = frame;
-        final CompiledCodeObject code = FrameAccess.getBlockOrMethod(frame);
+        final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
         for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
             if (slot == null) {
                 break;
@@ -77,13 +77,13 @@ public final class ContextScope implements TruffleObject {
             return FrameAccess.getSender(frame);
         }
         if (PC.equals(member)) {
-            return FrameAccess.getInstructionPointer(frame, FrameAccess.getBlockOrMethod(frame));
+            return FrameAccess.getInstructionPointerSlow(frame);
         }
         if (STACKP.equals(member)) {
-            return FrameAccess.getStackPointer(frame, FrameAccess.getBlockOrMethod(frame));
+            return FrameAccess.getStackPointerSlow(frame);
         }
         if (METHOD.equals(member)) {
-            return FrameAccess.getMethod(frame);
+            return FrameAccess.getCodeObject(frame);
         }
         if (CLOSURE_OR_NIL.equals(member)) {
             return NilObject.nullToNil(FrameAccess.getClosure(frame));
@@ -123,11 +123,11 @@ public final class ContextScope implements TruffleObject {
         if (slot == null) {
             return false;
         }
-        final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(frame);
+        final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
         int i = 0;
-        for (final FrameSlot currentSlot : blockOrMethod.getStackSlotsUnsafe()) {
+        for (final FrameSlot currentSlot : code.getStackSlotsUnsafe()) {
             if (currentSlot == slot) {
-                return i < FrameAccess.getStackPointer(frame, blockOrMethod);
+                return i < FrameAccess.getStackPointer(frame, code);
             }
             i++;
         }
@@ -192,7 +192,7 @@ public final class ContextScope implements TruffleObject {
     @ExportMessage
     @TruffleBoundary
     protected Object toDisplayString(@SuppressWarnings("unused") final boolean allowSideEffects) {
-        final CompiledCodeObject method = FrameAccess.getMethod(frame);
+        final CompiledCodeObject method = FrameAccess.getCodeObject(frame);
         final BlockClosureObject closure = FrameAccess.getClosure(frame);
         if (closure != null) {
             return "CTX [] in " + method;

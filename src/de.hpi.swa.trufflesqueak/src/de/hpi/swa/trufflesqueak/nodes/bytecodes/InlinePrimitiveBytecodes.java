@@ -9,12 +9,12 @@ import org.bouncycastle.util.Arrays;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
@@ -87,7 +87,7 @@ public final class InlinePrimitiveBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) ((PointersObject) popNode.execute(frame)).size()); // FIXME
+            throw SqueakException.create("Not yet implemented"); // TODO
         }
     }
 
@@ -98,7 +98,7 @@ public final class InlinePrimitiveBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, (long) ((PointersObject) popNode.execute(frame)).getNumSlots()); // FIXME
+            throw SqueakException.create("Not yet implemented"); // TODO
         }
     }
 
@@ -570,7 +570,7 @@ public final class InlinePrimitiveBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            final Object value = (long) pop3Node.execute(frame);
+            final Object value = (long) pop4Node.execute(frame);
             final long to = (long) pop3Node.execute(frame);
             final long from = (long) pop2Node.execute(frame);
             final Object receiver = pop1Node.execute(frame);
