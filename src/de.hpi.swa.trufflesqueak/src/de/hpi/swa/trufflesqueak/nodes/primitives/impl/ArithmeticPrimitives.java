@@ -1533,7 +1533,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(Double.class)
     public abstract static class AbstractArithmeticPrimitiveNode extends AbstractPrimitiveNode {
-        private static final long ONE_SHIFTED_BY_53 = 1L << FloatObject.PRECISION;
+        private static final long MAX_SAFE_INTEGER_LONG = (1L << FloatObject.PRECISION) - 1;
+        private static final long MIN_SAFE_INTEGER_LONG = -MAX_SAFE_INTEGER_LONG;
 
         protected static final double ensureFinite(final double value) {
             if (Double.isFinite(value)) {
@@ -1556,7 +1557,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected static final boolean inSafeIntegerRange(final double d) {
             // The ends of the interval are also included, since they are powers of two
-            return -ONE_SHIFTED_BY_53 <= d && d <= ONE_SHIFTED_BY_53;
+            return MIN_SAFE_INTEGER_LONG <= d && d <= MAX_SAFE_INTEGER_LONG;
         }
 
         protected static final boolean differentSign(final long lhs, final long rhs) {
