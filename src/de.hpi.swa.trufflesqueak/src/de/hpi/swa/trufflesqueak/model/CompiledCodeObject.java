@@ -49,6 +49,7 @@ import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
+import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 @ExportLibrary(InteropLibrary.class)
 public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHash {
@@ -400,15 +401,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return (1 + numLiterals) * SqueakImageConstants.WORD_SIZE; // header plus numLiterals
     }
 
-    public Object at0(final long longIndex) {
-        final int index = (int) longIndex;
-        if (index < getBytecodeOffset()) {
-            assert index % SqueakImageConstants.WORD_SIZE == 0;
-            return literals[index / SqueakImageConstants.WORD_SIZE];
+    public long at0(final long index) {
+        final int offset = getBytecodeOffset();
+        if (index < offset) {
+            CompilerDirectives.transferToInterpreter();
+            // FIXME: check bounds of compiled code objects
+            throw new ArrayIndexOutOfBoundsException();
         } else {
-            final int realIndex = index - getBytecodeOffset();
-            assert realIndex >= 0;
-            return Byte.toUnsignedLong(bytes[realIndex]);
+            return Byte.toUnsignedLong(UnsafeUtils.getByte(bytes, index - offset));
         }
     }
 

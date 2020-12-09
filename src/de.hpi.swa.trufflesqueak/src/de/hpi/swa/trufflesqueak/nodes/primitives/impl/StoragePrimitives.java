@@ -159,7 +159,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 68)
     protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Specialization
+        @Specialization(guards = "to0(index) < receiver.getLiterals().length")
         protected static final Object literalAt(final CompiledCodeObject receiver, final long index) {
             // Use getLiterals() instead of getLiteral(i), the latter skips the header.
             return receiver.getLiterals()[(int) index - 1];
@@ -169,9 +169,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 69)
     protected abstract static class PrimCompiledMethodObjectAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-        @Specialization
-        protected static final Object setLiteral(final CompiledCodeObject code, final long index, final Object value) {
-            code.setLiteral(index - 1, value);
+        @Specialization(guards = "to0(index) < receiver.getLiterals().length")
+        protected static final Object setLiteral(final CompiledCodeObject receiver, final long index, final Object value) {
+            receiver.setLiteral(index - 1, value);
             return value;
         }
     }
@@ -347,11 +347,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
          * should never be part of compilation, thus the <code>@TruffleBoundary</code>.
          */
         @TruffleBoundary
-        @Specialization(guards = "receiver.isCompiledMethodClass()")
+        @Specialization(guards = "receiver.isCompiledMethodClassType()")
         protected static final CompiledCodeObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             assert receiver.getBasicInstanceSize() == 0;
-            final CompiledCodeObject newMethod = CompiledCodeObject.newOfSize(image, (int) bytecodeCount, image.compiledMethodClass);
+            assert receiver.getSuperclassOrNull() == image.compiledMethodClass.getSuperclassOrNull() : "Receiver must be subclass of CompiledCode";
+            final CompiledCodeObject newMethod = CompiledCodeObject.newOfSize(image, (int) bytecodeCount, receiver);
             newMethod.setHeader(header);
             return newMethod;
         }
