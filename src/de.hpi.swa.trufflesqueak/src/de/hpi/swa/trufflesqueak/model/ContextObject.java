@@ -608,25 +608,21 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         if (hasTruffleFrame()) {
             for (int i = 0; i < from.length; i++) {
                 final Object fromPointer = from[i];
                 if (fromPointer == getFrameSender() && to[i] instanceof ContextObject) {
                     setSender((ContextObject) to[i]);
-                    copyHash(fromPointer, to[i], copyHash);
                 }
                 if (fromPointer == getCodeObject() && to[i] instanceof CompiledCodeObject) {
                     setCodeObject((CompiledCodeObject) to[i]);
-                    copyHash(fromPointer, to[i], copyHash);
                 }
                 if (fromPointer == getClosure() && to[i] instanceof BlockClosureObject) {
                     setClosure((BlockClosureObject) to[i]);
-                    copyHash(fromPointer, to[i], copyHash);
                 }
                 if (fromPointer == getReceiver()) {
                     setReceiver(to[i]);
-                    copyHash(fromPointer, to[i], copyHash);
                 }
 
                 final Object[] arguments = truffleFrame.getArguments();
@@ -634,7 +630,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                     final Object argument = arguments[j];
                     if (argument == fromPointer) {
                         arguments[j] = to[i];
-                        AbstractSqueakObjectWithClassAndHash.copyHash(fromPointer, to[i], copyHash);
                     }
                 }
 
@@ -648,7 +643,6 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
                         final Object stackValue = FrameUtil.getObjectSafe(truffleFrame, slot);
                         if (fromPointer == stackValue) {
                             truffleFrame.setObject(slot, to[i]);
-                            copyHash(fromPointer, to[i], copyHash);
                         }
                     }
                 }

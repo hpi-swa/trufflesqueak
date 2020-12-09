@@ -128,8 +128,8 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        layoutValuesBecomeOneWay(from, to, copyHash);
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+        layoutValuesBecomeOneWay(from, to);
         final int variableSize = variablePart.length;
         if (variableSize > 0) {
             for (int i = 0; i < from.length; i++) {
@@ -138,7 +138,6 @@ public final class WeakVariablePointersObject extends AbstractPointersObject {
                     final Object object = getFromVariablePart(j);
                     if (object == fromPointer) {
                         putIntoVariablePartSlow(j, to[i]);
-                        copyHash(fromPointer, to[i], copyHash);
                     }
                 }
             }

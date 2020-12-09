@@ -515,7 +515,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             for (int j = 0; j < getLiterals().length; j++) {
@@ -524,7 +524,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                     // FIXME: literals are @CompilationFinal, assumption needed (maybe
                     // pointersBecome should not modify literals at all?).
                     getLiterals()[j] = toPointer;
-                    copyHash(fromPointer, toPointer, copyHash);
                 }
             }
         }

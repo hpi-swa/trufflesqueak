@@ -155,8 +155,8 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        layoutValuesBecomeOneWay(from, to, copyHash);
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
+        layoutValuesBecomeOneWay(from, to);
     }
 
     @Override

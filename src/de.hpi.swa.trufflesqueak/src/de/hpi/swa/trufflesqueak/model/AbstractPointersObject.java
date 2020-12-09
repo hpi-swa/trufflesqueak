@@ -311,27 +311,23 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         return false;
     }
 
-    protected final void layoutValuesBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+    protected final void layoutValuesBecomeOneWay(final Object[] from, final Object[] to) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             if (object0 == fromPointer) {
                 object0 = to[i];
-                copyHash(fromPointer, to[i], copyHash);
             }
             if (object1 == fromPointer) {
                 object1 = to[i];
-                copyHash(fromPointer, to[i], copyHash);
             }
             if (object2 == fromPointer) {
                 object2 = to[i];
-                copyHash(fromPointer, to[i], copyHash);
             }
             if (objectExtension != null) {
                 for (int j = 0; j < objectExtension.length; j++) {
                     final Object object = objectExtension[j];
                     if (object == fromPointer) {
                         objectExtension[j] = to[i];
-                        copyHash(fromPointer, to[i], copyHash);
                     }
                 }
             }

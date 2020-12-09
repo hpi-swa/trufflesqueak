@@ -598,28 +598,24 @@ public final class ClassObject extends AbstractSqueakObjectWithClassAndHash {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             if (fromPointer == getSuperclassOrNull() && to[i] instanceof ClassObject) {
                 setSuperclass((ClassObject) to[i]);
-                copyHash(fromPointer, getSuperclassOrNull(), copyHash);
             }
             if (fromPointer == getMethodDict() && fromPointer != to[i] && to[i] instanceof VariablePointersObject) {
                 // Only update methodDict if changed to avoid redundant invalidation.
                 setMethodDict((VariablePointersObject) to[i]);
-                copyHash(fromPointer, to[i], copyHash);
             }
             if (fromPointer == getInstanceVariablesOrNull() && to[i] instanceof ArrayObject) {
                 setInstanceVariables((ArrayObject) to[i]);
-                copyHash(fromPointer, to[i], copyHash);
             }
             if (fromPointer == getOrganizationOrNull() && to[i] instanceof PointersObject) {
                 setOrganization((PointersObject) to[i]);
-                copyHash(fromPointer, to[i], copyHash);
             }
         }
-        pointersBecomeOneWay(getOtherPointers(), from, to, copyHash);
+        pointersBecomeOneWay(getOtherPointers(), from, to);
     }
 
     @Override

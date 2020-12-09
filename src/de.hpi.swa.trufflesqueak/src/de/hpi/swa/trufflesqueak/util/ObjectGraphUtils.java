@@ -51,12 +51,12 @@ public final class ObjectGraphUtils {
     }
 
     @TruffleBoundary
-    public static void pointersBecomeOneWay(final SqueakImageContext image, final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
+    public static void pointersBecomeOneWay(final SqueakImageContext image, final Object[] fromPointers, final Object[] toPointers) {
         final ObjectTracer pending = new ObjectTracer(image);
         AbstractSqueakObjectWithClassAndHash currentObject;
         while ((currentObject = pending.getNextPending()) != null) {
             if (currentObject.tryToMark(pending.getCurrentMarkingFlag())) {
-                currentObject.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
+                currentObject.pointersBecomeOneWay(fromPointers, toPointers);
                 pending.tracePointers(currentObject);
             }
         }

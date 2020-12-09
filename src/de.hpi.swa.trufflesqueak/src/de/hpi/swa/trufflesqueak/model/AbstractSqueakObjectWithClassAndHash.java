@@ -170,11 +170,11 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
     }
 
     @SuppressWarnings("unused")
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to) {
         // Do nothing by default.
     }
 
-    protected static final void pointersBecomeOneWay(final Object[] target, final Object[] from, final Object[] to, final boolean copyHash) {
+    protected static final void pointersBecomeOneWay(final Object[] target, final Object[] from, final Object[] to) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             for (int j = 0; j < target.length; j++) {
@@ -182,15 +182,8 @@ public abstract class AbstractSqueakObjectWithClassAndHash extends AbstractSquea
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     target[j] = toPointer;
-                    copyHash(fromPointer, toPointer, copyHash);
                 }
             }
-        }
-    }
-
-    public static final void copyHash(final Object from, final Object to, final boolean copyHash) {
-        if (copyHash && from instanceof AbstractSqueakObjectWithClassAndHash && to instanceof AbstractSqueakObjectWithClassAndHash) {
-            ((AbstractSqueakObjectWithClassAndHash) to).setSqueakHash(((AbstractSqueakObjectWithClassAndHash) from).getSqueakHash());
         }
     }
 

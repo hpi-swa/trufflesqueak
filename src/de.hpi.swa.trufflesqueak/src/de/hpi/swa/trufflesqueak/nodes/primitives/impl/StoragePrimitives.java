@@ -72,7 +72,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
-        protected static final ArrayObject performPointersBecomeOneWay(final SqueakImageContext image, final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
+        protected final ArrayObject performPointersBecomeOneWay(final SqueakImageContext image, final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -80,16 +80,30 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
             final Object[] fromPointers = fromArray.getObjectStorage();
             final Object[] toPointers = toArray.getObjectStorage();
+
+            if (copyHash) {
+                copyHash(fromPointers, toPointers);
+            }
             // Need to operate on copy of `fromPointers` because itself will also be changed.
             final Object[] fromPointersClone = fromPointers.clone();
-            ObjectGraphUtils.pointersBecomeOneWay(image, fromPointersClone, toPointers, copyHash);
-            patchTruffleFrames(fromPointersClone, toPointers, copyHash);
+            ObjectGraphUtils.pointersBecomeOneWay(image, fromPointersClone, toPointers);
+            patchTruffleFrames(fromPointersClone, toPointers);
             image.flushMethodCacheAfterBecome();
             return fromArray;
         }
 
+        private static void copyHash(final Object[] fromPointers, final Object[] toPointers) {
+            for (int i = 0; i < fromPointers.length; i++) {
+                final Object from = fromPointers[i];
+                final Object to = toPointers[i];
+                if (from instanceof AbstractSqueakObjectWithClassAndHash && to instanceof AbstractSqueakObjectWithClassAndHash) {
+                    ((AbstractSqueakObjectWithClassAndHash) to).setSqueakHash(((AbstractSqueakObjectWithClassAndHash) from).getSqueakHash());
+                }
+            }
+        }
+
         @TruffleBoundary
-        private static void patchTruffleFrames(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash) {
+        private static void patchTruffleFrames(final Object[] fromPointers, final Object[] toPointers) {
             final int fromPointersLength = fromPointers.length;
 
             Truffle.getRuntime().iterateFrames((frameInstance) -> {
@@ -105,9 +119,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         if (argument == fromPointer) {
                             final Object toPointer = toPointers[j];
                             arguments[i] = toPointer;
-                            AbstractSqueakObjectWithClassAndHash.copyHash(fromPointer, toPointer, copyHash);
                         } else if (argument instanceof AbstractSqueakObjectWithClassAndHash) {
-                            ((AbstractSqueakObjectWithClassAndHash) argument).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
+                            ((AbstractSqueakObjectWithClassAndHash) argument).pointersBecomeOneWay(fromPointers, toPointers);
                         }
                     }
                 }
@@ -120,9 +133,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         if (context == fromPointer) {
                             final Object toPointer = toPointers[j];
                             FrameAccess.setContext(current, code, (ContextObject) toPointer);
-                            AbstractSqueakObjectWithClassAndHash.copyHash(fromPointer, toPointer, copyHash);
                         } else {
-                            context.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
+                            context.pointersBecomeOneWay(fromPointers, toPointers);
                         }
                     }
                 }
@@ -143,9 +155,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                                 final Object toPointer = toPointers[j];
                                 assert toPointer != null : "Unexpected `null` value";
                                 current.setObject(slot, toPointer);
-                                AbstractSqueakObjectWithClassAndHash.copyHash(fromPointer, toPointer, copyHash);
                             } else if (stackObject instanceof AbstractSqueakObjectWithClassAndHash) {
-                                ((AbstractSqueakObjectWithClassAndHash) stackObject).pointersBecomeOneWay(fromPointers, toPointers, copyHash);
+                                ((AbstractSqueakObjectWithClassAndHash) stackObject).pointersBecomeOneWay(fromPointers, toPointers);
                             }
                         }
                     }
@@ -254,7 +265,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode implements BinaryPrimitive {
 
         @Specialization
-        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
+        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return performPointersBecomeOneWay(image, fromArray, toArray, true);
         }
@@ -606,9 +617,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode implements TernaryPrimitive {
 
         @Specialization
-        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+                        @Cached final ConditionProfile copyHashProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return performPointersBecomeOneWay(image, fromArray, toArray, copyHash);
+            return performPointersBecomeOneWay(image, fromArray, toArray, copyHashProfile.profile(copyHash));
         }
 
         @SuppressWarnings("unused")
