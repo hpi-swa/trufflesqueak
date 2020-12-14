@@ -255,7 +255,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         final NotProvided arg4, final NotProvided arg5,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0));
+            return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), FrameAccess.newFullClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 0));
         }
 
         @SuppressWarnings("unused")
@@ -277,7 +277,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         final NotProvided arg4, final NotProvided arg5,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 1);
+            final Object[] frameArguments = FrameAccess.newFullClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 1);
             frameArguments[FrameAccess.getArgumentStartIndex()] = arg1;
             return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), frameArguments);
         }
@@ -302,7 +302,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         final NotProvided arg4, final NotProvided arg5,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 2);
+            final Object[] frameArguments = FrameAccess.newFullClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 2);
             frameArguments[FrameAccess.getArgumentStartIndex()] = arg1;
             frameArguments[FrameAccess.getArgumentStartIndex() + 1] = arg2;
             return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), frameArguments);
@@ -330,7 +330,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         final NotProvided arg5,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 3);
+            final Object[] frameArguments = FrameAccess.newFullClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 3);
             frameArguments[FrameAccess.getArgumentStartIndex()] = arg1;
             frameArguments[FrameAccess.getArgumentStartIndex() + 1] = arg2;
             frameArguments[FrameAccess.getArgumentStartIndex() + 2] = arg3;
@@ -360,7 +360,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @SuppressWarnings("unused") final NotProvided arg5,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 4);
+            final Object[] frameArguments = FrameAccess.newFullClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 4);
             frameArguments[FrameAccess.getArgumentStartIndex()] = arg1;
             frameArguments[FrameAccess.getArgumentStartIndex() + 1] = arg2;
             frameArguments[FrameAccess.getArgumentStartIndex() + 2] = arg3;
@@ -391,7 +391,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         final Object arg5,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 4);
+            final Object[] frameArguments = FrameAccess.newFullClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), 4);
             frameArguments[FrameAccess.getArgumentStartIndex()] = arg1;
             frameArguments[FrameAccess.getArgumentStartIndex() + 1] = arg2;
             frameArguments[FrameAccess.getArgumentStartIndex() + 2] = arg3;
@@ -413,7 +413,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached("create(cachedBlock.getCallTarget())") final DirectCallNode directCallNode) {
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), sizeNode.execute(argArray));
+            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, cachedBlock, getContextOrMarkerNode.execute(frame), sizeNode.execute(argArray));
             copyIntoNode.execute(frameArguments, argArray);
             return directCallNode.call(frameArguments);
         }
@@ -424,7 +424,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Cached("createForFrameArguments()") final ArrayObjectCopyIntoObjectArrayNode copyIntoNode,
                         @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                         @Cached final IndirectCallNode indirectCallNode) {
-            final Object[] frameArguments = FrameAccess.newClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), sizeNode.execute(argArray));
+            final Object[] frameArguments = FrameAccess.newFullClosureArgumentsTemplate(closure, getContextOrMarkerNode.execute(frame), sizeNode.execute(argArray));
             copyIntoNode.execute(frameArguments, argArray);
             return indirectCallNode.call(closure.getCompiledBlock().getCallTarget(), frameArguments);
         }

@@ -86,10 +86,10 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
      * CompiledBlocks their outer method in their last literal. For traditional BlockClosures, we
      * need to do something similar, but with CompiledMethods only (CompiledBlocks are not used
      * then). The next two fields are used to store "shadowBlocks", which are light copies of the
-     * outer method with a new call target, and the code object to be used for closure activations.
+     * outer method with a new call target, and the outer method to be used for closure activations.
      */
     private EconomicMap<Integer, CompiledCodeObject> shadowBlocks;
-    @CompilationFinal private CompiledCodeObject closureCodeObject;
+    private CompiledCodeObject outerMethod;
 
     private Source source;
 
@@ -106,10 +106,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
-        if (!classObject.isCompiledMethodClass()) {
-            // CompiledBlocks are used as code object for closure activations.
-            closureCodeObject = this;
-        }
     }
 
     public CompiledCodeObject(final SqueakImageContext image, final byte[] bc, final Object[] lits, final ClassObject classObject) {
@@ -137,10 +133,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
         // Find outer method
         CompiledCodeObject currentOuterCode = outerCode;
-        while (currentOuterCode.closureCodeObject != null) {
-            currentOuterCode = currentOuterCode.closureCodeObject;
+        while (currentOuterCode.outerMethod != null) {
+            currentOuterCode = currentOuterCode.outerMethod;
         }
-        closureCodeObject = currentOuterCode;
+        assert currentOuterCode.isCompiledMethod();
+        outerMethod = currentOuterCode;
 
         frameDescriptor = new FrameDescriptor();
         thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
@@ -184,9 +181,9 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         }
     }
 
-    public CompiledCodeObject getClosureCodeObject() {
-        assert closureCodeObject != null;
-        return closureCodeObject;
+    public CompiledCodeObject getOuterMethod() {
+        assert outerMethod != null;
+        return outerMethod;
     }
 
     private void setLiteralsAndBytes(final Object[] literals, final byte[] bytes) {

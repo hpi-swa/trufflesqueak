@@ -388,16 +388,20 @@ public final class FrameAccess {
 
     /* Template because closure arguments still need to be filled in. */
     public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final Object senderOrMarker, final int numArgs) {
+        return newClosureArgumentsTemplate(closure, closure.getCompiledBlock().getOuterMethod(), senderOrMarker, numArgs);
+    }
+
+    public static Object[] newFullClosureArgumentsTemplate(final BlockClosureObject closure, final Object senderOrMarker, final int numArgs) {
         return newClosureArgumentsTemplate(closure, closure.getCompiledBlock(), senderOrMarker, numArgs);
     }
 
     /* Template because closure arguments still need to be filled in. */
-    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final CompiledCodeObject block, final Object senderOrMarker, final int numArgs) {
+    public static Object[] newClosureArgumentsTemplate(final BlockClosureObject closure, final CompiledCodeObject code, final Object senderOrMarker, final int numArgs) {
         final Object[] copied = closure.getCopiedValues();
         final int numCopied = copied.length;
         assert closure.getNumArgs() == numArgs : "number of required and provided block arguments do not match";
         final Object[] arguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + numArgs + numCopied];
-        arguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = block.getClosureCodeObject();
+        arguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = code;
         // Sender is thisContext (or marker)
         arguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = senderOrMarker;
         arguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
@@ -443,6 +447,6 @@ public final class FrameAccess {
 
     private static void assertCodeAndClosure(final BlockClosureObject closure, final CompiledCodeObject code) {
         assert closure == null || code.isCompiledBlock() || code == closure.getCompiledBlock() ||
-                        code == closure.getCompiledBlock().getClosureCodeObject() : "Frame's code object must be closure's outer method";
+                        code == closure.getCompiledBlock().getOuterMethod() : "Frame's code object must be closure's outer method";
     }
 }
