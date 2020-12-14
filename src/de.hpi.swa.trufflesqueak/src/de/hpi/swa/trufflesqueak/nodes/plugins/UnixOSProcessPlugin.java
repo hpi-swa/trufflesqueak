@@ -684,6 +684,15 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         }
     }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSizeOfPointer")
+    protected abstract static class PrimSizeOfPointerNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        @Specialization
+        protected static final long doSizeOfPointer(@SuppressWarnings("unused") final Object receiver) {
+            return 8L;
+        }
+    }
+
     private static final class SIGNALS {
         private static final int SIG_DFL = 0;
         private static final int SIGHUP = 1;
