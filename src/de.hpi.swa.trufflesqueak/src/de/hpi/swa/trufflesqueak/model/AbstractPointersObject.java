@@ -128,8 +128,8 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     }
 
     public final void changeClassTo(final ClassObject newClass) {
-        migrateToLayout(newClass.getLayout());
         setSqueakClass(newClass);
+        migrateToLayout(newClass.getLayout());
     }
 
     @TruffleBoundary
@@ -144,7 +144,7 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         assert !layout.getLocation(index).canStore(value);
         ObjectLayout latestLayout = getSqueakClass().getLayout();
         if (!latestLayout.getLocation(index).canStore(value)) {
-            latestLayout = latestLayout.evolveLocation(getSqueakClass(), index, value);
+            latestLayout = latestLayout.evolveLocation(index, value);
         } else {
             assert !layout.isValid() && layout != latestLayout : "Layout must have changed";
         }
@@ -153,19 +153,23 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
     }
 
     @TruffleBoundary
-    private void migrateToLayout(final ObjectLayout newLayout) {
-        assert newLayout.isValid() : "Should not migrate to outdated layout";
-        ObjectLayout theLayout = newLayout;
+    private void migrateToLayout(final ObjectLayout targetLayout) {
+        assert targetLayout.isValid() : "Should not migrate to outdated layout";
+        ObjectLayout newLayout = targetLayout;
         final ObjectLayout oldLayout = layout;
         assert oldLayout.getInstSize() == newLayout.getInstSize();
         final int instSize = oldLayout.getInstSize();
-        final Object[] changes = new Object[instSize];
+        final Object[] values = new Object[instSize];
         for (int i = 0; i < instSize; i++) {
             final SlotLocation oldLocation = oldLayout.getLocation(i);
             final SlotLocation newLocation = newLayout.getLocation(i);
-            if (oldLocation != newLocation && oldLocation.isSet(this)) {
-                changes[i] = oldLocation.read(this);
+            if (oldLocation.isSet(this)) {
+                final Object oldValue = oldLocation.read(this);
                 oldLocation.unset(this);
+                if (!newLocation.canStore(oldValue)) {
+                    newLayout = newLayout.evolveLocation(i, oldValue);
+                }
+                values[i] = oldValue;
             }
         }
         if (oldLayout.getNumPrimitiveExtension() != newLayout.getNumPrimitiveExtension()) {
@@ -191,7 +195,6 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
                 // ... objectExtension now needed
                 objectExtension = newLayout.getFreshObjectExtension();
             } else {
-                assert newLayout.getNumObjectExtension() > oldLayout.getNumObjectExtension() : "Number of generic extension slots should only grow";
                 // ... resize objectExtension
                 objectExtension = Arrays.copyOf(objectExtension, newLayout.getNumObjectExtension());
                 for (int i = oldLayout.getNumObjectExtension(); i < newLayout.getNumObjectExtension(); i++) {
@@ -203,20 +206,14 @@ public abstract class AbstractPointersObject extends AbstractSqueakObjectWithCla
         assert newLayout.getNumObjectExtension() == 0 || newLayout.getNumObjectExtension() == objectExtension.length;
 
         for (int i = 0; i < instSize; i++) {
-            final SlotLocation oldLocation = oldLayout.getLocation(i);
-            final SlotLocation newLocation = newLayout.getLocation(i);
-            if (oldLocation != newLocation && changes[i] != null) {
-                final Object change = changes[i];
-                if (newLocation.canStore(change)) {
-                    newLocation.writeMustSucceed(this, change);
-                } else {
-                    theLayout = newLayout.evolveLocation(getSqueakClass(), i, change);
-                    // TODO: is it possible that extensions need to be resized again?
-                    theLayout.getLocation(i).writeMustSucceed(this, change);
-                }
+            final Object value = values[i];
+            if (value != null) {
+                final SlotLocation newLocation = newLayout.getLocation(i);
+                assert newLocation.canStore(value) : "Evolved new location must be able to store value";
+                newLocation.writeMustSucceed(this, value);
             }
         }
-        layout = theLayout;
+        layout = newLayout;
         assert layout.getNumPrimitiveExtension() == 0 || layout.getNumPrimitiveExtension() == primitiveExtension.length;
         assert layout.getNumObjectExtension() == 0 || layout.getNumObjectExtension() == objectExtension.length;
     }

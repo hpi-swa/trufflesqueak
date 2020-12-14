@@ -46,7 +46,7 @@ public final class ObjectLayout {
         numObjectExtension = countObjectExtension(locations);
     }
 
-    public ObjectLayout evolveLocation(final ClassObject classObject, final int index, final Object value) {
+    public ObjectLayout evolveLocation(final int index, final Object value) {
         slowPathOperation();
         if (!isValid()) {
             throw SqueakException.create("Only the latest layout should be evolved");
@@ -79,7 +79,7 @@ public final class ObjectLayout {
 
         assert !newLocations[index].isUninitialized();
         assert slotLocationsAreConsecutive(newLocations) : "Locations are not consecutive";
-        return new ObjectLayout(classObject, newLocations);
+        return new ObjectLayout(squeakClass, newLocations);
     }
 
     private static void slowPathOperation() {
@@ -265,5 +265,11 @@ public final class ObjectLayout {
             }
         }
         return count;
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        return (isValid() ? "valid" : "invalid") + " ObjectLayout for " + squeakClass + " @" + Integer.toHexString(hashCode());
     }
 }
