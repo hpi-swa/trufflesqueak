@@ -87,6 +87,12 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
     }
 
     @Override
+    public boolean hasStoreIntoTemp1AfterCallPrimitive(final CompiledCodeObject code) {
+        final byte[] bytes = code.getBytes();
+        return Byte.toUnsignedInt(bytes[3]) == 129 && (Byte.toUnsignedInt(bytes[4]) >> 6 & 3) == 1;
+    }
+
+    @Override
     public AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();

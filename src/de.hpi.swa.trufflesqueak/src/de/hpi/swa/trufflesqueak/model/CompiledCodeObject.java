@@ -644,6 +644,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return hasPrimitive() && primitiveIndex() == 199;
     }
 
+    public boolean hasStoreIntoTemp1AfterCallPrimitive() {
+        assert hasPrimitive;
+        return decoder.hasStoreIntoTemp1AfterCallPrimitive(this);
+    }
+
     /*
      * CompiledBlock
      */

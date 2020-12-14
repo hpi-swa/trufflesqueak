@@ -15,6 +15,8 @@ public abstract class AbstractSqueakBytecodeDecoder {
 
     public abstract int trailerPosition(CompiledCodeObject code);
 
+    public abstract boolean hasStoreIntoTemp1AfterCallPrimitive(CompiledCodeObject code);
+
     public abstract AbstractBytecodeNode decodeBytecode(CompiledCodeObject code, int index);
 
     public abstract String decodeToString(CompiledCodeObject code);

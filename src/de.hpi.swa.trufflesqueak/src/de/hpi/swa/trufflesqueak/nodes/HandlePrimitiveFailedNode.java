@@ -24,8 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class HandlePrimitiveFailedNode extends AbstractNode {
     public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
-        // Fourth bytecode indicates extended store after callPrimitive.
-        if (code.getBytes()[3] == (byte) 0x81) {
+        if (code.hasStoreIntoTemp1AfterCallPrimitive()) {
             return HandlePrimitiveFailedImplNodeGen.create();
         } else {
             return new HandlePrimitiveFailedNoopNode();

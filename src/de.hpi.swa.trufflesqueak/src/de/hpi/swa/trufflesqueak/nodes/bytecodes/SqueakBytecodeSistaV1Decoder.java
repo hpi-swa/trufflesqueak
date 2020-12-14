@@ -88,6 +88,12 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
     }
 
     @Override
+    public boolean hasStoreIntoTemp1AfterCallPrimitive(final CompiledCodeObject code) {
+        final byte[] bytes = code.getBytes();
+        return Byte.toUnsignedInt(bytes[3]) == 245;
+    }
+
+    @Override
     public AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
         return decodeBytecode(code, index, 0, 0, 0);
     }
