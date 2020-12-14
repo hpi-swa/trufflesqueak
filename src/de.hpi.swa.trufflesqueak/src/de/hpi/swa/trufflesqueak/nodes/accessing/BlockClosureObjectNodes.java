@@ -13,6 +13,7 @@ import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 
@@ -68,6 +69,11 @@ public final class BlockClosureObjectNodes {
         @Specialization(guards = "index == OUTER_CONTEXT")
         protected static final void doClosureOuterContext(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, final ContextObject value) {
             closure.setOuterContext(value);
+        }
+
+        @Specialization(guards = "index == OUTER_CONTEXT")
+        protected static final void doClosureOuterContext(final BlockClosureObject closure, @SuppressWarnings("unused") final long index, @SuppressWarnings("unused") final NilObject value) {
+            closure.removeOuterContext();
         }
 
         @Specialization(guards = {"index == START_PC_OR_METHOD", "closure.isABlockClosure()"})

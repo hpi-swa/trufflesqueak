@@ -150,6 +150,11 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         this.outerContext = outerContext;
     }
 
+    public void removeOuterContext() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        outerContext = null;
+    }
+
     public void setStartPC(final int pc) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         startPC = pc;
