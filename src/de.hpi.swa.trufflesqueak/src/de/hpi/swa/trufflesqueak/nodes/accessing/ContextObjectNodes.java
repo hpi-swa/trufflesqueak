@@ -41,9 +41,15 @@ public final class ContextObjectNodes {
             return context.getStackPointer(); // Must return a long.
         }
 
-        @Specialization(guards = "index == METHOD")
+        @Specialization(guards = {"index == METHOD", "context.hasTruffleFrame()"})
         protected static final CompiledCodeObject doMethod(final ContextObject context, @SuppressWarnings("unused") final long index) {
             return context.getCodeObject();
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"index == METHOD", "!context.hasTruffleFrame()"})
+        protected static final NilObject doNilMethod(final ContextObject context, final long index) {
+            return NilObject.SINGLETON;
         }
 
         @Specialization(guards = {"index == CLOSURE_OR_NIL"})
