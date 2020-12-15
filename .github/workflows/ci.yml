@@ -72,6 +72,7 @@ jobs:
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and code coverage
       run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
+      timeout-minutes: 120
     - name: Report code coverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -113,6 +114,7 @@ jobs:
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and code coverage
       run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
+      timeout-minutes: 120
     - name: Report code coverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -184,6 +186,7 @@ jobs:
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
       run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+      timeout-minutes: 120
 
   macos-java8:
     name: macOS + JDK8 + Graal
@@ -217,6 +220,7 @@ jobs:
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
     - name: Run gate with Graal.js and Graal compiler
       run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+      timeout-minutes: 120
 
   windows-java11:
     name: Windows + JDK11 + Graal
@@ -252,6 +256,7 @@ jobs:
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+      timeout-minutes: 120
 
   windows-java8:
     name: Windows + JDK8 + Graal
@@ -287,3 +292,4 @@ jobs:
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+      timeout-minutes: 120
