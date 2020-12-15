@@ -14,7 +14,8 @@ privateStyleHighlighting: aText
 		replaceAttributesThat: [:attribute | false] 
 		by: [].
 	tokens := ([polyglot eval: polyglot languageIdRuby string: self rubyHighlightCode] ifError: [^ aText]) asCollection.
-	tokens do: [:each | each := each asCollection. 
+	tokens do: [:ea | | each |
+		each := ea asCollection. 
 		aText 
 			addAttribute: (self toTextColor: each third asString)
 			from: each first 
