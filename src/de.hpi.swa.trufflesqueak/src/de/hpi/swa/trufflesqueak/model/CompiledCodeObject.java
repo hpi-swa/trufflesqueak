@@ -541,7 +541,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     @Override
     public void write(final SqueakImageWriter writer) {
-        assert isCompiledMethod() : "Writing compiledBlocks has not been tested yet";
         final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
         assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
         if (writeHeader(writer, formatOffset)) {

@@ -335,11 +335,16 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
             throw SqueakException.create("BlockClosureObject must have slots:", this);
         }
         writer.writeObject(getOuterContext());
-        writer.writeSmallInteger(getStartPC());
-        writer.writeSmallInteger(getNumArgs());
-        for (final Object value : getCopiedValues()) {
-            writer.writeObject(value);
+        if (isAFullBlockClosure()) {
+            assert block != null || receiver != null;
+            writer.writeObject(block);
+            writer.writeSmallInteger(getNumArgs());
+            writer.writeObject(receiver);
+        } else {
+            writer.writeSmallInteger(getStartPC());
+            writer.writeSmallInteger(getNumArgs());
         }
+        writer.writeObjects(getCopiedValues());
     }
 
     /*
