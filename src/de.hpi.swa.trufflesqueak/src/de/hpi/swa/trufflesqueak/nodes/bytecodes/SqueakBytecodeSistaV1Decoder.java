@@ -115,7 +115,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C: case 0x2D: case 0x2E: case 0x2F:
             case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
             case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C: case 0x3D: case 0x3E: case 0x3F:
-                return new PushBytecodes.PushLiteralConstantNode(code, index, 1, b & 31);
+                return new PushBytecodes.PushLiteralConstantNode(code, index, 1, b & 0x1F);
             case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47:
                 return new PushBytecodes.PushTemporaryLocationNode(code, index, 1, b & 0x7);
             case 0x48: case 0x49: case 0x4A: case 0x4B:
@@ -248,13 +248,13 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xF1:
                 return new StoreBytecodes.PopIntoLiteralVariableNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1] + (extA << 8));
             case 0xF2:
-                return new StoreBytecodes.PopIntoTemporaryLocationNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1] + (extA << 8));
+                return new StoreBytecodes.PopIntoTemporaryLocationNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1]);
             case 0xF3:
                 return new StoreBytecodes.StoreIntoReceiverVariableNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1] + (extA << 8));
             case 0xF4:
                 return new StoreBytecodes.StoreIntoLiteralVariableNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1] + (extA << 8));
             case 0xF5:
-                return new StoreBytecodes.StoreIntoTemporaryLocationNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1] + (extA << 8));
+                return new StoreBytecodes.StoreIntoTemporaryLocationNode(code, index, 2 + extBytes, bytecode[indexWithExt + 1]);
             case 0xF6:
             case 0xF7:
                 return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 2, b);
