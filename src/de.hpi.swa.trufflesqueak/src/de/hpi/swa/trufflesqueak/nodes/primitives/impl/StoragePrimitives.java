@@ -73,7 +73,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractPrimitiveNode {
 
-        protected final ArrayObject performPointersBecomeOneWay(final SqueakImageContext image, final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
+        protected static final ArrayObject performPointersBecomeOneWay(final SqueakImageContext image, final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             if (!fromArray.isObjectType() || !toArray.isObjectType() || fromArray.getObjectLength() != toArray.getObjectLength()) {
                 CompilerDirectives.transferToInterpreter();
                 throw PrimitiveFailed.BAD_ARGUMENT;
@@ -266,7 +266,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode implements BinaryPrimitive {
 
         @Specialization
-        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
+        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return performPointersBecomeOneWay(image, fromArray, toArray, true);
         }
@@ -629,7 +629,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode implements TernaryPrimitive {
 
         @Specialization
-        protected final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
+        protected static final ArrayObject doForward(final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash,
                         @Cached final ConditionProfile copyHashProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return performPointersBecomeOneWay(image, fromArray, toArray, copyHashProfile.profile(copyHash));
