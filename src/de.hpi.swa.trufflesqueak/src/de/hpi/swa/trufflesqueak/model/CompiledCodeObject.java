@@ -544,7 +544,11 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         final int formatOffset = getNumSlots() * SqueakImageConstants.WORD_SIZE - size();
         assert 0 <= formatOffset && formatOffset <= 7 : "too many odd bits (see instSpec)";
         if (writeHeader(writer, formatOffset)) {
-            writer.writeObjects(getLiterals());
+            // Write header manually to ensure it is always written as SmallInteger.
+            writer.writeLong((long) literals[0] << SqueakImageConstants.NUM_TAG_BITS | SqueakImageConstants.SMALL_INTEGER_TAG);
+            for (int i = 1; i < literals.length; i++) {
+                writer.writeObject(literals[i]);
+            }
             writer.writeBytes(getBytes());
             final int byteOffset = getBytes().length % SqueakImageConstants.WORD_SIZE;
             if (byteOffset > 0) {
