@@ -31,7 +31,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public abstract class AbstractInstrumentableBytecodeNode extends AbstractBytecodeNode implements InstrumentableNode {
 
     protected AbstractInstrumentableBytecodeNode(final AbstractInstrumentableBytecodeNode original) {
-        this(original.code, original.index, original.getNumBytecodes());
+        this(original.code, original.index - original.code.getInitialPC(), original.getNumBytecodes());
     }
 
     public AbstractInstrumentableBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {

@@ -33,7 +33,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
     @Override
     public int findLineNumber(final CompiledCodeObject code, final int targetIndex) {
         final int trailerPosition = trailerPosition(code);
-        assert 0 <= targetIndex && targetIndex <= trailerPosition;
+        assert 0 <= targetIndex && targetIndex <= trailerPosition : targetIndex + " not between 0 and " + trailerPosition;
         int index = 0;
         int lineNumber = 1;
         while (index != targetIndex) {
