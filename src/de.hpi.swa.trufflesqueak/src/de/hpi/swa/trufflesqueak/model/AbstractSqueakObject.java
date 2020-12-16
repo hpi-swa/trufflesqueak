@@ -22,12 +22,12 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.utilities.TriState;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.BoundMethod;
 import de.hpi.swa.trufflesqueak.interop.InteropArray;
@@ -113,13 +113,12 @@ public abstract class AbstractSqueakObject implements TruffleObject {
                         @Shared("lookupNode") @Cached final LookupMethodByStringNode lookupNode,
                         @Shared("classNode") @Cached final SqueakObjectClassNode classNode,
                         @Exclusive @Cached final WrapToSqueakNode wrapNode,
-                        @Exclusive @Cached final DispatchUneagerlyNode dispatchNode) throws ArityException {
+                        @Exclusive @Cached final DispatchUneagerlyNode dispatchNode) throws ArityException, RespecializeException {
             final int actualArity = arguments.length;
             final Object methodObject = lookupNode.executeLookup(classNode.executeLookup(receiver), toSelector(member, actualArity));
             if (methodObject == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
                 /* DoesNotUnderstand, rewrite this specialization. */
-                throw new RespecializeException();
+                throw RespecializeException.transferToInterpreterInvalidateAndThrow();
             }
             final CompiledCodeObject method = (CompiledCodeObject) methodObject;
             final int expectedArity = method.getNumArgs();
@@ -128,10 +127,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
             } else {
                 throw ArityException.create(1 + expectedArity, 1 + actualArity);
             }
-        }
-
-        protected static final class RespecializeException extends ControlFlowException {
-            private static final long serialVersionUID = 1L;
         }
 
         @Specialization(replaces = "invokeMember")

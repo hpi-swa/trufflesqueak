@@ -13,6 +13,8 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.utilities.TriState;
 
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
+
 @ExportLibrary(InteropLibrary.class)
 public final class CharacterObject extends AbstractSqueakObject {
     private final long value;
@@ -42,6 +44,14 @@ public final class CharacterObject extends AbstractSqueakObject {
             return (char) value;
         } else {
             return new CharacterObject(value);
+        }
+    }
+
+    public static char valueExactOf(final long value) throws RespecializeException {
+        if (value <= Character.MAX_VALUE) {
+            return (char) value;
+        } else {
+            throw RespecializeException.transferToInterpreterInvalidateAndThrow();
         }
     }
 

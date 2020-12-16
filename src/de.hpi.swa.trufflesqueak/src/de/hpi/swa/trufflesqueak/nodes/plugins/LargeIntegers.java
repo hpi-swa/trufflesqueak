@@ -19,6 +19,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -508,10 +509,10 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         /*
          * Optimized version of montgomeryTimesModulo for integer-sized arguments.
          */
-        @Specialization(rewriteOn = {ArithmeticException.class})
-        protected static final long doLongQuick(final long receiver, final long a, final long m, final long mInv) {
+        @Specialization(rewriteOn = {RespecializeException.class})
+        protected static final long doLongQuick(final long receiver, final long a, final long m, final long mInv) throws RespecializeException {
             if (!(fitsInOneWord(receiver) && fitsInOneWord(a) && fitsInOneWord(m))) {
-                throw new ArithmeticException();
+                throw RespecializeException.transferToInterpreterInvalidateAndThrow();
             }
             final long accum3 = receiver * a;
             final long u = accum3 * mInv & 0xFFFFFFFFL;

@@ -32,6 +32,7 @@ import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
@@ -475,15 +476,26 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 170)
     protected abstract static class PrimCharacterValueNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        @Specialization(guards = {"0 <= receiver", "receiver <= MAX_VALUE"})
+        @Specialization(guards = {"0 <= receiver", "receiver <= MAX_VALUE"}, rewriteOn = RespecializeException.class)
+        protected static final char doLongExact(final long receiver, @SuppressWarnings("unused") final NotProvided target) throws RespecializeException {
+            return CharacterObject.valueExactOf(receiver);
+        }
+
+        @Specialization(guards = {"0 <= receiver", "receiver <= MAX_VALUE"}, replaces = "doLongExact")
         protected static final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target,
                         @Shared("isImmediateProfile") @Cached final ConditionProfile isImmediateProfile) {
             return CharacterObject.valueOf(receiver, isImmediateProfile);
         }
 
         /* Character class>>#value: */
-        @Specialization(guards = {"0 <= target", "target <= MAX_VALUE"})
-        protected static final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target,
+
+        @Specialization(guards = {"0 <= target", "target <= MAX_VALUE"}, rewriteOn = RespecializeException.class)
+        protected static final char doClassLongExact(@SuppressWarnings("unused") final Object receiver, final long target) throws RespecializeException {
+            return CharacterObject.valueExactOf(target);
+        }
+
+        @Specialization(guards = {"0 <= target", "target <= MAX_VALUE"}, replaces = "doClassLongExact")
+        protected static final Object doClassLong(@SuppressWarnings("unused") final Object receiver, final long target,
                         @Shared("isImmediateProfile") @Cached final ConditionProfile isImmediateProfile) {
             return CharacterObject.valueOf(target, isImmediateProfile);
         }

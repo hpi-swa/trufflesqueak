@@ -18,6 +18,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -44,12 +45,9 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveWithoutFallback {
         @CompilationFinal private NativeObject asciiOrder;
 
-        protected static final class NotAsciiOrderException extends RuntimeException {
-            private static final long serialVersionUID = 1L;
-        }
-
-        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()"}, rewriteOn = NotAsciiOrderException.class)
-        protected final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2, final NativeObject orderValue) {
+        @Specialization(guards = {"string1.isByteType()", "string2.isByteType()"}, rewriteOn = RespecializeException.class)
+        protected final long doCompareAsciiOrder(@SuppressWarnings("unused") final Object receiver, final NativeObject string1, final NativeObject string2, final NativeObject orderValue)
+                        throws RespecializeException {
             ensureAsciiOrder(orderValue);
             final int len1 = string1.getByteLength();
             final int len2 = string2.getByteLength();
@@ -64,26 +62,26 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return len1 == len2 ? 2L : len1 < len2 ? 1L : 3L;
         }
 
-        private void ensureAsciiOrder(final NativeObject orderValue) {
+        private void ensureAsciiOrder(final NativeObject orderValue) throws RespecializeException {
             if (orderValue != asciiOrder) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (asciiOrder == null) { /* Haven't seen asciiOrder yet. */
                     if (!orderValue.isByteType()) {
-                        throw new NotAsciiOrderException();
+                        throw RespecializeException.transferToInterpreterInvalidateAndThrow();
                     }
                     final byte[] bytes = orderValue.getByteStorage();
                     if (bytes.length != 256) {
-                        throw new NotAsciiOrderException();
+                        throw RespecializeException.transferToInterpreterInvalidateAndThrow();
                     }
                     /* AsciiOrder is the identity function. */
                     for (int i = 0; i < bytes.length; i++) {
                         if ((bytes[i] & 0xff) != i) {
-                            throw new NotAsciiOrderException();
+                            throw RespecializeException.transferToInterpreterInvalidateAndThrow();
                         }
                     }
                     asciiOrder = orderValue;
                 } else {
-                    throw new NotAsciiOrderException();
+                    throw RespecializeException.transferToInterpreterInvalidateAndThrow();
                 }
             }
         }

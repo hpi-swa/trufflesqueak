@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -22,6 +21,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -268,8 +268,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return rhs.multiply(lhs);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final double doLongDoubleFinite(final long lhs, final double rhs) {
+        @Specialization(rewriteOn = RespecializeException.class)
+        protected static final double doLongDoubleFinite(final long lhs, final double rhs) throws RespecializeException {
             return ensureFinite(lhs * rhs);
         }
 
@@ -295,8 +295,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return LargeIntegerObject.createLongMinOverflowResult(image);
         }
 
-        @Specialization(guards = {"!isZero(rhs)"}, rewriteOn = ArithmeticException.class)
-        protected static final double doLongDoubleFinite(final long lhs, final double rhs) {
+        @Specialization(guards = {"!isZero(rhs)"}, rewriteOn = RespecializeException.class)
+        protected static final double doLongDoubleFinite(final long lhs, final double rhs) throws RespecializeException {
             return ensureFinite(lhs / rhs);
         }
 
@@ -1026,8 +1026,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return matissa; /* Can be either 0.0 or -0.0. */
         }
 
-        @Specialization(guards = {"!matissa.isZero()", "!isZero(exponent)"}, rewriteOn = ArithmeticException.class)
-        protected static final double doDoubleFinite(final FloatObject matissa, final long exponent) {
+        @Specialization(guards = {"!matissa.isZero()", "!isZero(exponent)"}, rewriteOn = RespecializeException.class)
+        protected static final double doDoubleFinite(final FloatObject matissa, final long exponent) throws RespecializeException {
             return ensureFinite(timesToPower(matissa.getValue(), exponent));
         }
 
@@ -1323,13 +1323,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 549)
     protected abstract static class PrimSmallFloatMultiplyFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final double doDoubleFinite(final double lhs, final double rhs) {
+        @Specialization(rewriteOn = RespecializeException.class)
+        protected static final double doDoubleFinite(final double lhs, final double rhs) throws RespecializeException {
             return ensureFinite(lhs * rhs);
         }
 
-        @Specialization(guards = "isExactDouble(rhs)", rewriteOn = ArithmeticException.class)
-        protected static final double doLongFinite(final double lhs, final long rhs) {
+        @Specialization(guards = "isExactDouble(rhs)", rewriteOn = RespecializeException.class)
+        protected static final double doLongFinite(final double lhs, final long rhs) throws RespecializeException {
             return ensureFinite(lhs * rhs);
         }
 
@@ -1356,13 +1356,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 550)
     protected abstract static class PrimSmallFloatDivideFloatNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
 
-        @Specialization(guards = {"!isZero(rhs)"}, rewriteOn = ArithmeticException.class)
-        protected static final double doDoubleFinite(final double lhs, final double rhs) {
+        @Specialization(guards = {"!isZero(rhs)"}, rewriteOn = RespecializeException.class)
+        protected static final double doDoubleFinite(final double lhs, final double rhs) throws RespecializeException {
             return ensureFinite(lhs / rhs);
         }
 
-        @Specialization(guards = {"!isZero(rhs)", "isExactDouble(rhs)"}, rewriteOn = ArithmeticException.class)
-        protected static final double doLongFinite(final double lhs, final long rhs) {
+        @Specialization(guards = {"!isZero(rhs)", "isExactDouble(rhs)"}, rewriteOn = RespecializeException.class)
+        protected static final double doLongFinite(final double lhs, final long rhs) throws RespecializeException {
             return ensureFinite(lhs / rhs);
         }
 
@@ -1439,8 +1439,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return matissa; /* Can be either 0.0 or -0.0. */
         }
 
-        @Specialization(guards = {"!isZero(matissa)", "!isZero(exponent)"}, rewriteOn = ArithmeticException.class)
-        protected static final double doDoubleFinite(final double matissa, final long exponent) {
+        @Specialization(guards = {"!isZero(matissa)", "!isZero(exponent)"}, rewriteOn = RespecializeException.class)
+        protected static final double doDoubleFinite(final double matissa, final long exponent) throws RespecializeException {
             return ensureFinite(timesToPower(matissa, exponent));
         }
 
@@ -1507,8 +1507,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 559)
     protected abstract static class PrimExpSmallFloatNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final double doDoubleFinite(final double receiver) {
+        @Specialization(rewriteOn = RespecializeException.class)
+        protected static final double doDoubleFinite(final double receiver) throws RespecializeException {
             assert Double.isFinite(receiver);
             return ensureFinite(Math.exp(receiver));
         }
@@ -1536,12 +1536,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         private static final long MAX_SAFE_INTEGER_LONG = (1L << FloatObject.PRECISION) - 1;
         private static final long MIN_SAFE_INTEGER_LONG = -MAX_SAFE_INTEGER_LONG;
 
-        protected static final double ensureFinite(final double value) {
+        protected static final double ensureFinite(final double value) throws RespecializeException {
             if (Double.isFinite(value)) {
                 return value;
             } else {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                throw new ArithmeticException();
+                throw RespecializeException.transferToInterpreterInvalidateAndThrow();
             }
         }
 
