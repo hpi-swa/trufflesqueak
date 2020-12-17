@@ -14,11 +14,13 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.hpi.swa.trufflesqueak.util.OSDetector;
@@ -108,17 +110,46 @@ public final class SqueakTests {
         return test -> classNames.contains(test.className) || selectors.stream().anyMatch(s -> s.nameEquals(test));
     }
 
-    /**
-     * Test names in the order they appear in the file - useful for testing properties such as
-     * sorting, duplication (see TruffleSqueakTest in image).
-     */
-    public static String[] rawTestNames() {
+    private static List<String> rawTestNames() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(SqueakTests.class.getResourceAsStream(FILENAME)))) {
-            return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).toArray(String[]::new);
+            return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).collect(Collectors.toList());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+
+    // Use in TruffleSqueakTest>>testTestMapConsistency
+    public static boolean testTestMapConsistency(final List<String> imageTestNameList) {
+        final List<String> mapTestNameList = rawTestNames();
+        final HashSet<String> mapTestNameSet = new HashSet<>(mapTestNameList);
+        if (mapTestNameList.size() != mapTestNameSet.size()) {
+            printError("test.properties contains duplicates");
+            return false;
+        }
+        final HashSet<String> imageTestNameSet = new HashSet<>(imageTestNameList);
+        if (imageTestNameList.size() != imageTestNameSet.size()) {
+            printError("Image reported duplicate tests");
+            return false;
+        }
+        mapTestNameSet.removeAll(imageTestNameList);
+        if (!mapTestNameSet.isEmpty()) {
+            printError("Additional tests in test.properties:\n" + String.join("\n", mapTestNameSet));
+            return false;
+        }
+        imageTestNameSet.removeAll(mapTestNameList);
+        if (!imageTestNameSet.isEmpty()) {
+            printError("Additional tests in image:\n" + String.join("\n", imageTestNameSet));
+            return false;
+        }
+        return true;
+    }
+
+    // Checkstyle: stop
+    protected static void printError(final String value) {
+        System.err.println(value);
+        System.err.flush();
+    }
+    // Checkstyle: resume
 
     // Checkstyle: stop
     protected static Stream<SqueakTest> allTests() {
