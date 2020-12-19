@@ -67,7 +67,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrim
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.NotProvided;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -189,12 +188,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 101)
-    protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @Child private AbstractPointersObjectReadNode cursorReadNode = AbstractPointersObjectReadNode.create();
-        @Child private AbstractPointersObjectReadNode offsetReadNode = AbstractPointersObjectReadNode.create();
-
+    protected abstract static class PrimBeCursor1Node extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Specialization
-        protected final PointersObject doCursor(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided mask,
+        protected static final PointersObject doCursor(final PointersObject receiver,
+                        @Cached final AbstractPointersObjectReadNode cursorReadNode,
+                        @Cached final AbstractPointersObjectReadNode offsetReadNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 final PointersObject offset = receiver.getFormOffset(cursorReadNode);
@@ -205,9 +203,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             return receiver;
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 101)
+    protected abstract static class PrimBeCursor2Node extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        protected final PointersObject doCursor(final PointersObject receiver, final PointersObject maskObject,
+        protected static final PointersObject doCursor(final PointersObject receiver, final PointersObject maskObject,
+                        @Cached final AbstractPointersObjectReadNode cursorReadNode,
+                        @Cached final AbstractPointersObjectReadNode offsetReadNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
                         @Cached final ConditionProfile depthProfile) {
             if (image.hasDisplay()) {

@@ -53,16 +53,23 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.SqueakFFIPrims.AbstractFFIPrimitiv
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.DecimaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.DuodecimaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.NonaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.OctonaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SenaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UndecimaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerState;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
-import de.hpi.swa.trufflesqueak.util.NotProvided;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -108,9 +115,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 120)
-    public abstract static class PrimCalloutToFFINode extends AbstractFFIPrimitiveNode implements DuodecimaryPrimitive {
+    public abstract static class AbstractPrimCalloutToFFINode extends AbstractFFIPrimitiveNode {
         @CompilationFinal private PointersObject externalFunction;
 
         @Override
@@ -126,127 +131,156 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return false;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization
-        protected final Object doArg0(final AbstractSqueakObject receiver, final NotProvided n1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
-                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)"})
-        protected final Object doArg1(final AbstractSqueakObject receiver, final Object arg1, final NotProvided n2, final NotProvided n3, final NotProvided n4, final NotProvided n5,
-                        final NotProvided n6, final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)"})
-        protected final Object doArg2(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final NotProvided n3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
-        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final NotProvided n4, final NotProvided n5, final NotProvided n6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2, arg3);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
-        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final NotProvided n5, final NotProvided n6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2, arg3, arg4);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
-        protected final Object doArg5(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final NotProvided n6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)"})
-        protected final Object doArg6(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final NotProvided n7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
-                        "!isNotProvided(arg7)"})
-        protected final Object doArg7(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final NotProvided n8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
-                        "!isNotProvided(arg7)", "!isNotProvided(arg8)"})
-        protected final Object doArg8(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final NotProvided n9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
-                        "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)"})
-        protected final Object doArg9(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final NotProvided n10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
-                        "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)"})
-        protected final Object doArg10(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final NotProvided n11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
-                        "!isNotProvided(arg7)", "!isNotProvided(arg8)", "!isNotProvided(arg9)", "!isNotProvided(arg10)", "!isNotProvided(arg11)"})
-        protected final Object doArg11(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
-                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
-        }
-
-        private Object doCallout(final SqueakImageContext image, final AbstractSqueakObject receiver, final Object... arguments) {
+        protected final Object doCallout(final SqueakImageContext image, final AbstractSqueakObject receiver, final Object... arguments) {
             return doCallout(image, externalFunction, receiver, arguments);
         }
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI1Node extends AbstractPrimCalloutToFFINode implements UnaryPrimitive {
+        @Specialization
+        protected final Object doArg0(final AbstractSqueakObject receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI2Node extends AbstractPrimCalloutToFFINode implements BinaryPrimitive {
+        @Specialization
+        protected final Object doArg1(final AbstractSqueakObject receiver, final Object arg1,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI3Node extends AbstractPrimCalloutToFFINode implements TernaryPrimitive {
+        @Specialization
+        protected final Object doArg2(final AbstractSqueakObject receiver, final Object arg1, final Object arg2,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI4Node extends AbstractPrimCalloutToFFINode implements QuaternaryPrimitive {
+        @Specialization
+        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI5Node extends AbstractPrimCalloutToFFINode implements QuinaryPrimitive {
+        @Specialization
+        protected final Object doArg3(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI6Node extends AbstractPrimCalloutToFFINode implements SenaryPrimitive {
+        @Specialization
+        protected final Object doArg5(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI7Node extends AbstractPrimCalloutToFFINode implements SeptenaryPrimitive {
+        @Specialization
+        protected final Object doArg6(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI8Node extends AbstractPrimCalloutToFFINode implements OctonaryPrimitive {
+        @Specialization
+        protected final Object doArg7(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI9Node extends AbstractPrimCalloutToFFINode implements NonaryPrimitive {
+        @Specialization
+        protected final Object doArg8(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI10Node extends AbstractPrimCalloutToFFINode implements DecimaryPrimitive {
+        @Specialization
+        protected final Object doArg9(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final Object arg9,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI11Node extends AbstractPrimCalloutToFFINode implements UndecimaryPrimitive {
+        @Specialization
+        protected final Object doArg10(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 120)
+    public abstract static class PrimCalloutToFFI12Node extends AbstractPrimCalloutToFFINode implements DuodecimaryPrimitive {
+        @Specialization
+        protected final Object doArg11(final AbstractSqueakObject receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4, final Object arg5, final Object arg6,
+                        final Object arg7, final Object arg8, final Object arg9, final Object arg10, final Object arg11,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return doCallout(image, receiver, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 121)
-    protected abstract static class PrimImageNameNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimImageName1Node extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         @Specialization
-        protected static final NativeObject doGetName(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final NotProvided value,
+        protected static final NativeObject doGetName(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.asByteString(image.getImagePath());
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 121)
+    protected abstract static class PrimImageName2Node extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization(guards = "newName.isByteType()")
         protected static final NativeObject doSetName(@SuppressWarnings("unused") final Object receiver, final NativeObject newName,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             image.setImagePath(newName.asStringUnsafe());
-            return doGetName(receiver, null, image);
+            return newName;
         }
     }
 
@@ -465,11 +499,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 141)
-    protected abstract static class PrimClipboardTextNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
-        @SuppressWarnings("unused")
+    protected abstract static class PrimClipboardText1Node extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Specialization
-        protected static final NativeObject getClipboardText(final Object receiver, final NotProvided value,
+        protected static final NativeObject getClipboardText(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             if (image.hasDisplay()) {
                 return image.asByteString(image.getDisplay().getClipboardData());
@@ -477,7 +509,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 return image.clipboardTextHeadless;
             }
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 141)
+    protected abstract static class PrimClipboardText2Node extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization(guards = "value.isByteType()")
         protected static final NativeObject setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -755,46 +791,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 254)
-    protected abstract static class PrimVMParametersNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class AbstractPrimVMParametersNode extends AbstractPrimitiveNode {
         protected static final int PARAMS_ARRAY_SIZE = 71;
 
-        /**
-         * Behaviour depends on argument count:
-         *
-         * <pre>
-         * 0 args: return an Array of VM parameter values;
-         * 1 arg:  return the indicated VM parameter;
-         * 2 args: set the VM indicated parameter.
-         * </pre>
-         */
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final ArrayObject getVMParameters(final Object receiver, final NotProvided index, final NotProvided value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            final Object[] vmParameters = new Object[PARAMS_ARRAY_SIZE];
-            for (int i = 0; i < PARAMS_ARRAY_SIZE; i++) {
-                vmParameters[i] = vmParameterAt(image, i + 1);
-            }
-            return image.asArrayOfObjects(vmParameters);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"})
-        protected static final Object getVMParameters(final Object receiver, final long index, final NotProvided value,
-                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return vmParameterAt(image, (int) index);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!isNotProvided(value)")
-        protected static final NilObject getVMParameters(final Object receiver, final long index, final Object value) {
-            return NilObject.SINGLETON; // ignore writes
-        }
-
-        private static Object vmParameterAt(final SqueakImageContext image, final int index) {
+        protected static final Object vmParameterAt(final SqueakImageContext image, final int index) {
             //@formatter:off
             switch (index) {
                 case 1: return 1L; // end (v3)/size(Spur) of old-space (0-based, read-only)
@@ -865,6 +865,53 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 default: return NilObject.SINGLETON;
             }
             //@formatter:on
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 254)
+    protected abstract static class PrimVMParameters1Node extends AbstractPrimVMParametersNode implements UnaryPrimitiveWithoutFallback {
+        /**
+         * Behaviour depends on argument count:
+         *
+         * <pre>
+         * 0 args: return an Array of VM parameter values;
+         * 1 arg:  return the indicated VM parameter;
+         * 2 args: set the VM indicated parameter.
+         * </pre>
+         */
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected static final ArrayObject getVMParameters(final Object receiver,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            final Object[] vmParameters = new Object[PARAMS_ARRAY_SIZE];
+            for (int i = 0; i < PARAMS_ARRAY_SIZE; i++) {
+                vmParameters[i] = vmParameterAt(image, i + 1);
+            }
+            return image.asArrayOfObjects(vmParameters);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 254)
+    protected abstract static class PrimVMParameters2Node extends AbstractPrimVMParametersNode implements BinaryPrimitive {
+        protected static final int PARAMS_ARRAY_SIZE = 71;
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"})
+        protected static final Object getVMParameters(final Object receiver, final long index,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return vmParameterAt(image, (int) index);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 254)
+    protected abstract static class PrimVMParameters3Node extends AbstractPrimVMParametersNode implements TernaryPrimitive {
+        @Specialization
+        protected static final NilObject getVMParameters(final Object receiver, final long index, final Object value) {
+            return NilObject.SINGLETON; // ignore writes
         }
     }
 

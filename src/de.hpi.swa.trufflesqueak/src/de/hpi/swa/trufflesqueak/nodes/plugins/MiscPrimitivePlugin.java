@@ -24,13 +24,13 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimHashMultiplyNode;
-import de.hpi.swa.trufflesqueak.util.NotProvided;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
@@ -387,27 +387,41 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    private abstract static class AbstractPrimStringHashNode extends AbstractPrimitiveNode {
+        protected static final long calculateHash(final long initialHash, final byte[] bytes) {
+            long hash = initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
+            final int length = bytes.length;
+            for (int i = 0; i < length; i++) {
+                hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
+            }
+            return hash;
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveStringHash")
-    public abstract static class PrimStringHashNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
+    public abstract static class PrimStringHash2Node extends AbstractPrimStringHashNode implements BinaryPrimitive {
         /* Byte(Array|String|Symbol)>>#hashWithInitialHash: */
 
         @Specialization(guards = {"string.isByteType()"})
-        protected static final long doNativeObject(final NativeObject string, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected static final long doNativeObject(final NativeObject string, final long initialHash) {
             return calculateHash(initialHash, string.getByteStorage());
         }
 
         @Specialization
-        protected static final long doLargeInteger(final LargeIntegerObject largeInteger, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected static final long doLargeInteger(final LargeIntegerObject largeInteger, final long initialHash) {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
         @Specialization(guards = {"isLongMinValue(value)"})
-        protected static final long doLongMinValue(@SuppressWarnings("unused") final long value, final long initialHash, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected static final long doLongMinValue(@SuppressWarnings("unused") final long value, final long initialHash) {
             return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveStringHash")
+    public abstract static class PrimStringHash3Node extends AbstractPrimStringHashNode implements TernaryPrimitive {
         /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
 
         @Specialization(guards = {"string.isByteType()"})
@@ -423,15 +437,6 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"isLongMinValue(value)"})
         protected static final long doLongMinValue(@SuppressWarnings("unused") final Object receiver, @SuppressWarnings("unused") final long value, final long initialHash) {
             return calculateHash(initialHash, LargeIntegerObject.getLongMinOverflowResultBytes());
-        }
-
-        private static long calculateHash(final long initialHash, final byte[] bytes) {
-            long hash = initialHash & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
-            final int length = bytes.length;
-            for (int i = 0; i < length; i++) {
-                hash = (hash + (UnsafeUtils.getByte(bytes, i) & 0xff)) * PrimHashMultiplyNode.HASH_MULTIPLY_CONSTANT & PrimHashMultiplyNode.HASH_MULTIPLY_MASK;
-            }
-            return hash;
         }
     }
 

@@ -42,7 +42,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrim
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
-import de.hpi.swa.trufflesqueak.util.NotProvided;
 
 public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     protected static final byte[] LOCAL_HOST_NAME = getLocalHostName().getBytes();
@@ -208,7 +207,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketListenWithOrWithoutBacklog")
-    protected abstract static class PrimSocketListenWithOrWithoutBacklogNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimSocketListenWithOrWithoutBacklog3Node extends AbstractPrimitiveNode implements TernaryPrimitive {
         /**
          * Listen for a connection on the given port. This is an asynchronous call; query the socket
          * status to discover if and when the connection is actually completed.
@@ -216,8 +215,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doListen(final Object receiver,
                         final PointersObject sd,
-                        final long port,
-                        @SuppressWarnings("unused") final NotProvided backlogSize) {
+                        final long port) {
             try {
                 getSocketOrPrimFail(sd).listenOn(port, 0L);
             } catch (final IOException e) {
@@ -226,7 +224,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
             return receiver;
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveSocketListenWithOrWithoutBacklog")
+    protected abstract static class PrimSocketListenWithOrWithoutBacklog4Node extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         /**
          * Set up the socket to listen on the given port. Will be used in conjunction with #accept
          * only.

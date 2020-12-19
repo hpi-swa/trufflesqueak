@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -31,8 +30,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.NotProvided;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -54,10 +53,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 60)
-    protected abstract static class PrimBasicAtNode extends AbstractBasicAtOrAtPutNode implements TernaryPrimitive {
+    protected abstract static class PrimBasicAt2Node extends AbstractBasicAtOrAtPutNode implements BinaryPrimitive {
         @Specialization
-        protected final Object doSqueakObject(final Object receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("at0Node") @Cached final SqueakObjectAt0Node at0Node,
+        protected final Object doSqueakObject(final Object receiver, final long index,
+                        @Cached final SqueakObjectAt0Node at0Node,
                         @Cached final BranchProfile outOfBounceProfile) {
             final int instSize = instSizeNode.execute(receiver);
             if (inBoundsOfSqueakObject(receiver, instSize, index)) {
@@ -67,24 +66,33 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                 throw PrimitiveFailed.BAD_INDEX;
             }
         }
+    }
 
-        /* Context>>#object:basicAt: */
+    @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
+    @SqueakPrimitive(indices = 60)
+    protected abstract static class PrimBasicAt3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitive {
         @Specialization
         protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target, final long index,
-                        @Shared("at0Node") @Cached final SqueakObjectAt0Node at0Node,
+                        @Cached final SqueakObjectAt0Node at0Node,
                         @Cached final BranchProfile outOfBounceProfile) {
-            return doSqueakObject(target, index, NotProvided.SINGLETON, at0Node, outOfBounceProfile);
+            final int instSize = instSizeNode.execute(target);
+            if (inBoundsOfSqueakObject(target, instSize, index)) {
+                return at0Node.execute(target, index - 1 + instSize);
+            } else {
+                outOfBounceProfile.enter();
+                throw PrimitiveFailed.BAD_INDEX;
+            }
         }
     }
 
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 61)
-    protected abstract static class PrimBasicAtPutNode extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitive {
+    protected abstract static class PrimBasicAtPut3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitive {
         @Specialization
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
-                        @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("atput0Node") @Cached final SqueakObjectAtPut0Node atput0Node,
+                        @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final BranchProfile outOfBounceProfile) {
             final int instSize = instSizeNode.execute(receiver);
             if (inBoundsOfSqueakObject(receiver, instSize, index)) {
@@ -95,32 +103,47 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                 throw PrimitiveFailed.BAD_INDEX;
             }
         }
+    }
 
-        /* Context>>#object:basicAt:put: */
+    @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
+    @SqueakPrimitive(indices = 61)
+    protected abstract static class PrimBasicAtPut4Node extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitive {
         @Specialization
         protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
-                        @Shared("atput0Node") @Cached final SqueakObjectAtPut0Node atput0Node,
+                        @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final BranchProfile outOfBounceProfile) {
-            return doSqueakObject(target, index, value, NotProvided.SINGLETON, atput0Node, outOfBounceProfile);
+            final int instSize = instSizeNode.execute(target);
+            if (inBoundsOfSqueakObject(target, instSize, index)) {
+                atput0Node.execute(target, index - 1 + instSize, value);
+                return value;
+            } else {
+                outOfBounceProfile.enter();
+                throw PrimitiveFailed.BAD_INDEX;
+            }
         }
     }
 
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 62)
-    protected abstract static class PrimSizeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSize1Node extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Specialization
-        protected static final long doSqueakObject(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
-                        @Shared("instSizeNode") @Cached final SqueakObjectInstSizeNode instSizeNode) {
+        protected static final long doSqueakObject(final AbstractSqueakObject receiver,
+                        @Cached final SqueakObjectSizeNode sizeNode,
+                        @Cached final SqueakObjectInstSizeNode instSizeNode) {
             return sizeNode.execute(receiver) - instSizeNode.execute(receiver);
         }
+    }
 
-        /* Context>>#objectSize: */
+    @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
+    @SqueakPrimitive(indices = 62)
+    protected abstract static class PrimSize2Node extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target,
-                        @Shared("sizeNode") @Cached final SqueakObjectSizeNode sizeNode,
-                        @Shared("instSizeNode") @Cached final SqueakObjectInstSizeNode instSizeNode) {
+                        @Cached final SqueakObjectSizeNode sizeNode,
+                        @Cached final SqueakObjectInstSizeNode instSizeNode) {
             return sizeNode.execute(target) - instSizeNode.execute(target);
         }
     }

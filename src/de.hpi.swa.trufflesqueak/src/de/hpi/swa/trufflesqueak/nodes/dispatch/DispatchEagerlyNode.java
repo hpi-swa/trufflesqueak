@@ -19,7 +19,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -43,10 +42,9 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     protected static final Object doPrimitiveEagerly(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                     @Cached("forIndex(cachedMethod, false, cachedMethod.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
-                    @Cached final CreateEagerArgumentsNode createEagerArgumentsNode,
                     @Cached final PrimitiveFailedCounter failureCounter) {
         try {
-            return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
+            return primitiveNode.executeWithArguments(frame, receiverAndArguments);
         } catch (final PrimitiveFailed pf) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (failureCounter.shouldNoLongerSendEagerly()) {

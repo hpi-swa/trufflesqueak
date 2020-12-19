@@ -56,13 +56,13 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryP
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.PrimCalloutToFFINode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.AbstractPrimCalloutToFFINode;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
 
-    /** "primitiveCallout" implemented as {@link PrimCalloutToFFINode}. */
+    /** "primitiveCallout" implemented as {@link AbstractPrimCalloutToFFINode}. */
 
     @ImportStatic(FFI_TYPES.class)
     protected abstract static class ArgTypeConversionNode extends Node {

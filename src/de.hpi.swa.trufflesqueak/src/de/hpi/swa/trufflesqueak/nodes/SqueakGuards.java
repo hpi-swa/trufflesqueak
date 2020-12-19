@@ -22,7 +22,6 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.util.NotProvided;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
 
 public final class SqueakGuards {
@@ -156,10 +155,6 @@ public final class SqueakGuards {
 
     public static boolean isNil(final Object object) {
         return object == NilObject.SINGLETON;
-    }
-
-    public static boolean isNotProvided(final Object obj) {
-        return obj == NotProvided.SINGLETON;
     }
 
     public static boolean isOverflowDivision(final long a, final long b) {

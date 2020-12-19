@@ -32,8 +32,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.NotProvided;
 
 public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -44,15 +44,20 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCopyBits")
-    protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-
+    protected abstract static class PrimCopyBits1Node extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Specialization
-        protected static final Object doCopy(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided,
+        protected static final Object doCopy(final PointersObject receiver,
                         @Cached final ConditionProfile resultProfile,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return doCopyTranslucent(receiver, -1L, resultProfile, image);
+            image.bitblt.resetSuccessFlag();
+            final long result = image.bitblt.primitiveCopyBits(receiver, -1);
+            return resultProfile.profile(result == -1) ? receiver : result;
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveCopyBits")
+    protected abstract static class PrimCopyBits2Node extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
         protected static final Object doCopyTranslucent(final PointersObject receiver, final long factor,
                         @Cached final ConditionProfile resultProfile,
@@ -143,14 +148,19 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWarpBits")
-    protected abstract static class PrimWarpBitsNode extends AbstractPrimitiveNode implements TernaryPrimitive {
-
+    protected abstract static class PrimWarpBits1Node extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Specialization
-        protected static final PointersObject doWarpBits(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NotProvided notProvided,
+        protected static final PointersObject doWarpBits(final PointersObject receiver, final long n,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
-            return warpBits(receiver, n, null, image);
+            image.bitblt.resetSuccessFlag();
+            image.bitblt.primitiveWarpBits(receiver, n, null);
+            return receiver;
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveWarpBits")
+    protected abstract static class PrimWarpBits2Node extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Specialization
         protected static final PointersObject doWarpBits(final PointersObject receiver, final long n, final NilObject nil,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {

@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.graalvm.collections.EconomicMap;
-import org.graalvm.collections.UnmodifiableEconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -69,10 +69,8 @@ public final class PrimitiveNodeFactory {
     private static final int MAX_PRIMITIVE_INDEX = 575;
     @CompilationFinal(dimensions = 1) private static final byte[] NULL_MODULE_NAME = NullPlugin.class.getSimpleName().getBytes();
 
-    // Using an array instead of a HashMap requires type-checking to be disabled here.
-    @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] PRIMITIVE_TABLE = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
-
-    private static final EconomicMap<String, UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>>> PLUGIN_MAP = EconomicMap.create();
+    private static final EconomicMap<Integer, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> PRIMITIVE_TABLE = EconomicMap.create(MAX_PRIMITIVE_INDEX);
+    private static final EconomicMap<String, EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>>> PLUGIN_MAP = EconomicMap.create();
 
     static {
         final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
@@ -129,12 +127,9 @@ public final class PrimitiveNodeFactory {
             return namedFor(method, useStack);
         } else if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
             return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX,
-                            new AbstractArgumentNode[]{ArgumentNode.create(0, 0, useStack)});
+                            new AbstractArgumentNode[]{ArgumentNode.create(0, useStack)});
         } else if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
-            final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = PRIMITIVE_TABLE[primitiveIndex - 1];
-            if (nodeFactory != null) {
-                return createInstance(method, useStack, nodeFactory);
-            }
+            return createInstance(method, useStack, PRIMITIVE_TABLE.get(primitiveIndex));
         }
         return null;
     }
@@ -155,12 +150,12 @@ public final class PrimitiveNodeFactory {
 
     private static AbstractPrimitiveNode forName(final CompiledCodeObject method, final boolean useStack, final byte[] moduleName, final byte[] functionName) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
-        final UnmodifiableEconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = PLUGIN_MAP.get(new String(moduleName));
+        final EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> functionNameToNodeFactory = PLUGIN_MAP.get(new String(moduleName));
+        if ("primitiveSocketCreate3Semaphores".equals(new String(functionName))) {
+            Truffle.getRuntime();
+        }
         if (functionNameToNodeFactory != null) {
-            final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = functionNameToNodeFactory.get(new String(functionName));
-            if (nodeFactory != null) {
-                return createInstance(method, useStack, nodeFactory);
-            }
+            return createInstance(method, useStack, functionNameToNodeFactory.get(new String(functionName)));
         }
         return null;
     }
@@ -173,15 +168,23 @@ public final class PrimitiveNodeFactory {
         return target.toArray(new String[0]);
     }
 
-    private static AbstractPrimitiveNode createInstance(final CompiledCodeObject method, final boolean useStack, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
-        final int primitiveArity = nodeFactory.getExecutionSignature().size();
+    private static AbstractPrimitiveNode createInstance(final CompiledCodeObject method, final boolean useStack, final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map) {
+        if (map == null) {
+            return null;
+        }
+        final int numReceiverAndArguments = 1 + method.getNumArgs();
+        final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = map.get(numReceiverAndArguments);
+        if (nodeFactory == null) {
+            assert false : "Unable to find primitive with arity: " + numReceiverAndArguments;
+            return null;
+        }
+        assert numReceiverAndArguments == nodeFactory.getExecutionSignature().size();
         final AbstractArgumentNode[] argumentNodes;
-        argumentNodes = new AbstractArgumentNode[primitiveArity];
-        for (int i = 0; i < primitiveArity; i++) {
-            argumentNodes[i] = AbstractArgumentNode.create(i, method.getNumArgs(), useStack);
+        argumentNodes = new AbstractArgumentNode[numReceiverAndArguments];
+        for (int i = 0; i < numReceiverAndArguments; i++) {
+            argumentNodes[i] = AbstractArgumentNode.create(i, useStack);
         }
         final AbstractPrimitiveNode primitiveNode = nodeFactory.createNode((Object) argumentNodes);
-        assert primitiveArity == primitiveNode.getNumArguments() : "Arities do not match in " + primitiveNode;
         if (primitiveNode.acceptsMethod(method)) {
             return primitiveNode;
         } else {
@@ -208,13 +211,19 @@ public final class PrimitiveNodeFactory {
     private static void fillPluginMap(final AbstractPrimitiveFactoryHolder[] plugins) {
         for (final AbstractPrimitiveFactoryHolder plugin : plugins) {
             final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = plugin.getFactories();
-            final EconomicMap<String, NodeFactory<? extends AbstractPrimitiveNode>> functionNameToNodeFactory = EconomicMap.create(nodeFactories.size());
+            final EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> functionNameToNodeFactory = EconomicMap.create(nodeFactories.size());
             for (final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
                 final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
                 final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                 for (final String name : primitive.names()) {
-                    assert !functionNameToNodeFactory.containsKey(name) : "Primitive name is not unique: " + name;
-                    functionNameToNodeFactory.put(name, nodeFactory);
+                    EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map = functionNameToNodeFactory.get(name);
+                    if (map == null) {
+                        map = EconomicMap.create();
+                        functionNameToNodeFactory.put(name, map);
+                    }
+                    final int numReceiverAndArguments = nodeFactory.getExecutionSignature().size();
+                    assert !map.containsKey(numReceiverAndArguments) : "Primitive name is not unique: " + name;
+                    map.put(numReceiverAndArguments, nodeFactory);
                 }
             }
             final String pluginName = plugin.getClass().getSimpleName();
@@ -224,7 +233,13 @@ public final class PrimitiveNodeFactory {
 
     private static void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
         assert index <= MAX_PRIMITIVE_INDEX : "primitive table array not large enough";
-        assert PRIMITIVE_TABLE[index - 1] == null : "primitives are not allowed to override others (#" + index + ")";
-        PRIMITIVE_TABLE[index - 1] = nodeFactory;
+        EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map = PRIMITIVE_TABLE.get(index);
+        if (map == null) {
+            map = EconomicMap.create();
+            PRIMITIVE_TABLE.put(index, map);
+        }
+        final int numReceiverAndArguments = nodeFactory.getExecutionSignature().size();
+        assert !map.containsKey(numReceiverAndArguments) : "primitives are not allowed to override others (#" + index + ")";
+        map.put(nodeFactory.getExecutionSignature().size(), nodeFactory);
     }
 }
