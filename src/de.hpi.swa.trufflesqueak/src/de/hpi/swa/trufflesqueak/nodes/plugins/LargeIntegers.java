@@ -230,30 +230,30 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitMultiplyNegative")
-    protected abstract static class PrimDigitMultiplyNegativeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDigitMultiplyNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final long doLong(final long lhs, final long rhs) {
+        protected static final long doLong(final long lhs, final long rhs, @SuppressWarnings("unused") final boolean neg) {
             return Math.multiplyExact(lhs, rhs);
         }
 
         @Specialization(replaces = "doLong")
-        protected static final Object doLongWithOverflow(final long lhs, final long rhs,
+        protected static final Object doLongWithOverflow(final long lhs, final long rhs, @SuppressWarnings("unused") final boolean neg,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return LargeIntegerObject.multiply(image, lhs, rhs);
         }
 
         @Specialization
-        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs) {
+        protected static final Object doLongLargeInteger(final long lhs, final LargeIntegerObject rhs, @SuppressWarnings("unused") final boolean neg) {
             return rhs.multiply(lhs);
         }
 
         @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs) {
+        protected static final Object doLargeInteger(final LargeIntegerObject lhs, final LargeIntegerObject rhs, @SuppressWarnings("unused") final boolean neg) {
             return lhs.multiply(rhs);
         }
 
         @Specialization
-        protected static final double doDouble(final double lhs, final double rhs) {
+        protected static final double doDouble(final double lhs, final double rhs, @SuppressWarnings("unused") final boolean neg) {
             return lhs * rhs;
         }
     }
