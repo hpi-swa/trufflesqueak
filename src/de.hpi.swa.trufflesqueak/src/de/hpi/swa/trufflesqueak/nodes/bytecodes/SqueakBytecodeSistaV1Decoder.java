@@ -261,8 +261,9 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xF8: {
                 // TODO: use `final boolean m = bytecode[indexWithExt + 2] >> 8 == 0;`
                 // TODO: use `final int s = bytecode[indexWithExt + 2] >> 5 & 3;`
+                final int i = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
                 final int j = bytecode[indexWithExt + 2] & 31;
-                final int primitiveIndex = Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + j;
+                final int primitiveIndex = i + (j << 8);
                 assert 1 <= primitiveIndex && primitiveIndex < 32767 : "primitiveIndex out of range";
                 if (primitiveIndex < 1000) {
                     return new MiscellaneousBytecodes.CallPrimitiveNode(code, index, primitiveIndex);

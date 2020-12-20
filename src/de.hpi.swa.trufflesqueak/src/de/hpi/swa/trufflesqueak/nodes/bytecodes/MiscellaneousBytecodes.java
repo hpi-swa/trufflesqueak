@@ -38,7 +38,7 @@ public final class MiscellaneousBytecodes {
 
         public CallPrimitiveNode(final CompiledCodeObject method, final int index, final int primitiveIndex) {
             super(method, index, NUM_BYTECODES);
-            assert method.hasPrimitive();
+            assert method.hasPrimitive() && method.primitiveIndex() == primitiveIndex;
             this.primitiveIndex = primitiveIndex;
             primitiveNode = PrimitiveNodeFactory.forIndex(method, false, primitiveIndex);
             assert method.hasPrimitive();
