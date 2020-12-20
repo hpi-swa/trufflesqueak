@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.OctonaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SenaryPrimitive;
@@ -237,7 +238,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doListen(final Object receiver,
                         final PointersObject sd,
                         final long port,
-                        @SuppressWarnings("unused") final long backlogSize) {
+                        final long backlogSize) {
             try {
                 getSocketOrPrimFail(sd).listenOn(port, backlogSize);
             } catch (final IOException e) {
@@ -259,7 +260,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doListen(final Object receiver,
                         final PointersObject sd,
                         final long port,
-                        @SuppressWarnings("unused") final long backlogSize,
+                        final long backlogSize,
                         @SuppressWarnings("unused") final NativeObject interfaceAddress) {
             try {
                 getSocketOrPrimFail(sd).listenOn(port, backlogSize);
@@ -527,13 +528,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketCreate3Semaphores")
-    protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
+    protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractPrimitiveNode implements OctonaryPrimitive {
         @SuppressWarnings("unused")
         @Specialization
         protected static final PointersObject doWork(final PointersObject receiver,
                         final long netType,
                         final long socketType,
                         final long rcvBufSize,
+                        final long sendBufSize,
                         final long semaphoreIndex,
                         final long aReadSemaphore,
                         final long aWriteSemaphore,
