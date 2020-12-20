@@ -17,6 +17,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 @ExportLibrary(InteropLibrary.class)
 public final class NilObject extends AbstractSqueakObject {
     public static final NilObject SINGLETON = new NilObject();
+    public static final long SQUEAK_HASH = 1L;
     private static final int IDENTITY_HASH = System.identityHashCode(SINGLETON);
 
     private NilObject() {
@@ -40,7 +41,7 @@ public final class NilObject extends AbstractSqueakObject {
 
     @Override
     public long getSqueakHash() {
-        return 1L;
+        return SQUEAK_HASH;
     }
 
     @Override

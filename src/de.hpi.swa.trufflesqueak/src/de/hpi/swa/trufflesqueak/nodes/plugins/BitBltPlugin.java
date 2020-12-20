@@ -29,10 +29,10 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayCopyNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
@@ -44,7 +44,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCopyBits")
-    protected abstract static class PrimCopyBits1Node extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimCopyBits1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
         protected static final Object doCopy(final PointersObject receiver,
                         @Cached final ConditionProfile resultProfile,
@@ -57,7 +57,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCopyBits")
-    protected abstract static class PrimCopyBits2Node extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimCopyBits2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final Object doCopyTranslucent(final PointersObject receiver, final long factor,
                         @Cached final ConditionProfile resultProfile,
@@ -70,7 +70,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDisplayString")
-    protected abstract static class PrimDisplayStringNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
+    protected abstract static class PrimDisplayStringNode extends AbstractPrimitiveNode implements SeptenaryPrimitiveFallback {
 
         @Specialization(guards = {"startIndex >= 1", "stopIndex > 0", "aString.isByteType()", "aString.getByteLength() > 0", "stopIndex <= aString.getByteLength()"})
         protected static final PointersObject doDisplayString(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
@@ -116,7 +116,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDrawLoop")
-    protected abstract static class PrimDrawLoopNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimDrawLoopNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization
         protected static final Object doDrawLoop(final PointersObject receiver, final long xDelta, final long yDelta,
@@ -130,7 +130,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(FORM.class)
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitivePixelValueAt")
-    protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"xValue < 0 || yValue < 0"})
@@ -148,7 +148,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWarpBits")
-    protected abstract static class PrimWarpBits1Node extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimWarpBits1Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final PointersObject doWarpBits(final PointersObject receiver, final long n,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -160,7 +160,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWarpBits")
-    protected abstract static class PrimWarpBits2Node extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimWarpBits2Node extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization
         protected static final PointersObject doWarpBits(final PointersObject receiver, final long n, final NilObject nil,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {

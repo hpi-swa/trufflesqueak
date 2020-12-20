@@ -15,15 +15,14 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveExpandBlock")
-    protected abstract static class PrimExpandBlockNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimExpandBlockNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"buf.isByteType()", "expanded.isIntType()", "expanded.getIntLength() == 80", "buf.getByteLength() == 64"})
         protected static final Object doExpand(final Object receiver, final NativeObject buf, final NativeObject expanded) {
             final byte[] bytes = buf.getByteStorage();
@@ -40,7 +39,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHasSecureHashPrimitive")
-    protected abstract static class PrimHasSecureHashPrimitiveNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimHasSecureHashPrimitiveNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final boolean doHas(@SuppressWarnings("unused") final Object receiver) {
             return BooleanObject.TRUE;
@@ -49,7 +48,7 @@ public final class DSAPrims extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHashBlock")
-    protected abstract static class PrimHashBlockNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimHashBlockNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"buf.isIntType()", "state.isIntType()", "state.getIntLength() == 5", "buf.getIntLength() == 80"})
         protected static final Object doHash(final Object receiver, final NativeObject buf, final NativeObject state) {
             final int[] statePtr = state.getIntStorage();

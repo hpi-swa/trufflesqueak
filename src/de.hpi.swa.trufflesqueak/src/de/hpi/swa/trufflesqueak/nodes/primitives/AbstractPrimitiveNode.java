@@ -12,10 +12,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.AbstractPrimitive;
 
 @NodeChild(value = "arguments", type = AbstractArgumentNode[].class)
-public abstract class AbstractPrimitiveNode extends AbstractNode implements AbstractPrimitive {
+public abstract class AbstractPrimitiveNode extends AbstractNode {
 
     public abstract Object executeWithArguments(VirtualFrame frame, Object... arguments);
 

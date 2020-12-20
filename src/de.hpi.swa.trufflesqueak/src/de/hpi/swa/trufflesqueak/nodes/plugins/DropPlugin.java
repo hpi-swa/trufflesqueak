@@ -19,7 +19,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
@@ -32,7 +32,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(DropPlugin.class)
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDropRequestFileHandle")
-    protected abstract static class PrimDropRequestFileHandleNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDropRequestFileHandleNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "dropIndex <= getFileList(image).length")
         protected final PointersObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex,
@@ -50,7 +50,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(DropPlugin.class)
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDropRequestFileName")
-    protected abstract static class PrimDropRequestFileNameNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDropRequestFileNameNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "dropIndex <= getFileList(image).length")
         protected final NativeObject doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex,

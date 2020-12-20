@@ -14,14 +14,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class SoundCodecPrims extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGSMNewState")
-    protected abstract static class PrimGSMNewStateNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimGSMNewStateNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final Object doFakeNewState(@SuppressWarnings("unused") final Object receiver) {
             return NilObject.SINGLETON;

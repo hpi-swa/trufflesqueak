@@ -24,11 +24,10 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitiveWithoutFallback;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.PrimHashMultiplyNode;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -42,7 +41,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCompareString")
-    public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveWithoutFallback {
+    public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode {
         @CompilationFinal private NativeObject asciiOrder;
 
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()"}, rewriteOn = RespecializeException.class)
@@ -111,7 +110,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCompressToByteArray")
-    public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
 
         private static int encodeBytesOf(final int anInt, final NativeObject ba, final int i) {
             ba.setByte(i - 1, (byte) (anInt >> 24));
@@ -217,7 +216,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveConvert8BitSigned")
-    public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "aByteArray.getByteLength() > aSoundBuffer.getIntLength()"})
         protected static final Object doConvert(final Object receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer) {
             for (int i = 0; i < aByteArray.getByteLength(); i++) {
@@ -235,7 +234,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDecompressFromByteArray")
-    public abstract static class PrimDecompressFromByteArrayNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+    public abstract static class PrimDecompressFromByteArrayNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
         @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
         protected static final Object doDecompress(final Object receiver, final NativeObject bm, final NativeObject ba, final long index) {
             /**
@@ -311,7 +310,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFindFirstInString")
-    public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+    public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
 
         @Specialization
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final NativeObject inclusionMap, final long start,
@@ -335,7 +334,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFindSubstring")
-    public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
+    public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
         @Specialization
         protected static final long doFind(@SuppressWarnings("unused") final Object receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable,
@@ -370,7 +369,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIndexOfAsciiInString")
-    public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+    public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
 
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final long value, final NativeObject string, final long start,
@@ -400,9 +399,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveStringHash")
-    public abstract static class PrimStringHash2Node extends AbstractPrimStringHashNode implements BinaryPrimitive {
-        /* Byte(Array|String|Symbol)>>#hashWithInitialHash: */
-
+    /* Byte(Array|String|Symbol)>>#hashWithInitialHash: */
+    public abstract static class PrimStringHash2Node extends AbstractPrimStringHashNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"string.isByteType()"})
         protected static final long doNativeObject(final NativeObject string, final long initialHash) {
             return calculateHash(initialHash, string.getByteStorage());
@@ -421,9 +419,8 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveStringHash")
-    public abstract static class PrimStringHash3Node extends AbstractPrimStringHashNode implements TernaryPrimitive {
-        /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
-
+    /* (Byte(Array|String|Symbol) class|MiscPrimitivePluginTest)>>#hashBytes:startingWith: */
+    public abstract static class PrimStringHash3Node extends AbstractPrimStringHashNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"string.isByteType()"})
         protected static final long doNativeObject(@SuppressWarnings("unused") final Object receiver, final NativeObject string, final long initialHash) {
             return calculateHash(initialHash, string.getByteStorage());
@@ -442,7 +439,7 @@ public final class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTranslateStringWithTable")
-    public abstract static class PrimTranslateStringWithTableNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
+    public abstract static class PrimTranslateStringWithTableNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"})
         protected static final Object doNativeObject(final Object receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {

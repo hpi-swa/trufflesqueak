@@ -27,11 +27,10 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SenaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SeptenaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -39,7 +38,7 @@ import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primImageHeight")
-    protected abstract static class PrimImageHeightNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimImageHeightNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "aJPEGDecompressStruct.isByteType()")
         protected static final long doHeight(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct) {
             return UnsafeUtils.getLong(aJPEGDecompressStruct.getByteStorage(), 0);
@@ -48,7 +47,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primImageNumComponents")
-    protected abstract static class PrimImageNumComponentsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimImageNumComponentsNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = "aJPEGDecompressStruct.isByteType()")
         protected static final long doNum(final Object receiver, final NativeObject aJPEGDecompressStruct) {
@@ -58,7 +57,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primImageWidth")
-    protected abstract static class PrimImageWidthNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimImageWidthNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "aJPEGDecompressStruct.isByteType()")
         protected static final long doWidth(@SuppressWarnings("unused") final Object receiver, final NativeObject aJPEGDecompressStruct) {
             return UnsafeUtils.getLong(aJPEGDecompressStruct.getByteStorage(), 1);
@@ -67,7 +66,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGCompressStructSize")
-    protected abstract static class PrimJPEGCompressStructSizeNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimJPEGCompressStructSizeNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final Object doSize(@SuppressWarnings("unused") final Object receiver) {
             return 0L;
@@ -76,7 +75,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGDecompressStructSize")
-    protected abstract static class PrimJPEGDecompressStructSizeNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimJPEGDecompressStructSizeNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final long doSize(@SuppressWarnings("unused") final Object receiver) {
             return 16L;
@@ -85,7 +84,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGErrorMgr2StructSize")
-    protected abstract static class PrimJPEGErrorMgr2StructSizeNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimJPEGErrorMgr2StructSizeNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final long doSize(@SuppressWarnings("unused") final Object receiver) {
             return 0L;
@@ -94,7 +93,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGPluginIsPresent")
-    protected abstract static class PrimJPEGPluginIsPresentNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimJPEGPluginIsPresentNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final Object doIsPresent(@SuppressWarnings("unused") final Object receiver) {
             return BooleanObject.TRUE;
@@ -103,7 +102,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGReadHeaderfromByteArrayerrorMgr")
-    protected abstract static class PrimJPEGReadHeaderfromByteArrayerrorMgrNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimJPEGReadHeaderfromByteArrayerrorMgrNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
         @Specialization(guards = {"aJPEGDecompressStruct.isByteType()", "source.isByteType()"})
         protected static final Object doReadHeader(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source,
                         @SuppressWarnings("unused") final NativeObject aJPEGErrorMgr2Struct) {
@@ -126,7 +125,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGReadImagefromByteArrayonFormdoDitheringerrorMgr")
-    protected abstract static class PrimJPEGReadImagefromByteArrayonFormdoDitheringerrorMgrNode extends AbstractPrimitiveNode implements SenaryPrimitive {
+    protected abstract static class PrimJPEGReadImagefromByteArrayonFormdoDitheringerrorMgrNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"aJPEGDecompressStruct.isByteType()", "source.isByteType()"})
         protected static final Object doRead(final Object receiver, final NativeObject aJPEGDecompressStruct, final NativeObject source, final PointersObject form,
@@ -157,7 +156,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgr")
-    protected abstract static class PrimJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgrNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
+    protected abstract static class PrimJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgrNode extends AbstractPrimitiveNode implements SeptenaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization(guards = {"aJPEGCompressStruct.isByteType()", "destination.isByteType()"})
         protected static final long doWrite(final Object receiver, final NativeObject aJPEGCompressStruct, final NativeObject destination, final PointersObject form,
@@ -209,7 +208,7 @@ public final class JPEGReadWriter2Plugin extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primSupports8BitGrayscaleJPEGs")
-    protected abstract static class PrimSupports8BitGrayscaleJPEGsNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimSupports8BitGrayscaleJPEGsNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final boolean doSupports(@SuppressWarnings("unused") final Object receiver) {
             return BooleanObject.FALSE;

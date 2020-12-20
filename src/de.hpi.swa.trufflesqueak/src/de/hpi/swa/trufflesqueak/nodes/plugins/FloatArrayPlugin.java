@@ -22,9 +22,9 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
@@ -36,7 +36,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddFloatArray")
-    public abstract static class PrimAddFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimAddFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
                         "receiver.getIntLength() == floatArray.getIntLength()"})
@@ -53,7 +53,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddScalar")
-    public abstract static class PrimAddScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimAddScalarNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final NativeObject doAdd(final NativeObject receiver, final double scalarValue) {
@@ -68,7 +68,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAt")
-    public abstract static class PrimFloatArrayAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimFloatArrayAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doAt(final NativeObject receiver, final long index) {
@@ -78,7 +78,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAtPut")
-    public abstract static class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    public abstract static class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doDouble(final NativeObject receiver, final long index, final double value) {
@@ -100,7 +100,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDivFloatArray")
-    public abstract static class PrimDivFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimDivFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
                         "receiver.getIntLength() == floatArray.getIntLength()"})
@@ -123,7 +123,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDivScalar")
-    public abstract static class PrimDivScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimDivScalarNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue) {
@@ -137,7 +137,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDotProduct")
-    public abstract static class PrimDotProductNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimDotProductNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "aFloatVector.isIntType()", "receiver.getIntLength() == aFloatVector.getIntLength()"})
         protected static final double doDot64bit(final NativeObject receiver, final NativeObject aFloatVector) {
@@ -153,7 +153,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEqual")
-    public abstract static class PrimFloatArrayEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimFloatArrayEqualNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "other.isIntType()"})
         protected static final boolean doEqual(final NativeObject receiver, final NativeObject other) {
@@ -172,7 +172,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHashArray")
-    public abstract static class PrimHashArrayNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    public abstract static class PrimHashArrayNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
 
         @Specialization(guards = "receiver.isIntType()")
         protected static final long doHash(final NativeObject receiver) {
@@ -189,7 +189,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMulFloatArray")
-    public abstract static class PrimMulFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimMulFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
                         "receiver.getIntLength() == floatArray.getIntLength()"})
@@ -207,7 +207,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMulScalar")
-    public abstract static class PrimMulScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimMulScalarNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final NativeObject doMul(final NativeObject receiver, final double scalarValue) {
@@ -228,7 +228,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSubFloatArray")
-    public abstract static class PrimSubFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimSubFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
                         "receiver.getIntLength() == floatArray.getIntLength()"})
@@ -246,7 +246,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSubScalar")
-    public abstract static class PrimSubScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimSubScalarNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final NativeObject doSub(final NativeObject receiver, final double scalarValue) {
@@ -260,7 +260,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSum")
-    public abstract static class PrimFloatArraySumNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    public abstract static class PrimFloatArraySumNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()"})
         protected static final double doSum(final NativeObject receiver) {

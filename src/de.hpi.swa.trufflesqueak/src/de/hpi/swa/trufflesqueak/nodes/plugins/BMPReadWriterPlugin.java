@@ -14,7 +14,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
@@ -27,7 +27,7 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveRead24BmpLine")
-    protected abstract static class PrimRead24BmpLineNode extends AbstractBMPPluginNode implements QuinaryPrimitive {
+    protected abstract static class PrimRead24BmpLineNode extends AbstractBMPPluginNode implements QuinaryPrimitiveFallback {
         @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
         protected static final Object doRead(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
             final byte[] bytes = pixelLine.getByteStorage();
@@ -44,7 +44,7 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveWrite24BmpLine")
-    protected abstract static class PrimWrite24BmpLineNode extends AbstractBMPPluginNode implements QuinaryPrimitive {
+    protected abstract static class PrimWrite24BmpLineNode extends AbstractBMPPluginNode implements QuinaryPrimitiveFallback {
         @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()", "inBounds(formBitsIndex, width, formBits, pixelLine)"})
         protected static final Object doWrite(final Object receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
             final byte[] bytes = pixelLine.getByteStorage();

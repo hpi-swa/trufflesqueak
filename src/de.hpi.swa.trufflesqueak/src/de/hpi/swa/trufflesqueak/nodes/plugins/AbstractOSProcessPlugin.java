@@ -27,9 +27,8 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
@@ -101,7 +100,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveChdir")
-    protected abstract static class PrimChdirNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimChdirNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "pathString.isByteType()")
         protected static final NilObject doChdir(@SuppressWarnings("unused") final Object receiver, final NativeObject pathString,
@@ -119,7 +118,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetCurrentWorkingDirectory")
-    protected abstract static class PrimGetCurrentWorkingDirectoryNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimGetCurrentWorkingDirectoryNode extends AbstractPrimitiveNode {
 
         @Specialization
         protected static final NativeObject doGet(@SuppressWarnings("unused") final Object receiver,
@@ -130,7 +129,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetPid")
-    protected abstract static class PrimGetPidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimGetPidNode extends AbstractSysCallPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "supportsNFI")
         protected final long doGetPid(@SuppressWarnings("unused") final Object receiver,
                         @CachedLibrary("getSysCallObject()") final InteropLibrary lib) {
@@ -145,7 +144,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetSession")
-    protected abstract static class PrimGetSessionNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimGetSessionNode extends AbstractPrimitiveNode {
         @CompilationFinal private NativeObject sessionByteArray;
 
         @Specialization

@@ -26,9 +26,9 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.Abst
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
@@ -142,7 +142,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveComposeMatrix")
-    protected abstract static class PrimComposeMatrixNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimComposeMatrixNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "aTransformation.isIntType()", "result.isIntType()"})
         protected final Object doCompose(final NativeObject receiver, final NativeObject aTransformation, final NativeObject result) {
             final float[] m1 = loadMatrixAsFloat(receiver);
@@ -160,7 +160,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInvertPoint")
-    protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject point,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
@@ -177,7 +177,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInvertRectInto")
-    protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doInvert(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
@@ -227,7 +227,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsIdentity")
-    protected abstract static class PrimIsIdentityNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIsIdentityNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "receiver.isIntType()")
         protected final Object doIdentity(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
@@ -237,7 +237,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIsPureTranslation")
-    protected abstract static class PrimIsPureTranslationNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimIsPureTranslationNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "receiver.isIntType()")
         protected final Object doPure(final NativeObject receiver) {
             final int[] ints = loadMatrix(receiver);
@@ -247,7 +247,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTransformPoint")
-    protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject point,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,
@@ -263,7 +263,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveTransformRectInto")
-    protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() == 6", "srcRect.getSqueakClass() == dstRect.getSqueakClass()", "srcRect.size() == 2"})
         protected final PointersObject doTransform(final NativeObject receiver, final PointersObject srcRect, final PointersObject dstRect,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image,

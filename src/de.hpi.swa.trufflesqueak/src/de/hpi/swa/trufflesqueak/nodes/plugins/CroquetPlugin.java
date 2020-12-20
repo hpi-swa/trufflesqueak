@@ -16,15 +16,15 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class CroquetPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGatherEntropy")
-    protected abstract static class PrimGatherEntropyNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimGatherEntropyNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "byteArray.isByteType()")
         protected static final boolean doGather(@SuppressWarnings("unused") final Object receiver, final NativeObject byteArray) {
@@ -35,7 +35,7 @@ public final class CroquetPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMD5Transform")
-    protected abstract static class PrimMD5TransformNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimMD5TransformNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @TruffleBoundary
         @Specialization(guards = {"buffer.isIntType()", "hash.isIntType()", "buffer.getIntLength() == 16", "hash.getIntLength() == 4"})
         protected static final NativeObject doMD5(@SuppressWarnings("unused") final Object receiver, final NativeObject buffer, final NativeObject hash) {

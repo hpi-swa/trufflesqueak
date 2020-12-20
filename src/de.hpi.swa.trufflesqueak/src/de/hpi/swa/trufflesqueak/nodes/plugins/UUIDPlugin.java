@@ -14,7 +14,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
@@ -27,7 +27,7 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMakeUUID")
-    protected abstract static class PrimMakeUUIDNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimMakeUUIDNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = {"receiver.isByteType()", "receiver.getByteLength() == 16"})
         protected static final Object doUUID(final NativeObject receiver) {
             ArrayUtils.fillRandomly(receiver.getByteStorage());

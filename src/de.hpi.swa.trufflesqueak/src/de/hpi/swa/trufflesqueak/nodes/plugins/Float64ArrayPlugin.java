@@ -22,9 +22,9 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
@@ -36,7 +36,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddFloat64Array")
-    public abstract static class PrimAddFloat64ArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimAddFloat64ArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "floatArray.isLongType()", "receiver.getLongLength() == floatArray.getLongLength()"})
         protected static final NativeObject doAdd(final NativeObject receiver, final NativeObject floatArray) {
@@ -52,7 +52,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAddScalar")
-    public abstract static class PrimAddScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimAddScalarNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()"})
         protected static final NativeObject doAdd(final NativeObject receiver, final double scalarValue) {
@@ -67,7 +67,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAt")
-    public abstract static class PrimFloat64ArrayAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimFloat64ArrayAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"})
         protected static final double doAt(final NativeObject receiver, final long index) {
@@ -77,7 +77,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveAtPut")
-    public abstract static class PrimFloat64ArrayAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    public abstract static class PrimFloat64ArrayAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"})
         protected static final double doDouble(final NativeObject receiver, final long index, final double value) {
@@ -99,7 +99,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDivFloat64Array")
-    public abstract static class PrimDivFloat64ArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimDivFloat64ArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "floatArray.isLongType()", "receiver.getLongLength() == floatArray.getLongLength()"})
         protected static final NativeObject doDiv(final NativeObject receiver, final NativeObject floatArray) {
@@ -121,7 +121,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDivScalar")
-    public abstract static class PrimDivScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimDivScalarNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()"})
         protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue) {
@@ -135,7 +135,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDotProduct")
-    public abstract static class PrimDotProductNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimDotProductNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "aFloatVector.isLongType()", "receiver.getLongLength() == aFloatVector.getLongLength()"})
         protected static final double doDot64bit(final NativeObject receiver, final NativeObject aFloatVector) {
@@ -151,7 +151,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveEqual")
-    public abstract static class PrimFloat64ArrayEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimFloat64ArrayEqualNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "other.isLongType()"})
         protected static final boolean doEqual(final NativeObject receiver, final NativeObject other) {
@@ -170,7 +170,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFromFloatArray")
-    public abstract static class PrimFromFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimFromFloatArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "other.isIntType()", "receiver.getLongLength() == other.getIntLength()"})
         protected static final NativeObject doEqual(final NativeObject receiver, final NativeObject other) {
@@ -185,7 +185,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveHashArray")
-    public abstract static class PrimHashArrayNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    public abstract static class PrimHashArrayNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
 
         @Specialization(guards = "receiver.isLongType()")
         protected static final long doHash(final NativeObject receiver) {
@@ -202,7 +202,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMulFloat64Array")
-    public abstract static class PrimMulFloat64ArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimMulFloat64ArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "floatArray.isLongType()",
                         "receiver.getLongLength() == floatArray.getLongLength()"})
@@ -220,7 +220,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveMulScalar")
-    public abstract static class PrimMulScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimMulScalarNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()"})
         protected static final NativeObject doMul(final NativeObject receiver, final double scalarValue) {
@@ -241,7 +241,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSubFloat64Array")
-    public abstract static class PrimSubFloat64ArrayNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimSubFloat64ArrayNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()", "floatArray.isLongType()", "receiver.getLongLength() == floatArray.getLongLength()"})
         protected static final NativeObject doSub(final NativeObject receiver, final NativeObject floatArray) {
@@ -258,7 +258,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSubScalar")
-    public abstract static class PrimSubScalarNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimSubScalarNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()"})
         protected static final NativeObject doSub(final NativeObject receiver, final double scalarValue) {
@@ -272,7 +272,7 @@ public class Float64ArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSum")
-    public abstract static class PrimFloat64ArraySumNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    public abstract static class PrimFloat64ArraySumNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isLongType()"})
         protected static final double doSum(final NativeObject receiver) {

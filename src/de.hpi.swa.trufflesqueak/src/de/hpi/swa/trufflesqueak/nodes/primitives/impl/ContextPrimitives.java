@@ -39,9 +39,9 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObject
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -51,7 +51,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(CONTEXT.class)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 76)
-    protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"0 <= newStackPointer", "newStackPointer <= LARGE_FRAMESIZE"})
         protected static final ContextObject store(final ContextObject receiver, final long newStackPointer) {
             /**
@@ -65,7 +65,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 195)
-    protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "receiver.hasMaterializedSender()")
         protected static final AbstractSqueakObject doFindNext(final ContextObject receiver, final AbstractSqueakObject previousContextOrNil) {
             ContextObject current = receiver;
@@ -124,7 +124,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 196)
-    protected abstract static class PrimTerminateToNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimTerminateToNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected final ContextObject doUnwindAndTerminate(final ContextObject receiver, final ContextObject previousContext) {
             /*
@@ -201,7 +201,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 197)
-    protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         private ContextObject interopExceptionThrowingContextPrototype;
 
         @TruffleBoundary
@@ -329,7 +329,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210)
-    protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = {"index < receiver.getStackSize()"})
         protected static final Object doContextObject(final ContextObject receiver, final long index,
                         @Cached final ContextObjectReadNode readNode) {
@@ -340,7 +340,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211)
-    protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = "index < receiver.getStackSize()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value,
                         @Cached final ContextObjectWriteNode writeNode) {
@@ -351,7 +351,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 212)
-    protected abstract static class PrimContextSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimContextSizeNode extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization(guards = "receiver.hasTruffleFrame()")
         protected static final long doSize(final ContextObject receiver) {
             return receiver.getStackPointer();

@@ -44,11 +44,10 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
@@ -155,7 +154,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDirectoryCreate")
-    protected abstract static class PrimDirectoryCreateNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDirectoryCreateNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "fullPath.isByteType()")
         protected static final Object doCreate(final Object receiver, final NativeObject fullPath,
@@ -172,7 +171,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDirectoryDelete")
-    protected abstract static class PrimDirectoryDeleteNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDirectoryDeleteNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "fullPath.isByteType()")
         protected static final Object doDelete(final Object receiver, final NativeObject fullPath,
@@ -190,7 +189,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(names = "primitiveDirectoryDelimitor")
-    protected abstract static class PrimDirectoryDelimitorNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimDirectoryDelimitorNode extends AbstractPrimitiveNode {
 
         @Specialization
         protected static final char doDelimitor(@SuppressWarnings("unused") final Object receiver,
@@ -201,7 +200,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDirectoryEntry")
-    protected abstract static class PrimDirectoryEntryNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimDirectoryEntryNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitiveFallback {
 
         @TruffleBoundary(transferToInterpreterOnException = false)
         @Specialization(guards = {"fullPath.isByteType()", "fName.isByteType()"})
@@ -233,7 +232,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDirectoryLookup")
-    protected abstract static class PrimDirectoryLookupNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimDirectoryLookupNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization(guards = {"longIndex > 0", "nativePathName.isByteType()", "nativePathName.getByteLength() == 0"})
         @TruffleBoundary(transferToInterpreterOnException = false)
@@ -291,7 +290,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDirectoryGetMacTypeAndCreator")
-    protected abstract static class PrimDirectoryGetMacTypeAndCreatorNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimDirectoryGetMacTypeAndCreatorNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object doNothing(final Object receiver, final NativeObject fileName, final NativeObject typeString, final NativeObject creatorString) {
@@ -306,7 +305,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDirectorySetMacTypeAndCreator")
-    protected abstract static class PrimDirectorySetMacTypeAndCreatorNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimDirectorySetMacTypeAndCreatorNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object doNothing(final Object receiver, final NativeObject fileName, final NativeObject typeString, final NativeObject creatorString) {
@@ -322,7 +321,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileAtEnd")
-    protected abstract static class PrimFileAtEndNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFileAtEndNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "!isStdioFileDescriptor(fd)")
         protected static final boolean doAtEnd(@SuppressWarnings("unused") final Object receiver, final PointersObject fd) {
@@ -348,7 +347,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileClose")
-    protected abstract static class PrimFileCloseNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFileCloseNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "!isStdioFileDescriptor(fd)")
         protected static final Object doClose(final Object receiver, final PointersObject fd) {
@@ -374,7 +373,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileDelete")
-    protected abstract static class PrimFileDeleteNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFileDeleteNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "nativeFileName.isByteType()")
         protected static final Object doDelete(final Object receiver, final NativeObject nativeFileName,
@@ -391,7 +390,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileFlush")
-    protected abstract static class PrimFileFlushNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFileFlushNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitiveFallback {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"isStdoutFileDescriptor(fd)"})
@@ -427,7 +426,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileGetPosition")
-    protected abstract static class PrimFileGetPositionNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFileGetPositionNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "!isStdioFileDescriptor(fd)")
         @TruffleBoundary(transferToInterpreterOnException = false)
@@ -449,7 +448,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileOpen")
-    protected abstract static class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization(guards = "nativeFileName.isByteType()")
         protected static final Object doOpen(@SuppressWarnings("unused") final Object receiver, final NativeObject nativeFileName, final boolean writableFlag,
@@ -460,7 +459,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileRead")
-    protected abstract static class PrimFileReadNode extends AbstractFilePluginPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimFileReadNode extends AbstractFilePluginPrimitiveNode implements QuinaryPrimitiveFallback {
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "target.isByteType()", "inBounds(startIndex, count, target.getByteLength())"})
         protected static final long doReadBytes(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject target, final long startIndex, final long count) {
@@ -520,7 +519,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileRename")
-    protected abstract static class PrimFileRenameNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimFileRenameNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization(guards = {"oldName.isByteType()", "newName.isByteType()"})
         protected static final Object doRename(final Object receiver, final NativeObject oldName, final NativeObject newName,
@@ -537,7 +536,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileSetPosition")
-    protected abstract static class PrimFileSetPositionNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimFileSetPositionNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization(guards = "!isStdioFileDescriptor(fd)")
         protected static final Object doSet(final Object receiver, final PointersObject fd, final long position) {
@@ -564,7 +563,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileSize")
-    protected abstract static class PrimFileSizeNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFileSizeNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = "!isStdioFileDescriptor(fd)")
         protected static final long doSize(@SuppressWarnings("unused") final Object receiver, final PointersObject fd) {
@@ -590,7 +589,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileStdioHandles")
-    protected abstract static class PrimFileStdioHandlesNode extends AbstractFilePluginPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimFileStdioHandlesNode extends AbstractFilePluginPrimitiveNode {
         @Specialization
         protected static final Object getHandles(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -602,7 +601,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileTruncate")
-    protected abstract static class PrimFileTruncateNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimFileTruncateNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = "!isStdioFileDescriptor(fd)")
         protected static final Object doTruncate(final Object receiver, final PointersObject fd, final long to) {
             truncate(getChannelOrPrimFail(fd), to);
@@ -629,7 +628,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic({FloatObject.class})
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveFileWrite")
-    protected abstract static class PrimFileWriteNode extends AbstractFilePluginPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimFileWriteNode extends AbstractFilePluginPrimitiveNode implements QuinaryPrimitiveFallback {
 
         @Specialization(guards = {"!isStdioFileDescriptor(fd)", "content.isByteType()", "inBounds(startIndex, count, content.getByteLength())"})
         protected static final long doWriteByte(@SuppressWarnings("unused") final Object receiver, final PointersObject fd, final NativeObject content, final long startIndex, final long count) {

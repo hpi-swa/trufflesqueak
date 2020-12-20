@@ -27,11 +27,10 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
@@ -41,7 +40,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primAnyBitFromTo")
-    protected abstract static class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitiveFallback {
         private final BranchProfile startLargerThanStopProfile = BranchProfile.create();
         private final ConditionProfile firstAndLastDigitIndexIdenticalProfile = ConditionProfile.createBinaryProfile();
         private final BranchProfile firstDigitNonZeroProfile = BranchProfile.create();
@@ -120,7 +119,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitAdd")
-    protected abstract static class PrimDigitAddNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDigitAddNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
                         @Cached final ConditionProfile differentSignProfile) {
@@ -175,7 +174,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitSubtract")
-    protected abstract static class PrimDigitSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDigitSubtractNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs,
                         @Cached final ConditionProfile differentSignProfile) {
@@ -230,7 +229,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitMultiplyNegative")
-    protected abstract static class PrimDigitMultiplyNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimDigitMultiplyNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(rewriteOn = ArithmeticException.class)
         protected static final long doLong(final long lhs, final long rhs, @SuppressWarnings("unused") final boolean neg) {
             return Math.multiplyExact(lhs, rhs);
@@ -260,7 +259,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitAnd")
-    protected abstract static class PrimDigitBitAndNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDigitBitAndNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final long doLong(final long receiver, final long arg) {
             return receiver & arg;
@@ -294,7 +293,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitOr")
-    protected abstract static class PrimDigitBitOrNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDigitBitOrNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final long bitOr(final long receiver, final long arg) {
             return receiver | arg;
@@ -318,7 +317,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitShiftMagnitude")
-    public abstract static class PrimDigitBitShiftMagnitudeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    public abstract static class PrimDigitBitShiftMagnitudeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
             return receiver.shiftLeft((int) arg);
@@ -327,7 +326,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitBitXor")
-    protected abstract static class PrimBitXorNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimBitXorNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final long doLong(final long lhs, final long rhs) {
             return lhs ^ rhs;
@@ -351,7 +350,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitCompare")
-    protected abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final long doLong(final long lhs, final long rhs,
                         @Cached final ConditionProfile smallerProfile,
@@ -395,7 +394,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primDigitDivNegative")
-    protected abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization
         protected static final ArrayObject doLong(final long rcvr, final long arg, final boolean negative,
                         @Cached final BranchProfile signProfile,
@@ -486,7 +485,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primGetModuleName")
-    protected abstract static class PrimGetModuleNameNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimGetModuleNameNode extends AbstractArithmeticPrimitiveNode {
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object rcvr,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -496,7 +495,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primMontgomeryDigitLength")
-    protected abstract static class PrimMontgomeryDigitLengthNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimMontgomeryDigitLengthNode extends AbstractArithmeticPrimitiveNode {
         @Specialization
         protected static final long doDigitLength(@SuppressWarnings("unused") final Object receiver) {
             return 32L;
@@ -505,7 +504,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primMontgomeryTimesModulo")
-    protected abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode implements QuaternaryPrimitiveFallback {
         /*
          * Optimized version of montgomeryTimesModulo for integer-sized arguments.
          */
@@ -685,7 +684,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = {"primNormalizePositive", "primNormalizeNegative"})
-    protected abstract static class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitiveFallback {
 
         @Specialization
         protected static final Object doLargeInteger(final LargeIntegerObject value) {

@@ -20,16 +20,15 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.SenaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.SenaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveColorConvertGrayscaleMCU")
-    protected abstract static class PrimColorConvertGrayscaleMCUNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimColorConvertGrayscaleMCUNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
         @Specialization(guards = {"bits.isIntType()", "residualArray.isIntType()", "residualArray.getIntLength() == 3"})
         protected static final Object doColor(final Object receiver, final ArrayObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -40,7 +39,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveColorConvertMCU")
-    protected abstract static class PrimColorConvertMCUNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimColorConvertMCUNode extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
         @Specialization(guards = {"componentArray.size() == 3", "bits.isIntType()", "residualArray.isIntType()", "residualArray.getIntLength() == 3"})
         protected static final Object doColor(final Object receiver, final PointersObject componentArray, final NativeObject bits, final NativeObject residualArray, final long mask,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -52,7 +51,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(JPEGReader.class)
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDecodeMCU")
-    protected abstract static class PrimDecodeMCUNode extends AbstractPrimitiveNode implements SenaryPrimitive {
+    protected abstract static class PrimDecodeMCUNode extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
         @Specialization(guards = {"sampleBuffer.isIntType()", "sampleBuffer.getIntLength() == DCTSize2", "comp.size() >= MinComponentSize", "dcTableValue.isIntType()", "acTableValue.isIntType()",
                         "jpegStream.size() >= 5"})
         protected static final Object doColor(final Object receiver, final NativeObject sampleBuffer, final PointersObject comp, final NativeObject dcTableValue, final NativeObject acTableValue,
@@ -66,7 +65,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(JPEGReader.class)
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveIdctInt")
-    protected abstract static class PrimIdctIntNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimIdctIntNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
         @Specialization(guards = {"anArray.isIntType()", "anArray.getIntLength() == DCTSize2", "qt.isIntType()", "qt.getIntLength() == DCTSize2"})
         protected static final Object doColor(final Object receiver, final NativeObject anArray, final NativeObject qt) {
             JPEGReader.primitiveIdctInt(anArray, qt);
@@ -76,7 +75,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primGetModuleName")
-    public abstract static class PrimGetModuleNameNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    public abstract static class PrimGetModuleNameNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final NativeObject doGet(@SuppressWarnings("unused") final Object rcvr,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {

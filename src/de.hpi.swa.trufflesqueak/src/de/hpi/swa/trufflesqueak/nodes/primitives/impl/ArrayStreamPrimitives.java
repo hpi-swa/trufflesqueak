@@ -27,10 +27,10 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectInstSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
@@ -48,16 +48,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected final boolean inBoundsOfSqueakObject(final Object target, final int instSize, final long index) {
             return SqueakGuards.inBounds1(index + instSize, sizeNode.execute(target));
         }
-    }
 
-    @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
-    @SqueakPrimitive(indices = 60)
-    protected abstract static class PrimBasicAt2Node extends AbstractBasicAtOrAtPutNode implements BinaryPrimitive {
-        @Specialization
-        protected final Object doSqueakObject(final Object receiver, final long index,
-                        @Cached final SqueakObjectAt0Node at0Node,
-                        @Cached final BranchProfile outOfBounceProfile) {
+        protected final Object basicAt(final Object receiver, final long index, final SqueakObjectAt0Node at0Node, final BranchProfile outOfBounceProfile) {
             final int instSize = instSizeNode.execute(receiver);
             if (inBoundsOfSqueakObject(receiver, instSize, index)) {
                 return at0Node.execute(receiver, index - 1 + instSize);
@@ -66,34 +58,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
                 throw PrimitiveFailed.BAD_INDEX;
             }
         }
-    }
 
-    @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
-    @SqueakPrimitive(indices = 60)
-    protected abstract static class PrimBasicAt3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitive {
-        @Specialization
-        protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target, final long index,
-                        @Cached final SqueakObjectAt0Node at0Node,
-                        @Cached final BranchProfile outOfBounceProfile) {
-            final int instSize = instSizeNode.execute(target);
-            if (inBoundsOfSqueakObject(target, instSize, index)) {
-                return at0Node.execute(target, index - 1 + instSize);
-            } else {
-                outOfBounceProfile.enter();
-                throw PrimitiveFailed.BAD_INDEX;
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @NodeInfo(cost = NodeCost.NONE)
-    @SqueakPrimitive(indices = 61)
-    protected abstract static class PrimBasicAtPut3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitive {
-        @Specialization
-        protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
-                        @Cached final SqueakObjectAtPut0Node atput0Node,
-                        @Cached final BranchProfile outOfBounceProfile) {
+        protected final Object basicAtPut(final AbstractSqueakObject receiver, final long index, final Object value, final SqueakObjectAtPut0Node atput0Node, final BranchProfile outOfBounceProfile) {
             final int instSize = instSizeNode.execute(receiver);
             if (inBoundsOfSqueakObject(receiver, instSize, index)) {
                 atput0Node.execute(receiver, index - 1 + instSize, value);
@@ -107,27 +73,56 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
+    @SqueakPrimitive(indices = 60)
+    protected abstract static class PrimBasicAt2Node extends AbstractBasicAtOrAtPutNode implements BinaryPrimitiveFallback {
+        @Specialization
+        protected final Object doSqueakObject(final Object receiver, final long index,
+                        @Cached final SqueakObjectAt0Node at0Node,
+                        @Cached final BranchProfile outOfBounceProfile) {
+            return basicAt(receiver, index, at0Node, outOfBounceProfile);
+        }
+    }
+
+    @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
+    @SqueakPrimitive(indices = 60)
+    protected abstract static class PrimBasicAt3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitiveFallback {
+        @Specialization
+        protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final Object target, final long index,
+                        @Cached final SqueakObjectAt0Node at0Node,
+                        @Cached final BranchProfile outOfBounceProfile) {
+            return basicAt(target, index, at0Node, outOfBounceProfile);
+        }
+    }
+
+    @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 61)
-    protected abstract static class PrimBasicAtPut4Node extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitive {
+    protected abstract static class PrimBasicAtPut3Node extends AbstractBasicAtOrAtPutNode implements TernaryPrimitiveFallback {
+        @Specialization
+        protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value,
+                        @Cached final SqueakObjectAtPut0Node atput0Node,
+                        @Cached final BranchProfile outOfBounceProfile) {
+            return basicAtPut(receiver, index, value, atput0Node, outOfBounceProfile);
+        }
+    }
+
+    @GenerateNodeFactory
+    @NodeInfo(cost = NodeCost.NONE)
+    @SqueakPrimitive(indices = 61)
+    protected abstract static class PrimBasicAtPut4Node extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitiveFallback {
         @Specialization
         protected final Object doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index, final Object value,
                         @Cached final SqueakObjectAtPut0Node atput0Node,
                         @Cached final BranchProfile outOfBounceProfile) {
-            final int instSize = instSizeNode.execute(target);
-            if (inBoundsOfSqueakObject(target, instSize, index)) {
-                atput0Node.execute(target, index - 1 + instSize, value);
-                return value;
-            } else {
-                outOfBounceProfile.enter();
-                throw PrimitiveFailed.BAD_INDEX;
-            }
+            return basicAtPut(target, index, value, atput0Node, outOfBounceProfile);
         }
     }
 
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 62)
-    protected abstract static class PrimSize1Node extends AbstractPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSize1Node extends AbstractPrimitiveNode implements UnaryPrimitiveFallback {
         @Specialization
         protected static final long doSqueakObject(final AbstractSqueakObject receiver,
                         @Cached final SqueakObjectSizeNode sizeNode,
@@ -139,7 +134,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 62)
-    protected abstract static class PrimSize2Node extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSize2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
         protected static final long doSqueakObject(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target,
                         @Cached final SqueakObjectSizeNode sizeNode,
@@ -150,7 +145,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 63)
-    protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())"})
         protected static final char doNativeObjectBytes(final NativeObject obj, final long index) {
@@ -166,7 +161,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 64)
-    protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization(guards = {"obj.isByteType()", "inBounds1(index, obj.getByteLength())", "inByteRange(value)"})
         protected static final char doNativeObjectBytes(final NativeObject obj, final long index, final char value) {
@@ -193,7 +188,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 143)
-    protected abstract static class PrimShortAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimShortAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength(), 2)"})
         protected static final long doNativeInts(final NativeObject receiver, final long index) {
@@ -203,7 +198,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 144)
-    protected abstract static class PrimShortAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimShortAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength(), 2)", "inShortRange(value)"})
         protected static final long doNativeInts(final NativeObject receiver, final long index, final long value) {
@@ -218,7 +213,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 165)
-    protected abstract static class PrimIntegerAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimIntegerAtNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())"})
         protected static final long doNativeInt(final NativeObject receiver, final long index) {
@@ -228,7 +223,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 166)
-    protected abstract static class PrimIntegerAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimIntegerAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
 
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())", "fitsIntoInt(value)"})
         protected static final long doNativeInt(final NativeObject receiver, final long index, final long value) {

@@ -24,15 +24,14 @@ import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectSize
 import de.hpi.swa.trufflesqueak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 
 public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveUtcWithOffset")
-    protected abstract static class PrimUtcWithOffset1Node extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimUtcWithOffset1Node extends AbstractPrimitiveNode {
         @Specialization
         @SuppressWarnings("unused")
         protected static final ArrayObject doUTC(final Object receiver,
@@ -43,7 +42,7 @@ public final class NullPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveUtcWithOffset")
-    protected abstract static class PrimUtcWithOffset2Node extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimUtcWithOffset2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization(guards = "objectWithTwoSlots.size() == 2")
         protected static final PointersObject doUTC(@SuppressWarnings("unused") final Object receiver, final PointersObject objectWithTwoSlots,
                         @Cached final AbstractPointersObjectWriteNode writeNode) {

@@ -126,12 +126,23 @@ public final class PrimitiveNodeFactory {
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
             return namedFor(method, useStack);
         } else if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
-            return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX,
-                            new AbstractArgumentNode[]{ArgumentNode.create(0, useStack)});
-        } else if (primitiveIndex <= MAX_PRIMITIVE_INDEX) {
+            assert method.getNumArgs() == 0;
+            return createPrimLoadInstVarNode(primitiveIndex, useStack);
+        } else {
+            assert primitiveIndex <= MAX_PRIMITIVE_INDEX;
             return createInstance(method, useStack, PRIMITIVE_TABLE.get(primitiveIndex));
         }
-        return null;
+    }
+
+    public static AbstractPrimitiveNode forIndex(final int primitiveIndex, final int numArgs) {
+        assert primitiveIndex != PRIMITIVE_EXTERNAL_CALL_INDEX;
+        if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
+            assert numArgs == 0;
+            return createPrimLoadInstVarNode(primitiveIndex, false);
+        } else {
+            assert primitiveIndex <= MAX_PRIMITIVE_INDEX;
+            return createInstance(PRIMITIVE_TABLE.get(primitiveIndex), numArgs);
+        }
     }
 
     public static AbstractPrimitiveNode namedFor(final CompiledCodeObject method, final boolean useStack) {
@@ -160,6 +171,11 @@ public final class PrimitiveNodeFactory {
         return null;
     }
 
+    private static AbstractPrimitiveNode createPrimLoadInstVarNode(final int primitiveIndex, final boolean useStack) {
+        return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX,
+                        new AbstractArgumentNode[]{ArgumentNode.create(0, useStack)});
+    }
+
     public static String[] getPluginNames() {
         final Set<String> target = new HashSet<>();
         for (final String key : PLUGIN_MAP.getKeys()) {
@@ -175,7 +191,6 @@ public final class PrimitiveNodeFactory {
         final int numReceiverAndArguments = 1 + method.getNumArgs();
         final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = map.get(numReceiverAndArguments);
         if (nodeFactory == null) {
-            assert false : "Unable to find primitive with arity: " + numReceiverAndArguments;
             return null;
         }
         assert numReceiverAndArguments == nodeFactory.getExecutionSignature().size();
@@ -190,6 +205,25 @@ public final class PrimitiveNodeFactory {
         } else {
             return null;
         }
+    }
+
+    private static AbstractPrimitiveNode createInstance(final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map, final int numArgs) {
+        if (map == null) {
+            return null;
+        }
+        final int numReceiverAndArguments = 1 + numArgs;
+        final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = map.get(numReceiverAndArguments);
+        if (nodeFactory == null) {
+            assert false : "Unable to find primitive with arity: " + numReceiverAndArguments;
+            return null;
+        }
+        assert numReceiverAndArguments == nodeFactory.getExecutionSignature().size();
+        final AbstractArgumentNode[] argumentNodes;
+        argumentNodes = new AbstractArgumentNode[numReceiverAndArguments];
+        for (int i = 0; i < numReceiverAndArguments; i++) {
+            argumentNodes[i] = AbstractArgumentNode.create(i, false);
+        }
+        return nodeFactory.createNode((Object) argumentNodes);
     }
 
     private static void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {

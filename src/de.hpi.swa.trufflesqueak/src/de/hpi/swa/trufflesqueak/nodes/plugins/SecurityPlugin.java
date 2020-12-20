@@ -19,13 +19,12 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveCanWriteImage")
-    protected abstract static class PrimCanWriteImageNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimCanWriteImageNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final Object doCanWrite(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
@@ -35,7 +34,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDisableImageWrite")
-    protected abstract static class PrimDisableImageWriteNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimDisableImageWriteNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final Object doDisable(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -44,7 +43,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetSecureUserDirectory")
-    protected abstract static class PrimGetSecureUserDirectoryNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimGetSecureUserDirectoryNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final Object doGet(@SuppressWarnings("unused") final Object receiver) {
             throw PrimitiveFailed.GENERIC_ERROR; // TODO: implement primitive
@@ -53,7 +52,7 @@ public final class SecurityPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveGetUntrustedUserDirectory")
-    protected abstract static class PrimGetUntrustedUserDirectoryNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+    protected abstract static class PrimGetUntrustedUserDirectoryNode extends AbstractPrimitiveNode {
         @Specialization
         protected static final NativeObject doGet(@SuppressWarnings("unused") final Object receiver,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
