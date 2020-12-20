@@ -228,7 +228,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
                     continue bytecode_loop;
                 }
             } else if (node instanceof UnconditionalJumpNode) {
-                final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                final int successor = ((UnconditionalJumpNode) node).getSuccessorIndex();
                 if (CompilerDirectives.inInterpreter() && successor <= pc) {
                     backJumpCounter++;
                 }
@@ -295,7 +295,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
                     continue bytecode_loop_slow;
                 }
             } else if (node instanceof UnconditionalJumpNode) {
-                pc = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                pc = ((UnconditionalJumpNode) node).getSuccessorIndex();
                 continue bytecode_loop_slow;
             } else if (node instanceof AbstractReturnNode) {
                 returnValue = ((AbstractReturnNode) node).executeReturn(frame);

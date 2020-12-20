@@ -18,14 +18,14 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class JumpBytecodes {
 
     public abstract static class ConditionalJumpNode extends AbstractBytecodeNode {
-        protected final int offset;
+        private final int jumpSuccessorIndex;
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
         protected ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
             super(code, index, numBytecodes);
-            this.offset = offset;
+            jumpSuccessorIndex = getSuccessorIndex() + offset;
         }
 
         @Override
@@ -48,7 +48,7 @@ public final class JumpBytecodes {
         protected abstract boolean check(boolean value);
 
         public final int getJumpSuccessorIndex() {
-            return getSuccessorIndex() + offset;
+            return jumpSuccessorIndex;
         }
     }
 
@@ -72,7 +72,7 @@ public final class JumpBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "jumpFalse: " + offset;
+            return "jumpFalse: " + getJumpSuccessorIndex();
         }
 
         @Override
@@ -101,7 +101,7 @@ public final class JumpBytecodes {
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "jumpTrue: " + offset;
+            return "jumpTrue: " + getJumpSuccessorIndex();
         }
 
         @Override
@@ -111,11 +111,8 @@ public final class JumpBytecodes {
     }
 
     public static final class UnconditionalJumpNode extends AbstractBytecodeNode {
-        private final int offset;
-
         private UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int offset) {
-            super(code, index, numBytecodes);
-            this.offset = offset;
+            super(code, index, numBytecodes + offset);
         }
 
         public static UnconditionalJumpNode createShort(final CompiledCodeObject code, final int index, final int bytecode) {
@@ -135,14 +132,10 @@ public final class JumpBytecodes {
             // nothing to do
         }
 
-        public int getJumpSuccessor() {
-            return getSuccessorIndex() + offset;
-        }
-
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "jumpTo: " + offset;
+            return "jumpTo: " + getSuccessorIndex();
         }
     }
 
