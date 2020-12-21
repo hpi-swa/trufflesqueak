@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -15,19 +16,6 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
     public static final SqueakBytecodeSistaV1Decoder SINGLETON = new SqueakBytecodeSistaV1Decoder();
 
     private SqueakBytecodeSistaV1Decoder() {
-    }
-
-    @Override
-    public AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
-        final int trailerPosition = trailerPosition(code);
-        final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[trailerPosition];
-        int index = 0;
-        while (index < trailerPosition) {
-            final AbstractBytecodeNode bytecodeNode = decodeBytecode(code, index);
-            nodes[index] = bytecodeNode;
-            index += decodeNumBytes(code, index);
-        }
-        return nodes;
     }
 
     @Override
@@ -94,11 +82,11 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
     }
 
     @Override
-    public AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
-        return decodeBytecode(code, index, 0, 0, 0);
+    public AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
+        return decodeBytecode(frame, code, index, 0, 0, 0);
     }
 
-    public static AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index, final int extBytes, final int extA, final int extB) {
+    private static AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final int index, final int extBytes, final int extA, final int extB) {
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();
         final int indexWithExt = index + extBytes;
@@ -144,20 +132,20 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0x54: case 0x55: case 0x56: case 0x57:
                 return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
             case 0x58:
-                return ReturnBytecodes.ReturnReceiverNode.create(code, index);
+                return new ReturnBytecodes.ReturnReceiverNode(frame, code, index);
             case 0x59:
-                return ReturnBytecodes.ReturnConstantTrueNode.create(code, index);
+                return new ReturnBytecodes.ReturnConstantTrueNode(frame, code, index);
             case 0x5A:
-                return ReturnBytecodes.ReturnConstantFalseNode.create(code, index);
+                return new ReturnBytecodes.ReturnConstantFalseNode(frame, code, index);
             case 0x5B:
-                return ReturnBytecodes.ReturnConstantNilNode.create(code, index);
+                return new ReturnBytecodes.ReturnConstantNilNode(frame, code, index);
             case 0x5C:
-                return ReturnBytecodes.ReturnTopFromMethodNode.create(code, index);
+                return new ReturnBytecodes.ReturnTopFromMethodNode(frame, code, index);
             case 0x5D:
-                return ReturnBytecodes.ReturnNilFromBlockNode.create(code, index);
+                return new ReturnBytecodes.ReturnNilFromBlockNode(code, index);
             case 0x5E:
                 if (extA == 0) {
-                    return ReturnBytecodes.ReturnTopFromBlockNode.create(code, index);
+                    return new ReturnBytecodes.ReturnTopFromBlockNode(code, index);
                 } else { // shouldBeImplemented, see #genExtReturnTopFromBlock
                     return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
                 }
@@ -194,9 +182,9 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
                 return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
             case 0xE0:
-                return decodeBytecode(code, index, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB);
+                return decodeBytecode(frame, code, index, extBytes + 2, (extA << 8) + Byte.toUnsignedInt(bytecode[indexWithExt + 1]), extB);
             case 0xE1:
-                return decodeBytecode(code, index, extBytes + 2, extA, (extB << 8) + bytecode[indexWithExt + 1]);
+                return decodeBytecode(frame, code, index, extBytes + 2, extA, (extB << 8) + bytecode[indexWithExt + 1]);
             case 0xE2:
                 return PushBytecodes.PushReceiverVariableNode.create(code, index, 2 + extBytes, Byte.toUnsignedInt(bytecode[indexWithExt + 1]) + (extA << 8));
             case 0xE3:

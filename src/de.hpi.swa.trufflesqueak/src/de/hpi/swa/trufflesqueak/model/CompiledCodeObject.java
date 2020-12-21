@@ -21,6 +21,7 @@ import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
@@ -334,16 +335,12 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         bytes = Arrays.copyOfRange(chunk.getBytes(), ptrs.length * SqueakImageConstants.WORD_SIZE, chunk.getBytes().length);
     }
 
-    public AbstractBytecodeNode[] asBytecodeNodes() {
-        return decoder.decode(this);
-    }
-
     public AbstractBytecodeNode[] asBytecodeNodesEmpty() {
         return new AbstractBytecodeNode[decoder.trailerPosition(this)];
     }
 
-    public AbstractBytecodeNode bytecodeNodeAt(final int pc) {
-        return decoder.decodeBytecode(this, pc);
+    public AbstractBytecodeNode bytecodeNodeAt(final VirtualFrame frame, final int pc) {
+        return decoder.decodeBytecode(frame, this, pc);
     }
 
     public int findLineNumber(final int index) {

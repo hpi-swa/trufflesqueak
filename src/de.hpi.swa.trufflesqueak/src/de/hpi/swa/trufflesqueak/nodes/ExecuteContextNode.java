@@ -171,7 +171,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
-            final AbstractBytecodeNode node = fetchNextBytecodeNode(pc - initialPC);
+            final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
             if (node instanceof CallPrimitiveNode) {
                 final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
                 if (callPrimitiveNode.primitiveNode != null) {
@@ -269,7 +269,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         int pc = (int) resumptionPC;
         Object returnValue = null;
         bytecode_loop_slow: while (pc != LOCAL_RETURN_PC) {
-            final AbstractBytecodeNode node = fetchNextBytecodeNode(pc - initialPC);
+            final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
             if (node instanceof AbstractSendNode) {
                 pc = node.getSuccessorIndex();
                 FrameAccess.setInstructionPointer(frame, code, pc);
@@ -322,10 +322,10 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
      * Fetch next bytecode and insert AST nodes on demand if enabled.
      */
     @SuppressWarnings("unused")
-    private AbstractBytecodeNode fetchNextBytecodeNode(final int pcZeroBased) {
+    private AbstractBytecodeNode fetchNextBytecodeNode(final VirtualFrame frame, final int pcZeroBased) {
         if (bytecodeNodes[pcZeroBased] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            bytecodeNodes[pcZeroBased] = insert(code.bytecodeNodeAt(pcZeroBased));
+            bytecodeNodes[pcZeroBased] = insert(code.bytecodeNodeAt(frame, pcZeroBased));
             notifyInserted(bytecodeNodes[pcZeroBased]);
         }
         return bytecodeNodes[pcZeroBased];

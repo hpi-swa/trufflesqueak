@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -14,19 +15,6 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
     public static final SqueakBytecodeV3PlusClosuresDecoder SINGLETON = new SqueakBytecodeV3PlusClosuresDecoder();
 
     private SqueakBytecodeV3PlusClosuresDecoder() {
-    }
-
-    @Override
-    public AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
-        final int trailerPosition = trailerPosition(code);
-        final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[trailerPosition];
-        int index = 0;
-        while (index < trailerPosition) {
-            final AbstractBytecodeNode bytecodeNode = decodeBytecode(code, index);
-            nodes[index] = bytecodeNode;
-            index += decodeNumBytes(code, index);
-        }
-        return nodes;
     }
 
     @Override
@@ -93,7 +81,7 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
     }
 
     @Override
-    public AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
+    public AbstractBytecodeNode decodeBytecode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
         CompilerAsserts.neverPartOfCompilation();
         final byte[] bytecode = code.getBytes();
         final int b = Byte.toUnsignedInt(bytecode[index]);
@@ -136,17 +124,17 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
             case 0x77:
                 return new PushBytecodes.PushConstantTwoNode(code, index);
             case 0x78:
-                return ReturnBytecodes.ReturnReceiverNode.create(code, index);
+                return new ReturnBytecodes.ReturnReceiverNode(frame, code, index);
             case 0x79:
-                return ReturnBytecodes.ReturnConstantTrueNode.create(code, index);
+                return new ReturnBytecodes.ReturnConstantTrueNode(frame, code, index);
             case 0x7A:
-                return ReturnBytecodes.ReturnConstantFalseNode.create(code, index);
+                return new ReturnBytecodes.ReturnConstantFalseNode(frame, code, index);
             case 0x7B:
-                return ReturnBytecodes.ReturnConstantNilNode.create(code, index);
+                return new ReturnBytecodes.ReturnConstantNilNode(frame, code, index);
             case 0x7C:
-                return ReturnBytecodes.ReturnTopFromMethodNode.create(code, index);
+                return new ReturnBytecodes.ReturnTopFromMethodNode(frame, code, index);
             case 0x7D:
-                return ReturnBytecodes.ReturnTopFromBlockNode.create(code, index);
+                return new ReturnBytecodes.ReturnTopFromBlockNode(code, index);
             case 0x7E:
             case 0x7F:
                 return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);

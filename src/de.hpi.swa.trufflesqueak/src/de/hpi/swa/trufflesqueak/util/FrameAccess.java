@@ -124,6 +124,10 @@ public final class FrameAccess {
         return (BlockClosureObject) frame.getArguments()[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()];
     }
 
+    public static boolean hasClosure(final Frame frame) {
+        return getClosure(frame) != null;
+    }
+
     public static void setClosure(final Frame frame, final BlockClosureObject closure) {
         frame.getArguments()[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = closure;
     }

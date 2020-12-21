@@ -7,9 +7,9 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
@@ -17,13 +17,7 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantFalseNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNilNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantTrueNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnNilFromBlockNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
@@ -34,11 +28,6 @@ public final class ReturnBytecodes {
     public abstract static class AbstractReturnNode extends AbstractBytecodeNode {
         protected AbstractReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-        }
-
-        protected final boolean hasModifiedSender(final VirtualFrame frame) {
-            final ContextObject context = getContext(frame);
-            return context != null && context.hasModifiedSender();
         }
 
         @Override
@@ -52,32 +41,58 @@ public final class ReturnBytecodes {
 
         protected abstract Object executeReturnSpecialized(VirtualFrame frame);
 
-        @SuppressWarnings("unused")
-        protected Object getReturnValue(final VirtualFrame frame) {
-            throw SqueakException.create("Needs to be overriden");
+        protected abstract Object getReturnValue(VirtualFrame frame);
+    }
+
+    public abstract static class AbstractNormalReturnNode extends AbstractReturnNode {
+        @Child protected AbstractReturnKindNode returnNode;
+
+        protected AbstractNormalReturnNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
+            super(code, index);
+            returnNode = FrameAccess.hasClosure(frame) ? new ReturnFromClosureNode() : new ReturnFromMethodNode(frame);
+        }
+
+        @Override
+        public final Object executeReturnSpecialized(final VirtualFrame frame) {
+            return returnNode.execute(frame, getReturnValue(frame));
         }
     }
 
-    protected abstract static class AbstractReturnWithSpecializationsNode extends AbstractReturnNode {
+    private abstract static class AbstractReturnKindNode extends AbstractNode {
+        protected abstract Object execute(VirtualFrame frame, Object returnValue);
+    }
 
-        protected AbstractReturnWithSpecializationsNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+    private static final class ReturnFromMethodNode extends AbstractReturnKindNode {
+        private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.createBinaryProfile();
+        private final FrameSlot thisContextSlot;
+
+        private ReturnFromMethodNode(final VirtualFrame frame) {
+            thisContextSlot = FrameAccess.getContextSlot(frame);
         }
 
-        @Specialization(guards = {"getClosure(frame) == null", "!hasModifiedSender(frame)"})
-        protected final Object doLocalReturn(final VirtualFrame frame) {
-            return getReturnValue(frame);
+        @Override
+        protected Object execute(final VirtualFrame frame, final Object returnValue) {
+            assert !FrameAccess.hasClosure(frame);
+            if (hasModifiedSenderProfile.profile(hasModifiedSender(frame))) {
+                assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
+                throw new NonLocalReturn(returnValue, FrameAccess.getSender(frame));
+            } else {
+                return returnValue;
+            }
         }
 
-        @Specialization(guards = {"getClosure(frame) == null", "hasModifiedSender(frame)"})
-        protected final Object doNonLocalReturn(final VirtualFrame frame) {
-            assert FrameAccess.getSender(frame) instanceof ContextObject : "Sender must be a materialized ContextObject";
-            throw new NonLocalReturn(getReturnValue(frame), FrameAccess.getSender(frame));
+        private boolean hasModifiedSender(final VirtualFrame frame) {
+            final ContextObject context = FrameAccess.getContext(frame, thisContextSlot);
+            return context != null && context.hasModifiedSender();
         }
+    }
 
-        @Specialization(guards = {"getClosure(frame) != null"})
-        protected final Object doClosureReturnFromMaterialized(final VirtualFrame frame,
-                        @Cached final GetActiveProcessNode getActiveProcessNode) {
+    private static final class ReturnFromClosureNode extends AbstractReturnKindNode {
+        @Child private GetActiveProcessNode getActiveProcessNode = GetActiveProcessNode.create();
+
+        @Override
+        protected Object execute(final VirtualFrame frame, final Object returnValue) {
+            assert FrameAccess.hasClosure(frame);
             // Target is sender of closure's home context.
             final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
             assert homeContext.getProcess() != null;
@@ -86,16 +101,16 @@ public final class ReturnBytecodes {
             if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
                 CompilerDirectives.transferToInterpreter();
                 final ContextObject contextObject = GetOrCreateContextNode.getOrCreateFromActiveProcessUncached(frame);
-                lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
+                lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, returnValue);
                 throw SqueakException.create("Should not reach");
             }
-            throw new NonLocalReturn(getReturnValue(frame), caller);
+            throw new NonLocalReturn(returnValue, caller);
         }
     }
 
-    protected abstract static class AbstractReturnConstantNode extends AbstractReturnWithSpecializationsNode {
-        protected AbstractReturnConstantNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
+    protected abstract static class AbstractReturnConstantNode extends AbstractNormalReturnNode {
+        protected AbstractReturnConstantNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
+            super(frame, code, index);
         }
 
         @Override
@@ -105,158 +120,143 @@ public final class ReturnBytecodes {
         }
     }
 
-    public abstract static class ReturnConstantTrueNode extends AbstractReturnConstantNode {
-        protected ReturnConstantTrueNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
-        }
-
-        public static ReturnConstantTrueNode create(final CompiledCodeObject code, final int index) {
-            return ReturnConstantTrueNodeGen.create(code, index);
+    public static final class ReturnConstantTrueNode extends AbstractReturnConstantNode {
+        protected ReturnConstantTrueNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
+            super(frame, code, index);
         }
 
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return BooleanObject.TRUE;
         }
     }
 
-    public abstract static class ReturnConstantFalseNode extends AbstractReturnConstantNode {
-        protected ReturnConstantFalseNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
-        }
-
-        public static ReturnConstantFalseNode create(final CompiledCodeObject code, final int index) {
-            return ReturnConstantFalseNodeGen.create(code, index);
+    public static final class ReturnConstantFalseNode extends AbstractReturnConstantNode {
+        protected ReturnConstantFalseNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
+            super(frame, code, index);
         }
 
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return BooleanObject.FALSE;
         }
     }
 
-    public abstract static class ReturnConstantNilNode extends AbstractReturnConstantNode {
-        protected ReturnConstantNilNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
-        }
-
-        public static ReturnConstantNilNode create(final CompiledCodeObject code, final int index) {
-            return ReturnConstantNilNodeGen.create(code, index);
+    public static final class ReturnConstantNilNode extends AbstractReturnConstantNode {
+        protected ReturnConstantNilNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
+            super(frame, code, index);
         }
 
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return NilObject.SINGLETON;
         }
     }
 
-    public abstract static class ReturnReceiverNode extends AbstractReturnWithSpecializationsNode {
-
-        protected ReturnReceiverNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
-        }
-
-        public static ReturnReceiverNode create(final CompiledCodeObject code, final int index) {
-            return ReturnReceiverNodeGen.create(code, index);
+    public static final class ReturnReceiverNode extends AbstractNormalReturnNode {
+        protected ReturnReceiverNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
+            super(frame, code, index);
         }
 
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return FrameAccess.getReceiver(frame);
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "returnSelf";
         }
     }
 
-    public abstract static class AbstractReturnFromBlockNode extends AbstractReturnNode {
-        protected AbstractReturnFromBlockNode(final CompiledCodeObject code, final int index) {
+    public abstract static class AbstractBlockReturnNode extends AbstractReturnNode {
+        private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.createBinaryProfile();
+        @Child private GetActiveProcessNode getActiveProcessNode;
+
+        protected AbstractBlockReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
-        @Specialization(guards = {"!hasModifiedSender(frame)"})
-        protected final Object doLocalReturn(final VirtualFrame frame) {
-            return getReturnValue(frame);
+        @Override
+        public final Object executeReturnSpecialized(final VirtualFrame frame) {
+            if (hasModifiedSenderProfile.profile(hasModifiedSender(frame))) {
+                // Target is sender of closure's home context.
+                final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
+                assert homeContext.getProcess() != null;
+                final boolean homeContextNotOnTheStack = homeContext.getProcess() != getGetActiveProcessNode().execute();
+                final Object caller = homeContext.getFrameSender();
+                if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
+                    CompilerDirectives.transferToInterpreter();
+                    final ContextObject contextObject = GetOrCreateContextNode.getOrCreateFromActiveProcessUncached(frame);
+                    lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
+                    throw SqueakException.create("Should not reach");
+                }
+                throw new NonLocalReturn(getReturnValue(frame), caller);
+            } else {
+                return getReturnValue(frame);
+            }
         }
 
-        @Specialization(guards = {"hasModifiedSender(frame)"})
-        protected final Object doNonLocalReturnClosure(final VirtualFrame frame,
-                        @Cached final GetActiveProcessNode getActiveProcessNode) {
-            // Target is sender of closure's home context.
-            final ContextObject homeContext = FrameAccess.getClosure(frame).getHomeContext();
-            assert homeContext.getProcess() != null;
-            final boolean homeContextNotOnTheStack = homeContext.getProcess() != getActiveProcessNode.execute();
-            final Object caller = homeContext.getFrameSender();
-            if (caller == NilObject.SINGLETON || homeContextNotOnTheStack) {
-                CompilerDirectives.transferToInterpreter();
-                final ContextObject contextObject = GetOrCreateContextNode.getOrCreateFromActiveProcessUncached(frame);
-                lookupContext().cannotReturn.executeAsSymbolSlow(frame, contextObject, getReturnValue(frame));
-                throw SqueakException.create("Should not reach");
+        private boolean hasModifiedSender(final VirtualFrame frame) {
+            final ContextObject context = getContext(frame);
+            return context != null && context.hasModifiedSender();
+        }
+
+        private GetActiveProcessNode getGetActiveProcessNode() {
+            if (getActiveProcessNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getActiveProcessNode = insert(GetActiveProcessNode.create());
             }
-            throw new NonLocalReturn(getReturnValue(frame), caller);
+            return getActiveProcessNode;
         }
     }
 
-    public abstract static class ReturnTopFromBlockNode extends AbstractReturnFromBlockNode {
+    public static final class ReturnTopFromBlockNode extends AbstractBlockReturnNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
-        public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
-            return ReturnTopFromBlockNodeGen.create(code, index);
-        }
-
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return popNode.execute(frame);
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "blockReturn";
         }
     }
 
-    public abstract static class ReturnNilFromBlockNode extends AbstractReturnFromBlockNode {
+    public static final class ReturnNilFromBlockNode extends AbstractBlockReturnNode {
         protected ReturnNilFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
-        public static ReturnNilFromBlockNode create(final CompiledCodeObject code, final int index) {
-            return ReturnNilFromBlockNodeGen.create(code, index);
-        }
-
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return NilObject.SINGLETON;
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "blockReturn: nil";
         }
     }
 
-    public abstract static class ReturnTopFromMethodNode extends AbstractReturnWithSpecializationsNode {
+    public static final class ReturnTopFromMethodNode extends AbstractNormalReturnNode {
         @Child private FrameStackPopNode popNode = FrameStackPopNode.create();
 
-        protected ReturnTopFromMethodNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
-        }
-
-        public static ReturnTopFromMethodNode create(final CompiledCodeObject code, final int index) {
-            return ReturnTopFromMethodNodeGen.create(code, index);
+        protected ReturnTopFromMethodNode(final VirtualFrame frame, final CompiledCodeObject code, final int index) {
+            super(frame, code, index);
         }
 
         @Override
-        protected final Object getReturnValue(final VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return popNode.execute(frame);
         }
 

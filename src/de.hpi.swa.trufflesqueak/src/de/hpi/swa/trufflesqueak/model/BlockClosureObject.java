@@ -24,7 +24,6 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.image.SqueakImageWriter;
 import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.BLOCK_CLOSURE;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -265,13 +264,11 @@ public final class BlockClosureObject extends AbstractSqueakObjectWithClassAndHa
         if (block.getSignFlag()) {
             pc = (int) getStartPC() - 4 - block.getInitialPC();
             pushNilCode = 115;
-            blockSize = Byte.toUnsignedInt(bytecode[pc + 2]) << 8 | Byte.toUnsignedInt(bytecode[pc + 3]);
         } else {
             pc = (int) getStartPC() - 3 - block.getInitialPC();
             pushNilCode = 79;
-            final PushClosureNode pushNode = (PushClosureNode) block.bytecodeNodeAt(pc);
-            blockSize = pushNode.getBlockSize();
         }
+        blockSize = Byte.toUnsignedInt(bytecode[pc + 2]) << 8 | Byte.toUnsignedInt(bytecode[pc + 3]);
         final int blockEnd = pc + blockSize;
 
         int stackpointer = 0;
