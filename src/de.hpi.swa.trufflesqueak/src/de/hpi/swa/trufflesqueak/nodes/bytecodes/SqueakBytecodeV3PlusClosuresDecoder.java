@@ -161,7 +161,7 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
             case 0x8A:
                 return PushBytecodes.PushNewArrayNode.create(code, index, 2, bytecode[index + 1]);
             case 0x8B:
-                return MiscellaneousBytecodes.CallPrimitiveNode.create(code, index, bytecode[index + 1], bytecode[index + 2]);
+                throw SqueakException.create("callPrimitive bytecode should never be decoded");
             case 0x8C:
                 return new PushBytecodes.PushRemoteTempNode(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x8D:

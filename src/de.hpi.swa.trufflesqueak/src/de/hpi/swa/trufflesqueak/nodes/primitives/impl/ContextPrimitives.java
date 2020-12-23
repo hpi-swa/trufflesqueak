@@ -36,7 +36,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.BinaryPrimitiveFallback;
@@ -318,7 +318,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                                 "[ :e | ((e isKindOf: Error) or: [ e isKindOf: Halt ]) ifTrue: [ Interop throwException: e \"rethrow as interop\" ] ifFalse: [(e isKindOf: Warning) ifTrue: [ e resume \"ignore\" ] " +
                                                 "ifFalse: [ nil handleSignal: e \"handle the usual way\" ] ] ]"));
                 interopExceptionThrowingContextPrototype.atTempPut(2, BooleanObject.TRUE);
-                interopExceptionThrowingContextPrototype.setInstructionPointer(onDoMethod.getInitialPC() + CallPrimitiveNode.NUM_BYTECODES);
+                interopExceptionThrowingContextPrototype.setInstructionPointer(onDoMethod.getInitialPC() + AbstractSqueakBytecodeDecoder.CALL_PRIMITIVE_NUM_BYTECODES);
                 interopExceptionThrowingContextPrototype.setStackPointer(onDoMethod.getNumTemps());
                 interopExceptionThrowingContextPrototype.removeSender();
             }

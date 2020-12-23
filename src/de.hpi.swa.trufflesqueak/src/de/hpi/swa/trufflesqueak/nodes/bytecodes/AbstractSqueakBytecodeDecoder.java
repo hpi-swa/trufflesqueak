@@ -10,6 +10,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class AbstractSqueakBytecodeDecoder {
+    public static final int CALL_PRIMITIVE_NUM_BYTECODES = 3;
 
     public abstract AbstractBytecodeNode decodeBytecode(VirtualFrame frame, CompiledCodeObject code, int index);
 

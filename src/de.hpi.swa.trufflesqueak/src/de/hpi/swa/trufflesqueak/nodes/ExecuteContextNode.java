@@ -27,13 +27,15 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
@@ -47,6 +49,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     @CompilationFinal private int initialPC = -1;
     @CompilationFinal private int startPC = -1;
 
+    @Child private AbstractPrimitiveNode primitiveNode;
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
@@ -61,6 +64,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
 
     protected ExecuteContextNode(final CompiledCodeObject code, final boolean resume) {
         this.code = code;
+        primitiveNode = code.hasPrimitive() ? PrimitiveNodeFactory.forIndex(code, false, code.primitiveIndex()) : null;
         bytecodeNodes = code.asBytecodeNodesEmpty();
         frameInitializationNode = resume ? null : FrameStackInitializationNode.create();
         /*
@@ -92,7 +96,23 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
             if (interruptHandlerNode != null) {
                 interruptHandlerNode.executeTrigger(frame);
             }
-            return startBytecode(frame);
+            if (primitiveNode != null) {
+                try {
+                    return primitiveNode.executePrimitive(frame);
+                } catch (final PrimitiveFailed e) {
+                    /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
+                    getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
+                    /*
+                     * Same toString() methods may throw compilation warnings, this is expected and
+                     * ok for primitive failure logging purposes. Note that primitives that are not
+                     * implemented are also not logged.
+                     */
+                    LogUtils.PRIMITIVES.fine(() -> primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
+                                    ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
+                    /* continue with fallback code. */
+                }
+            }
+            return executeBytecode(frame, getStartPC(frame));
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -108,7 +128,23 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     @Override
     public Object executeResumeAtStart(final VirtualFrame frame) {
         try {
-            return startBytecode(frame);
+            if (primitiveNode != null) {
+                try {
+                    return primitiveNode.executePrimitive(frame);
+                } catch (final PrimitiveFailed e) {
+                    /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
+                    getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
+                    /*
+                     * Same toString() methods may throw compilation warnings, this is expected and
+                     * ok for primitive failure logging purposes. Note that primitives that are not
+                     * implemented are also not logged.
+                     */
+                    LogUtils.PRIMITIVES.fine(() -> primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
+                                    ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
+                    /* continue with fallback code. */
+                }
+            }
+            return executeBytecode(frame, getStartPC(frame));
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -120,7 +156,8 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     @Override
     public Object executeResumeInMiddle(final VirtualFrame frame, final long resumptionPC) {
         try {
-            return resumeBytecode(frame, resumptionPC);
+            getStartPC(frame); // FIXME: hack to ensure initialPC is set
+            return executeBytecode(frame, (int) resumptionPC);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -152,7 +189,12 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
             if (closure == null) {
                 initialPC = code.getInitialPC();
                 startPC = initialPC;
+                if (code.hasPrimitive()) {
+                    // skip callPrimitive bytecode if any
+                    startPC += AbstractSqueakBytecodeDecoder.CALL_PRIMITIVE_NUM_BYTECODES;
+                }
             } else {
+                assert !code.hasPrimitive();
                 initialPC = closure.getCompiledBlock().getInitialPC();
                 startPC = (int) closure.getStartPC();
             }
@@ -164,38 +206,16 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
      * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://git.io/fjEDw).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private Object startBytecode(final VirtualFrame frame) {
+    private Object executeBytecode(final VirtualFrame frame, final int firstPC) {
         CompilerAsserts.partialEvaluationConstant(bytecodeNodes.length);
-        int pc = getStartPC(frame);
+        assert firstPC > 0;
+        int pc = firstPC;
         int backJumpCounter = 0;
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
-            if (node instanceof CallPrimitiveNode) {
-                final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
-                if (callPrimitiveNode.primitiveNode != null) {
-                    try {
-                        returnValue = callPrimitiveNode.primitiveNode.executePrimitive(frame);
-                        pc = LOCAL_RETURN_PC;
-                        continue bytecode_loop;
-                    } catch (final PrimitiveFailed e) {
-                        /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
-                        getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                        /*
-                         * Same toString() methods may throw compilation warnings, this is expected
-                         * and ok for primitive failure logging purposes. Note that primitives that
-                         * are not implemented are also not logged.
-                         */
-                        LogUtils.PRIMITIVES.fine(() -> callPrimitiveNode.primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
-                                        ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
-                        /* continue with fallback code. */
-                    }
-                }
-                pc = callPrimitiveNode.getSuccessorIndex();
-                assert pc == startPC + CallPrimitiveNode.NUM_BYTECODES;
-                continue;
-            } else if (node instanceof AbstractSendNode) {
+            if (node instanceof AbstractSendNode) {
                 pc = node.getSuccessorIndex();
                 FrameAccess.setInstructionPointer(frame, code, pc);
                 node.executeVoid(frame);
@@ -260,60 +280,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         return handlePrimitiveFailedNode;
     }
 
-    /*
-     * Non-optimized version of startBytecode used to resume contexts.
-     */
-    private Object resumeBytecode(final VirtualFrame frame, final long resumptionPC) {
-        assert resumptionPC > 0 : "Trying to resume a fresh/terminated/illegal context";
-        getStartPC(frame); // TODO: Ensure startPC is set
-        int pc = (int) resumptionPC;
-        Object returnValue = null;
-        bytecode_loop_slow: while (pc != LOCAL_RETURN_PC) {
-            final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
-            if (node instanceof AbstractSendNode) {
-                pc = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, pc);
-                node.executeVoid(frame);
-                final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
-                if (pc != actualNextPc) {
-                    /*
-                     * pc has changed, which can happen if a context is restarted (e.g. as part of
-                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
-                     * the Graal compiler.
-                     */
-                    CompilerDirectives.transferToInterpreter();
-                    pc = actualNextPc;
-                }
-                continue bytecode_loop_slow;
-            } else if (node instanceof ConditionalJumpNode) {
-                final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame)) {
-                    pc = jumpNode.getJumpSuccessorIndex();
-                    continue bytecode_loop_slow;
-                } else {
-                    pc = jumpNode.getSuccessorIndex();
-                    continue bytecode_loop_slow;
-                }
-            } else if (node instanceof UnconditionalJumpNode) {
-                pc = ((UnconditionalJumpNode) node).getSuccessorIndex();
-                continue bytecode_loop_slow;
-            } else if (node instanceof AbstractReturnNode) {
-                returnValue = ((AbstractReturnNode) node).executeReturn(frame);
-                pc = LOCAL_RETURN_PC;
-                continue bytecode_loop_slow;
-            } else {
-                /* All other bytecode nodes. */
-                node.executeVoid(frame);
-                pc = node.getSuccessorIndex();
-                continue bytecode_loop_slow;
-            }
-        }
-        assert returnValue != null && !hasModifiedSender(frame);
-        FrameAccess.terminate(frame, code.getInstructionPointerSlot());
-        return returnValue;
-    }
-
-    protected boolean hasModifiedSender(final VirtualFrame frame) {
+    private boolean hasModifiedSender(final VirtualFrame frame) {
         final ContextObject context = FrameAccess.getContext(frame, code);
         return context != null && context.hasModifiedSender();
     }

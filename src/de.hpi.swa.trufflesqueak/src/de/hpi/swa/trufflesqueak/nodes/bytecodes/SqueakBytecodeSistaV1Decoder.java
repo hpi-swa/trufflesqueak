@@ -254,7 +254,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 final int primitiveIndex = i + (j << 8);
                 assert 1 <= primitiveIndex && primitiveIndex < 32767 : "primitiveIndex out of range";
                 if (primitiveIndex < 1000) {
-                    return new MiscellaneousBytecodes.CallPrimitiveNode(code, index, primitiveIndex);
+                    throw SqueakException.create("callPrimitive bytecode should never be decoded");
                 }
                 switch (primitiveIndex) {
                     case 1000:
