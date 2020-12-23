@@ -99,12 +99,15 @@ public final class LargeIntegerObject extends AbstractSqueakObjectWithClassAndHa
     }
 
     public long getNativeAt0(final long index) {
-        assert index < size() : "Illegal index: " + index;
-        final byte[] bytes = toBigEndianBytes(integer);
-        final int length = bytes.length;
-        return index < length ? Byte.toUnsignedLong(bytes[length - 1 - (int) index]) : 0L;
+        return absShiftRightIntValue((int) index * Byte.SIZE) & 0xFF;
     }
 
+    @TruffleBoundary
+    private long absShiftRightIntValue(final int n) {
+        return integer.abs().shiftRight(n).intValue();
+    }
+
+    @TruffleBoundary
     public void setNativeAt0(final long index, final long value) {
         assert index < size() : "Illegal index: " + index;
         assert 0 <= value && value <= NativeObject.BYTE_MAX : "Illegal value for LargeIntegerObject: " + value;
