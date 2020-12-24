@@ -70,8 +70,8 @@ jobs:
       run: |
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal.js and code coverage
-      run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
+    - name: Run gate with Graal compiler, Graal.js, and code coverage
+      run: mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test --jacocout coverage
       timeout-minutes: 120
     - name: Report code coverage
       env:
@@ -112,8 +112,8 @@ jobs:
       run: |
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal.js and code coverage
-      run: mx --disable-polyglot --dy /graal-js gate --strict-mode --tags build,test --jacocout coverage
+    - name: Run gate with Graal compiler, Graal.js, and code coverage
+      run: mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test --jacocout coverage
       timeout-minutes: 120
     - name: Report code coverage
       env:
@@ -155,7 +155,7 @@ jobs:
         run: mx.trufflesqueak/utils.sh deploy-asset ${{ steps.build_aarch64.outputs.installable_jvm }} ${{ secrets.GITHUB_TOKEN }}
 
   macos-java11:
-    name: macOS + JDK11 + Graal
+    name: macOS + JDK11
     runs-on: macos-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
@@ -184,12 +184,12 @@ jobs:
       run: |
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal.js and Graal compiler
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+    - name: Run gate with Graal compiler and Graal.js
+      run: mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test
       timeout-minutes: 120
 
   macos-java8:
-    name: macOS + JDK8 + Graal
+    name: macOS + JDK8
     runs-on: macos-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
@@ -218,12 +218,12 @@ jobs:
       run: |
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
         mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_SVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal.js and Graal compiler
-      run: mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+    - name: Run gate with Graal compiler and Graal.js
+      run: mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test
       timeout-minutes: 120
 
   windows-java11:
-    name: Windows + JDK11 + Graal
+    name: Windows + JDK11
     runs-on: windows-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
@@ -251,15 +251,15 @@ jobs:
     - name: Upload TruffleSqueak component
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal.js and Graal compiler
+    - name: Run gate with Graal compiler and Graal.js
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+        mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test
       timeout-minutes: 120
 
   windows-java8:
-    name: Windows + JDK8 + Graal
+    name: Windows + JDK8
     runs-on: windows-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
@@ -287,9 +287,9 @@ jobs:
     - name: Upload TruffleSqueak component
       shell: bash
       run: mx.trufflesqueak/utils.sh deploy-asset ${{ env.INSTALLABLE_JVM_TARGET }} ${{ secrets.GITHUB_TOKEN }}
-    - name: Run gate with Graal.js and Graal compiler
+    - name: Run gate with Graal compiler and Graal.js
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        mx --disable-polyglot --dy /graal-js,/compiler gate --strict-mode --tags build,test
+        mx --disable-polyglot --dy /compiler,/graal-js gate --strict-mode --tags build,test
       timeout-minutes: 120
