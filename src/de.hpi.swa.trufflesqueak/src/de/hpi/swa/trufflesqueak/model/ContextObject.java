@@ -162,9 +162,10 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         } else {
             setInstructionPointer(MiscUtils.toIntExact((long) pc));
         }
-        setStackPointer(MiscUtils.toIntExact((long) pointers[CONTEXT.STACKPOINTER]));
-        for (int i = CONTEXT.TEMP_FRAME_START; i < pointers.length; i++) {
-            atTempPut(i - CONTEXT.TEMP_FRAME_START, pointers[i]);
+        final int stackPointer = MiscUtils.toIntExact((long) pointers[CONTEXT.STACKPOINTER]);
+        setStackPointer(stackPointer);
+        for (int i = 0; i < stackPointer; i++) {
+            atTempPut(i, pointers[CONTEXT.TEMP_FRAME_START + i]);
         }
     }
 
