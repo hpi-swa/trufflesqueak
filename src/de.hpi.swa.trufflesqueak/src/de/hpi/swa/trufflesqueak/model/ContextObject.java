@@ -580,9 +580,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return !(FrameAccess.getSender(getTruffleFrame()) instanceof FrameMarker);
     }
 
-    @TruffleBoundary
     public FrameMarker getFrameMarker() {
-        return FrameAccess.getMarkerSlow(getTruffleFrame());
+        return FrameAccess.getMarker(getTruffleFrame(), methodOrBlock);
     }
 
     // The context represents primitive call which needs to be skipped when unwinding call stack.
