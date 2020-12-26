@@ -145,7 +145,13 @@ public abstract class CachedDispatchNode extends AbstractNode {
         }
 
         protected static AbstractCachedDispatchMethodNode create(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
-            if (method.getDoesNotNeedSenderAssumption().isValid()) {
+            AbstractPrimitiveNode primitiveNode = null;
+            if (method.hasPrimitive()) {
+                primitiveNode = PrimitiveNodeFactory.forIndex(method, true, argumentCount);
+            }
+            if (primitiveNode != null) {
+                return new CachedDispatchPrimitiveMethodWithoutSenderNode(frame, argumentCount, method, primitiveNode);
+            } else if (method.getDoesNotNeedSenderAssumption().isValid()) {
                 return new CachedDispatchMethodWithoutSenderNode(frame, argumentCount, method);
             } else {
                 return new CachedDispatchMethodWithSenderNode(frame, argumentCount, method);
@@ -157,11 +163,38 @@ public abstract class CachedDispatchNode extends AbstractNode {
         }
     }
 
+    protected static final class CachedDispatchPrimitiveMethodWithoutSenderNode extends AbstractCachedDispatchMethodNode {
+        @Child private AbstractPrimitiveNode primitiveNode;
+        @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
+
+        private CachedDispatchPrimitiveMethodWithoutSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
+            super(frame, argumentCount, method);
+            this.primitiveNode = primitiveNode;
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame) {
+            try {
+                return primitiveNode.executePrimitive(frame);
+            } catch (final PrimitiveFailed pf) {
+                // FIXME: push prim error code
+            }
+            try {
+                method.getDoesNotNeedSenderAssumption().check();
+            } catch (final InvalidAssumptionException e) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                return replace(new CachedDispatchMethodWithSenderNode(frame, receiverAndArgumentsNodes.length - 1, method)).execute(frame);
+            }
+            return callNode.call(createFrameArguments(frame, getContextOrMarkerNode.execute(frame)));
+        }
+    }
+
     protected static final class CachedDispatchMethodWithoutSenderNode extends AbstractCachedDispatchMethodNode {
         @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
 
         private CachedDispatchMethodWithoutSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             super(frame, argumentCount, method);
+            assert !method.hasPrimitive();
         }
 
         @Override
@@ -181,6 +214,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         private CachedDispatchMethodWithSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             super(frame, argumentCount, method);
+            assert !method.hasPrimitive();
         }
 
         @Override
@@ -194,6 +228,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         private AbstractCachedDispatchDoesNotUnderstandNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final CompiledCodeObject method) {
             super(method);
+            assert !method.hasPrimitive();
             createFrameArgumentsForDNUNode = CreateFrameArgumentsForDNUNode.create(frame, selector, argumentCount);
         }
 
@@ -246,6 +281,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         private AbstractCachedDispatchObjectAsMethodNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount, final Object object, final CompiledCodeObject method) {
             super(method);
+            assert !method.hasPrimitive();
             this.object = object;
             createFrameArgumentsForOAMNode = CreateFrameArgumentsForOAMNode.create(frame, selector, argumentCount);
         }

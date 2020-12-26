@@ -18,7 +18,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
@@ -34,10 +33,8 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNo
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
-import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
-import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class ExecuteContextNode extends AbstractExecuteContextNode {
     private static final int LOCAL_RETURN_PC = -2;
@@ -152,6 +149,9 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
             if (closure == null) {
                 initialPC = code.getInitialPC();
                 startPC = initialPC;
+                if (code.hasPrimitive()) { // skip primitive bytecode
+                    startPC += CallPrimitiveNode.NUM_BYTECODES;
+                }
             } else {
                 initialPC = closure.getCompiledBlock().getInitialPC();
                 startPC = (int) closure.getStartPC();
@@ -172,30 +172,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
             CompilerAsserts.partialEvaluationConstant(pc);
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
-            if (node instanceof CallPrimitiveNode) {
-                final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
-                if (callPrimitiveNode.primitiveNode != null) {
-                    try {
-                        returnValue = callPrimitiveNode.primitiveNode.executePrimitive(frame);
-                        pc = LOCAL_RETURN_PC;
-                        continue bytecode_loop;
-                    } catch (final PrimitiveFailed e) {
-                        /* getHandlePrimitiveFailedNode() also acts as a BranchProfile. */
-                        getHandlePrimitiveFailedNode().executeHandle(frame, e.getReasonCode());
-                        /*
-                         * Same toString() methods may throw compilation warnings, this is expected
-                         * and ok for primitive failure logging purposes. Note that primitives that
-                         * are not implemented are also not logged.
-                         */
-                        LogUtils.PRIMITIVES.fine(() -> callPrimitiveNode.primitiveNode.getClass().getSimpleName() + " failed (arguments: " +
-                                        ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(frame)) + ")");
-                        /* continue with fallback code. */
-                    }
-                }
-                pc = callPrimitiveNode.getSuccessorIndex();
-                assert pc == startPC + CallPrimitiveNode.NUM_BYTECODES;
-                continue;
-            } else if (node instanceof AbstractSendNode) {
+            if (node instanceof AbstractSendNode) {
                 pc = node.getSuccessorIndex();
                 FrameAccess.setInstructionPointer(frame, code, pc);
                 node.executeVoid(frame);

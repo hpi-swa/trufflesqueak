@@ -12,14 +12,18 @@ import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSelfSendNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForIndirectCallNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
 @ReportPolymorphism
 @ImportStatic(AbstractSelfSendNode.class)
@@ -46,9 +50,33 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
     protected static final Object doIndirect(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
                     @Cached final ResolveMethodNode methodNode,
                     @Cached("create(frame, selector, argumentCount)") final CreateFrameArgumentsForIndirectCallNode argumentsNode,
+                    @Cached final IndirectPrimitiveNode primitiveNode,
                     @Cached final IndirectCallNode callNode,
                     @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
         final CompiledCodeObject method = methodNode.execute(image, receiverClass, lookupResult);
+        if (method.hasPrimitive()) {
+            try {
+                return primitiveNode.execute(frame, method);
+            } catch (final PrimitiveFailed pf) {
+                // FIXME: do something with prim error code
+            }
+        }
         return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, receiver, receiverClass, lookupResult, method));
+    }
+
+    @ImportStatic(PrimitiveNodeFactory.class)
+    protected abstract static class IndirectPrimitiveNode extends Node {
+        /* Number of primitives to cache per method (may need to be raised if not high enough). */
+        protected static final int CACHE_LIMIT = 4;
+
+        protected abstract Object execute(VirtualFrame frame, CompiledCodeObject primitiveMethod);
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "primitiveMethod == cachedPrimitiveMethod", limit = "CACHE_LIMIT")
+        protected static final Object doCached(final VirtualFrame frame, final CompiledCodeObject primitiveMethod,
+                        @Cached("primitiveMethod") final CompiledCodeObject cachedPrimitiveMethod,
+                        @Cached("forIndex(cachedPrimitiveMethod, true, cachedPrimitiveMethod.primitiveIndex())") final AbstractPrimitiveNode primitiveNode) {
+            return primitiveNode.executePrimitive(frame);
+        }
     }
 }
