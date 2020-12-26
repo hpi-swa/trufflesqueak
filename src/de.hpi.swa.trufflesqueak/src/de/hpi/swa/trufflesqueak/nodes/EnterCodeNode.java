@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
@@ -84,6 +85,9 @@ public final class EnterCodeNode extends RootNode {
             final int numArgs;
             if (closure == null) {
                 initialPC = code.getInitialPC();
+                if (code.hasPrimitive()) { // skip primitive bytecode
+                    initialPC += CallPrimitiveNode.NUM_BYTECODES;
+                }
                 initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
                 numArgs = code.getNumArgs();
             } else {

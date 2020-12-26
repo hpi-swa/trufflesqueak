@@ -25,23 +25,15 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoTemporar
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
 public final class MiscellaneousBytecodes {
 
     public static final class CallPrimitiveNode extends AbstractBytecodeNode {
         public static final int NUM_BYTECODES = 3;
 
-        @Child public AbstractPrimitiveNode primitiveNode;
-        private final int primitiveIndex;
-
         public CallPrimitiveNode(final CompiledCodeObject method, final int index, final int primitiveIndex) {
             super(method, index, NUM_BYTECODES);
             assert method.hasPrimitive() && method.primitiveIndex() == primitiveIndex;
-            this.primitiveIndex = primitiveIndex;
-            primitiveNode = PrimitiveNodeFactory.forIndex(method, false, primitiveIndex, false);
-            assert method.hasPrimitive();
         }
 
         public static CallPrimitiveNode create(final CompiledCodeObject code, final int index, final byte byte1, final byte byte2) {
@@ -50,13 +42,13 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            // no-op, primitives are handled specially.
+            // no-op, primitives handled specially.
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "callPrimitive: " + primitiveIndex;
+            return "callPrimitive: " + code.primitiveIndex();
         }
     }
 
