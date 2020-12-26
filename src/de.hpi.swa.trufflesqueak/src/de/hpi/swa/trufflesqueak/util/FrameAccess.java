@@ -341,6 +341,20 @@ public final class FrameAccess {
         return frameArguments;
     }
 
+    public static Object[] newWith(final CompiledCodeObject method, final Object sender, final Object[] receiverAndArguments) {
+        final int numReceiverAndArguments = receiverAndArguments.length;
+        CompilerAsserts.partialEvaluationConstant(numReceiverAndArguments);
+        final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
+        assert method != null : "Method should never be null";
+        assert sender != null : "Sender should never be null";
+        assert numReceiverAndArguments > 0 : "At least a receiver must be provided";
+        frameArguments[ArgumentIndicies.CODE_OBJECT.ordinal()] = method;
+        frameArguments[ArgumentIndicies.SENDER_OR_SENDER_MARKER.ordinal()] = sender;
+        frameArguments[ArgumentIndicies.CLOSURE_OR_NULL.ordinal()] = null;
+        System.arraycopy(receiverAndArguments, 0, frameArguments, ArgumentIndicies.RECEIVER.ordinal(), numReceiverAndArguments);
+        return frameArguments;
+    }
+
     @ExplodeLoop
     public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final Object receiver, final FrameStackReadNode[] argumentsNodes) {
         final int argumentCount = argumentsNodes.length;

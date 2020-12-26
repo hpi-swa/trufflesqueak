@@ -10,6 +10,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 
@@ -179,9 +180,14 @@ public abstract class CachedDispatchNode extends AbstractNode {
         }
 
         @Override
+        @ExplodeLoop
         public Object execute(final VirtualFrame frame) {
+            final Object[] receiverAndArguments = new Object[receiverAndArgumentsNodes.length];
+            for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
+                receiverAndArguments[i] = receiverAndArgumentsNodes[i].executeRead(frame);
+            }
             try {
-                return primitiveNode.executePrimitive(frame);
+                return primitiveNode.executeWithArguments(frame, receiverAndArguments);
             } catch (final PrimitiveFailed pf) {
                 // FIXME: push prim error code
             }
@@ -191,7 +197,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new CachedDispatchMethodWithSenderNode(frame, receiverAndArgumentsNodes.length - 1, method)).execute(frame);
             }
-            return callNode.call(createFrameArguments(frame, getContextOrMarkerNode.execute(frame)));
+            return callNode.call(FrameAccess.newWith(method, getContextOrMarkerNode.execute(frame), receiverAndArguments));
         }
     }
 

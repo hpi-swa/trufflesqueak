@@ -57,8 +57,23 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
         }
     }
 
-    @Specialization(guards = {"method == cachedMethod"}, //
+    @Specialization(guards = {"method == cachedMethod", "cachedMethod.hasPrimitive()"}, //
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()", "cachedMethod.getDoesNotNeedSenderAssumption()"}, replaces = "doPrimitiveEagerly")
+    protected static final Object doDirectWithPrimitive(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
+                    @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
+                    @Cached("forIndex(cachedMethod, false, cachedMethod.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
+                    @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
+                    @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
+        try {
+            return primitiveNode.executeWithArguments(frame, receiverAndArguments);
+        } catch (final PrimitiveFailed pf) {
+            // FIXME: do something with error code
+            return callDirect(callNode, cachedMethod, getContextOrMarkerNode.execute(frame), receiverAndArguments);
+        }
+    }
+
+    @Specialization(guards = {"method == cachedMethod"}, //
+                    limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()", "cachedMethod.getDoesNotNeedSenderAssumption()"})
     protected static final Object doDirect(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
@@ -80,6 +95,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
                     @Cached final IndirectCallNode callNode) {
+        assert !method.hasPrimitive();
         return callIndirect(callNode, method, getContextOrMarkerNode.execute(frame), receiverAndArguments);
     }
 
