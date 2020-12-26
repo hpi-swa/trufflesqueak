@@ -153,7 +153,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         protected static AbstractCachedDispatchMethodNode create(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             AbstractPrimitiveNode primitiveNode = null;
             if (method.hasPrimitive()) {
-                primitiveNode = PrimitiveNodeFactory.forIndex(method, true, argumentCount);
+                primitiveNode = PrimitiveNodeFactory.forIndex(method, true, method.primitiveIndex());
             }
             if (primitiveNode != null) {
                 return new CachedDispatchPrimitiveMethodWithoutSenderNode(frame, argumentCount, method, primitiveNode);
@@ -200,7 +200,6 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         private CachedDispatchMethodWithoutSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             super(frame, argumentCount, method);
-            assert !method.hasPrimitive();
         }
 
         @Override
@@ -220,7 +219,6 @@ public abstract class CachedDispatchNode extends AbstractNode {
 
         private CachedDispatchMethodWithSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             super(frame, argumentCount, method);
-            assert !method.hasPrimitive();
         }
 
         @Override
