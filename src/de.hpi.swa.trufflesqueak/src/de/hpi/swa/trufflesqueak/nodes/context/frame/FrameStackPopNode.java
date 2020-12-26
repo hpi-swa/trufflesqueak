@@ -31,7 +31,7 @@ public final class FrameStackPopNode extends AbstractNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
-            readNode = insert(FrameSlotReadNode.create(frame, stackPointer));
+            readNode = insert(FrameSlotReadNode.create(frame, stackPointer, true));
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
         return readNode.executeRead(frame);

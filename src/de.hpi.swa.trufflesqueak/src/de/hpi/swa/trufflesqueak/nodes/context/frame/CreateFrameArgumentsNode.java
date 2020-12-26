@@ -34,7 +34,7 @@ public final class CreateFrameArgumentsNode extends AbstractNode {
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - receiverAndArgumentsNodes.length;
             assert stackPointer >= 0 : "Bad stack pointer";
             for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
+                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i, true));
             }
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);

@@ -25,7 +25,7 @@ public final class FrameStackTopNode extends AbstractNode {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final int stackPointer = FrameAccess.getStackPointerSlow(frame) - 1;
-            readNode = FrameSlotReadNode.create(FrameAccess.getStackSlotSlow(frame, stackPointer));
+            readNode = FrameSlotReadNode.create(frame, stackPointer, false);
         }
         return readNode.executeRead(frame);
     }

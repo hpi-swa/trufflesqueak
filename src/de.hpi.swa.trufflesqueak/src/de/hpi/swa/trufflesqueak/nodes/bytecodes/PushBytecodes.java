@@ -545,7 +545,7 @@ public final class PushBytecodes {
             super(code, index, numBytecodes);
             this.indexInArray = Byte.toUnsignedInt(indexInArray);
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
-            readTempNode = FrameSlotReadNode.create(code.getStackSlot(this.indexOfArray));
+            readTempNode = FrameSlotReadNode.create(code, this.indexOfArray, true);
         }
 
         @Override
@@ -569,7 +569,7 @@ public final class PushBytecodes {
         public PushTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            tempNode = FrameSlotReadNode.create(code.getStackSlot(tempIndex));
+            tempNode = FrameSlotReadNode.create(code, tempIndex, true);
         }
 
         @Override

@@ -10,7 +10,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -42,9 +41,8 @@ public final class ArgumentNodes {
         public Object execute(final VirtualFrame frame) {
             if (readNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
-                final int stackPointer = FrameAccess.getStackPointer(frame, code);
-                readNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer + argumentIndex)));
+                final int stackPointer = FrameAccess.getStackPointerSlow(frame);
+                readNode = insert(FrameSlotReadNode.create(frame, stackPointer + argumentIndex, false));
             }
             return readNode.executeRead(frame);
         }

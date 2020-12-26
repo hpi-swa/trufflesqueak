@@ -148,6 +148,10 @@ public final class FrameAccess {
         return ArgumentIndicies.ARGUMENTS_START.ordinal();
     }
 
+    public static int getNumArguments(final Frame frame) {
+        return frame.getArguments().length - ArgumentIndicies.ARGUMENTS_START.ordinal();
+    }
+
     public static void setArgumentIfInRange(final Frame frame, final int index, final Object value) {
         assert index >= 0;
         final Object[] frameArguments = frame.getArguments();

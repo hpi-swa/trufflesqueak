@@ -144,7 +144,7 @@ public final class SendBytecodes {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final int stackPointer = FrameAccess.getStackPointer(frame, code);
-                peekAtReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer)));
+                peekAtReceiverNode = insert(FrameSlotReadNode.create(frame, stackPointer, false));
             }
             return peekAtReceiverNode.executeRead(frame);
         }
@@ -259,7 +259,7 @@ public final class SendBytecodes {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final int sp = FrameAccess.getStackPointer(frame, code);
-                peekAtReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(sp)));
+                peekAtReceiverNode = insert(FrameSlotReadNode.create(frame, sp, false));
             }
             return peekAtReceiverNode.executeRead(frame);
         }
@@ -274,7 +274,7 @@ public final class SendBytecodes {
                  * Read and clear directed class. Add receiver and argumentCount (sp already
                  * decremented in AbstractSendNode).
                  */
-                readDirectedClassNode = insert(FrameSlotReadNode.create(frame, stackPointer + 1 + argumentCount));
+                readDirectedClassNode = insert(FrameSlotReadNode.create(frame, stackPointer + 1 + argumentCount, true));
             }
             FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
             return (ClassObject) readDirectedClassNode.executeRead(frame);
