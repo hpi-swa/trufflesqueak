@@ -10,7 +10,6 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
@@ -26,10 +25,6 @@ public final class TemporaryWriteMarkContextsNode extends AbstractNode {
 
     public static TemporaryWriteMarkContextsNode create(final VirtualFrame frame, final int tempIndex) {
         return new TemporaryWriteMarkContextsNode(FrameSlotWriteNode.create(frame, tempIndex));
-    }
-
-    public static TemporaryWriteMarkContextsNode create(final CompiledCodeObject code, final int tempIndex) {
-        return new TemporaryWriteMarkContextsNode(FrameSlotWriteNode.create(code, tempIndex));
     }
 
     public void executeWrite(final VirtualFrame frame, final Object value) {

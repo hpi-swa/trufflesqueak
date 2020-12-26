@@ -45,17 +45,17 @@ public final class FrameStackInitializationNode extends AbstractNode {
                 numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
             }
             writeNodes = new FrameSlotWriteNode[initialSP];
-            for (int i = 0; i < writeNodes.length; i++) {
-                writeNodes[i] = insert(FrameSlotWriteNode.create(code.getStackSlot(i)));
+            for (int i = numArgs; i < writeNodes.length; i++) {
+                writeNodes[i] = insert(FrameSlotWriteNode.create(frame, i));
             }
         }
         CompilerAsserts.partialEvaluationConstant(writeNodes.length);
         final Object[] arguments = frame.getArguments();
         assert arguments.length == FrameAccess.expectedArgumentSize(numArgs);
-        for (int i = 0; i < numArgs; i++) {
-            writeNodes[i].executeWrite(frame, arguments[FrameAccess.getArgumentStartIndex() + i]);
-        }
-        // Initialize remaining temporary variables with nil in newContext.
+// for (int i = 0; i < numArgs; i++) {
+// writeNodes[i].executeWrite(frame, arguments[FrameAccess.getArgumentStartIndex() + i]);
+// }
+// Initialize remaining temporary variables with nil in newContext.
         for (int i = numArgs; i < writeNodes.length; i++) {
             writeNodes[i].executeWrite(frame, NilObject.SINGLETON);
         }

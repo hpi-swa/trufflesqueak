@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -69,14 +70,21 @@ public final class StoreBytecodes {
         private final int indexInArray;
         private final int indexOfArray;
 
-        @Child protected FrameSlotReadNode readNode;
+        @Child private FrameSlotReadNode readNode;
 
         private AbstractStoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte indexInArray, final byte indexOfArray) {
             super(code, index, numBytecodes);
             this.indexInArray = Byte.toUnsignedInt(indexInArray);
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(indexInArray);
-            readNode = FrameSlotReadNode.create(code, this.indexOfArray, true);
+        }
+
+        protected final FrameSlotReadNode getReadNode(final VirtualFrame frame) {
+            if (readNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                readNode = insert(FrameSlotReadNode.create(frame, indexOfArray, true));
+            }
+            return readNode;
         }
 
         @Override
@@ -89,12 +97,19 @@ public final class StoreBytecodes {
     private abstract static class AbstractStoreIntoTempNode extends AbstractInstrumentableBytecodeNode {
         protected final int tempIndex;
 
-        @Child protected TemporaryWriteMarkContextsNode storeNode;
+        @Child private TemporaryWriteMarkContextsNode storeNode;
 
         private AbstractStoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            storeNode = TemporaryWriteMarkContextsNode.create(code, tempIndex);
+        }
+
+        protected final TemporaryWriteMarkContextsNode getStoreNode(final VirtualFrame frame) {
+            if (storeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                storeNode = insert(TemporaryWriteMarkContextsNode.create(frame, tempIndex));
+            }
+            return storeNode;
         }
 
         protected abstract String getTypeName();
@@ -151,7 +166,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(readNode.executeRead(frame), popNode.execute(frame));
+            storeNode.executeWrite(getReadNode(frame).executeRead(frame), popNode.execute(frame));
         }
 
         @Override
@@ -169,7 +184,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(frame, popNode.execute(frame));
+            getStoreNode(frame).executeWrite(frame, popNode.execute(frame));
         }
 
         @Override
@@ -223,7 +238,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(readNode.executeRead(frame), topNode.execute(frame));
+            storeNode.executeWrite(getReadNode(frame).executeRead(frame), topNode.execute(frame));
         }
 
         @Override
@@ -241,7 +256,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(frame, topNode.execute(frame));
+            getStoreNode(frame).executeWrite(frame, topNode.execute(frame));
         }
 
         @Override

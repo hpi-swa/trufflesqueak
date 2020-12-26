@@ -11,24 +11,10 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNodeFactory.FrameSlotWriteImplNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
-    public static FrameSlotWriteNode create(final FrameSlot slot) {
-        return FrameSlotWriteImplNodeGen.create(slot);
-    }
-
-    public static FrameSlotWriteNode create(final CompiledCodeObject code, final int index) {
-        final int numArgs = code.getNumArgs();
-        if (index < numArgs) {
-            return new FrameArgumentWriteNode(index);
-        } else {
-            return FrameSlotWriteImplNodeGen.create(code.getStackSlot(index));
-        }
-    }
-
     public static FrameSlotWriteNode create(final Frame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
