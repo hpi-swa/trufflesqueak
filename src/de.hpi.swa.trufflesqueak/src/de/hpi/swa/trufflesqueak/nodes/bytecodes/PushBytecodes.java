@@ -545,11 +545,14 @@ public final class PushBytecodes {
             super(code, index, numBytecodes);
             this.indexInArray = Byte.toUnsignedInt(indexInArray);
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
-            readTempNode = FrameSlotReadNode.create(code, this.indexOfArray, true);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
+            if (readTempNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                readTempNode = insert(FrameSlotReadNode.create(frame, indexOfArray, true));
+            }
             pushNode.execute(frame, at0Node.execute(readTempNode.executeRead(frame), indexInArray));
         }
 
@@ -569,11 +572,14 @@ public final class PushBytecodes {
         public PushTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            tempNode = FrameSlotReadNode.create(code, tempIndex, true);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
+            if (tempNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                tempNode = insert(FrameSlotReadNode.create(frame, tempIndex, true));
+            }
             pushNode.execute(frame, tempNode.executeRead(frame));
         }
 

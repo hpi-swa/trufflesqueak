@@ -22,17 +22,6 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 @ImportStatic(FrameSlotKind.class)
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
 
-    public static FrameSlotReadNode create(final CompiledCodeObject code, final int index, final boolean clear) {
-        final int numArgs = code.getNumArgs();
-        if (index < numArgs) {
-            return new FrameArgumentNode(index);
-        } else if (clear && index >= code.getNumTemps()) {
-            return FrameSlotReadClearNodeGen.create(code.getStackSlot(index));
-        } else {
-            return FrameSlotReadNoClearNodeGen.create(code.getStackSlot(index));
-        }
-    }
-
     public static FrameSlotReadNode create(final Frame frame, final int index, final boolean clear) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
