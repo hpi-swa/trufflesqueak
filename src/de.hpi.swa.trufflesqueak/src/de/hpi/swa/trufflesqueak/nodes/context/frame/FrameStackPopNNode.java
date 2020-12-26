@@ -52,7 +52,7 @@ public abstract class FrameStackPopNNode extends AbstractNode {
                 stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
                 stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
                 assert stackPointer >= 0 : "Bad stack pointer";
-                readNode = insert(FrameSlotReadNode.create(frame, stackPointer));
+                readNode = insert(FrameSlotReadNode.create(frame, stackPointer, true));
             }
             FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
             return new Object[]{readNode.executeRead(frame)};
@@ -77,7 +77,7 @@ public abstract class FrameStackPopNNode extends AbstractNode {
                 stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - readNodes.length;
                 assert stackPointer >= 0 : "Bad stack pointer";
                 for (int i = 0; i < readNodes.length; i++) {
-                    readNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
+                    readNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i, true));
                 }
             }
             FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);

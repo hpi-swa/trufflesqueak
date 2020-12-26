@@ -15,18 +15,29 @@ import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeGen.FrameSlotReadClearNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeGen.FrameSlotReadNoClearNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeFactory.FrameSlotReadClearNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeFactory.FrameSlotReadNoClearNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ImportStatic(FrameSlotKind.class)
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
 
-    public static FrameSlotReadNode create(final FrameSlot frameSlot) {
-        return FrameSlotReadNoClearNodeGen.create(frameSlot);
+    public static FrameSlotReadNode create(final CompiledCodeObject code, final int index, final boolean clear) {
+        final int numArgs = code.getNumArgs();
+        if (index < numArgs) {
+            return new FrameArgumentNode(index);
+        } else if (clear && index >= code.getNumTemps()) {
+            return FrameSlotReadClearNodeGen.create(code.getStackSlot(index));
+        } else {
+            return FrameSlotReadNoClearNodeGen.create(code.getStackSlot(index));
+        }
     }
 
-    public static FrameSlotReadNode create(final Frame frame, final int index) {
+    public static FrameSlotReadNode create(final Frame frame, final int index, final boolean clear) {
+        final int numArgs = FrameAccess.getNumArguments(frame);
+        if (index < numArgs) {
+            return new FrameArgumentNode(index);
+        }
         // Only clear stack values, not receiver, arguments, or temporary variables.
         final CompiledCodeObject code;
         final int initialSP;
@@ -38,7 +49,7 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
             code = closure.getCompiledBlock();
             initialSP = closure.getNumTemps();
         }
-        if (index >= initialSP) {
+        if (clear && index >= initialSP) {
             return FrameSlotReadClearNodeGen.create(code.getStackSlot(index));
         } else {
             return FrameSlotReadNoClearNodeGen.create(code.getStackSlot(index));
@@ -54,22 +65,24 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
     /* Unsafe as it may return `null` values. */
     public abstract Object executeReadUnsafe(Frame frame);
 
-    @Specialization(guards = "frame.isBoolean(getSlot())")
-    protected final boolean readBoolean(final Frame frame) {
-        return FrameUtil.getBooleanSafe(frame, getSlot());
+    protected abstract static class AbstractFrameSlotReadNode extends FrameSlotReadNode {
+        @Specialization(guards = "frame.isBoolean(getSlot())")
+        protected final boolean readBoolean(final Frame frame) {
+            return FrameUtil.getBooleanSafe(frame, getSlot());
+        }
+
+        @Specialization(guards = "frame.isLong(getSlot())")
+        protected final long readLong(final Frame frame) {
+            return FrameUtil.getLongSafe(frame, getSlot());
+        }
+
+        @Specialization(guards = "frame.isDouble(getSlot())")
+        protected final double readDouble(final Frame frame) {
+            return FrameUtil.getDoubleSafe(frame, getSlot());
+        }
     }
 
-    @Specialization(guards = "frame.isLong(getSlot())")
-    protected final long readLong(final Frame frame) {
-        return FrameUtil.getLongSafe(frame, getSlot());
-    }
-
-    @Specialization(guards = "frame.isDouble(getSlot())")
-    protected final double readDouble(final Frame frame) {
-        return FrameUtil.getDoubleSafe(frame, getSlot());
-    }
-
-    protected abstract static class FrameSlotReadNoClearNode extends FrameSlotReadNode {
+    protected abstract static class FrameSlotReadNoClearNode extends AbstractFrameSlotReadNode {
 
         @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
         protected final Object readObject(final Frame frame) {
@@ -92,7 +105,7 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         }
     }
 
-    protected abstract static class FrameSlotReadClearNode extends FrameSlotReadNode {
+    protected abstract static class FrameSlotReadClearNode extends AbstractFrameSlotReadNode {
 
         @Specialization(replaces = {"readBoolean", "readLong", "readDouble"})
         protected final Object readAndClearObject(final Frame frame) {
@@ -112,6 +125,24 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
             }
             frame.setObject(getSlot(), null);
             return value;
+        }
+    }
+
+    protected final static class FrameArgumentNode extends FrameSlotReadNode {
+        private final int index;
+
+        public FrameArgumentNode(final int index) {
+            this.index = FrameAccess.getArgumentStartIndex() + index;
+        }
+
+        @Override
+        public Object executeReadUnsafe(final Frame frame) {
+            return frame.getArguments()[index];
+        }
+
+        @Override
+        protected FrameSlot getSlot() {
+            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 }

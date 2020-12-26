@@ -76,7 +76,7 @@ public final class StoreBytecodes {
             this.indexInArray = Byte.toUnsignedInt(indexInArray);
             this.indexOfArray = Byte.toUnsignedInt(indexOfArray);
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(indexInArray);
-            readNode = FrameSlotReadNode.create(code.getStackSlot(this.indexOfArray));
+            readNode = FrameSlotReadNode.create(code, this.indexOfArray, true);
         }
 
         @Override

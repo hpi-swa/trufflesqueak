@@ -140,7 +140,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
             receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
             final int stackPointer = FrameAccess.getStackPointerSlow(frame);
             for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
+                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i, true));
             }
         }
 

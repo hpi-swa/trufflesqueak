@@ -50,7 +50,7 @@ public final class CreateFrameArgumentNodes {
             argumentNodes = new FrameSlotReadNode[argumentCount];
             final int stackPointer = FrameAccess.getStackPointerSlow(frame) + 1;
             for (int i = 0; i < argumentNodes.length; i++) {
-                argumentNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
+                argumentNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i, true));
             }
         }
 
@@ -74,7 +74,7 @@ public final class CreateFrameArgumentNodes {
             if (receiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final int stackPointer = FrameAccess.getStackPointerSlow(frame);
-                receiverNode = insert(FrameSlotReadNode.create(frame, stackPointer));
+                receiverNode = insert(FrameSlotReadNode.create(frame, stackPointer, true));
             }
             return receiverNode.executeRead(frame);
         }
@@ -130,7 +130,7 @@ public final class CreateFrameArgumentNodes {
             assert stackPointer >= 0 : "Bad stack pointer";
             argumentNodes = new FrameSlotReadNode[argumentCount];
             for (int i = 0; i < argumentNodes.length; i++) {
-                argumentNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
+                argumentNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i, true));
             }
         }
 
