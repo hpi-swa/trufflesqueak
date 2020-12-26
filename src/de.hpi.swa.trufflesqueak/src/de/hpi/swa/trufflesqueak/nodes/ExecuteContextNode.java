@@ -32,16 +32,13 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpN
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.AbstractReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackInitializationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 import de.hpi.swa.trufflesqueak.util.LogUtils;
 
 public final class ExecuteContextNode extends AbstractExecuteContextNode {
     private static final int LOCAL_RETURN_PC = -2;
-    private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
     protected final CompiledCodeObject code;
     @CompilationFinal private int initialPC = -1;
@@ -51,9 +48,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
-    @Child private FrameStackInitializationNode frameInitializationNode;
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
-    @Child private InterruptHandlerNode interruptHandlerNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
     @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
 
@@ -62,15 +57,6 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     protected ExecuteContextNode(final CompiledCodeObject code, final boolean resume) {
         this.code = code;
         bytecodeNodes = code.asBytecodeNodesEmpty();
-        frameInitializationNode = resume ? null : FrameStackInitializationNode.create();
-        /*
-         * Only check for interrupts if method is relatively large. Avoid check if a closure is
-         * activated (effectively what #primitiveClosureValueNoContextSwitch is for). Also, skip
-         * timer interrupts here as they trigger too often, which causes a lot of context switches
-         * and therefore materialization and deopts. Timer inputs are currently handled in
-         * primitiveRelinquishProcessor (#230) only.
-         */
-        interruptHandlerNode = code.isCompiledBlock() || bytecodeNodes.length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? null : InterruptHandlerNode.createOrNull(false);
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create();
     }
 
@@ -86,12 +72,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
 
     @Override
     public Object executeFresh(final VirtualFrame frame) {
-        FrameAccess.setInstructionPointer(frame, code, getStartPC(frame));
         try {
-            frameInitializationNode.executeInitialize(frame);
-            if (interruptHandlerNode != null) {
-                interruptHandlerNode.executeTrigger(frame);
-            }
             return startBytecode(frame);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
