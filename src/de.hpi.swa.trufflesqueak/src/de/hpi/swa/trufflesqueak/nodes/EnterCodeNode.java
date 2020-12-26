@@ -29,7 +29,6 @@ public final class EnterCodeNode extends RootNode {
 
     private final CompiledCodeObject code;
 
-    @CompilationFinal private int initialPC = -1;
     @CompilationFinal private int startPC = -1;
     @CompilationFinal private int numArgs;
     @Children private FrameSlotWriteNode[] writeNodes;
@@ -60,7 +59,7 @@ public final class EnterCodeNode extends RootNode {
             interruptHandlerNode.executeTrigger(frame);
         }
         initializeFrame(frame);
-        return executeContextNode.executeFresh(frame);
+        return executeContextNode.executeFresh(frame, startPC);
     }
 
     @ExplodeLoop
@@ -70,12 +69,10 @@ public final class EnterCodeNode extends RootNode {
             final int initialSP;
             final BlockClosureObject closure = FrameAccess.getClosure(frame);
             if (closure == null) {
-                initialPC = code.getInitialPC();
-                startPC = initialPC;
+                startPC = code.getInitialPC();
                 initialSP = code.getNumTemps();
                 numArgs = code.getNumArgs();
             } else {
-                initialPC = closure.getCompiledBlock().getInitialPC();
                 startPC = (int) closure.getStartPC();
                 initialSP = closure.getNumTemps();
                 numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());

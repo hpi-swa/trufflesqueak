@@ -23,7 +23,6 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
@@ -41,8 +40,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     private static final int LOCAL_RETURN_PC = -2;
 
     protected final CompiledCodeObject code;
-    @CompilationFinal private int initialPC = -1;
-    @CompilationFinal private int startPC = -1;
+    private final int initialPC;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
@@ -56,6 +54,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
 
     protected ExecuteContextNode(final CompiledCodeObject code, final boolean resume) {
         this.code = code;
+        initialPC = code.getInitialPC();
         bytecodeNodes = code.asBytecodeNodesEmpty();
         materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create();
     }
@@ -71,9 +70,9 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     }
 
     @Override
-    public Object executeFresh(final VirtualFrame frame) {
+    public Object executeFresh(final VirtualFrame frame, final int pc) {
         try {
-            return startBytecode(frame);
+            return startBytecode(frame, pc);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -87,21 +86,9 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     }
 
     @Override
-    public Object executeResumeAtStart(final VirtualFrame frame) {
+    public Object executeResume(final VirtualFrame frame, final int pc) {
         try {
-            return startBytecode(frame);
-        } catch (final NonLocalReturn nlr) {
-            /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
-            return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
-        } finally {
-            getSqueakImageContext().lastSeenContext = null; // Stop materialization here.
-        }
-    }
-
-    @Override
-    public Object executeResumeInMiddle(final VirtualFrame frame, final long resumptionPC) {
-        try {
-            return resumeBytecode(frame, resumptionPC);
+            return resumeBytecode(frame, pc);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -126,28 +113,13 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         return getOrCreateContextNode;
     }
 
-    private int getStartPC(final VirtualFrame frame) {
-        if (initialPC < 0) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            final BlockClosureObject closure = FrameAccess.getClosure(frame);
-            if (closure == null) {
-                initialPC = code.getInitialPC();
-                startPC = initialPC;
-            } else {
-                initialPC = closure.getCompiledBlock().getInitialPC();
-                startPC = (int) closure.getStartPC();
-            }
-        }
-        return startPC;
-    }
-
     /*
      * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://git.io/fjEDw).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private Object startBytecode(final VirtualFrame frame) {
+    private Object startBytecode(final VirtualFrame frame, final int firstPC) {
         CompilerAsserts.partialEvaluationConstant(bytecodeNodes.length);
-        int pc = getStartPC(frame);
+        int pc = firstPC;
         int backJumpCounter = 0;
         Object returnValue = null;
         bytecode_loop: while (pc != LOCAL_RETURN_PC) {
@@ -174,7 +146,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
                     }
                 }
                 pc = callPrimitiveNode.getSuccessorIndex();
-                assert pc == startPC + CallPrimitiveNode.NUM_BYTECODES;
+                assert pc == firstPC + CallPrimitiveNode.NUM_BYTECODES;
                 continue;
             } else if (node instanceof AbstractSendNode) {
                 pc = node.getSuccessorIndex();
@@ -244,10 +216,9 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     /*
      * Non-optimized version of startBytecode used to resume contexts.
      */
-    private Object resumeBytecode(final VirtualFrame frame, final long resumptionPC) {
+    private Object resumeBytecode(final VirtualFrame frame, final int resumptionPC) {
         assert resumptionPC > 0 : "Trying to resume a fresh/terminated/illegal context";
-        getStartPC(frame); // TODO: Ensure startPC is set
-        int pc = (int) resumptionPC;
+        int pc = resumptionPC;
         Object returnValue = null;
         bytecode_loop_slow: while (pc != LOCAL_RETURN_PC) {
             final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
