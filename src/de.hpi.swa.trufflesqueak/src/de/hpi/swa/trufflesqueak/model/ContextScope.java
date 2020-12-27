@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 
@@ -43,11 +44,8 @@ public final class ContextScope implements TruffleObject {
 
     public ContextScope(final Frame frame) {
         this.frame = frame;
-        final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
-        for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
-            if (slot == null) {
-                break;
-            }
+        for (final ListIterator<? extends FrameSlot> iterator = FrameAccess.getStackSlotsIterator(frame); iterator.hasNext();) {
+            final FrameSlot slot = iterator.next();
             slots.put(Objects.toString(slot.getIdentifier()), slot);
         }
     }
@@ -125,7 +123,8 @@ public final class ContextScope implements TruffleObject {
         }
         final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
         int i = 0;
-        for (final FrameSlot currentSlot : code.getStackSlotsUnsafe()) {
+        for (final ListIterator<? extends FrameSlot> iterator = FrameAccess.getStackSlotsIterator(frame); iterator.hasNext();) {
+            final FrameSlot currentSlot = iterator.next();
             if (currentSlot == slot) {
                 return i < FrameAccess.getStackPointer(frame, code);
             }

@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.util;
 
 import java.util.AbstractCollection;
 import java.util.ArrayDeque;
+import java.util.ListIterator;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -120,10 +121,8 @@ public final class ObjectGraphUtils {
                 }
                 final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
                 addIfUnmarked(FrameAccess.getContext(current, code));
-                for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
-                    if (slot == null) {
-                        return null; // Stop here, slot has not (yet) been created.
-                    }
+                for (final ListIterator<? extends FrameSlot> iterator = FrameAccess.getStackSlotsIterator(current); iterator.hasNext();) {
+                    final FrameSlot slot = iterator.next();
                     if (current.isObject(slot)) {
                         addIfUnmarked(FrameUtil.getObjectSafe(current, slot));
                     }

@@ -121,7 +121,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
             final int stackPointer = FrameAccess.getStackPointer(frame, code);
             final Object[] receiverAndArguments = new Object[1 + argumentCount];
             for (int i = 0; i < receiverAndArguments.length; i++) {
-                final FrameSlot stackSlot = code.getStackSlot(stackPointer + i);
+                final FrameSlot stackSlot = FrameAccess.findStackSlot(frame, stackPointer + i);
                 receiverAndArguments[i] = frame.getValue(stackSlot);
                 if (frame.isObject(stackSlot)) {
                     frame.setObject(stackSlot, null); /* Clear stack slot. */
