@@ -33,7 +33,7 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 
@@ -334,7 +334,7 @@ public final class FrameAccess {
     }
 
     @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final FrameSlotReadNode[] receiverAndArgumentsNodes) {
+    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final FrameStackReadNode[] receiverAndArgumentsNodes) {
         final int numReceiverAndArguments = receiverAndArgumentsNodes.length;
         CompilerAsserts.partialEvaluationConstant(numReceiverAndArguments);
         final Object[] frameArguments = new Object[ArgumentIndicies.RECEIVER.ordinal() + numReceiverAndArguments];
@@ -351,7 +351,7 @@ public final class FrameAccess {
     }
 
     @ExplodeLoop
-    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final Object receiver, final FrameSlotReadNode[] argumentsNodes) {
+    public static Object[] newWith(final VirtualFrame frame, final CompiledCodeObject method, final Object sender, final Object receiver, final FrameStackReadNode[] argumentsNodes) {
         final int argumentCount = argumentsNodes.length;
         CompilerAsserts.partialEvaluationConstant(argumentCount);
         final Object[] frameArguments = new Object[ArgumentIndicies.ARGUMENTS_START.ordinal() + argumentCount];

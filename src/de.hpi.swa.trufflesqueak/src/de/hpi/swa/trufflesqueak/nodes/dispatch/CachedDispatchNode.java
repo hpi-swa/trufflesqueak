@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForDNUNode;
@@ -139,14 +139,14 @@ public abstract class CachedDispatchNode extends AbstractNode {
     }
 
     protected abstract static class AbstractCachedDispatchMethodNode extends CachedDispatchWithDirectCallNode {
-        @Children protected FrameSlotReadNode[] receiverAndArgumentsNodes;
+        @Children protected FrameStackReadNode[] receiverAndArgumentsNodes;
 
         private AbstractCachedDispatchMethodNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             super(method);
-            receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
+            receiverAndArgumentsNodes = new FrameStackReadNode[1 + argumentCount];
             final int stackPointer = FrameAccess.getStackPointerSlow(frame);
             for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i, true));
+                receiverAndArgumentsNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
             }
         }
 

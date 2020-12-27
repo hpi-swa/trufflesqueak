@@ -12,23 +12,23 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNodeFactory.FrameSlotWriteImplNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNodeFactory.FrameSlotWriteNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-public abstract class FrameSlotWriteNode extends AbstractNode {
-    public static FrameSlotWriteNode create(final Frame frame, final int index) {
+public abstract class FrameStackWriteNode extends AbstractNode {
+    public static FrameStackWriteNode create(final Frame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
             return new FrameArgumentWriteNode(index);
         } else {
-            return FrameSlotWriteImplNodeGen.create(FrameAccess.findOrAddStackSlot(frame, index));
+            return FrameSlotWriteNodeGen.create(FrameAccess.findOrAddStackSlot(frame, index));
         }
     }
 
     public abstract void executeWrite(Frame frame, Object value);
 
     @NodeField(name = "slot", type = FrameSlot.class)
-    public abstract static class FrameSlotWriteImplNode extends FrameSlotWriteNode {
+    public abstract static class FrameSlotWriteNode extends FrameStackWriteNode {
 
         protected abstract FrameSlot getSlot();
 
@@ -87,7 +87,7 @@ public abstract class FrameSlotWriteNode extends AbstractNode {
 
     }
 
-    private static final class FrameArgumentWriteNode extends FrameSlotWriteNode {
+    private static final class FrameArgumentWriteNode extends FrameStackWriteNode {
         private final int index;
 
         private FrameArgumentWriteNode(final int index) {

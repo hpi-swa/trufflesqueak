@@ -21,7 +21,7 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchLookupResultNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
@@ -115,7 +115,7 @@ public final class SendBytecodes {
     public abstract static class AbstractSelfSendNode extends AbstractSendNode {
         public static final int INLINE_CACHE_SIZE = 6;
 
-        @Child private FrameSlotReadNode peekAtReceiverNode;
+        @Child private FrameStackReadNode peekAtReceiverNode;
         @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
         @Child private LookupSelectorNode lookupSelectorNode;
         @Child private DispatchLookupResultNode dispatchNode;
@@ -144,7 +144,7 @@ public final class SendBytecodes {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final int stackPointer = FrameAccess.getStackPointer(frame, code);
-                peekAtReceiverNode = insert(FrameSlotReadNode.create(frame, stackPointer, false));
+                peekAtReceiverNode = insert(FrameStackReadNode.create(frame, stackPointer, false));
             }
             return peekAtReceiverNode.executeRead(frame);
         }
@@ -227,8 +227,8 @@ public final class SendBytecodes {
         @CompilationFinal private FrameSlot stackPointerSlot;
         @CompilationFinal private int stackPointer;
 
-        @Child private FrameSlotReadNode peekAtReceiverNode;
-        @Child private FrameSlotReadNode readDirectedClassNode;
+        @Child private FrameStackReadNode peekAtReceiverNode;
+        @Child private FrameStackReadNode readDirectedClassNode;
         @Child private LookupSelectorNode lookupSelectorNode;
         @Child private DispatchLookupResultNode dispatchNode;
 
@@ -259,7 +259,7 @@ public final class SendBytecodes {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final int sp = FrameAccess.getStackPointer(frame, code);
-                peekAtReceiverNode = insert(FrameSlotReadNode.create(frame, sp, false));
+                peekAtReceiverNode = insert(FrameStackReadNode.create(frame, sp, false));
             }
             return peekAtReceiverNode.executeRead(frame);
         }
@@ -274,7 +274,7 @@ public final class SendBytecodes {
                  * Read and clear directed class. Add receiver and argumentCount (sp already
                  * decremented in AbstractSendNode).
                  */
-                readDirectedClassNode = insert(FrameSlotReadNode.create(frame, stackPointer + 1 + argumentCount, true));
+                readDirectedClassNode = insert(FrameStackReadNode.create(frame, stackPointer + 1 + argumentCount, true));
             }
             FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
             return (ClassObject) readDirectedClassNode.executeRead(frame);

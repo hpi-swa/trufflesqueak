@@ -19,7 +19,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.AboutToReturnNodeFactory.AboutToReturnImplNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchClosureNode;
@@ -48,8 +48,8 @@ public abstract class AboutToReturnNode extends AbstractNode {
         @Specialization(guards = {"!getContextNode.hasModifiedSender(frame)", "isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
         protected static final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                         @SuppressWarnings("unused") @Shared("getContextNode") @Cached final GetContextNode getContextNode,
-                        @Cached("createTemporaryReadNode(frame, 0)") final FrameSlotReadNode blockArgumentNode,
-                        @SuppressWarnings("unused") @Cached("createTemporaryReadNode(frame, 1)") final FrameSlotReadNode completeTempReadNode,
+                        @Cached("createTemporaryReadNode(frame, 0)") final FrameStackReadNode blockArgumentNode,
+                        @SuppressWarnings("unused") @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode,
                         @Cached("create(frame, 1)") final TemporaryWriteMarkContextsNode completeTempWriteNode,
                         /*
                          * It is very likely that ensure block is constant, hence the ValueProfile.
@@ -66,7 +66,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
         @Specialization(guards = {"!getContextNode.hasModifiedSender(frame)", "!isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
         protected final void doAboutToReturnVirtualizedNothing(final VirtualFrame frame, final NonLocalReturn nlr,
                         @Shared("getContextNode") @Cached final GetContextNode getContextNode,
-                        @Cached("createTemporaryReadNode(frame, 1)") final FrameSlotReadNode completeTempReadNode) {
+                        @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode) {
             // Nothing to do.
         }
 
@@ -86,8 +86,8 @@ public abstract class AboutToReturnNode extends AbstractNode {
         }
     }
 
-    protected static final FrameSlotReadNode createTemporaryReadNode(final VirtualFrame frame, final int tempIndex) {
-        return FrameSlotReadNode.create(frame, tempIndex, false);
+    protected static final FrameStackReadNode createTemporaryReadNode(final VirtualFrame frame, final int tempIndex) {
+        return FrameStackReadNode.create(frame, tempIndex, false);
     }
 
     protected static final SendSelectorNode createAboutToReturnSend() {

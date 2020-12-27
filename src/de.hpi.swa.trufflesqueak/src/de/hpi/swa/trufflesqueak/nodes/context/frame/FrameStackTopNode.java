@@ -15,7 +15,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class FrameStackTopNode extends AbstractNode {
-    @Child private FrameSlotReadNode readNode;
+    @Child private FrameStackReadNode readNode;
 
     public static FrameStackTopNode create() {
         return new FrameStackTopNode();
@@ -25,7 +25,7 @@ public final class FrameStackTopNode extends AbstractNode {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final int stackPointer = FrameAccess.getStackPointerSlow(frame) - 1;
-            readNode = FrameSlotReadNode.create(frame, stackPointer, false);
+            readNode = FrameStackReadNode.create(frame, stackPointer, false);
         }
         return readNode.executeRead(frame);
     }
