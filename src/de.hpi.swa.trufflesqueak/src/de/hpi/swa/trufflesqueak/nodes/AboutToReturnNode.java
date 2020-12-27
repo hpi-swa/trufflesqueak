@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -36,6 +37,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
 
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);
 
+    @ImportStatic(FrameStackReadNode.class)
     protected abstract static class AboutToReturnImplNode extends AboutToReturnNode {
 
         /*
@@ -84,10 +86,6 @@ public abstract class AboutToReturnNode extends AbstractNode {
         public void executeAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
             // Nothing to do.
         }
-    }
-
-    protected static final FrameStackReadNode createTemporaryReadNode(final VirtualFrame frame, final int tempIndex) {
-        return FrameStackReadNode.create(frame, tempIndex, false);
     }
 
     protected static final SendSelectorNode createAboutToReturnSend() {
