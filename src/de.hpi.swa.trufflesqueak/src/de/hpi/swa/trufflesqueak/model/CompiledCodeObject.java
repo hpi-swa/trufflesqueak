@@ -40,7 +40,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ADDITIONAL_METHOD_STA
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
-import de.hpi.swa.trufflesqueak.nodes.ResumeContextNode.ResumeContextRootNode;
+import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
