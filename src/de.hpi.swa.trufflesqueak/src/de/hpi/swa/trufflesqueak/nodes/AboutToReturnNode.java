@@ -47,7 +47,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
          * handled. Note that this however does not check if the current context isDead nor does it
          * terminate contexts (this may be a problem).
          */
-        @Specialization(guards = {"!getContextNode.hasModifiedSender(frame)", "isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
+        @Specialization(guards = {"!getContextNode.hasModifiedSender(frame)", "completeTempReadNode.executeReadUnsafe(frame) == null"}, limit = "1")
         protected static final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                         @SuppressWarnings("unused") @Shared("getContextNode") @Cached final GetContextNode getContextNode,
                         @Cached("createTemporaryReadNode(frame, 0)") final FrameStackReadNode blockArgumentNode,
@@ -65,7 +65,7 @@ public abstract class AboutToReturnNode extends AbstractNode {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!getContextNode.hasModifiedSender(frame)", "!isNil(completeTempReadNode.executeRead(frame))"}, limit = "1")
+        @Specialization(guards = {"!getContextNode.hasModifiedSender(frame)", "completeTempReadNode.executeReadUnsafe(frame) != null"}, limit = "1")
         protected final void doAboutToReturnVirtualizedNothing(final VirtualFrame frame, final NonLocalReturn nlr,
                         @Shared("getContextNode") @Cached final GetContextNode getContextNode,
                         @Cached("createTemporaryReadNode(frame, 1)") final FrameStackReadNode completeTempReadNode) {

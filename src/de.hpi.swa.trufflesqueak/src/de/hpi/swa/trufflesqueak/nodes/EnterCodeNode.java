@@ -9,7 +9,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -17,9 +16,6 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
@@ -32,7 +28,6 @@ public final class EnterCodeNode extends RootNode {
     @CompilationFinal private int initialPC = -1;
     @CompilationFinal private int initialSP;
 
-    @Children private FrameStackWriteNode[] writeTempNodes;
     @Child private AbstractExecuteContextNode executeContextNode;
     @Child private InterruptHandlerNode interruptHandlerNode;
 
@@ -60,35 +55,23 @@ public final class EnterCodeNode extends RootNode {
             interruptHandlerNode.executeTrigger(frame);
         }
         ensureInitialized(frame);
+        FrameAccess.setInstructionPointer(frame, code, initialPC);
+        FrameAccess.setStackPointer(frame, code, initialSP);
         return executeContextNode.executeFresh(frame, initialPC);
     }
 
-    @ExplodeLoop
     private void ensureInitialized(final VirtualFrame frame) {
-        if (writeTempNodes == null) {
+        if (initialPC < 0) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final BlockClosureObject closure = FrameAccess.getClosure(frame);
-            final int numArgs;
             if (closure == null) {
                 initialPC = code.getInitialPC();
                 initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
-                numArgs = code.getNumArgs();
             } else {
                 initialPC = (int) closure.getStartPC();
                 initialSP = closure.getNumTemps();
-                numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
-            }
-            writeTempNodes = new FrameStackWriteNode[initialSP - numArgs];
-            for (int i = 0; i < writeTempNodes.length; i++) {
-                writeTempNodes[i] = insert(FrameStackWriteNode.create(frame, numArgs + i));
-                assert writeTempNodes[i] instanceof FrameSlotWriteNode;
             }
         }
-        for (int i = 0; i < writeTempNodes.length; i++) {
-            writeTempNodes[i].executeWrite(frame, NilObject.SINGLETON);
-        }
-        FrameAccess.setInstructionPointer(frame, code, initialPC);
-        FrameAccess.setStackPointer(frame, code, initialSP);
     }
 
     @Override
