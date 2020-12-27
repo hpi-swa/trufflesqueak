@@ -20,7 +20,7 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
         if (index < numArgs) {
             return new FrameArgumentWriteNode(index);
         } else {
-            return FrameSlotWriteImplNodeGen.create(FrameAccess.getStackSlotSlow(frame, index));
+            return FrameSlotWriteImplNodeGen.create(FrameAccess.findOrAddStackSlot(frame, index));
         }
     }
 

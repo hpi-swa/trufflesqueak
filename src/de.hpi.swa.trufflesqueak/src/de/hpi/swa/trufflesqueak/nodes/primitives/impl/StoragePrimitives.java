@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.ListIterator;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -137,13 +138,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 }
 
                 /*
-                 * use blockOrMethod.getStackSlotsUnsafe() here instead of stackPointer because in
-                 * rare cases, the stack is accessed behind the stackPointer.
+                 * iterate all stack slots here instead of stackPointer because in rare cases, the
+                 * stack is accessed behind the stackPointer.
                  */
-                for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
-                    if (slot == null) {
-                        return null; // Stop here, slot has not (yet) been created.
-                    }
+                for (final ListIterator<? extends FrameSlot> iterator = FrameAccess.getStackSlotsIterator(current); iterator.hasNext();) {
+                    final FrameSlot slot = iterator.next();
                     if (current.isObject(slot)) {
                         final Object stackObject = FrameUtil.getObjectSafe(current, slot);
                         for (int j = 0; j < fromPointersLength; j++) {

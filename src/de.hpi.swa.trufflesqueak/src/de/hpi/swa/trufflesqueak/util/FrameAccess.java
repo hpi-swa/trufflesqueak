@@ -6,6 +6,7 @@
 package de.hpi.swa.trufflesqueak.util;
 
 import java.util.Arrays;
+import java.util.ListIterator;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -270,9 +271,20 @@ public final class FrameAccess {
         setStackPointer(frame, code.getStackPointerSlot(), value);
     }
 
-    public static FrameSlot getStackSlotSlow(final Frame frame, final int index) {
+    public static FrameSlot findOrAddStackSlot(final Frame frame, final int index) {
         CompilerAsserts.neverPartOfCompilation();
-        return getMethodOrBlock(frame).getStackSlot(index);
+        assert frame.getArguments().length - getArgumentStartIndex() <= index;
+        return frame.getFrameDescriptor().findOrAddFrameSlot(index, FrameSlotKind.Illegal);
+    }
+
+    public static FrameSlot findStackSlot(final Frame frame, final int index) {
+        CompilerAsserts.neverPartOfCompilation();
+        assert frame.getArguments().length - getArgumentStartIndex() <= index;
+        return frame.getFrameDescriptor().findFrameSlot(index);
+    }
+
+    public static ListIterator<? extends FrameSlot> getStackSlotsIterator(final Frame frame) {
+        return frame.getFrameDescriptor().getSlots().listIterator(getArgumentStartIndex());
     }
 
     /** Write to a frame slot (slow operation), prefer {@link FrameStackPushNode}. */

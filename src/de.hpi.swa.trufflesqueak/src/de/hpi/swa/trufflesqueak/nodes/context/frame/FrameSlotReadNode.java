@@ -38,10 +38,11 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
             code = closure.getCompiledBlock();
             initialSP = closure.getNumTemps();
         }
+        final FrameSlot slot = FrameAccess.findOrAddStackSlot(frame, index);
         if (clear && index >= initialSP) {
-            return FrameSlotReadClearNodeGen.create(code.getStackSlot(index));
+            return FrameSlotReadClearNodeGen.create(slot);
         } else {
-            return FrameSlotReadNoClearNodeGen.create(code.getStackSlot(index));
+            return FrameSlotReadNoClearNodeGen.create(slot);
         }
     }
 
