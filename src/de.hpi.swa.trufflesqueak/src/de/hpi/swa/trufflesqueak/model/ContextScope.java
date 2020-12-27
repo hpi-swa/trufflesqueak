@@ -180,7 +180,7 @@ public final class ContextScope implements TruffleObject {
 
     private int getContextSize() {
         final BlockClosureObject closure = FrameAccess.getClosure(frame);
-        CompiledCodeObject code;
+        final CompiledCodeObject code;
         if (closure == null) {
             code = FrameAccess.getCodeObject(frame);
         } else {
