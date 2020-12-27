@@ -46,7 +46,11 @@ public abstract class FrameStackReadNode extends AbstractNode {
 
     public static final FrameStackReadNode createTemporaryReadNode(final Frame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
-        return FrameSlotReadNoClearNodeGen.create(FrameAccess.findStackSlot(frame, numArgs + index));
+        if (index < numArgs) {
+            return new FrameArgumentNode(index);
+        } else {
+            return FrameSlotReadNoClearNodeGen.create(FrameAccess.findStackSlot(frame, index));
+        }
     }
 
     public final Object executeRead(final Frame frame) {
