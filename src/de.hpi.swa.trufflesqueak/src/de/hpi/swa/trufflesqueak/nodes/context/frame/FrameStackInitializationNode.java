@@ -32,7 +32,7 @@ public final class FrameStackInitializationNode extends AbstractNode {
             if (closure == null) {
                 initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
             } else {
-                initialSP = (int) (closure.getNumArgs() + closure.getNumCopied());
+                initialSP = closure.getNumTemps();
             }
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, initialSP);
