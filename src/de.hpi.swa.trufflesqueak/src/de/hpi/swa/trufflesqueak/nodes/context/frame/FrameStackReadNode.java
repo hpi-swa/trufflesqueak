@@ -44,6 +44,11 @@ public abstract class FrameStackReadNode extends AbstractNode {
         }
     }
 
+    public static final FrameStackReadNode createTemporaryReadNode(final Frame frame, final int index) {
+        final int numArgs = FrameAccess.getNumArguments(frame);
+        return FrameSlotReadNoClearNodeGen.create(FrameAccess.findStackSlot(frame, numArgs + index));
+    }
+
     public final Object executeRead(final Frame frame) {
         final Object value = executeReadUnsafe(frame);
         assert value != null : "Unexpected `null` value";
