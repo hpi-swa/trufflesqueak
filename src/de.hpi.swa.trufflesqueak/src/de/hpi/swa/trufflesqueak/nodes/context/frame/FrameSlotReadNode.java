@@ -22,7 +22,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 @ImportStatic(FrameSlotKind.class)
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
 
-    public static FrameSlotReadNode create(final Frame frame, final int index, final boolean clear) {
+    public static final FrameSlotReadNode create(final Frame frame, final int index, final boolean clear) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
             return new FrameArgumentNode(index);
@@ -118,10 +118,10 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         }
     }
 
-    protected final static class FrameArgumentNode extends FrameSlotReadNode {
+    private static final class FrameArgumentNode extends FrameSlotReadNode {
         private final int index;
 
-        public FrameArgumentNode(final int index) {
+        private FrameArgumentNode(final int index) {
             this.index = FrameAccess.getArgumentStartIndex() + index;
         }
 

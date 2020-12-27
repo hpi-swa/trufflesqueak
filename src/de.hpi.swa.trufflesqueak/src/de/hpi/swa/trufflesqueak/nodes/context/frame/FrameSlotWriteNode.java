@@ -86,7 +86,7 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
     private static final class FrameArgumentWriteNode extends FrameSlotWriteNode {
         private final int index;
 
-        public FrameArgumentWriteNode(final int index) {
+        private FrameArgumentWriteNode(final int index) {
             this.index = FrameAccess.getArgumentStartIndex() + index;
         }
 
