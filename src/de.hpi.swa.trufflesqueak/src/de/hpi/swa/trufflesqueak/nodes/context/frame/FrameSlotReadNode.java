@@ -7,6 +7,7 @@ package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -14,12 +15,13 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeFactory.FrameSlotReadClearNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeFactory.FrameSlotReadNoClearNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ImportStatic(FrameSlotKind.class)
-public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
+public abstract class FrameSlotReadNode extends AbstractNode {
 
     public static final FrameSlotReadNode create(final Frame frame, final int index, final boolean clear) {
         final int numArgs = FrameAccess.getNumArguments(frame);
@@ -51,7 +53,11 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
     /* Unsafe as it may return `null` values. */
     public abstract Object executeReadUnsafe(Frame frame);
 
+    @NodeField(name = "slot", type = FrameSlot.class)
     protected abstract static class AbstractFrameSlotReadNode extends FrameSlotReadNode {
+
+        protected abstract FrameSlot getSlot();
+
         @Specialization(guards = "frame.isBoolean(getSlot())")
         protected final boolean readBoolean(final Frame frame) {
             return FrameUtil.getBooleanSafe(frame, getSlot());
@@ -124,11 +130,6 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         @Override
         public Object executeReadUnsafe(final Frame frame) {
             return frame.getArguments()[index];
-        }
-
-        @Override
-        protected FrameSlot getSlot() {
-            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 }

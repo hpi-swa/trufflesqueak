@@ -5,16 +5,17 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
+import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNodeFactory.FrameSlotWriteImplNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
+public abstract class FrameSlotWriteNode extends AbstractNode {
     public static FrameSlotWriteNode create(final Frame frame, final int index) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
@@ -26,7 +27,10 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
 
     public abstract void executeWrite(Frame frame, Object value);
 
+    @NodeField(name = "slot", type = FrameSlot.class)
     public abstract static class FrameSlotWriteImplNode extends FrameSlotWriteNode {
+
+        protected abstract FrameSlot getSlot();
 
         @Specialization(guards = "isBooleanOrIllegal(frame)")
         protected final void writeBool(final Frame frame, final boolean value) {
@@ -94,11 +98,5 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
         public void executeWrite(final Frame frame, final Object value) {
             frame.getArguments()[index] = value;
         }
-
-        @Override
-        protected FrameSlot getSlot() {
-            throw CompilerDirectives.shouldNotReachHere();
-        }
-
     }
 }

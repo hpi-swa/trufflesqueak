@@ -551,7 +551,7 @@ public final class PushBytecodes {
         public void executeVoid(final VirtualFrame frame) {
             if (readTempNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                readTempNode = insert(FrameSlotReadNode.create(frame, indexOfArray, true));
+                readTempNode = insert(FrameSlotReadNode.create(frame, indexOfArray, false));
             }
             pushNode.execute(frame, at0Node.execute(readTempNode.executeRead(frame), indexInArray));
         }
@@ -578,7 +578,7 @@ public final class PushBytecodes {
         public void executeVoid(final VirtualFrame frame) {
             if (tempNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                tempNode = insert(FrameSlotReadNode.create(frame, tempIndex, true));
+                tempNode = insert(FrameSlotReadNode.create(frame, tempIndex, false));
             }
             pushNode.execute(frame, tempNode.executeRead(frame));
         }

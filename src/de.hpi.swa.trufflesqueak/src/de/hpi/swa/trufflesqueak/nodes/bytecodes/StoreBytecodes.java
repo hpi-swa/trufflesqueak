@@ -82,7 +82,7 @@ public final class StoreBytecodes {
         protected final FrameSlotReadNode getReadNode(final VirtualFrame frame) {
             if (readNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                readNode = insert(FrameSlotReadNode.create(frame, indexOfArray, true));
+                readNode = insert(FrameSlotReadNode.create(frame, indexOfArray, false));
             }
             return readNode;
         }
