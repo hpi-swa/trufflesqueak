@@ -13,7 +13,6 @@ import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -162,9 +161,6 @@ public final class PrimitiveNodeFactory {
     private static AbstractPrimitiveNode forName(final CompiledCodeObject method, final boolean useStack, final boolean argsProvided, final byte[] moduleName, final byte[] functionName) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         final EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> functionNameToNodeFactory = PLUGIN_MAP.get(new String(moduleName));
-        if ("primitiveSocketCreate3Semaphores".equals(new String(functionName))) {
-            Truffle.getRuntime();
-        }
         if (functionNameToNodeFactory != null) {
             return createInstance(method, useStack, argsProvided, functionNameToNodeFactory.get(new String(functionName)));
         }
