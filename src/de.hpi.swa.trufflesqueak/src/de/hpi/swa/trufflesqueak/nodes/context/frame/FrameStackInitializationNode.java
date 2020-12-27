@@ -52,10 +52,8 @@ public final class FrameStackInitializationNode extends AbstractNode {
         CompilerAsserts.partialEvaluationConstant(writeNodes.length);
         final Object[] arguments = frame.getArguments();
         assert arguments.length == FrameAccess.expectedArgumentSize(numArgs);
-// for (int i = 0; i < numArgs; i++) {
-// writeNodes[i].executeWrite(frame, arguments[FrameAccess.getArgumentStartIndex() + i]);
-// }
-// Initialize remaining temporary variables with nil in newContext.
+        // FIXME: avoid generalizing temp slots.
+        // Initialize remaining temporary variables with nil in newContext.
         for (int i = numArgs; i < writeNodes.length; i++) {
             writeNodes[i].executeWrite(frame, NilObject.SINGLETON);
         }
