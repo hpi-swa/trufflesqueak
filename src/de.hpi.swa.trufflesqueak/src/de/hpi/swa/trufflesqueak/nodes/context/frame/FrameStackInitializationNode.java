@@ -44,19 +44,18 @@ public final class FrameStackInitializationNode extends AbstractNode {
                 initialSP = closure.getNumTemps();
                 numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
             }
-            writeNodes = new FrameSlotWriteNode[initialSP];
-            for (int i = numArgs; i < writeNodes.length; i++) {
-                writeNodes[i] = insert(FrameSlotWriteNode.create(frame, i));
+            writeNodes = new FrameSlotWriteNode[initialSP - numArgs];
+            for (int i = 0; i < writeNodes.length; i++) {
+                writeNodes[i] = insert(FrameSlotWriteNode.create(frame, initialSP + i));
             }
         }
         CompilerAsserts.partialEvaluationConstant(writeNodes.length);
         final Object[] arguments = frame.getArguments();
         assert arguments.length == FrameAccess.expectedArgumentSize(numArgs);
-        // FIXME: avoid generalizing temp slots.
         // Initialize remaining temporary variables with nil in newContext.
-        for (int i = numArgs; i < writeNodes.length; i++) {
+        for (int i = 0; i < writeNodes.length; i++) {
             writeNodes[i].executeWrite(frame, NilObject.SINGLETON);
         }
-        FrameAccess.setStackPointer(frame, stackPointerSlot, writeNodes.length);
+        FrameAccess.setStackPointer(frame, stackPointerSlot, numArgs + writeNodes.length);
     }
 }
