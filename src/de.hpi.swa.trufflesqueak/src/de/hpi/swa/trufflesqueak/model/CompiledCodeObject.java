@@ -101,7 +101,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     @TruffleBoundary
     public CompiledCodeObject(final SqueakImageContext image, final long hash, final ClassObject classObject) {
         super(image, hash, classObject);
-        frameDescriptor = new FrameDescriptor();
+        frameDescriptor = new FrameDescriptor(NilObject.SINGLETON);
         thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
         thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
@@ -138,7 +138,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         assert currentOuterCode.isCompiledMethod();
         outerMethod = currentOuterCode;
 
-        frameDescriptor = new FrameDescriptor();
+        frameDescriptor = new FrameDescriptor(NilObject.SINGLETON);
         thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
         thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);

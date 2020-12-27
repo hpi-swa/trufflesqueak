@@ -58,13 +58,13 @@ public final class SendBytecodes {
                 assert result != null : "Result of a message send should not be null";
                 getPushNode().execute(frame, result);
             } catch (final NonLocalReturn nlr) {
-                if (nlrProfile.profile(nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame))) {
+                if (nlrProfile.profile(nlr.getTargetContextOrMarker() == getMarkerOrNil(frame) || nlr.getTargetContextOrMarker() == getContextOrNil(frame))) {
                     getPushNode().execute(frame, nlr.getReturnValue());
                 } else {
                     throw nlr;
                 }
             } catch (final NonVirtualReturn nvr) {
-                if (nvrProfile.profile(nvr.getTargetContext() == getContext(frame))) {
+                if (nvrProfile.profile(nvr.getTargetContext() == getContextOrNil(frame))) {
                     getPushNode().execute(frame, nvr.getReturnValue());
                 } else {
                     throw nvr;

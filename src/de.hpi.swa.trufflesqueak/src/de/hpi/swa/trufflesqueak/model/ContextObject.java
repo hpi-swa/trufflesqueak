@@ -63,7 +63,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private ContextObject(final SqueakImageContext image, final MaterializedFrame truffleFrame, final int size) {
         super(image, image.methodContextClass);
         assert FrameAccess.getSender(truffleFrame) != null;
-        assert FrameAccess.getContextSlow(truffleFrame) == null;
+        assert !FrameAccess.hasContextSlow(truffleFrame);
         assert FrameAccess.getCodeObject(truffleFrame).getSqueakContextSize() == size;
         this.truffleFrame = truffleFrame;
         methodOrBlock = FrameAccess.getMethodOrBlock(truffleFrame);
@@ -310,7 +310,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public void setSender(final ContextObject value) {
         if (truffleFrame != null) {
             final Object sender = FrameAccess.getSender(getTruffleFrame());
-            if (!hasModifiedSender && sender != value && sender != value.getFrameMarker()) {
+            if (!hasModifiedSender && sender != value && sender != value.getFrameMarkerOrNil()) {
                 hasModifiedSender = true;
             }
         }
@@ -588,8 +588,8 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return !(FrameAccess.getSender(getTruffleFrame()) instanceof FrameMarker);
     }
 
-    public FrameMarker getFrameMarker() {
-        return FrameAccess.getMarker(getTruffleFrame(), methodOrBlock);
+    public Object getFrameMarkerOrNil() {
+        return FrameAccess.getMarkerOrNil(getTruffleFrame(), methodOrBlock.getThisMarkerSlot());
     }
 
     // The context represents primitive call which needs to be skipped when unwinding call stack.

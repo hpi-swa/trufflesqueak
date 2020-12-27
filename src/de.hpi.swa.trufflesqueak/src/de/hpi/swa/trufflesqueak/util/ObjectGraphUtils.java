@@ -120,7 +120,7 @@ public final class ObjectGraphUtils {
                     addIfUnmarked(argument);
                 }
                 final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
-                addIfUnmarked(FrameAccess.getContext(current, code));
+                addIfUnmarked(FrameAccess.getContextOrNil(current, code));
                 for (final ListIterator<? extends FrameSlot> iterator = FrameAccess.getStackSlotsIterator(current); iterator.hasNext();) {
                     final FrameSlot slot = iterator.next();
                     if (current.isObject(slot)) {

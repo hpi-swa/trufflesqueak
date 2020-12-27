@@ -20,10 +20,10 @@ public final class FrameMarker {
     public ContextObject getMaterializedContext() {
         final MaterializedFrame targetFrame = FrameAccess.findFrameForMarker(this);
         final CompiledCodeObject code = FrameAccess.getMethodOrBlock(targetFrame);
-        final ContextObject context = FrameAccess.getContext(targetFrame, code);
-        if (context != null) {
-            assert context.getFrameMarker() == this;
-            return context;
+        final Object contextOrNil = FrameAccess.getContextOrNil(targetFrame, code);
+        if (contextOrNil != NilObject.SINGLETON) {
+            assert ((ContextObject) contextOrNil).getFrameMarkerOrNil() == this;
+            return (ContextObject) contextOrNil;
         } else {
             assert this == FrameAccess.getMarker(targetFrame, code) : "Frame does not match";
             return ContextObject.create(code.getSqueakClass().getImage(), targetFrame, code);

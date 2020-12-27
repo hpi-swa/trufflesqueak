@@ -93,7 +93,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
                     return null; // Foreign frame cannot be unwind marked.
                 }
-                final ContextObject context = FrameAccess.getContextSlow(current);
+                final Object context = FrameAccess.getContextOrNilSlow(current);
                 if (!foundMyself[0]) {
                     if (receiver == context) {
                         foundMyself[0] = true;
@@ -103,8 +103,8 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         return NilObject.SINGLETON;
                     }
                     if (FrameAccess.getClosure(current) == null && FrameAccess.getCodeObject(current).isUnwindMarked()) {
-                        if (context != null) {
-                            return context;
+                        if (context != NilObject.SINGLETON) {
+                            return (ContextObject) context;
                         } else {
                             return ContextObject.create(ref.get(), frameInstance);
                         }
@@ -171,15 +171,15 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         return null;
                     }
                     if (!foundMyself) {
-                        if (start == FrameAccess.getMarkerSlow(current)) {
+                        if (start == FrameAccess.getMarkerOrNilSlow(current)) {
                             foundMyself = true;
                         }
                     } else {
-                        final ContextObject context = FrameAccess.getContextSlow(current);
+                        final Object context = FrameAccess.getContextOrNilSlow(current);
                         if (context == end) {
                             return end;
                         }
-                        bottomContextOnTruffleStack[0] = context;
+                        bottomContextOnTruffleStack[0] = context == NilObject.SINGLETON ? null : (ContextObject) context;
                         final Frame currentWritable = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
                         // Terminate frame
                         FrameAccess.setInstructionPointer(currentWritable, FrameAccess.getMethodOrBlock(current), -1);
@@ -248,15 +248,15 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         return receiver;
                     }
                 }
-                final ContextObject context = FrameAccess.getContextSlow(current);
+                final Object context = FrameAccess.getContextOrNilSlow(current);
                 if (!foundMyself[0]) {
                     if (context == receiver) {
                         foundMyself[0] = true;
                     }
                 } else {
                     if (FrameAccess.getCodeObject(current).isExceptionHandlerMarked()) {
-                        if (context != null) {
-                            return context;
+                        if (context != NilObject.SINGLETON) {
+                            return (ContextObject) context;
                         } else {
                             return ContextObject.create(ref.get(), frameInstance);
                         }

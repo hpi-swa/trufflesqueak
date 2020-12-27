@@ -25,7 +25,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -314,8 +313,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     }
 
     protected boolean hasModifiedSender(final VirtualFrame frame) {
-        final ContextObject context = FrameAccess.getContext(frame, code);
-        return context != null && context.hasModifiedSender();
+        return FrameAccess.hasContext(frame, code) && FrameAccess.getContext(frame, code).hasModifiedSender();
     }
 
     /*

@@ -12,8 +12,8 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -34,12 +34,12 @@ public final class GetContextOrMarkerNode extends AbstractNode {
             contextSlot = FrameAccess.getContextSlot(frame);
             markerSlot = FrameAccess.getMarkerSlot(frame);
         }
-        final ContextObject context = FrameAccess.getContext(frame, contextSlot);
-        if (hasContextProfile.profile(context != null)) {
-            return context;
+        final Object contextOrNil = FrameAccess.getContextOrNil(frame, contextSlot);
+        if (hasContextProfile.profile(contextOrNil != NilObject.SINGLETON)) {
+            return contextOrNil;
         } else {
-            final FrameMarker marker = FrameAccess.getMarker(frame, markerSlot);
-            if (hasMarkerProfile.profile(marker != null)) {
+            final Object marker = FrameAccess.getMarkerOrNil(frame, markerSlot);
+            if (hasMarkerProfile.profile(marker != NilObject.SINGLETON)) {
                 return marker;
             } else {
                 final FrameMarker newMarker = new FrameMarker();
@@ -51,13 +51,13 @@ public final class GetContextOrMarkerNode extends AbstractNode {
 
     public static Object getNotProfiled(final VirtualFrame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        final ContextObject context = FrameAccess.getContextSlow(frame);
-        if (context != null) {
-            return context;
+        final Object contextOrNil = FrameAccess.getContextOrNilSlow(frame);
+        if (contextOrNil != NilObject.SINGLETON) {
+            return contextOrNil;
         } else {
             final FrameSlot markerSlot = FrameAccess.getMarkerSlot(frame);
-            final FrameMarker marker = FrameAccess.getMarker(frame, markerSlot);
-            if (marker != null) {
+            final Object marker = FrameAccess.getMarkerOrNil(frame, markerSlot);
+            if (marker != NilObject.SINGLETON) {
                 return marker;
             } else {
                 final FrameMarker newMarker = new FrameMarker();

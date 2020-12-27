@@ -162,8 +162,8 @@ public final class DebugUtils {
             }
             final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
             lastSender[0] = FrameAccess.getSender(current);
-            final Object marker = FrameAccess.getMarker(current, code);
-            final Object context = FrameAccess.getContext(current, code);
+            final Object marker = FrameAccess.getMarkerOrNil(current, code.getThisMarkerSlot());
+            final Object context = FrameAccess.getContextOrNil(current, code.getThisContextSlot());
             final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
             final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
             err.println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, code, argumentsString, marker, context, lastSender[0]));
@@ -227,7 +227,7 @@ public final class DebugUtils {
         ContextObject current = context;
         while (current != null && current.hasTruffleFrame()) {
             final Object[] rcvrAndArgs = current.getReceiverAndNArguments();
-            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarker())).append('\n');
+            b.append(MiscUtils.format("%s #(%s) [%s]", current, ArrayUtils.toJoinedString(", ", rcvrAndArgs), current.getFrameMarkerOrNil())).append('\n');
             final Object sender = current.getFrameSender();
             if (sender == NilObject.SINGLETON) {
                 break;

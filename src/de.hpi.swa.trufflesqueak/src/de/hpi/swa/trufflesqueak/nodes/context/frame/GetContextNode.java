@@ -23,19 +23,22 @@ public final class GetContextNode extends AbstractNode {
     }
 
     public boolean hasModifiedSender(final VirtualFrame frame) {
-        final ContextObject context = execute(frame);
-        return context != null && context.hasModifiedSender();
+        return hasContext(frame) && execute(frame).hasModifiedSender();
+    }
+
+    public boolean hasEscaped(final VirtualFrame frame) {
+        return hasContext(frame) && execute(frame).hasEscaped();
     }
 
     public boolean hasContext(final VirtualFrame frame) {
-        return execute(frame) == null;
-    }
-
-    public ContextObject execute(final VirtualFrame frame) {
         if (contextSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             contextSlot = FrameAccess.getContextSlot(frame);
         }
+        return FrameAccess.hasContext(frame, contextSlot);
+    }
+
+    public ContextObject execute(final VirtualFrame frame) {
         return FrameAccess.getContext(frame, contextSlot);
     }
 }

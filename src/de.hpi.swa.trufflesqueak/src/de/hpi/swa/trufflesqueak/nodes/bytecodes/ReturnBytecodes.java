@@ -82,8 +82,7 @@ public final class ReturnBytecodes {
         }
 
         private boolean hasModifiedSender(final VirtualFrame frame) {
-            final ContextObject context = FrameAccess.getContext(frame, thisContextSlot);
-            return context != null && context.hasModifiedSender();
+            return FrameAccess.hasContext(frame, thisContextSlot) && FrameAccess.getContext(frame, thisContextSlot).hasModifiedSender();
         }
     }
 
@@ -199,8 +198,7 @@ public final class ReturnBytecodes {
         }
 
         private boolean hasModifiedSender(final VirtualFrame frame) {
-            final ContextObject context = getContext(frame);
-            return context != null && context.hasModifiedSender();
+            return hasContext(frame) && getContext(frame).hasModifiedSender();
         }
 
         private GetActiveProcessNode getGetActiveProcessNode() {

@@ -172,9 +172,13 @@ public final class FrameAccess {
         return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.THIS_MARKER);
     }
 
-    public static FrameMarker getMarkerSlow(final Frame frame) {
+    public static Object getMarkerOrNilSlow(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        return getMarker(frame, getMethodOrBlock(frame));
+        return getMarkerOrNil(frame, getMethodOrBlock(frame).getThisMarkerSlot());
+    }
+
+    public static Object getMarkerOrNil(final Frame frame, final FrameSlot thisMarkerSlot) {
+        return FrameUtil.getObjectSafe(frame, thisMarkerSlot);
     }
 
     public static FrameMarker getMarker(final Frame frame, final FrameSlot thisMarkerSlot) {
@@ -208,6 +212,32 @@ public final class FrameAccess {
         return getContext(frame, getMethodOrBlock(frame));
     }
 
+    public static Object getContextOrNilSlow(final Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        return getContextOrNil(frame, getMethodOrBlock(frame).getThisContextSlot());
+    }
+
+    public static boolean hasContextSlow(final Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        return hasContext(frame, getMethodOrBlock(frame));
+    }
+
+    public static boolean hasContext(final Frame frame, final FrameSlot thisContextSlot) {
+        return FrameUtil.getObjectSafe(frame, thisContextSlot) != NilObject.SINGLETON;
+    }
+
+    public static boolean hasContext(final Frame frame, final CompiledCodeObject blockOrMethod) {
+        return hasContext(frame, blockOrMethod.getThisContextSlot());
+    }
+
+    public static Object getContextOrNil(final Frame frame, final FrameSlot thisContextSlot) {
+        return FrameUtil.getObjectSafe(frame, thisContextSlot);
+    }
+
+    public static Object getContextOrNil(final Frame frame, final CompiledCodeObject blockOrMethod) {
+        return getContextOrNil(frame, blockOrMethod.getThisContextSlot());
+    }
+
     public static ContextObject getContext(final Frame frame, final FrameSlot thisContextSlot) {
         return (ContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
     }
@@ -218,7 +248,7 @@ public final class FrameAccess {
 
     public static void setContext(final Frame frame, final CompiledCodeObject blockOrMethod, final ContextObject context) {
         final FrameSlot thisContextSlot = blockOrMethod.getThisContextSlot();
-        assert getContext(frame, blockOrMethod) == null : "ContextObject already allocated";
+        assert getContextOrNil(frame, thisContextSlot) == NilObject.SINGLETON : "ContextObject already allocated";
         blockOrMethod.getFrameDescriptor().setFrameSlotKind(thisContextSlot, FrameSlotKind.Object);
         frame.setObject(thisContextSlot, context);
     }
@@ -453,7 +483,7 @@ public final class FrameAccess {
                 return null;
             }
             LogUtils.ITERATE_FRAMES.fine(() -> "..." + FrameAccess.getCodeObject(current).toString());
-            if (frameMarker == getMarkerSlow(current)) {
+            if (frameMarker == getMarkerOrNilSlow(current)) {
                 return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
             }
             return null;
