@@ -9,6 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -87,11 +88,14 @@ public final class ContextScope implements TruffleObject {
             if (index < numArgs) {
                 return FrameAccess.getArgument(frame, index);
             } else {
-                return frame.getValue(FrameAccess.findStackSlot(frame, index));
+                final FrameSlot slot = FrameAccess.findStackSlot(frame, index);
+                if (slot != null) {
+                    return frame.getValue(slot);
+                }
             }
         } catch (final NumberFormatException e) {
-            throw UnknownIdentifierException.create(member);
         }
+        throw UnknownIdentifierException.create(member);
     }
 
     @ExportMessage

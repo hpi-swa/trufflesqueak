@@ -16,14 +16,14 @@ import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeFactory.FrameSlotReadClearNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeFactory.FrameSlotReadNoClearNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNodeFactory.FrameSlotReadClearNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNodeFactory.FrameSlotReadNoClearNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ImportStatic(FrameSlotKind.class)
-public abstract class FrameSlotReadNode extends AbstractNode {
+public abstract class FrameStackReadNode extends AbstractNode {
 
-    public static final FrameSlotReadNode create(final Frame frame, final int index, final boolean clear) {
+    public static final FrameStackReadNode create(final Frame frame, final int index, final boolean clear) {
         final int numArgs = FrameAccess.getNumArguments(frame);
         if (index < numArgs) {
             return new FrameArgumentNode(index);
@@ -54,7 +54,7 @@ public abstract class FrameSlotReadNode extends AbstractNode {
     public abstract Object executeReadUnsafe(Frame frame);
 
     @NodeField(name = "slot", type = FrameSlot.class)
-    protected abstract static class AbstractFrameSlotReadNode extends FrameSlotReadNode {
+    protected abstract static class AbstractFrameSlotReadNode extends FrameStackReadNode {
 
         protected abstract FrameSlot getSlot();
 
@@ -120,7 +120,7 @@ public abstract class FrameSlotReadNode extends AbstractNode {
         }
     }
 
-    private static final class FrameArgumentNode extends FrameSlotReadNode {
+    private static final class FrameArgumentNode extends FrameStackReadNode {
         private final int index;
 
         private FrameArgumentNode(final int index) {

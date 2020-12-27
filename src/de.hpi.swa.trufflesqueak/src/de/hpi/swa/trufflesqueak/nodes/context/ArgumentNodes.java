@@ -11,7 +11,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ArgumentNodes {
@@ -31,7 +31,7 @@ public final class ArgumentNodes {
     public static final class ArgumentOnStackNode extends AbstractArgumentNode {
         private final int argumentIndex;
 
-        @Child private FrameSlotReadNode readNode;
+        @Child private FrameStackReadNode readNode;
 
         public ArgumentOnStackNode(final int argumentIndex) {
             this.argumentIndex = argumentIndex; // argumentIndex == 0 returns receiver
@@ -42,7 +42,7 @@ public final class ArgumentNodes {
             if (readNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final int stackPointer = FrameAccess.getStackPointerSlow(frame);
-                readNode = insert(FrameSlotReadNode.create(frame, stackPointer + argumentIndex, false));
+                readNode = insert(FrameStackReadNode.create(frame, stackPointer + argumentIndex, false));
             }
             return readNode.executeRead(frame);
         }

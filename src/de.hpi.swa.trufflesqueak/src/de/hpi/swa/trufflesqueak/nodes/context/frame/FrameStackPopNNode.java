@@ -43,7 +43,7 @@ public abstract class FrameStackPopNNode extends AbstractNode {
     private static final class FrameStackPop1Node extends FrameStackPopNNode {
         @CompilationFinal private FrameSlot stackPointerSlot;
         @CompilationFinal private int stackPointer;
-        @Child private FrameSlotReadNode readNode;
+        @Child private FrameStackReadNode readNode;
 
         @Override
         public Object[] execute(final VirtualFrame frame) {
@@ -52,7 +52,7 @@ public abstract class FrameStackPopNNode extends AbstractNode {
                 stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
                 stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
                 assert stackPointer >= 0 : "Bad stack pointer";
-                readNode = insert(FrameSlotReadNode.create(frame, stackPointer, true));
+                readNode = insert(FrameStackReadNode.create(frame, stackPointer, true));
             }
             FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
             return new Object[]{readNode.executeRead(frame)};
@@ -62,10 +62,10 @@ public abstract class FrameStackPopNNode extends AbstractNode {
     private static final class FrameStackPopMultipleNode extends FrameStackPopNNode {
         @CompilationFinal private FrameSlot stackPointerSlot;
         @CompilationFinal private int stackPointer;
-        @Children private FrameSlotReadNode[] readNodes;
+        @Children private FrameStackReadNode[] readNodes;
 
         private FrameStackPopMultipleNode(final int numPop) {
-            readNodes = new FrameSlotReadNode[numPop];
+            readNodes = new FrameStackReadNode[numPop];
         }
 
         @Override
@@ -77,7 +77,7 @@ public abstract class FrameStackPopNNode extends AbstractNode {
                 stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - readNodes.length;
                 assert stackPointer >= 0 : "Bad stack pointer";
                 for (int i = 0; i < readNodes.length; i++) {
-                    readNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i, true));
+                    readNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
                 }
             }
             FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);

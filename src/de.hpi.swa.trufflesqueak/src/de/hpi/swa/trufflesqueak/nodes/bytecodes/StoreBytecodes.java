@@ -16,7 +16,7 @@ import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteMarkContextsNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackTopNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -70,7 +70,7 @@ public final class StoreBytecodes {
         private final int indexInArray;
         private final int indexOfArray;
 
-        @Child private FrameSlotReadNode readNode;
+        @Child private FrameStackReadNode readNode;
 
         private AbstractStoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte indexInArray, final byte indexOfArray) {
             super(code, index, numBytecodes);
@@ -79,10 +79,10 @@ public final class StoreBytecodes {
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(indexInArray);
         }
 
-        protected final FrameSlotReadNode getReadNode(final VirtualFrame frame) {
+        protected final FrameStackReadNode getReadNode(final VirtualFrame frame) {
             if (readNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                readNode = insert(FrameSlotReadNode.create(frame, indexOfArray, false));
+                readNode = insert(FrameStackReadNode.create(frame, indexOfArray, false));
             }
             return readNode;
         }
