@@ -15,6 +15,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -568,6 +569,7 @@ public final class PushBytecodes {
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
         @Child private FrameSlotReadNode tempNode;
         private final int tempIndex;
+        private final ConditionProfile nullToNilProfile = ConditionProfile.createBinaryProfile();
 
         public PushTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
@@ -580,7 +582,7 @@ public final class PushBytecodes {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 tempNode = insert(FrameSlotReadNode.create(frame, tempIndex, false));
             }
-            pushNode.execute(frame, tempNode.executeRead(frame));
+            pushNode.execute(frame, NilObject.nullToNil(tempNode.executeReadUnsafe(frame), nullToNilProfile));
         }
 
         @Override
