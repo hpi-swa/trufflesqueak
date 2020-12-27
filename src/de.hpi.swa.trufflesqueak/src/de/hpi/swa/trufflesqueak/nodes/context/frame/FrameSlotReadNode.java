@@ -14,7 +14,6 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeFactory.FrameSlotReadClearNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNodeFactory.FrameSlotReadNoClearNodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -28,15 +27,12 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
             return new FrameArgumentNode(index);
         }
         // Only clear stack values, not receiver, arguments, or temporary variables.
-        final CompiledCodeObject code;
         final int initialSP;
         final BlockClosureObject closure = FrameAccess.getClosure(frame);
         if (closure == null) {
-            code = FrameAccess.getCodeObject(frame);
-            initialSP = code.getNumTemps();
+            initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
         } else {
-            code = closure.getCompiledBlock();
-            initialSP = closure.getNumTemps();
+            initialSP = closure.getCompiledBlock().getNumTemps();
         }
         final FrameSlot slot = FrameAccess.findOrAddStackSlot(frame, index);
         if (clear && index >= initialSP) {
