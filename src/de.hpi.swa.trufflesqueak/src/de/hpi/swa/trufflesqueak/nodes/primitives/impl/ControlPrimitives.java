@@ -656,7 +656,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractPrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode {
         protected static final AbstractPrimitiveNode createPrimitiveNode(final long primitiveIndex, final int arraySize) {
-            return PrimitiveNodeFactory.forIndex((int) primitiveIndex, arraySize);
+            return PrimitiveNodeFactory.forIndex((int) primitiveIndex, arraySize, true);
         }
 
         protected static final Object primitiveWithArgs(final VirtualFrame frame, final Object receiver, final ArrayObject argumentArray, final int cachedArraySize,
@@ -1112,7 +1112,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final AbstractPrimitiveNode createPrimitiveNode(final CompiledCodeObject methodObject) {
-            return PrimitiveNodeFactory.namedFor(methodObject, false);
+            return PrimitiveNodeFactory.namedFor(methodObject, false, true);
         }
     }
 

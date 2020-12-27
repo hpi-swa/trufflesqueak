@@ -120,53 +120,53 @@ public final class PrimitiveNodeFactory {
     private PrimitiveNodeFactory() {
     }
 
-    public static AbstractPrimitiveNode forIndex(final CompiledCodeObject method, final boolean useStack, final int primitiveIndex) {
+    public static AbstractPrimitiveNode forIndex(final CompiledCodeObject method, final boolean useStack, final int primitiveIndex, final boolean argsProvided) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         assert primitiveIndex >= 0 : "Unexpected negative primitiveIndex";
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
-            return namedFor(method, useStack);
+            return namedFor(method, useStack, argsProvided);
         } else if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
             assert method.getNumArgs() == 0;
             return createPrimLoadInstVarNode(primitiveIndex, useStack);
         } else {
             assert primitiveIndex <= MAX_PRIMITIVE_INDEX;
-            return createInstance(method, useStack, PRIMITIVE_TABLE.get(primitiveIndex));
+            return createInstance(method, useStack, argsProvided, PRIMITIVE_TABLE.get(primitiveIndex));
         }
     }
 
-    public static AbstractPrimitiveNode forIndex(final int primitiveIndex, final int numArgs) {
+    public static AbstractPrimitiveNode forIndex(final int primitiveIndex, final int numArgs, final boolean argsProvided) {
         assert primitiveIndex != PRIMITIVE_EXTERNAL_CALL_INDEX;
         if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
             assert numArgs == 0;
             return createPrimLoadInstVarNode(primitiveIndex, false);
         } else {
             assert primitiveIndex <= MAX_PRIMITIVE_INDEX;
-            return createInstance(PRIMITIVE_TABLE.get(primitiveIndex), numArgs);
+            return createInstance(PRIMITIVE_TABLE.get(primitiveIndex), numArgs, argsProvided);
         }
     }
 
-    public static AbstractPrimitiveNode namedFor(final CompiledCodeObject method, final boolean useStack) {
+    public static AbstractPrimitiveNode namedFor(final CompiledCodeObject method, final boolean useStack, final boolean argsProvided) {
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
         if (values[1] == NilObject.SINGLETON) {
             return null;
         } else if (values[0] == NilObject.SINGLETON) {
             final NativeObject functionName = (NativeObject) values[1];
-            return forName(method, useStack, NULL_MODULE_NAME, functionName.getByteStorage());
+            return forName(method, useStack, argsProvided, NULL_MODULE_NAME, functionName.getByteStorage());
         } else {
             final NativeObject moduleName = (NativeObject) values[0];
             final NativeObject functionName = (NativeObject) values[1];
-            return forName(method, useStack, moduleName.getByteStorage(), functionName.getByteStorage());
+            return forName(method, useStack, argsProvided, moduleName.getByteStorage(), functionName.getByteStorage());
         }
     }
 
-    private static AbstractPrimitiveNode forName(final CompiledCodeObject method, final boolean useStack, final byte[] moduleName, final byte[] functionName) {
+    private static AbstractPrimitiveNode forName(final CompiledCodeObject method, final boolean useStack, final boolean argsProvided, final byte[] moduleName, final byte[] functionName) {
         CompilerAsserts.neverPartOfCompilation("Primitive node instantiation should never happen on fast path");
         final EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> functionNameToNodeFactory = PLUGIN_MAP.get(new String(moduleName));
         if ("primitiveSocketCreate3Semaphores".equals(new String(functionName))) {
             Truffle.getRuntime();
         }
         if (functionNameToNodeFactory != null) {
-            return createInstance(method, useStack, functionNameToNodeFactory.get(new String(functionName)));
+            return createInstance(method, useStack, argsProvided, functionNameToNodeFactory.get(new String(functionName)));
         }
         return null;
     }
@@ -184,7 +184,8 @@ public final class PrimitiveNodeFactory {
         return target.toArray(new String[0]);
     }
 
-    private static AbstractPrimitiveNode createInstance(final CompiledCodeObject method, final boolean useStack, final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map) {
+    private static AbstractPrimitiveNode createInstance(final CompiledCodeObject method, final boolean useStack, final boolean argsProvided,
+                    final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map) {
         if (map == null) {
             return null;
         }
@@ -194,10 +195,12 @@ public final class PrimitiveNodeFactory {
             return null;
         }
         assert numReceiverAndArguments == nodeFactory.getExecutionSignature().size();
-        final AbstractArgumentNode[] argumentNodes;
-        argumentNodes = new AbstractArgumentNode[numReceiverAndArguments];
-        for (int i = 0; i < numReceiverAndArguments; i++) {
-            argumentNodes[i] = AbstractArgumentNode.create(i, useStack);
+        AbstractArgumentNode[] argumentNodes = null;
+        if (!argsProvided) {
+            argumentNodes = new AbstractArgumentNode[numReceiverAndArguments];
+            for (int i = 0; i < numReceiverAndArguments; i++) {
+                argumentNodes[i] = AbstractArgumentNode.create(i, useStack);
+            }
         }
         final AbstractPrimitiveNode primitiveNode = nodeFactory.createNode((Object) argumentNodes);
         if (primitiveNode.acceptsMethod(method)) {
@@ -207,7 +210,7 @@ public final class PrimitiveNodeFactory {
         }
     }
 
-    private static AbstractPrimitiveNode createInstance(final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map, final int numArgs) {
+    private static AbstractPrimitiveNode createInstance(final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map, final int numArgs, final boolean argsProvided) {
         if (map == null) {
             return null;
         }
@@ -218,10 +221,12 @@ public final class PrimitiveNodeFactory {
             return null;
         }
         assert numReceiverAndArguments == nodeFactory.getExecutionSignature().size();
-        final AbstractArgumentNode[] argumentNodes;
-        argumentNodes = new AbstractArgumentNode[numReceiverAndArguments];
-        for (int i = 0; i < numReceiverAndArguments; i++) {
-            argumentNodes[i] = AbstractArgumentNode.create(i, false);
+        AbstractArgumentNode[] argumentNodes = null;
+        if (!argsProvided) {
+            argumentNodes = new AbstractArgumentNode[numReceiverAndArguments];
+            for (int i = 0; i < numReceiverAndArguments; i++) {
+                argumentNodes[i] = AbstractArgumentNode.create(i, false);
+            }
         }
         return nodeFactory.createNode((Object) argumentNodes);
     }

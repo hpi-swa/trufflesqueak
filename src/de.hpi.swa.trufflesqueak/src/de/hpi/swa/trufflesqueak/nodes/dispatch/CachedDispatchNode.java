@@ -48,7 +48,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         } else if (lookupResult instanceof CompiledCodeObject) {
             final CompiledCodeObject lookupMethod = (CompiledCodeObject) lookupResult;
             if (lookupMethod.hasPrimitive()) {
-                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(lookupMethod, true, lookupMethod.primitiveIndex());
+                final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(lookupMethod, true, lookupMethod.primitiveIndex(), false);
                 if (primitiveNode != null) {
                     return new CachedDispatchPrimitiveNode(argumentCount, lookupMethod, primitiveNode);
                 }

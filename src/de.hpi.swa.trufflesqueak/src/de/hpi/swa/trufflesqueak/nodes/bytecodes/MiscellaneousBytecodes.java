@@ -40,7 +40,7 @@ public final class MiscellaneousBytecodes {
             super(method, index, NUM_BYTECODES);
             assert method.hasPrimitive() && method.primitiveIndex() == primitiveIndex;
             this.primitiveIndex = primitiveIndex;
-            primitiveNode = PrimitiveNodeFactory.forIndex(method, false, primitiveIndex);
+            primitiveNode = PrimitiveNodeFactory.forIndex(method, false, primitiveIndex, false);
             assert method.hasPrimitive();
         }
 
