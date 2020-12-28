@@ -27,7 +27,7 @@ public final class ResumeContextRootNode extends RootNode {
         activeContext = context;
         final BlockClosureObject closure = context.getClosure();
         final CompiledCodeObject code = closure == null ? context.getCodeObject() : closure.getCompiledBlock();
-        executeContextNode = ExecuteContextNode.create(code, true);
+        executeContextNode = ExecuteContextNode.create(code);
     }
 
     public static ResumeContextRootNode create(final SqueakLanguage language, final ContextObject activeContext) {
