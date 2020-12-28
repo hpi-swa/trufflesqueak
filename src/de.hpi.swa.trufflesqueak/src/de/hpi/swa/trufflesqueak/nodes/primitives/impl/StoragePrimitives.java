@@ -138,7 +138,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 }
 
                 /*
-                 * iterate all stack slots here instead of stackPointer because in rare cases, the
+                 * Iterate all stack slots here instead of stackPointer because in rare cases, the
                  * stack is accessed behind the stackPointer.
                  */
                 for (final ListIterator<? extends FrameSlot> iterator = FrameAccess.getStackSlotsIterator(current); iterator.hasNext();) {
