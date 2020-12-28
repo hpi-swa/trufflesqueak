@@ -17,10 +17,12 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CharacterObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakGuards;
+import de.hpi.swa.trufflesqueak.nodes.accessing.FloatObjectNodes.AsFloatObjectIfNessaryNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectInstSizeNode;
@@ -32,6 +34,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.QuaternaryPr
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.TernaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveFallbacks.UnaryPrimitiveFallback;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
 import de.hpi.swa.trufflesqueak.util.UnsafeUtils;
 
 public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -229,6 +232,58 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected static final long doNativeInt(final NativeObject receiver, final long index, final long value) {
             receiver.setInt(index - 1, (int) value);
             return value;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 238)
+    protected abstract static class PrimFloatArrayAtNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"}, rewriteOn = RespecializeException.class)
+        protected static final double doAtIntFinite(final NativeObject receiver, final long index) throws RespecializeException {
+            return ensureFinite(Float.intBitsToFloat(receiver.getInt(index - 1)));
+        }
+
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"}, replaces = "doAtIntFinite")
+        protected static final Object doAtInt(final NativeObject receiver, final long index,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return boxNode.execute(Float.intBitsToFloat(receiver.getInt(index - 1)));
+        }
+
+        @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, rewriteOn = RespecializeException.class)
+        protected static final double doAtLongFinite(final NativeObject receiver, final long index) throws RespecializeException {
+            return ensureFinite(Double.longBitsToDouble(receiver.getLong(index - 1)));
+        }
+
+        @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"}, replaces = "doAtLongFinite")
+        protected static final Object doAtLong(final NativeObject receiver, final long index,
+                        @Cached final AsFloatObjectIfNessaryNode boxNode) {
+            return boxNode.execute(Double.longBitsToDouble(receiver.getLong(index - 1)));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 239)
+    protected abstract static class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
+        protected static final double doAtPutInt(final NativeObject receiver, final long index, final double value) {
+            receiver.setInt(index - 1, Float.floatToRawIntBits((float) value));
+            return value;
+        }
+
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
+        protected static final double doAtPutIntLong(final NativeObject receiver, final long index, final long value) {
+            return doAtPutInt(receiver, index, value);
+        }
+
+        @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"})
+        protected static final double doAtPutLong(final NativeObject receiver, final long index, final double value) {
+            receiver.setLong(index - 1, Double.doubleToRawLongBits(value));
+            return value;
+        }
+
+        @Specialization(guards = {"receiver.isLongType()", "index <= receiver.getLongLength()"})
+        protected static final double doAtPutLongLong(final NativeObject receiver, final long index, final long value) {
+            return doAtPutLong(receiver, index, value);
         }
     }
 }
