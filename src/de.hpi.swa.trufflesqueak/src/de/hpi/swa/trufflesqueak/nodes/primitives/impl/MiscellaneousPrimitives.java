@@ -623,6 +623,25 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(indices = 158)
+    public abstract static class PrimCompareString2Node extends AbstractPrimitiveNode {
+        @Specialization(guards = {"receiver.isByteType()", "other.isByteType()"})
+        protected static final long doCompareAsciiOrder(final NativeObject receiver, final NativeObject other) {
+            final int len1 = receiver.getByteLength();
+            final int len2 = other.getByteLength();
+            final int min = Math.min(len1, len2);
+            for (int i = 0; i < min; i++) {
+                final byte c1 = receiver.getByte(i);
+                final byte c2 = other.getByte(i);
+                if (c1 != c2) {
+                    return (c1 & 0xff) < (c2 & 0xff) ? -1L : 1L;
+                }
+            }
+            return len1 == len2 ? 0L : len1 < len2 ? -1L : 1L;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 163)
     protected abstract static class PrimGetImmutabilityNode extends AbstractPrimitiveNode {
         @Specialization
