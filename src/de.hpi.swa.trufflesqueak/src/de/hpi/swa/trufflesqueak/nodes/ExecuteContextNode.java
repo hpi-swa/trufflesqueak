@@ -19,9 +19,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -47,20 +45,18 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
-    @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
     @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
 
     private SourceSection section;
 
-    protected ExecuteContextNode(final CompiledCodeObject code, final boolean resume) {
+    protected ExecuteContextNode(final CompiledCodeObject code) {
         this.code = code;
         initialPC = code.getInitialPC();
         bytecodeNodes = code.asBytecodeNodesEmpty();
-        materializeContextOnMethodExitNode = resume ? null : MaterializeContextOnMethodExitNode.create();
     }
 
-    public static ExecuteContextNode create(final CompiledCodeObject code, final boolean resume) {
-        return new ExecuteContextNode(code, resume);
+    public static ExecuteContextNode create(final CompiledCodeObject code) {
+        return new ExecuteContextNode(code);
     }
 
     @Override
@@ -76,12 +72,6 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
-        } catch (final NonVirtualReturn | ProcessSwitch nvr) {
-            /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
-            getGetOrCreateContextNode().executeGet(frame).markEscaped();
-            throw nvr;
-        } finally {
-            materializeContextOnMethodExitNode.execute(frame);
         }
     }
 
@@ -103,14 +93,6 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
             contextReference = lookupContextReference(SqueakLanguage.class);
         }
         return contextReference.get();
-    }
-
-    private GetOrCreateContextNode getGetOrCreateContextNode() {
-        if (getOrCreateContextNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            getOrCreateContextNode = insert(GetOrCreateContextNode.create(false));
-        }
-        return getOrCreateContextNode;
     }
 
     /*

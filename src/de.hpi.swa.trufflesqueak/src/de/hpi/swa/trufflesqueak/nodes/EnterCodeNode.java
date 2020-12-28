@@ -15,11 +15,14 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
@@ -35,11 +38,13 @@ public final class EnterCodeNode extends RootNode {
     @Children private FrameStackWriteNode[] writeTempNodes;
     @Child private AbstractExecuteContextNode executeContextNode;
     @Child private InterruptHandlerNode interruptHandlerNode;
+    @Child private GetOrCreateContextNode getOrCreateContextNode;
+    @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
 
     protected EnterCodeNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
-        executeContextNode = ExecuteContextNode.create(code, false);
+        executeContextNode = ExecuteContextNode.create(code);
         /*
          * Only check for interrupts if method is relatively large. Avoid check if a closure is
          * activated (effectively what #primitiveClosureValueNoContextSwitch is for). Also, skip
@@ -56,15 +61,23 @@ public final class EnterCodeNode extends RootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        if (interruptHandlerNode != null) {
-            interruptHandlerNode.executeTrigger(frame);
+        try {
+            initializeFrame(frame);
+            if (interruptHandlerNode != null) {
+                interruptHandlerNode.executeTrigger(frame);
+            }
+            return executeContextNode.executeFresh(frame, initialPC);
+        } catch (final NonVirtualReturn | ProcessSwitch nvr) {
+            /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
+            getGetOrCreateContextNode().executeGet(frame).markEscaped();
+            throw nvr;
+        } finally {
+            materializeContextOnMethodExitNode.execute(frame);
         }
-        ensureInitialized(frame);
-        return executeContextNode.executeFresh(frame, initialPC);
     }
 
     @ExplodeLoop
-    private void ensureInitialized(final VirtualFrame frame) {
+    private void initializeFrame(final VirtualFrame frame) {
         if (writeTempNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final BlockClosureObject closure = FrameAccess.getClosure(frame);
@@ -89,6 +102,14 @@ public final class EnterCodeNode extends RootNode {
         }
         FrameAccess.setInstructionPointer(frame, code, initialPC);
         FrameAccess.setStackPointer(frame, code, initialSP);
+    }
+
+    private GetOrCreateContextNode getGetOrCreateContextNode() {
+        if (getOrCreateContextNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getOrCreateContextNode = insert(GetOrCreateContextNode.create(false));
+        }
+        return getOrCreateContextNode;
     }
 
     @Override
