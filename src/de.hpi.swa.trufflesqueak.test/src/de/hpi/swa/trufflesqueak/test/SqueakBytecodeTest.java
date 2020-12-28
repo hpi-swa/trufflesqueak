@@ -491,11 +491,6 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     }
 
     @Test
-    public void testCallPrimitive() {
-        assertEquals(2L, runBinaryPrimitive(1, 1L, 1L));
-    }
-
-    @Test
     public void testCallPrimitiveFailure() {
         final int primCode = 1;
         final long rcvr = 1L;
