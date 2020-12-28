@@ -1075,6 +1075,57 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(indices = 189)
+    protected abstract static class PrimExecuteMethod2Node extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
+        @Specialization
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final CompiledCodeObject methodObject,
+                        @Cached final DispatchEagerlyNode dispatchNode) {
+            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver});
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 189)
+    protected abstract static class PrimExecuteMethod3Node extends AbstractPrimitiveNode implements TernaryPrimitiveFallback {
+        @Specialization
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final CompiledCodeObject methodObject,
+                        @Cached final DispatchEagerlyNode dispatchNode) {
+            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver, arg1});
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 189)
+    protected abstract static class PrimExecuteMethod4Node extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
+        @Specialization
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final CompiledCodeObject methodObject,
+                        @Cached final DispatchEagerlyNode dispatchNode) {
+            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver, arg1, arg2});
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 189)
+    protected abstract static class PrimExecuteMethod5Node extends AbstractPrimitiveNode implements QuinaryPrimitiveFallback {
+        @Specialization
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final CompiledCodeObject methodObject,
+                        @Cached final DispatchEagerlyNode dispatchNode) {
+            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver, arg1, arg2, arg3});
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 189)
+    protected abstract static class PrimExecuteMethod6Node extends AbstractPrimitiveNode implements SenaryPrimitiveFallback {
+        @Specialization
+        protected static final Object doExecute(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        final CompiledCodeObject methodObject,
+                        @Cached final DispatchEagerlyNode dispatchNode) {
+            return dispatchNode.executeDispatch(frame, methodObject, new Object[]{receiver, arg1, arg2, arg3, arg4});
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 218)
     protected abstract static class PrimDoNamedPrimitiveWithArgsNode extends AbstractPrimitiveNode implements QuaternaryPrimitiveFallback {
 
