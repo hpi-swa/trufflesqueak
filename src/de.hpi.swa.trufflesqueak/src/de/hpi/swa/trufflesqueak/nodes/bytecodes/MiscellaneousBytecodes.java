@@ -50,7 +50,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            throw SqueakException.create("Should never be called directly.");
+            // no-op, primitives are handled specially.
         }
 
         @Override

@@ -106,19 +106,6 @@ public abstract class AbstractSqueakTestCase {
         return runMethod(method, receiver, arguments);
     }
 
-    protected Object runBinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
-        return runPrim(new Object[]{17104899L}, primCode, rcvr, arguments);
-    }
-
-    protected Object runQuinaryPrimitive(final int primCode, final Object rcvr, final Object... arguments) {
-        return runPrim(new Object[]{68222979L}, primCode, rcvr, arguments);
-    }
-
-    protected Object runPrim(final Object[] literals, final int primCode, final Object rcvr, final Object... arguments) {
-        final CompiledCodeObject method = makeMethod(literals, 139, primCode & 0xFF, (primCode & 0xFF00) >> 8);
-        return runMethod(method, rcvr, arguments);
-    }
-
     protected static VirtualFrame createTestFrame(final CompiledCodeObject code) {
         final Object[] arguments = FrameAccess.newWith(code, NilObject.SINGLETON, null, new Object[]{NilObject.SINGLETON});
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
