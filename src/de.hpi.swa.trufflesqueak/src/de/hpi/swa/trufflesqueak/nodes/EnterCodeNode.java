@@ -82,18 +82,19 @@ public final class EnterCodeNode extends RootNode {
         if (writeTempNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final BlockClosureObject closure = FrameAccess.getClosure(frame);
-            final int numArgs;
+            final int numArgs = FrameAccess.getNumArguments(frame);
             if (closure == null) {
                 initialPC = code.getInitialPC();
                 if (code.hasPrimitive()) { // skip primitive bytecode
                     initialPC += CallPrimitiveNode.NUM_BYTECODES;
                 }
                 initialSP = FrameAccess.getCodeObject(frame).getNumTemps();
-                numArgs = code.getNumArgs();
+                // +1 for error objects from primitive failures
+                assert numArgs == code.getNumArgs() || code.hasPrimitive() && numArgs == code.getNumArgs() + 1;
             } else {
                 initialPC = (int) closure.getStartPC();
                 initialSP = closure.getNumTemps();
-                numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
+                assert numArgs == (int) (closure.getNumArgs() + closure.getNumCopied());
             }
             writeTempNodes = new FrameStackWriteNode[initialSP - numArgs];
             for (int i = 0; i < writeTempNodes.length; i++) {

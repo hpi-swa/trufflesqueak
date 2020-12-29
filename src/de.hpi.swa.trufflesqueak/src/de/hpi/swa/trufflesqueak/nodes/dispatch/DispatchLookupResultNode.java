@@ -16,6 +16,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -46,8 +47,21 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
         return dispatchNode.execute(frame);
     }
 
-    @Specialization(replaces = "doCached")
+    @Specialization(replaces = "doCached", rewriteOn = RespecializeException.class)
     protected static final Object doIndirect(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
+                    @Cached final ResolveMethodNode methodNode,
+                    @Cached("create(frame, selector, argumentCount)") final CreateFrameArgumentsForIndirectCallNode argumentsNode,
+                    @Cached final IndirectCallNode callNode,
+                    @CachedContext(SqueakLanguage.class) final SqueakImageContext image) throws RespecializeException {
+        final CompiledCodeObject method = methodNode.execute(image, receiverClass, lookupResult);
+        if (method.hasPrimitive()) {
+            throw RespecializeException.transferToInterpreterInvalidateAndThrow();
+        }
+        return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, receiver, receiverClass, lookupResult, method));
+    }
+
+    @Specialization(replaces = "doIndirect")
+    protected static final Object doIndirectWithPrimitives(final VirtualFrame frame, final Object receiver, final ClassObject receiverClass, final Object lookupResult,
                     @Cached final ResolveMethodNode methodNode,
                     @Cached("create(frame, selector, argumentCount)") final CreateFrameArgumentsForIndirectCallNode argumentsNode,
                     @Cached final IndirectPrimitiveNode primitiveNode,
@@ -58,7 +72,7 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
             try {
                 return primitiveNode.execute(frame, method);
             } catch (final PrimitiveFailed pf) {
-                // FIXME: do something with prim error code
+                assert !method.hasStoreIntoTemp1AfterCallPrimitive() : "Primitive error codes not yet supported in indirect sends";
             }
         }
         return callNode.call(method.getCallTarget(), argumentsNode.execute(frame, receiver, receiverClass, lookupResult, method));

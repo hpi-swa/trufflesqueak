@@ -50,11 +50,15 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
             if (failureCounter.shouldNoLongerSendEagerly()) {
                 throw pf; // Rewrite specialization.
             } else {
-                // Slow path send to fallback code.
-                return IndirectCallNode.getUncached().call(cachedMethod.getCallTarget(),
-                                FrameAccess.newWith(cachedMethod, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
+                return slowPathSendToFallbackCode(frame, receiverAndArguments, cachedMethod, pf);
             }
         }
+    }
+
+    private static Object slowPathSendToFallbackCode(final VirtualFrame frame, final Object[] receiverAndArguments, final CompiledCodeObject cachedMethod, final PrimitiveFailed pf) {
+        return IndirectCallNode.getUncached().call(cachedMethod.getCallTarget(),
+                        FrameAccess.newWith(cachedMethod, FrameAccess.getContextOrMarkerSlow(frame), null,
+                                        HandlePrimitiveFailedNode.uncached(cachedMethod, pf, receiverAndArguments)));
     }
 
     @Specialization(guards = {"method == cachedMethod", "cachedMethod.hasPrimitive()"}, //
@@ -62,13 +66,13 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
     protected static final Object doDirectWithPrimitive(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
                     @Cached("forIndex(cachedMethod, false, cachedMethod.primitiveIndex(), true)") final AbstractPrimitiveNode primitiveNode,
+                    @Cached("create(cachedMethod)") final HandlePrimitiveFailedNode handleFailureNode,
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                     @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
         try {
             return primitiveNode.executeWithArguments(frame, receiverAndArguments);
         } catch (final PrimitiveFailed pf) {
-            // FIXME: do something with error code
-            return callDirect(callNode, cachedMethod, getContextOrMarkerNode.execute(frame), receiverAndArguments);
+            return callDirect(callNode, cachedMethod, getContextOrMarkerNode.execute(frame), handleFailureNode.execute(pf, receiverAndArguments));
         }
     }
 

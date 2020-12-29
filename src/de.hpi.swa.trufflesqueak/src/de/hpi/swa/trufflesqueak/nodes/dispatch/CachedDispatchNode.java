@@ -110,14 +110,14 @@ public abstract class CachedDispatchNode extends AbstractNode {
             } catch (final PrimitiveFailed pf) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (failureCounter.shouldNoLongerSendEagerly()) {
-                    return replace(AbstractCachedDispatchMethodNode.create(frame, argumentCount, method)).execute(frame);
+                    return replace(new CachedDispatchPrimitiveMethodWithoutSenderNode(frame, argumentCount, method, primitiveNode)).execute(frame);
                 } else {
-                    return slowPathSendToFallbackCode(frame);
+                    return slowPathSendToFallbackCode(frame, pf);
                 }
             }
         }
 
-        private Object slowPathSendToFallbackCode(final VirtualFrame frame) {
+        private Object slowPathSendToFallbackCode(final VirtualFrame frame, final PrimitiveFailed pf) {
             final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
             final int stackPointer = FrameAccess.getStackPointer(frame, code);
             final Object[] receiverAndArguments = new Object[1 + argumentCount];
@@ -135,7 +135,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
                 }
             }
             return IndirectCallNode.getUncached().call(method.getCallTarget(),
-                            FrameAccess.newWith(method, FrameAccess.getContextOrMarkerSlow(frame), null, receiverAndArguments));
+                            FrameAccess.newWith(method, FrameAccess.getContextOrMarkerSlow(frame), null, HandlePrimitiveFailedNode.uncached(method, pf, receiverAndArguments)));
         }
     }
 
@@ -173,10 +173,12 @@ public abstract class CachedDispatchNode extends AbstractNode {
     protected static final class CachedDispatchPrimitiveMethodWithoutSenderNode extends AbstractCachedDispatchMethodNode {
         @Child private AbstractPrimitiveNode primitiveNode;
         @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
+        @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
 
         private CachedDispatchPrimitiveMethodWithoutSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
             super(frame, argumentCount, method);
             this.primitiveNode = primitiveNode;
+            handlePrimitiveFailedNode = HandlePrimitiveFailedNode.create(method);
         }
 
         @Override
@@ -189,15 +191,14 @@ public abstract class CachedDispatchNode extends AbstractNode {
             try {
                 return primitiveNode.executeWithArguments(frame, receiverAndArguments);
             } catch (final PrimitiveFailed pf) {
-                // FIXME: push prim error code
+                try {
+                    method.getDoesNotNeedSenderAssumption().check();
+                } catch (final InvalidAssumptionException e) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    return replace(new CachedDispatchMethodWithSenderNode(frame, receiverAndArgumentsNodes.length - 1, method)).execute(frame);
+                }
+                return callNode.call(FrameAccess.newWith(method, getContextOrMarkerNode.execute(frame), handlePrimitiveFailedNode.execute(pf, receiverAndArguments)));
             }
-            try {
-                method.getDoesNotNeedSenderAssumption().check();
-            } catch (final InvalidAssumptionException e) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new CachedDispatchMethodWithSenderNode(frame, receiverAndArgumentsNodes.length - 1, method)).execute(frame);
-            }
-            return callNode.call(FrameAccess.newWith(method, getContextOrMarkerNode.execute(frame), receiverAndArguments));
         }
     }
 
