@@ -14,9 +14,11 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.RespecializeException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
@@ -94,20 +96,57 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
         return callDirect(callNode, cachedMethod, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
     }
 
-    @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
+    @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, rewriteOn = RespecializeException.class, limit = "1")
     protected static final Object doIndirect(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
-                    @Cached final IndirectCallNode callNode) {
-        assert !method.hasPrimitive();
+                    @Cached final IndirectCallNode callNode) throws RespecializeException {
+        if (method.hasPrimitive()) {
+            throw RespecializeException.transferToInterpreterInvalidateAndThrow();
+        }
         return callIndirect(callNode, method, getContextOrMarkerNode.execute(frame), receiverAndArguments);
     }
 
-    @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, limit = "1")
+    @Specialization(guards = "doesNotNeedSender(method, assumptionProfile)", replaces = {"doIndirect"}, limit = "1")
+    protected static final Object doIndirectWithPrimitive(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
+                    @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
+                    @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
+                    @Cached final IndirectPrimitiveNode primitiveNode,
+                    @Cached final IndirectCallNode callNode) {
+        if (method.hasPrimitive()) {
+            try {
+                primitiveNode.execute(frame, method, receiverAndArguments);
+            } catch (final PrimitiveFailed pf) {
+                assert !method.hasStoreIntoTemp1AfterCallPrimitive() : "Primitive error codes not yet supported in indirect sends";
+            }
+        }
+        return callIndirect(callNode, method, getContextOrMarkerNode.execute(frame), receiverAndArguments);
+    }
+
+    @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doDirect", "doDirectWithSender"}, rewriteOn = RespecializeException.class, limit = "1")
     protected static final Object doIndirectWithSender(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode,
                     @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
+                    @Cached final IndirectCallNode callNode) throws RespecializeException {
+        if (method.hasPrimitive()) {
+            throw RespecializeException.transferToInterpreterInvalidateAndThrow();
+        }
+        return callIndirect(callNode, method, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
+    }
+
+    @Specialization(guards = "!doesNotNeedSender(method, assumptionProfile)", replaces = {"doIndirectWithSender"}, limit = "1")
+    protected static final Object doIndirectWithPrimitiveAndSender(final VirtualFrame frame, final CompiledCodeObject method, final Object[] receiverAndArguments,
+                    @Cached("create(true)") final GetOrCreateContextNode getOrCreateContextNode,
+                    @SuppressWarnings("unused") @Shared("assumptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile,
+                    @Cached final IndirectPrimitiveNode primitiveNode,
                     @Cached final IndirectCallNode callNode) {
+        if (method.hasPrimitive()) {
+            try {
+                primitiveNode.execute(frame, method, receiverAndArguments);
+            } catch (final PrimitiveFailed pf) {
+                assert !method.hasStoreIntoTemp1AfterCallPrimitive() : "Primitive error codes not yet supported in indirect sends";
+            }
+        }
         return callIndirect(callNode, method, getOrCreateContextNode.executeGet(frame), receiverAndArguments);
     }
 
@@ -121,5 +160,21 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
 
     protected static final boolean doesNotNeedSender(final CompiledCodeObject method, final ValueProfile assumptionProfile) {
         return assumptionProfile.profile(method.getDoesNotNeedSenderAssumption()).isValid();
+    }
+
+    @ImportStatic(PrimitiveNodeFactory.class)
+    protected abstract static class IndirectPrimitiveNode extends Node {
+        /* Number of primitives to cache per method (may need to be raised if not high enough). */
+        protected static final int CACHE_LIMIT = 4;
+
+        protected abstract Object execute(VirtualFrame frame, CompiledCodeObject primitiveMethod, Object[] receiverAndArguments);
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "primitiveMethod == cachedPrimitiveMethod", limit = "CACHE_LIMIT")
+        protected static final Object doCached(final VirtualFrame frame, final CompiledCodeObject primitiveMethod, final Object[] receiverAndArguments,
+                        @Cached("primitiveMethod") final CompiledCodeObject cachedPrimitiveMethod,
+                        @Cached("forIndex(cachedPrimitiveMethod, true, cachedPrimitiveMethod.primitiveIndex(), true)") final AbstractPrimitiveNode primitiveNode) {
+            return primitiveNode.executeWithArguments(frame, receiverAndArguments);
+        }
     }
 }

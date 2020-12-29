@@ -152,11 +152,17 @@ public abstract class CachedDispatchNode extends AbstractNode {
                 primitiveNode = PrimitiveNodeFactory.forIndex(method, true, method.primitiveIndex(), true);
             }
             if (primitiveNode != null) {
-                return new CachedDispatchPrimitiveMethodWithoutSenderNode(frame, argumentCount, method, primitiveNode);
-            } else if (method.getDoesNotNeedSenderAssumption().isValid()) {
-                return new CachedDispatchMethodWithoutSenderNode(frame, argumentCount, method);
+                if (method.getDoesNotNeedSenderAssumption().isValid()) {
+                    return new CachedDispatchPrimitiveMethodWithoutSenderNode(frame, argumentCount, method, primitiveNode);
+                } else {
+                    return new CachedDispatchPrimitiveMethodWithSenderNode(frame, argumentCount, method, primitiveNode);
+                }
             } else {
-                return new CachedDispatchMethodWithSenderNode(frame, argumentCount, method);
+                if (method.getDoesNotNeedSenderAssumption().isValid()) {
+                    return new CachedDispatchMethodWithoutSenderNode(frame, argumentCount, method);
+                } else {
+                    return new CachedDispatchMethodWithSenderNode(frame, argumentCount, method);
+                }
             }
         }
 
