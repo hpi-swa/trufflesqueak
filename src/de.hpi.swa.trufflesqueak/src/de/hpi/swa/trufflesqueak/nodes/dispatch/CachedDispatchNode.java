@@ -7,7 +7,6 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -110,7 +109,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
             } catch (final PrimitiveFailed pf) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (failureCounter.shouldNoLongerSendEagerly()) {
-                    return replace(new CachedDispatchPrimitiveMethodWithoutSenderNode(frame, argumentCount, method, primitiveNode)).execute(frame);
+                    return replace(AbstractCachedDispatchMethodNode.create(frame, argumentCount, method)).execute(frame);
                 } else {
                     return slowPathSendToFallbackCode(frame, pf);
                 }
@@ -127,11 +126,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
                 if (stackIndex < numArgs) {
                     receiverAndArguments[i] = FrameAccess.getArgument(frame, stackIndex);
                 } else {
-                    final FrameSlot stackSlot = FrameAccess.findStackSlot(frame, stackIndex);
-                    receiverAndArguments[i] = frame.getValue(stackSlot);
-                    if (frame.isObject(stackSlot)) {
-                        frame.setObject(stackSlot, null); /* Clear stack slot. */
-                    }
+                    receiverAndArguments[i] = frame.getValue(FrameAccess.findStackSlot(frame, stackIndex));
                 }
             }
             return IndirectCallNode.getUncached().call(method.getCallTarget(),
@@ -170,15 +165,50 @@ public abstract class CachedDispatchNode extends AbstractNode {
         }
     }
 
-    protected static final class CachedDispatchPrimitiveMethodWithoutSenderNode extends AbstractCachedDispatchMethodNode {
-        @Child private AbstractPrimitiveNode primitiveNode;
-        @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
-        @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
+    protected abstract static class AbstractCachedDispatchPrimitiveMethodNode extends AbstractCachedDispatchMethodNode {
+        @Child protected AbstractPrimitiveNode primitiveNode;
+        @Child protected HandlePrimitiveFailedNode handlePrimitiveFailedNode;
 
-        private CachedDispatchPrimitiveMethodWithoutSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
+        protected AbstractCachedDispatchPrimitiveMethodNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
             super(frame, argumentCount, method);
             this.primitiveNode = primitiveNode;
             handlePrimitiveFailedNode = HandlePrimitiveFailedNode.create(method);
+        }
+    }
+
+    protected static final class CachedDispatchPrimitiveMethodWithoutSenderNode extends AbstractCachedDispatchPrimitiveMethodNode {
+        @Child private GetContextOrMarkerNode getContextOrMarkerNode = GetContextOrMarkerNode.create();
+
+        protected CachedDispatchPrimitiveMethodWithoutSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
+            super(frame, argumentCount, method, primitiveNode);
+        }
+
+        @Override
+        @ExplodeLoop
+        public Object execute(final VirtualFrame frame) {
+            try {
+                method.getDoesNotNeedSenderAssumption().check();
+            } catch (final InvalidAssumptionException e) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                return replace(new CachedDispatchPrimitiveMethodWithSenderNode(frame, receiverAndArgumentsNodes.length - 1, method, primitiveNode)).execute(frame);
+            }
+            final Object[] receiverAndArguments = new Object[receiverAndArgumentsNodes.length];
+            for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
+                receiverAndArguments[i] = receiverAndArgumentsNodes[i].executeRead(frame);
+            }
+            try {
+                return primitiveNode.executeWithArguments(frame, receiverAndArguments);
+            } catch (final PrimitiveFailed pf) {
+                return callNode.call(FrameAccess.newWith(method, getContextOrMarkerNode.execute(frame), handlePrimitiveFailedNode.execute(pf, receiverAndArguments)));
+            }
+        }
+    }
+
+    protected static final class CachedDispatchPrimitiveMethodWithSenderNode extends AbstractCachedDispatchPrimitiveMethodNode {
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create(true);
+
+        protected CachedDispatchPrimitiveMethodWithSenderNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method, final AbstractPrimitiveNode primitiveNode) {
+            super(frame, argumentCount, method, primitiveNode);
         }
 
         @Override
@@ -191,13 +221,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
             try {
                 return primitiveNode.executeWithArguments(frame, receiverAndArguments);
             } catch (final PrimitiveFailed pf) {
-                try {
-                    method.getDoesNotNeedSenderAssumption().check();
-                } catch (final InvalidAssumptionException e) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    return replace(new CachedDispatchMethodWithSenderNode(frame, receiverAndArgumentsNodes.length - 1, method)).execute(frame);
-                }
-                return callNode.call(FrameAccess.newWith(method, getContextOrMarkerNode.execute(frame), handlePrimitiveFailedNode.execute(pf, receiverAndArguments)));
+                return callNode.call(FrameAccess.newWith(method, getOrCreateContextNode.executeGet(frame), handlePrimitiveFailedNode.execute(pf, receiverAndArguments)));
             }
         }
     }
