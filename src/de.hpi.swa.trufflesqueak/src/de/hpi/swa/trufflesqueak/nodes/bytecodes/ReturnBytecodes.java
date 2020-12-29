@@ -64,10 +64,10 @@ public final class ReturnBytecodes {
 
     private static final class ReturnFromMethodNode extends AbstractReturnKindNode {
         private final ConditionProfile hasModifiedSenderProfile = ConditionProfile.createBinaryProfile();
-        private final FrameSlot thisContextSlot;
+        private final FrameSlot contextSlot;
 
         private ReturnFromMethodNode(final VirtualFrame frame) {
-            thisContextSlot = FrameAccess.getContextSlot(frame);
+            contextSlot = FrameAccess.findContextSlot(frame);
         }
 
         @Override
@@ -82,7 +82,7 @@ public final class ReturnBytecodes {
         }
 
         private boolean hasModifiedSender(final VirtualFrame frame) {
-            final ContextObject context = FrameAccess.getContext(frame, thisContextSlot);
+            final ContextObject context = FrameAccess.getContext(frame, contextSlot);
             return context != null && context.hasModifiedSender();
         }
     }

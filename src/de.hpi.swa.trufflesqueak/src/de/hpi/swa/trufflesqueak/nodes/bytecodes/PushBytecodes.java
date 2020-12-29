@@ -15,7 +15,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -31,10 +30,10 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakProfiles.SqueakProfile;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.ArrayFromStackNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeFactory.CreateNewArrayNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPopNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -569,7 +568,6 @@ public final class PushBytecodes {
         @Child private FrameStackPushNode pushNode = FrameStackPushNode.create();
         @Child private FrameStackReadNode tempNode;
         private final int tempIndex;
-        private final ConditionProfile nullToNilProfile = ConditionProfile.createBinaryProfile();
 
         public PushTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
@@ -582,7 +580,7 @@ public final class PushBytecodes {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 tempNode = insert(FrameStackReadNode.create(frame, tempIndex, false));
             }
-            pushNode.execute(frame, NilObject.nullToNil(tempNode.executeReadUnsafe(frame), nullToNilProfile));
+            pushNode.execute(frame, tempNode.executeRead(frame));
         }
 
         @Override

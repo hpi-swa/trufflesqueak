@@ -601,11 +601,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public boolean pointsTo(final Object thang) {
         // TODO: make sure this works correctly
         if (truffleFrame != null) {
-            if (getSender() == thang || thang.equals(getInstructionPointer(ConditionProfile.getUncached())) || thang.equals(getStackPointer()) || getCodeObject() == thang || getClosure() == thang ||
+            final int stackPointer = getStackPointer();
+            if (getSender() == thang || thang.equals(getInstructionPointer(ConditionProfile.getUncached())) || thang.equals(stackPointer) || getCodeObject() == thang || getClosure() == thang ||
                             getReceiver() == thang) {
                 return true;
             }
-            for (int i = 0; i < getCodeObject().getNumStackSlots(); i++) {
+            for (int i = 0; i < stackPointer; i++) {
                 if (atTemp(i) == thang) {
                     return true;
                 }
@@ -642,7 +643,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
                 assert methodOrBlock != fromPointer : "Code should change and with it the frame descriptor";
                 assert process != fromPointer : "Process should change";
-                for (int j = arguments.length - FrameAccess.getArgumentStartIndex(); j < getStackPointer(); j++) {
+                for (int j = FrameAccess.getNumArguments(truffleFrame); j < getStackPointer(); j++) {
                     final FrameSlot slot = FrameAccess.findStackSlot(truffleFrame, j);
                     if (slot != null && truffleFrame.isObject(slot)) {
                         final Object stackValue = FrameUtil.getObjectSafe(truffleFrame, slot);
