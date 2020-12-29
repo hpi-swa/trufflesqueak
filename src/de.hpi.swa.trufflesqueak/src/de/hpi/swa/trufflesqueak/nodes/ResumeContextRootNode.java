@@ -6,12 +6,15 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
@@ -21,18 +24,19 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class ResumeContextRootNode extends RootNode {
-    protected ContextObject activeContext;
+    private ContextObject activeContext;
+    private final IntValueProfile instructionPointerProfile = IntValueProfile.createIdentityProfile();
 
     @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
 
-    @Child private AbstractExecuteContextNode executeContextNode;
+    @Child private AbstractExecuteContextNode executeBytecodeNode;
 
     protected ResumeContextRootNode(final SqueakLanguage language, final ContextObject context) {
         super(language, context.getTruffleFrame().getFrameDescriptor());
         activeContext = context;
         final BlockClosureObject closure = context.getClosure();
         final CompiledCodeObject code = closure == null ? context.getCodeObject() : closure.getCompiledBlock();
-        executeContextNode = ExecuteContextNode.create(code);
+        executeBytecodeNode = new ExecuteBytecodeNode(code);
         contextReference = lookupContextReference(SqueakLanguage.class);
     }
 
@@ -43,10 +47,20 @@ public final class ResumeContextRootNode extends RootNode {
     @Override
     public Object execute(final VirtualFrame frame) {
         try {
-            return executeContextNode.executeResume(activeContext.getTruffleFrame(), activeContext.getInstructionPointerForBytecodeLoop());
+            final int pc = instructionPointerProfile.profile(activeContext.getInstructionPointerForBytecodeLoop());
+            if (CompilerDirectives.isPartialEvaluationConstant(pc)) {
+                return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
+            } else {
+                return interpretBytecodeWithBoundary(pc);
+            }
         } finally {
             contextReference.get().lastSeenContext = null; // Stop materialization here.
         }
+    }
+
+    @TruffleBoundary
+    private Object interpretBytecodeWithBoundary(final int pc) {
+        return executeBytecodeNode.execute(activeContext.getTruffleFrame(), pc);
     }
 
     public ContextObject getActiveContext() {

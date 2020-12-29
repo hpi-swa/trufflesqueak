@@ -26,7 +26,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-public final class ExecuteContextNode extends AbstractExecuteContextNode {
+public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
     private static final int LOCAL_RETURN_PC = -2;
 
     protected final CompiledCodeObject code;
@@ -38,36 +38,16 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
 
     private SourceSection section;
 
-    protected ExecuteContextNode(final CompiledCodeObject code) {
+    public ExecuteBytecodeNode(final CompiledCodeObject code) {
         this.code = code;
         initialPC = code.getInitialPC();
         bytecodeNodes = code.asBytecodeNodesEmpty();
     }
 
-    public static ExecuteContextNode create(final CompiledCodeObject code) {
-        return new ExecuteContextNode(code);
-    }
-
     @Override
-    public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return code.toString();
-    }
-
-    @Override
-    public Object executeFresh(final VirtualFrame frame, final int startPC) {
+    public Object execute(final VirtualFrame frame, final int startPC) {
         try {
-            return startBytecode(frame, startPC);
-        } catch (final NonLocalReturn nlr) {
-            /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
-            return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
-        }
-    }
-
-    @Override
-    public Object executeResume(final VirtualFrame frame, final int resumptionPC) {
-        try {
-            return resumeBytecode(frame, resumptionPC);
+            return interpretBytecode(frame, startPC);
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
@@ -78,7 +58,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
      * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://git.io/fjEDw).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private Object startBytecode(final VirtualFrame frame, final int startPC) {
+    private Object interpretBytecode(final VirtualFrame frame, final int startPC) {
         CompilerAsserts.partialEvaluationConstant(bytecodeNodes.length);
         int pc = startPC;
         int backJumpCounter = 0;
@@ -144,63 +124,6 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     }
 
     /*
-     * Non-optimized version of startBytecode used to resume contexts.
-     */
-    private Object resumeBytecode(final VirtualFrame frame, final int resumptionPC) {
-        assert resumptionPC > 0 : "Trying to resume a fresh/terminated/illegal context";
-        int pc = resumptionPC;
-        Object returnValue = null;
-        bytecode_loop_slow: while (pc != LOCAL_RETURN_PC) {
-            final AbstractBytecodeNode node = fetchNextBytecodeNode(frame, pc - initialPC);
-            if (node instanceof AbstractSendNode) {
-                pc = node.getSuccessorIndex();
-                FrameAccess.setInstructionPointer(frame, code, pc);
-                node.executeVoid(frame);
-                final int actualNextPc = FrameAccess.getInstructionPointer(frame, code);
-                if (pc != actualNextPc) {
-                    /*
-                     * pc has changed, which can happen if a context is restarted (e.g. as part of
-                     * Exception>>retry). For now, we continue in the interpreter to avoid confusing
-                     * the Graal compiler.
-                     */
-                    CompilerDirectives.transferToInterpreter();
-                    pc = actualNextPc;
-                }
-                continue bytecode_loop_slow;
-            } else if (node instanceof ConditionalJumpNode) {
-                final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                if (jumpNode.executeCondition(frame)) {
-                    pc = jumpNode.getJumpSuccessorIndex();
-                    continue bytecode_loop_slow;
-                } else {
-                    pc = jumpNode.getSuccessorIndex();
-                    continue bytecode_loop_slow;
-                }
-            } else if (node instanceof UnconditionalJumpNode) {
-                pc = ((UnconditionalJumpNode) node).getSuccessorIndex();
-                continue bytecode_loop_slow;
-            } else if (node instanceof AbstractReturnNode) {
-                returnValue = ((AbstractReturnNode) node).executeReturn(frame);
-                pc = LOCAL_RETURN_PC;
-                continue bytecode_loop_slow;
-            } else {
-                /* All other bytecode nodes. */
-                node.executeVoid(frame);
-                pc = node.getSuccessorIndex();
-                continue bytecode_loop_slow;
-            }
-        }
-        assert returnValue != null && !hasModifiedSender(frame);
-        FrameAccess.terminate(frame, code.getInstructionPointerSlot());
-        return returnValue;
-    }
-
-    protected boolean hasModifiedSender(final VirtualFrame frame) {
-        final ContextObject context = FrameAccess.getContext(frame, code);
-        return context != null && context.hasModifiedSender();
-    }
-
-    /*
      * Fetch next bytecode and insert AST nodes on demand if enabled.
      */
     @SuppressWarnings("unused")
@@ -211,6 +134,19 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
             notifyInserted(bytecodeNodes[pcZeroBased]);
         }
         return bytecodeNodes[pcZeroBased];
+    }
+
+    protected boolean hasModifiedSender(final VirtualFrame frame) {
+        final ContextObject context = FrameAccess.getContext(frame, code);
+        return context != null && context.hasModifiedSender();
+    }
+
+    private HandleNonLocalReturnNode getHandleNonLocalReturnNode() {
+        if (handleNonLocalReturnNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            handleNonLocalReturnNode = insert(HandleNonLocalReturnNode.create(code));
+        }
+        return handleNonLocalReturnNode;
     }
 
     @Override
@@ -237,11 +173,8 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         return section;
     }
 
-    private HandleNonLocalReturnNode getHandleNonLocalReturnNode() {
-        if (handleNonLocalReturnNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            handleNonLocalReturnNode = insert(HandleNonLocalReturnNode.create(code));
-        }
-        return handleNonLocalReturnNode;
+    @Override
+    public String toString() {
+        return code.toString();
     }
 }

@@ -37,7 +37,7 @@ public final class EnterCodeNode extends RootNode {
     @CompilationFinal private int initialSP;
 
     @Children private FrameStackWriteNode[] writeTempNodes;
-    @Child private AbstractExecuteContextNode executeContextNode;
+    @Child private AbstractExecuteContextNode executeBytecodeNode;
     @Child private InterruptHandlerNode interruptHandlerNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
@@ -45,7 +45,7 @@ public final class EnterCodeNode extends RootNode {
     protected EnterCodeNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
-        executeContextNode = ExecuteContextNode.create(code);
+        executeBytecodeNode = new ExecuteBytecodeNode(code);
         /*
          * Only check for interrupts if method is relatively large. Avoid check if a closure is
          * activated (effectively what #primitiveClosureValueNoContextSwitch is for). Also, skip
@@ -67,7 +67,7 @@ public final class EnterCodeNode extends RootNode {
             if (interruptHandlerNode != null) {
                 interruptHandlerNode.executeTrigger(frame);
             }
-            return executeContextNode.executeFresh(frame, initialPC);
+            return executeBytecodeNode.execute(frame, initialPC);
         } catch (final NonVirtualReturn | ProcessSwitch nvr) {
             /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
             getGetOrCreateContextNode().executeGet(frame).markEscaped();
