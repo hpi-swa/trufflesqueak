@@ -75,7 +75,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
  *                       +-------------------------------+
  * stackPointer       -> | int                           |
  *                       +-------------------------------+
- * stackSlots[]       -> | Object[] (specialized)        |
+ * stackSlots         -> | Object[] (specialized)        |
  *                       +-------------------------------+
  * </pre>
  */
@@ -145,21 +145,16 @@ public final class FrameAccess {
         return frame.getArguments()[ArgumentIndicies.RECEIVER.ordinal() + index];
     }
 
+    public static int getReceiverStartIndex() {
+        return ArgumentIndicies.RECEIVER.ordinal();
+    }
+
     public static int getArgumentStartIndex() {
         return ArgumentIndicies.ARGUMENTS_START.ordinal();
     }
 
     public static int getNumArguments(final Frame frame) {
         return frame.getArguments().length - ArgumentIndicies.ARGUMENTS_START.ordinal();
-    }
-
-    public static void setArgumentIfInRange(final Frame frame, final int index, final Object value) {
-        assert index >= 0;
-        final Object[] frameArguments = frame.getArguments();
-        final int argumentIndex = ArgumentIndicies.ARGUMENTS_START.ordinal() + index;
-        if (argumentIndex < frameArguments.length) {
-            frameArguments[argumentIndex] = value;
-        }
     }
 
     public static Object[] getReceiverAndArguments(final Frame frame) {

@@ -34,7 +34,7 @@ public final class ArgumentNodes {
         @Child private FrameStackReadNode readNode;
 
         public ArgumentOnStackNode(final int argumentIndex) {
-            this.argumentIndex = argumentIndex; // argumentIndex == 0 returns receiver
+            this.argumentIndex = argumentIndex;
         }
 
         @Override
@@ -52,12 +52,13 @@ public final class ArgumentNodes {
         private final int argumentIndex;
 
         public ArgumentNode(final int argumentIndex) {
-            this.argumentIndex = argumentIndex; // argumentIndex == 0 returns receiver
+            // argumentIndex == 0 returns receiver
+            this.argumentIndex = FrameAccess.getReceiverStartIndex() + argumentIndex;
         }
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return FrameAccess.getArgument(frame, argumentIndex);
+            return frame.getArguments()[argumentIndex];
         }
     }
 }

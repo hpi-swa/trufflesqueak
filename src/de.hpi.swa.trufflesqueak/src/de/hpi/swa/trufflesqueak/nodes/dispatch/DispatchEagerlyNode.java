@@ -61,7 +61,7 @@ public abstract class DispatchEagerlyNode extends AbstractNode {
                     limit = "INLINE_CACHE_SIZE", assumptions = {"cachedMethod.getCallTargetStable()", "cachedMethod.getDoesNotNeedSenderAssumption()"}, replaces = "doPrimitiveEagerly")
     protected static final Object doDirectWithPrimitive(final VirtualFrame frame, @SuppressWarnings("unused") final CompiledCodeObject method, final Object[] receiverAndArguments,
                     @SuppressWarnings("unused") @Cached("method") final CompiledCodeObject cachedMethod,
-                    @Cached("forIndex(cachedMethod, false, cachedMethod.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
+                    @Cached("forIndex(cachedMethod, false, cachedMethod.primitiveIndex(), true)") final AbstractPrimitiveNode primitiveNode,
                     @Cached final GetContextOrMarkerNode getContextOrMarkerNode,
                     @Cached("create(cachedMethod.getCallTarget())") final DirectCallNode callNode) {
         try {

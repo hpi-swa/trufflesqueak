@@ -75,7 +75,7 @@ public abstract class DispatchLookupResultNode extends AbstractDispatchNode {
         @Specialization(guards = "primitiveMethod == cachedPrimitiveMethod", limit = "CACHE_LIMIT")
         protected static final Object doCached(final VirtualFrame frame, final CompiledCodeObject primitiveMethod,
                         @Cached("primitiveMethod") final CompiledCodeObject cachedPrimitiveMethod,
-                        @Cached("forIndex(cachedPrimitiveMethod, true, cachedPrimitiveMethod.primitiveIndex())") final AbstractPrimitiveNode primitiveNode) {
+                        @Cached("forIndex(cachedPrimitiveMethod, true, cachedPrimitiveMethod.primitiveIndex(), false)") final AbstractPrimitiveNode primitiveNode) {
             return primitiveNode.executePrimitive(frame);
         }
     }

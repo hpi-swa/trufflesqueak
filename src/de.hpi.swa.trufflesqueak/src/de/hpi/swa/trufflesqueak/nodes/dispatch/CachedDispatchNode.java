@@ -154,7 +154,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         protected static AbstractCachedDispatchMethodNode create(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             AbstractPrimitiveNode primitiveNode = null;
             if (method.hasPrimitive()) {
-                primitiveNode = PrimitiveNodeFactory.forIndex(method, true, method.primitiveIndex());
+                primitiveNode = PrimitiveNodeFactory.forIndex(method, true, method.primitiveIndex(), true);
             }
             if (primitiveNode != null) {
                 return new CachedDispatchPrimitiveMethodWithoutSenderNode(frame, argumentCount, method, primitiveNode);
