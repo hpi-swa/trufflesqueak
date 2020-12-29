@@ -75,7 +75,7 @@ public final class SendBytecodes {
         private void decrementStackPointerByNumReceiverAndArguments(final VirtualFrame frame) {
             if (stackPointerSlot == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+                stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
                 stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - (1 + argumentCount);
                 assert stackPointer >= 0 : "Bad stack pointer";
             }
@@ -267,7 +267,7 @@ public final class SendBytecodes {
         protected ClassObject popDirectedClass(final VirtualFrame frame) {
             if (readDirectedClassNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+                stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
                 /* Decrement sp to pop directed class. */
                 stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
                 /*

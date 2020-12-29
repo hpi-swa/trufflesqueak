@@ -34,7 +34,7 @@ public final class GetContextNode extends AbstractNode {
     public ContextObject execute(final VirtualFrame frame) {
         if (contextSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            contextSlot = FrameAccess.getContextSlot(frame);
+            contextSlot = FrameAccess.findContextSlot(frame);
         }
         return FrameAccess.getContext(frame, contextSlot);
     }

@@ -295,14 +295,6 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return CompiledCodeHeaderDecoder.getSignFlag((long) literals[0]);
     }
 
-    public int getNumStackSlots() {
-        /**
-         * Arguments and copied values are also pushed onto the stack in {@link EnterCodeNode},
-         * therefore there must be enough slots for all these values as well as the Squeak stack.
-         */
-        return getSqueakContextSize();
-    }
-
     @Override
     public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();

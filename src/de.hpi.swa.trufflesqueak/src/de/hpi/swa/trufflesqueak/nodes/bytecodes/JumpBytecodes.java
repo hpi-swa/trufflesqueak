@@ -39,7 +39,7 @@ public final class JumpBytecodes {
                 return conditionProfile.profile(check((boolean) result));
             } else {
                 CompilerDirectives.transferToInterpreter();
-                FrameAccess.setInstructionPointer(frame, FrameAccess.getInstructionPointerSlot(frame), code.getInitialPC() + getSuccessorIndex());
+                FrameAccess.setInstructionPointer(frame, FrameAccess.findInstructionPointerSlot(frame), code.getInitialPC() + getSuccessorIndex());
                 lookupContext().mustBeBooleanSelector.executeAsSymbolSlow(frame, result);
                 throw SqueakException.create("Should not be reached");
             }

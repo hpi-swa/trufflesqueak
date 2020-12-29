@@ -33,8 +33,8 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 
 /**
@@ -167,14 +167,12 @@ public final class FrameAccess {
         return Arrays.copyOfRange(frame.getArguments(), ArgumentIndicies.RECEIVER.ordinal(), frame.getArguments().length);
     }
 
-    public static FrameSlot getMarkerSlot(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
+    public static FrameSlot findMarkerSlot(final Frame frame) {
         return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.THIS_MARKER);
     }
 
     public static FrameMarker getMarkerSlow(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
-        return getMarker(frame, getMethodOrBlock(frame));
+        return getMarker(frame, findMarkerSlot(frame));
     }
 
     public static FrameMarker getMarker(final Frame frame, final FrameSlot thisMarkerSlot) {
@@ -198,14 +196,12 @@ public final class FrameAccess {
         return GetContextOrMarkerNode.getNotProfiled(frame);
     }
 
-    public static FrameSlot getContextSlot(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
+    public static FrameSlot findContextSlot(final Frame frame) {
         return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT);
     }
 
     public static ContextObject getContextSlow(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
-        return getContext(frame, getMethodOrBlock(frame));
+        return getContext(frame, findContextSlot(frame));
     }
 
     public static ContextObject getContext(final Frame frame, final FrameSlot thisContextSlot) {
@@ -223,14 +219,12 @@ public final class FrameAccess {
         frame.setObject(thisContextSlot, context);
     }
 
-    public static FrameSlot getInstructionPointerSlot(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
+    public static FrameSlot findInstructionPointerSlot(final Frame frame) {
         return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER);
     }
 
     public static int getInstructionPointerSlow(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
-        return FrameUtil.getIntSafe(frame, getMethodOrBlock(frame).getInstructionPointerSlot());
+        return FrameUtil.getIntSafe(frame, findInstructionPointerSlot(frame));
     }
 
     public static int getInstructionPointer(final Frame frame, final CompiledCodeObject code) {
@@ -245,14 +239,12 @@ public final class FrameAccess {
         setInstructionPointer(frame, code.getInstructionPointerSlot(), value);
     }
 
-    public static FrameSlot getStackPointerSlot(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
+    public static FrameSlot findStackPointerSlot(final Frame frame) {
         return frame.getFrameDescriptor().findFrameSlot(SLOT_IDENTIFIER.STACK_POINTER);
     }
 
     public static int getStackPointerSlow(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
-        return FrameUtil.getIntSafe(frame, getMethodOrBlock(frame).getStackPointerSlot());
+        return FrameUtil.getIntSafe(frame, findStackPointerSlot(frame));
     }
 
     public static int getStackPointer(final Frame frame, final FrameSlot stackPointerSlot) {
@@ -272,17 +264,16 @@ public final class FrameAccess {
     }
 
     public static FrameSlot findOrAddStackSlot(final Frame frame, final int index) {
-        CompilerAsserts.neverPartOfCompilation();
         assert frame.getArguments().length - getArgumentStartIndex() <= index;
         return frame.getFrameDescriptor().findOrAddFrameSlot(index, FrameSlotKind.Illegal);
     }
 
     public static FrameSlot findStackSlot(final Frame frame, final int index) {
-        CompilerAsserts.neverPartOfCompilation();
         assert frame.getArguments().length - getArgumentStartIndex() <= index;
         return frame.getFrameDescriptor().findFrameSlot(index);
     }
 
+    /* Iterator for used stack slots (may not be ordered). */
     public static ListIterator<? extends FrameSlot> getStackSlotsIterator(final Frame frame) {
         return frame.getFrameDescriptor().getSlots().listIterator(getArgumentStartIndex());
     }

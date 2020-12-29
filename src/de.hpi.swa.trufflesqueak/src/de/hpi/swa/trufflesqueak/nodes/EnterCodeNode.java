@@ -32,7 +32,7 @@ public final class EnterCodeNode extends RootNode {
     private static final int MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS = 32;
 
     private final CompiledCodeObject code;
-    @CompilationFinal private int initialPC = -1;
+    @CompilationFinal private int initialPC;
     @CompilationFinal private int initialSP;
 
     @Children private FrameStackWriteNode[] writeTempNodes;
@@ -97,6 +97,7 @@ public final class EnterCodeNode extends RootNode {
                 assert writeTempNodes[i] instanceof FrameSlotWriteNode;
             }
         }
+        // TODO: avoid nilling out of temp slots to allow specializations
         for (int i = 0; i < writeTempNodes.length; i++) {
             writeTempNodes[i].executeWrite(frame, NilObject.SINGLETON);
         }

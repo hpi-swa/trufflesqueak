@@ -30,7 +30,7 @@ public final class CreateFrameArgumentsNode extends AbstractNode {
     public Object[] execute(final VirtualFrame frame, final CompiledCodeObject method, final Object sender) {
         if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+            stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - receiverAndArgumentsNodes.length;
             assert stackPointer >= 0 : "Bad stack pointer";
             for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {

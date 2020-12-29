@@ -31,8 +31,8 @@ public final class GetContextOrMarkerNode extends AbstractNode {
     public Object execute(final VirtualFrame frame) {
         if (contextSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            contextSlot = FrameAccess.getContextSlot(frame);
-            markerSlot = FrameAccess.getMarkerSlot(frame);
+            contextSlot = FrameAccess.findContextSlot(frame);
+            markerSlot = FrameAccess.findMarkerSlot(frame);
         }
         final ContextObject context = FrameAccess.getContext(frame, contextSlot);
         if (hasContextProfile.profile(context != null)) {
@@ -55,7 +55,7 @@ public final class GetContextOrMarkerNode extends AbstractNode {
         if (context != null) {
             return context;
         } else {
-            final FrameSlot markerSlot = FrameAccess.getMarkerSlot(frame);
+            final FrameSlot markerSlot = FrameAccess.findMarkerSlot(frame);
             final FrameMarker marker = FrameAccess.getMarker(frame, markerSlot);
             if (marker != null) {
                 return marker;

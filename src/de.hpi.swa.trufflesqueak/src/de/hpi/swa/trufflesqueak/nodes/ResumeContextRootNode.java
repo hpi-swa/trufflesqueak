@@ -6,12 +6,15 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -19,6 +22,8 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 @NodeInfo(cost = NodeCost.NONE)
 public final class ResumeContextRootNode extends RootNode {
     protected ContextObject activeContext;
+
+    @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
 
     @Child private AbstractExecuteContextNode executeContextNode;
 
@@ -28,6 +33,7 @@ public final class ResumeContextRootNode extends RootNode {
         final BlockClosureObject closure = context.getClosure();
         final CompiledCodeObject code = closure == null ? context.getCodeObject() : closure.getCompiledBlock();
         executeContextNode = ExecuteContextNode.create(code);
+        contextReference = lookupContextReference(SqueakLanguage.class);
     }
 
     public static ResumeContextRootNode create(final SqueakLanguage language, final ContextObject activeContext) {
@@ -36,7 +42,11 @@ public final class ResumeContextRootNode extends RootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        return executeContextNode.executeResume(activeContext.getTruffleFrame(), activeContext.getInstructionPointerForBytecodeLoop());
+        try {
+            return executeContextNode.executeResume(activeContext.getTruffleFrame(), activeContext.getInstructionPointerForBytecodeLoop());
+        } finally {
+            contextReference.get().lastSeenContext = null; // Stop materialization here.
+        }
     }
 
     public ContextObject getActiveContext() {

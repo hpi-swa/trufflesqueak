@@ -29,7 +29,7 @@ public final class FrameStackPopNode extends AbstractNode {
     public Object execute(final VirtualFrame frame) {
         if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+            stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
             readNode = insert(FrameStackReadNode.create(frame, stackPointer, true));
         }

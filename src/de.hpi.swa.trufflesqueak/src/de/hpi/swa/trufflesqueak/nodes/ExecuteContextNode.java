@@ -7,8 +7,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
@@ -17,10 +15,8 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
@@ -45,7 +41,6 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
     @Child private HandlePrimitiveFailedNode handlePrimitiveFailedNode;
-    @CompilationFinal private ContextReference<SqueakImageContext> contextReference;
 
     private SourceSection section;
 
@@ -82,17 +77,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
         } catch (final NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
-        } finally {
-            getSqueakImageContext().lastSeenContext = null; // Stop materialization here.
         }
-    }
-
-    private SqueakImageContext getSqueakImageContext() {
-        if (contextReference == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            contextReference = lookupContextReference(SqueakLanguage.class);
-        }
-        return contextReference.get();
     }
 
     /*
