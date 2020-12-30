@@ -10,12 +10,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushTemporaryLocationNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelfSelectorNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SingleExtendedSuperNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SelfSendNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SuperSendNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLocationNode;
@@ -67,9 +68,9 @@ public final class MiscellaneousBytecodes {
             final int third = Byte.toUnsignedInt(param2);
             switch (second >> 5) {
                 case 0:
-                    return new SendSelfSelectorNode(code, index, numBytecodes, code.getLiteral(third), second & 31);
+                    return SelfSendNode.create(code, index, numBytecodes, (NativeObject) code.getLiteral(third), second & 31);
                 case 1:
-                    return new SingleExtendedSuperNode(code, index, numBytecodes, third, second & 31);
+                    return new SuperSendNode(code, index, numBytecodes, third, second & 31);
                 case 2:
                     return PushReceiverVariableNode.create(code, index, numBytecodes, third);
                 case 3:

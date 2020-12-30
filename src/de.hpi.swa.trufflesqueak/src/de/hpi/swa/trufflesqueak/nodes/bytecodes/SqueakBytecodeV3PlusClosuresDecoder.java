@@ -10,6 +10,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 
 public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakBytecodeDecoder {
     public static final SqueakBytecodeV3PlusClosuresDecoder SINGLETON = new SqueakBytecodeV3PlusClosuresDecoder();
@@ -144,14 +145,22 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
                 return MiscellaneousBytecodes.ExtendedBytecodes.createStoreInto(code, index, 2, bytecode[index + 1]);
             case 0x82:
                 return MiscellaneousBytecodes.ExtendedBytecodes.createPopInto(code, index, 2, bytecode[index + 1]);
-            case 0x83:
-                return new SendBytecodes.SingleExtendedSendNode(code, index, 2, bytecode[index + 1]);
+            case 0x83: {
+                final byte byte1 = bytecode[index + 1];
+                final NativeObject selector = (NativeObject) code.getLiteral(byte1 & 31);
+                final int numArgs = Byte.toUnsignedInt(byte1) >> 5;
+                return SendBytecodes.SelfSendNode.create(code, index, 2, selector, numArgs);
+            }
             case 0x84:
                 return MiscellaneousBytecodes.DoubleExtendedDoAnythingNode.create(code, index, 3, bytecode[index + 1], bytecode[index + 2]);
             case 0x85:
-                return new SendBytecodes.SingleExtendedSuperNode(code, index, 2, bytecode[index + 1]);
-            case 0x86:
-                return new SendBytecodes.SecondExtendedSendNode(code, index, 2, bytecode[index + 1]);
+                return new SendBytecodes.SuperSendNode(code, index, 2, bytecode[index + 1]);
+            case 0x86: {
+                final byte byte1 = bytecode[index + 1];
+                final NativeObject selector = (NativeObject) code.getLiteral(byte1 & 63);
+                final int numArgs = Byte.toUnsignedInt(byte1) >> 6;
+                return SendBytecodes.SelfSendNode.create(code, index, 2, selector, numArgs);
+            }
             case 0x87:
                 return new MiscellaneousBytecodes.PopNode(code, index);
             case 0x88:
@@ -184,16 +193,16 @@ public final class SqueakBytecodeV3PlusClosuresDecoder extends AbstractSqueakByt
             case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
             case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
             case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
-                return SendBytecodes.SendSpecialSelectorNode.create(code, index, b - 176);
+                return SendBytecodes.AbstractSendSpecialSelectorQuickNode.create(code, index, b - 176);
             case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6: case 0xD7:
             case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
-                return SendBytecodes.SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 0);
+                return SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 0);
             case 0xE0: case 0xE1: case 0xE2: case 0xE3: case 0xE4: case 0xE5: case 0xE6: case 0xE7:
             case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEE: case 0xEF:
-                return SendBytecodes.SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 1);
+                return SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 1);
             case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7:
             case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC: case 0xFD: case 0xFE: case 0xFF:
-                return SendBytecodes.SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 2);
+                return SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 2);
             default:
                 throw SqueakException.create("Not a bytecode:", b);
         }

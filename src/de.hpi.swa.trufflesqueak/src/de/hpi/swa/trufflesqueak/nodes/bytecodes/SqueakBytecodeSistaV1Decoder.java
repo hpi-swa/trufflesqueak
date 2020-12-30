@@ -10,6 +10,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.SPECIAL_OBJECT;
 
 public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDecoder {
@@ -155,16 +156,16 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
             case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
             case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F:
-                return SendBytecodes.SendSpecialSelectorNode.create(code, index, b - 96);
+                return SendBytecodes.AbstractSendSpecialSelectorQuickNode.create(code, index, b - 96);
             case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
             case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F:
-                return SendBytecodes.SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 0);
+                return SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 0);
             case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97:
             case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9E: case 0x9F:
-                return SendBytecodes.SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 1);
+                return SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 1);
             case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
             case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
-                return SendBytecodes.SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 2);
+                return SendBytecodes.SelfSendNode.create(code, index, 1, (NativeObject) code.getLiteral(b & 0xF), 2);
             case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
                 return JumpBytecodes.UnconditionalJumpNode.createShort(code, index, b);
             case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
@@ -178,7 +179,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
             case 0xD8:
                 return new MiscellaneousBytecodes.PopNode(code, index);
             case 0xD9:
-                return new SendBytecodes.SendSelfSelectorNode(code, index, 1, code.getSqueakClass().getImage().getSpecialSelector(SPECIAL_OBJECT.SELECTOR_SISTA_TRAP), 1); // FIXME: Unconditional trap
+                return SendBytecodes.SelfSendNode.create(code, index, 1, code.getSqueakClass().getImage().getSpecialSelector(SPECIAL_OBJECT.SELECTOR_SISTA_TRAP), 1); // FIXME: Unconditional trap
             case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
                 return new MiscellaneousBytecodes.UnknownBytecodeNode(code, index, 1, b);
             case 0xE0:
@@ -205,7 +206,8 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 final int byte1 = Byte.toUnsignedInt(bytecode[indexWithExt + 1]);
                 final int literalIndex = (byte1 >> 3) + (extA << 5);
                 final int numArgs = (byte1 & 7) + (extB << 3);
-                return SendBytecodes.SendLiteralSelectorNode.create(code, index, 2 + extBytes, literalIndex, numArgs);
+                final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
+                return SendBytecodes.SelfSendNode.create(code, index, 2 + extBytes, selector, numArgs);
             }
             case 0xEB: {
                 boolean isDirected = false;
@@ -220,7 +222,7 @@ public final class SqueakBytecodeSistaV1Decoder extends AbstractSqueakBytecodeDe
                 if (isDirected) {
                     return new SendBytecodes.DirectedSuperSendNode(code, index, 2 + extBytes, literalIndex, numArgs);
                 } else {
-                    return new SendBytecodes.SingleExtendedSuperNode(code, index, 2 + extBytes, literalIndex, numArgs);
+                    return new SendBytecodes.SuperSendNode(code, index, 2 + extBytes, literalIndex, numArgs);
                 }
             }
             case 0xEC:

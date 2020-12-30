@@ -217,7 +217,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         /** Quick return `false` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
-        protected static final boolean doQuickFalse(final Object lhs, final AbstractSqueakObject rhs) {
+        protected static final boolean doQuickFalse(final long lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.FALSE;
         }
     }
@@ -243,7 +243,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         /** Quick return `true` if b is not a Number or Complex. */
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isFloatObject(rhs)", "!isLargeIntegerObject(rhs)", "!isPointersObject(rhs)"})
-        protected static final boolean doQuickTrue(final Object lhs, final AbstractSqueakObject rhs) {
+        protected static final boolean doQuickTrue(final long lhs, final AbstractSqueakObject rhs) {
             return BooleanObject.TRUE;
         }
     }
@@ -455,10 +455,31 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 18)
-    protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode implements BinaryPrimitiveFallback {
         @Specialization
-        protected static final PointersObject doObject(final Object xPos, final Object yPos,
-                        @Cached final AbstractPointersObjectWriteNode writeNode,
+        protected static final PointersObject doLong(final long xPos, final Object yPos,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.asPoint(writeNode, xPos, yPos);
+        }
+
+        @Specialization
+        protected static final PointersObject doDouble(final double xPos, final Object yPos,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.asPoint(writeNode, xPos, yPos);
+        }
+
+        @Specialization
+        protected static final PointersObject doLargeInteger(final LargeIntegerObject xPos, final Object yPos,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
+                        @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
+            return image.asPoint(writeNode, xPos, yPos);
+        }
+
+        @Specialization
+        protected static final PointersObject doFloatObject(final FloatObject xPos, final Object yPos,
+                        @Shared("writeNode") @Cached final AbstractPointersObjectWriteNode writeNode,
                         @CachedContext(SqueakLanguage.class) final SqueakImageContext image) {
             return image.asPoint(writeNode, xPos, yPos);
         }

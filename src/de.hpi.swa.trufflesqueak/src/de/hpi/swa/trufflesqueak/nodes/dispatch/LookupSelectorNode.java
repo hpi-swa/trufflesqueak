@@ -19,10 +19,10 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSelfSendNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SelfSendNode;
 import de.hpi.swa.trufflesqueak.util.MethodCacheEntry;
 
-@ImportStatic(AbstractSelfSendNode.class)
+@ImportStatic(SelfSendNode.class)
 public abstract class LookupSelectorNode extends AbstractNode {
     protected final NativeObject selector;
 

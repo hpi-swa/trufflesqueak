@@ -536,7 +536,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 110)
-    protected abstract static class PrimIdentical2Node extends AbstractPrimitiveNode {
+    public abstract static class PrimIdentical2Node extends AbstractPrimitiveNode {
         @Specialization
         protected static final boolean doObject(final Object a, final Object b,
                         @Cached final SqueakObjectIdentityNode identityNode) {
@@ -561,7 +561,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 111)
-    protected abstract static class PrimClass1Node extends AbstractPrimitiveNode {
+    public abstract static class PrimClass1Node extends AbstractPrimitiveNode {
         @Specialization
         protected static final ClassObject doClass(final Object receiver,
                         @Cached final SqueakObjectClassNode classNode) {
@@ -879,7 +879,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @NodeInfo(cost = NodeCost.NONE)
     @SqueakPrimitive(indices = 169)
-    protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
+    public abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
         @Specialization
         public static final boolean doObject(final Object a, final Object b,
                         @Cached final SqueakObjectIdentityNode identityNode) {

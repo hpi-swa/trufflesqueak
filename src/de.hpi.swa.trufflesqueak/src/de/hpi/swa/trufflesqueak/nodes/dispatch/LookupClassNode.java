@@ -15,9 +15,9 @@ import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSelfSendNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SelfSendNode;
 
-@ImportStatic(AbstractSelfSendNode.class)
+@ImportStatic(SelfSendNode.class)
 public abstract class LookupClassNode extends AbstractNode {
 
     public static LookupClassNode create() {

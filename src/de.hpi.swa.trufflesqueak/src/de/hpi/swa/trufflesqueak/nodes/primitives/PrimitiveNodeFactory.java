@@ -63,8 +63,8 @@ import de.hpi.swa.trufflesqueak.util.OSDetector;
 
 public final class PrimitiveNodeFactory {
     private static final int PRIMITIVE_EXTERNAL_CALL_INDEX = 117;
-    private static final int PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX = 264;
-    private static final int PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX = 520;
+    public static final int PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX = 264;
+    public static final int PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX = 520;
     private static final int MAX_PRIMITIVE_INDEX = 575;
     @CompilationFinal(dimensions = 1) private static final byte[] NULL_MODULE_NAME = NullPlugin.class.getSimpleName().getBytes();
 
@@ -124,7 +124,7 @@ public final class PrimitiveNodeFactory {
         assert primitiveIndex >= 0 : "Unexpected negative primitiveIndex";
         if (primitiveIndex == PRIMITIVE_EXTERNAL_CALL_INDEX) {
             return namedFor(method, useStack, argsProvided);
-        } else if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
+        } else if (isLoadInstVarPrimitive(primitiveIndex)) {
             assert method.getNumArgs() == 0;
             return createPrimLoadInstVarNode(primitiveIndex, useStack);
         } else {
@@ -135,13 +135,17 @@ public final class PrimitiveNodeFactory {
 
     public static AbstractPrimitiveNode forIndex(final int primitiveIndex, final int numArgs, final boolean argsProvided) {
         assert primitiveIndex != PRIMITIVE_EXTERNAL_CALL_INDEX;
-        if (PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX) {
+        if (isLoadInstVarPrimitive(primitiveIndex)) {
             assert numArgs == 0;
             return createPrimLoadInstVarNode(primitiveIndex, false);
         } else {
             assert primitiveIndex <= MAX_PRIMITIVE_INDEX;
             return createInstance(PRIMITIVE_TABLE.get(primitiveIndex), numArgs, argsProvided);
         }
+    }
+
+    public static boolean isLoadInstVarPrimitive(final int primitiveIndex) {
+        return PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX <= primitiveIndex && primitiveIndex <= PRIMITIVE_LOAD_INST_VAR_UPPER_INDEX;
     }
 
     public static AbstractPrimitiveNode namedFor(final CompiledCodeObject method, final boolean useStack, final boolean argsProvided) {
@@ -170,6 +174,33 @@ public final class PrimitiveNodeFactory {
     private static AbstractPrimitiveNode createPrimLoadInstVarNode(final int primitiveIndex, final boolean useStack) {
         return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(primitiveIndex - PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX,
                         new AbstractArgumentNode[]{ArgumentNode.create(0, useStack)});
+    }
+
+    public static NodeFactory<? extends AbstractPrimitiveNode> getNodeFactory(final int primitiveIndex, final int numArguments) {
+        if (isLoadInstVarPrimitive(primitiveIndex)) {
+            return ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.getInstance();
+        }
+        final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map = PRIMITIVE_TABLE.get(primitiveIndex);
+        if (map == null) {
+            return null;
+        }
+        return map.get(numArguments);
+    }
+
+    public static NodeFactory<? extends AbstractPrimitiveNode> getNodeFactory(final CompiledCodeObject method, final int numArguments) {
+        assert method.hasPrimitive() && method.primitiveIndex() == 117;
+        final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
+        final String moduleName = ((NativeObject) values[0]).asStringUnsafe();
+        final EconomicMap<String, EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>>> pluginMap = PLUGIN_MAP.get(moduleName);
+        if (pluginMap == null) {
+            return null;
+        }
+        final String functionName = ((NativeObject) values[1]).asStringUnsafe();
+        final EconomicMap<Integer, NodeFactory<? extends AbstractPrimitiveNode>> map = pluginMap.get(functionName);
+        if (map == null) {
+            return null;
+        }
+        return map.get(numArguments);
     }
 
     public static String[] getPluginNames() {

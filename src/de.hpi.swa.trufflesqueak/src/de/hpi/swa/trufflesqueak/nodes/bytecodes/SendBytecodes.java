@@ -5,29 +5,39 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.debug.DebuggerTags;
+import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
+import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchLookupResultNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchSuperSendNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.LookupSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimExitToDebuggerNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class SendBytecodes {
@@ -112,7 +122,7 @@ public final class SendBytecodes {
         }
     }
 
-    public abstract static class AbstractSelfSendNode extends AbstractSendNode {
+    public static final class SelfSendNode extends AbstractSendNode {
         public static final int INLINE_CACHE_SIZE = 6;
 
         @Child private FrameSlotReadNode peekAtReceiverNode;
@@ -120,15 +130,18 @@ public final class SendBytecodes {
         @Child private LookupSelectorNode lookupSelectorNode;
         @Child private DispatchLookupResultNode dispatchNode;
 
-        private AbstractSelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int numArgs) {
+        private SelfSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {
             super(code, index, numBytecodes, numArgs);
-            final NativeObject selector = (NativeObject) sel;
             lookupSelectorNode = LookupSelectorNode.create(selector);
             dispatchNode = DispatchLookupResultNode.create(selector, numArgs);
         }
 
+        public static SelfSendNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final NativeObject selector, final int numArgs) {
+            return new SelfSendNode(code, index, numBytecodes, selector, numArgs);
+        }
+
         @Override
-        protected final Object dispatchSend(final VirtualFrame frame) {
+        protected Object dispatchSend(final VirtualFrame frame) {
             final Object receiver = peekAtReceiver(frame);
             final ClassObject receiverClass = lookupClassNode.execute(receiver);
             final Object lookupResult = lookupSelectorNode.execute(receiverClass);
@@ -140,7 +153,7 @@ public final class SendBytecodes {
             return dispatchNode.getSelector();
         }
 
-        protected final Object peekAtReceiver(final VirtualFrame frame) {
+        private Object peekAtReceiver(final VirtualFrame frame) {
             if (peekAtReceiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 final int stackPointer = FrameAccess.getStackPointer(frame, code);
@@ -150,56 +163,14 @@ public final class SendBytecodes {
         }
     }
 
-    public static final class SecondExtendedSendNode extends AbstractSelfSendNode {
-        public SecondExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
-            super(code, index, numBytecodes, code.getLiteral(param & 63), Byte.toUnsignedInt(param) >> 6);
-        }
-    }
-
-    public static final class SendLiteralSelectorNode extends AbstractSelfSendNode {
-        public SendLiteralSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
-            super(code, index, numBytecodes, selector, numArgs);
-        }
-
-        public static AbstractInstrumentableBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
-            final Object selector = code.getLiteral(literalIndex);
-            return new SendLiteralSelectorNode(code, index, numBytecodes, selector, numArgs);
-        }
-    }
-
-    public static final class SendSpecialSelectorNode extends AbstractSelfSendNode {
-        private SendSpecialSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
-            super(code, index, numBytecodes, selector, numArgs);
-        }
-
-        public static SendSpecialSelectorNode create(final CompiledCodeObject code, final int index, final int selectorIndex) {
-            final SqueakImageContext image = code.getSqueakClass().getImage(); // TODO: Refactor
-            final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
-            final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
-            return new SendSpecialSelectorNode(code, index, 1, specialSelector, numArguments);
-        }
-    }
-
-    public static final class SendSelfSelectorNode extends AbstractSelfSendNode {
-        public SendSelfSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
-            super(code, index, numBytecodes, selector, numArgs);
-        }
-    }
-
-    public static final class SingleExtendedSendNode extends AbstractSelfSendNode {
-        public SingleExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
-            super(code, index, numBytecodes, code.getLiteral(param & 31), Byte.toUnsignedInt(param) >> 5);
-        }
-    }
-
-    public static final class SingleExtendedSuperNode extends AbstractSendNode {
+    public static final class SuperSendNode extends AbstractSendNode {
         @Child private DispatchSuperSendNode dispatchNode;
 
-        public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
+        public SuperSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final byte param) {
             this(code, index, numBytecodes, param & 31, Byte.toUnsignedInt(param) >> 5);
         }
 
-        public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
+        public SuperSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
             super(code, index, numBytecodes, numArgs);
             final NativeObject selector = (NativeObject) code.getLiteral(literalIndex);
             dispatchNode = DispatchSuperSendNode.create(code, selector, numArgs);
@@ -284,6 +255,327 @@ public final class SendBytecodes {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return "directedSuperSend: " + getSelector().asStringUnsafe();
+        }
+    }
+
+    /*
+     * Try to execute primitive for special selectors. Replaces itself with a normal send on
+     * primitive failure. Modifies the stack only once, primitives read their arguments directly
+     * from the stack.
+     */
+    public abstract static class AbstractSendSpecialSelectorQuickNode extends AbstractInstrumentableBytecodeNode {
+        protected final int selectorIndex;
+
+        @Child protected AbstractPrimitiveNode primitiveNode;
+        @Child protected FrameSlotWriteNode writeNode;
+
+        protected AbstractSendSpecialSelectorQuickNode(final CompiledCodeObject code, final int index, final int selectorIndex) {
+            super(code, index, 1);
+            this.selectorIndex = selectorIndex;
+        }
+
+        protected static final AbstractArgumentNode[] createArgumentNodes(final int numArguments) {
+            final int numReceiverAndArguments = 1 + numArguments;
+            final AbstractArgumentNode[] argumentNodes = new AbstractArgumentNode[numReceiverAndArguments];
+            for (int i = 0; i < numReceiverAndArguments; i++) {
+                argumentNodes[i] = AbstractArgumentNode.create(i - numReceiverAndArguments, true);
+            }
+            return argumentNodes;
+        }
+
+        public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int selectorIndex) {
+            NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = null;
+            final SqueakImageContext image = code.getSqueakClass().getImage();
+            final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
+            final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
+            if (0 <= selectorIndex && selectorIndex <= 15) { // arithmetic primitives
+                /* Look up specialSelector in SmallInteger class. */
+                final CompiledCodeObject method = (CompiledCodeObject) image.smallIntegerClass.lookupInMethodDictSlow(specialSelector);
+                assert method.hasPrimitive() && method.getNumArgs() == numArguments;
+                nodeFactory = PrimitiveNodeFactory.getNodeFactory(method.primitiveIndex(), 1 + numArguments);
+                assert nodeFactory != null;
+            } else if (selectorIndex == 16 || selectorIndex == 17) { // #at:, #at:put:
+                return new SendSpecialSelectorQuickWithClassCheck1OrMoreArgumentsNode(code, index, selectorIndex);
+            } else if (selectorIndex == 18) { // #size
+                return new SendSpecialSelectorQuickWithClassCheck0ArgumentsNode(code, index, selectorIndex);
+            } else if (selectorIndex == 22) { // #==
+                nodeFactory = ControlPrimitivesFactory.PrimIdentical2NodeFactory.getInstance();
+            } else if (selectorIndex == 23) { // #class
+                nodeFactory = ControlPrimitivesFactory.PrimClass1NodeFactory.getInstance();
+            } else if (selectorIndex == 24) { // #~~
+                nodeFactory = ControlPrimitivesFactory.PrimNotIdenticalNodeFactory.getInstance();
+            } else if (selectorIndex == 25 || selectorIndex == 26) { // #value, #value:
+                /*
+                 * Closure primitives must go through the normal send infrastructure. This node does
+                 * not handle NonLocalReturn and NonVirtualReturn.
+                 */
+            } else if (selectorIndex == 28) { // #new
+                return new SendSpecialSelectorQuickWithClassCheck0ArgumentsNode(code, index, selectorIndex);
+            } else if (selectorIndex == 29) { // #new:
+                return new SendSpecialSelectorQuickWithClassCheck1OrMoreArgumentsNode(code, index, selectorIndex);
+            } else if (selectorIndex == 30) { // #x
+                return new SendSpecialSelectorQuickPointXYNode(code, index, selectorIndex, POINT.X);
+            } else if (selectorIndex == 31) { // #y
+                return new SendSpecialSelectorQuickPointXYNode(code, index, selectorIndex, POINT.Y);
+            }
+            if (nodeFactory != null) {
+                if (numArguments == 0) {
+                    return new SendSpecialSelectorQuick0ArgumentsNode(code, index, selectorIndex, nodeFactory, numArguments);
+                } else {
+                    return new SendSpecialSelectorQuick1OrMoreArgumentsNode(code, index, selectorIndex, nodeFactory, numArguments);
+                }
+            } else {
+                return new SelfSendNode(code, index, 1, specialSelector, numArguments);
+            }
+        }
+
+        protected final void replaceWithSend(final VirtualFrame frame) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            // Replace with normal send (pc needs to be written)
+            FrameAccess.setInstructionPointer(frame, code, getSuccessorIndex());
+            // Lookup specialSelector and replace with normal send
+            final SqueakImageContext image = code.getSqueakClass().getImage(); // TODO: Refactor
+            final NativeObject specialSelector = image.getSpecialSelector(selectorIndex);
+            final int numArguments = image.getSpecialSelectorNumArgs(selectorIndex);
+            replace(new SelfSendNode(code, index - code.getInitialPC(), 1, specialSelector, numArguments)).executeVoid(frame);
+        }
+
+        protected final int findNewStackPointer(final VirtualFrame frame) {
+            final int numArguments = findNumArguments();
+            final int stackPointer = FrameAccess.getStackPointer(frame, code) - (1 + numArguments) + 1;
+            assert stackPointer <= CONTEXT.MAX_STACK_SIZE : "Bad stack pointer";
+            return stackPointer;
+        }
+
+        protected final FrameSlotWriteNode createFrameSlotWriteNode(final VirtualFrame frame) {
+            return createFrameSlotWriteNode(frame, findNewStackPointer(frame));
+        }
+
+        protected static final FrameSlotWriteNode createFrameSlotWriteNode(final VirtualFrame frame, final int newStackPointer) {
+            return FrameSlotWriteNode.create(FrameAccess.getStackSlotSlow(frame, newStackPointer - 1));
+        }
+
+        protected final NativeObject findSelector() {
+            return code.getSqueakClass().getImage().getSpecialSelector(selectorIndex);
+        }
+
+        protected final int findNumArguments() {
+            return code.getSqueakClass().getImage().getSpecialSelectorNumArgs(selectorIndex);
+        }
+
+        @Override
+        public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+            return "send: " + findSelector().asStringUnsafe();
+        }
+    }
+
+    private abstract static class SendSpecialSelectorQuickNode extends AbstractSendSpecialSelectorQuickNode {
+        private SendSpecialSelectorQuickNode(final CompiledCodeObject code, final int index, final int selectorIndex, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory,
+                        final int numArguments) {
+            super(code, index, selectorIndex);
+            primitiveNode = nodeFactory.createNode((Object) createArgumentNodes(numArguments));
+        }
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            try {
+                popArgumentAndPush(frame, primitiveNode.executePrimitive(frame));
+            } catch (final PrimitiveFailed pf) {
+                replaceWithSend(frame);
+            }
+        }
+
+        protected abstract void popArgumentAndPush(VirtualFrame frame, Object result);
+    }
+
+    private static final class SendSpecialSelectorQuick0ArgumentsNode extends SendSpecialSelectorQuickNode {
+        private SendSpecialSelectorQuick0ArgumentsNode(final CompiledCodeObject code, final int index, final int selectorIndex, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory,
+                        final int numArguments) {
+            super(code, index, selectorIndex, nodeFactory, numArguments);
+        }
+
+        @Override
+        protected void popArgumentAndPush(final VirtualFrame frame, final Object result) {
+            if (writeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                assert findNumArguments() == 0;
+                writeNode = insert(createFrameSlotWriteNode(frame));
+            }
+            writeNode.executeWrite(frame, result);
+        }
+    }
+
+    private static final class SendSpecialSelectorQuick1OrMoreArgumentsNode extends SendSpecialSelectorQuickNode {
+        @CompilationFinal private int stackPointer;
+
+        private SendSpecialSelectorQuick1OrMoreArgumentsNode(final CompiledCodeObject code, final int index, final int selectorIndex, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory,
+                        final int numArguments) {
+            super(code, index, selectorIndex, nodeFactory, numArguments);
+        }
+
+        @Override
+        protected void popArgumentAndPush(final VirtualFrame frame, final Object result) {
+            if (writeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                assert findNumArguments() > 0;
+                stackPointer = findNewStackPointer(frame);
+                writeNode = insert(createFrameSlotWriteNode(frame, stackPointer));
+            }
+            FrameAccess.setStackPointer(frame, code, stackPointer);
+            writeNode.executeWrite(frame, result);
+        }
+    }
+
+    private abstract static class SendSpecialSelectorQuickWithClassCheckNode extends AbstractSendSpecialSelectorQuickNode {
+        @CompilationFinal private ClassObject cachedReceiverClass;
+        @CompilationFinal private Assumption cachedCallTargetStableAssumption;
+
+        @Child private FrameSlotReadNode peekAtReceiverNode;
+        @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
+
+        private SendSpecialSelectorQuickWithClassCheckNode(final CompiledCodeObject code, final int index, final int selectorIndex) {
+            super(code, index, selectorIndex);
+        }
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            final Object receiver = peekAtReceiver(frame);
+            if (doesNotMatchClassOrMethodInvalidated(lookupClassNode.execute(receiver))) {
+                replaceWithSend(frame);
+                return;
+            }
+            try {
+                popArgumentsAndPush(frame, primitiveNode.executePrimitive(frame));
+            } catch (final PrimitiveFailed pf) {
+                replaceWithSend(frame);
+            }
+        }
+
+        protected abstract void popArgumentsAndPush(VirtualFrame frame, Object result);
+
+        private boolean doesNotMatchClassOrMethodInvalidated(final ClassObject actualClass) {
+            if (primitiveNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                assert actualClass != null;
+                final Object lookupResult = actualClass.lookupInMethodDictSlow(findSelector());
+                if (lookupResult instanceof CompiledCodeObject && ((CompiledCodeObject) lookupResult).hasPrimitive()) {
+                    final CompiledCodeObject primitiveMethod = (CompiledCodeObject) lookupResult;
+                    final int primitiveIndex = primitiveMethod.primitiveIndex();
+                    assert primitiveMethod.getNumArgs() == findNumArguments();
+                    final int numArguments = primitiveMethod.getNumArgs();
+                    final AbstractPrimitiveNode node;
+                    if (PrimitiveNodeFactory.isLoadInstVarPrimitive(primitiveIndex)) {
+                        assert numArguments == 0;
+                        node = ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(primitiveIndex - PrimitiveNodeFactory.PRIMITIVE_LOAD_INST_VAR_LOWER_INDEX,
+                                        new AbstractArgumentNode[]{AbstractArgumentNode.create(-1, true)});
+                    } else {
+                        final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory;
+                        if (primitiveIndex == 117) {
+                            nodeFactory = PrimitiveNodeFactory.getNodeFactory(primitiveMethod, 1 + numArguments);
+                        } else {
+                            nodeFactory = PrimitiveNodeFactory.getNodeFactory(primitiveIndex, 1 + numArguments);
+                        }
+                        if (nodeFactory == null) {
+                            return true; // primitive not found / supported
+                        }
+                        node = nodeFactory.createNode((Object) createArgumentNodes(numArguments));
+                    }
+                    primitiveNode = insert(node);
+                    cachedReceiverClass = actualClass;
+                    cachedCallTargetStableAssumption = primitiveMethod.getCallTargetStable();
+                } else {
+                    return true;
+                }
+            }
+            return actualClass != cachedReceiverClass || !cachedCallTargetStableAssumption.isValid();
+        }
+
+        private Object peekAtReceiver(final VirtualFrame frame) {
+            if (peekAtReceiverNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final int currentStackPointer = FrameAccess.getStackPointer(frame, code) - (1 + findNumArguments());
+                peekAtReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(currentStackPointer)));
+            }
+            return peekAtReceiverNode.executeRead(frame);
+        }
+    }
+
+    private static final class SendSpecialSelectorQuickWithClassCheck0ArgumentsNode extends SendSpecialSelectorQuickWithClassCheckNode {
+        private SendSpecialSelectorQuickWithClassCheck0ArgumentsNode(final CompiledCodeObject code, final int index, final int selectorIndex) {
+            super(code, index, selectorIndex);
+        }
+
+        @Override
+        protected void popArgumentsAndPush(final VirtualFrame frame, final Object result) {
+            if (writeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                assert findNumArguments() == 0;
+                writeNode = insert(createFrameSlotWriteNode(frame));
+            }
+            writeNode.executeWrite(frame, result);
+        }
+    }
+
+    private static final class SendSpecialSelectorQuickWithClassCheck1OrMoreArgumentsNode extends SendSpecialSelectorQuickWithClassCheckNode {
+        @CompilationFinal private int stackPointer;
+
+        private SendSpecialSelectorQuickWithClassCheck1OrMoreArgumentsNode(final CompiledCodeObject code, final int index, final int selectorIndex) {
+            super(code, index, selectorIndex);
+        }
+
+        @Override
+        protected void popArgumentsAndPush(final VirtualFrame frame, final Object result) {
+            if (writeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                assert findNumArguments() > 0;
+                stackPointer = findNewStackPointer(frame);
+                writeNode = insert(createFrameSlotWriteNode(frame, stackPointer));
+            }
+            FrameAccess.setStackPointer(frame, code, stackPointer);
+            writeNode.executeWrite(frame, result);
+        }
+    }
+
+    private static final class SendSpecialSelectorQuickPointXYNode extends AbstractSendSpecialSelectorQuickNode {
+        @Child private FrameSlotReadNode peekAtReceiverNode;
+        @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
+
+        private SendSpecialSelectorQuickPointXYNode(final CompiledCodeObject code, final int index, final int selectorIndex, final int pointInstVarIndex) {
+            super(code, index, selectorIndex);
+            primitiveNode = ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(pointInstVarIndex, null);
+        }
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            final Object receiver = peekAtReceiver(frame);
+            if (!lookupClassNode.execute(receiver).isPoint()) {
+                replaceWithSend(frame);
+                return;
+            }
+            try {
+                popArgumentAndPush(frame, primitiveNode.executeWithArguments(frame, receiver));
+            } catch (final PrimitiveFailed pf) {
+                replaceWithSend(frame);
+            }
+        }
+
+        private void popArgumentAndPush(final VirtualFrame frame, final Object value) {
+            if (writeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                assert findNumArguments() == 0;
+                writeNode = insert(createFrameSlotWriteNode(frame));
+            }
+            writeNode.executeWrite(frame, value);
+        }
+
+        private Object peekAtReceiver(final VirtualFrame frame) {
+            if (peekAtReceiverNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final int currentStackPointer = FrameAccess.getStackPointer(frame, code) - 1;
+                peekAtReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(currentStackPointer)));
+            }
+            return peekAtReceiverNode.executeRead(frame);
         }
     }
 }
