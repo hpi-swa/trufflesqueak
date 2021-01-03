@@ -76,19 +76,9 @@ public class AbstractPointersObjectNodes {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "object.getLayout().isValid(assumptionProfile)", replaces = "doReadCached", limit = "1")
-        protected static final Object doReadUncached(final AbstractPointersObject object, final int index,
-                        @SuppressWarnings("unused") @Shared("assmuptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile) {
+        @Specialization(replaces = "doReadCached")
+        protected static final Object doReadUncached(final AbstractPointersObject object, final int index) {
             return object.getLayout().getLocation(index).read(object);
-        }
-
-        @Specialization(guards = "!object.getLayout().isValid(assumptionProfile)", limit = "1")
-        protected static final Object doUpdateLayoutAndRead(final AbstractPointersObject object, final int index,
-                        @SuppressWarnings("unused") @Shared("assmuptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile) {
-            /* Note that this specialization does not replace the cached specialization. */
-            CompilerDirectives.transferToInterpreter();
-            object.updateLayout();
-            return doReadUncached(object, index, assumptionProfile);
         }
     }
 
