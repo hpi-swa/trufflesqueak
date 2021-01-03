@@ -23,18 +23,18 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class StoreBytecodes {
 
     private abstract static class AbstractStoreIntoAssociationNode extends AbstractStoreIntoNode {
-        protected final long variableIndex;
+        protected final Object literalVariable;
 
         private AbstractStoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes);
-            this.variableIndex = variableIndex;
+            literalVariable = code.getLiteral(variableIndex);
             storeNode = SqueakObjectAtPutAndMarkContextsNode.create(ASSOCIATION.VALUE);
         }
 
         @Override
         public final String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return getTypeName() + "IntoLit: " + SqueakObjectAt0Node.getUncached().execute(code.getLiteral(variableIndex), ASSOCIATION.KEY);
+            return getTypeName() + "IntoLit: " + SqueakObjectAt0Node.getUncached().execute(literalVariable, ASSOCIATION.KEY);
         }
     }
 
@@ -115,7 +115,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(code.getLiteral(variableIndex), popNode.execute(frame));
+            storeNode.executeWrite(literalVariable, popNode.execute(frame));
         }
 
         @Override
@@ -187,7 +187,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            storeNode.executeWrite(code.getLiteral(variableIndex), topNode.execute(frame));
+            storeNode.executeWrite(literalVariable, topNode.execute(frame));
         }
 
         @Override

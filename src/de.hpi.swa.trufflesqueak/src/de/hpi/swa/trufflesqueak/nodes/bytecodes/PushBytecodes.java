@@ -374,22 +374,22 @@ public final class PushBytecodes {
 
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushLiteralConstantNode extends AbstractPushNode {
-        private final int literalIndex;
+        private final Object literal;
 
         public PushLiteralConstantNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             super(code, index, numBytecodes);
-            this.literalIndex = literalIndex;
+            literal = code.getLiteral(literalIndex);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, code.getLiteral(literalIndex));
+            pushNode.execute(frame, literal);
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushConstant: " + code.getLiteral(literalIndex);
+            return "pushConstant: " + literal;
         }
     }
 
@@ -397,23 +397,23 @@ public final class PushBytecodes {
     public static final class PushLiteralVariableNode extends AbstractPushNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         private final SqueakProfile valueProfile;
-        private final int literalIndex;
+        private final Object literal;
 
         public PushLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             super(code, index, numBytecodes);
-            this.literalIndex = literalIndex;
-            valueProfile = SqueakProfile.createLiteralProfile(code.getLiteral(literalIndex));
+            literal = code.getLiteral(literalIndex);
+            valueProfile = SqueakProfile.createLiteralProfile(literal);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.execute(frame, valueProfile.profile(at0Node.execute(code.getLiteral(literalIndex), ASSOCIATION.VALUE)));
+            pushNode.execute(frame, valueProfile.profile(at0Node.execute(literal, ASSOCIATION.VALUE)));
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "pushLitVar: " + code.getLiteral(literalIndex);
+            return "pushLitVar: " + literal;
         }
     }
 
