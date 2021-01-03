@@ -226,6 +226,12 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         return callTarget;
     }
 
+    private void invalidateCallTarget() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        callTargetStable.invalidate();
+        callTarget = null;
+    }
+
     private void renewCallTarget() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         callTargetStable.invalidate();
@@ -423,6 +429,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
             } else {
                 bytes[realIndex] = (byte) obj;
             }
+            invalidateCallTarget();
         }
     }
 
@@ -442,6 +449,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
         } else {
             literals[index] = obj;
         }
+        invalidateCallTarget();
     }
 
     public boolean hasPrimitive() {
@@ -517,7 +525,7 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
                     final Object toPointer = to[i];
                     // FIXME: literals are @CompilationFinal, assumption needed (maybe
                     // pointersBecome should not modify literals at all?).
-                    getLiterals()[j] = toPointer;
+                    setLiteral(j, toPointer);
                 }
             }
         }
