@@ -176,7 +176,7 @@ public final class ExecuteContextNode extends AbstractExecuteContextNode {
                 final CallPrimitiveNode callPrimitiveNode = (CallPrimitiveNode) node;
                 if (callPrimitiveNode.primitiveNode != null) {
                     try {
-                        returnValue = callPrimitiveNode.primitiveNode.executePrimitive(frame);
+                        returnValue = callPrimitiveNode.primitiveNode.execute(frame);
                         pc = LOCAL_RETURN_PC;
                         continue bytecode_loop;
                     } catch (final PrimitiveFailed e) {

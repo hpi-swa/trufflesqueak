@@ -380,7 +380,7 @@ public final class SendBytecodes {
         @Override
         public void executeVoid(final VirtualFrame frame) {
             try {
-                popArgumentAndPush(frame, primitiveNode.executePrimitive(frame));
+                popArgumentAndPush(frame, primitiveNode.execute(frame));
             } catch (final PrimitiveFailed pf) {
                 replaceWithSend(frame);
             }
@@ -446,7 +446,7 @@ public final class SendBytecodes {
                 return;
             }
             try {
-                popArgumentsAndPush(frame, primitiveNode.executePrimitive(frame));
+                popArgumentsAndPush(frame, primitiveNode.execute(frame));
             } catch (final PrimitiveFailed pf) {
                 replaceWithSend(frame);
             }
@@ -554,7 +554,7 @@ public final class SendBytecodes {
                 return;
             }
             try {
-                popArgumentAndPush(frame, primitiveNode.executeWithArguments(frame, receiver));
+                popArgumentAndPush(frame, primitiveNode.executeWithReceiverAndArguments(frame, receiver));
             } catch (final PrimitiveFailed pf) {
                 replaceWithSend(frame);
             }

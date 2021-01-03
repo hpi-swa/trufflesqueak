@@ -16,9 +16,11 @@ import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode
 @NodeChild(value = "arguments", type = AbstractArgumentNode[].class)
 public abstract class AbstractPrimitiveNode extends AbstractNode {
 
-    public abstract Object executeWithArguments(VirtualFrame frame, Object... arguments);
+    public abstract Object execute(VirtualFrame frame);
 
-    public abstract Object executePrimitive(VirtualFrame frame);
+    public abstract Object executeWithArguments(VirtualFrame frame, Object... receiverAndArguments);
+
+    public abstract Object executeWithReceiverAndArguments(VirtualFrame frame, Object receiver, Object... arguments);
 
     public boolean acceptsMethod(@SuppressWarnings("unused") final CompiledCodeObject method) {
         CompilerAsserts.neverPartOfCompilation();

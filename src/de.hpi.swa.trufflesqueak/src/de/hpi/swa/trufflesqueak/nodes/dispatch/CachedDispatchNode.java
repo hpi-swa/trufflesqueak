@@ -105,7 +105,7 @@ public abstract class CachedDispatchNode extends AbstractNode {
         @Override
         public Object execute(final VirtualFrame frame) {
             try {
-                return primitiveNode.executePrimitive(frame);
+                return primitiveNode.execute(frame);
             } catch (final PrimitiveFailed pf) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (failureCounter.shouldNoLongerSendEagerly()) {
