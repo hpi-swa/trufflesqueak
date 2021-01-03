@@ -21,11 +21,13 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.POINT;
+import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNodes.AbstractArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
@@ -266,7 +268,6 @@ public final class SendBytecodes {
     public abstract static class AbstractSendSpecialSelectorQuickNode extends AbstractInstrumentableBytecodeNode {
         protected final int selectorIndex;
 
-        @Child protected AbstractPrimitiveNode primitiveNode;
         @Child protected FrameSlotWriteNode writeNode;
 
         protected AbstractSendSpecialSelectorQuickNode(final CompiledCodeObject code, final int index, final int selectorIndex) {
@@ -314,9 +315,9 @@ public final class SendBytecodes {
             } else if (selectorIndex == 29) { // #new:
                 return new SendSpecialSelectorQuickWithClassCheck1OrMoreArgumentsNode(code, index, selectorIndex);
             } else if (selectorIndex == 30) { // #x
-                return new SendSpecialSelectorQuickPointXYNode(code, index, selectorIndex, POINT.X);
+                return new SendSpecialSelectorQuickPointXNode(code, index, selectorIndex);
             } else if (selectorIndex == 31) { // #y
-                return new SendSpecialSelectorQuickPointXYNode(code, index, selectorIndex, POINT.Y);
+                return new SendSpecialSelectorQuickPointYNode(code, index, selectorIndex);
             }
             if (nodeFactory != null) {
                 if (numArguments == 0) {
@@ -371,6 +372,8 @@ public final class SendBytecodes {
     }
 
     private abstract static class SendSpecialSelectorQuickNode extends AbstractSendSpecialSelectorQuickNode {
+        @Child protected AbstractPrimitiveNode primitiveNode;
+
         private SendSpecialSelectorQuickNode(final CompiledCodeObject code, final int index, final int selectorIndex, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory,
                         final int numArguments) {
             super(code, index, selectorIndex);
@@ -431,6 +434,7 @@ public final class SendBytecodes {
         @CompilationFinal private ClassObject cachedReceiverClass;
         @CompilationFinal private Assumption cachedCallTargetStableAssumption;
 
+        @Child protected AbstractPrimitiveNode primitiveNode;
         @Child private FrameSlotReadNode peekAtReceiverNode;
         @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
 
@@ -537,28 +541,39 @@ public final class SendBytecodes {
         }
     }
 
-    private static final class SendSpecialSelectorQuickPointXYNode extends AbstractSendSpecialSelectorQuickNode {
+    private abstract static class AbstractSendSpecialSelectorQuickPointXYNode extends AbstractSendSpecialSelectorQuickNode {
+        @Child private AbstractPointersObjectReadNode readNode = AbstractPointersObjectReadNode.create();
         @Child private FrameSlotReadNode peekAtReceiverNode;
         @Child private LookupClassNode lookupClassNode = LookupClassNode.create();
+        @CompilationFinal private ClassObject pointClass;
 
-        private SendSpecialSelectorQuickPointXYNode(final CompiledCodeObject code, final int index, final int selectorIndex, final int pointInstVarIndex) {
+        protected AbstractSendSpecialSelectorQuickPointXYNode(final CompiledCodeObject code, final int index, final int selectorIndex) {
             super(code, index, selectorIndex);
-            primitiveNode = ControlPrimitivesFactory.PrimLoadInstVarNodeFactory.create(pointInstVarIndex, null);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
             final Object receiver = peekAtReceiver(frame);
-            if (!lookupClassNode.execute(receiver).isPoint()) {
+            if (lookupClassNode.execute(receiver) != getPointClass()) {
                 replaceWithSend(frame);
                 return;
             }
             try {
-                popArgumentAndPush(frame, primitiveNode.executeWithReceiverAndArguments(frame, receiver));
+                popArgumentAndPush(frame, readNode.execute((AbstractPointersObject) receiver, getPointInstVarIndex()));
             } catch (final PrimitiveFailed pf) {
                 replaceWithSend(frame);
             }
         }
+
+        private ClassObject getPointClass() {
+            if (pointClass == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                pointClass = lookupContext().pointClass;
+            }
+            return pointClass;
+        }
+
+        protected abstract int getPointInstVarIndex();
 
         private void popArgumentAndPush(final VirtualFrame frame, final Object value) {
             if (writeNode == null) {
@@ -576,6 +591,28 @@ public final class SendBytecodes {
                 peekAtReceiverNode = insert(FrameSlotReadNode.create(code.getStackSlot(currentStackPointer)));
             }
             return peekAtReceiverNode.executeRead(frame);
+        }
+    }
+
+    private static final class SendSpecialSelectorQuickPointXNode extends AbstractSendSpecialSelectorQuickPointXYNode {
+        protected SendSpecialSelectorQuickPointXNode(final CompiledCodeObject code, final int index, final int selectorIndex) {
+            super(code, index, selectorIndex);
+        }
+
+        @Override
+        protected int getPointInstVarIndex() {
+            return POINT.X;
+        }
+    }
+
+    private static final class SendSpecialSelectorQuickPointYNode extends AbstractSendSpecialSelectorQuickPointXYNode {
+        protected SendSpecialSelectorQuickPointYNode(final CompiledCodeObject code, final int index, final int selectorIndex) {
+            super(code, index, selectorIndex);
+        }
+
+        @Override
+        protected int getPointInstVarIndex() {
+            return POINT.Y;
         }
     }
 }
