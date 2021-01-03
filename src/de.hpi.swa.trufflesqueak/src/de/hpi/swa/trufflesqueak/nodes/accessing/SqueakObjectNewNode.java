@@ -73,7 +73,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     }
 
     @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!classObject.isMetaClass()", "!classObject.instancesAreClasses()",
-                    "classObject.getLayout() == cachedLayout"}, limit = "NEW_CACHE_SIZE")
+                    "classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
     protected static final PointersObject doPointers(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
                     @Cached(value = "classObject.getLayout()", allowUncached = true) final ObjectLayout cachedLayout) {
         assert extraSize == 0;
@@ -110,7 +110,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
     }
 
     @Specialization(guards = {"classObject.isIndexableWithInstVars()", "!classObject.isMethodContextClass()", "!classObject.isBlockClosureClass()", "!classObject.isFullBlockClosureClass()",
-                    "classObject.getLayout() == cachedLayout"}, limit = "NEW_CACHE_SIZE")
+                    "classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
     protected static final VariablePointersObject doVariablePointers(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
                     @Cached(value = "classObject.getLayout()", allowUncached = true) final ObjectLayout cachedLayout) {
         return new VariablePointersObject(image, classObject, cachedLayout, extraSize);
@@ -122,7 +122,7 @@ public abstract class SqueakObjectNewNode extends AbstractNode {
         return new VariablePointersObject(image, classObject, extraSize);
     }
 
-    @Specialization(guards = {"classObject.isWeak()", "classObject.getLayout() == cachedLayout"}, limit = "NEW_CACHE_SIZE")
+    @Specialization(guards = {"classObject.isWeak()", "classObject.getLayout() == cachedLayout"}, assumptions = "cachedLayout.getValidAssumption()", limit = "NEW_CACHE_SIZE")
     protected static final WeakVariablePointersObject doWeakPointers(final SqueakImageContext image, final ClassObject classObject, final int extraSize,
                     @Cached(value = "classObject.getLayout()", allowUncached = true) final ObjectLayout cachedLayout) {
         return new WeakVariablePointersObject(image, classObject, cachedLayout, extraSize);
