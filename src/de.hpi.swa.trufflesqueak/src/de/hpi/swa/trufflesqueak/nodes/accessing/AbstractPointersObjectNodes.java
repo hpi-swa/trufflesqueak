@@ -8,7 +8,6 @@ package de.hpi.swa.trufflesqueak.nodes.accessing;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -17,7 +16,6 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.ArrayObject;
@@ -128,9 +126,8 @@ public class AbstractPointersObjectNodes {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "object.getLayout().isValid(assumptionProfile)", replaces = "doWriteCached", limit = "1")
-        protected static final void doWriteUncached(final AbstractPointersObject object, final int index, final Object value,
-                        @SuppressWarnings("unused") @Shared("assmuptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile) {
+        @Specialization(replaces = "doWriteCached")
+        protected static final void doWriteUncached(final AbstractPointersObject object, final int index, final Object value) {
             try {
                 object.getLayout().getLocation(index).write(object, value);
             } catch (final IllegalWriteException e) {
@@ -142,15 +139,6 @@ public class AbstractPointersObjectNodes {
                 object.updateLayout(index, value);
                 object.getLayout().getLocation(index).writeMustSucceed(object, value);
             }
-        }
-
-        @Specialization(guards = "!object.getLayout().isValid(assumptionProfile)", limit = "1")
-        protected static final void doUpdateLayoutAndWrite(final AbstractPointersObject object, final int index, final Object value,
-                        @SuppressWarnings("unused") @Shared("assmuptionProfile") @Cached("createClassProfile()") final ValueProfile assumptionProfile) {
-            /* Note that this specialization does not replace the cached specialization. */
-            CompilerDirectives.transferToInterpreter();
-            object.updateLayout();
-            doWriteUncached(object, index, value, assumptionProfile);
         }
     }
 
