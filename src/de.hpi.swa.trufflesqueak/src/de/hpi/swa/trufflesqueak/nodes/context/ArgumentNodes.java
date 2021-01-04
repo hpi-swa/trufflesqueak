@@ -10,9 +10,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ArgumentNodes {
@@ -32,19 +31,18 @@ public final class ArgumentNodes {
     public static final class ArgumentOnStackNode extends AbstractArgumentNode {
         private final int argumentIndex;
 
-        @Child private FrameSlotReadNode readNode;
+        @Child private FrameStackReadNode readNode;
 
         public ArgumentOnStackNode(final int argumentIndex) {
-            this.argumentIndex = argumentIndex; // argumentIndex == 0 returns receiver
+            this.argumentIndex = argumentIndex;
         }
 
         @Override
         public Object execute(final VirtualFrame frame) {
             if (readNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
-                final int stackPointer = FrameAccess.getStackPointer(frame, code);
-                readNode = insert(FrameSlotReadNode.create(code.getStackSlot(stackPointer + argumentIndex)));
+                final int stackPointer = FrameAccess.findStackPointer(frame);
+                readNode = insert(FrameStackReadNode.create(frame, stackPointer + argumentIndex, false));
             }
             return readNode.executeRead(frame);
         }
@@ -54,12 +52,13 @@ public final class ArgumentNodes {
         private final int argumentIndex;
 
         public ArgumentNode(final int argumentIndex) {
-            this.argumentIndex = argumentIndex; // argumentIndex == 0 returns receiver
+            // argumentIndex == 0 returns receiver
+            this.argumentIndex = FrameAccess.getReceiverStartIndex() + argumentIndex;
         }
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return FrameAccess.getArgument(frame, argumentIndex);
+            return frame.getArguments()[argumentIndex];
         }
     }
 }

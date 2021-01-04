@@ -21,7 +21,7 @@ public final class FrameStackPushNode extends AbstractNode {
     @CompilationFinal private FrameSlot stackPointerSlot;
     @CompilationFinal private int stackPointer = -1;
 
-    @Child private FrameSlotWriteNode writeNode;
+    @Child private FrameStackWriteNode writeNode;
 
     public static FrameStackPushNode create() {
         return new FrameStackPushNode();
@@ -30,10 +30,10 @@ public final class FrameStackPushNode extends AbstractNode {
     public void execute(final VirtualFrame frame, final Object value) {
         if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+            stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) + 1;
             assert stackPointer <= CONTEXT.MAX_STACK_SIZE : "Bad stack pointer";
-            writeNode = insert(FrameSlotWriteNode.create(FrameAccess.getStackSlotSlow(frame, stackPointer - 1)));
+            writeNode = insert(FrameStackWriteNode.create(frame, stackPointer - 1));
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
         writeNode.executeWrite(frame, value);

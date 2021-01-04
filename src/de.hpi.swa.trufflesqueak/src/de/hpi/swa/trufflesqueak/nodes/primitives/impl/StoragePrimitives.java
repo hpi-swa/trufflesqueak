@@ -21,7 +21,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -137,13 +136,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 }
 
                 /*
-                 * use blockOrMethod.getStackSlotsUnsafe() here instead of stackPointer because in
-                 * rare cases, the stack is accessed behind the stackPointer.
+                 * Iterate over all stack slots here instead of stackPointer because in rare cases,
+                 * the stack is accessed behind the stackPointer.
                  */
-                for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
-                    if (slot == null) {
-                        return null; // Stop here, slot has not (yet) been created.
-                    }
+                FrameAccess.iterateStackSlots(current, slot -> {
                     if (current.isObject(slot)) {
                         final Object stackObject = FrameUtil.getObjectSafe(current, slot);
                         for (int j = 0; j < fromPointersLength; j++) {
@@ -157,7 +153,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             }
                         }
                     }
-                }
+                });
                 return null;
             });
         }

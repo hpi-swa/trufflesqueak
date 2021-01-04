@@ -93,7 +93,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (!FrameAccess.isTruffleSqueakFrame(current)) {
                     return null; // Foreign frame cannot be unwind marked.
                 }
-                final ContextObject context = FrameAccess.getContextSlow(current);
+                final ContextObject context = FrameAccess.findContext(current);
                 if (!foundMyself[0]) {
                     if (receiver == context) {
                         foundMyself[0] = true;
@@ -171,11 +171,11 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         return null;
                     }
                     if (!foundMyself) {
-                        if (start == FrameAccess.getMarkerSlow(current)) {
+                        if (start == FrameAccess.findMarker(current)) {
                             foundMyself = true;
                         }
                     } else {
-                        final ContextObject context = FrameAccess.getContextSlow(current);
+                        final ContextObject context = FrameAccess.findContext(current);
                         if (context == end) {
                             return end;
                         }
@@ -248,7 +248,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
                         return receiver;
                     }
                 }
-                final ContextObject context = FrameAccess.getContextSlow(current);
+                final ContextObject context = FrameAccess.findContext(current);
                 if (!foundMyself[0]) {
                     if (context == receiver) {
                         foundMyself[0] = true;

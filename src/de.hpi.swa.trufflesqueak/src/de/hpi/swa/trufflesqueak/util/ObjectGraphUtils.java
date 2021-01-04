@@ -13,14 +13,12 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObject;
 import de.hpi.swa.trufflesqueak.model.AbstractSqueakObjectWithClassAndHash;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 
 public final class ObjectGraphUtils {
@@ -118,16 +116,12 @@ public final class ObjectGraphUtils {
                 for (final Object argument : current.getArguments()) {
                     addIfUnmarked(argument);
                 }
-                final CompiledCodeObject code = FrameAccess.getMethodOrBlock(current);
-                addIfUnmarked(FrameAccess.getContext(current, code));
-                for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
-                    if (slot == null) {
-                        return null; // Stop here, slot has not (yet) been created.
-                    }
+                addIfUnmarked(FrameAccess.findContext(current));
+                FrameAccess.iterateStackSlots(current, slot -> {
                     if (current.isObject(slot)) {
                         addIfUnmarked(FrameUtil.getObjectSafe(current, slot));
                     }
-                }
+                });
                 return null;
             });
         }

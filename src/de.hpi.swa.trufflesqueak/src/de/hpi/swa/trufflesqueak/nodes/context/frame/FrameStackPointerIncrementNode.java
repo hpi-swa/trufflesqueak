@@ -25,7 +25,7 @@ public final class FrameStackPointerIncrementNode extends AbstractNode {
     public void execute(final VirtualFrame frame) {
         if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+            stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) + 1;
             assert stackPointer <= CONTEXT.MAX_STACK_SIZE : "Bad stack pointer";
         }

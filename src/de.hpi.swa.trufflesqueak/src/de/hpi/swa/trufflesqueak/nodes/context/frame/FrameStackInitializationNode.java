@@ -5,7 +5,6 @@
  */
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -16,12 +15,13 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class FrameStackInitializationNode extends AbstractNode {
     @CompilationFinal private FrameSlot stackPointerSlot;
-    @CompilationFinal private int numArgs;
-    @Children private FrameSlotWriteNode[] writeNodes;
+    @CompilationFinal private int initialSP;
+    @Children private FrameStackWriteNode[] writeTempNodes;
 
     public static FrameStackInitializationNode create() {
         return new FrameStackInitializationNode();
@@ -31,34 +31,30 @@ public final class FrameStackInitializationNode extends AbstractNode {
     public void executeInitialize(final VirtualFrame frame) {
         if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+            stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
             final CompiledCodeObject code;
-            final int initialSP;
             final BlockClosureObject closure = FrameAccess.getClosure(frame);
+            final int numArgs = FrameAccess.getNumArguments(frame);
             if (closure == null) {
                 code = FrameAccess.getCodeObject(frame);
                 initialSP = code.getNumTemps();
-                numArgs = code.getNumArgs();
+                assert numArgs == code.getNumArgs();
             } else {
                 code = closure.getCompiledBlock();
                 initialSP = closure.getNumTemps();
-                numArgs = (int) (closure.getNumArgs() + closure.getNumCopied());
+                assert numArgs == closure.getNumArgs() + closure.getNumCopied();
             }
-            writeNodes = new FrameSlotWriteNode[initialSP];
-            for (int i = 0; i < writeNodes.length; i++) {
-                writeNodes[i] = insert(FrameSlotWriteNode.create(code.getStackSlot(i)));
+            writeTempNodes = new FrameStackWriteNode[initialSP - numArgs];
+            for (int i = 0; i < writeTempNodes.length; i++) {
+                writeTempNodes[i] = insert(FrameStackWriteNode.create(frame, numArgs + i));
+                assert writeTempNodes[i] instanceof FrameSlotWriteNode;
             }
         }
-        CompilerAsserts.partialEvaluationConstant(writeNodes.length);
-        final Object[] arguments = frame.getArguments();
-        assert arguments.length == FrameAccess.expectedArgumentSize(numArgs);
-        for (int i = 0; i < numArgs; i++) {
-            writeNodes[i].executeWrite(frame, arguments[FrameAccess.getArgumentStartIndex() + i]);
-        }
+        // TODO: avoid nilling out of temp slots to allow slot specializations
         // Initialize remaining temporary variables with nil in newContext.
-        for (int i = numArgs; i < writeNodes.length; i++) {
-            writeNodes[i].executeWrite(frame, NilObject.SINGLETON);
+        for (int i = 0; i < writeTempNodes.length; i++) {
+            writeTempNodes[i].executeWrite(frame, NilObject.SINGLETON);
         }
-        FrameAccess.setStackPointer(frame, stackPointerSlot, writeNodes.length);
+        FrameAccess.setStackPointer(frame, stackPointerSlot, initialSP);
     }
 }

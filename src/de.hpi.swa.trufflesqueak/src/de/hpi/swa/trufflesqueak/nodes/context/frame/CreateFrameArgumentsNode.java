@@ -17,10 +17,10 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public final class CreateFrameArgumentsNode extends AbstractNode {
     @CompilationFinal private FrameSlot stackPointerSlot;
     @CompilationFinal private int stackPointer;
-    @Children private FrameSlotReadNode[] receiverAndArgumentsNodes;
+    @Children private FrameStackReadNode[] receiverAndArgumentsNodes;
 
     private CreateFrameArgumentsNode(final int argumentCount) {
-        receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
+        receiverAndArgumentsNodes = new FrameStackReadNode[1 + argumentCount];
     }
 
     public static CreateFrameArgumentsNode create(final int argumentCount) {
@@ -30,11 +30,11 @@ public final class CreateFrameArgumentsNode extends AbstractNode {
     public Object[] execute(final VirtualFrame frame, final CompiledCodeObject method, final Object sender) {
         if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+            stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - receiverAndArgumentsNodes.length;
             assert stackPointer >= 0 : "Bad stack pointer";
             for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
+                receiverAndArgumentsNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
             }
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);

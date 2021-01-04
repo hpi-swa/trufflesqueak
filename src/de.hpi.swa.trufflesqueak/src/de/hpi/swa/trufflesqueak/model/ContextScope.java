@@ -5,10 +5,6 @@
  */
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -22,9 +18,9 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.interop.InteropArray;
+import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ExportLibrary(InteropLibrary.class)
@@ -38,18 +34,10 @@ public final class ContextScope implements TruffleObject {
     private static final String RECEIVER = "receiver";
     private static final String[] ALL_FIELDS = new String[]{SENDER, PC, STACKP, METHOD, CLOSURE_OR_NIL, RECEIVER};
 
-    private final Map<String, FrameSlot> slots = new HashMap<>();
     private final Frame frame;
 
     public ContextScope(final Frame frame) {
         this.frame = frame;
-        final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
-        for (final FrameSlot slot : code.getStackSlotsUnsafe()) {
-            if (slot == null) {
-                break;
-            }
-            slots.put(Objects.toString(slot.getIdentifier()), slot);
-        }
     }
 
     @ExportMessage
@@ -77,10 +65,10 @@ public final class ContextScope implements TruffleObject {
             return FrameAccess.getSender(frame);
         }
         if (PC.equals(member)) {
-            return FrameAccess.getInstructionPointerSlow(frame);
+            return FrameAccess.findInstructionPointer(frame);
         }
         if (STACKP.equals(member)) {
-            return FrameAccess.getStackPointerSlow(frame);
+            return FrameAccess.findStackPointer(frame);
         }
         if (METHOD.equals(member)) {
             return FrameAccess.getCodeObject(frame);
@@ -91,22 +79,32 @@ public final class ContextScope implements TruffleObject {
         if (RECEIVER.equals(member)) {
             return FrameAccess.getReceiver(frame);
         }
-        final FrameSlot slot = slots.get(member);
-        if (slot == null) {
-            throw UnknownIdentifierException.create(member);
-        } else {
-            return Objects.requireNonNull(frame.getValue(slot));
+        try {
+            final int index = Integer.parseInt(member);
+            if (index >= getContextSize()) {
+                throw UnknownIdentifierException.create(member);
+            }
+            final int numArgs = FrameAccess.getNumArguments(frame);
+            if (index < numArgs) {
+                return FrameAccess.getArgument(frame, index);
+            } else {
+                final FrameSlot slot = FrameAccess.findStackSlot(frame, index);
+                if (slot != null) {
+                    return frame.getValue(slot);
+                }
+            }
+        } catch (final NumberFormatException e) {
         }
+        throw UnknownIdentifierException.create(member);
     }
 
     @ExportMessage
     @TruffleBoundary
     protected Object getMembers(@SuppressWarnings("unused") final boolean includeInternal) {
-        final String[] members = new String[ALL_FIELDS.length + slots.size()];
+        final String[] members = new String[getContextSize()];
         System.arraycopy(ALL_FIELDS, 0, members, 0, ALL_FIELDS.length);
-        int index = ALL_FIELDS.length;
-        for (final String key : slots.keySet()) {
-            members[index++] = key;
+        for (int i = CONTEXT.TEMP_FRAME_START; i < members.length; i++) {
+            members[i] = "" + i;
         }
         return new InteropArray(members);
     }
@@ -119,39 +117,22 @@ public final class ContextScope implements TruffleObject {
                 return true;
             }
         }
-        final FrameSlot slot = slots.get(member);
-        if (slot == null) {
+        try {
+            return Integer.parseInt(member) < getContextSize();
+        } catch (final NumberFormatException e) {
             return false;
         }
-        final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
-        int i = 0;
-        for (final FrameSlot currentSlot : code.getStackSlotsUnsafe()) {
-            if (currentSlot == slot) {
-                return i < FrameAccess.getStackPointer(frame, code);
-            }
-            i++;
-        }
-        throw SqueakException.create("Unable to find slot");
     }
 
     @ExportMessage
-    @TruffleBoundary
-    protected boolean isMemberModifiable(final String member) {
-        return slots.containsKey(member) && frame != null;
+    protected boolean isMemberModifiable(@SuppressWarnings("unused") final String member) {
+        return false; // TODO: allow modifications
     }
 
+    @SuppressWarnings("unused")
     @ExportMessage
-    @TruffleBoundary
     protected void writeMember(final String member, final Object value) throws UnknownIdentifierException, UnsupportedMessageException {
-        if (frame == null) {
-            throw UnsupportedMessageException.create();
-        }
-        final FrameSlot slot = slots.get(member);
-        if (slot != null) {
-            FrameAccess.setStackSlot(frame, slot, value);
-        } else {
-            throw UnknownIdentifierException.create(member);
-        }
+        // TODO: allow modifications
     }
 
     @SuppressWarnings("static-method")
@@ -199,5 +180,16 @@ public final class ContextScope implements TruffleObject {
         } else {
             return "CTX " + method;
         }
+    }
+
+    private int getContextSize() {
+        final BlockClosureObject closure = FrameAccess.getClosure(frame);
+        final CompiledCodeObject code;
+        if (closure == null) {
+            code = FrameAccess.getCodeObject(frame);
+        } else {
+            code = closure.getCompiledBlock();
+        }
+        return CONTEXT.TEMP_FRAME_START + code.getSqueakContextSize();
     }
 }

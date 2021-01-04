@@ -62,13 +62,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     private ContextObject(final SqueakImageContext image, final MaterializedFrame truffleFrame, final int size) {
         super(image, image.methodContextClass);
         assert FrameAccess.getSender(truffleFrame) != null;
-        assert FrameAccess.getContextSlow(truffleFrame) == null;
+        assert FrameAccess.findContext(truffleFrame) == null;
         assert FrameAccess.getCodeObject(truffleFrame).getSqueakContextSize() == size;
         this.truffleFrame = truffleFrame;
         methodOrBlock = FrameAccess.getMethodOrBlock(truffleFrame);
         this.size = size;
     }
 
+    @TruffleBoundary
     private ContextObject(final ContextObject original) {
         super(original);
         methodOrBlock = original.methodOrBlock;
@@ -83,16 +84,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         FrameAccess.setInstructionPointer(truffleFrame, methodOrBlock, FrameAccess.getInstructionPointer(original.truffleFrame, methodOrBlock));
         FrameAccess.setStackPointer(truffleFrame, methodOrBlock, FrameAccess.getStackPointer(original.truffleFrame, methodOrBlock));
         // Copy stack
-        final int numStackSlots = methodOrBlock.getNumStackSlots();
-        for (int i = 0; i < numStackSlots; i++) {
-            final FrameSlot slot = methodOrBlock.getStackSlot(i);
+        FrameAccess.iterateStackSlots(truffleFrame, slot -> {
             final Object value = original.truffleFrame.getValue(slot);
             if (value != null) {
                 FrameAccess.setStackSlot(truffleFrame, slot, value);
-            } else {
-                break; // This and all following slots are not in use.
             }
-        }
+        });
     }
 
     public static ContextObject create(final SqueakImageContext image, final int size) {
@@ -162,9 +159,10 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         } else {
             setInstructionPointer(MiscUtils.toIntExact((long) pc));
         }
-        setStackPointer(MiscUtils.toIntExact((long) pointers[CONTEXT.STACKPOINTER]));
-        for (int i = CONTEXT.TEMP_FRAME_START; i < pointers.length; i++) {
-            atTempPut(i - CONTEXT.TEMP_FRAME_START, pointers[i]);
+        final int stackPointer = MiscUtils.toIntExact((long) pointers[CONTEXT.STACKPOINTER]);
+        setStackPointer(stackPointer);
+        for (int i = 0; i < stackPointer; i++) {
+            atTempPut(i, pointers[CONTEXT.TEMP_FRAME_START + i]);
         }
     }
 
@@ -382,6 +380,7 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         }
     }
 
+    @TruffleBoundary
     public void setClosure(final BlockClosureObject value) {
         final MaterializedFrame oldFrame = getOrCreateTruffleFrame();
         final CompiledCodeObject code = FrameAccess.getMethodOrBlock(oldFrame);
@@ -397,18 +396,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         FrameAccess.setInstructionPointer(truffleFrame, block, pc);
         FrameAccess.setStackPointer(truffleFrame, block, sp);
         FrameAccess.setClosure(truffleFrame, value);
-        int i = 0;
-        for (final FrameSlot stackSlot : code.getStackSlotsUnsafe()) {
-            if (stackSlot == null) {
-                break; /* Done, this and all following slots have not (yet) been used. */
-            } else {
-                final Object stackValue = oldFrame.getValue(stackSlot);
-                if (stackValue == null) {
-                    break; /* Done, no more stack values will follow. */
-                }
-                FrameAccess.setStackSlot(truffleFrame, block.getStackSlot(i++), stackValue);
+        FrameAccess.iterateStackSlots(truffleFrame, slot -> {
+            final Object stackValue = oldFrame.getValue(slot);
+            if (stackValue != null) {
+                FrameAccess.setStackSlot(truffleFrame, slot, stackValue);
             }
-        }
+        });
     }
 
     public Object getReceiver() {
@@ -421,13 +414,22 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
 
     @TruffleBoundary
     public Object atTemp(final int index) {
-        return NilObject.nullToNil(truffleFrame.getValue(methodOrBlock.getStackSlot(index)));
+        final Object[] args = truffleFrame.getArguments();
+        if (FrameAccess.getArgumentStartIndex() + index < args.length) {
+            return args[FrameAccess.getArgumentStartIndex() + index];
+        } else {
+            return NilObject.nullToNil(truffleFrame.getValue(FrameAccess.findOrAddStackSlot(truffleFrame, index)));
+        }
     }
 
     @TruffleBoundary
     public void atTempPut(final int index, final Object value) {
-        FrameAccess.setArgumentIfInRange(getOrCreateTruffleFrame(), index, value);
-        FrameAccess.setStackSlot(truffleFrame, methodOrBlock.getStackSlot(index), value);
+        final Object[] args = getOrCreateTruffleFrame().getArguments();
+        if (FrameAccess.getArgumentStartIndex() + index < args.length) {
+            args[FrameAccess.getArgumentStartIndex() + index] = value;
+        } else {
+            FrameAccess.setStackSlot(truffleFrame, FrameAccess.findOrAddStackSlot(truffleFrame, index), value);
+        }
     }
 
     public void terminate() {
@@ -593,11 +595,12 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
     public boolean pointsTo(final Object thang) {
         // TODO: make sure this works correctly
         if (truffleFrame != null) {
-            if (getSender() == thang || thang.equals(getInstructionPointer(ConditionProfile.getUncached())) || thang.equals(getStackPointer()) || getCodeObject() == thang || getClosure() == thang ||
+            final int stackPointer = getStackPointer();
+            if (getSender() == thang || thang.equals(getInstructionPointer(ConditionProfile.getUncached())) || thang.equals(stackPointer) || getCodeObject() == thang || getClosure() == thang ||
                             getReceiver() == thang) {
                 return true;
             }
-            for (int i = 0; i < getCodeObject().getNumStackSlots(); i++) {
+            for (int i = 0; i < stackPointer; i++) {
                 if (atTemp(i) == thang) {
                     return true;
                 }
@@ -611,40 +614,38 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         if (hasTruffleFrame()) {
             for (int i = 0; i < from.length; i++) {
                 final Object fromPointer = from[i];
-                if (fromPointer == getFrameSender() && to[i] instanceof ContextObject) {
-                    setSender((ContextObject) to[i]);
+                final Object toPointer = to[i];
+                if (fromPointer == getFrameSender() && toPointer instanceof ContextObject) {
+                    setSender((ContextObject) toPointer);
                 }
-                if (fromPointer == getCodeObject() && to[i] instanceof CompiledCodeObject) {
-                    setCodeObject((CompiledCodeObject) to[i]);
+                if (fromPointer == getCodeObject() && toPointer instanceof CompiledCodeObject) {
+                    setCodeObject((CompiledCodeObject) toPointer);
                 }
-                if (fromPointer == getClosure() && to[i] instanceof BlockClosureObject) {
-                    setClosure((BlockClosureObject) to[i]);
+                if (fromPointer == getClosure() && toPointer instanceof BlockClosureObject) {
+                    setClosure((BlockClosureObject) toPointer);
                 }
                 if (fromPointer == getReceiver()) {
-                    setReceiver(to[i]);
+                    setReceiver(toPointer);
                 }
 
                 final Object[] arguments = truffleFrame.getArguments();
                 for (int j = FrameAccess.getArgumentStartIndex(); j < arguments.length; j++) {
                     final Object argument = arguments[j];
                     if (argument == fromPointer) {
-                        arguments[j] = to[i];
+                        arguments[j] = toPointer;
                     }
                 }
 
                 assert methodOrBlock != fromPointer : "Code should change and with it the frame descriptor";
-                assert methodOrBlock.getStackSlotsUnsafe().length == methodOrBlock.getNumStackSlots();
                 assert process != fromPointer : "Process should change";
-                for (final FrameSlot slot : methodOrBlock.getStackSlotsUnsafe()) {
-                    if (slot == null) {
-                        break; /* Done, this and all following slots have not (yet) been used. */
-                    } else if (truffleFrame.isObject(slot)) {
+                FrameAccess.iterateStackSlots(truffleFrame, slot -> {
+                    if (truffleFrame.isObject(slot)) {
                         final Object stackValue = FrameUtil.getObjectSafe(truffleFrame, slot);
                         if (fromPointer == stackValue) {
-                            truffleFrame.setObject(slot, to[i]);
+                            truffleFrame.setObject(slot, toPointer);
                         }
                     }
-                }
+                });
             }
         }
     }
@@ -656,14 +657,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             tracer.addIfUnmarked(getCodeObject());
             tracer.addIfUnmarked(getClosure());
             tracer.addIfUnmarked(getReceiver());
-            assert getCodeObject().getStackSlotsUnsafe().length == getCodeObject().getNumStackSlots();
-            for (final FrameSlot slot : methodOrBlock.getStackSlotsUnsafe()) {
-                if (slot == null) {
-                    break; /* Done, this and all following slots have not (yet) been used. */
-                } else if (truffleFrame.isObject(slot)) {
+            for (final Object arg : truffleFrame.getArguments()) {
+                tracer.addIfUnmarked(arg);
+            }
+            FrameAccess.iterateStackSlots(truffleFrame, slot -> {
+                if (truffleFrame.isObject(slot)) {
                     tracer.addIfUnmarked(FrameUtil.getObjectSafe(truffleFrame, slot));
                 }
-            }
+            });
         }
     }
 
@@ -675,14 +676,14 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
             writer.traceIfNecessary(getCodeObject());
             writer.traceIfNecessary(getClosure());
             writer.traceIfNecessary(getReceiver());
-            assert methodOrBlock.getStackSlotsUnsafe().length == getCodeObject().getNumStackSlots();
-            for (final FrameSlot slot : methodOrBlock.getStackSlotsUnsafe()) {
-                if (slot == null) {
-                    break; /* Done, this and all following slots have not (yet) been used. */
-                } else if (truffleFrame.isObject(slot)) {
+            for (final Object arg : truffleFrame.getArguments()) {
+                writer.traceIfNecessary(arg);
+            }
+            FrameAccess.iterateStackSlots(truffleFrame, slot -> {
+                if (truffleFrame.isObject(slot)) {
                     writer.traceIfNecessary(FrameUtil.getObjectSafe(truffleFrame, slot));
                 }
-            }
+            });
         }
     }
 
@@ -696,10 +697,15 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         writer.writeSmallInteger(getStackPointer());
         writer.writeObject(getCodeObject());
         writer.writeObject(NilObject.nullToNil(getClosure()));
-        writer.writeObject(getReceiver());
-        assert methodOrBlock.getStackSlotsUnsafe().length == getCodeObject().getNumStackSlots();
-        final FrameSlot[] stackSlots = methodOrBlock.getStackSlotsUnsafe();
-        for (final FrameSlot slot : stackSlots) {
+        final Object[] args = truffleFrame.getArguments();
+        final int numArgs = FrameAccess.getNumArguments(truffleFrame);
+        // Write receiver and arguments
+        for (int i = 0; i < 1 + numArgs; i++) {
+            writer.writeObject(args[FrameAccess.getReceiverStartIndex() + i]);
+        }
+        // Write remaining stack items
+        for (int i = numArgs; i < getCodeObject().getSqueakContextSize(); i++) {
+            final FrameSlot slot = FrameAccess.findStackSlot(truffleFrame, i);
             if (slot == null) {
                 writer.writeNil();
             } else {

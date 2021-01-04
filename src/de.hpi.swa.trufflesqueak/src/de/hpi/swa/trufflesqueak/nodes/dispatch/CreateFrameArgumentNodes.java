@@ -30,7 +30,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodesFactory.CreateFrameArgumentsForIndirectCallNodeGen;
@@ -42,15 +42,15 @@ public final class CreateFrameArgumentNodes {
         protected final NativeObject selector;
         @CompilationFinal private ContextReference<SqueakImageContext> context;
 
-        @Child private FrameSlotReadNode receiverNode;
-        @Children protected FrameSlotReadNode[] argumentNodes;
+        @Child private FrameStackReadNode receiverNode;
+        @Children protected FrameStackReadNode[] argumentNodes;
 
         private AbstractCreateFrameArgumentsForExceptionalNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
             this.selector = selector;
-            argumentNodes = new FrameSlotReadNode[argumentCount];
-            final int stackPointer = FrameAccess.getStackPointerSlow(frame) + 1;
+            argumentNodes = new FrameStackReadNode[argumentCount];
+            final int stackPointer = FrameAccess.findStackPointer(frame) + 1;
             for (int i = 0; i < argumentNodes.length; i++) {
-                argumentNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
+                argumentNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
             }
         }
 
@@ -73,8 +73,8 @@ public final class CreateFrameArgumentNodes {
         protected final Object getReceiver(final VirtualFrame frame) {
             if (receiverNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                final int stackPointer = FrameAccess.getStackPointerSlow(frame);
-                receiverNode = insert(FrameSlotReadNode.create(frame, stackPointer));
+                final int stackPointer = FrameAccess.findStackPointer(frame);
+                receiverNode = insert(FrameStackReadNode.create(frame, stackPointer, true));
             }
             return receiverNode.executeRead(frame);
         }
@@ -120,17 +120,17 @@ public final class CreateFrameArgumentNodes {
     @ImportStatic(AbstractDispatchNode.class)
     protected abstract static class CreateFrameArgumentsForIndirectCallNode extends AbstractNode {
         private final NativeObject selector;
-        @Children private FrameSlotReadNode[] argumentNodes;
+        @Children private FrameStackReadNode[] argumentNodes;
         @Child private GetOrCreateContextOrMarkerNode senderNode = GetOrCreateContextOrMarkerNode.create();
 
         protected CreateFrameArgumentsForIndirectCallNode(final VirtualFrame frame, final NativeObject selector, final int argumentCount) {
             this.selector = selector;
             /* +1 for receiver. */
-            final int stackPointer = FrameAccess.getStackPointerSlow(frame) + 1;
+            final int stackPointer = FrameAccess.findStackPointer(frame) + 1;
             assert stackPointer >= 0 : "Bad stack pointer";
-            argumentNodes = new FrameSlotReadNode[argumentCount];
+            argumentNodes = new FrameStackReadNode[argumentCount];
             for (int i = 0; i < argumentNodes.length; i++) {
-                argumentNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
+                argumentNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
             }
         }
 
@@ -167,7 +167,7 @@ public final class CreateFrameArgumentNodes {
     }
 
     @ExplodeLoop
-    private static Object[] getArguments(final VirtualFrame frame, final FrameSlotReadNode[] argumentNodes) {
+    private static Object[] getArguments(final VirtualFrame frame, final FrameStackReadNode[] argumentNodes) {
         final int argumentCount = argumentNodes.length;
         CompilerAsserts.partialEvaluationConstant(argumentCount);
         final Object[] arguments = new Object[argumentCount];

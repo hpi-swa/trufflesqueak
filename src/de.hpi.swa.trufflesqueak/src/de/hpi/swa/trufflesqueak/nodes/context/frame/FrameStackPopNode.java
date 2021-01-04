@@ -20,7 +20,7 @@ public final class FrameStackPopNode extends AbstractNode {
     @CompilationFinal private FrameSlot stackPointerSlot;
     @CompilationFinal private int stackPointer;
 
-    @Child private FrameSlotReadNode readNode;
+    @Child private FrameStackReadNode readNode;
 
     public static FrameStackPopNode create() {
         return new FrameStackPopNode();
@@ -29,9 +29,9 @@ public final class FrameStackPopNode extends AbstractNode {
     public Object execute(final VirtualFrame frame) {
         if (stackPointerSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stackPointerSlot = FrameAccess.getStackPointerSlot(frame);
+            stackPointerSlot = FrameAccess.findStackPointerSlot(frame);
             stackPointer = FrameAccess.getStackPointer(frame, stackPointerSlot) - 1;
-            readNode = insert(FrameSlotReadNode.create(frame, stackPointer));
+            readNode = insert(FrameStackReadNode.create(frame, stackPointer, true));
         }
         FrameAccess.setStackPointer(frame, stackPointerSlot, stackPointer);
         return readNode.executeRead(frame);

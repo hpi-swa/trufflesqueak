@@ -33,7 +33,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNode {
 
     @Specialization
     protected final Object doHandle(final VirtualFrame frame, final NonLocalReturn nlr,
-                    @Cached("getInstructionPointerSlot(frame)") final FrameSlot instructionPointerSlot,
+                    @Cached("findInstructionPointerSlot(frame)") final FrameSlot instructionPointerSlot,
                     @Cached final GetContextNode getContextNode,
                     @Cached final ConditionProfile hasModifiedSenderProfile) {
         if (hasModifiedSenderProfile.profile(getContextNode.hasModifiedSender(frame))) {

@@ -7,7 +7,6 @@ package de.hpi.swa.trufflesqueak.nodes.dispatch;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
@@ -23,7 +22,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.SqueakObjectClassNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetContextOrMarkerNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.CreateFrameArgumentNodes.CreateFrameArgumentsForDNUNode;
@@ -120,11 +119,13 @@ public abstract class CachedDispatchNode extends AbstractNode {
             final CompiledCodeObject code = FrameAccess.getMethodOrBlock(frame);
             final int stackPointer = FrameAccess.getStackPointer(frame, code);
             final Object[] receiverAndArguments = new Object[1 + argumentCount];
+            final int numArgs = FrameAccess.getNumArguments(frame);
             for (int i = 0; i < receiverAndArguments.length; i++) {
-                final FrameSlot stackSlot = code.getStackSlot(stackPointer + i);
-                receiverAndArguments[i] = frame.getValue(stackSlot);
-                if (frame.isObject(stackSlot)) {
-                    frame.setObject(stackSlot, null); /* Clear stack slot. */
+                final int stackIndex = stackPointer + i;
+                if (stackIndex < numArgs) {
+                    receiverAndArguments[i] = FrameAccess.getArgument(frame, stackIndex);
+                } else {
+                    receiverAndArguments[i] = frame.getValue(FrameAccess.findStackSlot(frame, stackIndex));
                 }
             }
             return IndirectCallNode.getUncached().call(method.getCallTarget(),
@@ -133,14 +134,14 @@ public abstract class CachedDispatchNode extends AbstractNode {
     }
 
     protected abstract static class AbstractCachedDispatchMethodNode extends CachedDispatchWithDirectCallNode {
-        @Children protected FrameSlotReadNode[] receiverAndArgumentsNodes;
+        @Children protected FrameStackReadNode[] receiverAndArgumentsNodes;
 
         private AbstractCachedDispatchMethodNode(final VirtualFrame frame, final int argumentCount, final CompiledCodeObject method) {
             super(method);
-            receiverAndArgumentsNodes = new FrameSlotReadNode[1 + argumentCount];
-            final int stackPointer = FrameAccess.getStackPointerSlow(frame);
+            receiverAndArgumentsNodes = new FrameStackReadNode[1 + argumentCount];
+            final int stackPointer = FrameAccess.findStackPointer(frame);
             for (int i = 0; i < receiverAndArgumentsNodes.length; i++) {
-                receiverAndArgumentsNodes[i] = insert(FrameSlotReadNode.create(frame, stackPointer + i));
+                receiverAndArgumentsNodes[i] = insert(FrameStackReadNode.create(frame, stackPointer + i, true));
             }
         }
 
