@@ -71,13 +71,17 @@ public class ObjectLayoutTest extends AbstractSqueakTestCaseWithDummyImage {
         assertSame(obj1.object0, dummyClass);
 
         assertSame(readNode.execute(obj2, 1), NilObject.SINGLETON);
-        assertSame("Layouts should be in sync after read", obj1.getLayout(), obj2.getLayout());
+        assertFalse("Read does not update layout", obj2.getLayout().isValid());
+        assertNotSame("Layouts should still be out of sync after read", obj1.getLayout(), obj2.getLayout());
 
         writeAndValidate(obj2, 12, 1234L);
         assertEquals(1234L, obj2.primitive1);
 
         writeAndValidate(obj1, 12, image.bitmapClass);
+        assertFalse("obj2 should have outdated layout", obj2.getLayout().isValid());
         assertEquals(1234L, (long) readNode.execute(obj2, 12));
+        writeAndValidate(obj2, 11, image.bitmapClass);
+        assertTrue("obj2 should have valid layout after write", obj2.getLayout().isValid());
         assertEquals("Primitive slot should be unset", 0L, obj2.primitive1);
         assertEquals("Object slot should be used for primitive value", 1234L, (long) obj2.object1);
     }
