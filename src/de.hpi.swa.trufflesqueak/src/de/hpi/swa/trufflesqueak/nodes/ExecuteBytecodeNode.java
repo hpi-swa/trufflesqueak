@@ -54,8 +54,9 @@ public final class ExecuteBytecodeNode extends AbstractExecuteContextNode {
 
     @Override
     public Object execute(final VirtualFrame frame, final int startPC) {
+        CompilerAsserts.partialEvaluationConstant(startPC);
         try {
-            if (primitiveNode != null) {
+            if (primitiveNode != null && startPC == initialPC) {
                 try {
                     return primitiveNode.execute(frame);
                 } catch (final PrimitiveFailed e) {

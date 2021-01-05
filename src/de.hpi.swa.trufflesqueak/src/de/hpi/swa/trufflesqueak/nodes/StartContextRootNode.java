@@ -20,7 +20,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.GetOrCreateContextNode;
@@ -81,9 +80,6 @@ public final class StartContextRootNode extends RootNode {
             final int numArgs = FrameAccess.getNumArguments(frame);
             if (closure == null) {
                 initialPC = code.getInitialPC();
-                if (code.hasPrimitive()) { // skip primitive bytecode
-                    initialPC += CallPrimitiveNode.NUM_BYTECODES;
-                }
                 initialSP = code.getNumTemps();
                 assert numArgs == code.getNumArgs();
             } else {
