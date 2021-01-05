@@ -27,6 +27,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
@@ -39,14 +40,17 @@ import de.hpi.swa.trufflesqueak.interop.WrapToSqueakNode;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.ADDITIONAL_METHOD_STATE;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CLASS_BINDING;
 import de.hpi.swa.trufflesqueak.model.layout.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
+import de.hpi.swa.trufflesqueak.nodes.ExecuteNonFailingPrimitiveRootNode;
 import de.hpi.swa.trufflesqueak.nodes.ResumeContextRootNode;
+import de.hpi.swa.trufflesqueak.nodes.StartContextRootNode;
 import de.hpi.swa.trufflesqueak.nodes.accessing.AbstractPointersObjectNodes.AbstractPointersObjectReadNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractSqueakBytecodeDecoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeSistaV1Decoder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeV3PlusClosuresDecoder;
 import de.hpi.swa.trufflesqueak.nodes.dispatch.DispatchUneagerlyNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.shared.SqueakLanguageConfig;
 import de.hpi.swa.trufflesqueak.util.MiscUtils;
 import de.hpi.swa.trufflesqueak.util.ObjectGraphUtils.ObjectTracer;
@@ -236,7 +240,16 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
 
     protected void initializeCallTargetUnsafe() {
         CompilerAsserts.neverPartOfCompilation();
-        callTarget = Truffle.getRuntime().createCallTarget(StartContextRootNode.create(SqueakLanguage.getContext().getLanguage(), this));
+        final SqueakLanguage language = SqueakLanguage.getContext().getLanguage();
+        final RootNode rootNode;
+        if (isQuickPushPrimitive()) {
+            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(this, false, primitiveIndex(), false);
+            assert primitiveNode != null;
+            rootNode = new ExecuteNonFailingPrimitiveRootNode(language, this, primitiveNode);
+        } else {
+            rootNode = new StartContextRootNode(language, this);
+        }
+        callTarget = Truffle.getRuntime().createCallTarget(rootNode);
     }
 
     public Assumption getCallTargetStable() {
@@ -410,6 +423,14 @@ public final class CompiledCodeObject extends AbstractSqueakObjectWithClassAndHa
     public int primitiveIndex() {
         assert hasPrimitive() && bytes.length >= 3;
         return (Byte.toUnsignedInt(bytes[2]) << 8) + Byte.toUnsignedInt(bytes[1]);
+    }
+
+    public boolean isQuickPushPrimitive() {
+        if (!hasPrimitive()) {
+            return false;
+        }
+        final int primitiveIndex = primitiveIndex();
+        return 256 <= primitiveIndex && primitiveIndex <= 519;
     }
 
     public boolean isUnwindMarked() {

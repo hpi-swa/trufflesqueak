@@ -42,7 +42,7 @@ public final class StartContextRootNode extends RootNode {
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
 
-    protected StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
+    public StartContextRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
         /*
@@ -54,10 +54,6 @@ public final class StartContextRootNode extends RootNode {
          */
         interruptHandlerNode = code.isCompiledBlock() || code.getBytes().length < MIN_NUMBER_OF_BYTECODE_FOR_INTERRUPT_CHECKS ? null : InterruptHandlerNode.createOrNull(false);
         executeBytecodeNode = new ExecuteBytecodeNode(code);
-    }
-
-    public static StartContextRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
-        return new StartContextRootNode(language, code);
     }
 
     @Override
