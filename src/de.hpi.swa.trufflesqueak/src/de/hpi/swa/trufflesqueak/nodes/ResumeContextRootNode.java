@@ -18,8 +18,6 @@ import com.oracle.truffle.api.profiles.IntValueProfile;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.image.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 @NodeInfo(cost = NodeCost.NONE)
@@ -34,9 +32,7 @@ public final class ResumeContextRootNode extends RootNode {
     protected ResumeContextRootNode(final SqueakLanguage language, final ContextObject context) {
         super(language, context.getTruffleFrame().getFrameDescriptor());
         activeContext = context;
-        final BlockClosureObject closure = context.getClosure();
-        final CompiledCodeObject code = closure == null ? context.getCodeObject() : closure.getCompiledBlock();
-        executeBytecodeNode = new ExecuteBytecodeNode(code);
+        executeBytecodeNode = new ExecuteBytecodeNode(context.getMethodOrBlock());
         contextReference = lookupContextReference(SqueakLanguage.class);
     }
 
@@ -67,8 +63,9 @@ public final class ResumeContextRootNode extends RootNode {
         return activeContext;
     }
 
-    public void setActiveContext(final ContextObject activeContext) {
-        this.activeContext = activeContext;
+    public void setActiveContext(final ContextObject newActiveContext) {
+        assert activeContext.getMethodOrBlock() == newActiveContext.getMethodOrBlock();
+        activeContext = newActiveContext;
     }
 
     @Override

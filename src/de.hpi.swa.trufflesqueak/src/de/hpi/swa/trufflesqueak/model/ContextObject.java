@@ -170,6 +170,10 @@ public final class ContextObject extends AbstractSqueakObjectWithClassAndHash {
         return methodOrBlock.getResumptionCallTarget(this);
     }
 
+    public CompiledCodeObject getMethodOrBlock() {
+        return methodOrBlock;
+    }
+
     public MaterializedFrame getOrCreateTruffleFrame() {
         if (truffleFrame == null) {
             truffleFrame = createTruffleFrame(this);
